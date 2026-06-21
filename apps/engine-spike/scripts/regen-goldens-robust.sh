@@ -77,8 +77,8 @@ for genre in "${GENRES_ARR[@]}"; do
   EDIT="$EDIT_DIR/edit-vst3.trkedit"
   [ -f "$EDIT" ] || EDIT="$EDIT_DIR/edit.trkedit"
   if [ -f "$EDIT" ]; then
-    echo "[regen] bundling $(basename "$EDIT")"
-    python3 scripts/export-edit-bundle.py "$EDIT" "$gendir/casperaki.zip" \
+    echo "[regen] bundling $(basename "$EDIT") -> $genre.zip"
+    python3 scripts/export-edit-bundle.py "$EDIT" "$gendir/$genre.zip" \
       | sed 's/^/[regen] /' || echo "[regen] $genre bundle had MISSING samples"
   else
     echo "[regen] $genre: no edit to bundle"
