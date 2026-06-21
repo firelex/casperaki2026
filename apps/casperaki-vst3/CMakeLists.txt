@@ -90,4 +90,5 @@ casperaki_vst3(CasperakiKPlateA        "Casperaki kPlateA"        Ckpa makeKPlat
 casperaki_vst3(CasperakiTexturizeMS    "Casperaki TexturizeMS"    Ctxm makeTexturizeMS)
 casperaki_vst3(CasperakiStereoChorus   "Casperaki StereoChorus"   Csch makeStereoChorus)
 casperaki_vst3(CasperakiHuge           "Casperaki Huge"           Chug makeHuge)
-casperaki_vst3(CasperakiAir2           "Casperaki Air2"           Cair makeAir2)
+# (makeAir2 is a registered AirWindows extra but appears in NO rack chain in
+# mix-config.json, so no song references it — not shipped.)

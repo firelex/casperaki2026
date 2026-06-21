@@ -38,7 +38,7 @@ inline const std::map<juce::String, juce::String>& typeToProduct()
         { "airwindows_texturizems",      "Casperaki TexturizeMS" },
         { "airwindows_stereochorus",     "Casperaki StereoChorus" },
         { "airwindows_huge",             "Casperaki Huge" },
-        { "airwindows_air2",             "Casperaki Air2" },
+        // airwindows_air2 intentionally omitted — not used by any rack chain.
     };
     return m;
 }

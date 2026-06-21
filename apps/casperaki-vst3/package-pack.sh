@@ -24,7 +24,7 @@ cat > "$STAGE/INSTALL.md" <<'MD'
 
 These are the Casperaki-custom effects used in the exported Tracktion edits
 (FreqShiftEcho, SimpleSide, and the AirWindows extras: Console8 in/out buss/sub,
-kPlateD/A, TexturizeMS, StereoChorus, Huge, Air2). Install them ONCE, then every
+kPlateD/A, TexturizeMS, StereoChorus, Huge). Install them ONCE, then every
 per-song `edit.trkedit` you receive will resolve them automatically (Tracktion
 matches plugins by their stable id, regardless of where you install them).
 
