@@ -1,0 +1,387 @@
+[
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "intro"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "verse1"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "verse2"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "preChorus1"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "chorus1"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "verse3"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "verse4"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "preChorus2"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "chorus2"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "chorus3"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      }
+    ],
+    "name": "break1"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "chorus4"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "chorus5"
+  },
+  {
+    "bars": [
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      },
+      {
+        "chords": []
+      }
+    ],
+    "name": "outro"
+  }
+]

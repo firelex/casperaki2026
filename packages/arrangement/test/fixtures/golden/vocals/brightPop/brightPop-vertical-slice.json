@@ -1,0 +1,6637 @@
+{
+  "backings": [
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 46,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus1"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 46,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus2"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 46,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus3"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 46,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus4"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 46,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 44,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus5"
+    }
+  ],
+  "backings2": [
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 56,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus1"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 56,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus2"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 56,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus3"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 56,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus4"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 56,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 57,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus5"
+    }
+  ],
+  "segments": [
+    {
+      "bars": [
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Ming",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Of",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Brand",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "New",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Way",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Ming",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1,
+                "fullWord": "Of",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Brand",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "King",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "The",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "dh",
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Gol-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Den",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "l",
+                  "d",
+                  "ah0",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Day",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "King",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "segmentName": "verse1"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Ming",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Of",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Brand",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "New",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Way",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Ming",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1,
+                "fullWord": "Of",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Brand",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "King",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "The",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "dh",
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Gol-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Den",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "l",
+                  "d",
+                  "ah0",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Day",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "King",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "segmentName": "verse2"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Here",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "iy1",
+                  "r"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "We",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "iy1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 2,
+                "fullWord": "Go",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Up",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "p"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "High",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ay1"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Here",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "iy1",
+                  "r"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "We",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "iy1"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Go",
+                "note": 59,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Up",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "p"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 1,
+                "fullWord": "Take",
+                "note": 59,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ey1",
+                  "k"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "My",
+                "note": 59,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ay1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hand",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "Fly",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "f",
+                  "l",
+                  "ay1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "preChorus1"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus1"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Ming",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Of",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Brand",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "New",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Way",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Ming",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1,
+                "fullWord": "Of",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Brand",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "King",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "The",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "dh",
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Gol-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Den",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "l",
+                  "d",
+                  "ah0",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Day",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "King",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "segmentName": "verse3"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Ming",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Of",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Brand",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "New",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Way",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Drea-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "r",
+                  "iy1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Ming",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1,
+                "fullWord": "Of",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "v"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 1,
+                "fullWord": "A",
+                "note": 45,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Brand",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "b",
+                  "r",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "King",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 1,
+                "fullWord": "The",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "dh",
+                  "ah0"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Gol-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 2,
+                "endOfPhrase": true,
+                "fullWord": "Den",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "l",
+                  "d",
+                  "ah0",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.0": [
+              {
+                "duration": 1,
+                "endOfPhrase": true,
+                "fullWord": "Day",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "d",
+                  "ey1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Wal-",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "ao1"
+                ]
+              }
+            ],
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "King",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "k",
+                  "ih0",
+                  "ng"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Through",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "th",
+                  "r",
+                  "uw1"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "segmentName": "verse4"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Here",
+                "note": 43,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "iy1",
+                  "r"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "We",
+                "note": 47,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "iy1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 2,
+                "fullWord": "Go",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "2.0": [
+              {
+                "duration": 1,
+                "fullWord": "Up",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "p"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "High",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ay1"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Here",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "iy1",
+                  "r"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "We",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "w",
+                  "iy1"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Go",
+                "note": 59,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "g",
+                  "ow1"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Up",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah1",
+                  "p"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 1,
+                "fullWord": "Take",
+                "note": 59,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ey1",
+                  "k"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "My",
+                "note": 59,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "m",
+                  "ay1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hand",
+                "note": 55,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ae1",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 53,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "Fly",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "f",
+                  "l",
+                  "ay1"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "preChorus2"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus2"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus3"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus4"
+    },
+    {
+      "bars": [
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "To-",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "To-",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ah0"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Night",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "n",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "2.5": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 0.5,
+                "endOfPhrase": true,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "0.0": [
+              {
+                "duration": 1,
+                "fullWord": "Rise",
+                "note": 50,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "And",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 1.5,
+                "endOfPhrase": true,
+                "fullWord": "Hold",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "1.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ],
+            "1.5": [
+              {
+                "duration": 1.5,
+                "fullWord": "Tight",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "t",
+                  "ay1",
+                  "t"
+                ]
+              }
+            ],
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Rise",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "r",
+                  "ay1",
+                  "z"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 3.5,
+                "endOfPhrase": true,
+                "fullWord": "And",
+                "note": 52,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "ah0",
+                  "n",
+                  "d"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {
+            "3.0": [
+              {
+                "duration": 0.5,
+                "fullWord": "Hold",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "hh",
+                  "ow1",
+                  "l",
+                  "d"
+                ]
+              }
+            ],
+            "3.5": [
+              {
+                "duration": 2.5,
+                "endOfPhrase": true,
+                "fullWord": "On",
+                "note": 48,
+                "type": "vocalNote",
+                "vocaloidPhonemes": [
+                  "aa1",
+                  "n"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "notes": {}
+        }
+      ],
+      "segmentName": "chorus5"
+    }
+  ]
+}

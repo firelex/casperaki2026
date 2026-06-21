@@ -1,0 +1,5 @@
+# native cmake build tree
+build/
+
+# rendered audio (large, rebuildable via casperaki_render)
+out-renders/

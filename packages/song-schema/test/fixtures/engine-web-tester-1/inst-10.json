@@ -1,0 +1,19 @@
+{
+    "id": 100017,
+    "instrumentGroup": "restOfDrumsAndLoops",
+    "lowLevelType": "snareDrumsElectronic",
+    "name": "edmSnareDrumRoll",
+    "sampleOrVst": "sample",
+    "samples": [
+        {
+            "id": 27130,
+            "note": "C1"
+        },
+        {
+            "id": 27143,
+            "note": "G1"
+        }
+    ],
+    "transitionId": 17,
+    "type": "transitionPattern"
+}

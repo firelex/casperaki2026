@@ -1,0 +1,34 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Legacy-derived pad pattern bank manifest. The legacy PadPatternGeneratorClass + ChordsAndNotesPadPatternGeneratorClass declare 9 voicing styles, all of which emit a single hit on beat 0 of every bar with a full-bar (duration=4) sustain. The rhythmic shape is identical across the nine styles; what differs is the engine-side voicing — six 'chord' styles emit a 'chord' brain event carrying the chord symbol, three 'singleNote' styles emit a 'note' brain event carrying the chord root in a fixed MIDI octave. The brain selects one voicing per pad-active segment via ctx.rng.fork('patterns/pad'); the legacy 'oneOctave' vs 'twoOctaves' distinction inside the chord styles is voicing metadata that the brain does not currently carry through the Song schema (engine reads chord events without an explicit voicing tag today) and is documented as deferred under engine-adapter Pad coverage in docs/53x.",
+  "$legacySource": {
+    "selector": "casperaki2-engine-js/api/v1.0/services/classes/patterns/padPatterns/PadPatternGeneratorClass.js#getPadPattern (style switch)",
+    "applier":  "casperaki2-engine-js/api/v1.0/services/classes/patterns/padPatterns/ChordsAndNotesPadPatternGeneratorClass.js#createPadPattern",
+    "extractedAt": "2026-06-06"
+  },
+  "barBeats": 4,
+  "barDuration": 4,
+  "styles": {
+    "chordsOneOctaveHigh":  { "kind": "chord", "voicing": "oneOctaveHigh" },
+    "chordsOneOctaveMid":   { "kind": "chord", "voicing": "oneOctaveMid" },
+    "chordsOneOctaveLow":   { "kind": "chord", "voicing": "oneOctaveLow" },
+    "chordsTwoOctavesHigh": { "kind": "chord", "voicing": "twoOctavesHigh" },
+    "chordsTwoOctavesMid":  { "kind": "chord", "voicing": "twoOctavesMid" },
+    "chordsTwoOctavesLow":  { "kind": "chord", "voicing": "twoOctavesLow" },
+    "singleNoteHigh":       { "kind": "singleNote", "rootMidiOctave": 4 },
+    "singleNoteMid":        { "kind": "singleNote", "rootMidiOctave": 3 },
+    "singleNoteLow":        { "kind": "singleNote", "rootMidiOctave": 2 }
+  },
+  "$singleNoteOctaveNote": "rootMidiOctave fixed 06-20 (docs/62 A3). Legacy emits chordBaseNote+'5'/'4'/'3' and converts via notesDecMap where c5=60 (c0=0 convention), i.e. MIDI 60/48/36. The rebuild's pad.ts uses (rootMidiOctave+1)*12+root (c-1=0 convention), so the matching octaves are 4/3/2 -> 60/48/36. Verified against BOTH casperaki1 and casperaki2 ChordsAndNotesPadPatternGeneratorClass.",
+  "$genreStylesNote": "Legacy config.json#defaultStyleMappings.padPatterns maps EVERY genre uniformly to all 9 pad styles (verified 06-16). The rebuild matches that distribution directly (parity policy — no curated subset). Style order mirrors the legacy config array.",
+  "genreStyles": {
+    "ballad":       ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "brightPop":    ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "edm":          ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "latin":        ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "organicVibes": ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "rock":         ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "schlager":     ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],
+    "urban":        ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"]
+  }
+}

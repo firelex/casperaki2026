@@ -1,0 +1,164 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Legacy-derived per-segment-type rules for fills, transitions, and signal processors. Manifest mirrors the legacy switch tables in `services/classes/arrangements/instruments/{drums,transitions}.js` and gets consumed by the brain-side generators with deterministic RNG picks (see ../../src/arrangement-polish/).",
+  "$legacySource": {
+    "fillTypes":         "casperaki2-engine-js/api/v1.0/services/classes/arrangements/instruments/drums.js#_getFill (segment-type switch)",
+    "transitions":       "casperaki2-engine-js/api/v1.0/services/classes/arrangements/instruments/transitions.js#getArrangement (segment-type switch)",
+    "signalProcessors":  "casperaki2-engine-js/api/v1.0/services/classes/arrangements/instruments/drums.js#getArrangement (segmentType === 'break'/'bridge' branches)"
+  },
+  "fillStylesByGenre": ["edm", "latin", "organicVibes", "brightPop", "rock", "schlager"],
+  "$fillsNote": "docs/62 A1 (06-20): fill PLACEMENT splits per genre into `rich` (latin/organicVibes/rock — legacy drums.js _getFill's [latin,organicVibes,rock] gate) and `default` (edm/brightPop/schlager). String slot value = constant (0 RNG draws); array = selectRandomly pool (1 draw, incl. length-1). intro is `$introSpecial` (coin logic in fills.ts). Legacy has no outro fill case. Grids/composition are unchanged (faithful).",
+  "fills": {
+    "intro": {
+      "$introSpecial": true,
+      "rich": {
+        "patternEndOfSegment": ["smallFill", "mediumFill"]
+      }
+    },
+    "verse": {
+      "rich": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill",
+        "patternEndOfSegmentByNext": {
+          "chorus":    ["mediumFill", "bigFill"],
+          "preChorus": ["smallFill", "mediumFill"],
+          "break":     ["smallFill", "mediumFill"],
+          "bridge":    ["smallFill", "mediumFill"],
+          "default":   "smallFill"
+        }
+      },
+      "default": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill"
+      }
+    },
+    "preChorus": {
+      "rich": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill",
+        "patternEndOfSegmentByNext": {
+          "chorus":    ["mediumFill", "bigFill"],
+          "preChorus": ["smallFill", "mediumFill"],
+          "break":     ["smallFill", "mediumFill"],
+          "bridge":    ["smallFill", "mediumFill"],
+          "default":   "smallFill"
+        }
+      },
+      "default": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill"
+      }
+    },
+    "chorus": {
+      "rich": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":["mediumFill", "bigFill"],
+        "patternEndOfSegment":   "bigFill"
+      },
+      "default": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"bigFill"
+      }
+    },
+    "break": {
+      "rich": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill",
+        "patternEndOfSegmentByNext": {
+          "chorus":  ["bigFill"],
+          "default": ["smallFill", "mediumFill"]
+        }
+      },
+      "default": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill"
+      }
+    },
+    "bridge": {
+      "rich": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill",
+        "patternEndOfSegmentByNext": {
+          "chorus":  ["bigFill"],
+          "default": ["smallFill", "mediumFill"]
+        }
+      },
+      "default": {
+        "patternFourthBar":      "smallFill",
+        "patternTwelfthBar":     "smallFill",
+        "patternMiddleOfSegment":"smallFill"
+      }
+    }
+  },
+  "transitions": {
+    "$selectionRule": "Legacy emits transitions on segments that are intro / outro / contain '1' in their name (= the first instance of each segment-type plus head + tail). Names like verse2 / chorus3 inherit the same transition set by virtue of belonging to the same type (legacy carries them across via TransitionsClass).",
+    "intro": {
+      "anyGenre":     ["fxReverse", "fxTonalReverse"],
+      "brightPopExtra": ["percussionBreaksFills"]
+    },
+    "verse": {
+      "beginningAnyGenre":     ["fxHighImpact", "fxLowImpact"],
+      "beginningBrightPopExtra": ["fxDownlifter", "fxTransition"],
+      "endAnyGenre":           ["fxUplifter", "fxReverse", "fxTonalReverse"],
+      "endBrightPopExtra":     ["edmSnareDrumRoll"],
+      "midBrightPopByNext": {
+        "chorus": "percussionBreaksFills"
+      }
+    },
+    "preChorus": {
+      "beginningAnyGenre":     ["fxHighImpact", "fxLowImpact"],
+      "beginningBrightPopExtra": ["fxDownlifter", "fxTransition"],
+      "endAnyGenre":           ["fxUplifter", "fxReverse", "fxTonalReverse"],
+      "endBrightPopExtra":     ["edmSnareDrumRoll"],
+      "midBrightPopByNext": {
+        "chorus": "percussionBreaksBuildups"
+      }
+    },
+    "chorus": {
+      "beginningAnyGenre":  ["cymbalsCrashHit", "fxDownlifter", "fxHighImpact", "fxTransition"],
+      "endAnyGenre":        [],
+      "brightPopExtraAlways": ["cymbalsCrashHit", "percussionBreaksFills"]
+    },
+    "break": {
+      "anyGenre":     ["fxReverse", "fxTonalReverse"],
+      "brightPopExtra": ["percussionBreaksFills"]
+    },
+    "bridge": {
+      "beginningAnyGenre":  ["fxNoiseRise", "fxReverse", "fxTonalReverse"],
+      "endAnyGenre":        ["edmSnareDrumRoll"],
+      "brightPopExtra":     ["percussionBreaksBuildups"]
+    },
+    "outro": {
+      "$note": "Legacy TransitionsClass has NO `case 'outro'` (docs/62 B14, fixed 06-20). Outro receives transitions only via the cross-segment post-passes (B4, deferred). The earlier anyGenre:[fxReverse] was invented behaviour and is removed.",
+      "anyGenre": []
+    }
+  },
+  "signalProcessors": {
+    "$gateRule":  "Legacy applies Drums SP only on break/bridge segment-types (no per-genre gate). Other intro/verse/preChorus/outro SP slots come from optional `introEffect/verseEffect/...` parameters that the brain does not currently surface — left as a deferred extension point.",
+    "$lowPassCurve": "Schema-compliant minimal automation: a single point at t=0 carrying the legacy `lowPassFilter*` family tag's nominal cutoff (Hz). Real per-32nd automation needs `EffectsClass.getEffect`, deferred.",
+    "break": [
+      { "type": "lowPassFilter",            "weight": 3 },
+      { "type": "lowPassFilterSweepUp",     "weight": 1 },
+      { "type": "lowPassFilter100SweepUp",  "weight": 1 },
+      { "type": "lowPassFilter300SweepUp",  "weight": 1 },
+      { "type": "lowPassFilter700SweepUp",  "weight": 1 },
+      { "type": "lowPassFilter1000SweepUp", "weight": 1 }
+    ],
+    "bridge": [
+      { "type": "lowPassFilterSweepUp",     "weight": 1 },
+      { "type": "lowPassFilter100SweepUp",  "weight": 1 },
+      { "type": "lowPassFilter300SweepUp",  "weight": 1 },
+      { "type": "lowPassFilter700SweepUp",  "weight": 1 },
+      { "type": "lowPassFilter1000SweepUp", "weight": 1 }
+    ]
+  }
+}

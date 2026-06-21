@@ -1,0 +1,15 @@
+{
+    "details": {
+        "LUFS": "24",
+        "bpm": 99,
+        "duration": 11.572245,
+        "file": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+        "vstPlugin": "oversampled - UFBT_faller_16"
+    },
+    "id": 26590,
+    "instrumentGroup": "fx",
+    "lowLevelType": "fxDownlifter",
+    "name": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+    "transitionId": 0,
+    "type": "transitionSample"
+}

@@ -1,0 +1,23 @@
+diff --git a/Source/sequencer/Sequencer.cpp b/Source/sequencer/Sequencer.cpp
+index 0d1c784..1cd08e0 100644
+--- a/Source/sequencer/Sequencer.cpp
++++ b/Source/sequencer/Sequencer.cpp
+@@ -178,6 +178,18 @@ Sequencer::Sequencer (te::Engine &_engine, te::Edit &_edit, j::OwnedArray<Instru
+         }
+         if (instrument->type == Instrument::Type::transitionSample)
+         {
++            // docs/54o: the `fx` submix track is only lazily created when an
++            // instrument's fxGroup == fx (line 153-156). cymbalsCrashHit etc
++            // belong to fxGroup `drums`, so when the first transitionSample is
++            // processed `submixTracks[fx]` is a default-constructed null
++            // FolderTrack::Ptr and `.get()` returns nullptr. The subsequent
++            // `submixTracks[fx]->getOutput()` then trips
++            // `juce_ReferenceCountedObject.h:394` (null operator->). Eagerly
++            // create the fx submix on first transitionSample to fix.
++            if (!submixTracks.contains (FX::InstrumentGroup::fx))
++            {
++                initializeSubmixTrack (FX::InstrumentGroup::fx, FX::instrumentGroupToString (FX::InstrumentGroup::fx));
++            }
+             edit.moveTrack (te::Track::Ptr {*sampleTransitionsTrackFX}, te::TrackInsertPoint {submixTracks[FX::InstrumentGroup::fx].get(), nullptr});
+             auto output = submixTracks[FX::InstrumentGroup::fx]->getOutput();
+             output->setOutputToTrack (masterTrack);

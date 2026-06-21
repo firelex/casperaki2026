@@ -1,0 +1,36 @@
+{
+  "$schemaVersion": 2,
+  "$description": "Legacy-derived keys (piano) pattern bank manifest. Maps canonical Casperaki genres → which keys style(s) to draw piano patterns from (legacy config.json#defaultStyleMappings.pianoPatterns). Each style declares a `kind`: 'chordPattern' (file-backed; format 'hitGroups' = chordsStraight hit-group pools, format 'absHitTriples' = edmHousePiano [absHit,duration,layer] triples) emitting `chord` events; 'algo' (chordsMixed / arpeggio) handled by keys-algo.ts; 'ezKeys' (library / altLibrary) handled by piano-bank.ts emitting `noteRelative` events. The generator picks one style for the genre via ctx.rng.fork('patterns/keys') (legacy Tools.selectRandomly). chordsStraight / chordsMixed / arpeggio are legacy `freestyle`-only styles — shipped as available styles + unit-tested but not mapped to any canonical genre by default.",
+  "$legacySource": {
+    "dispatch": "casperaki1/api/v1.0/services/classes/patterns/pianoPatterns/PianoPatternGeneratorClass.js#getPianoPattern (style switch) + config.json#defaultStyleMappings.pianoPatterns",
+    "chordsStraight": "ChordsPianoPatternGeneratorClass.js (classic substyle)",
+    "edmHousePiano": "EDMHousePianoPatternGeneratorClass.js (data/EDMHousePianoPatterns.json)",
+    "chordsMixed": "ChordsPianoPatternGeneratorClass.js (style2='straight')",
+    "arpeggio": "ArpeggioPianoPatternGeneratorClass.js",
+    "library/altLibrary": "LibraryPianoPatternGeneratorClass.js (EZKeys patterns.json)",
+    "extractedAt": "2026-06-14"
+  },
+  "lengthDurations": {
+    "short": [0.25, 0.5],
+    "medium": [1],
+    "long": [2, 3]
+  },
+  "styles": {
+    "chordsStraight": { "kind": "chordPattern", "format": "hitGroups", "file": "chordsStraight.json" },
+    "edmHousePiano": { "kind": "chordPattern", "format": "absHitTriples", "file": "edmHousePiano.json" },
+    "chordsMixed": { "kind": "algo" },
+    "arpeggio": { "kind": "algo" },
+    "library": { "kind": "ezKeys", "library": "library" },
+    "altLibrary": { "kind": "ezKeys", "library": "altLibrary" }
+  },
+  "genreStyles": {
+    "ballad": ["library"],
+    "brightPop": ["library", "altLibrary"],
+    "edm": ["edmHousePiano"],
+    "latin": ["library"],
+    "organicVibes": ["library", "altLibrary"],
+    "rock": ["library"],
+    "schlager": ["edmHousePiano"],
+    "urban": ["library"]
+  }
+}

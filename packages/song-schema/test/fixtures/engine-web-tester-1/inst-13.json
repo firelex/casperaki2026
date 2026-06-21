@@ -1,0 +1,15 @@
+{
+    "details": {
+        "LUFS": "24",
+        "bpm": 99,
+        "duration": 9.795918,
+        "file": "fx - fxHighImpact - edm - vengeance - VEH4 Impacts High 40.mp3",
+        "vstPlugin": "vengeance - VEH4 Impacts High 40"
+    },
+    "id": 26660,
+    "instrumentGroup": "fx",
+    "lowLevelType": "fxHighImpact",
+    "name": "fx - fxHighImpact - edm - vengeance - VEH4 Impacts High 40.mp3",
+    "transitionId": 4,
+    "type": "transitionSample"
+}

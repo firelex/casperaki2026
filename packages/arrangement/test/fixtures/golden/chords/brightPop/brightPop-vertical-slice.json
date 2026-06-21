@@ -1,0 +1,940 @@
+[
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "ABCAABCA",
+    "name": "intro",
+    "precedent": "endOfChorus"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      }
+    ],
+    "chordStructure": "ABABABAB",
+    "name": "verse1",
+    "precedent": "Dancing queen"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      }
+    ],
+    "chordStructure": "ABABABAB",
+    "name": "verse2",
+    "precedent": "Dancing queen"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "F",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "F",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      }
+    ],
+    "chordStructure": "ABAAABAA",
+    "name": "preChorus1",
+    "precedent": "Mamma mia"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "ABCAABCA",
+    "name": "chorus1",
+    "precedent": "Quit playing games"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      }
+    ],
+    "chordStructure": "ABABABAB",
+    "name": "verse3",
+    "precedent": "Dancing queen"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "F",
+          "F",
+          "F",
+          "F"
+        ]
+      }
+    ],
+    "chordStructure": "ABABABAB",
+    "name": "verse4",
+    "precedent": "Dancing queen"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "F",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "F",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      },
+      {
+        "chords": [
+          "G",
+          "G",
+          "G",
+          "G"
+        ]
+      }
+    ],
+    "chordStructure": "ABAAABAA",
+    "name": "preChorus2",
+    "precedent": "Mamma mia"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "ABCAABCA",
+    "name": "chorus2",
+    "precedent": "Quit playing games"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "ABCAABCA",
+    "name": "chorus3",
+    "precedent": "Quit playing games"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "A",
+    "name": "break1",
+    "precedent": "verse"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "ABCAABCA",
+    "name": "chorus4",
+    "precedent": "Quit playing games"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "ABCAABCA",
+    "name": "chorus5",
+    "precedent": "Quit playing games"
+  },
+  {
+    "bars": [
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      },
+      {
+        "chords": [
+          "Dm",
+          "Dm",
+          "Dm",
+          "Dm"
+        ]
+      },
+      {
+        "chords": [
+          "A#9",
+          "A#9",
+          "A#9",
+          "A#9"
+        ]
+      },
+      {
+        "chords": [
+          "C",
+          "C",
+          "C",
+          "C"
+        ]
+      }
+    ],
+    "chordStructure": "",
+    "name": "outro",
+    "precedent": "endOfChorus"
+  }
+]

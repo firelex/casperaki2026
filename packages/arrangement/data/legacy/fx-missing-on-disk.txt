@@ -1,0 +1,92 @@
+# 74 unmatched legacy fx entries
+
+## 8bitArcade  (4)
+  BANK_00_INSTR_000A_SND_0001.wav
+  BANK_00_INSTR_000A_SND_000C-001.wav
+  BANK_00_INSTR_000A_SND_000D.wav
+  BANK_00_INSTR_000A_SND_000E.wav
+
+## downlifter  (14)
+  Oversampled_UFBT_faller_08.wav
+  Oversampled_UFBT_faller_21.wav
+  Oversampled_UFBT_faller_23.wav
+  Oversampled_UFBT_faller_28.wav
+  Oversampled_UFBT_faller_29.wav
+  Oversampled_UFBT_faller_33.wav
+  Oversampled_UFBT_faller_35.wav
+  Serum FX Fall.wav
+  Serum FX Power down 1.wav
+  Serum FX Power down 2.wav
+  Serum FX Power down 3.wav
+  Serum FX Power down 4.wav
+  Serum FX Rampant 1.wav
+  Serum FX Rampant 2.wav
+
+## fretNoises  (7)
+  a#6.wav
+  a6.wav
+  b6.wav
+  f#6.wav
+  f6.wav
+  g#6.wav
+  g6.wav
+
+## highImpact  (1)
+  Serum FX Shotgun.wav
+
+## noiseRise  (1)
+  White Noise 1min.wav  [engine self-synthesises — no file needed]
+
+## tonalReverse  (36)
+  Type1_A#.wav
+  Type1_A.wav
+  Type1_B.wav
+  Type1_C#.wav
+  Type1_C.wav
+  Type1_D#.wav
+  Type1_D.wav
+  Type1_E.wav
+  Type1_F#.wav
+  Type1_F.wav
+  Type1_G#.wav
+  Type1_G.wav
+  Type2_A#.wav
+  Type2_A.wav
+  Type2_B.wav
+  Type2_C#.wav
+  Type2_C.wav
+  Type2_D#.wav
+  Type2_D.wav
+  Type2_E.wav
+  Type2_F#.wav
+  Type2_F.wav
+  Type2_G#.wav
+  Type2_G.wav
+  Type3_A#.wav
+  Type3_A.wav
+  Type3_B.wav
+  Type3_C#.wav
+  Type3_C.wav
+  Type3_D#.wav
+  Type3_D.wav
+  Type3_E.wav
+  Type3_F#.wav
+  Type3_F.wav
+  Type3_G#.wav
+  Type3_G.wav
+
+## transition  (1)
+  Serum FX Noisy downer.wav
+
+## uplifter  (10)
+  Serum FX 16-bar riser 1.wav
+  Serum FX 8-bar riser 1.wav
+  Serum FX Downlifter classic breakdown 1.wav
+  Serum FX Downlifter classic breakdown 2.wav
+  Serum FX Downlifter classic breakdown 3.wav
+  Serum FX Downlifter classic breakdown 4.wav
+  Serum FX Downlifter classic breakdown 5.wav
+  Serum FX Downlifter classic breakdown 6.wav
+  Serum FX Power up 1.wav
+  Serum FX Shifting Gear.wav
+

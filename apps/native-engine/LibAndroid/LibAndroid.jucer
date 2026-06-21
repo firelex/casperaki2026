@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="uBROpQ" name="casperaki_engine" projectType="dll" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" bundleIdentifier="com.casperaki.casperaki_engine"
+              cppLanguageStandard="17" defines="JUCE_USE_MP3AUDIOFORMAT = 1">
+  <MAINGROUP id="O7R1rD" name="casperaki_engine">
+    <GROUP id="{AE1C3FCD-A2A3-50D0-A25B-F640F2EF1E55}" name="Source">
+      <GROUP id="{F75DDFB6-8ED3-CA23-983C-951BB4676BBF}" name="instruments">
+        <FILE id="ArK42k" name="Bass.h" compile="0" resource="0" file="Source/instruments/Bass.h"/>
+        <FILE id="r5FuBx" name="Drums.h" compile="0" resource="0" file="Source/instruments/Drums.h"/>
+        <FILE id="IQgd8f" name="Guitar.h" compile="0" resource="0" file="Source/instruments/Guitar.h"/>
+        <FILE id="JfZvau" name="Instrument.cpp" compile="1" resource="0" file="Source/instruments/Instrument.cpp"/>
+        <FILE id="y9jV1q" name="Instrument.h" compile="0" resource="0" file="Source/instruments/Instrument.h"/>
+        <FILE id="qvx3kl" name="Loop.h" compile="0" resource="0" file="Source/instruments/Loop.h"/>
+        <FILE id="rgbyf5" name="SamplesDownloadTask.h" compile="0" resource="0"
+              file="Source/instruments/SamplesDownloadTask.h"/>
+        <FILE id="sA523l" name="SequencerUtils.h" compile="0" resource="0"
+              file="Source/instruments/SequencerUtils.h"/>
+        <FILE id="PyvowQ" name="Synths.h" compile="0" resource="0" file="Source/instruments/Synths.h"/>
+        <FILE id="EMLNA3" name="TonalInstrument.h" compile="0" resource="0"
+              file="Source/instruments/TonalInstrument.h"/>
+        <FILE id="kp3Ct7" name="TransitionNoise.h" compile="0" resource="0"
+              file="Source/instruments/TransitionNoise.h"/>
+        <FILE id="tGDlYi" name="TransitionPattern.h" compile="0" resource="0"
+              file="Source/instruments/TransitionPattern.h"/>
+        <FILE id="WQKebi" name="TransitionSample.h" compile="0" resource="0"
+              file="Source/instruments/TransitionSample.h"/>
+      </GROUP>
+      <GROUP id="{BF6E8979-4916-EAFD-A853-D3FC253683E4}" name="music">
+        <FILE id="COOWMA" name="Chord.h" compile="0" resource="0" file="Source/music/Chord.h"/>
+        <FILE id="iP3MqF" name="ChordData.h" compile="0" resource="0" file="Source/music/ChordData.h"/>
+        <FILE id="G2PuTS" name="Note.h" compile="0" resource="0" file="Source/music/Note.h"/>
+      </GROUP>
+      <GROUP id="{0EA6F957-E1D5-1F6A-B310-68227FF21A0E}" name="sequencer">
+        <FILE id="KcgtfR" name="Sequencer.cpp" compile="1" resource="0" file="Source/sequencer/Sequencer.cpp"/>
+        <FILE id="Fr8CD4" name="Sequencer.h" compile="0" resource="0" file="Source/sequencer/Sequencer.h"/>
+      </GROUP>
+      <FILE id="kyUaE7" name="CasperakiEngine.cpp" compile="1" resource="0"
+            file="Source/CasperakiEngine.cpp"/>
+      <FILE id="bswx4T" name="CasperakiEngine.h" compile="0" resource="0"
+            file="Source/CasperakiEngine.h"/>
+      <FILE id="wokGYp" name="common.h" compile="0" resource="0" file="Source/common.h"/>
+      <FILE id="qdIm3X" name="FX.h" compile="0" resource="0" file="Source/FX.h"/>
+    </GROUP>
+    <FILE id="J8POsQ" name="CasperakiEngineBridge.cpp" compile="1" resource="0"
+          file="Builds/Android/lib/src/main/jni/CasperakiEngineBridge.cpp"/>
+    <FILE id="DXYvUT" name="CasperakiEngineBridge.h" compile="0" resource="0"
+          file="Builds/Android/lib/src/main/jni/CasperakiEngineBridge.h"/>
+    <GROUP id="{D09BC148-C7BA-1996-C15A-1D5BBFF9FF55}" name="BinaryData">
+      <FILE id="MkRXXf" name="ChordData.json" compile="0" resource="1" file="Source/music/ChordData.json"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_USE_OBOE_STABILIZED_CALLBACK="1"/>
+  <EXPORTFORMATS>
+    <ANDROIDSTUDIO targetFolder="Builds/Android" extraDefs="JUCE_USE_MP3AUDIOFORMAT=1">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="casperaki_engine_android"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="casperaki_engine_android"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="tracktion_engine" path="../tracktion_engine/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_osc" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="tracktion_graph" path="../tracktion_engine/modules"/>
+      </MODULEPATHS>
+    </ANDROIDSTUDIO>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_engine" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_graph" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+</JUCERPROJECT>

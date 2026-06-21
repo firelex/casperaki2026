@@ -1,0 +1,49 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Legacy-derived drum pattern bank manifest. Maps canonical Casperaki genres → which legacy style bank(s) to draw blueprints from, plus the canonical lane → General MIDI drum mapping.",
+  "$legacySource": {
+    "drLuke": "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/data/drLukePatterns.json @ commit-of-2026-06-06",
+    "rock":   "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/data/rockPatterns.json @ commit-of-2026-06-06",
+    "selector": "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/PopRockDrumPatternGeneratorClass.js#createDrumPattern (style → method switch)"
+  },
+  "lanes": {
+    "bassDrum1":    { "midi": 36 },
+    "bassDrum2":    { "midi": 35 },
+    "snareDrum1":   { "midi": 38 },
+    "snareDrum2":   { "midi": 40 },
+    "hiHatClosed1": { "midi": 42 },
+    "hiHatClosed2": { "midi": 44 },
+    "hiHatPedal":   { "midi": 44 },
+    "hiHatOpen":    { "midi": 46 },
+    "tom1":         { "midi": 50 },
+    "tom2":         { "midi": 47 },
+    "tom3":         { "midi": 43 },
+    "crash1":       { "midi": 49 },
+    "crash2":       { "midi": 57 },
+    "ride":         { "midi": 51 },
+    "rim":          { "midi": 37 },
+    "clap":         { "midi": 39 },
+    "snap":         { "midi": 31 },
+    "shaker":       { "midi": 70 }
+  },
+  "styles": {
+    "drLuke":       { "file": "drLuke.json" },
+    "rock":         { "file": "rock.json" },
+    "edm":          { "algo": "edm" },
+    "urban":        { "algo": "urban" },
+    "latin":        { "algo": "latin" },
+    "balladAlgo":   { "algo": "ballad" },
+    "popLooseAlgo": { "algo": "popLoose" },
+    "popTightAlgo": { "algo": "popTight" }
+  },
+  "genreStyles": {
+    "brightPop":    ["popTightAlgo"],
+    "rock":         ["rock"],
+    "ballad":       ["balladAlgo"],
+    "edm":          ["edm"],
+    "latin":        ["latin"],
+    "organicVibes": ["popLooseAlgo"],
+    "schlager":     ["edm"],
+    "urban":        ["urban"]
+  }
+}

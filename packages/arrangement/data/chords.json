@@ -1,0 +1,65 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Roman-numeral vocabulary the chord generator parses. Each entry encodes a scale degree (1..7), an optional accidental (-1 = flat root, 1 = sharp root; omitted = natural), and a chord-quality key. qualitySymbols maps each quality key onto the chord-symbol suffix appended to the root name.",
+  "LEGACY_PROVENANCE": {
+    "source": "casperaki2-engine-js/api/v1.0/services/classes/chords/chords.json",
+    "extractedAt": "2026-06-06",
+    "note": "Vocabulary derived from the 79-entry legacy chord-progression bank: every distinct (root, quality) chord symbol mapped against its precedent's home key into a (numeral, accidental, quality) triple. The progression bank itself lands separately in step 3 (precedents + voice-leading)."
+  },
+  "romanNumerals": {
+    "I":       { "degree": 1, "quality": "maj" },
+    "ii":      { "degree": 2, "quality": "min" },
+    "iii":     { "degree": 3, "quality": "min" },
+    "IV":      { "degree": 4, "quality": "maj" },
+    "V":       { "degree": 5, "quality": "maj" },
+    "vi":      { "degree": 6, "quality": "min" },
+    "vii°":    { "degree": 7, "quality": "dim" },
+
+    "I9":      { "degree": 1, "quality": "dom9" },
+    "Isus":    { "degree": 1, "quality": "sus" },
+
+    "II":      { "degree": 2, "quality": "maj" },
+    "ii7":     { "degree": 2, "quality": "min7" },
+
+    "III":     { "degree": 3, "quality": "maj" },
+    "III7":    { "degree": 3, "quality": "dom7" },
+    "iii9":    { "degree": 3, "quality": "min9" },
+    "IIImaj7": { "degree": 3, "quality": "maj7" },
+    "IIIsus":  { "degree": 3, "quality": "sus" },
+
+    "IV6":     { "degree": 4, "quality": "add6" },
+    "IV9":     { "degree": 4, "quality": "dom9" },
+    "IVmaj7":  { "degree": 4, "quality": "maj7" },
+    "IVmaj9":  { "degree": 4, "quality": "maj9" },
+    "#IVsus":  { "degree": 4, "accidental": 1, "quality": "sus" },
+
+    "V5":      { "degree": 5, "quality": "pow5" },
+    "V7":      { "degree": 5, "quality": "dom7" },
+    "V11":     { "degree": 5, "quality": "dom11" },
+    "Vsus":    { "degree": 5, "quality": "sus" },
+
+    "VI":      { "degree": 6, "quality": "maj" },
+    "vi7":     { "degree": 6, "quality": "min7" },
+    "VIsus":   { "degree": 6, "quality": "sus" },
+    "bvi":     { "degree": 6, "accidental": -1, "quality": "min" },
+
+    "bVII":    { "degree": 7, "accidental": -1, "quality": "maj" },
+    "bVII9":   { "degree": 7, "accidental": -1, "quality": "dom9" }
+  },
+  "qualitySymbols": {
+    "maj":   "",
+    "min":   "m",
+    "dim":   "dim",
+    "aug":   "aug",
+    "maj7":  "maj7",
+    "min7":  "m7",
+    "dom7":  "7",
+    "maj9":  "maj9",
+    "min9":  "m9",
+    "dom9":  "9",
+    "sus":   "sus",
+    "add6":  "6",
+    "dom11": "11",
+    "pow5":  "5"
+  }
+}

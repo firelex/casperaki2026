@@ -1,0 +1,18 @@
+{
+    "details": {
+        "LUFS": null,
+        "bpm": "99",
+        "duration": 19.435102,
+        "file": "percussionLoops - percussionLoopsElectronic_90-119bpm - latin - CRP_Percussion_Loop_09_99bpm_modified.mp3",
+        "octaveAdjustment": null,
+        "vstPlugin": "CRP_Percussion_Loop_09_99bpm_modified - 99"
+    },
+    "id": 37297,
+    "instrumentGroup": "restOfDrumsAndLoops",
+    "isSample": true,
+    "isVst": false,
+    "lowLevelType": "percussionLoopsElectronic",
+    "name": "Loop - undefined - 99",
+    "shortName": "loop",
+    "type": "percussionLoops"
+}

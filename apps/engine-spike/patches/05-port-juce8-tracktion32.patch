@@ -1,0 +1,98 @@
+--- a/Source/CasperakiEngine.cpp
++++ b/Source/CasperakiEngine.cpp
+@@ -206,7 +206,18 @@
+     // render completes "successfully". This is intentionally not upstreamed
+     // to casperaki_engine yet — the engine still needs forEditing for the
+     // live-transport paths.
+-    edit.reset(new te::Edit(*engine, te::createEmptyEdit(*engine), te::Edit::forRendering, nullptr, 0));
++    // 55a port: v2 Edit ctor became private in Tracktion v3. Switch to the
++    // new Options-based ctor. Provide a synthetic ProjectItemID so the Edit
++    // is happy with a non-default identity (rendering only — we never persist).
++    te::Edit::Options editOpts {
++        *engine,
++        te::createEmptyEdit(*engine),
++        te::ProjectItemID::createNewID(0)
++    };
++    editOpts.role = te::Edit::forRendering;
++    editOpts.loadContext = nullptr;
++    editOpts.numUndoLevelsToStore = 0;
++    edit.reset(new te::Edit(std::move(editOpts)));
+     transport = &(edit.get()->getTransport());
+ 
+     // create edit file
+@@ -583,7 +594,8 @@
+         edit->tempoSequence.toTime(te::BeatPosition::fromBeats(bar * 4 + step / 8.0)).inSeconds();
+     //edit->tempoSequence.barsBeatsToTime(te::TempoSequence::BarsAndBeats{bar, step/8});
+ 
+-    edit->getTransport().setCurrentPosition(newPosition);
++    // 55a port: v3 TransportControl::setCurrentPosition removed; use setPosition(TimePosition).
++    edit->getTransport().setPosition(te::TimePosition::fromSeconds(newPosition));
+ 
+     std::cout << "SEEK TO: " << newPosition << std::endl;
+ }
+@@ -693,9 +705,9 @@
+     auto start = std::chrono::high_resolution_clock::now();
+ 
+ #if JUCE_MODAL_LOOPS_PERMITTED
+-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, {}, true);
++    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
+ #else
+-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, {}, false);
++    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, false); // 55a: v3 adds useACID
+ #endif
+ //    auto job = tracktion::EditRenderJob::getOrCreateRenderJob (edit->engine, r, false, false, false);
+     //jassert (job != nullptr);
+@@ -776,7 +788,7 @@
+ 
+     auto start = std::chrono::high_resolution_clock::now();
+ 
+-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, {}, true);
++    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
+ 
+     //auto job = tracktion::EditRenderJob::getOrCreateRenderJob (edit->engine, r, false, false, false);
+     //jassert (job != nullptr);
+@@ -862,7 +874,7 @@
+ 
+     auto start = std::chrono::high_resolution_clock::now();
+ 
+-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, {}, true);
++    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
+ 
+     // Stop the timer
+     auto stop = std::chrono::high_resolution_clock::now();
+--- a/Source/CasperakiEngine.h
++++ b/Source/CasperakiEngine.h
+@@ -231,7 +231,10 @@
+         sequencer.reset();
+         instruments.clear();
+ 
+-        engine->getDeviceManager().clearAllContextDevices();
++        // 55a port: v3 made DeviceManager::clearAllContextDevices private.
++        // For the render-only spike we never created hardware-bound contexts,
++        // so dropping this teardown step is safe.
++        // engine->getDeviceManager().clearAllContextDevices();
+         engine->getEditDeleter().deleteEdit(std::move(edit));
+ 
+         edit = nullptr;
+--- a/Source/instruments/Drums.h
++++ b/Source/instruments/Drums.h
+@@ -70,7 +70,8 @@
+             auto dynamicObj = instrumentData["ids"].getDynamicObject();
+             
+             if (dynamicObj)
+-                ids = dynamicObj->clone();
++                // 55a port: v8 DynamicObject::clone() returns std::unique_ptr; release to Ptr.
++                ids = juce::DynamicObject::Ptr (dynamicObj->clone().release());
+             else
+             {
+                 std::cerr << "Could not create instrument " << name << ". JSON ids are NULL. Error: " << std::endl;
+@@ -84,7 +85,8 @@
+         }
+ 
+ 
+-        subInstruments = instrumentData["subInstruments"].getDynamicObject()->clone();
++        // 55a port: v8 DynamicObject::clone() returns std::unique_ptr; release to Ptr.
++        subInstruments = juce::DynamicObject::Ptr (instrumentData["subInstruments"].getDynamicObject()->clone().release());
+ 
+         TRACKTION_LOG( "Drums created!" );
+ 

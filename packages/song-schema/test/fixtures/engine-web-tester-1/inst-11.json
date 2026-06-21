@@ -1,0 +1,16 @@
+{
+    "details": {
+        "LUFS": "24",
+        "bpm": 99,
+        "climax": 0.5,
+        "duration": 2.45551,
+        "file": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+        "vstPlugin": "bigZ - Transition_3"
+    },
+    "id": 26907,
+    "instrumentGroup": "fx",
+    "lowLevelType": "fxTransition",
+    "name": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+    "transitionId": 12,
+    "type": "transitionSample"
+}

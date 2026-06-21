@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="OPGgaV" name="casperaki_engine_ios" projectType="library"
+              useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
+              compilerFlagSchemes="EMSCRIPTEN" cppLanguageStandard="17">
+  <MAINGROUP id="dQLpXJ" name="casperaki_engine_ios">
+    <GROUP id="{F0258513-09A8-2654-5B4D-75CFA90A9028}" name="iOS">
+      <FILE id="a2N07M" name="CasperakiEngineInterface.h" compile="0" resource="0"
+            file="Builds/iOS/CasperakiEngineInterface.h"/>
+      <FILE id="Jl2zhc" name="CasperakiEngineInterface.mm" compile="1" resource="0"
+            file="Builds/iOS/CasperakiEngineInterface.mm"/>
+    </GROUP>
+    <GROUP id="{67B8EE75-1BA7-9A82-FA42-4B843AEFDC58}" name="Source">
+      <GROUP id="{E97530CB-3A64-9580-9558-0515333A7FB3}" name="instruments">
+        <GROUP id="{A861F9A4-9145-E2EF-7843-A7B70EC5E2B9}" name="mp3decode">
+          <GROUP id="{41F3FA81-5630-102B-DFED-9DF27E0DCE38}" name="wave">
+            <FILE id="cou1RR" name="wave.cpp" compile="1" resource="0" file="Source/instruments/mp3decode/wave/wave.cpp"/>
+            <FILE id="a67Eur" name="wave.h" compile="0" resource="0" file="Source/instruments/mp3decode/wave/wave.h"/>
+          </GROUP>
+        </GROUP>
+        <GROUP id="{768AEC9F-3387-67D2-71ED-B6B56620354F}" name="sequencer">
+          <FILE id="X9O88b" name="Sequencer.cpp" compile="1" resource="0" file="Source/sequencer/Sequencer.cpp"/>
+          <FILE id="KyPqI9" name="Sequencer.h" compile="0" resource="0" file="Source/sequencer/Sequencer.h"/>
+        </GROUP>
+        <FILE id="EgCFA4" name="Bass.h" compile="0" resource="0" file="Source/instruments/Bass.h"/>
+        <FILE id="cY40o0" name="Drums.h" compile="0" resource="0" file="Source/instruments/Drums.h"/>
+        <FILE id="i6FlGJ" name="Instrument.cpp" compile="1" resource="0" file="Source/instruments/Instrument.cpp"/>
+        <FILE id="BF2NYN" name="Instrument.h" compile="0" resource="0" file="Source/instruments/Instrument.h"/>
+      </GROUP>
+      <GROUP id="{003B0830-B286-07F7-D8BF-EC444D6D1696}" name="music">
+        <FILE id="w2RrwF" name="Chord.h" compile="0" resource="0" file="Source/music/Chord.h"/>
+        <FILE id="obBSYW" name="ChordData.h" compile="0" resource="0" file="Source/music/ChordData.h"/>
+        <FILE id="HthITr" name="Note.h" compile="0" resource="0" file="Source/music/Note.h"/>
+      </GROUP>
+      <FILE id="E8zGtz" name="CasperakiEngine.cpp" compile="1" resource="0"
+            file="Source/CasperakiEngine.cpp"/>
+      <FILE id="exerug" name="CasperakiEngine.h" compile="0" resource="0"
+            file="Source/CasperakiEngine.h"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <XCODE_IPHONE targetFolder="Builds/iOS" useHeaderMap="1" bundleIdentifier="com.casperaki.casperaki_engine">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="casperaki_engine_ios"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="casperaki_engine_ios"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="tracktion_engine" path="../tracktion_engine/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_basics" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_osc" path="../tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="tracktion_graph" path="../tracktion_engine/modules"/>
+      </MODULEPATHS>
+    </XCODE_IPHONE>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_engine" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_graph" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+</JUCERPROJECT>

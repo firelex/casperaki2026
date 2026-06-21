@@ -1,0 +1,42 @@
+diff --git a/Source/instruments/Loop.h b/Source/instruments/Loop.h
+index 6cf67c5..d59bdf4 100644
+--- a/Source/instruments/Loop.h
++++ b/Source/instruments/Loop.h
+@@ -52,27 +52,17 @@ public:
+     void createSegmentClip (const j::String& segName, const te::TimeRange& segTimeRange, const j::var& mute)
+     {
+         jassert (sampleFile.existsAsFile());
+-        
+-        auto waveClip = track->insertWaveClip (segName, sampleFile, te::ClipPosition {segTimeRange}, true);
+-        
+-        te::tempo::BarsAndBeats b = edit.tempoSequence.toBarsAndBeats (te::TimePosition::fromSeconds (waveClip->getSourceLength().inSeconds()));
+-
+-        const te::BeatRange loopTimeRange
+-        {
+-            te::BeatPosition::fromBeats (0),
+-            te::BeatDuration::fromBeats (4 * b.bars)
+-        };
+-        
+-        waveClip->setNumberOfLoops (b.bars); //Need to set this, or the loop doesn't extend the way it should.
+-        waveClip->setLoopRangeBeats (loopTimeRange);
+-        waveClip->setLength (segTimeRange.getLength (), true);
+ 
+-        auto loopInfo = waveClip->getLoopInfo ();
+-        auto fileInfo = waveClip->getAudioFile ().getInfo ();
+-
+-        DBG (loopInfo.getBpm (fileInfo));
+-        loopInfo.setBpm (bpm, fileInfo);
+-        waveClip->setLoopInfo (loopInfo);
++        // docs/54o: drop setLoopRangeBeats (hangs renderToFile) + setLoopInfo
++        // (library is pre-stretched). Tile with N = ceil(seg/source).
++        auto waveClip = track->insertWaveClip (segName, sampleFile, te::ClipPosition {segTimeRange}, true);
++        const double sourceSec  = waveClip->getSourceLength ().inSeconds ();
++        const double segmentSec = segTimeRange.getLength ().inSeconds ();
++        const int    nLoops     = sourceSec > 0
++            ? std::max (1, (int) std::ceil (segmentSec / sourceSec))
++            : 1;
++        waveClip->setNumberOfLoops (nLoops);
++        waveClip->setLength (segTimeRange.getLength (), false);
+ 
+         applyMuteToTrack (track, segTimeRange, mute);
+     }

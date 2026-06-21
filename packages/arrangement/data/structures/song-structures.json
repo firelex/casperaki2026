@@ -1,0 +1,254 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Per-style song-structure precedent pools. `default` is sampled by every canonical brain genre except `schlager`; `schlager` is sampled when genre === 'schlager'. Each precedent lists segments in performance order with their bar length; legacy camelCase segment naming preserved verbatim. The generator may prepend an `intro` (4 bars) and append an `outro` (4|8 bars) per the legacy `SongStructureClass` rules — see src/structure/index.ts.",
+  "LEGACY_PROVENANCE": {
+    "source": [
+      "casperaki2-engine-js/api/v1.0/services/classes/songStructures/songStructures.json (default pool, 5 precedents)",
+      "casperaki2-engine-js/api/v1.0/services/classes/songStructures/schlagerSongStructures.json (schlager pool, 8 precedents)",
+      "casperaki2-engine-js/api/v1.0/services/classes/songStructures/SongStructureClass.js (selection logic)"
+    ],
+    "extractedAt": "2026-06-06",
+    "transform": "Verbatim port. Segment names kept lowercase camelCase (intro, verse1, preChorus1, chorus1, break1, bridge1, outro). lengthInBars kept as integers."
+  },
+  "default": [
+    {
+      "precedent": "Seniorita",
+      "segments": {
+        "chorus1": 8,
+        "verse1": 8,
+        "verse2": 8,
+        "chorus2": 8,
+        "chorus3": 8,
+        "bridge1": 8,
+        "chorus4": 8
+      }
+    },
+    {
+      "precedent": "Who we are",
+      "segments": {
+        "verse1": 8,
+        "verse2": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "verse3": 8,
+        "verse4": 8,
+        "preChorus2": 8,
+        "chorus2": 8,
+        "bridge1": 8,
+        "chorus3": 8
+      }
+    },
+    {
+      "precedent": "Hot n cold",
+      "segments": {
+        "verse1": 8,
+        "verse2": 8,
+        "chorus1": 8,
+        "chorus2": 8,
+        "break1": 4,
+        "verse3": 8,
+        "verse4": 8,
+        "chorus3": 8,
+        "chorus4": 8,
+        "break2": 8,
+        "bridge1": 8,
+        "break3": 2,
+        "chorus5": 8,
+        "chorus6": 8
+      }
+    },
+    {
+      "precedent": "Photograph",
+      "segments": {
+        "intro": 8,
+        "verse1": 8,
+        "verse2": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "verse3": 8,
+        "verse4": 8,
+        "preChorus2": 8,
+        "chorus2": 8,
+        "chorus3": 8,
+        "break1": 2,
+        "chorus4": 8,
+        "chorus5": 8,
+        "outro": 8
+      }
+    },
+    {
+      "precedent": "Easy on me",
+      "segments": {
+        "intro": 4,
+        "verse1": 8,
+        "chorus1": 8,
+        "break1": 2,
+        "verse2": 8,
+        "chorus2": 8,
+        "bridge1": 4,
+        "chorus3": 8,
+        "outro": 2
+      }
+    }
+  ],
+  "schlager": [
+    {
+      "precedent": "Atemlos",
+      "segments": {
+        "intro": 4,
+        "verse1": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "chorus2": 8,
+        "bridge1": 8,
+        "break1": 2,
+        "verse2": 8,
+        "preChorus2": 8,
+        "chorus3": 8,
+        "chorus4": 8,
+        "bridge2": 8,
+        "chorus5": 8,
+        "bridge3": 8
+      }
+    },
+    {
+      "precedent": "Amoi seg ma uns wieder",
+      "segments": {
+        "intro": 8,
+        "verse1": 8,
+        "verse2": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "chorus2": 8,
+        "break1": 4,
+        "verse3": 8,
+        "verse4": 8,
+        "preChorus2": 8,
+        "chorus3": 8,
+        "chorus4": 8,
+        "bridge1": 8,
+        "chorus5": 8,
+        "chorus6": 8,
+        "chorus7": 8
+      }
+    },
+    {
+      "precedent": "Geboren, um dich zu lieben",
+      "segments": {
+        "intro": 8,
+        "verse1": 8,
+        "verse2": 8,
+        "preChorus1": 4,
+        "chorus1": 8,
+        "chorus2": 8,
+        "verse3": 8,
+        "verse4": 8,
+        "preChorus2": 4,
+        "chorus3": 8,
+        "chorus4": 8,
+        "bridge1": 8,
+        "chorus5": 8,
+        "chorus6": 8,
+        "outro": 8
+      }
+    },
+    {
+      "precedent": "Ich will immer wieder",
+      "segments": {
+        "intro": 8,
+        "verse1": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "chorus2": 8,
+        "break1": 4,
+        "verse2": 8,
+        "preChorus2": 8,
+        "chorus3": 8,
+        "chorus4": 8,
+        "break2": 8,
+        "chorus5": 8,
+        "chorus6": 8,
+        "outro": 4
+      }
+    },
+    {
+      "precedent": "Marathon",
+      "segments": {
+        "intro": 8,
+        "verse1": 8,
+        "verse2": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "chorus2": 8,
+        "break1": 2,
+        "verse3": 8,
+        "verse4": 8,
+        "preChorus2": 8,
+        "chorus3": 8,
+        "chorus4": 8,
+        "break2": 8,
+        "chorus5": 8,
+        "chorus6": 8
+      }
+    },
+    {
+      "precedent": "Mit keinem andern",
+      "segments": {
+        "bridge1": 8,
+        "intro": 4,
+        "verse1": 8,
+        "preChorus1": 8,
+        "chorus1": 16,
+        "break1": 8,
+        "verse2": 8,
+        "preChorus2": 8,
+        "chorus2": 16,
+        "bridge2": 8,
+        "chorus3": 16,
+        "outro": 4
+      }
+    },
+    {
+      "precedent": "Und morgen frueh kuess ich wach",
+      "segments": {
+        "intro": 4,
+        "verse1": 8,
+        "preChorus1": 8,
+        "chorus1": 8,
+        "chorus2": 8,
+        "break1": 2,
+        "verse2": 8,
+        "preChorus2": 8,
+        "chorus3": 8,
+        "chorus4": 8,
+        "bridge1": 8,
+        "chorus5": 8,
+        "chorus6": 8,
+        "outro": 4
+      }
+    },
+    {
+      "precedent": "Warum hast du nicht nein gesagt",
+      "segments": {
+        "intro": 2,
+        "verse1": 8,
+        "verse2": 8,
+        "break1": 1,
+        "chorus1": 8,
+        "chorus2": 8,
+        "break2": 1,
+        "verse3": 8,
+        "bridge1": 8,
+        "break3": 1,
+        "chorus3": 8,
+        "chorus4": 8,
+        "break4": 1,
+        "bridge2": 8,
+        "break5": 1,
+        "chorus5": 8,
+        "chorus6": 8,
+        "chorus7": 8
+      }
+    }
+  ]
+}

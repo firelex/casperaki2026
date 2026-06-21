@@ -1,0 +1,884 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Imported legacy chord-progression bank. Each entry is one 4-bar block of roman numerals in a key-agnostic representation; resolveBankEntry(entry, key) lowers it to ChordSymbol[][] against any target key. Roles mirror legacy filter semantics: `verse` applies to every entry; `preChorus`/`chorus` are present only for entries the legacy code filtered by `isLeadUpToChorus`/`isChorus`.",
+  "LEGACY_PROVENANCE": {
+    "source": "casperaki2-engine-js/api/v1.0/services/classes/chords/chords.json",
+    "extractedAt": "2026-06-06",
+    "sourceEntryCount": 79,
+    "importedEntryCount": 79,
+    "transform": "Each legacy chord symbol parsed via the same regex `^([A-G][#b]?)(m(?!aj))?(.*)$` the legacy tools.js uses, then mapped against its precedent\u0027s home key to a Step-1 roman-numeral vocabulary entry. No symbols dropped; failure during conversion is a hard error.",
+    "ignoredFields": ["concrete chord-symbol strings — the roman-numeral representation is key-agnostic and any target key resolves via Step-1\u0027s degreePitchClass + accidental shift"],
+    "importer": "packages/arrangement/scripts/import-chord-bank.mjs"
+  },
+  "entries": [
+    {
+      "precedent": "Angeleyes",
+      "sourceKey": "B",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["vi", "vi", "vi", "vi"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Angeleyes",
+      "sourceKey": "B",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["V", "V", "V", "V"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Angeleyes",
+      "sourceKey": "B",
+      "roles": ["verse"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Angeleyes",
+      "sourceKey": "B",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["V", "V", "V7", "V7"],
+        ["V", "V", "I", "I"],
+        ["V", "V", "V7", "V7"],
+        ["I", "I", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Angeleyes",
+      "sourceKey": "B",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Anywhere",
+      "sourceKey": "D",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["ii", "ii", "ii", "ii"],
+        ["V", "V", "V", "V"],
+        ["I", "I", "I", "I"],
+        ["vi", "vi", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Anywhere",
+      "sourceKey": "D",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["ii", "ii", "ii", "ii"],
+        ["V", "V", "V", "V"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "Baby one more time",
+      "sourceKey": "Eb",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["III7", "III7", "III7", "III7"],
+        ["I", "I", "I", "I"],
+        ["ii", "ii", "III", "vi"]
+      ]
+    },
+    {
+      "precedent": "Birthday",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["ii7", "ii7", "I", "I"],
+        ["IVmaj9", "IVmaj9", "IVmaj9", "IVmaj9"],
+        ["IVmaj9", "IVmaj9", "IVmaj9", "IVmaj9"],
+        ["ii7", "ii7", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Birthday",
+      "sourceKey": "C",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["IVmaj9", "IVmaj9", "IVmaj9", "IVmaj9"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["IVmaj9", "IVmaj9", "IVmaj9", "IVmaj9"],
+        ["ii7", "ii7", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Birthday",
+      "sourceKey": "C",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["IV", "IV", "IV", "IV"],
+        ["ii", "ii", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "California gurls",
+      "sourceKey": "F",
+      "roles": ["verse"],
+      "bars": [
+        ["V", "V", "V", "V"],
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "IV", "IV"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "California gurls",
+      "sourceKey": "F",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["V", "V", "V", "V"],
+        ["vi", "vi", "vi", "vi"],
+        ["vi", "vi", "vi", "vi"],
+        ["vi", "vi", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "California gurls",
+      "sourceKey": "F",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "IV", "IV"],
+        ["IV", "V", "vi", "vi"],
+        ["I", "I", "IV", "IV"],
+        ["IV", "V", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Chiquitita",
+      "sourceKey": "A",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["I", "I", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Chiquitita",
+      "sourceKey": "A",
+      "roles": ["verse"],
+      "bars": [
+        ["V", "V", "V", "V"],
+        ["V", "V", "IV", "IV"],
+        ["V", "V", "V11", "V11"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Chiquitita",
+      "sourceKey": "A",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "IV", "IV"],
+        ["IV", "IV", "IV", "IV"],
+        ["iii9", "iii9", "iii9", "iii9"]
+      ]
+    },
+    {
+      "precedent": "Chiquitita",
+      "sourceKey": "A",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["V", "V", "IV", "IV"],
+        ["V", "V", "V11", "V11"],
+        ["I", "I", "I", "IV"]
+      ]
+    },
+    {
+      "precedent": "Chiquitita",
+      "sourceKey": "A",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["iii9", "iii9", "iii9", "iii9"],
+        ["V", "V", "IV", "IV"],
+        ["V", "V", "V11", "V11"],
+        ["I", "I", "I", "IV"]
+      ]
+    },
+    {
+      "precedent": "Chiquitita",
+      "sourceKey": "A",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Dancing queen",
+      "sourceKey": "A",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "IV"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["vi", "vi", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Dancing queen",
+      "sourceKey": "A",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "Dark horse",
+      "sourceKey": "Gb",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["iii", "iii", "iii", "iii"],
+        ["iii", "iii", "iii", "iii"],
+        ["iii", "iii", "iii", "iii"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "Dark horse",
+      "sourceKey": "Gb",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["iii", "iii", "iii", "iii"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "Does your mother know?",
+      "sourceKey": "Gb",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["VI", "VI", "VIsus", "VIsus"],
+        ["VI", "VI", "VIsus", "VIsus"],
+        ["VI", "VI", "VI", "VI"],
+        ["III", "III", "III", "III"]
+      ]
+    },
+    {
+      "precedent": "Firework",
+      "sourceKey": "Ab",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["bVII", "bVII", "bVII", "bVII"],
+        ["vi", "vi", "vi", "vi"],
+        ["IV9", "IV9", "IV9", "IV9"]
+      ]
+    },
+    {
+      "precedent": "Firework",
+      "sourceKey": "Ab",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["vi7", "vi7", "vi7", "vi7"],
+        ["IV9", "IV9", "IV9", "IV9"]
+      ]
+    },
+    {
+      "precedent": "Firework",
+      "sourceKey": "Ab",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["vi7", "vi7", "vi7", "vi7"],
+        ["IV9", "IV9", "IV9", "IV9"]
+      ]
+    },
+    {
+      "precedent": "Hot n cold",
+      "sourceKey": "G",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Hot n cold",
+      "sourceKey": "G",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["ii", "ii", "ii", "ii"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "I kissed a girl",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["iii", "iii", "iii", "iii"],
+        ["vi", "vi", "vi", "vi"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "I kissed a girl",
+      "sourceKey": "C",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["iii", "iii", "I", "I"],
+        ["ii", "ii", "ii", "ii"],
+        ["IV", "IV", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "I kissed a girl",
+      "sourceKey": "C",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["iii", "iii", "I", "I"],
+        ["ii", "ii", "ii", "ii"],
+        ["IV", "IV", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "I wanna go",
+      "sourceKey": "F",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "I wanna go",
+      "sourceKey": "F",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "It ain't me",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "It ain't me",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "It ain't me",
+      "sourceKey": "C",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "It ain't me",
+      "sourceKey": "C",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["V", "V", "V", "V"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Last Friday night",
+      "sourceKey": "G",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["vi7", "vi7", "vi7", "vi7"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Lay all your love on me",
+      "sourceKey": "F",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["vi", "vi", "III", "III"],
+        ["vi", "III", "vi", "III7"],
+        ["IV", "IV", "IV", "IV"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "Lay all your love on me",
+      "sourceKey": "F",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["vi", "vi", "V", "I"],
+        ["IV6", "IV6", "V", "V"],
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Mamma mia",
+      "sourceKey": "D",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["V", "V", "V", "V"],
+        ["V", "V", "IV", "I"],
+        ["V", "V", "V", "V"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Mamma mia",
+      "sourceKey": "D",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"],
+        ["IV", "bVII", "IV", "IV"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "Oops!... I did it again",
+      "sourceKey": "E",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "IV", "IV"],
+        ["IIIsus", "IIIsus", "III", "III"]
+      ]
+    },
+    {
+      "precedent": "Oops!... I did it again",
+      "sourceKey": "E",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "III", "III"],
+        ["vi", "vi", "V", "V"],
+        ["I", "I", "I", "I"],
+        ["III", "III", "III", "III"]
+      ]
+    },
+    {
+      "precedent": "Oops!... I did it again",
+      "sourceKey": "E",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["ii7", "ii7", "ii7", "ii7"],
+        ["III", "III", "III", "III"],
+        ["IV", "IV", "IV", "V5"],
+        ["V5", "V5", "V5", "V5"]
+      ]
+    },
+    {
+      "precedent": "Oops!... I did it again",
+      "sourceKey": "E",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["vi", "vi", "III", "III"],
+        ["vi", "vi", "V", "V"],
+        ["I", "I", "V", "V"],
+        ["I", "I", "V", "III"]
+      ]
+    },
+    {
+      "precedent": "Overprotected",
+      "sourceKey": "Eb",
+      "roles": ["verse"],
+      "bars": [
+        ["ii", "ii", "III", "III"],
+        ["vi", "vi", "vi", "vi"],
+        ["ii", "ii", "III", "III"],
+        ["vi", "vi", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Overprotected",
+      "sourceKey": "Eb",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["ii", "ii", "V", "V"],
+        ["vi", "vi", "vi", "vi"],
+        ["ii", "ii", "V", "V"],
+        ["III", "III", "III", "III"]
+      ]
+    },
+    {
+      "precedent": "Overprotected",
+      "sourceKey": "Eb",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["ii", "ii", "III", "III"],
+        ["vi", "vi", "vi", "vi"],
+        ["ii", "ii", "III", "III"],
+        ["vi", "vi", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Part of me",
+      "sourceKey": "F",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["IV", "IV", "IV", "V"]
+      ]
+    },
+    {
+      "precedent": "Part of me",
+      "sourceKey": "F",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["IV", "IV", "V", "IV"]
+      ]
+    },
+    {
+      "precedent": "Part of me",
+      "sourceKey": "F",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["IV", "IV", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Quit playing games",
+      "sourceKey": "A",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["ii", "ii", "ii", "ii"],
+        ["bVII9", "bVII9", "bVII9", "bVII9"],
+        ["bVII9", "bVII9", "bVII9", "bVII9"]
+      ]
+    },
+    {
+      "precedent": "Quit playing games",
+      "sourceKey": "A",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["ii", "ii", "ii", "ii"],
+        ["bVII9", "bVII9", "bVII9", "bVII9"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Roar",
+      "sourceKey": "Bb",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["vi", "vi", "I9", "I9"],
+        ["vi", "vi", "vi", "vi"],
+        ["vi", "vi", "I9", "I9"]
+      ]
+    },
+    {
+      "precedent": "Roar",
+      "sourceKey": "Bb",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "I9", "I9"],
+        ["vi", "vi", "vi", "vi"],
+        ["vi", "vi", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "S.O.S.",
+      "sourceKey": "Bb",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["V", "V", "II", "II"],
+        ["vi", "vi", "I", "I"],
+        ["V", "V", "I", "I"],
+        ["V", "V", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Show me the meaning of being lonely",
+      "sourceKey": "A",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["IVmaj7", "IVmaj7", "V", "V"],
+        ["V", "V", "IV", "IV"],
+        ["IIIsus", "IIIsus", "III7", "III7"]
+      ]
+    },
+    {
+      "precedent": "Show me the meaning of being lonely",
+      "sourceKey": "A",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "V", "V"],
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Shower",
+      "sourceKey": "D",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["V", "V", "V", "V"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Stronger",
+      "sourceKey": "B",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "IV", "IV"],
+        ["ii", "ii", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["III7", "III7", "III7", "III7"]
+      ]
+    },
+    {
+      "precedent": "Stronger",
+      "sourceKey": "B",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["V", "V", "vi", "vi"],
+        ["IV", "IV", "IV", "IV"],
+        ["V", "V", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Super trouper",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["iii", "iii", "iii", "iii"],
+        ["ii", "ii", "ii", "ii"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Super trouper",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["iii", "iii", "iii", "iii"],
+        ["ii", "ii", "ii", "ii"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Super trouper",
+      "sourceKey": "C",
+      "roles": ["verse"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Super trouper",
+      "sourceKey": "C",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["Vsus", "Vsus", "Vsus", "Vsus"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Super trouper",
+      "sourceKey": "C",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "Isus", "Isus"],
+        ["I", "I", "I", "I"],
+        ["Isus", "Isus", "I", "I"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Take a chance on me",
+      "sourceKey": "B",
+      "roles": ["verse"],
+      "bars": [
+        ["ii", "ii", "ii", "ii"],
+        ["ii", "ii", "ii", "ii"],
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Take a chance on me",
+      "sourceKey": "B",
+      "roles": ["verse"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "IV", "IV"],
+        ["vi", "vi", "IV", "V"],
+        ["vi", "vi", "vi", "vi"]
+      ]
+    },
+    {
+      "precedent": "Take a chance on me",
+      "sourceKey": "B",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["ii", "ii", "ii", "ii"],
+        ["V", "V", "V", "V"],
+        ["ii", "ii", "ii", "ii"],
+        ["V", "V", "V", "V"]
+      ]
+    },
+    {
+      "precedent": "Take a chance on me",
+      "sourceKey": "B",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"]
+      ]
+    },
+    {
+      "precedent": "Teenage dream",
+      "sourceKey": "B",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["IIImaj7", "IIImaj7", "IIImaj7", "IIImaj7"],
+        ["bvi", "#IVsus", "#IVsus", "#IVsus"],
+        ["IIImaj7", "IIImaj7", "IIImaj7", "IIImaj7"],
+        ["bvi", "#IVsus", "#IVsus", "#IVsus"]
+      ]
+    },
+    {
+      "precedent": "The one that got away",
+      "sourceKey": "E",
+      "roles": ["verse"],
+      "bars": [
+        ["I", "I", "I", "I"],
+        ["I", "I", "I", "I"],
+        ["iii", "iii", "iii", "iii"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "The one that got away",
+      "sourceKey": "E",
+      "roles": ["verse", "preChorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["vi", "vi", "vi", "vi"],
+        ["IV", "IV", "IV", "IV"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "The one that got away",
+      "sourceKey": "E",
+      "roles": ["verse", "chorus"],
+      "bars": [
+        ["IV", "IV", "IV", "IV"],
+        ["I", "I", "I", "I"],
+        ["iii", "iii", "iii", "iii"],
+        ["iii", "iii", "iii", "iii"]
+      ]
+    },
+    {
+      "precedent": "Timber",
+      "sourceKey": "C",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["IV", "IV", "IV", "IV"]
+      ]
+    },
+    {
+      "precedent": "Tonight",
+      "sourceKey": "Eb",
+      "roles": ["verse", "preChorus", "chorus"],
+      "bars": [
+        ["vi", "vi", "vi", "vi"],
+        ["I", "I", "I", "I"],
+        ["V", "V", "V", "V"],
+        ["ii", "ii", "ii", "ii"]
+      ]
+    }
+  ]
+}

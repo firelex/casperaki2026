@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="waxUzR" name="InstrumentalGenerator" projectType="consoleapp"
+              useAppConfig="0" addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1"
+              defines="_USE_MATH_DEFINES=1&#10;" cppLanguageStandard="17">
+  <MAINGROUP id="kV7Ww1" name="InstrumentalGenerator">
+    <GROUP id="{47E436C1-C72D-C3B0-66C1-15A2450D27AD}" name="assets">
+      <FILE id="VVgmqH" name="referenceAtemlos.wav" compile="0" resource="1"
+            file="../assets/referenceAtemlos.wav"/>
+    </GROUP>
+    <GROUP id="{B860E601-1228-E25A-4E6B-F62005161813}" name="dependencies">
+      <GROUP id="{42C17903-D791-7B8F-2E4D-630C7114D6E3}" name="CasperakiEffects">
+        <FILE id="oLfAlZ" name="Casperaki_Effect.h" compile="0" resource="0"
+              file="../dependencies/CasperakiEffects/Casperaki_Effect.h"/>
+        <FILE id="SElUO1" name="Casperaki_NC17.h" compile="0" resource="0"
+              file="../dependencies/CasperakiEffects/Casperaki_NC17.h"/>
+      </GROUP>
+      <GROUP id="{C0175E3B-F326-DEEC-7E2E-B1E96A78C091}" name="choc">
+        <GROUP id="{6C8728BA-69EA-AD00-8814-60ABD6272DCD}" name="audio">
+          <FILE id="fDEilu" name="choc_AudioFileFormat.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_AudioFileFormat.h"/>
+          <FILE id="kZT74o" name="choc_AudioFileFormat_FLAC.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_AudioFileFormat_FLAC.h"/>
+          <FILE id="KTXwYI" name="choc_AudioFileFormat_MP3.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_AudioFileFormat_MP3.h"/>
+          <FILE id="c1IFE0" name="choc_AudioFileFormat_Ogg.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_AudioFileFormat_Ogg.h"/>
+          <FILE id="xmfc34" name="choc_AudioFileFormat_WAV.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_AudioFileFormat_WAV.h"/>
+          <FILE id="nve2fI" name="choc_AudioMIDIBlockDispatcher.h" compile="0"
+                resource="0" file="../dependencies/choc/audio/choc_AudioMIDIBlockDispatcher.h"/>
+          <FILE id="eeVrRx" name="choc_AudioSampleData.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_AudioSampleData.h"/>
+          <FILE id="ttzXw1" name="choc_MIDI.h" compile="0" resource="0" file="../dependencies/choc/audio/choc_MIDI.h"/>
+          <FILE id="lF1Gwz" name="choc_MIDIFile.h" compile="0" resource="0" file="../dependencies/choc/audio/choc_MIDIFile.h"/>
+          <FILE id="WGvLeJ" name="choc_MIDISequence.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_MIDISequence.h"/>
+          <FILE id="G6tQdn" name="choc_Oscillators.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_Oscillators.h"/>
+          <FILE id="ox4CCd" name="choc_SampleBuffers.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_SampleBuffers.h"/>
+          <FILE id="GEf0Ff" name="choc_SampleBufferUtilities.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_SampleBufferUtilities.h"/>
+          <FILE id="nBX3oS" name="choc_SincInterpolator.h" compile="0" resource="0"
+                file="../dependencies/choc/audio/choc_SincInterpolator.h"/>
+        </GROUP>
+        <GROUP id="{CE85E8F8-D07A-0A6F-AB59-0C4EAF47BEC1}" name="containers">
+          <FILE id="WUi7fA" name="choc_COM.h" compile="0" resource="0" file="../dependencies/choc/containers/choc_COM.h"/>
+          <FILE id="Df7iXU" name="choc_DirtyList.h" compile="0" resource="0"
+                file="../dependencies/choc/containers/choc_DirtyList.h"/>
+          <FILE id="F9SUHI" name="choc_FIFOReadWritePosition.h" compile="0" resource="0"
+                file="../dependencies/choc/containers/choc_FIFOReadWritePosition.h"/>
+          <FILE id="DbVO9w" name="choc_MultipleReaderMultipleWriterFIFO.h" compile="0"
+                resource="0" file="../dependencies/choc/containers/choc_MultipleReaderMultipleWriterFIFO.h"/>
+          <FILE id="XRXS16" name="choc_NonAllocatingStableSort.h" compile="0"
+                resource="0" file="../dependencies/choc/containers/choc_NonAllocatingStableSort.h"/>
+          <FILE id="IH3via" name="choc_SingleReaderMultipleWriterFIFO.h" compile="0"
+                resource="0" file="../dependencies/choc/containers/choc_SingleReaderMultipleWriterFIFO.h"/>
+          <FILE id="BHRVHf" name="choc_SingleReaderSingleWriterFIFO.h" compile="0"
+                resource="0" file="../dependencies/choc/containers/choc_SingleReaderSingleWriterFIFO.h"/>
+          <FILE id="kLGGnL" name="choc_SmallVector.h" compile="0" resource="0"
+                file="../dependencies/choc/containers/choc_SmallVector.h"/>
+          <FILE id="KnmeP4" name="choc_Span.h" compile="0" resource="0" file="../dependencies/choc/containers/choc_Span.h"/>
+          <FILE id="wtQ31G" name="choc_Value.h" compile="0" resource="0" file="../dependencies/choc/containers/choc_Value.h"/>
+          <FILE id="awQG2Y" name="choc_VariableSizeFIFO.h" compile="0" resource="0"
+                file="../dependencies/choc/containers/choc_VariableSizeFIFO.h"/>
+        </GROUP>
+        <GROUP id="{96426EEA-E720-5067-1EFF-FB8319F24BD2}" name="gui">
+          <FILE id="zoz4Uw" name="choc_DesktopWindow.h" compile="0" resource="0"
+                file="../dependencies/choc/gui/choc_DesktopWindow.h"/>
+          <FILE id="NQ9bLN" name="choc_MessageLoop.h" compile="0" resource="0"
+                file="../dependencies/choc/gui/choc_MessageLoop.h"/>
+          <FILE id="xYvsuE" name="choc_WebView.h" compile="0" resource="0" file="../dependencies/choc/gui/choc_WebView.h"/>
+        </GROUP>
+        <GROUP id="{9EF82277-6BC1-B714-A6D7-444D1FF5209E}" name="javascript">
+          <FILE id="epb7a4" name="choc_javascript.h" compile="0" resource="0"
+                file="../dependencies/choc/javascript/choc_javascript.h"/>
+          <FILE id="rRp2B3" name="choc_javascript_Duktape.h" compile="0" resource="0"
+                file="../dependencies/choc/javascript/choc_javascript_Duktape.h"/>
+          <FILE id="qTKeKu" name="choc_javascript_QuickJS.h" compile="0" resource="0"
+                file="../dependencies/choc/javascript/choc_javascript_QuickJS.h"/>
+        </GROUP>
+        <GROUP id="{78BC5569-7BBB-5A7D-8A60-2BD09BB47379}" name="math">
+          <FILE id="PV28pi" name="choc_MathHelpers.h" compile="0" resource="0"
+                file="../dependencies/choc/math/choc_MathHelpers.h"/>
+        </GROUP>
+        <GROUP id="{6A126263-436B-2E03-8724-4E6FAF8575D3}" name="memory">
+          <FILE id="XRkTCu" name="choc_AlignedMemoryBlock.h" compile="0" resource="0"
+                file="../dependencies/choc/memory/choc_AlignedMemoryBlock.h"/>
+          <FILE id="vbfuVD" name="choc_Base64.h" compile="0" resource="0" file="../dependencies/choc/memory/choc_Base64.h"/>
+          <FILE id="ehYLpS" name="choc_Endianness.h" compile="0" resource="0"
+                file="../dependencies/choc/memory/choc_Endianness.h"/>
+          <FILE id="SBX0fF" name="choc_ObjectPointer.h" compile="0" resource="0"
+                file="../dependencies/choc/memory/choc_ObjectPointer.h"/>
+          <FILE id="zWpSbX" name="choc_ObjectReference.h" compile="0" resource="0"
+                file="../dependencies/choc/memory/choc_ObjectReference.h"/>
+          <FILE id="fXkgX3" name="choc_PoolAllocator.h" compile="0" resource="0"
+                file="../dependencies/choc/memory/choc_PoolAllocator.h"/>
+          <FILE id="SgiE7k" name="choc_VariableLengthEncoding.h" compile="0"
+                resource="0" file="../dependencies/choc/memory/choc_VariableLengthEncoding.h"/>
+          <FILE id="w8Lx9B" name="choc_xxHash.h" compile="0" resource="0" file="../dependencies/choc/memory/choc_xxHash.h"/>
+        </GROUP>
+        <GROUP id="{56854FCF-8BBA-7183-F21B-6AC4837FBCA2}" name="platform">
+          <FILE id="pr1rLP" name="choc_Assert.h" compile="0" resource="0" file="../dependencies/choc/platform/choc_Assert.h"/>
+          <FILE id="b0d4UQ" name="choc_DetectDebugger.h" compile="0" resource="0"
+                file="../dependencies/choc/platform/choc_DetectDebugger.h"/>
+          <FILE id="sJPzzu" name="choc_DisableAllWarnings.h" compile="0" resource="0"
+                file="../dependencies/choc/platform/choc_DisableAllWarnings.h"/>
+          <FILE id="CKfAoz" name="choc_DynamicLibrary.h" compile="0" resource="0"
+                file="../dependencies/choc/platform/choc_DynamicLibrary.h"/>
+          <FILE id="kcyMhK" name="choc_FileWatcher.h" compile="0" resource="0"
+                file="../dependencies/choc/platform/choc_FileWatcher.h"/>
+          <FILE id="f5R6bV" name="choc_MemoryDLL.h" compile="0" resource="0"
+                file="../dependencies/choc/platform/choc_MemoryDLL.h"/>
+          <FILE id="goszfT" name="choc_Platform.h" compile="0" resource="0" file="../dependencies/choc/platform/choc_Platform.h"/>
+          <FILE id="fhxnBf" name="choc_ReenableAllWarnings.h" compile="0" resource="0"
+                file="../dependencies/choc/platform/choc_ReenableAllWarnings.h"/>
+        </GROUP>
+        <GROUP id="{6274D1EB-59CE-895C-B2E5-9F5AB3BF7424}" name="tests">
+          <FILE id="qv1vdd" name="choc_tests.h" compile="0" resource="0" file="../dependencies/choc/tests/choc_tests.h"/>
+          <FILE id="EhFrjK" name="choc_UnitTest.h" compile="0" resource="0" file="../dependencies/choc/tests/choc_UnitTest.h"/>
+          <FILE id="Nce9Lk" name="CMakeLists.txt" compile="0" resource="1" file="../dependencies/choc/tests/CMakeLists.txt"/>
+          <FILE id="BSTqxr" name="main.cpp" compile="0" resource="0" file="../dependencies/choc/tests/main.cpp"/>
+          <FILE id="hInANo" name="main2.cpp" compile="0" resource="0" file="../dependencies/choc/tests/main2.cpp"/>
+        </GROUP>
+        <GROUP id="{A86F3413-2602-DB66-ADAD-EE0C3FE6F6E8}" name="text">
+          <FILE id="qD41Pr" name="choc_CodePrinter.h" compile="0" resource="0"
+                file="../dependencies/choc/text/choc_CodePrinter.h"/>
+          <FILE id="R5wQuJ" name="choc_Files.h" compile="0" resource="0" file="../dependencies/choc/text/choc_Files.h"/>
+          <FILE id="dvV7Sc" name="choc_FloatToString.h" compile="0" resource="0"
+                file="../dependencies/choc/text/choc_FloatToString.h"/>
+          <FILE id="gvQon1" name="choc_HTML.h" compile="0" resource="0" file="../dependencies/choc/text/choc_HTML.h"/>
+          <FILE id="ubuS1l" name="choc_JSON.h" compile="0" resource="0" file="../dependencies/choc/text/choc_JSON.h"/>
+          <FILE id="fFI5XT" name="choc_OpenSourceLicenseList.h" compile="0" resource="0"
+                file="../dependencies/choc/text/choc_OpenSourceLicenseList.h"/>
+          <FILE id="q3WQfC" name="choc_StringUtilities.h" compile="0" resource="0"
+                file="../dependencies/choc/text/choc_StringUtilities.h"/>
+          <FILE id="W2PYYE" name="choc_TextTable.h" compile="0" resource="0"
+                file="../dependencies/choc/text/choc_TextTable.h"/>
+          <FILE id="GkmeyO" name="choc_UTF8.h" compile="0" resource="0" file="../dependencies/choc/text/choc_UTF8.h"/>
+          <FILE id="pom6ai" name="choc_Wildcard.h" compile="0" resource="0" file="../dependencies/choc/text/choc_Wildcard.h"/>
+        </GROUP>
+        <GROUP id="{05166C4E-7BA1-7655-F096-330BF9201B43}" name="threading">
+          <FILE id="UDKfvW" name="choc_SpinLock.h" compile="0" resource="0" file="../dependencies/choc/threading/choc_SpinLock.h"/>
+          <FILE id="zVQhlQ" name="choc_TaskThread.h" compile="0" resource="0"
+                file="../dependencies/choc/threading/choc_TaskThread.h"/>
+          <FILE id="WXogYM" name="choc_ThreadSafeFunctor.h" compile="0" resource="0"
+                file="../dependencies/choc/threading/choc_ThreadSafeFunctor.h"/>
+        </GROUP>
+        <FILE id="z8XVcm" name="CONTRIBUTING.md" compile="0" resource="1" file="../dependencies/choc/CONTRIBUTING.md"/>
+        <FILE id="J0gIZd" name="LICENSE.md" compile="0" resource="1" file="../dependencies/choc/LICENSE.md"/>
+        <FILE id="M0Al1w" name="README.md" compile="0" resource="1" file="../dependencies/choc/README.md"/>
+        <FILE id="oCrVUM" name="tidy_whitespace.py" compile="0" resource="1"
+              file="../dependencies/choc/tidy_whitespace.py"/>
+      </GROUP>
+      <GROUP id="{96A710B8-D72F-15AC-008C-DEFA3A4A7BD7}" name="matchering">
+        <GROUP id="{2C93644F-E078-50C2-9D52-43193E7DF139}" name="Source">
+          <FILE id="pmd0Hd" name="atemlos.json" compile="0" resource="1" file="../dependencies/matchering/Source/atemlos.json"/>
+          <FILE id="SaRQNr" name="BrickwallLimiter.h" compile="0" resource="0"
+                file="../dependencies/matchering/Source/BrickwallLimiter.h"/>
+          <FILE id="Z7bSdk" name="Clipper.h" compile="0" resource="0" file="../dependencies/matchering/Source/Clipper.h"/>
+          <FILE id="OFdy1E" name="Helpers.h" compile="0" resource="0" file="../dependencies/matchering/Source/Helpers.h"/>
+          <FILE id="OIYVSN" name="Lowess.h" compile="0" resource="0" file="../dependencies/matchering/Source/Lowess.h"/>
+          <FILE id="P5MowB" name="Matchering.h" compile="0" resource="0" file="../dependencies/matchering/Source/Matchering.h"/>
+          <FILE id="o0fafU" name="SpectrumExtractor.h" compile="0" resource="0"
+                file="../dependencies/matchering/Source/SpectrumExtractor.h"/>
+          <FILE id="OP7wk4" name="StatsHelpers.h" compile="0" resource="0" file="../dependencies/matchering/Source/StatsHelpers.h"/>
+          <FILE id="PPfMxR" name="STFT.h" compile="0" resource="0" file="../dependencies/matchering/Source/STFT.h"/>
+        </GROUP>
+        <FILE id="j9ZSlO" name="Matchering_Casperaki.jucer" compile="0" resource="1"
+              file="../dependencies/matchering/Matchering_Casperaki.jucer"/>
+      </GROUP>
+    </GROUP>
+    <GROUP id="{8921A14B-E141-6C79-EB5D-AC3BB56AF678}" name="Source">
+      <GROUP id="{E7D45B59-839F-DF2E-5BB3-3E3F5A81EF53}" name="instruments">
+        <GROUP id="{7E92B568-1542-0DA0-96A7-8AE1763C250D}" name="mp3decode">
+          <GROUP id="{8F4BAEF9-39B7-2F35-35C4-4A89B177263B}" name="wave">
+            <FILE id="vIaOoO" name="namespace_lib.h" compile="0" resource="0" file="../Source/instruments/mp3decode/wave/namespace_lib.h"/>
+            <FILE id="drHQbg" name="wave.cpp" compile="1" resource="0" file="../Source/instruments/mp3decode/wave/wave.cpp"/>
+            <FILE id="OqnBsm" name="wave.h" compile="0" resource="0" file="../Source/instruments/mp3decode/wave/wave.h"/>
+          </GROUP>
+          <FILE id="x8htGq" name="minimp3.h" compile="0" resource="0" file="../Source/instruments/mp3decode/minimp3.h"/>
+          <FILE id="ZDhUhu" name="minimp3_ex.h" compile="0" resource="0" file="../Source/instruments/mp3decode/minimp3_ex.h"/>
+        </GROUP>
+        <FILE id="NUcQ1L" name="Bass.h" compile="0" resource="0" file="../Source/instruments/Bass.h"/>
+        <FILE id="nA2XdO" name="Drums.h" compile="0" resource="0" file="../Source/instruments/Drums.h"/>
+        <FILE id="xVNLB6" name="Guitar.h" compile="0" resource="0" file="../Source/instruments/Guitar.h"/>
+        <FILE id="F00jiw" name="Instrument.cpp" compile="1" resource="0" file="../Source/instruments/Instrument.cpp"/>
+        <FILE id="xciWhy" name="Instrument.h" compile="0" resource="0" file="../Source/instruments/Instrument.h"/>
+        <FILE id="JwdJvu" name="Loop.h" compile="0" resource="0" file="../Source/instruments/Loop.h"/>
+        <FILE id="nQWiX1" name="SamplesDownloadTask.cpp" compile="1" resource="0"
+              file="../Source/instruments/SamplesDownloadTask.cpp"/>
+        <FILE id="EnYVL2" name="SamplesDownloadTask.h" compile="0" resource="0"
+              file="../Source/instruments/SamplesDownloadTask.h"/>
+        <FILE id="dfatXP" name="SamplesDownloadTaskUtils.h" compile="0" resource="0"
+              file="../Source/instruments/SamplesDownloadTaskUtils.h"/>
+        <FILE id="m41NG6" name="SequencerUtils.h" compile="0" resource="0"
+              file="../Source/instruments/SequencerUtils.h"/>
+        <FILE id="latdR1" name="Synths.h" compile="0" resource="0" file="../Source/instruments/Synths.h"/>
+        <FILE id="tqs9CV" name="TonalInstrument.h" compile="0" resource="0"
+              file="../Source/instruments/TonalInstrument.h"/>
+        <FILE id="nVvbf9" name="TransitionNoise.h" compile="0" resource="0"
+              file="../Source/instruments/TransitionNoise.h"/>
+        <FILE id="tVyCJJ" name="TransitionPattern.h" compile="0" resource="0"
+              file="../Source/instruments/TransitionPattern.h"/>
+        <FILE id="sPtbld" name="TransitionSample.h" compile="0" resource="0"
+              file="../Source/instruments/TransitionSample.h"/>
+      </GROUP>
+      <GROUP id="{E7C41170-7388-0305-EDE0-A6B0F79F183F}" name="music">
+        <FILE id="a0Z2in" name="Chord.h" compile="0" resource="0" file="../Source/music/Chord.h"/>
+        <FILE id="c128pk" name="ChordData.h" compile="0" resource="0" file="../Source/music/ChordData.h"/>
+        <FILE id="ZEBim5" name="ChordData.json" compile="0" resource="1" file="../Source/music/ChordData.json"/>
+        <FILE id="HCNpAS" name="Note.h" compile="0" resource="0" file="../Source/music/Note.h"/>
+      </GROUP>
+      <GROUP id="{D4C963FF-22FD-F4AF-275F-94D86EA67B6B}" name="sequencer">
+        <FILE id="QzGS1G" name="Sequencer.cpp" compile="1" resource="0" file="../Source/sequencer/Sequencer.cpp"/>
+        <FILE id="PzIa8m" name="Sequencer.h" compile="0" resource="0" file="../Source/sequencer/Sequencer.h"/>
+      </GROUP>
+      <GROUP id="{D0F597DD-AA6E-806B-DF99-6108640E6212}" name="tests">
+        <GROUP id="{6A7BAAC2-2B25-E58F-D8D9-A54FD91DE648}" name="ChocDecoderTest">
+          <FILE id="V1aLDs" name="izotope.mp3" compile="0" resource="1" file="../Source/tests/ChocDecoderTest/izotope.mp3"/>
+          <FILE id="bFGdFJ" name="logic.mp3" compile="0" resource="1" file="../Source/tests/ChocDecoderTest/logic.mp3"/>
+          <FILE id="uqfyCB" name="oldone.mp3" compile="0" resource="1" file="../Source/tests/ChocDecoderTest/oldone.mp3"/>
+          <FILE id="Qy0n6e" name="wonkyclip-logic.mp3" compile="0" resource="1"
+                file="../Source/tests/ChocDecoderTest/wonkyclip-logic.mp3"/>
+          <FILE id="JM2UbB" name="wonkyclip-stefan.mp3" compile="0" resource="1"
+                file="../Source/tests/ChocDecoderTest/wonkyclip-stefan.mp3"/>
+          <FILE id="DIm79I" name="wonkyclip-workingmac.mp3" compile="0" resource="1"
+                file="../Source/tests/ChocDecoderTest/wonkyclip-workingmac.mp3"/>
+          <FILE id="rUcjfG" name="wonkyclip.mp3" compile="0" resource="1" file="../Source/tests/ChocDecoderTest/wonkyclip.mp3"/>
+        </GROUP>
+        <GROUP id="{C47BC335-2474-72DF-CE37-C6E1BBD45417}" name="e2etest">
+          <FILE id="Dpyo14" name="Stefan_ballad1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_ballad1.json"/>
+          <FILE id="egheY4" name="Stefan_brightPop1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_brightPop1.json"/>
+          <FILE id="HAjLlH" name="Stefan_edm1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_edm1.json"/>
+          <FILE id="bhyga7" name="Stefan_latin1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_latin1.json"/>
+          <FILE id="nEbswU" name="Stefan_organicVibes1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_organicVibes1.json"/>
+          <FILE id="cRPkOG" name="Stefan_rock1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_rock1.json"/>
+          <FILE id="wvk3Bj" name="Stefan_schlager1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_schlager1.json"/>
+          <FILE id="oDj5aO" name="Stefan_urban1.json" compile="0" resource="1"
+                file="../Source/tests/e2etest/Stefan_urban1.json"/>
+        </GROUP>
+        <GROUP id="{0E3E7269-D163-5B13-2057-B1246709A66F}" name="genreJsons">
+          <FILE id="FLjKh6" name="ballad.json" compile="0" resource="1" file="../Source/tests/genreJsons/ballad.json"/>
+          <FILE id="A6vGHR" name="brightPop.json" compile="0" resource="1" file="../Source/tests/genreJsons/brightPop.json"/>
+          <FILE id="ZFuZBg" name="edm.json" compile="0" resource="1" file="../Source/tests/genreJsons/edm.json"/>
+          <FILE id="qs0tIH" name="genreRock.json" compile="0" resource="1" file="../Source/tests/genreJsons/genreRock.json"/>
+        </GROUP>
+        <GROUP id="{8EA13612-BAFB-FEC8-D837-E5E3D317C95C}" name="InstrumentalPitchTesting">
+          <FILE id="CD9foU" name="pitchoff.json.json" compile="0" resource="1"
+                file="../Source/tests/InstrumentalPitchTesting/pitchoff.json.json"/>
+        </GROUP>
+        <GROUP id="{6A444268-24CF-677D-430E-8E6A77DC0238}" name="loadTest">
+          <FILE id="rqjfiN" name="206seconds1.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds1.json"/>
+          <FILE id="V51t1G" name="206seconds2.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds2.json"/>
+          <FILE id="cQrcx9" name="206seconds3.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds3.json"/>
+          <FILE id="T9azGG" name="206seconds4.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds4.json"/>
+          <FILE id="RLaN0S" name="206seconds5.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds5.json"/>
+          <FILE id="FbH66c" name="206seconds6.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds6.json"/>
+          <FILE id="tWvSOm" name="206seconds7.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds7.json"/>
+          <FILE id="Un777j" name="206seconds8.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds8.json"/>
+          <FILE id="wgQGN0" name="206seconds9.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds9.json"/>
+          <FILE id="gMYrhv" name="206seconds10.json" compile="0" resource="1"
+                file="../Source/tests/loadTest/206seconds10.json"/>
+        </GROUP>
+        <GROUP id="{E3749A6E-5C01-D598-6343-200D16A46F1D}" name="optimizations">
+          <FILE id="JUVVHE" name="235seconds.json" compile="0" resource="1" file="../Source/tests/optimizations/235seconds.json"/>
+        </GROUP>
+        <GROUP id="{716110C3-715B-D119-5AE2-CFE07F03FEB3}" name="qualityTests">
+          <FILE id="awfkqN" name="qualitytest1.json" compile="0" resource="1"
+                file="../Source/tests/qualityTests/qualitytest1.json"/>
+          <FILE id="XD0HFH" name="qualitytest2.json" compile="0" resource="1"
+                file="../Source/tests/qualityTests/qualitytest2.json"/>
+          <FILE id="DThlc9" name="qualitytest3.json" compile="0" resource="1"
+                file="../Source/tests/qualityTests/qualitytest3.json"/>
+        </GROUP>
+        <GROUP id="{04BC2E63-4122-069E-F58C-422FC6CDFCEE}" name="testjsons">
+          <FILE id="d1FFMr" name="strumjson.json" compile="0" resource="1" file="../Source/tests/testjsons/strumjson.json"/>
+          <FILE id="ih0F7j" name="weirdjson.json" compile="0" resource="1" file="../Source/tests/testjsons/weirdjson.json"/>
+          <FILE id="iw8OB3" name="wong4.json" compile="0" resource="1" file="../Source/tests/testjsons/wong4.json"/>
+        </GROUP>
+        <GROUP id="{E60B0136-4D9D-1F24-2DC5-FF0903612429}" name="vibeTests">
+          <FILE id="ZceCWx" name="ballad_vibe.json" compile="0" resource="1"
+                file="../Source/tests/vibeTests/ballad_vibe.json"/>
+          <FILE id="oAaj0q" name="brightPop_vibe.json" compile="0" resource="1"
+                file="../Source/tests/vibeTests/brightPop_vibe.json"/>
+          <FILE id="sON7ol" name="edm_vibe.json" compile="0" resource="1" file="../Source/tests/vibeTests/edm_vibe.json"/>
+          <FILE id="cAQYPd" name="latin_vibe.json" compile="0" resource="1" file="../Source/tests/vibeTests/latin_vibe.json"/>
+          <FILE id="Y8mQTB" name="organicVibe_vibe.json" compile="0" resource="1"
+                file="../Source/tests/vibeTests/organicVibe_vibe.json"/>
+          <FILE id="XmQAZo" name="rock_vibe.json" compile="0" resource="1" file="../Source/tests/vibeTests/rock_vibe.json"/>
+          <FILE id="Mxvd9e" name="schlager_vibe.json" compile="0" resource="1"
+                file="../Source/tests/vibeTests/schlager_vibe.json"/>
+          <FILE id="n0gDKa" name="urban_vibe.json" compile="0" resource="1" file="../Source/tests/vibeTests/urban_vibe.json"/>
+        </GROUP>
+        <FILE id="qhuZdR" name="InstrumentalGeneratorTests.h" compile="0" resource="0"
+              file="../Source/tests/InstrumentalGeneratorTests.h"/>
+      </GROUP>
+      <FILE id="c7BpFd" name="AudioTools.h" compile="0" resource="0" file="../Source/AudioTools.h"/>
+      <FILE id="GwlRE1" name="CasperakiApi.h" compile="0" resource="0" file="../Source/CasperakiApi.h"/>
+      <FILE id="hlpheq" name="CasperakiEngine.cpp" compile="1" resource="0"
+            file="../Source/CasperakiEngine.cpp"/>
+      <FILE id="UhFDmI" name="CasperakiEngine.h" compile="0" resource="0"
+            file="../Source/CasperakiEngine.h"/>
+      <FILE id="dcRF6g" name="CasperakiSamplerPlugin.cpp" compile="1" resource="0"
+            file="../Source/CasperakiSamplerPlugin.cpp"/>
+      <FILE id="oshYP5" name="CasperakiSamplerPlugin.h" compile="0" resource="0"
+            file="../Source/CasperakiSamplerPlugin.h"/>
+      <FILE id="Pv8AE1" name="ChocMP3AudioFormat.h" compile="0" resource="0"
+            file="../Source/ChocMP3AudioFormat.h"/>
+      <FILE id="JpxB5K" name="common.h" compile="0" resource="0" file="../Source/common.h"/>
+      <FILE id="Rm6HXX" name="config.h" compile="0" resource="0" file="../Source/config.h"/>
+      <FILE id="otvYQo" name="Exceptions.h" compile="0" resource="0" file="../Source/Exceptions.h"/>
+      <FILE id="hkEjxi" name="FX.h" compile="0" resource="0" file="../Source/FX.h"/>
+      <FILE id="yh8ITr" name="InstrumentalGenerator.h" compile="0" resource="0"
+            file="../Source/InstrumentalGenerator.h"/>
+      <FILE id="QKcRAU" name="json.hpp" compile="0" resource="0" file="../Source/json.hpp"/>
+      <FILE id="YWXIWH" name="Logging.h" compile="0" resource="0" file="../Source/Logging.h"/>
+      <FILE id="aP82xt" name="MetaDatabase.h" compile="0" resource="0" file="../Source/MetaDatabase.h"/>
+      <FILE id="QprkPk" name="PresetManager.h" compile="0" resource="0" file="../Source/PresetManager.h"/>
+      <FILE id="txmQdr" name="RestRequest.h" compile="0" resource="0" file="../Source/RestRequest.h"/>
+      <FILE id="OZRhWf" name="SamplesBulkDownloadTask.h" compile="0" resource="0"
+            file="../Source/SamplesBulkDownloadTask.h"/>
+    </GROUP>
+    <FILE id="MlHlIW" name="Main.cpp" compile="1" resource="0" file="Main.cpp"/>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" TRACKTION_ENABLE_REALTIME_TIMESTRETCHING="0"
+               TRACKTION_ENABLE_TIMESTRETCH_ELASTIQUE_IPP="0" TRACKTION_ENABLE_TIMESTRETCH_RUBBERBAND="0"
+               TRACKTION_BUILD_RUBBERBAND="0" TRACKTION_ENABLE_TIMESTRETCH_SOUNDTOUCH="1"
+               TRACKTION_AIR_WINDOWS="1" JUCE_PLUGINHOST_VST="1" TRACKTION_CHECK_FOR_SLOW_RENDERING="0"
+               TRACKTION_LOG_DEVICES="0" JUCE_USE_WINDOWS_MEDIA_FORMAT="1"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraDefs="JUCE_MODAL_LOOPS_PERMITTED=1&#10;JUCE_HEADLESS_PLUGIN_CLIENT=1 &#10;JucePlugin_Build_Standalone=1"
+               vstLegacyFolder="../VST_SDK/VST2_SDK" postbuildCommand="cp -R &quot;../../../ExternalPlugins&quot;* &quot;${BUILT_PRODUCTS_DIR}/ExternalPlugins&quot;">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="InstrumentalGenerator" macOSDeploymentTarget="10.15"
+                       osxCompatibility="10.15 SDK" customXcodeFlags="CODE_SIGNING_ALLOWED=NO"
+                       defines="JucePlugin_Build_Standalone=1"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="InstrumentalGenerator"
+                       macOSDeploymentTarget="10.15" osxCompatibility="10.15 SDK" customXcodeFlags="CODE_SIGNING_ALLOWED=NO"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_core" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_events" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_graphics" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_dsp" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_osc" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../dependencies/tracktion_engine/modules/juce/modules"/>
+        <MODULEPATH id="tracktion_engine" path="../dependencies/tracktion_engine/modules"/>
+        <MODULEPATH id="tracktion_graph" path="../dependencies/tracktion_engine/modules"/>
+        <MODULEPATH id="tracktion_core" path="../dependencies/tracktion_engine/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+    <VS2022 targetFolder="Builds/VisualStudio2022" extraDefs="JUCE_MODAL_LOOPS_PERMITTED=1&#10;JUCE_HEADLESS_PLUGIN_CLIENT=1 "
+            extraCompilerFlags="/bigobj" vstLegacyFolder="..\VST_SDK\VST2_SDK"
+            IPP1ALibrary="">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" postbuildCommand="xcopy /y /e /i &quot;..\..\..\ExternalPlugins&quot; &quot;$(OutDir)\ExternalPlugins&quot; "/>
+        <CONFIGURATION isDebug="0" name="Release" postbuildCommand="xcopy /y /e /i &quot;..\..\..\ExternalPlugins&quot; &quot;$(OutDir)\ExternalPlugins&quot; "/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_audio_devices" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_audio_formats" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_audio_processors" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_audio_utils" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_core" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_data_structures" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_dsp" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_events" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_graphics" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_gui_basics" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_gui_extra" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="juce_osc" path="..\dependencies\tracktion_engine\modules\juce\modules"/>
+        <MODULEPATH id="tracktion_engine" path="..\dependencies\tracktion_engine\modules"/>
+        <MODULEPATH id="tracktion_graph" path="..\dependencies\tracktion_engine\modules"/>
+        <MODULEPATH id="tracktion_core" path="..\dependencies\tracktion_engine\modules"/>
+      </MODULEPATHS>
+    </VS2022>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_dsp" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_osc" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_core" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_engine" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="tracktion_graph" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+  </MODULES>
+</JUCERPROJECT>

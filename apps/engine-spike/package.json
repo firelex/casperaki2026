@@ -1,0 +1,20 @@
+{
+  "name": "@casperaki/engine-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "emit": "node scripts/emit-engine-envelope.mjs",
+    "emit:brain-roundtrip": "node scripts/emit-brain-roundtrip.mjs",
+    "check:wav": "node scripts/check-wav.mjs",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@casperaki/arrangement": "workspace:*",
+    "@casperaki/engine-adapter": "workspace:*",
+    "@casperaki/song-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

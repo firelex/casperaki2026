@@ -1,0 +1,9 @@
+VST_SDK/
+dependencies/
+ExternalPlugins/
+assets/
+LinuxApp/
+build/
+cmake-build*/
+Builds/
+JuceLibraryCode/

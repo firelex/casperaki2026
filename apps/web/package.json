@@ -1,0 +1,31 @@
+{
+  "name": "@casperaki/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Casperaki workbench UI — modern React scaffold driving the brain (POST /api/songs/generate). Successor to casperaki-fe-rory.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@casperaki/song-schema": "workspace:*",
+    "@tanstack/react-query": "^5.101.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-router-dom": "^7.17.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.3.5",
+    "vitest": "^2.1.9"
+  }
+}

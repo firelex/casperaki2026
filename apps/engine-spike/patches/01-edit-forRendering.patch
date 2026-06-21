@@ -1,0 +1,20 @@
+diff --git a/Source/CasperakiEngine.cpp b/Source/CasperakiEngine.cpp
+index 33411bc..68fab47 100644
+--- a/Source/CasperakiEngine.cpp
++++ b/Source/CasperakiEngine.cpp
+@@ -199,7 +199,14 @@ void CasperakiEngine::prepareEdit(j::String editName)
+         deleteEdit ();
+     }
+ 
+-    edit.reset(new te::Edit(*engine, te::createEmptyEdit(*engine), te::Edit::forEditing, nullptr, 0));
++    // Spike patch (casperaki/apps/engine-spike): switch from forEditing to
++    // forRendering so the Edit doesn't create an EditPlaybackContext that
++    // demands a real audio output device. On WSL2/headless boxes this
++    // produces zero output from te::Renderer::renderToFile even though
++    // render completes "successfully". This is intentionally not upstreamed
++    // to casperaki_engine yet — the engine still needs forEditing for the
++    // live-transport paths.
++    edit.reset(new te::Edit(*engine, te::createEmptyEdit(*engine), te::Edit::forRendering, nullptr, 0));
+     transport = &(edit.get()->getTransport());
+ 
+     // create edit file

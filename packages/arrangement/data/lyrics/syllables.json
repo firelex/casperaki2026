@@ -1,0 +1,2024 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Step 17c trimmed syllable + phoneme dictionary. One entry per word used by data/lyrics/seed-phrases.json. Sourced byte-verbatim from casperaki2-engine-js/api/v1.0/services/data/lyrics/database/syllables.json (CMUdict-derived); the `phonemes` field is omitted (recoverable by flattening `phonemeSyllables`).",
+  "$legacySource": "casperaki2-engine-js/api/v1.0/services/data/lyrics/database/syllables.json",
+  "$extractedAt": "2026-06-07",
+  "entries": {
+    "a": {
+      "syllables": [
+        "a"
+      ],
+      "phonemeSyllables": [
+        "AH0"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "again": {
+      "syllables": [
+        "a",
+        "gain"
+      ],
+      "phonemeSyllables": [
+        "AH0",
+        "G EH1 N"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "-",
+        "+"
+      ]
+    },
+    "air": {
+      "syllables": [
+        "air"
+      ],
+      "phonemeSyllables": [
+        "EH1 R"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "all": {
+      "syllables": [
+        "all"
+      ],
+      "phonemeSyllables": [
+        "AO1 L"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "an": {
+      "syllables": [
+        "an"
+      ],
+      "phonemeSyllables": [
+        "AE1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "and": {
+      "syllables": [
+        "and"
+      ],
+      "phonemeSyllables": [
+        "AH0 N D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "are": {
+      "syllables": [
+        "are"
+      ],
+      "phonemeSyllables": [
+        "AA1 R"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "arms": {
+      "syllables": [
+        "arms"
+      ],
+      "phonemeSyllables": [
+        "AA1 R M Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "as": {
+      "syllables": [
+        "as"
+      ],
+      "phonemeSyllables": [
+        "AE1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "baby": {
+      "syllables": [
+        "ba",
+        "by"
+      ],
+      "phonemeSyllables": [
+        "B EY1",
+        "B IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "be": {
+      "syllables": [
+        "be"
+      ],
+      "phonemeSyllables": [
+        "B IY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "beat": {
+      "syllables": [
+        "beat"
+      ],
+      "phonemeSyllables": [
+        "B IY1 T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "beautiful": {
+      "syllables": [
+        "beau",
+        "ti",
+        "ful"
+      ],
+      "phonemeSyllables": [
+        "B Y UW1",
+        "T AH0",
+        "F AH0 L"
+      ],
+      "numberOfSyllables": 3,
+      "rhythm": [
+        "+",
+        "-",
+        "-"
+      ]
+    },
+    "behind": {
+      "syllables": [
+        "be",
+        "hind"
+      ],
+      "phonemeSyllables": [
+        "B IH0",
+        "HH AY1 N D"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "-",
+        "+"
+      ]
+    },
+    "body": {
+      "syllables": [
+        "bo",
+        "dy"
+      ],
+      "phonemeSyllables": [
+        "B AA1",
+        "D IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "brand": {
+      "syllables": [
+        "brand"
+      ],
+      "phonemeSyllables": [
+        "B R AE1 N D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "break": {
+      "syllables": [
+        "break"
+      ],
+      "phonemeSyllables": [
+        "B R EY1 K"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "breaks": {
+      "syllables": [
+        "breaks"
+      ],
+      "phonemeSyllables": [
+        "B R EY1 K S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "breathing": {
+      "syllables": [
+        "breat",
+        "hing"
+      ],
+      "phonemeSyllables": [
+        "B R IY1",
+        "DH IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "breeze": {
+      "syllables": [
+        "breeze"
+      ],
+      "phonemeSyllables": [
+        "B R IY1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "burning": {
+      "syllables": [
+        "bur",
+        "ning"
+      ],
+      "phonemeSyllables": [
+        "B ER1",
+        "N IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "but": {
+      "syllables": [
+        "but"
+      ],
+      "phonemeSyllables": [
+        "B AH1 T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "by": {
+      "syllables": [
+        "by"
+      ],
+      "phonemeSyllables": [
+        "B AY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "calm": {
+      "syllables": [
+        "calm"
+      ],
+      "phonemeSyllables": [
+        "K AA1 M"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "chains": {
+      "syllables": [
+        "chains"
+      ],
+      "phonemeSyllables": [
+        "CH EY1 N Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "chasing": {
+      "syllables": [
+        "cha",
+        "sing"
+      ],
+      "phonemeSyllables": [
+        "CH EY1",
+        "S IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "city": {
+      "syllables": [
+        "ci",
+        "ty"
+      ],
+      "phonemeSyllables": [
+        "S IH1",
+        "T IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "close": {
+      "syllables": [
+        "close"
+      ],
+      "phonemeSyllables": [
+        "K L OW1 S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "closer": {
+      "syllables": [
+        "clo",
+        "ser"
+      ],
+      "phonemeSyllables": [
+        "K L OW1",
+        "S ER0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "come": {
+      "syllables": [
+        "come"
+      ],
+      "phonemeSyllables": [
+        "K AH1 M"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "comes": {
+      "syllables": [
+        "comes"
+      ],
+      "phonemeSyllables": [
+        "K AH1 M Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "control": {
+      "syllables": [
+        "cont",
+        "rol"
+      ],
+      "phonemeSyllables": [
+        "K AH0",
+        "N T R OW1 L"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "-",
+        "+"
+      ]
+    },
+    "count": {
+      "syllables": [
+        "count"
+      ],
+      "phonemeSyllables": [
+        "K AW1 N T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "crew": {
+      "syllables": [
+        "crew"
+      ],
+      "phonemeSyllables": [
+        "K R UW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "dance": {
+      "syllables": [
+        "dance"
+      ],
+      "phonemeSyllables": [
+        "D AE1 N S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "dancing": {
+      "syllables": [
+        "dan",
+        "cing"
+      ],
+      "phonemeSyllables": [
+        "D AE1",
+        "N S IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "day": {
+      "syllables": [
+        "day"
+      ],
+      "phonemeSyllables": [
+        "D EY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "down": {
+      "syllables": [
+        "down"
+      ],
+      "phonemeSyllables": [
+        "D AW1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "dream": {
+      "syllables": [
+        "dream"
+      ],
+      "phonemeSyllables": [
+        "D R IY1 M"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "dreaming": {
+      "syllables": [
+        "drea",
+        "ming"
+      ],
+      "phonemeSyllables": [
+        "D R IY1",
+        "M IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "driving": {
+      "syllables": [
+        "dri",
+        "ving"
+      ],
+      "phonemeSyllables": [
+        "D R AY1",
+        "V IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "else": {
+      "syllables": [
+        "else"
+      ],
+      "phonemeSyllables": [
+        "EH1 L S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "end": {
+      "syllables": [
+        "end"
+      ],
+      "phonemeSyllables": [
+        "EH1 N D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "even": {
+      "syllables": [
+        "e",
+        "ven"
+      ],
+      "phonemeSyllables": [
+        "IY1",
+        "V IH0 N"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "evening": {
+      "syllables": [
+        "e",
+        "vening"
+      ],
+      "phonemeSyllables": [
+        "IY1",
+        "V N IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "every": {
+      "syllables": [
+        "e",
+        "ve",
+        "ry"
+      ],
+      "phonemeSyllables": [
+        "EH1",
+        "V ER0",
+        "IY0"
+      ],
+      "numberOfSyllables": 3,
+      "rhythm": [
+        "+",
+        "-",
+        "-"
+      ]
+    },
+    "everything": {
+      "syllables": [
+        "e",
+        "veryt",
+        "hing"
+      ],
+      "phonemeSyllables": [
+        "EH1",
+        "V R IY0",
+        "TH IH2 NG"
+      ],
+      "numberOfSyllables": 3,
+      "rhythm": [
+        "+",
+        "-",
+        "0"
+      ]
+    },
+    "eyes": {
+      "syllables": [
+        "eyes"
+      ],
+      "phonemeSyllables": [
+        "AY1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "fall": {
+      "syllables": [
+        "fall"
+      ],
+      "phonemeSyllables": [
+        "F AO1 L"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "feel": {
+      "syllables": [
+        "feel"
+      ],
+      "phonemeSyllables": [
+        "F IY1 L"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "feeling": {
+      "syllables": [
+        "fee",
+        "ling"
+      ],
+      "phonemeSyllables": [
+        "F IY1",
+        "L IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "find": {
+      "syllables": [
+        "find"
+      ],
+      "phonemeSyllables": [
+        "F AY1 N D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "fire": {
+      "syllables": [
+        "fi",
+        "re"
+      ],
+      "phonemeSyllables": [
+        "F AY1",
+        "ER0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "fly": {
+      "syllables": [
+        "fly"
+      ],
+      "phonemeSyllables": [
+        "F L AY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "for": {
+      "syllables": [
+        "for"
+      ],
+      "phonemeSyllables": [
+        "F AO1 R"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "forever": {
+      "syllables": [
+        "fo",
+        "re",
+        "ver"
+      ],
+      "phonemeSyllables": [
+        "F ER0",
+        "EH1",
+        "V ER0"
+      ],
+      "numberOfSyllables": 3,
+      "rhythm": [
+        "-",
+        "+",
+        "-"
+      ]
+    },
+    "free": {
+      "syllables": [
+        "free"
+      ],
+      "phonemeSyllables": [
+        "F R IY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "go": {
+      "syllables": [
+        "go"
+      ],
+      "phonemeSyllables": [
+        "G OW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "golden": {
+      "syllables": [
+        "gol",
+        "den"
+      ],
+      "phonemeSyllables": [
+        "G OW1",
+        "L D AH0 N"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "gray": {
+      "syllables": [
+        "gray"
+      ],
+      "phonemeSyllables": [
+        "G R EY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "hand": {
+      "syllables": [
+        "hand"
+      ],
+      "phonemeSyllables": [
+        "HH AE1 N D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "happy": {
+      "syllables": [
+        "hap",
+        "py"
+      ],
+      "phonemeSyllables": [
+        "HH AE1",
+        "P IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "has": {
+      "syllables": [
+        "has"
+      ],
+      "phonemeSyllables": [
+        "HH AE1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "haze": {
+      "syllables": [
+        "haze"
+      ],
+      "phonemeSyllables": [
+        "HH EY1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "head": {
+      "syllables": [
+        "head"
+      ],
+      "phonemeSyllables": [
+        "HH EH1 D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "here": {
+      "syllables": [
+        "here"
+      ],
+      "phonemeSyllables": [
+        "HH IY1 R"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "high": {
+      "syllables": [
+        "high"
+      ],
+      "phonemeSyllables": [
+        "HH AY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "hold": {
+      "syllables": [
+        "hold"
+      ],
+      "phonemeSyllables": [
+        "HH OW1 L D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "holding": {
+      "syllables": [
+        "hol",
+        "ding"
+      ],
+      "phonemeSyllables": [
+        "HH OW1",
+        "L D IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "hours": {
+      "syllables": [
+        "hour",
+        "s"
+      ],
+      "phonemeSyllables": [
+        "AW1",
+        "ER0 Z"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "in": {
+      "syllables": [
+        "in"
+      ],
+      "phonemeSyllables": [
+        "IH0 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "is": {
+      "syllables": [
+        "is"
+      ],
+      "phonemeSyllables": [
+        "IH1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "it": {
+      "syllables": [
+        "it"
+      ],
+      "phonemeSyllables": [
+        "IH1 T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "its": {
+      "syllables": [
+        "its"
+      ],
+      "phonemeSyllables": [
+        "IH1 T S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "lasts": {
+      "syllables": [
+        "lasts"
+      ],
+      "phonemeSyllables": [
+        "L AE1 S T S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "left": {
+      "syllables": [
+        "left"
+      ],
+      "phonemeSyllables": [
+        "L EH1 F T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "let": {
+      "syllables": [
+        "let"
+      ],
+      "phonemeSyllables": [
+        "L EH1 T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "lights": {
+      "syllables": [
+        "lights"
+      ],
+      "phonemeSyllables": [
+        "L AY1 T S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "line": {
+      "syllables": [
+        "line"
+      ],
+      "phonemeSyllables": [
+        "L AY1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "little": {
+      "syllables": [
+        "litt",
+        "le"
+      ],
+      "phonemeSyllables": [
+        "L IH1",
+        "T AH0 L"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "living": {
+      "syllables": [
+        "li",
+        "ving"
+      ],
+      "phonemeSyllables": [
+        "L IH1",
+        "V IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "lonely": {
+      "syllables": [
+        "lo",
+        "nely"
+      ],
+      "phonemeSyllables": [
+        "L OW1",
+        "N L IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "look": {
+      "syllables": [
+        "look"
+      ],
+      "phonemeSyllables": [
+        "L UH1 K"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "lose": {
+      "syllables": [
+        "lose"
+      ],
+      "phonemeSyllables": [
+        "L UW1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "love": {
+      "syllables": [
+        "love"
+      ],
+      "phonemeSyllables": [
+        "L AH1 V"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "low": {
+      "syllables": [
+        "low"
+      ],
+      "phonemeSyllables": [
+        "L OW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "matters": {
+      "syllables": [
+        "mat",
+        "ters"
+      ],
+      "phonemeSyllables": [
+        "M AE1",
+        "T ER0 Z"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "maybe": {
+      "syllables": [
+        "may",
+        "be"
+      ],
+      "phonemeSyllables": [
+        "M EY1",
+        "B IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "me": {
+      "syllables": [
+        "me"
+      ],
+      "phonemeSyllables": [
+        "M IY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "memory": {
+      "syllables": [
+        "me",
+        "mo",
+        "ry"
+      ],
+      "phonemeSyllables": [
+        "M EH1",
+        "M ER0",
+        "IY0"
+      ],
+      "numberOfSyllables": 3,
+      "rhythm": [
+        "+",
+        "-",
+        "-"
+      ]
+    },
+    "moment": {
+      "syllables": [
+        "mo",
+        "ment"
+      ],
+      "phonemeSyllables": [
+        "M OW1",
+        "M AH0 N T"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "moonlight": {
+      "syllables": [
+        "moon",
+        "light"
+      ],
+      "phonemeSyllables": [
+        "M UW1",
+        "N L AY2 T"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "0"
+      ]
+    },
+    "morning": {
+      "syllables": [
+        "mor",
+        "ning"
+      ],
+      "phonemeSyllables": [
+        "M AO1",
+        "R N IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "moving": {
+      "syllables": [
+        "mo",
+        "ving"
+      ],
+      "phonemeSyllables": [
+        "M UW1",
+        "V IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "music": {
+      "syllables": [
+        "mu",
+        "sic"
+      ],
+      "phonemeSyllables": [
+        "M Y UW1",
+        "Z IH0 K"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "my": {
+      "syllables": [
+        "my"
+      ],
+      "phonemeSyllables": [
+        "M AY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "never": {
+      "syllables": [
+        "ne",
+        "ver"
+      ],
+      "phonemeSyllables": [
+        "N EH1",
+        "V ER0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "new": {
+      "syllables": [
+        "new"
+      ],
+      "phonemeSyllables": [
+        "N UW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "nothing": {
+      "syllables": [
+        "not",
+        "hing"
+      ],
+      "phonemeSyllables": [
+        "N AH1",
+        "TH IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "now": {
+      "syllables": [
+        "now"
+      ],
+      "phonemeSyllables": [
+        "N AW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "ocean": {
+      "syllables": [
+        "o",
+        "cean"
+      ],
+      "phonemeSyllables": [
+        "OW1",
+        "SH AH0 N"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "of": {
+      "syllables": [
+        "of"
+      ],
+      "phonemeSyllables": [
+        "AH1 V"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "on": {
+      "syllables": [
+        "on"
+      ],
+      "phonemeSyllables": [
+        "AA1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "open": {
+      "syllables": [
+        "o",
+        "pen"
+      ],
+      "phonemeSyllables": [
+        "OW1",
+        "P AH0 N"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "quiet": {
+      "syllables": [
+        "qui",
+        "et"
+      ],
+      "phonemeSyllables": [
+        "K W AY1",
+        "AH0 T"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "rain": {
+      "syllables": [
+        "rain"
+      ],
+      "phonemeSyllables": [
+        "R EY1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "rest": {
+      "syllables": [
+        "rest"
+      ],
+      "phonemeSyllables": [
+        "R EH1 S T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "rhythm": {
+      "syllables": [
+        "rhyth",
+        "m"
+      ],
+      "phonemeSyllables": [
+        "R IH1",
+        "DH AH0 M"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "rise": {
+      "syllables": [
+        "rise"
+      ],
+      "phonemeSyllables": [
+        "R AY1 Z"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "road": {
+      "syllables": [
+        "road"
+      ],
+      "phonemeSyllables": [
+        "R OW1 D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "rolling": {
+      "syllables": [
+        "rol",
+        "ling"
+      ],
+      "phonemeSyllables": [
+        "R OW1",
+        "L IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "run": {
+      "syllables": [
+        "run"
+      ],
+      "phonemeSyllables": [
+        "R AH1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "scream": {
+      "syllables": [
+        "scream"
+      ],
+      "phonemeSyllables": [
+        "S K R IY1 M"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "side": {
+      "syllables": [
+        "side"
+      ],
+      "phonemeSyllables": [
+        "S AY1 D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "simple": {
+      "syllables": [
+        "simp",
+        "le"
+      ],
+      "phonemeSyllables": [
+        "S IH1",
+        "M P AH0 L"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "sing": {
+      "syllables": [
+        "sing"
+      ],
+      "phonemeSyllables": [
+        "S IH1 NG"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "singing": {
+      "syllables": [
+        "sin",
+        "ging"
+      ],
+      "phonemeSyllables": [
+        "S IH1",
+        "NG IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "sitting": {
+      "syllables": [
+        "sit",
+        "ting"
+      ],
+      "phonemeSyllables": [
+        "S IH1",
+        "T IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "sky": {
+      "syllables": [
+        "sky"
+      ],
+      "phonemeSyllables": [
+        "S K AY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "smile": {
+      "syllables": [
+        "smile"
+      ],
+      "phonemeSyllables": [
+        "S M AY1 L"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "softly": {
+      "syllables": [
+        "soft",
+        "ly"
+      ],
+      "phonemeSyllables": [
+        "S AO1",
+        "F T L IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "song": {
+      "syllables": [
+        "song"
+      ],
+      "phonemeSyllables": [
+        "S AO1 NG"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "sound": {
+      "syllables": [
+        "sound"
+      ],
+      "phonemeSyllables": [
+        "S AW1 N D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "stay": {
+      "syllables": [
+        "stay"
+      ],
+      "phonemeSyllables": [
+        "S T EY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "still": {
+      "syllables": [
+        "still"
+      ],
+      "phonemeSyllables": [
+        "S T IH1 L"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "stops": {
+      "syllables": [
+        "stops"
+      ],
+      "phonemeSyllables": [
+        "S T AA1 P S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "story": {
+      "syllables": [
+        "sto",
+        "ry"
+      ],
+      "phonemeSyllables": [
+        "S T AO1",
+        "R IY0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "streets": {
+      "syllables": [
+        "streets"
+      ],
+      "phonemeSyllables": [
+        "S T R IY1 T S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "summer": {
+      "syllables": [
+        "sum",
+        "mer"
+      ],
+      "phonemeSyllables": [
+        "S AH1",
+        "M ER0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "sunshine": {
+      "syllables": [
+        "suns",
+        "hine"
+      ],
+      "phonemeSyllables": [
+        "S AH1",
+        "N SH AY2 N"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "0"
+      ]
+    },
+    "take": {
+      "syllables": [
+        "take"
+      ],
+      "phonemeSyllables": [
+        "T EY1 K"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "the": {
+      "syllables": [
+        "the"
+      ],
+      "phonemeSyllables": [
+        "DH AH0"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "this": {
+      "syllables": [
+        "this"
+      ],
+      "phonemeSyllables": [
+        "DH IH1 S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "through": {
+      "syllables": [
+        "through"
+      ],
+      "phonemeSyllables": [
+        "TH R UW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "tight": {
+      "syllables": [
+        "tight"
+      ],
+      "phonemeSyllables": [
+        "T AY1 T"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "to": {
+      "syllables": [
+        "to"
+      ],
+      "phonemeSyllables": [
+        "T UW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "tonight": {
+      "syllables": [
+        "to",
+        "night"
+      ],
+      "phonemeSyllables": [
+        "T AH0",
+        "N AY1 T"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "-",
+        "+"
+      ]
+    },
+    "true": {
+      "syllables": [
+        "true"
+      ],
+      "phonemeSyllables": [
+        "T R UW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "until": {
+      "syllables": [
+        "un",
+        "til"
+      ],
+      "phonemeSyllables": [
+        "AH0",
+        "N T IH1 L"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "-",
+        "+"
+      ]
+    },
+    "up": {
+      "syllables": [
+        "up"
+      ],
+      "phonemeSyllables": [
+        "AH1 P"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "us": {
+      "syllables": [
+        "us"
+      ],
+      "phonemeSyllables": [
+        "AH1 S"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "walking": {
+      "syllables": [
+        "wal",
+        "king"
+      ],
+      "phonemeSyllables": [
+        "W AO1",
+        "K IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "watching": {
+      "syllables": [
+        "wat",
+        "ching"
+      ],
+      "phonemeSyllables": [
+        "W AA1",
+        "CH IH0 NG"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "way": {
+      "syllables": [
+        "way"
+      ],
+      "phonemeSyllables": [
+        "W EY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "we": {
+      "syllables": [
+        "we"
+      ],
+      "phonemeSyllables": [
+        "W IY1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "when": {
+      "syllables": [
+        "when"
+      ],
+      "phonemeSyllables": [
+        "W EH1 N"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "whisper": {
+      "syllables": [
+        "whis",
+        "per"
+      ],
+      "phonemeSyllables": [
+        "W IH1",
+        "S P ER0"
+      ],
+      "numberOfSyllables": 2,
+      "rhythm": [
+        "+",
+        "-"
+      ]
+    },
+    "wild": {
+      "syllables": [
+        "wild"
+      ],
+      "phonemeSyllables": [
+        "W AY1 L D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "will": {
+      "syllables": [
+        "will"
+      ],
+      "phonemeSyllables": [
+        "W IH1 L"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "with": {
+      "syllables": [
+        "with"
+      ],
+      "phonemeSyllables": [
+        "W IH1 DH"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "world": {
+      "syllables": [
+        "world"
+      ],
+      "phonemeSyllables": [
+        "W ER1 L D"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "you": {
+      "syllables": [
+        "you"
+      ],
+      "phonemeSyllables": [
+        "Y UW1"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    },
+    "your": {
+      "syllables": [
+        "your"
+      ],
+      "phonemeSyllables": [
+        "Y AO1 R"
+      ],
+      "numberOfSyllables": 1,
+      "rhythm": [
+        "0"
+      ]
+    }
+  }
+}

@@ -1,0 +1,52 @@
+diff --git a/Source/instruments/Guitar.h b/Source/instruments/Guitar.h
+index 7ef0a5b..b1a2cb3 100644
+--- a/Source/instruments/Guitar.h
++++ b/Source/instruments/Guitar.h
+@@ -121,12 +121,16 @@ class Guitar : public TonalInstrument {
+           {
+               if (timeStrum.duration != -1)
+               {
+-                  int midiNoteIndex = ensureSampleMidiNote (timeStrum, guitarStrumsStepClip);
++                  // docs/54m: addNote expects a MIDI note; ensureSampleMidiNote
++                  // returns the sound INDEX. Look up the slot's keyNote.
++                  int soundIndex = ensureSampleMidiNote (timeStrum, guitarStrumsStepClip);
+                   tracktion_engine::SamplerPlugin *samplerPlugin = dynamic_cast<tracktion_engine::SamplerPlugin *> (guitarStrumsSamplerPlugin.get ());
+-                  double soundLength = samplerPlugin->getSoundLength (midiNoteIndex - 48);
++                  int midiNote = samplerPlugin->getKeyNote (soundIndex);
++                  double soundLength = samplerPlugin->getSoundLength (soundIndex);
++                  (void) soundLength;
+ 
+                   auto guitarStrumsSequence = &guitarStrumsClip->getSequence ();
+-                  guitarStrumsSequence->addNote (midiNoteIndex, te::BeatPosition::fromBeats (timeStrum.start),
++                  guitarStrumsSequence->addNote (midiNote, te::BeatPosition::fromBeats (timeStrum.start),
+                                                  te::BeatDuration::fromBeats (timeStrum.duration), timeStrum.velocity, 1,
+                                                  nullptr);
+               }
+@@ -353,7 +357,10 @@ class Guitar : public TonalInstrument {
+                   // should be only one, but in the future we might have multiple samples
+                   for (auto it = sampleFiles.get ()->begin (); it != sampleFiles.get ()->end (); it++)
+                   {
+-                      int noteNumber = samplerPlugin->getNumSounds ();
++                      // docs/54m: keyNote = soundIndex + 48 (the nearby
++                      // `midiNoteIndex - 48` already assumed this offset).
++                      static constexpr int kStrumSoundIndexToMidiOffset = 48;
++                      int noteNumber = samplerPlugin->getNumSounds () + kStrumSoundIndexToMidiOffset;
+ 
+                       const auto error = samplerPlugin->addSound (it->second, it->first, 0.0, 0.0, 0.0f);
+                       jassert (error.isEmpty ());
+diff --git a/Source/instruments/SequencerUtils.h b/Source/instruments/SequencerUtils.h
+index 710adbf..8912488 100644
+--- a/Source/instruments/SequencerUtils.h
++++ b/Source/instruments/SequencerUtils.h
+@@ -610,7 +610,10 @@ getGuitarStrums (j::var &noteData, Chord currentChord)
+             : 1;
+     }
+ 
+-    if (noteData["duration"].isDouble ()) {
++    // docs/54m: accept int or double — original isDouble() filtered out
++    // integer-valued JSON numbers, leaving the default -1 + strum-tail
++    // offset → negative duration → Tracktion silently dropped the note.
++    if (noteData.hasProperty ("duration")) {
+         timeStrums.duration = noteData["duration"].toString ().getDoubleValue ();
+     }
+ 

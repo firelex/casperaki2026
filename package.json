@@ -1,0 +1,30 @@
+{
+  "name": "casperaki",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=8"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "dev:models": "pnpm --filter @casperaki/models dev",
+    "build:models": "pnpm --filter @casperaki/models build",
+    "typecheck:models": "pnpm --filter @casperaki/models typecheck",
+    "dev:brain": "pnpm --filter @casperaki/brain dev",
+    "dev:web": "pnpm --filter @casperaki/web dev",
+    "dev:all": "pnpm --parallel --filter @casperaki/brain --filter @casperaki/web dev"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3"
+  }
+}

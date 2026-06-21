@@ -1,0 +1,18 @@
+{
+    "details": {
+        "LUFS": null,
+        "bpm": "99",
+        "duration": 2.45551,
+        "file": "percussionLoops - percussionLoopsAcoustic_90-119bpm - brightPop - Shaker Tamb2 99bpm_modified.mp3",
+        "octaveAdjustment": null,
+        "vstPlugin": "Shaker Tamb2 99bpm_modified - 99"
+    },
+    "id": 31384,
+    "instrumentGroup": "restOfDrumsAndLoops",
+    "isSample": true,
+    "isVst": false,
+    "lowLevelType": "percussionLoopsAcoustic",
+    "name": "Loop",
+    "shortName": "loop",
+    "type": "percussionLoops"
+}

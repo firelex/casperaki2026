@@ -1,0 +1,16 @@
+
+[submodule "dependencies/tracktion_engine"]
+	path = dependencies/tracktion_engine
+	url = https://github.com/Tracktion/tracktion_engine
+[submodule "dependencies/matchering"]
+	path = dependencies/matchering
+	url = https://github.com/Casperaki/matchering
+[submodule "dependencies/choc"]
+	path = dependencies/choc
+	url = https://github.com/Casperaki/choc
+[submodule "dependencies/tracktion_engine_android"]
+	path = dependencies/tracktion_engine_android
+	url = https://github.com/Casperaki/tracktion_engine
+[submodule "dependencies/tracktion_engine_emscripten"]
+	path = dependencies/tracktion_engine_emscripten
+	url = https://github.com/Casperaki/tracktion_engine

@@ -1,0 +1,51 @@
+{
+  "$schemaVersion": 2,
+  "$description": "Transition fx climax overrides. Adapter looks up in priority order: byCatalogId → byLowLevel → defaultClimaxForTag heuristic. `byCatalogId` carries the 5 hand-tuned per-sample climax values that map cleanly from legacy `casperaki1/api/v1.0/services/data/sounds/fx/effectsMetadata.json` to today's xlsx catalog rows. `byLowLevel` carries family-wide conventions recovered from legacy (see 58e audit) — values that Stefan applied uniformly across all rows of a particular lowLevel rather than per-sample. The remaining 44 explicit-climax legacy entries reference Serum FX and Type1/2/3 tonalReverse packs that aren't in the disk library — unreachable. See docs/58d-climax-overrides.md + docs/58e-unified-catalog.md.",
+  "$generatedFrom": {
+    "legacySource": "casperaki1/api/v1.0/services/data/sounds/fx/effectsMetadata.json",
+    "catalogContentHash": "see-instrument-catalog.snapshot.json"
+  },
+  "byLowLevel": {
+    "fxTonalReverse": {
+      "climaxSec": 1.1,
+      "rationale": "Legacy Type1/2/3 tonalReverse pack (36 entries × 3 packs × 12 keys) all carried climax=1.1 — a family-wide convention rather than per-sample tuning. Applied here to all 120 fxTonalReverse catalog rows (bigZ Reverses_1..10 × 12 keys) as the lowLevel default."
+    }
+  },
+  "byCatalogId": {
+    "4a9682b02067fa33": {
+      "climaxSec": 7.732,
+      "legacyFile": "Big_Z_Uplifter_4",
+      "library": "bigZ",
+      "preset": "Uplifter_4",
+      "lowLevel": "fxUplifter"
+    },
+    "f5441b45a6961cc1": {
+      "climaxSec": 0.687,
+      "legacyFile": "Big_Z_Low_Impact_1",
+      "library": "bigZ",
+      "preset": "Low_Impact_1",
+      "lowLevel": "fxLowImpact"
+    },
+    "77d7f2815c7c5f14": {
+      "climaxSec": 1.9,
+      "legacyFile": "Big_Z_Transition_1",
+      "library": "bigZ",
+      "preset": "Transition_1",
+      "lowLevel": "fxTransition"
+    },
+    "58e9ffaa10f27139": {
+      "climaxSec": 0.986,
+      "legacyFile": "Big_Z_Transition_2",
+      "library": "bigZ",
+      "preset": "Transition_2",
+      "lowLevel": "fxTransition"
+    },
+    "783ff18ecde849e2": {
+      "climaxSec": 0.5,
+      "legacyFile": "Big_Z_Transition_3",
+      "library": "bigZ",
+      "preset": "Transition_3",
+      "lowLevel": "fxTransition"
+    }
+  }
+}

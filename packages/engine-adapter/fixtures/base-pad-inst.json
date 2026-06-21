@@ -1,0 +1,118 @@
+{
+  "details": {
+    "LUFS": null,
+    "octaveAdjustment": null
+  },
+  "id": 38972,
+  "instrumentGroup": "pads",
+  "isSample": false,
+  "isVst": true,
+  "lowLevelType": "synthsSoftPad",
+  "name": "Pad",
+  "samples": [
+    {
+      "id": 3153,
+      "note": "c2",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3154,
+      "note": "d#2",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3155,
+      "note": "f#2",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3156,
+      "note": "a2",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3157,
+      "note": "c3",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3158,
+      "note": "d#3",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3159,
+      "note": "f#3",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3160,
+      "note": "a3",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3161,
+      "note": "c4",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3162,
+      "note": "d#4",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3163,
+      "note": "f#4",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3164,
+      "note": "a4",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3165,
+      "note": "c5",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3166,
+      "note": "d#5",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3167,
+      "note": "f#5",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3168,
+      "note": "a5",
+      "type": "longNote",
+      "vst": 38972
+    },
+    {
+      "id": 3169,
+      "note": "c6",
+      "type": "longNote",
+      "vst": 38972
+    }
+  ],
+  "shortName": "pad",
+  "type": "synths"
+}

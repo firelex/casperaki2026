@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* Scan our own source plus the linked @teamsuzie/ui source so Tailwind emits
+   the utility classes those shared components rely on. */
+@source "./**/*.{ts,tsx}";
+@source "../../node_modules/@teamsuzie/ui/dist/**/*.js";
+
+@theme {
+  /* Type */
+  --font-sans:    "Inter", "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Poppins", "Inter", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Core palette — light */
+  --color-background:           oklch(98%  0.002 286);
+  --color-foreground:           oklch(20%  0.010 260);
+  --color-card:                 oklch(100% 0     0);
+  --color-card-foreground:      oklch(20%  0.010 260);
+  --color-popover:              oklch(100% 0     0);
+  --color-popover-foreground:   oklch(20%  0.010 260);
+  --color-primary:              oklch(48%  0.270 290);
+  --color-primary-foreground:   oklch(100% 0     0);
+  --color-secondary:            oklch(95%  0.020 290);
+  --color-secondary-foreground: oklch(30%  0.150 290);
+  --color-muted:                oklch(96%  0.010 286);
+  --color-muted-foreground:     oklch(50%  0.020 260);
+  --color-accent:               oklch(95%  0.030 290);
+  --color-accent-foreground:    oklch(30%  0.150 290);
+  --color-destructive:          oklch(57.71% 0.215 27.33);
+  --color-destructive-foreground: oklch(98.51% 0.001 106.42);
+  --color-border:               oklch(92%  0.004 286);
+  --color-input:                oklch(92%  0.004 286);
+  --color-ring:                 oklch(48%  0.270 290);
+
+  /* Radii */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+}
+
+/* Dark theme — <html data-theme="dark"> or system preference. */
+@layer base {
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --color-background:           oklch(16% 0.010 280);
+      --color-foreground:           oklch(96% 0.005 286);
+      --color-card:                 oklch(20% 0.012 280);
+      --color-card-foreground:      oklch(96% 0.005 286);
+      --color-popover:              oklch(20% 0.012 280);
+      --color-popover-foreground:   oklch(96% 0.005 286);
+      --color-primary:              oklch(72% 0.220 290);
+      --color-primary-foreground:   oklch(15% 0.010 280);
+      --color-secondary:            oklch(28% 0.060 290);
+      --color-secondary-foreground: oklch(92% 0.020 286);
+      --color-muted:                oklch(24% 0.010 280);
+      --color-muted-foreground:     oklch(66% 0.020 286);
+      --color-accent:               oklch(28% 0.080 290);
+      --color-accent-foreground:    oklch(92% 0.020 286);
+      --color-destructive:          oklch(65% 0.210 27);
+      --color-destructive-foreground: oklch(98% 0.001 106);
+      --color-border:               oklch(28% 0.010 280);
+      --color-input:                oklch(28% 0.010 280);
+      --color-ring:                 oklch(72% 0.220 290);
+    }
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply m-0 min-h-screen bg-background text-foreground font-sans antialiased;
+  }
+
+  button, textarea, input {
+    font: inherit;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}

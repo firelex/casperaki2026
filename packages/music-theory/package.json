@@ -1,0 +1,26 @@
+{
+  "name": "@casperaki/music-theory",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chord/note/scale primitives for Casperaki. Phase 3 brain port.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3",
+    "vitest": "^2.1.9"
+  }
+}

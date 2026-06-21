@@ -1,0 +1,428 @@
+{
+  "instruments": [
+    {
+      "entry": {
+        "addPlugins": null,
+        "addStyles": [],
+        "bpm": null,
+        "family": "kickDrums",
+        "id": "14e3f11f9ab89412",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "drLuke",
+        "lowLevel": "kickDrumsElectronic",
+        "mainStyle": "brightPop",
+        "matchedPath": "kickDrums/kickDrumsElectronic/kickDrums - kickDrumsElectronic - brightPop - drLuke - Dynamite Kick1 Verse.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-18dB",
+        "preset": "Dynamite Kick1 Verse",
+        "sourceRow": 49,
+        "sourceSheet": "kickDrums",
+        "status": null
+      },
+      "essential": true,
+      "family": "drums",
+      "lane": "Drums",
+      "lowLevel": "kickDrumsElectronic",
+      "perSegment": false,
+      "pickSource": "genre"
+    },
+    {
+      "entry": {
+        "addPlugins": "iZotope Ozone Imager",
+        "addStyles": [],
+        "bpm": null,
+        "family": "basses",
+        "id": "5004e4927795370f",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "serum",
+        "lowLevel": "bassesSynthSoft",
+        "mainStyle": "brightPop",
+        "matchedPath": "basses/bassesSynthSoft/basses - bassesSynthSoft - brightPop - serum - BA Crazy.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-24 LUVS",
+        "preset": "BA Crazy",
+        "sourceRow": 75,
+        "sourceSheet": "basses",
+        "status": null
+      },
+      "essential": true,
+      "family": "bass",
+      "lane": "Bass",
+      "lowLevel": "bassesSynthSoft",
+      "perSegment": false,
+      "pickSource": "genre"
+    },
+    {
+      "entry": {
+        "addPlugins": null,
+        "addStyles": [],
+        "bpm": null,
+        "family": "synths",
+        "id": "d1a3ce7633d618c2",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "serum",
+        "lowLevel": "synthsBrightPad",
+        "mainStyle": "edm",
+        "matchedPath": "synths/synthsBrightPad/synths - synthsBrightPad - edm - serum - PD Lux.mp3",
+        "matchedRule": "simple",
+        "normalisation": null,
+        "preset": "PD Lux",
+        "sourceRow": 1000050,
+        "sourceSheet": "synths",
+        "status": null
+      },
+      "essential": true,
+      "family": "pad",
+      "lane": "Pad",
+      "lowLevel": "synthsBrightPad",
+      "perSegment": false,
+      "pickSource": "fallback"
+    },
+    {
+      "entry": {
+        "addPlugins": null,
+        "addStyles": [
+          "brightPop"
+        ],
+        "bpm": null,
+        "family": "leadSynths",
+        "id": "1a49a04c652b282a",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "omnisphere",
+        "lowLevel": "leadSynthsBright",
+        "mainStyle": "edm",
+        "matchedPath": "leadSynths/leadSynthsBright/leadSynths - leadSynthsBright - edm - omnisphere - Fat Sid Lead.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-24LUFS",
+        "preset": "Fat Sid Lead",
+        "sourceRow": 7,
+        "sourceSheet": "leadSynths",
+        "status": null
+      },
+      "essential": false,
+      "family": "synths",
+      "lane": "Synths",
+      "lowLevel": "leadSynthsBright",
+      "perSegment": false,
+      "pickSource": "genre"
+    },
+    {
+      "entry": {
+        "addPlugins": null,
+        "addStyles": [
+          "ballad",
+          "organicVibes"
+        ],
+        "bpm": null,
+        "family": "leadSynths",
+        "id": "c866c0e21437fb67",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "omnisphere",
+        "lowLevel": "leadSynthsSoft",
+        "mainStyle": "edm",
+        "matchedPath": "leadSynths/leadSynthsSoft/leadSynths - leadSynthsSoft - edm - omnisphere - Enchanted Flute.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-24LUFS",
+        "preset": "Enchanted Flute",
+        "sourceRow": 29,
+        "sourceSheet": "leadSynths",
+        "status": null
+      },
+      "essential": false,
+      "family": "synths",
+      "lane": "Synths 2",
+      "lowLevel": "leadSynthsSoft",
+      "perSegment": false,
+      "pickSource": "fallback"
+    },
+    {
+      "entry": {
+        "addPlugins": null,
+        "addStyles": [
+          "organicVibes"
+        ],
+        "bpm": null,
+        "family": "leadSynths",
+        "id": "cb2de3a1f854b72d",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "omnisphere",
+        "lowLevel": "leadSynthsAnalog",
+        "mainStyle": "brightPop",
+        "matchedPath": "leadSynths/leadSynthsAnalog/leadSynths - leadSynthsAnalog - brightPop - omnisphere - Authentic Triangle Lead.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-24LUFS",
+        "preset": "Authentic Triangle Lead",
+        "sourceRow": 2,
+        "sourceSheet": "leadSynths",
+        "status": null
+      },
+      "essential": false,
+      "family": "synths",
+      "lane": "Synths 3",
+      "lowLevel": "leadSynthsAnalog",
+      "perSegment": false,
+      "pickSource": "genre"
+    },
+    {
+      "entry": {
+        "addPlugins": "FabFilter Pro-C (low cut)",
+        "addStyles": [
+          "brightPop",
+          "latin",
+          "organicVibes",
+          "rock"
+        ],
+        "bpm": null,
+        "family": "keys",
+        "id": "519af021b10d7d40",
+        "info": null,
+        "key": null,
+        "legacyReplacement": "yes",
+        "library": "kontakt",
+        "lowLevel": "keysAcousticPiano",
+        "mainStyle": "ballad",
+        "matchedPath": "keys/keysAcousticPiano/keys - keysAcousticPiano - ballad - kontakt - The Maverick.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-24 LUVS",
+        "preset": "The Maverick",
+        "sourceRow": 18,
+        "sourceSheet": "keys",
+        "status": null
+      },
+      "essential": false,
+      "family": "keys",
+      "lane": "Keys",
+      "lowLevel": "keysAcousticPiano",
+      "perSegment": true,
+      "pickSource": "genre"
+    },
+    {
+      "entry": {
+        "addPlugins": null,
+        "addStyles": [],
+        "bpm": null,
+        "family": "synths",
+        "id": "ecc3baf3773fc97e",
+        "info": null,
+        "key": null,
+        "legacyReplacement": null,
+        "library": "nexus",
+        "lowLevel": "synthsPlucked",
+        "mainStyle": "edm",
+        "matchedPath": "synths/synthsPlucked/synths - synthsPlucked - edm - nexus - Epic Pluck.mp3",
+        "matchedRule": "simple",
+        "normalisation": "-24LUFS",
+        "preset": "Epic Pluck",
+        "sourceRow": 14,
+        "sourceSheet": "synths",
+        "status": null
+      },
+      "essential": false,
+      "family": "pluckedSynths",
+      "lane": "PluckedSynths",
+      "lowLevel": "synthsPlucked",
+      "perSegment": true,
+      "pickSource": "fallback"
+    }
+  ],
+  "loop": {
+    "displayName": "Loop",
+    "entry": {
+      "addPlugins": null,
+      "addStyles": [],
+      "bpm": 120,
+      "family": "percussionLoops",
+      "id": "8265d815314a89ae",
+      "info": null,
+      "key": null,
+      "legacyReplacement": null,
+      "library": null,
+      "lowLevel": "percussionLoopsAcoustic_120-150bpm",
+      "mainStyle": "latin",
+      "matchedPath": "percussionLoops/percussionLoopsAcoustic_120-150bpm/percussionLoops - percussionLoopsAcoustic_120-150bpm - latin - FLP_DJEMBE_120BPM_12.mp3",
+      "matchedRule": "simple",
+      "normalisation": "-24 LUVS",
+      "preset": "FLP_DJEMBE_120BPM_12",
+      "sourceRow": 3756,
+      "sourceSheet": "percussionLoops",
+      "status": null
+    },
+    "pickSource": "fallback"
+  },
+  "segments": [
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2",
+        "Synths",
+        "Synths 3"
+      ],
+      "loopActive": false,
+      "segmentName": "intro"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2",
+        "Synths 3",
+        "Keys"
+      ],
+      "loopActive": true,
+      "segmentName": "verse1"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2",
+        "Synths 3",
+        "Keys"
+      ],
+      "loopActive": true,
+      "segmentName": "verse2"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2"
+      ],
+      "loopActive": false,
+      "segmentName": "preChorus1"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths",
+        "Synths 2",
+        "Synths 3"
+      ],
+      "loopActive": false,
+      "segmentName": "chorus1"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2",
+        "Synths 3",
+        "Keys"
+      ],
+      "loopActive": true,
+      "segmentName": "verse3"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2",
+        "Synths 3",
+        "Keys"
+      ],
+      "loopActive": true,
+      "segmentName": "verse4"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2"
+      ],
+      "loopActive": false,
+      "segmentName": "preChorus2"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths",
+        "Synths 2",
+        "Synths 3"
+      ],
+      "loopActive": false,
+      "segmentName": "chorus2"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths",
+        "Synths 2",
+        "Synths 3"
+      ],
+      "loopActive": false,
+      "segmentName": "chorus3"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths 2",
+        "PluckedSynths"
+      ],
+      "loopActive": false,
+      "segmentName": "break1"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths",
+        "Synths 2",
+        "Synths 3"
+      ],
+      "loopActive": false,
+      "segmentName": "chorus4"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths",
+        "Synths 2",
+        "Synths 3"
+      ],
+      "loopActive": false,
+      "segmentName": "chorus5"
+    },
+    {
+      "activeLanes": [
+        "Drums",
+        "Bass",
+        "Pad",
+        "Synths",
+        "Synths 2"
+      ],
+      "loopActive": false,
+      "segmentName": "outro"
+    }
+  ]
+}

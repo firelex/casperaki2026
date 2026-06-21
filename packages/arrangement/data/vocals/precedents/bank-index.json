@@ -1,0 +1,80 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Legacy-derived vocal precedent bank manifest. Maps canonical Casperaki genres + segmentType (verse / preChorus / chorus / bridge) → a melodic precedent bank + an optional rhythmic precedent bank + a per-style maxNote override. Mirrors `MelodyClass._getMergedRhythmicAndMelodicPrecedent` (vocals/MelodyClass.js lines 1098-1665) verbatim.",
+  "$legacySource": {
+    "dispatcher": "casperaki2-engine-js/api/v1.0/services/classes/vocals/MelodyClass.js:1098-1665 (_getMergedRhythmicAndMelodicPrecedent)",
+    "helper":     "casperaki2-engine-js/api/v1.0/services/classes/vocals/MelodyClass.js:984-1096 (_getMergedRhythmicAndMelodicPrecedentHelper)",
+    "merge":      "same function, lines 1494-1666 (drape + lift + buildTree)",
+    "banks":      "casperaki2-engine-js/api/v1.0/services/classes/vocals/offline/patterns/*.json @ 2026-06-07"
+  },
+  "banks": {
+    "stefan":               { "file": "mlDataRaw-stefan.json" },
+    "drLuke":               { "file": "mlDataRaw-drLuke.json" },
+    "schlager":             { "file": "mlDataRaw-schlager.json" },
+    "limitedRange":         { "file": "mlDataRaw-limitedRange.json" },
+    "rhythmic-ballad":      { "file": "mlDataRaw-rhythmic-ballad.json" },
+    "rhythmic-dance":       { "file": "mlDataRaw-rhythmic-dance.json" },
+    "rhythmic-latin":       { "file": "mlDataRaw-rhythmic-latin.json" },
+    "rhythmic-organicVibes":{ "file": "mlDataRaw-rhythmic-organicVibes.json" },
+    "rhythmic-urban":       { "file": "mlDataRaw-rhythmic-urban.json" },
+    "rhythmic-rock":        { "file": "mlDataRaw-rhythmic-rock.json" }
+  },
+  "$dispatcherNotes": {
+    "$1": "When `cheesy` is set, the dispatcher hard-overrides every genre to schlager (both melodic + rhythmic). The brain port does not yet surface a `cheesy` flag and so leaves the override out of the data table.",
+    "$2": "verse uses `limitedRange` and `maxNote = 55` for ballad / brightPop / latin / organicVibes / urban; `drLuke` and `maxNote = 55` for edm / schlager / rock.",
+    "$3": "chorus uses `schlager` for catchyness across every genre.",
+    "$4": "preChorus / bridge / other fall through to `stefan` (variety) except rock-preChorus which uses `drLuke`.",
+    "$5": "Rhythmic banks are tempo-windowed: ballad split at 80bpm, brightPop split at 113bpm, edm split at 133bpm, organicVibes split at 93bpm, rock-as-dance split at 115bpm. Each split takes the first or last `length - 5` slice — i.e. drops the slow or the fast 5 entries.",
+    "$6": "Rock-verse uniquely uses drLuke for BOTH melodic and rhythmic (legacy code line 1286 sets `rhythmicStructurePrecedents = drLukePrecedents`)."
+  },
+  "genres": {
+    "ballad": {
+      "verse":     { "melodic": "limitedRange", "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80, "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80 },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80 },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80 }
+    },
+    "brightPop": {
+      "verse":     { "melodic": "limitedRange", "rhythmic": "drLuke",          "rhythmicTempoSplit": 113, "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "drLuke",          "rhythmicTempoSplit": 113 },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "drLuke",          "rhythmicTempoSplit": 113 },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "drLuke",          "rhythmicTempoSplit": 113 }
+    },
+    "edm": {
+      "verse":     { "melodic": "drLuke",       "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133, "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133 },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133 },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133 }
+    },
+    "latin": {
+      "verse":     { "melodic": "limitedRange", "rhythmic": "rhythmic-latin", "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "rhythmic-latin" },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "rhythmic-latin" },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "rhythmic-latin" }
+    },
+    "organicVibes": {
+      "verse":     { "melodic": "limitedRange", "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93, "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93 },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93 },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93 }
+    },
+    "rock": {
+      "verse":     { "melodic": "drLuke",       "rhythmic": "drLuke", "maxNote": 55 },
+      "preChorus": { "melodic": "drLuke",       "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 115 },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 115 },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 115 }
+    },
+    "schlager": {
+      "verse":     { "melodic": "drLuke",       "rhythmic": "schlager", "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "schlager" },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "schlager" },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "schlager" }
+    },
+    "urban": {
+      "verse":     { "melodic": "limitedRange", "rhythmic": "rhythmic-urban", "maxNote": 55 },
+      "preChorus": { "melodic": "stefan",       "rhythmic": "rhythmic-urban" },
+      "chorus":    { "melodic": "schlager",     "rhythmic": "rhythmic-urban" },
+      "bridge":    { "melodic": "stefan",       "rhythmic": "rhythmic-urban" }
+    }
+  }
+}

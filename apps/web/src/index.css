@@ -1,0 +1,120 @@
+@import 'tailwindcss';
+
+/*
+ * Casperaki workbench theme.
+ *
+ * Tokens snapped to rory-fe (the legacy visual reference) so the new
+ * UI reads as a faithful first pass at that direction:
+ *   - editor canvas `#0D0D17`
+ *   - body fallback `#14151e` / `#0f1114`
+ *   - true brand red `#ff0000` (accent)
+ *   - six-hue instrument palette
+ *     red / cyan / lime / magenta / yellow / teal
+ *   - section type colors (Structure view)
+ *     verse `#f10b39`, break `#cc25c7`, chorus `#5a56df`,
+ *     default `#e91058`
+ *   - muted blue text `#8f9db0`
+ *
+ * Density is dialed for a workbench: 12–15px type, mono numerals,
+ * pill chips. No marketing surfaces.
+ */
+@theme {
+  --color-bg: #0d0d17;
+  --color-canvas: #14151e;
+  --color-panel: #1a1d27;
+  --color-panel-2: #20252e;
+  --color-line: #2e323b;
+  --color-line-2: #3a3f4a;
+  --color-fg: #ffffff;
+  --color-muted: #8f9db0;
+  --color-dim: #7e8694;
+  --color-dim-2: #616a79;
+
+  --color-accent: #ff0000;
+  --color-accent-soft: rgba(255, 0, 0, 0.18);
+
+  /* Six-hue instrument strip (rory `.colour-icon.colour-0…5`) */
+  --color-c0: #ff0000; /* drums */
+  --color-c1: #00c2ff; /* bass */
+  --color-c2: #61ff00; /* keys */
+  --color-c3: #ad00ff; /* pad */
+  --color-c4: #ffe500; /* vocal */
+  --color-c5: #2cd5c2; /* other */
+
+  /* Section types (rory Structure.vue) */
+  --color-seg-verse: #f10b39;
+  --color-seg-break: #cc25c7;
+  --color-seg-chorus: #5a56df;
+  --color-seg-bridge: #e91058;
+  --color-seg-intro: #2cd5c2;
+  --color-seg-outro: #ad00ff;
+  --color-seg-prechorus: #ffe500;
+
+  --color-ok: #61ff00;
+  --color-warn: #ffe500;
+  --color-err: #ff0000;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular,
+    Menlo, Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Compact scrollbars suit a dense workbench. */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-line-2);
+}
+
+/* Drag-scrolled rails (Sound Design, Timeline) hide their scrollbars. */
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Rory-fe-style background gradient glow used behind the editor. */
+.glow-bg::before,
+.glow-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(255, 0, 0, 0.07),
+    transparent 60%
+  );
+  z-index: 0;
+}
+
+.glow-bg::after {
+  background-image: radial-gradient(
+    ellipse at 20% 80%,
+    rgba(99, 88, 255, 0.06),
+    transparent 60%
+  );
+}

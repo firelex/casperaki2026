@@ -1,0 +1,234 @@
+{
+    "busyness": "3",
+    "id": 100,
+    "ids": {
+        "bassDrum1": 26949,
+        "bassDrum2": 26929,
+        "clap": 27252,
+        "crash1": 27602,
+        "crash2": 27612,
+        "hiHatClosed1": 27350,
+        "hiHatClosed2": 27412,
+        "hiHatOpen": 27483,
+        "hiHatPedal": 27384,
+        "ride": 27673,
+        "shaker": 27770,
+        "snap": 27254,
+        "snareDrum1": 27175,
+        "snareDrum2": 27129,
+        "tom1": 27540,
+        "tom2": 27530,
+        "tom3": 27543
+    },
+    "lowLevelType": "drums",
+    "name": "Drums",
+    "patternStyle": "brightPop",
+    "shortName": "drums",
+    "subInstruments": {
+        "bassDrum1": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "BGE_05_Kick_02"
+            },
+            "id": 26949,
+            "instrumentGroup": "kickDrums",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "kickDrumsElectronic",
+            "type": "kickDrums"
+        },
+        "bassDrum2": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "toontrackSuperiorDrummer - Hansa Live"
+            },
+            "id": 26929,
+            "instrumentGroup": "kickDrums",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "kickDrumsAcoustic",
+            "type": "kickDrums"
+        },
+        "clap": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "bigZ - Clap_24"
+            },
+            "id": 27252,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "clapsSnapsClapsElectronic",
+            "type": "clapsSnaps"
+        },
+        "crash1": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "vengeance - VPE2 Crash 09"
+            },
+            "id": 27602,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "cymbalsCrashHit",
+            "type": "cymbals"
+        },
+        "crash2": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "bigZ - Crash_4"
+            },
+            "id": 27612,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "cymbalsCrashHit",
+            "type": "cymbals"
+        },
+        "hiHatClosed1": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "toontrackSuperiorDrummer - Hansa Live Room HH Close"
+            },
+            "id": 27350,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "hiHatsClosedAcoustic",
+            "type": "hiHatsClosed"
+        },
+        "hiHatClosed2": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "vengeance - VEH3 Closed Hihats 097"
+            },
+            "id": 27412,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "hiHatsClosedElectronic",
+            "type": "hiHatsClosed"
+        },
+        "hiHatOpen": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "bigZ - Open_Hat_19"
+            },
+            "id": 27483,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "hiHatsOpenElectronic",
+            "type": "hiHatsOpen"
+        },
+        "hiHatPedal": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "SIDHH36"
+            },
+            "id": 27384,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "hiHatsClosedElectronic",
+            "type": "hiHatsClosed"
+        },
+        "ride": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "rideCymbal2"
+            },
+            "id": 27673,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "cymbalsRideBell",
+            "type": "cymbals"
+        },
+        "shaker": {
+            "details": {
+                "LUFS": "6",
+                "vstPlugin": "bigZ - Shaker_2"
+            },
+            "id": 27770,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "shakersElectronic",
+            "type": "shakers"
+        },
+        "snap": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "bigZ - Clap_27"
+            },
+            "id": 27254,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "clapsSnapsClapsElectronic",
+            "type": "clapsSnaps"
+        },
+        "snareDrum1": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "drLuke - ET Snare1"
+            },
+            "id": 27175,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "snareDrumsElectronic",
+            "type": "snareDrums"
+        },
+        "snareDrum2": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "bigZ - Snare_9"
+            },
+            "id": 27129,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "snareDrumsElectronic",
+            "type": "snareDrums"
+        },
+        "tom1": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "Kit5 tom2"
+            },
+            "id": 27540,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "tomsAcoustic",
+            "type": "toms"
+        },
+        "tom2": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "Kit2 tom3"
+            },
+            "id": 27530,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "tomsAcoustic",
+            "type": "toms"
+        },
+        "tom3": {
+            "details": {
+                "LUFS": "18",
+                "vstPlugin": "Kit6 tom1"
+            },
+            "id": 27543,
+            "instrumentGroup": "restOfDrumsAndLoops",
+            "isSample": true,
+            "isVst": false,
+            "lowLevelType": "tomsAcoustic",
+            "type": "toms"
+        }
+    },
+    "type": "drums"
+}

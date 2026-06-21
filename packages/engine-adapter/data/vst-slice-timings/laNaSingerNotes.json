@@ -1,0 +1,131 @@
+[{
+	"start": "00.04",
+	"end": "00.08",
+	"type": "longNote",
+	"note": "c2"
+}, {
+	"start": "00.08",
+	"end": "00.12",
+	"type": "longNote",
+	"note": "d#2"
+}, {
+	"start": "00.12",
+	"end": "00.16",
+	"type": "longNote",
+	"note": "f#2"
+}, {
+	"start": "00.16",
+	"end": "00.20",
+	"type": "longNote",
+	"note": "a2"
+}, {
+	"start": "00.20",
+	"end": "00.24",
+	"type": "longNote",
+	"note": "c3"
+}, {
+	"start": "00.24",
+	"end": "00.28",
+	"type": "longNote",
+	"note": "d#3"
+}, {
+	"start": "00.28",
+	"end": "00.32",
+	"type": "longNote",
+	"note": "f#3"
+}, {
+	"start": "00.32",
+	"end": "00.36",
+	"type": "longNote",
+	"note": "a3"
+}, {
+	"start": "00.36",
+	"end": "00.40",
+	"type": "longNote",
+	"note": "c4"
+}, {
+	"start": "00.40",
+	"end": "00.44",
+	"type": "longNote",
+	"note": "d#4"
+}, {
+	"start": "00.44",
+	"end": "00.48",
+	"type": "longNote",
+	"note": "f#4"
+}, {
+	"start": "00.48",
+	"end": "00.52",
+	"type": "longNote",
+	"note": "a4"
+}, {
+	"start": "00.52",
+	"end": "00.56",
+	"type": "longNote",
+	"note": "c5"
+}, {
+	"start": "00.56",
+	"end": "00.57",
+	"type": "shortNote",
+	"note": "c2"
+}, {
+	"start": "00.57",
+	"end": "00.58",
+	"type": "shortNote",
+	"note": "d#2"
+}, {
+	"start": "00.58",
+	"end": "00.59",
+	"type": "shortNote",
+	"note": "f#2"
+}, {
+	"start": "00.59",
+	"end": "01.00.00",
+	"type": "shortNote",
+	"note": "a2"
+}, {
+	"start": "01.00.00",
+	"end": "01.01.00",
+	"type": "shortNote",
+	"note": "c3"
+}, {
+	"start": "01.01.00",
+	"end": "01.02.00",
+	"type": "shortNote",
+	"note": "d#3"
+}, {
+	"start": "01.02.00",
+	"end": "01.03.00",
+	"type": "shortNote",
+	"note": "f#3"
+}, {
+	"start": "01.03.00",
+	"end": "01.04.00",
+	"type": "shortNote",
+	"note": "a3"
+}, {
+	"start": "01.04.00",
+	"end": "01.05.00",
+	"type": "shortNote",
+	"note": "c4"
+}, {
+	"start": "01.05.00",
+	"end": "01.06.00",
+	"type": "shortNote",
+	"note": "d#4"
+}, {
+	"start": "01.06.00",
+	"end": "01.07.00",
+	"type": "shortNote",
+	"note": "f#4"
+}, {
+	"start": "01.07.00",
+	"end": "01.08.00",
+	"type": "shortNote",
+	"note": "a4"
+}, {
+	"start": "01.08.00",
+	"end": "01.09.00",
+	"type": "shortNote",
+	"note": "c5"
+}]

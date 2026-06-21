@@ -1,0 +1,93 @@
+{
+  "$description": "Legacy-derived chord-comping patterns for the keys family. Each pattern covers two 4/4 bars. A 'hit' is one chord-event slot: {beats: <pool>, duration: <number|lengthCategoryKey>}. At generation time the generator picks one beat from `beats` via rng (legacy Tools.selectRandomly(beats)) and, if `duration` is a string, looks it up in bank-index.json#lengthDurations and picks one element via rng (legacy short → [0.25, 0.5], medium → [1], long → [2, 3]). Patterns enumerate the deterministic subset of ChordsPianoPatternGeneratorClass.createPianoPattern (classic style2 + straight style2 × busyness 1/2/3 × longChords/shortChords). busyness=2 firstHalf/secondHalf, funky, longAndShortChords, and the leftHand/rightHand voicing distinction are deferred (see docs/53x).",
+  "patterns": [
+    {
+      "id": "classicBusy1",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='classic' busyness=1 (single whole-bar chord)",
+      "bars": [
+        [ { "beats": [0], "duration": 4 } ],
+        [ { "beats": [0], "duration": 4 } ]
+      ]
+    },
+    {
+      "id": "classicBusy2",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='classic' busyness=2 (half-bar chords on beats 0 and 2)",
+      "bars": [
+        [ { "beats": [0], "duration": 2 }, { "beats": [2], "duration": 2 } ],
+        [ { "beats": [0], "duration": 2 }, { "beats": [2], "duration": 2 } ]
+      ]
+    },
+    {
+      "id": "classicBusy3",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='classic' busyness=3 (quarter chords on every beat)",
+      "bars": [
+        [
+          { "beats": [0], "duration": 1 },
+          { "beats": [1], "duration": 1 },
+          { "beats": [2], "duration": 1 },
+          { "beats": [3], "duration": 1 }
+        ],
+        [
+          { "beats": [0], "duration": 1 },
+          { "beats": [1], "duration": 1 },
+          { "beats": [2], "duration": 1 },
+          { "beats": [3], "duration": 1 }
+        ]
+      ]
+    },
+    {
+      "id": "straightLongBusy1",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='straight' style='longChords' busyness=1",
+      "bars": [
+        [ { "beats": [0, 1], "duration": "long" } ],
+        [ { "beats": [0, 1], "duration": "long" } ]
+      ]
+    },
+    {
+      "id": "straightShortBusy1",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='straight' style='shortChords' busyness=1",
+      "bars": [
+        [
+          { "beats": [0, 0.5, 1, 1.5], "duration": "short" },
+          { "beats": [2, 2.5, 3, 3.5], "duration": "short" }
+        ],
+        [
+          { "beats": [0, 0.5, 1, 1.5], "duration": "short" },
+          { "beats": [2, 2.5, 3, 3.5], "duration": "short" }
+        ]
+      ]
+    },
+    {
+      "id": "straightLongBusy3",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='straight' style='longChords' busyness=3",
+      "bars": [
+        [
+          { "beats": [0, 0.5, 1], "duration": "medium" },
+          { "beats": [2, 2.5, 3], "duration": "medium" }
+        ],
+        [
+          { "beats": [0, 0.5, 1], "duration": "medium" },
+          { "beats": [2, 2.5, 3], "duration": "medium" }
+        ]
+      ]
+    },
+    {
+      "id": "straightShortBusy3",
+      "legacySource": "ChordsPianoPatternGeneratorClass#createPianoPattern style2='straight' style='shortChords' busyness=3",
+      "bars": [
+        [
+          { "beats": [0, 0.5], "duration": "short" },
+          { "beats": [1, 1.5], "duration": "short" },
+          { "beats": [2, 2.5], "duration": "short" },
+          { "beats": [3, 3.5], "duration": "short" }
+        ],
+        [
+          { "beats": [0, 0.5], "duration": "short" },
+          { "beats": [1, 1.5], "duration": "short" },
+          { "beats": [2, 2.5], "duration": "short" },
+          { "beats": [3, 3.5], "duration": "short" }
+        ]
+      ]
+    }
+  ]
+}

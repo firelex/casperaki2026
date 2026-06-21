@@ -1,0 +1,174 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Legacy-derived drum fill pattern bank — a faithful port of FillGeneratorClass._addSmallFill / _addMediumFill / _addBigFill (casperaki2-engine-js). Each category (smallFill / mediumFill / bigFill) splits into an `edm` style branch (genre in {edm,brightPop,schlager} — legacy `[ 'edm','brightPop','schlager' ].includes(parameters.style)`) and a `default` (non-EDM) branch. Each branch is a weighted pool of variants; a variant is an ordered list of steps. A `step` is either an `add` (always overlay one chosen lane/grid) or a `choice` (legacy `Tools.selectRandomly([0..count-1])` — apply the matched case's adds, or nothing). `lanes`/`grids` arrays are uniform `selectRandomly` pools. `composeFrom` first composes a randomly-picked variant from that category's named pool (legacy `expandMiddleFill` = mediumFill + a fill intro). Grids are legacy verbatim 32nd-note ASCII (8 slots/beat; spaces are beat separators, stripped before overlay). A grid is overlaid at slot (4 + beat) * 8 — legacy `_addHits` with bar=1 and a negative `beat` (=4+beat); a grid that runs past slot 32 grows the lane string exactly as legacy does (e.g. the EDM clap beat:-1 cases).",
+  "$legacySource": {
+    "edmBranch": "FillGeneratorClass.js _addSmallFill/_addMediumFill/_addBigFill EDM block (switch 0-4) — identical across all three sizes (:31-67,:140-176,:231-267)",
+    "smallFill_default": "FillGeneratorClass.js#_addSmallFill non-EDM (focusOnSnareDrum x3 / focusOnKickDrum — :69-130)",
+    "mediumFill_default": "FillGeneratorClass.js#_addMediumFill non-EDM (tom cases 0-4 + flam — :178-225)",
+    "bigFill_default": "FillGeneratorClass.js#_addBigFill non-EDM (expandMiddleFill x2 / standaloneFill — :269-409). NB: the legacy standaloneFill switch is selectRandomly([0,1]); cases 2-7 (:355-403) are unreachable dead code and are intentionally NOT ported (parity = match legacy live behaviour)."
+  },
+  "$gridLength": 32,
+  "categories": {
+    "smallFill": {
+      "edm": [
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -1, "grids": ["0000x000 0000x000"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -1, "grids": ["0000x000 0000x0x0"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x000 0000x000"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x0x0 0000x0x0"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x0x0 0000x0xx"] } } ] }
+      ],
+      "default": [
+        {
+          "weight": 3,
+          "steps": [
+            { "add": { "lanes": ["snareDrum1"], "beat": -2, "grids": ["0000x000 x000x000", "0000x000 x000x0x0", "x000x000 x000x0x0"] } },
+            { "choice": { "count": 2, "cases": { "1": [ { "lanes": ["hiHatClosed1", "hiHatOpen"], "beat": -2, "grids": ["0000x000 x0000000"] } ] } } },
+            { "choice": { "count": 5, "cases": {
+              "1": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["0000000x"] } ],
+              "2": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["000000xx"] } ],
+              "3": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["00x000x0"] } ],
+              "4": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["00x000xx"] } ]
+            } } }
+          ]
+        },
+        {
+          "weight": 1,
+          "steps": [
+            { "add": { "lanes": ["hiHatOpen"], "beat": -3, "grids": ["0000x000 0000x000"] } },
+            { "add": { "lanes": ["bassDrum1"], "beat": -2, "grids": ["x0000000 x0000000"] } },
+            { "add": { "lanes": ["snareDrum1"], "beat": -1, "grids": ["00000000", "0000x000", "0000x0x0"] } }
+          ]
+        }
+      ]
+    },
+    "mediumFill": {
+      "edm": [
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -1, "grids": ["0000x000 0000x000"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -1, "grids": ["0000x000 0000x0x0"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x000 0000x000"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x0x0 0000x0x0"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x0x0 0000x0xx"] } } ] }
+      ],
+      "default": [
+        { "steps": [
+          { "add": { "lanes": ["snareDrum1"], "beat": -1, "grids": ["x0000000"] } },
+          { "add": { "lanes": ["tom1"], "beat": -1, "grids": ["00x00000"] } },
+          { "add": { "lanes": ["tom2", "tom3"], "beat": -1, "grids": ["0000x0x0"] } },
+          { "choice": { "count": 3, "cases": {
+            "1": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["0000000x"] } ],
+            "2": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["000000xx"] } ]
+          } } }
+        ] },
+        { "steps": [
+          { "add": { "lanes": ["snareDrum1"], "beat": -1, "grids": ["00x00000"] } },
+          { "add": { "lanes": ["tom1"], "beat": -1, "grids": ["x0000000"] } },
+          { "add": { "lanes": ["tom2", "tom3"], "beat": -1, "grids": ["0000x0x0"] } },
+          { "choice": { "count": 3, "cases": {
+            "1": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["0000000x"] } ],
+            "2": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["000000xx"] } ]
+          } } }
+        ] },
+        { "steps": [
+          { "add": { "lanes": ["snareDrum1"], "beat": -1, "grids": ["x0x00000"] } },
+          { "add": { "lanes": ["tom2", "tom3"], "beat": -1, "grids": ["0000x0x0"] } },
+          { "choice": { "count": 3, "cases": {
+            "1": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["0000000x"] } ],
+            "2": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["000000xx"] } ]
+          } } }
+        ] },
+        { "steps": [
+          { "add": { "lanes": ["snareDrum1"], "beat": -1, "grids": ["x0x000x0"] } },
+          { "add": { "lanes": ["tom2", "tom3"], "beat": -1, "grids": ["0000x000"] } },
+          { "choice": { "count": 3, "cases": {
+            "1": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["0000000x"] } ],
+            "2": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["000000xx"] } ]
+          } } }
+        ] },
+        { "steps": [
+          { "add": { "lanes": ["hiHatClosed1", "hiHatOpen"], "beat": -1, "grids": ["x0000000"] } },
+          { "add": { "lanes": ["snareDrum1"], "beat": -1, "grids": ["00x0x0x0"] } },
+          { "choice": { "count": 3, "cases": {
+            "1": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["0000000x"] } ],
+            "2": [ { "lanes": ["snareDrum2"], "beat": -2, "grids": ["000000xx"] } ]
+          } } }
+        ] }
+      ]
+    },
+    "bigFill": {
+      "edm": [
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -1, "grids": ["0000x000 0000x000"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -1, "grids": ["0000x000 0000x0x0"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x000 0000x000"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x0x0 0000x0x0"] } } ] },
+        { "steps": [ { "add": { "lanes": ["clap"], "beat": -2, "grids": ["0000x000 0000x000", "0000x0x0 0000x0xx"] } } ] }
+      ],
+      "default": [
+        {
+          "weight": 2,
+          "composeFrom": "mediumFill",
+          "steps": [
+            { "choice": { "count": 9, "cases": {
+              "0": [ { "lanes": ["snareDrum2"], "beat": -4, "grids": ["00x0x000 00x000x0 00x0x0x- 00000000"] } ],
+              "1": [ { "lanes": ["snareDrum2"], "beat": -4, "grids": ["00x000x0 00x0x000 00x0x0x- 00000000"] } ],
+              "2": [
+                { "lanes": ["snareDrum1"], "beat": -2, "grids": ["x0x000x0"] },
+                { "lanes": ["tom1", "tom2"], "beat": -3, "grids": ["000000xx"] },
+                { "lanes": ["bassDrum1"], "beat": -2, "grids": ["0000x000 00000000"] }
+              ],
+              "3": [
+                { "lanes": ["snareDrum1"], "beat": -4, "grids": ["0000x0x0 x0x00000 x0x000x0"] },
+                { "lanes": ["bassDrum1"], "beat": -3, "grids": ["0000x000 0000x000 00000000"] }
+              ],
+              "4": [
+                { "lanes": ["hiHatOpen"], "beat": -2, "grids": ["0000x000"] },
+                { "lanes": ["bassDrum1"], "beat": -2, "grids": ["------x0"] }
+              ],
+              "5": [
+                { "lanes": ["hiHatOpen"], "beat": -2, "grids": ["0000x000"] },
+                { "lanes": ["bassDrum1"], "beat": -2, "grids": ["x0x000x0"] }
+              ],
+              "6": [
+                { "lanes": ["snareDrum1"], "beat": -4, "grids": ["0000x000 00000000 x0x00000"] },
+                { "lanes": ["tom1", "tom2"], "beat": -4, "grids": ["000000x0"] },
+                { "lanes": ["tom2", "tom3"], "beat": -3, "grids": ["x0x00000"] },
+                { "lanes": ["bassDrum1"], "beat": -3, "grids": ["000000x0 0000x0x0"] }
+              ],
+              "7": [
+                { "lanes": ["snareDrum1"], "beat": -4, "grids": ["x0000000 0000x000 0000x000"] },
+                { "lanes": ["tom1", "tom2"], "beat": -4, "grids": ["00x00000 000000x0"] },
+                { "lanes": ["tom3"], "beat": -4, "grids": ["0000x0x0"] },
+                { "lanes": ["bassDrum1"], "beat": -3, "grids": ["00x00000 x0x000x0"] }
+              ],
+              "8": [
+                { "lanes": ["hiHatClosed1", "hiHatOpen"], "beat": -2, "grids": ["x000x000"] },
+                { "lanes": ["bassDrum1"], "beat": -2, "grids": ["x000x000"] }
+              ]
+            } } }
+          ]
+        },
+        {
+          "weight": 1,
+          "steps": [
+            { "choice": { "count": 2, "cases": {
+              "0": [
+                { "lanes": ["hiHatClosed1", "hiHatOpen"], "beat": -4, "grids": ["x0000000"] },
+                { "lanes": ["snareDrum1"], "beat": -4, "grids": ["0000x000 0000x0x0 00000000 00000000"] },
+                { "lanes": ["tom1", "tom2"], "beat": -3, "grids": ["x0000000 0000x000"] },
+                { "lanes": ["tom2", "tom3"], "beat": -1, "grids": ["x000x0x0"] },
+                { "lanes": ["bassDrum1"], "beat": -4, "grids": ["x0000000 00000000 x0x00000 00000000"] }
+              ],
+              "1": [
+                { "lanes": ["hiHatClosed1", "hiHatOpen"], "beat": -4, "grids": ["x0000000"] },
+                { "lanes": ["snareDrum1"], "beat": -4, "grids": ["00000000 0000x0x0 00000000 x0000000"] },
+                { "lanes": ["snareDrum2"], "beat": -4, "grids": ["00x000x0 00x00000 000000x0 00x00000"] },
+                { "lanes": ["tom1", "tom2"], "beat": -4, "grids": ["0000x000 00000000 0000x000"] },
+                { "lanes": ["tom2", "tom3"], "beat": -1, "grids": ["0000x0x0"] },
+                { "lanes": ["bassDrum1"], "beat": -4, "grids": ["x0000000 00000000 x0x00000 00000000"] }
+              ]
+            } } }
+          ]
+        }
+      ]
+    }
+  }
+}

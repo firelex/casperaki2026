@@ -1,0 +1,26 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Maps catalog families (InstrumentSheetFamily) to the legacy mp3split timing JSON used to slice the per-preset chromatic-scale recording into per-note vstsample slots. Imported from casperaki2-engine-js/api/v1.0/services/data/vstPreviews/rppFiles/ — see docs/54l.",
+  "families": {
+    "basses": "bassNotes",
+    "keys": "pianoNotes",
+    "synths": "padAndSynthNotes",
+    "leadSynths": "padAndSynthNotes",
+    "popStrings": "padAndSynthNotes",
+    "orchestral": "padAndSynthNotes",
+    "popBrass": "padAndSynthNotes",
+    "acousticGuitars": "guitarNotes",
+    "electricGuitars": "guitarNotes",
+    "vocals": "laNaSingerNotes"
+  },
+  "notes": {
+    "basses": "Imported verbatim from legacy vstSamples.controller.create switch (basses → bassNotes).",
+    "keys": "Imported verbatim (keys → pianoNotes). Also covered kickDrums/snareDrums in legacy but those families use the playsample mechanic in our pipeline, not vstsample.",
+    "synths_leadSynths": "Imported verbatim (synths/leadSynths → padAndSynthNotes).",
+    "popStrings_orchestral_popBrass": "Mapped to padAndSynthNotes by musical convention — sustained tonal instruments share the chromatic-scale rendering. Legacy switch is not explicit for these families; the canonical preset file durations match the padAndSynthNotes 81.6s timing (verified for popStrings/popLowStringsLegato/Basses Legato.mp3 = 82.65s).",
+    "guitars": "Imported verbatim (acousticGuitars/electricGuitars → guitarNotes). Note: this covers SINGLE-NOTE multisamples only. Guitar CHORDS are played from a separate chord-file pipeline (longChords/mediumChords/shortChords + GuitarChord positional MIDI) — deferred to Stage 2.",
+    "vocals": "Imported verbatim (mapped to laNaSingerNotes). Vocal rendering itself is deferred (post-port), so this entry is reference only until the vocal adapter ships.",
+    "drumComponents": "kickDrums / snareDrums / hiHatsClosed / hiHatsOpen / cymbals / toms / shakers / clapsSnaps / percussionBreaks / percussionLoops / percussionMisc / drumKits are intentionally absent — drum components are staged via playsample-<id> (one-shot triggers), not vstsample multisamples.",
+    "fx": "fx is intentionally absent — fx uses key/bpm whole-file variants handled by the asset-resolver (docs/53s)."
+  }
+}

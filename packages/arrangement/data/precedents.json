@@ -1,0 +1,17 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Phase-3 vertical-slice scaffolding. NO LONGER READ AT RUNTIME — post-53r the chord generator's entire output is bank-derived (verse/preChorus/chorus from one bank pick per role; intro/bridge/break/outro inherit a role pick per the generator's small Pass-2 placeholder table). This file is kept on disk for historical / diff-trace value; deleting it requires explicit confirmation. See docs/53r.",
+  "brightPop_default": {
+    "name": "brightPop_default",
+    "description": "brightPop slice precedent. Templates: intro tonic-centred, verse ii-V-I-I, preChorus vi-IV-I-V, chorus I-V-vi-IV (classic 'Axis' progression), bridge vi-IV-I-V, break tonic, outro I-vi-IV-I. Same key-agnostic roman numerals every structure precedent in the default pool can consume.",
+    "byType": {
+      "intro":     ["I",  "V",  "vi", "IV"],
+      "verse":     ["ii", "V",  "I",  "I"],
+      "preChorus": ["vi", "IV", "I",  "V"],
+      "chorus":    ["I",  "V",  "vi", "IV"],
+      "bridge":    ["vi", "IV", "I",  "V"],
+      "break":     ["I"],
+      "outro":     ["I",  "vi", "IV", "I"]
+    }
+  }
+}

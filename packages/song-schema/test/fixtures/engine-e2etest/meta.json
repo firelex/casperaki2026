@@ -1,0 +1,12 @@
+{
+  "source": "casperaki_engine/Source/tests/e2etest",
+  "sourceCommit": "external",
+  "envelope": "engine",
+  "structureKey": "songStructure",
+  "tempoKey": "tempo",
+  "redactions": [],
+  "knownDeviations": [
+    "Single-line JSON (no whitespace) — round-trip checks bytes after canonicalization, not before.",
+    "Stefan_edm1.json has tempo as a string (\"124\") — adapter coerces to number."
+  ]
+}

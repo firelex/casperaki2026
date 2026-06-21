@@ -1,0 +1,46 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Tiny hand-authored fixture catalog for the Phase 3 vertical slice. Four rows, one per pop family. Step 9 replaces this with apps/brain/data/catalog.sqlite seeded from a similar source. Field names anticipate the legacy mapping (family/lowLevelType/instrumentGroup/sampleStrategy) so step-6 pattern generators can key off them without renaming.",
+  "instruments": [
+    {
+      "id": "dev-drums-pop-01",
+      "name": "Studio Pop Kit",
+      "family": "drums",
+      "type": "AcousticDrumKit",
+      "lowLevelType": "DrumKit",
+      "instrumentGroup": "Drums",
+      "sampleStrategy": "multi-velocity-roundrobin",
+      "tags": ["pop", "studio", "acoustic"]
+    },
+    {
+      "id": "dev-bass-pop-01",
+      "name": "Pop Electric Bass",
+      "family": "bass",
+      "type": "ElectricBassFinger",
+      "lowLevelType": "Bass",
+      "instrumentGroup": "Bass",
+      "sampleStrategy": "round-robin-velocity",
+      "tags": ["pop", "electric", "finger"]
+    },
+    {
+      "id": "dev-keys-pop-01",
+      "name": "Concert Grand Piano",
+      "family": "keys",
+      "type": "AcousticGrandPiano",
+      "lowLevelType": "Piano",
+      "instrumentGroup": "Keys",
+      "sampleStrategy": "velocity-layered",
+      "tags": ["pop", "grand", "acoustic"]
+    },
+    {
+      "id": "dev-pad-pop-01",
+      "name": "Warm Analog Pad",
+      "family": "pad",
+      "type": "SynthPadWarm",
+      "lowLevelType": "Pad",
+      "instrumentGroup": "Pads",
+      "sampleStrategy": "sustained-poly",
+      "tags": ["pop", "synth", "warm"]
+    }
+  ]
+}

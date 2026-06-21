@@ -1,0 +1,22 @@
+{
+  "$schemaVersion": 1,
+  "$description": "popStrings (orchestral pop strings) pattern bank. Legacy has a single string style ('library'; config.json#defaultStyleMappings.stringPatterns maps every genre to ['library']); the genre dispatch + bpm-band filtering live INSIDE LibraryStringPatternGeneratorClass.js (the switch on parameters.genre, then `e.bpm==='any' || bpmLow<=bpm<=bpmHigh`). We model that as one style file per dispatched genre bucket (ballad / edm / organicVibes) and map each canonical genre to its bucket via genreStyles. Per-pattern bpmLow/bpmHigh (when bpm!=='any') drive the bpm-band filter in selectOrchestralPattern. Each pattern emits `noteRelative` events with octave-centering (adjustment = -12*round(avgPosition/numNotes/12), LibraryStringPatternGeneratorClass.js:70-99); the legacy bpm adjustmentFactor is fixed at 1.",
+  "$legacySource": {
+    "generator": "casperaki2-engine-js/api/v1.0/services/classes/patterns/stringPatterns/{StringPatternGeneratorClass,LibraryStringPatternGeneratorClass}.js",
+    "styleMap": "casperaki2-engine-js/api/v1.0/services/classes/config/config.json#defaultStyleMappings.stringPatterns (all genres -> ['library']; genre dispatch is internal: ballad->ballad, edm/schlager->edm, organicVibes/urban/accented->organicVibes)",
+    "bank": "casperaki2-engine-js/api/v1.0/services/classes/patterns/stringPatterns/stringPatterns.json (231 patterns: ballad 60, edm 60, organicVibes 111)",
+    "extractedAt": "2026-06-16"
+  },
+  "styles": {
+    "ballad": { "file": "ballad.json" },
+    "edm": { "file": "edm.json" },
+    "organicVibes": { "file": "organicVibes.json" }
+  },
+  "genreStyles": {
+    "ballad": ["ballad"],
+    "edm": ["edm"],
+    "schlager": ["edm"],
+    "organicVibes": ["organicVibes"],
+    "urban": ["organicVibes"]
+  }
+}

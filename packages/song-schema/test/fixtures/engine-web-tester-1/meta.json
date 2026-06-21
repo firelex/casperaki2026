@@ -1,0 +1,11 @@
+{
+  "source": "casperaki_engine/LibWASM/casperaki-web-tester/src/assets/songs/1",
+  "sourceCommit": "external",
+  "envelope": "engine",
+  "structureKey": "structure",
+  "tempoKey": "tempo",
+  "redactions": [],
+  "knownDeviations": [
+    "Uses 'structure' (not 'songStructure') and 'tempo' (not 'bpm'); adapter normalizes."
+  ]
+}

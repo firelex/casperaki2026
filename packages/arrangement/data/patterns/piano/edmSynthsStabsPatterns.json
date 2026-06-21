@@ -1,0 +1,1661 @@
+{
+  "ballad": [],
+  "edm": [
+	{
+	  "name": "EDM/Lead synths bright/1/Lead synth pattern 1.mid",
+	  "bpm": 120,
+	  "leftHandNotes": {
+		"0.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"0.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"4.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"12.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"12.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		]
+	  },
+	  "rightHandNotes": {
+		"0.0": [
+		  {
+			"position": 21,
+			"duration": 0.25
+		  },
+		  {
+			"position": 16,
+			"duration": 0.25
+		  },
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		],
+		"0.75": [
+		  {
+			"position": 21,
+			"duration": 0.25
+		  },
+		  {
+			"position": 16,
+			"duration": 0.25
+		  },
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": 16,
+			"duration": 0.25
+		  },
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"4.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": 21,
+			"duration": 0.25
+		  },
+		  {
+			"position": 16,
+			"duration": 0.25
+		  },
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		],
+		"12.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"12.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": 21,
+			"duration": 0.25
+		  },
+		  {
+			"position": 16,
+			"duration": 0.25
+		  },
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		]
+	  }
+	},
+	{
+	  "name": "EDM/Lead synths bright/1/Lead synth pattern 2.mid",
+	  "bpm": 120,
+	  "leftHandNotes": {
+		"0.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"0.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"2.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"4.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"6.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"7.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"10.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"12.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"12.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"14.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"15.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		]
+	  },
+	  "rightHandNotes": {
+		"0.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"0.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"2.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"4.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"6.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"7.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"10.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"12.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"12.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"14.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"15.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		]
+	  }
+	},
+	{
+	  "name": "EDM/Lead synths bright/1/Lead synth pattern 3.mid",
+	  "bpm": 120,
+	  "leftHandNotes": {
+		"0.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"0.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"3.0": [],
+		"3.25": [],
+		"3.5": [],
+		"4.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"4.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"11.0": [],
+		"11.25": [],
+		"11.5": [],
+		"12.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"12.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		]
+	  },
+	  "rightHandNotes": {
+		"0.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"0.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"3.0": [
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"3.25": [
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"4.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"11.0": [
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"11.25": [
+		  {
+			"position": 9,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  }
+		],
+		"12.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"12.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		]
+	  }
+	},
+	{
+	  "name": "EDM/Lead synths bright/1/Lead synth pattern 4.mid",
+	  "bpm": 120,
+	  "leftHandNotes": {
+		"0.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"1.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"2.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"2.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"5.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"6.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"6.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"9.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"10.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"10.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"13.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"14.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"14.75": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		]
+	  },
+	  "rightHandNotes": {
+		"0.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"1.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"2.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"2.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"5.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"6.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"6.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"9.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"10.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"10.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"13.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"14.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"14.75": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		]
+	  }
+	},
+	{
+	  "name": "EDM/Lead synths bright/1/Lead synth pattern 5.mid",
+	  "bpm": 120,
+	  "leftHandNotes": {
+		"0.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"1.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"2.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"5.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"6.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"7.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"9.0": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"10.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"12.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"14.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		],
+		"15.5": [
+		  {
+			"position": -15,
+			"duration": 0.25
+		  }
+		]
+	  },
+	  "rightHandNotes": {
+		"0.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"1.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"1.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"2.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"3.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"4.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"5.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"5.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"6.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"7.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"8.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"9.0": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"9.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"10.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"11.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"12.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"13.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"14.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		],
+		"15.5": [
+		  {
+			"position": 13,
+			"duration": 0.25
+		  },
+		  {
+			"position": 9,
+			"duration": 0.25
+		  },
+		  {
+			"position": 4,
+			"duration": 0.25
+		  }
+		]
+	  }
+	}
+  ],
+  "latin": [],
+  "brightPop": [],
+  "organicVibes": [],
+  "rock": [],
+  "schlager": [],
+  "urban": []
+}

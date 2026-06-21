@@ -1,0 +1,86 @@
+[{
+	"start": "00.00",
+	"end": "00.04.80",
+	"type": "longNote",
+	"note": "c2"
+}, {
+	"start": "00.04.80",
+	"end": "00.09.60",
+	"type": "longNote",
+	"note": "d#2"
+}, {
+	"start": "00.09.60",
+	"end": "00.14.40",
+	"type": "longNote",
+	"note": "f#2"
+}, {
+	"start": "00.14.40",
+	"end": "00.19.20",
+	"type": "longNote",
+	"note": "a2"
+}, {
+	"start": "00.19.20",
+	"end": "00.24",
+	"type": "longNote",
+	"note": "c3"
+}, {
+	"start": "00.24",
+	"end": "00.28.80",
+	"type": "longNote",
+	"note": "d#3"
+}, {
+	"start": "00.28.80",
+	"end": "00.33.60",
+	"type": "longNote",
+	"note": "f#3"
+}, {
+	"start": "00.33.60",
+	"end": "00.38.40",
+	"type": "longNote",
+	"note": "a3"
+}, {
+	"start": "00.38.40",
+	"end": "00.43.20",
+	"type": "longNote",
+	"note": "c4"
+}, {
+	"start": "00.43.20",
+	"end": "00.48",
+	"type": "longNote",
+	"note": "d#4"
+}, {
+	"start": "00.48",
+	"end": "00.52.80",
+	"type": "longNote",
+	"note": "f#4"
+}, {
+	"start": "00.52.80",
+	"end": "00.57.60",
+	"type": "longNote",
+	"note": "a4"
+}, {
+	"start": "00.57.60",
+	"end": "01.02.40",
+	"type": "longNote",
+	"note": "c5"
+}, {
+	"start": "01.02.40",
+	"end": "01.07.20",
+	"type": "longNote",
+	"note": "d#5"
+}, {
+	"start": "01.07.20",
+	"end": "01.12",
+	"type": "longNote",
+	"note": "f#5"
+}, {
+	"start": "01.12",
+	"end": "01.16.80",
+	"type": "longNote",
+	"note": "a5"
+}, {
+	"start": "01.16.80",
+	"end": "01.21.60",
+	"type": "longNote",
+	"note": "c6"
+}]

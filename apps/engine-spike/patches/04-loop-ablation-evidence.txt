@@ -1,0 +1,121 @@
+=== 01-baseline ===
+build rc=0
+  render rc=124 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  1
+  Number of CPUs line: 1
+  AudioClipBase:1902:  1 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 0 bytes
+
+=== 02-skip-setLoopInfo ===
+build rc=0
+  render rc=124 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  1
+  Number of CPUs line: 1
+  AudioClipBase:1902:  1 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 0 bytes
+
+=== 03-stretch-false ===
+build rc=0
+=== 03-stretch-false ===
+build rc=0
+  render rc=124 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  1
+  Number of CPUs line: 1
+  AudioClipBase:1902:  1 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 0 bytes
+
+=== 04-plain-waveclip ===
+build rc=0
+  render rc=0 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  2
+  Number of CPUs line: 1
+  AudioClipBase:1902:  0 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 635856 bytes
+  OK: 2.40s, peak -4.55 dB, rms -26.21 dB
+
+=== 04a-setlength-only ===
+build rc=0
+  render rc=0 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  2
+  Number of CPUs line: 1
+  AudioClipBase:1902:  0 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 635856 bytes
+  OK: 2.40s, peak -4.55 dB, rms -26.21 dB
+
+=== 04b-numloops-looprange ===
+build rc=0
+  render rc=124 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  1
+  Number of CPUs line: 1
+  AudioClipBase:1902:  1 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 0 bytes
+
+=== 04c-numloops-only ===
+build rc=0
+  render rc=0 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  2
+  Number of CPUs line: 1
+  AudioClipBase:1902:  0 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 635856 bytes
+  OK: 2.40s, peak -4.55 dB, rms -26.21 dB
+
+=== 04d-looprange-only ===
+build rc=0
+  render rc=124 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  1
+  Number of CPUs line: 1
+  AudioClipBase:1902:  1 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 0 bytes
+
+=== 04e-all-three ===
+build rc=0
+  render rc=124 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  1
+  Number of CPUs line: 1
+  AudioClipBase:1902:  1 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 0 bytes
+
+=== 04f-numloops-segfill-8bar ===
+build rc=0
+  render rc=0 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  2
+  Number of CPUs line: 1
+  AudioClipBase:1902:  0 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 5081136 bytes
+  OK: 19.20s, peak -4.55 dB, rms -26.21 dB
+
+Variant 5: SKIPPED — already proven irrelevant by variant 4f success.
+
+Variant 6: SKIPPED — variant 4f succeeded with OGG; no decoder interaction.
+
+=== 99-final-patch ===
+build rc=0
+  render rc=0 (124=timeout, 139=segfault)
+  SET SONG DONE lines: 1
+  renderToFile lines:  2
+  Number of CPUs line: 1
+  AudioClipBase:1902:  0 assertions
+  RefCounted:394:      0 assertions
+  WAV size: 5081136 bytes
+  OK: 19.20s, peak -4.55 dB, rms -26.21 dB
+

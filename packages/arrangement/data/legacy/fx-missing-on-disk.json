@@ -1,0 +1,673 @@
+{
+  "schemaVersion": 1,
+  "description": "Legacy effectsMetadata.json entries unmatched on disk after the 58e probe (matcher tightened \u2014 Big_Z_Crash_N_reverse \u2192 ReverseCrash_N + trailing-whitespace trim). The single noiseRise entry is flagged engineSelfSynthesizes=true: the new engine generates white noise programmatically via FourOscPlugin (TransitionNoise.h:125), so no file is needed for that lane.",
+  "count": 74,
+  "entries": [
+    {
+      "legacySubtype": "8bitArcade",
+      "legacyFile": "BANK_00_INSTR_000A_SND_0001.wav",
+      "duration": 0.225669,
+      "climax": null,
+      "parsedLibrary": "8bit",
+      "parsedPreset": "00_INSTR_000A_SND_0001",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "8bitArcade",
+      "legacyFile": "BANK_00_INSTR_000A_SND_000C-001.wav",
+      "duration": 0.331973,
+      "climax": null,
+      "parsedLibrary": "8bit",
+      "parsedPreset": "00_INSTR_000A_SND_000C-001",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "8bitArcade",
+      "legacyFile": "BANK_00_INSTR_000A_SND_000D.wav",
+      "duration": 0.486531,
+      "climax": null,
+      "parsedLibrary": "8bit",
+      "parsedPreset": "00_INSTR_000A_SND_000D",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "8bitArcade",
+      "legacyFile": "BANK_00_INSTR_000A_SND_000E.wav",
+      "duration": 0.871111,
+      "climax": null,
+      "parsedLibrary": "8bit",
+      "parsedPreset": "00_INSTR_000A_SND_000E",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX 16-bar riser 1.wav",
+      "duration": 7.2,
+      "climax": 6.572,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX 16-bar riser 1",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX 8-bar riser 1.wav",
+      "duration": 14.4,
+      "climax": 13,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX 8-bar riser 1",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Downlifter classic breakdown 1.wav",
+      "duration": 4.32,
+      "climax": 2.495,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Downlifter classic breakdown 1",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Downlifter classic breakdown 2.wav",
+      "duration": 7.2,
+      "climax": 4.5,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Downlifter classic breakdown 2",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Downlifter classic breakdown 3.wav",
+      "duration": 3.6,
+      "climax": 2.291,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Downlifter classic breakdown 3",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Downlifter classic breakdown 4.wav",
+      "duration": 2.16,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Downlifter classic breakdown 4",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Downlifter classic breakdown 5.wav",
+      "duration": 1.8,
+      "climax": 1.253,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Downlifter classic breakdown 5",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Downlifter classic breakdown 6.wav",
+      "duration": 1.542857,
+      "climax": 1.212,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Downlifter classic breakdown 6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Power up 1.wav",
+      "duration": 24,
+      "climax": 21.896,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Power up 1",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "uplifter",
+      "legacyFile": "Serum FX Shifting Gear.wav",
+      "duration": 3.58,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Shifting Gear",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_08.wav",
+      "duration": 6.4,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_08",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_21.wav",
+      "duration": 12.8,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_21",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_23.wav",
+      "duration": 12.8,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_23",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_28.wav",
+      "duration": 11,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_28",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_29.wav",
+      "duration": 6.4,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_29",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_33.wav",
+      "duration": 14.15839,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_33",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Oversampled_UFBT_faller_35.wav",
+      "duration": 10.617324,
+      "climax": null,
+      "parsedLibrary": "oversampled",
+      "parsedPreset": "UFBT_faller_35",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Fall.wav",
+      "duration": 1.704921,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Fall",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Power down 1.wav",
+      "duration": 19.2,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Power down 1",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Power down 2.wav",
+      "duration": 9.6,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Power down 2",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Power down 3.wav",
+      "duration": 6.4,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Power down 3",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Power down 4.wav",
+      "duration": 7.2,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Power down 4",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Rampant 1.wav",
+      "duration": 2.36,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Rampant 1",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "downlifter",
+      "legacyFile": "Serum FX Rampant 2.wav",
+      "duration": 2.98,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Rampant 2",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "highImpact",
+      "legacyFile": "Serum FX Shotgun.wav",
+      "duration": 3.58,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Shotgun",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "noiseRise",
+      "legacyFile": "White Noise 1min.wav",
+      "duration": 60,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "White Noise 1min",
+      "engineSelfSynthesizes": true
+    },
+    {
+      "legacySubtype": "transition",
+      "legacyFile": "Serum FX Noisy downer.wav",
+      "duration": 8.512948,
+      "climax": null,
+      "parsedLibrary": "serum",
+      "parsedPreset": "FX Noisy downer",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_A#.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_A#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_A.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_A",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_B.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_B",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_C#.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_C#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_C.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_C",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_D#.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_D#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_D.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_D",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_E.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_E",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_F#.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_F#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_F.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_F",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_G#.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_G#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type1_G.wav",
+      "duration": 3,
+      "climax": 1.1,
+      "parsedLibrary": null,
+      "parsedPreset": "Type1_G",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_A#.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_A#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_A.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_A",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_B.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_B",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_C#.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_C#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_C.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_C",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_D#.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_D#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_D.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_D",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_E.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_E",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_F#.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_F#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_F.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_F",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_G#.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_G#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type2_G.wav",
+      "duration": 3,
+      "climax": 2.19,
+      "parsedLibrary": null,
+      "parsedPreset": "Type2_G",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_A#.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_A#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_A.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_A",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_B.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_B",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_C#.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_C#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_C.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_C",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_D#.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_D#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_D.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_D",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_E.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_E",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_F#.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_F#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_F.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_F",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_G#.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_G#",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "tonalReverse",
+      "legacyFile": "Type3_G.wav",
+      "duration": 3,
+      "climax": 1.44,
+      "parsedLibrary": null,
+      "parsedPreset": "Type3_G",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "a#6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "a#6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "a6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "a6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "b6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "b6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "f#6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "f#6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "f6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "f6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "g#6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "g#6",
+      "engineSelfSynthesizes": false
+    },
+    {
+      "legacySubtype": "fretNoises",
+      "legacyFile": "g6.wav",
+      "duration": 1.5,
+      "climax": null,
+      "parsedLibrary": null,
+      "parsedPreset": "g6",
+      "engineSelfSynthesizes": false
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "busyness": 2,
+  "details": {
+    "LUFS": null,
+    "octaveAdjustment": null
+  },
+  "id": 38842,
+  "instrumentGroup": "basses",
+  "isSample": false,
+  "isVst": true,
+  "lowLevelType": "bassesSynthSoft",
+  "name": "Bass",
+  "samples": [
+    {
+      "id": 945,
+      "note": "c2",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 946,
+      "note": "d#2",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 947,
+      "note": "f#2",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 948,
+      "note": "a2",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 949,
+      "note": "c3",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 950,
+      "note": "d#3",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 951,
+      "note": "f#3",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 952,
+      "note": "a3",
+      "type": "longNote",
+      "vst": 38842
+    },
+    {
+      "id": 953,
+      "note": "c2",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 954,
+      "note": "d#2",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 955,
+      "note": "f#2",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 956,
+      "note": "a2",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 957,
+      "note": "c3",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 958,
+      "note": "d#3",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 959,
+      "note": "f#3",
+      "type": "shortNote",
+      "vst": 38842
+    },
+    {
+      "id": 960,
+      "note": "a3",
+      "type": "shortNote",
+      "vst": 38842
+    }
+  ],
+  "shortName": "bass",
+  "type": "basses"
+}

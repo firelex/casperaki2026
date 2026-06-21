@@ -1,0 +1,29 @@
+{
+  "$schemaVersion": 2,
+  "$description": "Piano-bank loader index. Single-bucket libraries (edmSynthsPluckedLibrary, edmSynthsStabsLibrary) carry one fixed bucket; the multi-bucket `library` entry holds the legacy EZKeys patterns.json (7 genre buckets — ballad/edm/latin/brightPop/organicVibes/rock/urban; schlager + freestyle absent in the legacy data). docs/56c follow-on adds `library` + `altLibrary` to unlock per-genre keys + the legacy keyboardMonophonic*/keyboardPolyphonic synth styles.",
+  "$legacySource": {
+    "generator": "casperaki2-engine-js/api/v1.0/services/classes/patterns/pianoPatterns/LibraryPianoPatternGeneratorClass.js",
+    "edmSynthsPluckedLibrary": "casperaki2-engine-js/api/v1.0/services/classes/patterns/pianoPatterns/edmSynthsPluckPatterns.json",
+    "edmSynthsStabsLibrary": "casperaki2-engine-js/api/v1.0/services/classes/patterns/pianoPatterns/edmSynthsStabsPatterns.json",
+    "library": "casperaki2-engine-js/api/v1.0/services/classes/patterns/pianoPatterns/patterns.json",
+    "altLibrary": "casperaki2-engine-js/api/v1.0/services/classes/patterns/pianoPatterns/altPatterns.json"
+  },
+  "libraries": {
+    "edmSynthsPluckedLibrary": {
+      "file": "edmSynthsPluckPatterns.json",
+      "bucket": "edm"
+    },
+    "edmSynthsStabsLibrary": {
+      "file": "edmSynthsStabsPatterns.json",
+      "bucket": "edm"
+    },
+    "library": {
+      "file": "library.json",
+      "bucketBy": "genre"
+    },
+    "altLibrary": {
+      "file": "altLibrary.json",
+      "bucket": "pop"
+    }
+  }
+}

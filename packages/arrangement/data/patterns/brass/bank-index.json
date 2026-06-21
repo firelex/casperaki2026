@@ -1,0 +1,19 @@
+{
+  "$schemaVersion": 1,
+  "$description": "popBrass (orchestral pop brass) pattern bank. Per-genre style pick (legacy config.json#defaultStyleMappings.brassPatterns) then a uniform pick over the style's pattern bank. Each pattern emits `noteRelative` events (distanceFromMiddleC = note.position + duration). The 'schlager' style is a schlager signature (legacy brassPatterns schlager=[schlager]).",
+  "$legacySource": {
+    "generator": "casperaki1/api/v1.0/services/classes/patterns/brassPatterns/{BrassPatternGeneratorClass,LibraryBrassPatternGeneratorClass}.js",
+    "styleMap": "casperaki1/api/v1.0/services/classes/config/config.json#defaultStyleMappings.brassPatterns (schlager=[schlager])",
+    "bank": "casperaki1/api/v1.0/services/classes/patterns/brassPatterns/data/StefanSchlagerPatterns.json",
+    "extractedAt": "2026-06-14"
+  },
+  "styles": {
+    "schlager": { "file": "schlager.json" }
+  },
+  "$genreStylesNote": "docs/62 A5 (06-20): casperaki2 actively rosters+plays brass in latin and organicVibes too, mapping both to the genre-independent StefanSchlagerPatterns stabs (c2 config brassPatterns latin=[library,libraryStabs], organicVibes=[libraryStabs]; LibraryBrass loads the same bank regardless of genre). c1 was schlager-only. We follow c2 (canonical) and point latin/organicVibes at the existing `schlager` style/bank (no new data). (c2's latin also has a `library` style that throws ~half the time — an upstream bug we intentionally do NOT reproduce.)",
+  "genreStyles": {
+    "schlager": ["schlager"],
+    "latin": ["schlager"],
+    "organicVibes": ["schlager"]
+  }
+}

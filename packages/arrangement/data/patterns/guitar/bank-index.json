@@ -1,0 +1,39 @@
+{
+  "$schemaVersion": 2,
+  "$description": "Lane A guitar bank. Two-level selection mirroring the legacy: per-genre `genreStyles` lists guitar STYLE names (legacy config.json#defaultStyleMappings.guitarPatterns) — the generator picks one style via ctx.rng.fork('patterns/guitar') — and `styleMarkers` maps each style to the substring marker(s) used to filter guitarPatterns.json by pattern name (legacy GuitarPatternGeneratorClass.js's e[0].indexOf(<marker>) !== -1 switch). A genre with a single style skips the style-pick draw (determinism-stable, identical musical result).",
+  "$legacySource": {
+    "generator": "casperaki1/api/v1.0/services/classes/patterns/guitarPatterns/GuitarPatternGeneratorClass.js (style→marker switch)",
+    "styleMap": "casperaki1/api/v1.0/services/classes/config/config.json#defaultStyleMappings.guitarPatterns",
+    "bank": "casperaki1/api/v1.0/services/classes/patterns/guitarPatterns/guitarPatterns.json",
+    "notes": "The legacy switch maps `funk`->'Jazz', `latin`->'Pop', `playful`->'Pop' — the dedicated 'Funk'/'Latin'/'Playful' filter lines are COMMENTED OUT in the legacy source (guitarPatterns.json carries 0 'Latin'/'Playful' names; 'Funk' names exist but the active line uses 'Jazz'). We port the ACTIVE legacy behaviour verbatim. brightPop / organicVibes ARE the renamed legacy popTight / popLoose (docs/62 A4, fixed 06-20): both casperaki1 and casperaki2 map popTight/brightPop -> [country,pop,rock] and popLoose/organicVibes -> [arpeggio,funk,jazz]. The earlier 'no legacy entry -> [pop]' mapping was a porting error that missed the popTight->brightPop rename and shrank both pools.",
+    "markerCounts": {
+      "ARP": 40,
+      "Country+Folk": 118,
+      "Jazz": 50,
+      "Pop": 33,
+      "Rock": 116
+    },
+    "extractedAt": "2026-06-14"
+  },
+  "bankFile": "guitarPatterns.json",
+  "styleMarkers": {
+    "arpeggio": ["ARP"],
+    "country": ["Country", "Folk"],
+    "funk": ["Jazz"],
+    "jazz": ["Jazz"],
+    "latin": ["Pop"],
+    "playful": ["Pop"],
+    "pop": ["Pop"],
+    "rock": ["Rock"]
+  },
+  "genreStyles": {
+    "ballad": ["arpeggio", "country", "latin", "pop"],
+    "brightPop": ["country", "pop", "rock"],
+    "edm": ["arpeggio", "country", "funk", "pop"],
+    "latin": ["latin"],
+    "organicVibes": ["arpeggio", "funk", "jazz"],
+    "rock": ["rock"],
+    "schlager": ["arpeggio", "country", "funk", "pop"],
+    "urban": ["jazz", "funk", "playful"]
+  }
+}

@@ -1,0 +1,630 @@
+{
+  "key": "A",
+  "tempo": 99,
+  "genre": "brightPop",
+  "structure": [
+    {
+      "segment": "intro",
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABAB",
+      "lengthInBars": 4,
+      "precedent": "endOfChorus"
+    }
+  ],
+  "arrangement": {
+    "intro": {
+      "instruments": {
+        "Drums": true
+      },
+      "overrides": {
+        "Drums": {
+          "type": "minimalProof",
+          "pattern": {
+            "bassDrum1": "x000000000000000x000000000000000",
+            "snareDrum1": "00000000x0000000000000000x000000",
+            "hiHatClosed1": "x000x000x000x000x000x000x000x000"
+          }
+        }
+      },
+      "fills": {},
+      "mutes": {},
+      "signalProcessors": {},
+      "transitions": {}
+    }
+  },
+  "patterns": [
+    {
+      "id": 13,
+      "lengthInBars": 2,
+      "pattern": [
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "oneOctaveLow",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "oneOctaveLow",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            }
+          ],
+          "instrumentId": 38972,
+          "instrumentName": "nexus - Island Pad",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "synthsSoftPad",
+          "nonCoreInstrument": true,
+          "patternType": "instrument"
+        },
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "twoOctavesMid",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "twoOctavesMid",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            }
+          ],
+          "instrumentId": 38907,
+          "instrumentName": "omnisphere - Analog Bright Violins",
+          "instrumentStyle": "virtualGuitarist",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "synthsBrightPad",
+          "patternType": "instrument"
+        },
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            }
+          ],
+          "instrumentId": 39111,
+          "instrumentName": "acousticGuitarsSteelStereo",
+          "instrumentStyle": "virtualGuitarist",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "acousticGuitarsSteelStereo",
+          "patternType": "instrument"
+        },
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 0.5,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "duration": 0.5,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "1.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.5": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "bassLowLevelType": "bassesElectric",
+          "bassPatternStyle": "brightPop",
+          "instrumentId": 38842,
+          "instrumentName": "Bass",
+          "instrumentType": "bass",
+          "instrumentType1": "bass",
+          "patternType": "instrument"
+        },
+        {
+          "drumsBusyness": "3",
+          "drumsPatternStyle": "brightPop",
+          "drumsSetStyle": "All",
+          "instrumentId": 100,
+          "instrumentIds": {
+            "bassDrum1": 26949,
+            "bassDrum2": 26929,
+            "clap": 27252,
+            "crash1": 27602,
+            "crash2": 27612,
+            "hiHatClosed1": 27350,
+            "hiHatClosed2": 27412,
+            "hiHatOpen": 27483,
+            "hiHatPedal": 27384,
+            "ride": 27673,
+            "shaker": 27770,
+            "snap": 27254,
+            "snareDrum1": 27175,
+            "snareDrum2": 27129,
+            "tom1": 27540,
+            "tom2": 27530,
+            "tom3": 27543
+          },
+          "instrumentName": "Drums",
+          "instrumentType": "drums",
+          "instrumentType1": "drums",
+          "pattern": {
+            "bassDrum1": "x0000000 x0000000 00000000 00000000|x0000000 x0000000 00000000 00000000|x0000000 x0000000 00000000 00000000|x0000000 x0000000 00000000 00000000",
+            "snareDrum1": "00000000 00000000 x0000000 00000000|00000000 00000000 x0000000 00000000|00000000 00000000 x0000000 00000000|00000000 00000000 x0000000 00000000"
+          },
+          "patternType": "drums"
+        },
+        {
+          "instrumentId": 31384,
+          "instrumentName": "Loop",
+          "instrumentStyle": "virtualGuitarist",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "percussionLoopsAcoustic",
+          "patternType": "instrument"
+        },
+        {
+          "instrumentId": 37297,
+          "instrumentName": "Loop - undefined - 99",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "percussionLoopsElectronic",
+          "nonCoreInstrument": true,
+          "patternType": "instrument"
+        }
+      ]
+    }
+  ]
+}

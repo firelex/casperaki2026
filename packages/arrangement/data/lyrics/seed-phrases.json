@@ -1,0 +1,152 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Step 17c seed phrase bank — small per-(genre × segmentType) word lists used by the deterministic phrase picker (vocals/lyrics-source/seed.ts). Each phrase is a list of plain lowercase English words; every word must resolve in data/lyrics/syllables.json (the trimmed companion). Words were chosen so each (genre × segmentType) cell carries two phrases with a roughly matched total-syllable count — the seed picker chooses one phrase per rhyme-line via Rng.pick. Per the 53af plan §4a this is the deterministic Path-A fallback that lands before LLM authoring (17f+).",
+  "$legacySource": "casperaki2-engine-js/api/v1.0/services/data/lyrics/database/loveSongs (TemplatePoetClass output approximation — original lyric content)",
+  "$extractedAt": "2026-06-07",
+  "phrases": {
+    "brightPop": {
+      "verse": [
+        { "words": ["walking", "through", "the", "golden", "day"] },
+        { "words": ["dreaming", "of", "a", "brand", "new", "way"] }
+      ],
+      "preChorus": [
+        { "words": ["take", "my", "hand", "and", "fly"] },
+        { "words": ["here", "we", "go", "up", "high"] }
+      ],
+      "chorus": [
+        { "words": ["hold", "on", "tight", "tonight"] },
+        { "words": ["rise", "and", "hold", "on", "tight"] }
+      ],
+      "bridge": [
+        { "words": ["maybe", "this", "is", "love"] },
+        { "words": ["everything", "will", "find", "its", "way"] }
+      ]
+    },
+    "ballad": {
+      "verse": [
+        { "words": ["softly", "in", "the", "evening"] },
+        { "words": ["quiet", "as", "a", "whisper"] }
+      ],
+      "preChorus": [
+        { "words": ["close", "your", "eyes", "and", "rest"] },
+        { "words": ["come", "a", "little", "closer"] }
+      ],
+      "chorus": [
+        { "words": ["stay", "with", "me", "tonight"] },
+        { "words": ["forever", "in", "your", "arms"] }
+      ],
+      "bridge": [
+        { "words": ["all", "the", "lonely", "hours"] },
+        { "words": ["nothing", "lasts", "forever"] }
+      ]
+    },
+    "edm": {
+      "verse": [
+        { "words": ["lights", "are", "burning", "low"] },
+        { "words": ["body", "moving", "to", "the", "sound"] }
+      ],
+      "preChorus": [
+        { "words": ["feel", "the", "rhythm", "rise"] },
+        { "words": ["count", "it", "down", "with", "me"] }
+      ],
+      "chorus": [
+        { "words": ["lose", "control", "tonight"] },
+        { "words": ["dance", "until", "we", "fall"] }
+      ],
+      "bridge": [
+        { "words": ["nothing", "else", "matters", "now"] },
+        { "words": ["hold", "the", "moment", "still"] }
+      ]
+    },
+    "latin": {
+      "verse": [
+        { "words": ["walking", "down", "the", "city", "lights"] },
+        { "words": ["dancing", "to", "the", "rhythm"] }
+      ],
+      "preChorus": [
+        { "words": ["take", "me", "to", "the", "fire"] },
+        { "words": ["feel", "the", "summer", "breeze"] }
+      ],
+      "chorus": [
+        { "words": ["baby", "let", "it", "go"] },
+        { "words": ["dancing", "in", "the", "moonlight"] }
+      ],
+      "bridge": [
+        { "words": ["every", "story", "has", "an", "end"] },
+        { "words": ["nothing", "but", "the", "music"] }
+      ]
+    },
+    "organicVibes": {
+      "verse": [
+        { "words": ["sitting", "by", "the", "ocean", "side"] },
+        { "words": ["watching", "as", "the", "morning", "breaks"] }
+      ],
+      "preChorus": [
+        { "words": ["holding", "on", "to", "you"] },
+        { "words": ["breathing", "in", "the", "calm"] }
+      ],
+      "chorus": [
+        { "words": ["simple", "as", "a", "song"] },
+        { "words": ["beautiful", "and", "true"] }
+      ],
+      "bridge": [
+        { "words": ["even", "when", "the", "sky", "is", "gray"] },
+        { "words": ["quiet", "as", "the", "rain"] }
+      ]
+    },
+    "rock": {
+      "verse": [
+        { "words": ["driving", "down", "the", "open", "road"] },
+        { "words": ["wild", "and", "free", "tonight"] }
+      ],
+      "preChorus": [
+        { "words": ["here", "comes", "the", "fire"] },
+        { "words": ["nothing", "left", "to", "lose"] }
+      ],
+      "chorus": [
+        { "words": ["break", "the", "chains", "tonight"] },
+        { "words": ["scream", "it", "to", "the", "world"] }
+      ],
+      "bridge": [
+        { "words": ["we", "will", "never", "fall"] },
+        { "words": ["hold", "the", "line", "again"] }
+      ]
+    },
+    "schlager": {
+      "verse": [
+        { "words": ["singing", "in", "the", "sunshine"] },
+        { "words": ["dancing", "with", "you", "tonight"] }
+      ],
+      "preChorus": [
+        { "words": ["happy", "to", "be", "here"] },
+        { "words": ["take", "my", "hand", "and", "smile"] }
+      ],
+      "chorus": [
+        { "words": ["love", "is", "in", "the", "air"] },
+        { "words": ["every", "song", "we", "sing"] }
+      ],
+      "bridge": [
+        { "words": ["nothing", "but", "a", "memory"] },
+        { "words": ["dancing", "in", "the", "rain"] }
+      ]
+    },
+    "urban": {
+      "verse": [
+        { "words": ["walking", "through", "the", "city", "streets"] },
+        { "words": ["chasing", "every", "dream", "tonight"] }
+      ],
+      "preChorus": [
+        { "words": ["rolling", "with", "the", "crew"] },
+        { "words": ["feeling", "every", "beat"] }
+      ],
+      "chorus": [
+        { "words": ["nothing", "stops", "us", "now"] },
+        { "words": ["living", "for", "the", "moment"] }
+      ],
+      "bridge": [
+        { "words": ["hold", "your", "head", "up", "high"] },
+        { "words": ["never", "look", "behind"] }
+      ]
+    }
+  }
+}

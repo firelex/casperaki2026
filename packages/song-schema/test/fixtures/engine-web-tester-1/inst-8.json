@@ -1,0 +1,11 @@
+{
+    "details": {
+        "frequencyStart": 100
+    },
+    "id": 104,
+    "instrumentGroup": "fx",
+    "lowLevelType": "fxNoiseRise",
+    "name": "fxNoiseRise",
+    "transitionId": 15,
+    "type": "transitionNoise"
+}

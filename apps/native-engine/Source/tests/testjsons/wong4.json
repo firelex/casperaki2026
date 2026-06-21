@@ -1,0 +1,244 @@
+{
+	"genre": "brightPop",
+	"tempo": 113,
+    "default": true,
+"key": "G",
+	"patterns": [{
+		"pattern": [{
+			"pattern": {
+				"clap": "00000000 00000000 00000000 x0000000|00000000 00000000 00000000 x0000000",
+				"ride": "x0000000 x0000000 x0000000 x0000000|x0000000 x0000000 x0000000 x0000000",
+				"bassDrum1": "x0000000 0000x000 x0000000 00000000|x0000000 0000x000 x0000000 00000000",
+				"snareDrum1": "00000000 x0000000 00000000 x0000000|00000000 x0000000 00000000 x0000000",
+				"hiHatClosed1": "x0x0x000 x000x000 x000x000 x000x0x0|x000x000 x000x0x0 x000x000 x000x0x0"
+			},
+			"patternType": "drums",
+			"drumsBusyness": 2,
+			"instrumentIds": {
+				"clap": 27304,
+				"ride": 27664,
+				"snap": 27227,
+				"tom1": 27546,
+				"tom2": 27562,
+				"tom3": 27566,
+				"crash1": 27617,
+				"crash2": 27604,
+				"shaker": 27759,
+				"bassDrum1": 26959,
+				"bassDrum2": 27023,
+				"hiHatOpen": 27452,
+				"hiHatPedal": 27334,
+				"snareDrum1": 27136,
+				"snareDrum2": 27196,
+				"hiHatClosed1": 27417,
+				"hiHatClosed2": 27335
+			},
+			"instrumentName": "Drums",
+			"instrumentType": "drums",
+			"instrumentType1": "drums",
+			"drumsPatternStyle": "brightPop"
+		}, {
+			"bars": [{
+				"notes": {
+					"0.0": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 0.75
+					}],
+					"1.5": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 1
+					}],
+					"2.5": [{
+						"note": "e2",
+						"type": "note",
+						"duration": 0.5
+					}],
+					"3.0": [{
+						"note": "e2",
+						"type": "note",
+						"duration": 0.5
+					}],
+					"3.5": [{
+						"note": "b1",
+						"type": "note",
+						"duration": 0.5
+					}],
+					"0.75": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 0.75
+					}]
+				}
+			}, {
+				"notes": {
+					"0.0": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 0.75
+					}],
+					"1.5": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 1
+					}],
+					"2.5": [{
+						"note": "g1",
+						"type": "note",
+						"duration": 0.5
+					}],
+					"3.0": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 1
+					}],
+					"0.75": [{
+						"note": "c2",
+						"type": "note",
+						"duration": 0.75
+					}]
+				}
+			}],
+			"patternType": "instrument",
+			"instrumentId": 38843,
+			"instrumentName": "Bass",
+			"instrumentType": "bass",
+			"instrumentType1": "bass",
+			"bassPatternStyle": "brightPopSM"
+		}, {
+			"bars": [{
+				"notes": {
+					"0.0": [{
+						"type": "chord",
+						"chord": "C",
+						"duration": 4,
+						"chordType": "twoOctavesHigh"
+					}]
+				}
+			}, {
+				"notes": {
+					"0.0": [{
+						"type": "chord",
+						"chord": "C",
+						"duration": 4,
+						"chordType": "twoOctavesHigh"
+					}]
+				}
+			}],
+			"patternType": "instrument",
+			"instrumentId": 38908,
+			"instrumentName": "omnisphere - Big Analog Strings",
+			"instrumentType": "customInstrument",
+			"instrumentType1": "synthsBrightPad"
+		}, {
+			"bars": [{
+				"notes": {
+					"0.0": [{
+						"type": "virtualGuitarist",
+						"chord": "C",
+						"event": "chordShortStrumDown",
+						"duration": 0.25
+					}],
+					"1.0": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [3],
+						"durations": [0.4979166666666668],
+						"velocities": [80]
+					}],
+					"1.5": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0.0000000000000002220446049250313],
+						"strings": [2],
+						"durations": [0.49791666666666656],
+						"velocities": [70]
+					}],
+					"2.0": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [3],
+						"durations": [0.4979166666666668],
+						"velocities": [90]
+					}],
+					"2.5": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [3],
+						"durations": [0.4979166666666668],
+						"velocities": [60]
+					}],
+					"3.0": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [2],
+						"durations": [0.4979166666666668],
+						"velocities": [80]
+					}]
+				}
+			}, {
+				"notes": {
+					"1.0": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [2],
+						"durations": [0.4979166666666668],
+						"velocities": [60]
+					}],
+					"1.5": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [4],
+						"durations": [0.4979166666666668],
+						"velocities": [1]
+					}],
+					"2.0": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [3],
+						"durations": [0.4979166666666668],
+						"velocities": [90]
+					}],
+					"2.5": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [2],
+						"durations": [0.4979166666666668],
+						"velocities": [80]
+					}],
+					"3.0": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [3],
+						"durations": [0.4979166666666668],
+						"velocities": [90]
+					}],
+					"3.5": [{
+						"type": "strum",
+						"chord": "C",
+						"offset": [0],
+						"strings": [3],
+						"durations": [0.4979166666666668],
+						"velocities": [50]
+					}]
+				}
+			}],
+			"patternType": "instrument",
+			"instrumentId": 39115,
+			"instrumentName": "electricGuitarsLpChorusStereo",
+			"instrumentType": "customInstrument",
+			"instrumentType1": "electricGuitarsLpChorusStereo"
+		}],
+		"lengthInBars": 2
+	}]
+}

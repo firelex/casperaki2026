@@ -1,0 +1,3130 @@
+{
+  "arrangement": {
+    "break1": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- 0000x0x0 0000x0xx"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        }
+      },
+      "signalProcessors": {
+        "Drums": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 1000
+            },
+            {
+              "pointIn32ndNotes": 32,
+              "pointInSeconds": 2.4242424242424243,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter1000SweepUp"
+        }
+      },
+      "transitions": {}
+    },
+    "break2": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {
+          "type": "hiHatOnly"
+        }
+      },
+      "signalProcessors": {
+        "Drums": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 32,
+              "pointInSeconds": 2.4242424242424243,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        }
+      },
+      "transitions": {}
+    },
+    "break3": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {
+          "pattern": {
+            "bassDrum1": "x0000000 x0000000 x0000000 x0000000|x0000000 x0000000 x0000000 x0000000"
+          },
+          "reset": true,
+          "type": "fourOnTheFloorBassDrum"
+        }
+      },
+      "signalProcessors": {
+        "Drums": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 300
+            },
+            {
+              "pointIn32ndNotes": 64,
+              "pointInSeconds": 4.848484848484849,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter300SweepUp"
+        }
+      },
+      "transitions": {
+        "15": {
+          "attackDuration": 7.2727272727272725,
+          "decayDuration": 7.2727272727272725,
+          "decaySequenceStartPositionOffsetInSeconds": 7.2727272727272725,
+          "frequencyEnd": 20000,
+          "frequencyStart": 100,
+          "fxNoiseRiseType": "threeBarsBeforeEndOfSegment",
+          "id": "fxNoiseRise",
+          "lowLevelType": "fxNoiseRise",
+          "name": "fxNoiseRise",
+          "sequenceStartPosition": -32,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "transitionId": 15,
+          "volumeAttack": -30,
+          "volumeDecay": -50,
+          "volumeSustain": -20
+        }
+      }
+    },
+    "bridge1": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x0x0 0000x0xx"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {}
+      },
+      "signalProcessors": {
+        "Drums": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 300
+            },
+            {
+              "pointIn32ndNotes": 256,
+              "pointInSeconds": 19.393939393939394,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter300SweepUp"
+        }
+      },
+      "transitions": {
+        "16": {
+          "duration": 5.276735,
+          "highLevelType": "fx",
+          "id": 26777,
+          "lowLevelType": "fxReverse",
+          "name": "fx - fxReverse - edm - vengeance - VEH1 Reverse - 30.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 2.616,
+            "duration": 5.276735,
+            "file": "fx - fxReverse - edm - vengeance - VEH1 Reverse - 30.mp3",
+            "LUFS": "24",
+            "vstPlugin": "vengeance - VEH1 Reverse - 30"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 221,
+          "sequenceStartPositionOffsetInSeconds": 0.03551515151515272,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 16,
+          "type": "sample",
+          "urls": [
+            "/playSample/26777"
+          ]
+        },
+        "17": {
+          "config": {
+            "details": {
+              "pattern": {
+                "snareDrum1": "x0000000 00000000 x0000000 00000000|x0000000 x0000000 x0000000 x0000000|x000x000 x000x000 x000x000 x000x000|x0x0x0x0 x0x0x0x0 xxxxxxxx xxxxxxxx"
+              }
+            },
+            "lengthInBars": 4
+          },
+          "lowLevelType": "snareDrumsElectronic",
+          "name": "edmSnareDrumRoll",
+          "oneShotOrPattern": "pattern",
+          "sampleIds": [
+            27130,
+            27143
+          ],
+          "sampleOrVst": "twoSamples",
+          "sequenceStartPosition": 128,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "transitionId": 17,
+          "urls": [
+            "/playSample/27130",
+            "/playSample/27143"
+          ]
+        }
+      }
+    },
+    "chorus1": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- 0000x0x0 0000x0xx"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x0x0 0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": true,
+        "Bass": true,
+        "Drums": true,
+        "Loop": true,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": false,
+        "omnisphere - Analog Bright Violins": true
+      },
+      "mutes": {},
+      "overrides": {},
+      "signalProcessors": {},
+      "transitions": {
+        "12": {
+          "duration": 2.45551,
+          "highLevelType": "fx",
+          "id": 26907,
+          "lowLevelType": "fxTransition",
+          "name": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 0.5,
+            "duration": 2.45551,
+            "file": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+            "LUFS": "24",
+            "vstPlugin": "bigZ - Transition_3"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": -7,
+          "sequenceStartPositionOffsetInSeconds": 0.03030303030303033,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 12,
+          "type": "sample",
+          "urls": [
+            "/playSample/26907"
+          ]
+        }
+      }
+    },
+    "chorus2": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- 0000x0x0 0000x0xx"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x0x0 0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": true,
+        "Bass": true,
+        "Drums": true,
+        "Loop": true,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": false,
+        "omnisphere - Analog Bright Violins": true
+      },
+      "mutes": {},
+      "overrides": {},
+      "signalProcessors": {},
+      "transitions": {
+        "13": {
+          "duration": 2.45551,
+          "highLevelType": "fx",
+          "id": 26907,
+          "lowLevelType": "fxTransition",
+          "name": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 0.5,
+            "duration": 2.45551,
+            "file": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+            "LUFS": "24",
+            "vstPlugin": "bigZ - Transition_3"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": -7,
+          "sequenceStartPositionOffsetInSeconds": 0.03030303030303033,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 13,
+          "type": "sample",
+          "urls": [
+            "/playSample/26907"
+          ]
+        }
+      }
+    },
+    "chorus3": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x000 0000x000"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- 0000x0x0 0000x0xx"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- 0000x0x0 0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": true,
+        "Bass": true,
+        "Drums": true,
+        "Loop": true,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": false,
+        "omnisphere - Analog Bright Violins": true
+      },
+      "mutes": {},
+      "overrides": {},
+      "signalProcessors": {},
+      "transitions": {
+        "14": {
+          "duration": 2.45551,
+          "highLevelType": "fx",
+          "id": 26907,
+          "lowLevelType": "fxTransition",
+          "name": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 0.5,
+            "duration": 2.45551,
+            "file": "fx - fxTransition - edm - bigZ - Transition_3.mp3",
+            "LUFS": "24",
+            "vstPlugin": "bigZ - Transition_3"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": -7,
+          "sequenceStartPositionOffsetInSeconds": 0.03030303030303033,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 14,
+          "type": "sample",
+          "urls": [
+            "/playSample/26907"
+          ]
+        }
+      }
+    },
+    "intro": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {},
+            "patternMiddleOfSegment": {},
+            "patternTwelfthBar": {}
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Drums": {
+          "type": "percussionOnly"
+        }
+      },
+      "signalProcessors": {
+        "acousticGuitarsSteelStereo": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        },
+        "Bass": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        },
+        "Drums": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        },
+        "Loop": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        },
+        "Loop - undefined - 99": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        },
+        "nexus - Island Pad": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        },
+        "omnisphere - Analog Bright Violins": {
+          "lowPassFilter": [
+            {
+              "pointIn32ndNotes": 0,
+              "pointInSeconds": 0,
+              "value": 700
+            },
+            {
+              "pointIn32ndNotes": 128,
+              "pointInSeconds": 9.696969696969697,
+              "value": 30000
+            }
+          ],
+          "type": "lowPassFilter700SweepUp"
+        }
+      },
+      "transitions": {}
+    },
+    "verse1": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- -------- 0000x000|0000x000"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {
+          "type": "noBassDrum"
+        }
+      },
+      "signalProcessors": {},
+      "transitions": {
+        "0": {
+          "duration": 11.572245,
+          "highLevelType": "fx",
+          "id": 26590,
+          "lowLevelType": "fxDownlifter",
+          "name": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "duration": 11.572245,
+            "file": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+            "LUFS": "24",
+            "vstPlugin": "oversampled - UFBT_faller_16"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 0,
+          "type": "sample",
+          "urls": [
+            "/playSample/26590"
+          ]
+        },
+        "4": {
+          "duration": 9.795918,
+          "highLevelType": "fx",
+          "id": 26660,
+          "lowLevelType": "fxHighImpact",
+          "name": "fx - fxHighImpact - edm - vengeance - VEH4 Impacts High 40.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "duration": 9.795918,
+            "file": "fx - fxHighImpact - edm - vengeance - VEH4 Impacts High 40.mp3",
+            "LUFS": "24",
+            "vstPlugin": "vengeance - VEH4 Impacts High 40"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 4,
+          "type": "sample",
+          "urls": [
+            "/playSample/26660"
+          ]
+        },
+        "6": {
+          "duration": 9.717551,
+          "highLevelType": "fx",
+          "id": 26886,
+          "lowLevelType": "fxTonalReverse",
+          "name": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 5.318,
+            "duration": 9.717551,
+            "file": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+            "key": "D",
+            "LUFS": "24",
+            "note": "D",
+            "vstPlugin": "bigZ - Reverses_9 - D"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 185,
+          "sequenceStartPositionOffsetInSeconds": 0.060787878787879224,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 6,
+          "type": "sample",
+          "urls": [
+            "/playSample/26886"
+          ]
+        }
+      }
+    },
+    "verse2": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- 0000x0x0 0000x0x0"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {
+          "type": "bassDrumOnly"
+        }
+      },
+      "signalProcessors": {},
+      "transitions": {
+        "1": {
+          "duration": 11.572245,
+          "highLevelType": "fx",
+          "id": 26590,
+          "lowLevelType": "fxDownlifter",
+          "name": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "duration": 11.572245,
+            "file": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+            "LUFS": "24",
+            "vstPlugin": "oversampled - UFBT_faller_16"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 1,
+          "type": "sample",
+          "urls": [
+            "/playSample/26590"
+          ]
+        },
+        "7": {
+          "duration": 9.717551,
+          "highLevelType": "fx",
+          "id": 26886,
+          "lowLevelType": "fxTonalReverse",
+          "name": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 5.318,
+            "duration": 9.717551,
+            "file": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+            "key": "D",
+            "LUFS": "24",
+            "note": "D",
+            "vstPlugin": "bigZ - Reverses_9 - D"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 185,
+          "sequenceStartPositionOffsetInSeconds": 0.060787878787879224,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 7,
+          "type": "sample",
+          "urls": [
+            "/playSample/26886"
+          ]
+        },
+        "10": {
+          "attackDuration": 9.696969696969697,
+          "decayDuration": 7.2727272727272725,
+          "decaySequenceStartPositionOffsetInSeconds": 9.696969696969697,
+          "frequencyEnd": 20000,
+          "frequencyStart": 100,
+          "fxNoiseRiseType": "middleOfSegment",
+          "id": "fxNoiseRise",
+          "lowLevelType": "fxNoiseRise",
+          "name": "fxNoiseRise",
+          "sequenceStartPosition": 128,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "transitionId": 10,
+          "volumeAttack": -30,
+          "volumeDecay": -50,
+          "volumeSustain": -20
+        }
+      }
+    },
+    "verse3": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- -------- 0000x000|0000x000"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {
+          "type": "noBassDrum"
+        }
+      },
+      "signalProcessors": {},
+      "transitions": {
+        "2": {
+          "duration": 11.572245,
+          "highLevelType": "fx",
+          "id": 26590,
+          "lowLevelType": "fxDownlifter",
+          "name": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "duration": 11.572245,
+            "file": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+            "LUFS": "24",
+            "vstPlugin": "oversampled - UFBT_faller_16"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 2,
+          "type": "sample",
+          "urls": [
+            "/playSample/26590"
+          ]
+        },
+        "5": {
+          "duration": 9.795918,
+          "highLevelType": "fx",
+          "id": 26660,
+          "lowLevelType": "fxHighImpact",
+          "name": "fx - fxHighImpact - edm - vengeance - VEH4 Impacts High 40.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "duration": 9.795918,
+            "file": "fx - fxHighImpact - edm - vengeance - VEH4 Impacts High 40.mp3",
+            "LUFS": "24",
+            "vstPlugin": "vengeance - VEH4 Impacts High 40"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 5,
+          "type": "sample",
+          "urls": [
+            "/playSample/26660"
+          ]
+        },
+        "8": {
+          "duration": 9.717551,
+          "highLevelType": "fx",
+          "id": 26886,
+          "lowLevelType": "fxTonalReverse",
+          "name": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 5.318,
+            "duration": 9.717551,
+            "file": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+            "key": "D",
+            "LUFS": "24",
+            "note": "D",
+            "vstPlugin": "bigZ - Reverses_9 - D"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 185,
+          "sequenceStartPositionOffsetInSeconds": 0.060787878787879224,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 8,
+          "type": "sample",
+          "urls": [
+            "/playSample/26886"
+          ]
+        }
+      }
+    },
+    "verse4": {
+      "fills": {
+        "Drums": {
+          "patterns": {
+            "patternEndOfSegment": {},
+            "patternFourthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            },
+            "patternMiddleOfSegment": {
+              "clap": "-------- -------- -------- 0000x000|0000x000"
+            },
+            "patternTwelfthBar": {
+              "clap": "-------- -------- -------- 0000x000|0000x0x0"
+            }
+          },
+          "reset": false
+        }
+      },
+      "instruments": {
+        "acousticGuitarsSteelStereo": false,
+        "Bass": true,
+        "Drums": true,
+        "Loop": false,
+        "Loop - undefined - 99": false,
+        "nexus - Island Pad": true,
+        "omnisphere - Analog Bright Violins": false
+      },
+      "mutes": {},
+      "overrides": {
+        "Bass": {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 2,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "reset": true,
+          "type": "onTheBeat157"
+        },
+        "Drums": {
+          "type": "bassDrumAndSnareDrumOnly"
+        }
+      },
+      "signalProcessors": {},
+      "transitions": {
+        "3": {
+          "duration": 11.572245,
+          "highLevelType": "fx",
+          "id": 26590,
+          "lowLevelType": "fxDownlifter",
+          "name": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "duration": 11.572245,
+            "file": "fx - fxDownlifter - edm - oversampled - UFBT_faller_16.mp3",
+            "LUFS": "24",
+            "vstPlugin": "oversampled - UFBT_faller_16"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 3,
+          "type": "sample",
+          "urls": [
+            "/playSample/26590"
+          ]
+        },
+        "9": {
+          "duration": 9.717551,
+          "highLevelType": "fx",
+          "id": 26886,
+          "lowLevelType": "fxTonalReverse",
+          "name": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+          "oneShotOrPattern": "oneShot",
+          "sampleDetails": {
+            "climax": 5.318,
+            "duration": 9.717551,
+            "file": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+            "key": "D",
+            "LUFS": "24",
+            "note": "D",
+            "vstPlugin": "bigZ - Reverses_9 - D"
+          },
+          "sampleOrVst": "sample",
+          "sequenceStartPosition": 185,
+          "sequenceStartPositionOffsetInSeconds": 0.060787878787879224,
+          "tags": [
+            "edm"
+          ],
+          "transitionId": 9,
+          "type": "sample",
+          "urls": [
+            "/playSample/26886"
+          ]
+        },
+        "11": {
+          "attackDuration": 19.393939393939394,
+          "decayDuration": 7.2727272727272725,
+          "decaySequenceStartPositionOffsetInSeconds": 19.393939393939394,
+          "frequencyEnd": 20000,
+          "frequencyStart": 100,
+          "fxNoiseRiseType": "beginningOfSegment",
+          "id": "fxNoiseRise",
+          "lowLevelType": "fxNoiseRise",
+          "name": "fxNoiseRise",
+          "sequenceStartPosition": 0,
+          "sequenceStartPositionOffsetInSeconds": 0,
+          "transitionId": 11,
+          "volumeAttack": -30,
+          "volumeDecay": -50,
+          "volumeSustain": -20
+        }
+      }
+    }
+  },
+  "genre": "brightPop",
+  "key": "A",
+  "patterns": [
+    {
+      "id": 13,
+      "lengthInBars": 2,
+      "pattern": [
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "oneOctaveLow",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "oneOctaveLow",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            }
+          ],
+          "instrumentId": 38972,
+          "instrumentName": "nexus - Island Pad",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "synthsSoftPad",
+          "nonCoreInstrument": true,
+          "patternType": "instrument"
+        },
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "twoOctavesMid",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "chordType": "twoOctavesMid",
+                    "duration": 4,
+                    "type": "chord"
+                  }
+                ]
+              }
+            }
+          ],
+          "instrumentId": 38907,
+          "instrumentName": "omnisphere - Analog Bright Violins",
+          "instrumentStyle": "virtualGuitarist",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "synthsBrightPad",
+          "patternType": "instrument"
+        },
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "1.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "chord": "C",
+                    "duration": 0.5,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "2.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.75,
+                    "event": "chordLongStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.25": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.5": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumDown",
+                    "type": "virtualGuitarist"
+                  }
+                ],
+                "3.75": [
+                  {
+                    "chord": "C",
+                    "duration": 0.25,
+                    "event": "chordShortStrumUp",
+                    "type": "virtualGuitarist"
+                  }
+                ]
+              }
+            }
+          ],
+          "instrumentId": 39111,
+          "instrumentName": "acousticGuitarsSteelStereo",
+          "instrumentStyle": "virtualGuitarist",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "acousticGuitarsSteelStereo",
+          "patternType": "instrument"
+        },
+        {
+          "bars": [
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 0.5,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "0.5": [
+                  {
+                    "duration": 0.5,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "1.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.5": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "1.5": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 1,
+                    "note": "c2",
+                    "type": "note"
+                  }
+                ]
+              }
+            }
+          ],
+          "bassLowLevelType": "bassesElectric",
+          "bassPatternStyle": "brightPop",
+          "instrumentId": 38842,
+          "instrumentName": "Bass",
+          "instrumentType": "bass",
+          "instrumentType1": "bass",
+          "patternType": "instrument"
+        },
+        {
+          "drumsBusyness": "3",
+          "drumsPatternStyle": "brightPop",
+          "drumsSetStyle": "All",
+          "instrumentId": 100,
+          "instrumentIds": {
+            "bassDrum1": 26949,
+            "bassDrum2": 26929,
+            "clap": 27252,
+            "crash1": 27602,
+            "crash2": 27612,
+            "hiHatClosed1": 27350,
+            "hiHatClosed2": 27412,
+            "hiHatOpen": 27483,
+            "hiHatPedal": 27384,
+            "ride": 27673,
+            "shaker": 27770,
+            "snap": 27254,
+            "snareDrum1": 27175,
+            "snareDrum2": 27129,
+            "tom1": 27540,
+            "tom2": 27530,
+            "tom3": 27543
+          },
+          "instrumentName": "Drums",
+          "instrumentType": "drums",
+          "instrumentType1": "drums",
+          "pattern": {
+            "bassDrum1": "x0000000 x0000000 00000000 00000000|x0000000 x0000000 00000000 00000000|x0000000 x0000000 00000000 00000000|x0000000 x0000000 00000000 00000000",
+            "snareDrum1": "00000000 00000000 x0000000 00000000|00000000 00000000 x0000000 00000000|00000000 00000000 x0000000 00000000|00000000 00000000 x0000000 00000000"
+          },
+          "patternType": "drums"
+        },
+        {
+          "instrumentId": 31384,
+          "instrumentName": "Loop",
+          "instrumentStyle": "virtualGuitarist",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "percussionLoopsAcoustic",
+          "patternType": "instrument"
+        },
+        {
+          "instrumentId": 37297,
+          "instrumentName": "Loop - undefined - 99",
+          "instrumentType": "customInstrument",
+          "instrumentType1": "percussionLoopsElectronic",
+          "nonCoreInstrument": true,
+          "patternType": "instrument"
+        }
+      ]
+    }
+  ],
+  "structure": [
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "Bm",
+            "Bm",
+            "Bm",
+            "Bm"
+          ]
+        },
+        {
+          "chords": [
+            "Bm",
+            "Bm",
+            "Bm",
+            "Bm"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABCDABCD",
+      "lengthInBars": 8,
+      "precedent": "Anywhere",
+      "segment": "bridge1"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABCDABCD",
+      "lengthInBars": 8,
+      "precedent": "It ain't me",
+      "segment": "verse1"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABCDABCD",
+      "lengthInBars": 8,
+      "precedent": "It ain't me",
+      "segment": "verse2"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABCDABCD",
+      "lengthInBars": 8,
+      "precedent": "It ain't me",
+      "segment": "verse3"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "A",
+            "A"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "D",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "E",
+            "E",
+            "E",
+            "E"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABCDABCD",
+      "lengthInBars": 8,
+      "precedent": "It ain't me",
+      "segment": "verse4"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABABABABABABABAB",
+      "lengthInBars": 16,
+      "precedent": "California gurls",
+      "segment": "chorus1"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABABABABABABABAB",
+      "lengthInBars": 16,
+      "precedent": "California gurls",
+      "segment": "chorus2"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABABABABABABABAB",
+      "lengthInBars": 16,
+      "precedent": "California gurls",
+      "segment": "chorus3"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "A",
+            "A",
+            "D",
+            "D"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "D",
+            "E",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "ABAB",
+      "lengthInBars": 4,
+      "precedent": "endOfChorus",
+      "segment": "intro"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        },
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "AA",
+      "lengthInBars": 2,
+      "precedent": "verse",
+      "segment": "break3"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "A",
+      "lengthInBars": 1,
+      "precedent": "verse",
+      "segment": "break1"
+    },
+    {
+      "bars": [
+        {
+          "chords": [
+            "F#m",
+            "F#m",
+            "F#m",
+            "F#m"
+          ]
+        }
+      ],
+      "chordStructure": "A",
+      "lengthInBars": 1,
+      "precedent": "verse",
+      "segment": "break2"
+    }
+  ],
+  "tempo": 99
+}

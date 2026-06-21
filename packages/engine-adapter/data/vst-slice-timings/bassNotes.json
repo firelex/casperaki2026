@@ -1,0 +1,81 @@
+[{
+	"start": "00.00.50",
+	"end": "00.04.50",
+	"type": "longNote",
+	"note": "c2"
+}, {
+	"start": "00.04.50",
+	"end": "00.08.50",
+	"type": "longNote",
+	"note": "d#2"
+}, {
+	"start": "00.08.50",
+	"end": "00.12.50",
+	"type": "longNote",
+	"note": "f#2"
+}, {
+	"start": "00.12.50",
+	"end": "00.16.50",
+	"type": "longNote",
+	"note": "a2"
+}, {
+	"start": "00.16.50",
+	"end": "00.20.50",
+	"type": "longNote",
+	"note": "c3"
+}, {
+	"start": "00.20.50",
+	"end": "00.24.50",
+	"type": "longNote",
+	"note": "d#3"
+}, {
+	"start": "00.24.50",
+	"end": "00.28.50",
+	"type": "longNote",
+	"note": "f#3"
+}, {
+	"start": "00.28.50",
+	"end": "00.32.50",
+	"type": "longNote",
+	"note": "a3"
+}, {
+	"start": "00.32.50",
+	"end": "00.32.75",
+	"type": "shortNote",
+	"note": "c2"
+}, {
+	"start": "00.32.75",
+	"end": "00.33.00",
+	"type": "shortNote",
+	"note": "d#2"
+}, {
+	"start": "00.33.00",
+	"end": "00.33.25",
+	"type": "shortNote",
+	"note": "f#2"
+}, {
+	"start": "00.33.25",
+	"end": "00.33.50",
+	"type": "shortNote",
+	"note": "a2"
+}, {
+	"start": "00.33.50",
+	"end": "00.33.75",
+	"type": "shortNote",
+	"note": "c3"
+}, {
+	"start": "00.33.75",
+	"end": "00.34.00",
+	"type": "shortNote",
+	"note": "d#3"
+}, {
+	"start": "00.34.00",
+	"end": "00.34.25",
+	"type": "shortNote",
+	"note": "f#3"
+}, {
+	"start": "00.34.25",
+	"end": "00.34.50",
+	"type": "shortNote",
+	"note": "a3"
+}]

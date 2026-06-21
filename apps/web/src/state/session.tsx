@@ -1,0 +1,200 @@
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+
+import type { Song } from '@casperaki/song-schema';
+
+import type { GeneratedSong, ReplayResult } from '../api/songs';
+import {
+  applyCommand,
+  canRedo as canRedoEdit,
+  canUndo as canUndoEdit,
+  initEditState,
+  type EditCommand,
+  type EditState,
+} from './song-edit';
+
+/**
+ * Session state.
+ *
+ * Holds the list of songs generated this session (no brain index
+ * endpoint yet) plus the currently-active song and segment, and the
+ * last replay outcome. This is the single read/write boundary between
+ * the Projects view (which writes via `addSong`) and the Editor view
+ * (which reads `activeSong` + writes `activeSegment`).
+ *
+ * NOT the typed editor store described in docs/54 — that lands with M2
+ * once mutations are real.
+ */
+
+export interface ProjectListItem {
+  readonly song: GeneratedSong;
+  readonly createdAt: number;
+  readonly seed: string;
+  readonly genre: string;
+}
+
+export interface SessionState {
+  readonly songs: readonly ProjectListItem[];
+  readonly activeSong: GeneratedSong | undefined;
+  readonly activeSegment: string | undefined;
+  /** Currently-focused bar within `activeSegment`. Read-only highlight today. */
+  readonly activeBarIndex: number | undefined;
+  readonly lastReplay: ReplayResult | undefined;
+  /** Editor session for the active Song. `undefined` outside the editor.
+   *  The reducer holds an immutable copy of the brain-returned Song
+   *  (`editor.original`) and the user's working copy (`editor.working`).
+   *  Mutations land via `applyEdit`. See `state/song-edit.ts`. */
+  readonly editor: EditState | undefined;
+  /** The Song that views should render — the editor's working copy when
+   *  an edit session exists, else the original. Existing read-only
+   *  inspectors only need this; the id/hash come from `activeSong`. */
+  readonly viewSong: Song | undefined;
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly editorDirty: boolean;
+  readonly renderStale: boolean;
+  addSong(song: GeneratedSong, meta: { seed: string; genre: string }): void;
+  removeSong(id: string): void;
+  setActiveSong(song: GeneratedSong | undefined): void;
+  setActiveSegment(segmentName: string | undefined): void;
+  setActiveBarIndex(barIndex: number | undefined): void;
+  setLastReplay(result: ReplayResult | undefined): void;
+  applyEdit(command: EditCommand): void;
+}
+
+const SessionContext = createContext<SessionState | undefined>(undefined);
+
+export function SessionProvider({ children }: { children: ReactNode }) {
+  const [songs, setSongs] = useState<ProjectListItem[]>([]);
+  const [activeSong, setActiveSongState] = useState<GeneratedSong | undefined>(undefined);
+  const [activeSegment, setActiveSegmentState] = useState<string | undefined>(undefined);
+  const [activeBarIndex, setActiveBarIndexState] = useState<number | undefined>(undefined);
+  const [lastReplay, setLastReplayState] = useState<ReplayResult | undefined>(undefined);
+  const [editor, setEditorState] = useState<EditState | undefined>(undefined);
+
+  const addSong = useCallback(
+    (song: GeneratedSong, meta: { seed: string; genre: string }) => {
+      setSongs((prev) => {
+        const filtered = prev.filter((p) => p.song.id !== song.id);
+        return [
+          { song, createdAt: Date.now(), seed: meta.seed, genre: meta.genre },
+          ...filtered,
+        ];
+      });
+    },
+    [],
+  );
+
+  const removeSong = useCallback((id: string) => {
+    setSongs((prev) => prev.filter((p) => p.song.id !== id));
+    setActiveSongState((cur) => (cur?.id === id ? undefined : cur));
+  }, []);
+
+  const setActiveSong = useCallback((song: GeneratedSong | undefined) => {
+    setActiveSongState(song);
+    setLastReplayState(undefined);
+    setActiveSegmentState(song?.song.songStructure[0]?.name);
+    setActiveBarIndexState(undefined);
+    // The brain-returned Song seeds a fresh edit session. Any in-flight
+    // edits from a previous song are discarded — switching songs is the
+    // explicit reset boundary.
+    setEditorState(song ? initEditState(song.song) : undefined);
+  }, []);
+
+  const applyEdit = useCallback((command: EditCommand) => {
+    setEditorState((current) => {
+      if (!current) return current;
+      const next = applyCommand(current, command);
+      if (next === current) return current;
+      // Keep the active segment selection valid through edits. If the
+      // selected segment is gone (delete) or renamed, fall back to the
+      // first segment in the new working structure so the inspector
+      // stays populated.
+      const names = next.working.songStructure.map((s) => s.name);
+      setActiveSegmentState((prev) => {
+        if (prev === undefined) return names[0];
+        if (names.includes(prev)) return prev;
+        return names[0];
+      });
+      setActiveBarIndexState((prev) => {
+        if (prev === undefined) return prev;
+        // If the bar index now points past the (possibly resized)
+        // active segment, drop the highlight.
+        return prev;
+      });
+      return next;
+    });
+  }, []);
+
+  const setActiveSegment = useCallback((segmentName: string | undefined) => {
+    setActiveSegmentState((prev) => {
+      if (prev !== segmentName) setActiveBarIndexState(undefined);
+      return segmentName;
+    });
+  }, []);
+
+  const setActiveBarIndex = useCallback((barIndex: number | undefined) => {
+    setActiveBarIndexState(barIndex);
+  }, []);
+
+  const setLastReplay = useCallback((result: ReplayResult | undefined) => {
+    setLastReplayState(result);
+  }, []);
+
+  const viewSong = editor?.working ?? activeSong?.song;
+  const canUndo = editor ? canUndoEdit(editor) : false;
+  const canRedo = editor ? canRedoEdit(editor) : false;
+  const editorDirty = editor?.dirty ?? false;
+  const renderStale = editor?.renderStale ?? false;
+
+  const value = useMemo<SessionState>(
+    () => ({
+      songs,
+      activeSong,
+      activeSegment,
+      activeBarIndex,
+      lastReplay,
+      editor,
+      viewSong,
+      canUndo,
+      canRedo,
+      editorDirty,
+      renderStale,
+      addSong,
+      removeSong,
+      setActiveSong,
+      setActiveSegment,
+      setActiveBarIndex,
+      setLastReplay,
+      applyEdit,
+    }),
+    [
+      songs,
+      activeSong,
+      activeSegment,
+      activeBarIndex,
+      lastReplay,
+      editor,
+      viewSong,
+      canUndo,
+      canRedo,
+      editorDirty,
+      renderStale,
+      addSong,
+      removeSong,
+      setActiveSong,
+      setActiveSegment,
+      setActiveBarIndex,
+      setLastReplay,
+      applyEdit,
+    ],
+  );
+
+  return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
+}
+
+export function useSession(): SessionState {
+  const ctx = useContext(SessionContext);
+  if (!ctx) throw new Error('useSession must be used inside <SessionProvider>');
+  return ctx;
+}

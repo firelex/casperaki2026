@@ -1,0 +1,18 @@
+{
+    "details": {
+        "LUFS": "24",
+        "bpm": 99,
+        "climax": 5.318,
+        "duration": 9.717551,
+        "file": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+        "key": "D",
+        "note": "D",
+        "vstPlugin": "bigZ - Reverses_9 - D"
+    },
+    "id": 26886,
+    "instrumentGroup": "fx",
+    "lowLevelType": "fxTonalReverse",
+    "name": "fx - fxTonalReverse - edm - bigZ - Reverses_9 - D.mp3",
+    "transitionId": 6,
+    "type": "transitionSample"
+}

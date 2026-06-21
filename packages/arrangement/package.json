@@ -1,0 +1,42 @@
+{
+  "name": "@casperaki/arrangement",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Procedural arrangement generators for Casperaki. Phase 3 brain port.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "data"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:goldens:update": "tsx scripts/update-goldens.mjs",
+    "catalog:export": "node scripts/export-catalog-xlsx.mjs",
+    "catalog:import": "node scripts/import-catalog-xlsx.mjs"
+  },
+  "dependencies": {
+    "@casperaki/music-theory": "workspace:*",
+    "@casperaki/song-schema": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "exceljs": "^4.4.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.8.3",
+    "vitest": "^2.1.9",
+    "xlsx": "^0.18.5"
+  }
+}

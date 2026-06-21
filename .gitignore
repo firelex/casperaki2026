@@ -1,0 +1,56 @@
+node_modules
+dist
+.env
+*.log
+
+# engine spike — generated, not committed
+apps/engine-spike/out/
+apps/engine-spike/native/build/
+# audio-normalisation cache (docs/54i) — repo-local fallback when
+# CASPERAKI_AUDIO_CACHE_ROOT / /mnt/d are unavailable. Converted audio
+# must never be tracked.
+apps/engine-spike/.cache/
+
+# vendored model service clones — tracked in their own upstream repos
+apps/models/services/ace-step/
+apps/models/services/sam-audio/repo/
+apps/models/services/soulx-singer/repo/
+apps/models/services/demucs/
+apps/models/services/liveact/
+
+# model weights / checkpoints / generated outputs — never tracked (multi-GB)
+apps/models/services/.checkpoints/
+apps/models/services/sam-audio/outputs/
+apps/models/services/_serving/vocal-pipelines/
+
+# Python bytecode caches
+__pycache__/
+*.pyc
+
+# === ML model layer: keep Casperaki serving glue, drop everything downloadable ==
+# (see apps/models/README.md for what to clone/download). The hand-written
+# serving code stays: _serving/{harness,adapter_common,adapters/*}.py and each
+# service's smoke_test.py + configs. Everything below is re-fetchable.
+#
+# Python virtualenvs (torch/CUDA libs, hundreds of MB each)
+**/.venv/
+**/venv/
+# Model weights / checkpoints anywhere (multi-GB) — incl. sam-audio/.checkpoints
+**/.checkpoints/
+**/checkpoints/
+*.safetensors
+*.pth
+*.ckpt
+*.pt
+*.onnx
+*.gguf
+*.msgpack
+# matchering is pip-installed; only venv/outputs live here
+apps/models/services/matchering/.venv/
+# Generated audio / outputs / run logs / caches under the model services
+apps/models/services/*/outputs/
+apps/models/services/_serving/run/
+apps/models/services/.cache/
+apps/models/services/sam-audio/*.wav
+apps/models/services/soulx-singer/*.wav
+apps/models/services/matchering/*.wav

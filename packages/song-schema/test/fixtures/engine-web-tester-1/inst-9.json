@@ -1,0 +1,16 @@
+{
+    "details": {
+        "LUFS": "24",
+        "bpm": 99,
+        "climax": 2.616,
+        "duration": 5.276735,
+        "file": "fx - fxReverse - edm - vengeance - VEH1 Reverse - 30.mp3",
+        "vstPlugin": "vengeance - VEH1 Reverse - 30"
+    },
+    "id": 26777,
+    "instrumentGroup": "fx",
+    "lowLevelType": "fxReverse",
+    "name": "fx - fxReverse - edm - vengeance - VEH1 Reverse - 30.mp3",
+    "transitionId": 16,
+    "type": "transitionSample"
+}
