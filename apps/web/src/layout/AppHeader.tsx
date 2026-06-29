@@ -20,7 +20,6 @@ export function AppHeader() {
       <nav className="hidden sm:flex items-center gap-2 h-full">
         <IconNav to="/" label="Home" glyph="◇" />
         <IconNav to="/catalog" label="Catalog" glyph="≡" />
-        <IconNav to="/login" label="Sign in" glyph="◉" />
         <IconNav to="#profile" label="Profile" glyph="◐" disabled />
         <IconNav to="#settings" label="Settings" glyph="✱" disabled />
       </nav>

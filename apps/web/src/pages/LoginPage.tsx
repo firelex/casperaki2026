@@ -1,19 +1,16 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../auth/AuthContext';
 
 /**
- * Login screen — visual mock of `rory-fe/src/views/LoginView.vue`.
+ * Landing screen — shown to every signed-out visitor.
  *
  * 50/50 split: left panel carries the brand boxes / play glyph and
- * staggered entrance animations; right panel is the dark form. No
- * backend auth — the form posts nowhere, hitting "Log in" sends the
- * user to `/` (Projects). Two sub-panels (Sign-up / Log in) toggle
- * inside the form, mirroring rory-fe's `<LoginForm>` switchTo flow.
+ * staggered entrance animations; right panel offers OIDC sign-in CTAs.
+ * All three buttons trigger the same OIDC redirect via useAuth().signIn().
  */
 export function LoginPage() {
-  const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [hidden, setHidden] = useState(false);
-  const [panel, setPanel] = useState<'home' | 'form'>('home');
   const [animBoxes, setAnimBoxes] = useState(false);
   const [animPlay, setAnimPlay] = useState(false);
   const [animForm, setAnimForm] = useState(false);
@@ -27,14 +24,9 @@ export function LoginPage() {
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const nextPage = () => {
+  const go = () => {
     setHidden(true);
-    setTimeout(() => navigate('/'), 400);
-  };
-
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    nextPage();
+    setTimeout(signIn, 300);
   };
 
   return (
@@ -97,7 +89,7 @@ export function LoginPage() {
         </div>
       </div>
 
-      {/* Right — form */}
+      {/* Right — sign-in CTAs */}
       <div
         className={`absolute right-0 top-0 bottom-0 w-1/2 bg-black z-10 transition-all duration-600 ease-[cubic-bezier(0,0,0,1.08)] ${
           animForm ? 'translate-x-0 opacity-100' : 'translate-x-[5%] opacity-0'
@@ -105,11 +97,7 @@ export function LoginPage() {
       >
         <div className="h-full w-full flex items-center justify-center px-10">
           <div className="w-full max-w-[360px] flex flex-col">
-            {panel === 'home' ? (
-              <SignUpPanel onSwitch={() => setPanel('form')} onContinue={nextPage} />
-            ) : (
-              <LoginPanel onBack={() => setPanel('home')} onSubmit={onSubmit} />
-            )}
+            <SignUpPanel onContinue={go} />
           </div>
         </div>
       </div>
@@ -117,13 +105,7 @@ export function LoginPage() {
   );
 }
 
-function SignUpPanel({
-  onSwitch,
-  onContinue,
-}: {
-  onSwitch(): void;
-  onContinue(): void;
-}) {
+function SignUpPanel({ onContinue }: { onContinue(): void }) {
   return (
     <>
       <h2 className="text-[30px] text-white text-center font-semibold leading-tight">
@@ -154,71 +136,8 @@ function SignUpPanel({
       >
         Continue with Apple
       </button>
-      <p className="text-center text-white/70 text-[14px] mt-8">
-        Already signed up?{' '}
-        <button
-          type="button"
-          onClick={onSwitch}
-          className="text-accent font-semibold hover:underline"
-        >
-          Log in here →
-        </button>
-      </p>
       <p className="text-center text-white/30 text-[11px] mt-6 leading-relaxed max-w-[280px] mx-auto">
-        Visual mock — no auth backend. By continuing, the workbench just
-        opens. The brain has no users.
-      </p>
-    </>
-  );
-}
-
-function LoginPanel({
-  onBack,
-  onSubmit,
-}: {
-  onBack(): void;
-  onSubmit(e: FormEvent<HTMLFormElement>): void;
-}) {
-  return (
-    <>
-      <div className="w-full flex items-center justify-between mb-8">
-        <button
-          type="button"
-          onClick={onBack}
-          className="h-9 w-9 rounded-full bg-white/5 text-white/70 hover:text-white hover:bg-white/10 transition-colors text-[18px]"
-          aria-label="Back"
-        >
-          ←
-        </button>
-        <span className="text-[11px] uppercase tracking-[0.18em] text-white/40">
-          Log in
-        </span>
-        <div className="w-9" />
-      </div>
-      <h2 className="text-[30px] text-white text-center font-semibold mb-8">Log in</h2>
-      <form onSubmit={onSubmit} className="flex flex-col">
-        <input
-          type="email"
-          placeholder="Email address"
-          className="h-14 rounded-2xl bg-[#252a31] text-white/80 text-[16px] px-7 mb-3 outline-none focus:bg-[#2c323b] placeholder:text-white/40"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          className="h-14 rounded-2xl bg-[#252a31] text-white/80 text-[16px] px-7 mb-5 outline-none focus:bg-[#2c323b] placeholder:text-white/40"
-        />
-        <button
-          type="submit"
-          className="h-14 rounded-full bg-accent text-white text-[16px] font-semibold hover:bg-accent/90 transition-colors"
-        >
-          Log in
-        </button>
-      </form>
-      <p className="text-center text-white/70 text-[13px] mt-6">
-        Forgotten password?{' '}
-        <a className="text-accent font-semibold cursor-pointer hover:underline">
-          Reset it here →
-        </a>
+        By continuing you agree to our terms of service and privacy policy.
       </p>
     </>
   );

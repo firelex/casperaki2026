@@ -149,6 +149,12 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.101.0
         version: 5.101.0(react@19.2.7)
+      '@teamsuzie/theme':
+        specifier: link:../../../open_teamsuzie/packages/theme
+        version: link:../../../open_teamsuzie/packages/theme
+      '@teamsuzie/ui':
+        specifier: link:../../../open_teamsuzie/packages/ui
+        version: link:../../../open_teamsuzie/packages/ui
       react:
         specifier: ^19.2.0
         version: 19.2.7
