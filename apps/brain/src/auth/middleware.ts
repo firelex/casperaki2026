@@ -24,7 +24,10 @@ export function readCookie(req: Request, name: string): string | undefined {
     const eq = part.indexOf('=');
     if (eq < 0) continue;
     const k = part.slice(0, eq).trim();
-    if (k === name) return decodeURIComponent(part.slice(eq + 1).trim());
+    if (k === name) {
+      try { return decodeURIComponent(part.slice(eq + 1).trim()); }
+      catch { return undefined; }
+    }
   }
   return undefined;
 }
@@ -56,8 +59,7 @@ export function attachSession(sessions: SessionBundleRepo, oidc: OidcClient): Re
     try {
       bundle = sessions.get(sid);
     } catch {
-      sessions.delete(sid);
-      clearSessionCookie(res);
+      try { sessions.delete(sid); clearSessionCookie(res); } catch { /* best effort */ }
       return next();
     }
     if (!bundle) return next();
@@ -70,8 +72,7 @@ export function attachSession(sessions: SessionBundleRepo, oidc: OidcClient): Re
       const accessToken = await ensureFreshAccessToken({ bundle, oidc, repo: sessions });
       req.user = { id: bundle.sub, email: bundle.email, name: bundle.name, accessToken };
     } catch {
-      sessions.delete(sid);
-      clearSessionCookie(res);
+      try { sessions.delete(sid); clearSessionCookie(res); } catch { /* best effort */ }
     }
     next();
   };

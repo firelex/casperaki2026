@@ -54,4 +54,50 @@ describe('attachSession', () => {
     expect((req as any).user).toBeUndefined();
     expect(next).toHaveBeenCalled();
   });
+
+  it('calls next without user when sessions.get() throws', async () => {
+    const fakeSessions = {
+      get() { throw new Error('db down'); },
+      delete() {},
+    } as any;
+    const req = { headers: { cookie: `${SESSION_COOKIE}=somesid` } } as unknown as Request;
+    const res = { setHeader: vi.fn() } as unknown as Response;
+    const next = vi.fn();
+    await expect(attachSession(fakeSessions, {} as any)(req, res, next)).resolves.toBeUndefined();
+    expect((req as any).user).toBeUndefined();
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('calls next without user when session is expired', async () => {
+    const db = openAuthDb(':memory:');
+    const sessions = new SessionBundleRepo(db, 'secret');
+    const created = sessions.create({
+      sub: 'u2', email: 'e2@x.com', name: 'E2', refreshToken: 'r', accessToken: 'a',
+      accessTokenExpiresAt: new Date(Date.now() + 3600_000).toISOString(),
+    });
+    db.prepare('UPDATE user_sessions SET expires_at = ? WHERE session_id = ?')
+      .run(new Date(Date.now() - 1000).toISOString(), created.sessionId);
+    const req = { headers: { cookie: `${SESSION_COOKIE}=${encodeURIComponent(created.sessionId)}` } } as unknown as Request;
+    const res = { setHeader: vi.fn() } as unknown as Response;
+    const next = vi.fn();
+    await attachSession(sessions, {} as any)(req, res, next);
+    expect((req as any).user).toBeUndefined();
+    expect(next).toHaveBeenCalled();
+  });
+
+  it('calls next without user when oidc.refresh throws', async () => {
+    const db = openAuthDb(':memory:');
+    const sessions = new SessionBundleRepo(db, 'secret');
+    const created = sessions.create({
+      sub: 'u3', email: 'e3@x.com', name: 'E3', refreshToken: 'r', accessToken: 'a',
+      accessTokenExpiresAt: new Date(Date.now() - 70_000).toISOString(),
+    });
+    const oidc = { refresh: async () => { throw new Error('idp down'); } } as any;
+    const req = { headers: { cookie: `${SESSION_COOKIE}=${encodeURIComponent(created.sessionId)}` } } as unknown as Request;
+    const res = { setHeader: vi.fn() } as unknown as Response;
+    const next = vi.fn();
+    await expect(attachSession(sessions, oidc)(req, res, next)).resolves.toBeUndefined();
+    expect((req as any).user).toBeUndefined();
+    expect(next).toHaveBeenCalled();
+  });
 });
