@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { AccountMenu } from './AccountMenu';
 
 /**
  * Top header used on the Projects screen — mirrors rory-fe
@@ -20,7 +21,6 @@ export function AppHeader() {
       <nav className="hidden sm:flex items-center gap-2 h-full">
         <IconNav to="/" label="Home" glyph="◇" />
         <IconNav to="/catalog" label="Catalog" glyph="≡" />
-        <IconNav to="/login" label="Sign in" glyph="◉" />
         <IconNav to="#profile" label="Profile" glyph="◐" disabled />
         <IconNav to="#settings" label="Settings" glyph="✱" disabled />
       </nav>
@@ -35,13 +35,7 @@ export function AppHeader() {
         >
           Create
         </button>
-        <button
-          type="button"
-          className="h-9 w-9 rounded-full bg-panel-2 text-white text-[13px] font-semibold flex items-center justify-center border border-line"
-          aria-label="Profile"
-        >
-          C
-        </button>
+        <AccountMenu />
       </div>
     </header>
   );
