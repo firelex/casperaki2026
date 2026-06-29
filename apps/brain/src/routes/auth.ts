@@ -101,11 +101,11 @@ export function authRouter(deps: AuthRouterDeps): Router {
   return r;
 }
 
-function normalizeReturnTo(raw: unknown, webOrigin: string): string {
+export function normalizeReturnTo(raw: unknown, webOrigin: string): string {
   const fallback = (process.env.OIDC_POST_LOGIN_DEFAULT || webOrigin) + '/';
   const value = typeof raw === 'string' ? raw : '';
   if (!value) return fallback;
-  if (value.startsWith('/')) return new URL(value, fallback).toString();
+  if (value.startsWith('/') && !value.startsWith('//')) return new URL(value, fallback).toString();
   try {
     const url = new URL(value);
     if (url.origin === new URL(webOrigin).origin) return url.toString();

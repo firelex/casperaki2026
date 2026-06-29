@@ -8,7 +8,10 @@
 import 'express-async-errors';
 import 'dotenv/config';
 
+import { randomBytes } from 'node:crypto';
 import express, { type Express } from 'express';
+
+const DEV_SESSION_SECRET = randomBytes(32).toString('hex');
 
 import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
@@ -39,7 +42,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     deps.auth ??
     (oidcConfigured(config)
       ? {
-          sessions: new SessionBundleRepo(openAuthDb(config.authDbPath), config.sessionSecret || 'dev-only-session-secret'),
+          sessions: new SessionBundleRepo(openAuthDb(config.authDbPath), config.sessionSecret || DEV_SESSION_SECRET),
           oidc: new OidcClient({
             issuerUrl: config.oidcIssuerUrl!,
             clientId: config.oidcClientId!,
