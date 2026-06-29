@@ -35,6 +35,13 @@ describe('OidcClient', () => {
     const tokens = await client(fetchImpl).exchangeCode({ code: 'c', codeVerifier: 'v' });
     expect(tokens.access_token).toBe('a');
     expect(fetchImpl).toHaveBeenCalledWith('https://idp.test/token', expect.objectContaining({ method: 'POST' }));
+    const init = (fetchImpl as any).mock.calls[0][1];
+    const sent = new URLSearchParams(init.body as string);
+    expect(sent.get('grant_type')).toBe('authorization_code');
+    expect(sent.get('code')).toBe('c');
+    expect(sent.get('code_verifier')).toBe('v');
+    expect(sent.get('client_id')).toBe('casperaki');
+    expect(sent.get('resource')).toBe('http://localhost:16500');
   });
 
   it('throws on a non-2xx token response', async () => {

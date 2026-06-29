@@ -29,8 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = await auth.me();
         if (!cancelled) setUser(me);
       } catch (err) {
-        if (!cancelled && err instanceof BrainError && err.status !== 401) {
-          console.warn('auth/me failed:', err.message);
+        const is401 = err instanceof BrainError && err.status === 401;
+        if (!cancelled && !is401) {
+          console.warn('auth/me failed:', err instanceof Error ? err.message : err);
         }
         if (!cancelled) setUser(null);
       } finally {

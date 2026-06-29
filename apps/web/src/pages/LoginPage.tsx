@@ -109,11 +109,11 @@ function SignUpPanel({ onContinue }: { onContinue(): void }) {
   return (
     <>
       <h2 className="text-[30px] text-white text-center font-semibold leading-tight">
-        Sign up for <span className="text-accent">Casperaki</span>
+        Welcome to <span className="text-accent">Casperaki</span>
       </h2>
       <p className="text-center text-white/60 text-[14px] mt-3 mb-10 leading-relaxed">
-        Sign up to create royalty-free music and videos, follow users, and
-        explore content.
+        Sign in or create an account to make royalty-free music and videos,
+        follow users, and explore content.
       </p>
       <button
         type="button"
@@ -128,13 +128,6 @@ function SignUpPanel({ onContinue }: { onContinue(): void }) {
         className="h-14 rounded-full border-2 border-white/10 text-white text-[16px] font-semibold mb-3 hover:border-white/30 transition-colors"
       >
         Continue with Google
-      </button>
-      <button
-        type="button"
-        onClick={onContinue}
-        className="h-14 rounded-full border-2 border-white/10 text-white text-[16px] font-semibold mb-3 hover:border-white/30 transition-colors"
-      >
-        Continue with Apple
       </button>
       <p className="text-center text-white/30 text-[11px] mt-6 leading-relaxed max-w-[280px] mx-auto">
         By continuing you agree to our terms of service and privacy policy.

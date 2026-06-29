@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import type { OidcClient } from '../auth/OidcClient.js';
 import type { SessionBundleRepo } from '../auth/SessionBundleRepo.js';
-import { clearSessionCookie, readCookie, SESSION_COOKIE } from '../auth/middleware.js';
+import { clearSessionCookie, readCookie, SESSION_COOKIE, SESSION_TTL_MS } from '../auth/middleware.js';
 
 const STATE_COOKIE = 'casperaki_oidc_state';
 const STATE_COOKIE_TTL_SECONDS = 300;
@@ -69,7 +69,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
         accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
       });
       const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      const sessionTtl = 30 * 24 * 60 * 60;
+      const sessionTtl = Math.floor(SESSION_TTL_MS / 1000);
       res.setHeader('Set-Cookie', [
         `${SESSION_COOKIE}=${encodeURIComponent(bundle.sessionId)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${sessionTtl}${secure}`,
         `${STATE_COOKIE}=; Path=/; HttpOnly; Max-Age=0`,
