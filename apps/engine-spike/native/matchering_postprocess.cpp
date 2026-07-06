@@ -11,7 +11,7 @@
 namespace casperaki::matchering
 {
 
-void masterAgainstAtemlos (const juce::File& src,
+bool masterAgainstAtemlos (const juce::File& src,
                            const juce::File& dst,
                            bool shouldLimit)
 {
@@ -19,7 +19,7 @@ void masterAgainstAtemlos (const juce::File& src,
     {
         std::cerr << "[matchering] source missing: "
                   << src.getFullPathName() << std::endl;
-        return;
+        return false;
     }
 
     // masterSongAtemlos() is `inline` (Matchering.h:1881) and reads the
@@ -31,6 +31,7 @@ void masterAgainstAtemlos (const juce::File& src,
                          shouldLimit,
                          /*sampleRate*/ 44100.0,
                          /*isVibe*/ false);
+    return true;
 }
 
 } // namespace casperaki::matchering

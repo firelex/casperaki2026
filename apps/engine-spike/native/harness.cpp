@@ -71,6 +71,22 @@ public:
                   << " base=" << baseURL
                   << " out=" << outWavPath << std::endl;
 
+        // Staging (readFile(song.json), directory_iterator, inst-* parsing and
+        // engine setup) can throw; mirror timerCallback's clean rc path rather
+        // than letting an uncaught exception reach std::terminate.
+        try {
+            stageEngineAndSchedule();
+        } catch (const std::exception& e) {
+            std::cerr << "[harness] FATAL: " << e.what() << '\n';
+            setApplicationReturnValue(3);
+            quit();
+        }
+    }
+
+    // Stage the engine + fixture and arm the deferred render timer. Split out of
+    // initialise() so its throwing calls funnel through the try/catch above.
+    void stageEngineAndSchedule()
+    {
         // CasperakiEngine starts a juce::HighResolutionTimer in its ctor
         // (CasperakiEngine.cpp:179) only if the controlStateCallback is
         // non-null. The timer fires hiResTimerCallback->getControlState()
@@ -128,13 +144,26 @@ public:
         std::vector<fs::path> instFiles;
         for (auto& e : fs::directory_iterator(envelopeDir)) {
             const auto name = e.path().filename().string();
-            if (name.rfind("inst-", 0) == 0 && e.path().extension() == ".json")
-                instFiles.push_back(e.path());
+            if (name.rfind("inst-", 0) != 0 || e.path().extension() != ".json")
+                continue;
+            // Require inst-<digits>.json so the numeric sort comparator's parse
+            // cannot fault on a badly-named file (a throwing std::sort
+            // comparator is UB). Skip anything else with a clear warning.
+            const auto stem = e.path().stem().string();          // e.g. "inst-3"
+            const std::string idx = stem.size() > 5 ? stem.substr(5) : std::string();
+            if (idx.empty() || idx.find_first_not_of("0123456789") != std::string::npos) {
+                std::cerr << "[harness] WARNING: skipping badly-named " << name
+                          << " (expected inst-<digits>.json)" << std::endl;
+                continue;
+            }
+            instFiles.push_back(e.path());
         }
         std::sort(instFiles.begin(), instFiles.end(),
-                  [](const fs::path& a, const fs::path& b) {
-                      auto n = [](const fs::path& p) {
-                          return std::stoi(p.stem().string().substr(5));
+                  [](const fs::path& a, const fs::path& b) noexcept {
+                      auto n = [](const fs::path& p) noexcept {
+                          // stem is validated inst-<digits> above; strtol never
+                          // throws, keeping the comparator noexcept.
+                          return std::strtol(p.stem().string().c_str() + 5, nullptr, 10);
                       };
                       return n(a) < n(b);
                   });
@@ -199,6 +228,13 @@ private:
 
         fs::create_directories(outWavPath.parent_path());
         const juce::File destFile(outWavPath.string());
+        // Render to a sibling temp file and rename onto the final out.wav only
+        // on success, so the brain never streams a half-written or stale render.
+        // Delete any pre-existing final file (and stale partial) up front too.
+        const std::string partialPath = outWavPath.string() + ".partial";
+        const juce::File partialFile(partialPath);
+        destFile.deleteFile();
+        partialFile.deleteFile();
 
         // docs/60 Phase 0 — resolved-event dump (resolution oracle). Set
         // SPIKE_DUMP_EVENTS=<path.json> to serialize the fully-resolved te::
@@ -300,8 +336,16 @@ private:
 
         std::atomic<bool> renderDone{false};
         std::thread watchdog;
+        // RAII backstop: signal + join the watchdog on ANY unwind path. If
+        // renderToFile throws, std::thread's destructor on a still-joinable
+        // thread would call std::terminate, defeating timerCallback's try/catch.
+        struct WatchdogJoiner {
+            std::atomic<bool>& done;
+            std::thread& t;
+            ~WatchdogJoiner() { done.store(true); if (t.joinable()) t.join(); }
+        } watchdogJoiner{renderDone, watchdog};
         if (stallSecs > 0 || timeoutSecs > 0) {
-            const std::string watchPath = outWavPath.string();
+            const std::string watchPath = partialPath;
             watchdog = std::thread([&renderDone, watchPath, stallSecs, timeoutSecs] {
                 using clock = std::chrono::steady_clock;
                 const auto start = clock::now();
@@ -375,20 +419,39 @@ private:
         // deadlocks on a WaveNode that is never ready (docs/57f). true routes
         // through HeadlessUIBehaviour, which pumps the message loop.
         const bool ok = soloTracks.isZero()
-            ? te::Renderer::renderToFile(*ed, destFile, /*useThread*/ true)
-            : te::Renderer::renderToFile("solo", destFile, *ed,
+            ? te::Renderer::renderToFile(*ed, partialFile, /*useThread*/ true)
+            : te::Renderer::renderToFile("solo", partialFile, *ed,
                   te::TimeRange(te::TimePosition(), ed->getLength()),
                   soloTracks, /*usePlugins*/ true, /*useACID*/ true, {}, /*useThread*/ true);
 
+        // Stop the watchdog now so a long post-process (matchering) below is not
+        // mistaken for a stall; the RAII WatchdogJoiner still joins on scope exit.
         renderDone.store(true);
-        if (watchdog.joinable())
-            watchdog.join();
 
         std::cout << "[harness] renderToFile returned " << (ok ? "true" : "false")
-                  << " exists=" << (destFile.existsAsFile() ? "yes" : "no")
-                  << " size=" << destFile.getSize() << std::endl;
+                  << " exists=" << (partialFile.existsAsFile() ? "yes" : "no")
+                  << " size=" << partialFile.getSize() << std::endl;
 
-        const bool renderOK = destFile.existsAsFile() && destFile.getSize() > 0;
+        // Fold the real renderToFile result into the gate — a false `ok` must
+        // never pass just because a (temp) file exists. Publish atomically by
+        // renaming the temp onto the final path only when the gate is satisfied.
+        const bool renderOK = ok && partialFile.existsAsFile() && partialFile.getSize() > 0;
+        if (renderOK) {
+            if (! partialFile.moveFileTo(destFile)) {
+                std::cerr << "[harness] FAILED to publish render "
+                          << partialFile.getFullPathName() << " -> "
+                          << destFile.getFullPathName() << std::endl;
+                partialFile.deleteFile();
+                setApplicationReturnValue(2);
+                return;
+            }
+        } else {
+            partialFile.deleteFile();
+        }
+
+        // rc scheme: 0 ok, 1 usage, 2 render fail, 3 fatal exception,
+        // 4 mastering fail, 124 watchdog abort.
+        int rc = renderOK ? 0 : 2;
 
         // SPIKE_MASTER=1 enables the legacy matchering post-process.
         // Mirrors InstrumentalGenerator::saveAndExportSong's shouldMaster
@@ -404,12 +467,17 @@ private:
                       << "src=" << destFile.getFullPathName()
                       << " dst=" << masteredFile.getFullPathName() << std::endl;
             const auto t0 = std::chrono::steady_clock::now();
-            casperaki::matchering::masterAgainstAtemlos(destFile, masteredFile, /*shouldLimit*/ true);
+            const bool mastered = casperaki::matchering::masterAgainstAtemlos(
+                destFile, masteredFile, /*shouldLimit*/ true);
             const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::steady_clock::now() - t0).count();
             std::cout << "[harness] matchering done in " << ms << "ms"
                       << " exists=" << (masteredFile.existsAsFile() ? "yes" : "no")
                       << " size=" << masteredFile.getSize() << std::endl;
+            if (! (mastered && masteredFile.existsAsFile() && masteredFile.getSize() > 0)) {
+                std::cerr << "[harness] SPIKE_MASTER=1 but mastering failed" << std::endl;
+                rc = 4;
+            }
         }
 
         // docs/65 — VST3 export: rewrite the rendered edit so the Casperaki
@@ -445,7 +513,7 @@ private:
             }
         }
 
-        setApplicationReturnValue(renderOK ? 0 : 2);
+        setApplicationReturnValue(rc);
     }
 
     // docs/60 Phase 0 — walk the resolved te::Edit and serialize its schedule.

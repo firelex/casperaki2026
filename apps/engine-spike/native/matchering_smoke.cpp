@@ -41,6 +41,9 @@ public:
         const juce::File src (inPath.string());
         const juce::File dst (outPath.string());
 
+        // Delete any pre-existing output so a stale file can't cause a false pass.
+        dst.deleteFile();
+
         std::cout << "[smoke] src=" << src.getFullPathName()
                   << " (exists=" << (src.existsAsFile() ? "yes" : "no")
                   << " size=" << src.getSize() << ")" << std::endl;
