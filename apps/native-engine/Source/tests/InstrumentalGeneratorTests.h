@@ -215,15 +215,17 @@ private:
 
         //Add audio file to melody buffer here
         auto melodyBuffer = readAudioFromFile (melodyFile);
-        instrumentalBuffer.addFrom (0, 0, melodyBuffer.getReadPointer (0), melodyBuffer.getNumSamples (), 1.0f);
+        // clamp to the destination length (mirror the non-test copy which uses jmin)
+        const int mixNumSamples = juce::jmin (instrumentalBuffer.getNumSamples (), melodyBuffer.getNumSamples ());
+        instrumentalBuffer.addFrom (0, 0, melodyBuffer.getReadPointer (0), mixNumSamples, 1.0f);
 
         if (melodyBuffer.getNumChannels () == 2)
         {
-            instrumentalBuffer.addFrom (1, 0, melodyBuffer.getReadPointer (1), melodyBuffer.getNumSamples (), 1.0f);
+            instrumentalBuffer.addFrom (1, 0, melodyBuffer.getReadPointer (1), mixNumSamples, 1.0f);
         }
         else
         {
-            instrumentalBuffer.addFrom (1, 0, melodyBuffer.getReadPointer (0), melodyBuffer.getNumSamples (), 1.0f);
+            instrumentalBuffer.addFrom (1, 0, melodyBuffer.getReadPointer (0), mixNumSamples, 1.0f);
         }
 
         exportFileToWAVPath (instrumentalBuffer, "export/" + titleVar.toString () + "_mixedFile", 44100);
@@ -313,30 +315,33 @@ private:
 
     bool readMP3FileWithTimeout (const juce::String& filePath)
     {
-        std::promise<bool> prom;
-        std::future<bool> future = prom.get_future ();
-        std::atomic<bool> done (false);
+        // Share prom/done via shared_ptr captured by value: on timeout the read
+        // thread is detached and may outlive this function, so it must not touch
+        // stack locals by reference.
+        auto prom = std::make_shared<std::promise<bool>> ();
+        std::future<bool> future = prom->get_future ();
+        auto done = std::make_shared<std::atomic<bool>> (false);
 
-        std::thread readThread ([&]() {
+        std::thread readThread ([this, filePath, prom, done]() {
             bool result = readMP3File (filePath);
-            if (!done) {
-                prom.set_value (result);
+            if (!done->load ()) {
+                prom->set_value (result);
             }
             });
 
-        std::thread timerThread ([&]()
+        std::thread timerThread ([&future, done, this]()
             {
                 if (future.wait_for (std::chrono::milliseconds (100)) == std::future_status::timeout)
                 {
-                    done = true;
+                    done->store (true);
                     logMessage ("Timeout occurred");
-                    readThread.detach (); // We don't care about this thread anymore.
                 }
             });
 
         timerThread.join ();
-        if (done)
+        if (done->load ())
         {
+            readThread.detach (); // We don't care about this thread anymore.
             return false; // A timeout occurred.
         }
         readThread.join ();

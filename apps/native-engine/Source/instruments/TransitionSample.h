@@ -118,6 +118,12 @@ class TransitionSample : public Instrument {
       );
 
 
+      if (files.get ()->empty ())
+      {
+          juce::Logger::writeToLog ("TransitionSample " + juce::String (id) + " has no downloaded sample files; skipping load.");
+          return;
+      }
+
       sampleFile = j::File::getCurrentWorkingDirectory ().getChildFile (files.get ()->begin ()->second);
   }
 
@@ -128,6 +134,6 @@ class TransitionSample : public Instrument {
 
   j::File sampleFile;
 
-  te::AudioTrack *sampleTransitionsTrack;
+  te::AudioTrack *sampleTransitionsTrack = nullptr;
 };
 

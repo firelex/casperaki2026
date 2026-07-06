@@ -14,10 +14,10 @@ public:
     {
         defaultVolume = 0;
 
+        // frequencyStart is read per-segment from transitionData in
+        // createSegmentClip; validate its presence in details but don't store it.
         auto detailsData = instrumentData["details"];
-
-        if (detailsData.hasProperty("frequencyStart")) frequencyStart = detailsData["frequencyStart"];
-        else jassertfalse;
+        jassert (detailsData.hasProperty ("frequencyStart"));
     }
 
     virtual ~TransitionNoise()
@@ -160,11 +160,9 @@ public:
 
     private:
 
-    int frequencyStart;
-
     te::FourOscPlugin::Ptr whiteNoisePlugin;
     te::LowPassPlugin::Ptr lowPassPlugin;
 
-    te::AudioTrack *track;
+    te::AudioTrack *track = nullptr;
 };
 

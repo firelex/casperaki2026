@@ -47,7 +47,7 @@ public:
                 {
                     clearTrack(track);
                 }
-                catch (std::exception e)
+                catch (const std::exception& e)
                 {
                     DBG("Error clearing track");
                 }

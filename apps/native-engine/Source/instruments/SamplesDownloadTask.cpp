@@ -3,6 +3,7 @@
 //
 #include <JuceHeader.h>
 #include "SamplesDownloadTask.h"
+#include "SamplesDownloadTaskUtils.h"
 #include <fstream>
 #define MINIMP3_IMPLEMENTATION
 
@@ -46,6 +47,7 @@ public:
             {
                 hasDownloadedFiles = true;
 
+                const juce::ScopedLock sl (downloadLock);
 #if COPY_TO_SAMPLES_FOLDER
                 juce::File sampleFile = copyFileToEditDir (edit, tempFile);
                 files.get()->insert (std::make_pair (it->name.toString(), getEditDirCopyFile (edit, sampleFile)));
@@ -58,6 +60,8 @@ public:
             {
                 auto dnlOpts = juce::URL::DownloadTaskOptions().withListener (this);
                 auto downloadTask = url.downloadToFile (tempFile, dnlOpts);
+
+                const juce::ScopedLock sl (downloadLock);
                 downloadTasks.push_back (std::move (downloadTask));
                 targetIds.set (tempFile.getFullPathName(), it->name.toString());
       //          juce::Logger::writeToLog (fileName + " download task has been added to the list of download tasks. \n");
@@ -131,7 +135,7 @@ public:
         juce::String headersString = "Accept: */*\r\n"
         "User-Agent: Thunder Client (https://www.thunderclient.com)\r\n"
         "host: " + url.getDomain() + "\r\n"
-        "Authorization: JWT eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTaW1wbGUgQXV0aCIsInN1YiI6NCwibmFtZSI6InNhbm1hcmlubyIsImF1ZCI6InNpbXBsZWF1dGgiLCJpYXQiOjE2ODI0MTQxMjgsImV4cCI6MTY5MTA1NDEyOCwianRpIjoiZjZjZGM5NTAtOGUxZi00MDc3LTg0ZmUtNDUzNDA2NzQzYzU0In0.kfeEy4vuc7isKEh3_3lE2knbSxjMwWfAQFmikl8cjBTIR7WlVBifLL1EhjZx-UrtKTm1ORJvzCdQfG5RybKcMQ\r\n"
+        "Authorization: JWT " + getSampleDownloadAuthToken() + "\r\n"
         "Content-Type: application/json\r\n";
 
 
@@ -241,7 +245,9 @@ public:
     void finished (juce::URL::DownloadTask* task, bool success) override
     {
         juce::Logger::writeToLog ("Entering final stage of download process.");
-        
+
+        const juce::ScopedLock sl (downloadLock);
+
         //If it isn't the unzipped files
         if (!isZipFile) //This means one download task per file
         {
@@ -252,16 +258,27 @@ public:
             else
             {
                 juce::Logger::writeToLog ("task target location: " + task->getTargetLocation().getFullPathName());
-                auto targetLocationPath = task->getTargetLocation().getFullPathName();
+                auto targetLocation = task->getTargetLocation();
+                auto targetLocationPath = targetLocation.getFullPathName();
                 auto targetId = targetIds.getValue (targetLocationPath, "");
-                juce::Logger::writeToLog ("done file: " + targetLocationPath);
 
+                // Only register a file that actually downloaded successfully and
+                // is non-empty. A failed/zero-byte download must NOT be treated
+                // as a valid sample.
+                if (success && targetLocation.existsAsFile() && targetLocation.getSize() > 0)
+                {
+                    juce::Logger::writeToLog ("done file: " + targetLocationPath);
 #if COPY_TO_SAMPLES_FOLDER
-                juce::File sampleFile = copyFileToEditDir (edit, task->getTargetLocation());
-                files.get()->insert(std::make_pair (targetId, getEditDirCopyFile (edit, sampleFile)));
+                    juce::File sampleFile = copyFileToEditDir (edit, targetLocation);
+                    files.get()->insert(std::make_pair (targetId, getEditDirCopyFile (edit, sampleFile)));
 #else
-                files.get()->insert(std::make_pair (targetId, targetLocationPath));
+                    files.get()->insert(std::make_pair (targetId, targetLocationPath));
 #endif
+                }
+                else
+                {
+                    juce::Logger::writeToLog ("download FAILED or empty for: " + targetLocationPath);
+                }
             }
         }
         else
@@ -270,7 +287,7 @@ public:
                 unzipFile();
             copyVstSampleFilesFromCacheIntoFolder();
         }
-        
+
         TRACKTION_LOG ("downloadTasks: " + juce::String(downloadTasks.size()) + " ids: " + juce::String(ids->getProperties().size()) );
         if (
             std::all_of(downloadTasks.begin(), downloadTasks.end(), [](std::unique_ptr<juce::URL::DownloadTask>& task) {
@@ -278,11 +295,8 @@ public:
         })
             ) {
             juce::Logger::writeToLog ("FINISHED DOWNLOADING FILES!!!! \n");
-            success = true;
             notify();
         }
-
-        success = false;
     }
     
     void copyVstSampleFilesFromCacheIntoFolder()
@@ -330,6 +344,10 @@ private:
     
     std::vector<std::unique_ptr<juce::URL::DownloadTask>> downloadTasks {};
     FileMapPtr files = std::make_shared<std::unordered_map<juce::String, juce::String>>();
+
+    // Guards downloadTasks + *files: iterativeRun() mutates them on the caller
+    // thread while JUCE download callbacks invoke finished() from other threads.
+    juce::CriticalSection downloadLock;
 };
 
 

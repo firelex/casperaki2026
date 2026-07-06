@@ -66,7 +66,7 @@ struct TimeStrums {
             type = TimeStrums::Type::fx;
             return;
         }
-        throw new std::invalid_argument("Invalid type string");
+        throw std::invalid_argument("Invalid type string");
     }
 };
 
@@ -238,8 +238,9 @@ inline j::Array<TimeNote> getStrumNotes (j::var &noteData, Chord &currentChord, 
         return i == -1;
     }))
     {
-        strings.clear ();
-        for (int i = 0; i < strings.size (); i++)
+        // keep the original entry count (e.g. [-1,-1,-1,-1] -> [5,4,3,2]);
+        // clearing first left size()==0 so the fallback produced no notes.
+        for (int i = 0; i < (int) strings.size (); i++)
         {
             strings[i] = (int) chordNotes.size () - 1 - i;
         }
@@ -249,6 +250,10 @@ inline j::Array<TimeNote> getStrumNotes (j::var &noteData, Chord &currentChord, 
     auto offsets = noteData["offset"].getArray ();
     auto durations = noteData["durations"].getArray ();
     auto velocities = noteData["velocities"].getArray ();
+    // durations/velocities are indexed with i % size() below; guard against
+    // missing/empty arrays (null deref / divide-by-zero).
+    if (durations == nullptr || durations->isEmpty () || velocities == nullptr || velocities->isEmpty ())
+        return ret;
     for (int i = 0; i < strings.size (); i++)
     {
         double offset = 0;
@@ -258,7 +263,7 @@ inline j::Array<TimeNote> getStrumNotes (j::var &noteData, Chord &currentChord, 
         }
 
 
-        if (chordNotes.size() != 0)
+        if (chordNotes.size() != 0 && strings[i] >= 0)
         {
             //PRT this has been commented out as the guitar strummer has actually not been implemented yet
             // Apply the per-instrument octave correction, matching the legacy
@@ -283,6 +288,10 @@ inline j::Array<TimeNote> getFretNoises (j::var &noteData, Chord &currentChord)
     auto offsets = noteData["offset"].getArray ();
     auto durations = noteData["durations"].getArray ();
     auto velocities = noteData["velocities"].getArray ();
+    // sounds drives the loop; durations/velocities are indexed with i % size()
+    // below. Guard against missing/empty arrays (null deref / divide-by-zero).
+    if (sounds == nullptr || sounds->isEmpty () || durations == nullptr || durations->isEmpty () || velocities == nullptr || velocities->isEmpty ())
+        return ret;
 
     for (int i = 0; i < sounds->size (); i++)
     {
@@ -698,13 +707,13 @@ inline void applyMuteToTrack (te::AudioTrack *track, const te::TimeRange &segTim
 
     j::String muteType = mute["type"].toString ();
 
-    std::regex re{"([0-9])To(.[0-9])"};
+    std::regex re{"([0-9]+)To([0-9]+)"};
     std::smatch match;
     std::string muteTypeStr = muteType.toStdString ();
     if (std::regex_search (muteTypeStr, match, re) && match.size () == 3)
     {
-        float muteStart = j::String{match.str (1)}.getFloatValue () / 100.0;  // e.g. 0
-        float muteEnd = j::String{match.str (2)}.getFloatValue () / 100.0;    // e.g. 75
+        float muteStart = j::String{match.str (1)}.getFloatValue () / 100.0;  // e.g. 25 -> 0.25
+        float muteEnd = j::String{match.str (2)}.getFloatValue () / 100.0;    // e.g. 75 -> 0.75
 
         te::AutomatableParameter::Ptr volParam = track->getVolumePlugin ()->getAutomatableParameterByID ("volume");
         te::AutomationCurve curve = volParam->getCurve ();

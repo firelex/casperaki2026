@@ -103,6 +103,12 @@ private:
             sampleId
         );
         
+        if (files.get()->empty())
+        {
+            DBG("Loop " << id << " has no downloaded sample files; skipping load.");
+            return;
+        }
+
         juce::String fullPathName = files.get()->begin()->second;
 
         sampleFile = j::File::getCurrentWorkingDirectory().getChildFile(fullPathName);
@@ -113,8 +119,8 @@ private:
 
     juce::DynamicObject::Ptr sampleId {new juce::DynamicObject()};
     
-    int bpm;
-    double duration;
+    int bpm = 0;
+    double duration = 0;
     j::String original;
 
     j::File sampleFile;
