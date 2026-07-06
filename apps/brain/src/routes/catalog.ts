@@ -27,19 +27,8 @@ import {
   type ValidatedCatalogEntry,
 } from '@casperaki/arrangement';
 
-const ListQuerySchema = z
-  .object({
-    family: z.string().optional(),
-    lowLevel: z.string().optional(),
-    mainStyle: z.string().optional(),
-    addStyle: z.string().optional(),
-    library: z.string().optional(),
-    q: z.string().optional(),
-    limit: z.coerce.number().int().positive().max(500).optional(),
-    cursor: z.coerce.number().int().nonnegative().optional(),
-  })
-  .strict();
-
+// The list query is the group query plus a `lowLevel` filter; derive it so
+// the shared filter fields can't drift between the two.
 const GroupQuerySchema = z
   .object({
     family: z.string().optional(),
@@ -51,6 +40,10 @@ const GroupQuerySchema = z
     cursor: z.coerce.number().int().nonnegative().optional(),
   })
   .strict();
+
+const ListQuerySchema = GroupQuerySchema.extend({
+  lowLevel: z.string().optional(),
+}).strict();
 
 export interface CatalogRouterDeps {
   /** Optional injection points for tests. Default to the package loaders. */

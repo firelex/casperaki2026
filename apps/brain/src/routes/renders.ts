@@ -220,14 +220,15 @@ async function computePeaksFromWav(path: string, bins: number): Promise<Computed
       rms: [],
     };
   }
-  // Bin frames into `bins` equal-width buckets. The last bin may pick up
-  // the remainder so every sample is accounted for.
+  // Bin frames into `bins` proportional buckets via floor(b*frames/bins).
+  // Equal-width bins with the remainder dumped into the last bucket skewed
+  // badly when frameCount wasn't a multiple of bins (the final bar could
+  // cover ~half the audio); proportional edges spread the remainder evenly.
   const peaks = new Array<number>(bins).fill(0);
   const rms = new Array<number>(bins).fill(0);
-  const framesPerBin = Math.max(1, Math.floor(frameCount / bins));
   for (let b = 0; b < bins; b++) {
-    const startFrame = b * framesPerBin;
-    const endFrame = b === bins - 1 ? frameCount : Math.min(frameCount, startFrame + framesPerBin);
+    const startFrame = Math.floor((b * frameCount) / bins);
+    const endFrame = Math.floor(((b + 1) * frameCount) / bins);
     let peak = 0;
     let sumSquares = 0;
     let sampleCount = 0;
@@ -290,13 +291,18 @@ function parseWavHeader(buf: Buffer): ParsedWavHeader {
   }
   if (!fmt) throw new Error('wav missing fmt chunk');
   if (dataStart < 0) throw new Error('wav missing data chunk');
+  // Clamp the declared data size to what the buffer actually holds. A
+  // truncated file (e.g. read mid-write) otherwise makes readers index past
+  // the buffer — the 24-bit reader would silently coerce out-of-range bytes
+  // to zero and fabricate silent samples instead of erroring.
+  const clampedDataSize = Math.max(0, Math.min(dataSize, buf.length - dataStart));
   return {
     sampleRate: fmt.sampleRate,
     channels: fmt.channels,
     bitsPerSample: fmt.bitsPerSample,
     audioFormat: fmt.audioFormat,
     dataStart,
-    dataSize,
+    dataSize: clampedDataSize,
   };
 }
 
@@ -399,90 +405,42 @@ interface WavAnalysis {
 // but reads the file as a buffer in one shot. The engine-spike artifact is
 // ~55 MB at 210 s / 24-bit / 44.1k stereo, well within node's default
 // buffer limits; the result is cached so this only runs on mtime drift.
+// Shares the RIFF walker (parseWavHeader) and the normalised sample readers
+// (readerFor) with the peaks path so there's one place to fix format bugs.
 async function analyseWav(path: string): Promise<WavAnalysis> {
   const buf = await fsp.readFile(path);
-  if (buf.length < 44) throw new Error(`wav too small: ${buf.length} bytes`);
-  if (buf.toString('ascii', 0, 4) !== 'RIFF' || buf.toString('ascii', 8, 12) !== 'WAVE')
-    throw new Error('not a RIFF/WAVE file');
-
-  let offset = 12;
-  let fmt: { audioFormat: number; channels: number; sampleRate: number; bitsPerSample: number } | undefined;
-  let dataStart = -1;
-  let dataSize = -1;
-  while (offset + 8 <= buf.length) {
-    const tag = buf.toString('ascii', offset, offset + 4);
-    const size = buf.readUInt32LE(offset + 4);
-    const body = offset + 8;
-    if (tag === 'fmt ') {
-      fmt = {
-        audioFormat: buf.readUInt16LE(body),
-        channels: buf.readUInt16LE(body + 2),
-        sampleRate: buf.readUInt32LE(body + 4),
-        bitsPerSample: buf.readUInt16LE(body + 14),
-      };
-    } else if (tag === 'data') {
-      dataStart = body;
-      dataSize = size;
-      break;
-    }
-    offset = body + size + (size % 2);
-  }
-  if (!fmt) throw new Error('wav missing fmt chunk');
-  if (dataStart < 0) throw new Error('wav missing data chunk');
-
-  const { channels, sampleRate, bitsPerSample, audioFormat } = fmt;
+  const { sampleRate, channels, bitsPerSample, audioFormat, dataStart, dataSize } = parseWavHeader(buf);
   if (channels < 1) throw new Error(`bad channel count: ${channels}`);
   if (sampleRate <= 0) throw new Error(`bad sample rate: ${sampleRate}`);
+  const reader = readerFor(audioFormat, bitsPerSample);
+  if (!reader) throw new Error(`unsupported wav format=${audioFormat} bits=${bitsPerSample}`);
 
   const bytesPerSample = bitsPerSample / 8;
   const bytesPerFrame = bytesPerSample * channels;
   const frameCount = Math.floor(dataSize / bytesPerFrame);
   const durationSec = frameCount / sampleRate;
 
-  let readSample: (offset: number) => number;
-  let scale: number;
-  if (audioFormat === 1 && bitsPerSample === 16) {
-    readSample = (o) => buf.readInt16LE(o);
-    scale = 1 << 15;
-  } else if (audioFormat === 1 && bitsPerSample === 24) {
-    readSample = (o) => {
-      const b0 = buf[o]!;
-      const b1 = buf[o + 1]!;
-      const b2 = buf[o + 2]!;
-      const v = (b2 << 16) | (b1 << 8) | b0;
-      return v & 0x800000 ? v | 0xff000000 : v;
-    };
-    scale = 1 << 23;
-  } else if (audioFormat === 1 && bitsPerSample === 32) {
-    readSample = (o) => buf.readInt32LE(o);
-    scale = 2 ** 31;
-  } else if (audioFormat === 3 && bitsPerSample === 32) {
-    readSample = (o) => buf.readFloatLE(o) * 2 ** 31;
-    scale = 2 ** 31;
-  } else {
-    throw new Error(`unsupported wav format=${audioFormat} bits=${bitsPerSample}`);
-  }
-
+  // reader returns normalised [-1, 1] samples, so peak/rms are already in
+  // that domain — no separate `scale` divisor needed.
   let peak = 0;
   let sumSquares = 0;
   let totalSamples = 0;
   for (let f = 0; f < frameCount; f++) {
     for (let c = 0; c < channels; c++) {
-      const s = readSample(dataStart + f * bytesPerFrame + c * bytesPerSample);
+      const s = reader(buf, dataStart + f * bytesPerFrame + c * bytesPerSample);
       const a = Math.abs(s);
       if (a > peak) peak = a;
       sumSquares += s * s;
       totalSamples++;
     }
   }
-  const peakNorm = peak / scale;
-  const rms = totalSamples > 0 ? Math.sqrt(sumSquares / totalSamples) / scale : 0;
+  const rms = totalSamples > 0 ? Math.sqrt(sumSquares / totalSamples) : 0;
   return {
     sampleRate,
     channels,
     bitsPerSample,
     durationSec,
-    peakDb: peakNorm > 0 ? 20 * Math.log10(peakNorm) : Number.NEGATIVE_INFINITY,
+    peakDb: peak > 0 ? 20 * Math.log10(peak) : Number.NEGATIVE_INFINITY,
     rmsDb: rms > 0 ? 20 * Math.log10(rms) : Number.NEGATIVE_INFINITY,
   };
 }

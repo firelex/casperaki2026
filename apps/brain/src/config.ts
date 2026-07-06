@@ -31,6 +31,9 @@ const ConfigSchema = z.object({
   oidcClientSecret: z.string().optional(),
   oidcRedirectUri: z.string().default('http://localhost:16500/api/auth/callback'),
   oidcResource: z.string().default('http://localhost:16500'),
+  // Where /login sends the user when no (valid, same-origin) return_to is
+  // given. Falls back to `${webOrigin}/` in the route when unset.
+  postLoginDefault: z.string().optional(),
 });
 
 export type BrainConfig = z.infer<typeof ConfigSchema>;
@@ -54,6 +57,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     oidcClientSecret: env.OIDC_CLIENT_SECRET,
     oidcRedirectUri: env.OIDC_REDIRECT_URI,
     oidcResource: env.OIDC_RESOURCE,
+    postLoginDefault: env.OIDC_POST_LOGIN_DEFAULT,
   });
 }
 
