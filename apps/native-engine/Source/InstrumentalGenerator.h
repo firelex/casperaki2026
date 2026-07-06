@@ -36,10 +36,17 @@ class InstrumentalGenerator {
 
       if (!fileToLoad.exists ())
       {
-          DBG ("JSON File: " + filePath + " exists");
+          DBG ("JSON File: " + filePath + " does not exist");
+          return {};
       }
 
       juce::FileInputStream fis (fileToLoad);
+      if (!fis.openedOk ())
+      {
+          DBG ("JSON File: " + filePath + " could not be opened");
+          return {};
+      }
+
       juce::String fileContents = fis.readEntireStreamAsString ();
       return fileContents;
   }
@@ -272,6 +279,10 @@ class InstrumentalGenerator {
       {
           std::cerr << "Error occurred while saving and exporting: " << e.what () << std::endl;
       }
+
+      // Reached only when saving/exporting threw — return an invalid file rather
+      // than falling off the end of this non-void function (which is UB).
+      return {};
   }
 
   void generateInstrumentalFromJSON (json jsonObj, bool shouldGenerateMelody, bool shouldMaster = false)
@@ -385,7 +396,7 @@ class InstrumentalGenerator {
               loadSongData (songData);
               casperakiEngine->exportSongWithoutMelody (genre);
           }
-          catch (std::exception e)
+          catch (const std::exception& e)
           {
               DBGEL("Error generating " << genre << " #" << i << ": " << e.what ());
           }
@@ -483,7 +494,10 @@ class InstrumentalGenerator {
       juce::Array<int> sampleIds;
       juce::Array<int> vstIds;
 
-      json songPattern = songData["patterns"][0]["pattern"];
+      json songPattern = json::array ();
+      if (songData.contains ("patterns") && songData["patterns"].is_array ()
+          && !songData["patterns"].empty () && songData["patterns"][0].contains ("pattern"))
+          songPattern = songData["patterns"][0]["pattern"];
       if (songPattern.is_array ())
       {
           for (json::iterator it = songPattern.begin(); it != songPattern.end(); ++it)
@@ -565,7 +579,10 @@ class InstrumentalGenerator {
 
       // TODO: reset song (remove all instruments, etc.);
 
-      json songPattern = songData["patterns"][0]["pattern"];
+      json songPattern = json::array ();
+      if (songData.contains ("patterns") && songData["patterns"].is_array ()
+          && !songData["patterns"].empty () && songData["patterns"][0].contains ("pattern"))
+          songPattern = songData["patterns"][0]["pattern"];
       if (songPattern.is_array ())
       {
           // Start the timer
@@ -661,7 +678,8 @@ class InstrumentalGenerator {
                       {
                           String endpoint = URL ()
                               .withNewSubPath ("vstSamples")
-                              .withParameter ("vst", String (instrumentData["genre"].get<int> ()))
+                              .withParameter ("vst", instrumentData.contains ("genre")
+                                  ? String (instrumentData["genre"].get<int> ()) : String ())
                               .toString (true);
                           auto response = casperakiApi->get (endpoint);
                           instrumentData["samples"] = response.body;
@@ -735,7 +753,7 @@ class InstrumentalGenerator {
 
 //      juce::Logger::writeToLog(songData["genre"].dump());
 
-      if (songData["genre"].is_null())
+      if (!songData.contains ("genre") || songData.at ("genre").is_null())
       {
           auto patterns = songData["patterns"];
           json genre = patterns.at(0).contains("genre");
@@ -886,12 +904,12 @@ class InstrumentalGenerator {
           if (response.result.failed ())
           {
               j::String error = "Error retrieving drums instruments types for idsToLoadFromApi. info: " + response.result.getErrorMessage ();
-              throw new std::runtime_error(error.toStdString ());
+              throw std::runtime_error(error.toStdString ());
           }
 
           if (!response.body.is_array()){
               j::String error = "Error retrieving drums instruments types for idsToLoadFromApi. info: Response body is not an array";
-              throw new std::runtime_error(error.toStdString ());
+              throw std::runtime_error(error.toStdString ());
           }
 
           juce::String preShiftsEndpoint = "drumKitPreshifts";
@@ -900,7 +918,7 @@ class InstrumentalGenerator {
           if (preShiftsResponse.result.failed ())
           {
               j::String error = "Error retrieving drums preshifts instruments types for idsToLoadFromApi. info: " + response.result.getErrorMessage ();
-              throw new std::runtime_error(error.toStdString ());
+              throw std::runtime_error(error.toStdString ());
           }
 
           // function to get the drums name for an id
@@ -942,9 +960,13 @@ class InstrumentalGenerator {
           if (response.result.failed ())
           {
               juce::Logger::writeToLog (response.bodyAsString);
-              juce::Logger::writeToLog ("Error retrieving instrument " + juce::String (instrumentData["instrumentId"].get<int>()) + " info: "
-                      + response.result.getErrorMessage ());
+              j::String error = "Error retrieving instrument " + juce::String (instrumentData["instrumentId"].get<int>()) + " info: "
+                      + response.result.getErrorMessage ();
+              juce::Logger::writeToLog (error);
               jassertfalse;
+              // Bail out BEFORE parsing the (empty/error) body — otherwise
+              // getOrLoadCachedData would cache the garbage response permanently.
+              throw std::runtime_error (error.toStdString ());
           }
 
 

@@ -9,13 +9,14 @@
 */
 
 #pragma once
-#include <Juceheader.h>
+#include <JuceHeader.h>
 #include <chrono>
 using namespace juce;
 
 class DeferredLogger : public juce::Logger
 {
     std::vector<juce::String> messageBuffer;
+    juce::CriticalSection bufferLock;
 
 public:
     static DeferredLogger& getInstance()
@@ -26,11 +27,13 @@ public:
 
     void logMessage (const juce::String& message) override
     {
+        const juce::ScopedLock sl (bufferLock);
         messageBuffer.push_back(message);
     }
 
     void flushMessages()
     {
+        const juce::ScopedLock sl (bufferLock);
         for (const auto& message : messageBuffer)
         {
             std::cout << message << std::endl;

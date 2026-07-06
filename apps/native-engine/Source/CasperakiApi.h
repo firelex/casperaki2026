@@ -14,10 +14,15 @@ public:
     CasperakiApi(juce::URL _baseUrl = juce::URL{"https://staging.casperaki.com"}, juce::String _username = "sanmarino", juce::String _password = "whoweare")
     {
         baseUrl = _baseUrl;
-        username = _username;
-        password = _password;
 
-        token = "JWT eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTaW1wbGUgQXV0aCIsInN1YiI6NCwibmFtZSI6InNhbm1hcmlubyIsImF1ZCI6InNpbXBsZWF1dGgiLCJpYXQiOjE2ODI0MTQxMjgsImV4cCI6MTY5MTA1NDEyOCwianRpIjoiZjZjZGM5NTAtOGUxZi00MDc3LTg0ZmUtNDUzNDA2NzQzYzU0In0.kfeEy4vuc7isKEh3_3lE2knbSxjMwWfAQFmikl8cjBTIR7WlVBifLL1EhjZx-UrtKTm1ORJvzCdQfG5RybKcMQ";
+        // TODO: these are dev credentials / a long-expired JWT baked into source.
+        // Prefer the environment; fall back to the historical literals so the
+        // default behaviour is unchanged when the vars are not set.
+        username = juce::SystemStats::getEnvironmentVariable ("CASPERAKI_API_USERNAME", _username);
+        password = juce::SystemStats::getEnvironmentVariable ("CASPERAKI_API_PASSWORD", _password);
+
+        token = juce::SystemStats::getEnvironmentVariable ("CASPERAKI_API_TOKEN",
+            "JWT eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTaW1wbGUgQXV0aCIsInN1YiI6NCwibmFtZSI6InNhbm1hcmlubyIsImF1ZCI6InNpbXBsZWF1dGgiLCJpYXQiOjE2ODI0MTQxMjgsImV4cCI6MTY5MTA1NDEyOCwianRpIjoiZjZjZGM5NTAtOGUxZi00MDc3LTg0ZmUtNDUzNDA2NzQzYzU0In0.kfeEy4vuc7isKEh3_3lE2knbSxjMwWfAQFmikl8cjBTIR7WlVBifLL1EhjZx-UrtKTm1ORJvzCdQfG5RybKcMQ");
     };
 
     RestRequest::Response post(const String &endpoint, const json &postData)
@@ -93,6 +98,16 @@ public:
         RestRequest::Response response = loginRequest.post("testLogin")
                                              .execute();
         DBG(response.body.dump(2));
+
+        // Guard the JSON access: a failed request leaves body null, and indexing
+        // a missing/null key with operator[] on a const json throws json::type_error.
+        if (!response.result.wasOk() || !response.body.is_object() || !response.body.contains("status"))
+        {
+            DBG("login failed: " << response.status << ": " << response.bodyAsString);
+            logout();
+            return false;
+        }
+
         status = response.body["status"].get<std::string>();
 
         if (status != "loggedIn")
@@ -102,8 +117,10 @@ public:
             return false;
         }
 
-        token = response.body["token"].get<std::string>();
-        userData = response.body["user"];
+        if (response.body.contains("token"))
+            token = response.body["token"].get<std::string>();
+        if (response.body.contains("user"))
+            userData = response.body["user"];
         return true;
     }
 
@@ -118,6 +135,9 @@ public:
 
     bool ensureLoggedIn()
     {
+        // NOTE: auth is intentionally bypassed — the baked-in token is used for
+        // every request and the login flow below is currently dead code. Left in
+        // place (rather than deleted) so it can be re-enabled by removing this line.
         return true;
 
         if (status == "loggedIn")

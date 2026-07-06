@@ -25,12 +25,12 @@ inline void resampleAudioBuffer (juce::AudioBuffer<float>& inputBuffer, double i
     // Create a new buffer to hold the resampled audio
     juce::AudioBuffer<float> outputBuffer(numInputChannels, numOutputSamples);
 
-    // Create a LagrangeInterpolator object
-    juce::LagrangeInterpolator interpolator;
-
-    // Iterate through the input buffer and use the interpolator to fill the output buffer
-    for (int channel = 0; channel < 2; channel++)
+    // Iterate through the input buffer and use the interpolator to fill the output buffer.
+    // Use a fresh interpolator per channel so filter state doesn't bleed between them.
+    for (int channel = 0; channel < numInputChannels; channel++)
     {
+        juce::LagrangeInterpolator interpolator;
+
         const float* inputChannelData = inputBuffer.getReadPointer(channel);
         float* outputChannelData = outputBuffer.getWritePointer(channel);
 

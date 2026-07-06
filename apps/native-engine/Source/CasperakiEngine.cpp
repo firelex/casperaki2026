@@ -81,17 +81,6 @@ CasperakiEngine::CasperakiEngine (const ControlStateCallback& _controlStateCallb
     initialise ();
 }
 
-void CasperakiEngine::testAsync(std::function<void()> callback)
-{
-    std::cout << "testAsync Hello I am Thread: " << j::Thread::getCurrentThreadId() << std::endl;
-    j::Thread::launch([callback]()
-        {
-            std::cout << "thread Hello I am Thread: " << j::Thread::getCurrentThreadId() << std::endl;
-            j::Thread::sleep(3000);
-            callback();
-        });
-}
-
 void CasperakiEngine::changeListenerCallback(juce::ChangeBroadcaster*)
 {
     // transport state changed. do something
@@ -318,7 +307,10 @@ void CasperakiEngine::stop()
 
 void CasperakiEngine::setBpm(double bpm)
 {
-    edit->tempoSequence.insertTempo(te::BeatPosition::fromBeats(0), bpm, 0);
+    // Update the existing tempo at the start instead of inserting a new setting
+    // on every call (which would accumulate duplicate TempoSettings at beat 0).
+    auto& tempo = edit->tempoSequence.getTempoAt (te::TimePosition());
+    tempo.setBpm (bpm);
 }
 
 CasperakiEngine::ControlState CasperakiEngine::getControlState()
@@ -336,6 +328,12 @@ CasperakiEngine::ControlState CasperakiEngine::getControlState()
      */
 
     te::EditPlaybackContext* playbackContext = transport->getCurrentPlaybackContext();
+
+    // The context may not be allocated yet (before ensureContextAllocated) —
+    // dereferencing it would crash, so fall back to the last known state.
+    if (playbackContext == nullptr)
+        return lastControlState;
+
     te::TimePosition currentAbsTime = playbackContext->getPosition();
 
     te::ArrangerTrack* arrangerTrack = edit->getArrangerTrack();
@@ -419,9 +417,20 @@ void CasperakiEngine::load()
 {
     (*edit).flushState();
 
+    if (edit != nullptr)
+    {
+        edit->getTransport().removeChangeListener(this);
+        edit->getTransport().stop(false, false);
+    }
+
     const juce::File editFile("./test.trkedit");
 
     edit = te::loadEditFromFile(*engine, editFile);
+
+    // Rewire the transport pointer and listeners onto the freshly loaded Edit;
+    // otherwise `transport` would dangle at the destroyed Edit's transport.
+    transport = &(edit->getTransport());
+    transport->addChangeListener(this);
 }
 
 juce::ValueTree& CasperakiEngine::getState()
@@ -515,7 +524,7 @@ void CasperakiEngine::addInstrument(std::string instrumentDataStr, juce::String 
     //    lastInstrument->initPlugins();
     //}
 
-    DBG ("ADDED INSTRUMENT. count: " + juce::String(instruments.size()) + " name: " + (*instruments[instruments.size() - 1]).name);
+    DBG ("ADDED INSTRUMENT. count: " + juce::String(instruments.size()));
 }
 
 void CasperakiEngine::removeInstrument(int instrumentId)
@@ -583,6 +592,8 @@ void CasperakiEngine::setSong(std::string songDataStr)
 void CasperakiEngine::setInstrumentMute(int instrumentId, bool mute)
 {
     Instrument* inst = findInstrument(instrumentId);
+    if (inst == nullptr)
+        return;
 
     for (auto track : inst->getAudioTracks())
         track->setMute(mute);
@@ -593,6 +604,8 @@ void CasperakiEngine::setInstrumentMute(int instrumentId, bool mute)
 void CasperakiEngine::setInstrumentPostVolume(int instrumentId, float db)
 {
     Instrument* inst = findInstrument(instrumentId);
+    if (inst == nullptr)
+        return;
 
     for (auto track : inst->getAudioTracks())
         applyPostVolumeToTrack(*edit.get(), track, db);
@@ -657,6 +670,7 @@ void CasperakiEngine::playNote(int instrumentId, std::string noteDataStr)
 
 juce::File CasperakiEngine::exportSongWithoutMelody (const juce::String fileName)
 {
+    wasLastGenerationSuccessful = false;
     j::Time time = j::Time::getCurrentTime();
 
     juce::Logger::writeToLog("Start export. Size: " + juce::String(edit->getLength().inSeconds()) + " seconds.");
@@ -687,9 +701,7 @@ juce::File CasperakiEngine::exportSongWithoutMelody (const juce::String fileName
 
     juce::BigInteger tracksToDo{ 0 };
 
-    juce::Array<tracktion_engine::Clip*> clips;
-
-    /* if should do all tracks except vocals */ 
+    /* if should do all tracks except vocals */
     for (auto i = 0; i < te::getAllTracks(*edit).size(); i++)
     {
         auto track = te::getAllTracks(*edit)[i];
@@ -702,28 +714,7 @@ juce::File CasperakiEngine::exportSongWithoutMelody (const juce::String fileName
         }
     }
 
-    /* if should just do vocals */
-    for (auto i = 0; i < te::getAllTracks(*edit).size(); i++)
-    {
-        auto track = te::getAllTracks(*edit)[i];
-        if (track->getName() == "vocals"
-         || track->getName() == "Lead vocals"
-            )
-        {
-            tracksToDo.setBit(0);
-        }
-    }
-
-
     juce::Logger::writeToLog("tracksToDo: " + tracksToDo.toString(2));
-
-//    te::Renderer::Parameters r(*edit);
-//    r.tracksToDo = tracksToDo;
-//    r.time = range;
-//    r.audioFormat = edit.get()->engine.getAudioFileFormatManager().getWavFormat();
-//    r.destFile = exportFile;
-//    r.sampleRateForAudio = 44100;
-//    r.separateTracks = true;
 
     juce::Logger::writeToLog("Exporting to: " + exportFile.getFullPathName());
 
@@ -732,13 +723,10 @@ juce::File CasperakiEngine::exportSongWithoutMelody (const juce::String fileName
     auto start = std::chrono::high_resolution_clock::now();
 
 #if JUCE_MODAL_LOOPS_PERMITTED
-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
+    const bool renderSucceeded = te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
 #else
-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, false); // 55a: v3 adds useACID
+    const bool renderSucceeded = te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, false); // 55a: v3 adds useACID
 #endif
-//    auto job = tracktion::EditRenderJob::getOrCreateRenderJob (edit->engine, r, false, false, false);
-    //jassert (job != nullptr);
-    //edit->engine.getUIBehaviour().runTaskWithProgressBar (*job);
 
     // Stop the timer
     auto stop = std::chrono::high_resolution_clock::now();
@@ -755,13 +743,14 @@ juce::File CasperakiEngine::exportSongWithoutMelody (const juce::String fileName
     logger.logMessage("Time taken to render song: " + juce::String(j::Time::getCurrentTime().toMilliseconds() - time.toMilliseconds()) + "ms");
 
     std::cout << ("Successfully exported file to: " + exportFile.getFullPathName()) << std::endl;
-    wasLastGenerationSuccessful = true;
+    wasLastGenerationSuccessful = renderSucceeded;
 
     return exportFile;
 }
 
 juce::File CasperakiEngine::exportSongWithMelody (const juce::String fileName)
 {
+    wasLastGenerationSuccessful = false;
     j::Time time = j::Time::getCurrentTime();
 
     juce::Logger::writeToLog("Start export. Size: " + juce::String(edit->getLength().inSeconds()) + " seconds.");
@@ -787,9 +776,7 @@ juce::File CasperakiEngine::exportSongWithMelody (const juce::String fileName)
 
     juce::BigInteger tracksToDo{ 0 };
 
-    juce::Array<tracktion_engine::Clip*> clips;
-
-    /* if should do all tracks except vocals */ 
+    /* if should do all tracks except vocals */
     for (auto i = 0; i < te::getAllTracks(*edit).size(); i++)
     {
         auto track = te::getAllTracks(*edit)[i];
@@ -801,25 +788,13 @@ juce::File CasperakiEngine::exportSongWithMelody (const juce::String fileName)
 
     juce::Logger::writeToLog("tracksToDo: " + tracksToDo.toString(2));
 
-    te::Renderer::Parameters r(*edit);
-    r.tracksToDo = tracksToDo;
-    r.time = range;
-    r.audioFormat = edit.get()->engine.getAudioFileFormatManager().getWavFormat();
-    r.destFile = exportFile;
-    r.sampleRateForAudio = 44100;
-//    r.separateTracks = true;
-
     juce::Logger::writeToLog("Exporting to: " + exportFile.getFullPathName());
 
     std::cout << "made it this far" << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
-
-    //auto job = tracktion::EditRenderJob::getOrCreateRenderJob (edit->engine, r, false, false, false);
-    //jassert (job != nullptr);
-    //edit->engine.getUIBehaviour().runTaskWithProgressBar (*job);
+    const bool renderSucceeded = te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
 
     // Stop the timer
     auto stop = std::chrono::high_resolution_clock::now();
@@ -836,7 +811,7 @@ juce::File CasperakiEngine::exportSongWithMelody (const juce::String fileName)
     logger.logMessage("Time taken to render song: " + juce::String(j::Time::getCurrentTime().toMilliseconds() - time.toMilliseconds()) + "ms");
 
     std::cout << ("Successfully exported file to: " + exportFile.getFullPathName()) << std::endl;
-    wasLastGenerationSuccessful = true;
+    wasLastGenerationSuccessful = renderSucceeded;
 
     return exportFile;
 }
@@ -844,6 +819,7 @@ juce::File CasperakiEngine::exportSongWithMelody (const juce::String fileName)
 
 juce::File CasperakiEngine::exportVocalMelody (const juce::String fileName)
 {
+    wasLastGenerationSuccessful = false;
     j::Time time = j::Time::getCurrentTime();
 
     juce::Logger::writeToLog("Start export. Size: " + juce::String(edit->getLength().inSeconds()) + " seconds.");
@@ -869,8 +845,6 @@ juce::File CasperakiEngine::exportVocalMelody (const juce::String fileName)
 
     juce::BigInteger tracksToDo{ 0 };
 
-    juce::Array<tracktion_engine::Clip*> clips;
-
     /* if should just do vocals */
     for (auto i = 0; i < te::getAllTracks(*edit).size(); i++)
     {
@@ -887,21 +861,13 @@ juce::File CasperakiEngine::exportVocalMelody (const juce::String fileName)
 
     juce::Logger::writeToLog("tracksToDo: " + tracksToDo.toString(2));
 
-    te::Renderer::Parameters r(*edit);
-    r.tracksToDo = tracksToDo;
-    r.time = range;
-    r.audioFormat = edit.get()->engine.getAudioFileFormatManager().getWavFormat();
-    r.destFile = exportFile;
-    r.sampleRateForAudio = 44100;
-//    r.separateTracks = true;
-
     juce::Logger::writeToLog("Exporting to: " + exportFile.getFullPathName());
 
     std::cout << "made it this far" << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
+    const bool renderSucceeded = te::Renderer::renderToFile ("export song", exportFile, *edit, range, tracksToDo, true, true, {}, true); // 55a: v3 adds useACID
 
     // Stop the timer
     auto stop = std::chrono::high_resolution_clock::now();
@@ -918,7 +884,7 @@ juce::File CasperakiEngine::exportVocalMelody (const juce::String fileName)
     logger.logMessage("Time taken to render song: " + juce::String(j::Time::getCurrentTime().toMilliseconds() - time.toMilliseconds()) + "ms");
 
     std::cout << ("Successfully exported file to: " + exportFile.getFullPathName()) << std::endl;
-    wasLastGenerationSuccessful = true;
+    wasLastGenerationSuccessful = renderSucceeded;
 
     return exportFile;
 }
