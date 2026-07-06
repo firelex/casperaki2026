@@ -33,6 +33,8 @@ import { execFileSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
+  renameSync,
+  rmSync,
   statSync,
 } from 'node:fs';
 import { basename, extname, join, resolve as resolvePath } from 'node:path';
@@ -240,14 +242,19 @@ export function prepareNormalizedSource(opts) {
     }
   }
 
+  // Write to a temp sibling and atomically rename on success, so a
+  // killed/crashed ffmpeg can't leave a truncated file that the
+  // `fileExists && size>0` check above would treat as a permanent cache hit.
+  const tmpPath = `${preparedPath}.tmp`;
   const args = buildFfmpegArgs({
     sourcePath,
-    preparedPath,
+    preparedPath: tmpPath,
     targetFormat,
   });
   try {
     runFfmpeg(ffmpegPath, args);
   } catch (err) {
+    rmSync(tmpPath, { force: true });
     const msg = err instanceof Error ? err.message : String(err);
     return {
       kind: 'error',
@@ -256,21 +263,23 @@ export function prepareNormalizedSource(opts) {
     };
   }
 
-  if (!fileExists(preparedPath)) {
+  if (!fileExists(tmpPath)) {
     return {
       kind: 'error',
       sourceFormat,
       error: `ffmpeg ran but no output produced at ${preparedPath}`,
     };
   }
-  const outStat = stat(preparedPath);
+  const outStat = stat(tmpPath);
   if (outStat.size === 0) {
+    rmSync(tmpPath, { force: true });
     return {
       kind: 'error',
       sourceFormat,
       error: `ffmpeg produced an empty file at ${preparedPath}`,
     };
   }
+  renameSync(tmpPath, preparedPath);
   return {
     kind: 'transcoded',
     preparedPath,

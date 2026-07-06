@@ -64,7 +64,14 @@ public:
         try {
             response.body = json::parse(response.bodyAsString.toStdString());
             DBG(verb << " - " << urlRequest.toString (true) << " >>> " << response.bodyAsString.toStdString());
-            response.result = juce::Result::ok();
+
+            // A valid JSON body is not enough — a 4xx/5xx status means the body is
+            // an error payload, not data. Fold that into a failed result so callers
+            // don't consume error bodies as valid responses.
+            if (response.status >= 400)
+                response.result = juce::Result::fail ("HTTP error " + juce::String (response.status) + ": " + response.bodyAsString);
+            else
+                response.result = juce::Result::ok();
         } catch (json::parse_error& e){
             response.result = juce::Result::fail(e.what());
         }

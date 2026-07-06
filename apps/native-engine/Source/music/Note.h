@@ -74,6 +74,7 @@ public:
         if ( compareRoots ) {
             delta = delta % 12;
             if (delta > 6) delta -= 12;
+            if (delta < -6) delta += 12;
         }
 
         return delta;

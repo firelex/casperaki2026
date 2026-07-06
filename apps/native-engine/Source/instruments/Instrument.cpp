@@ -121,7 +121,6 @@ Instrument::Type Instrument::getType (j::String typeStr)
         { "popStrings", Type::popStrings },
         { "acousticGuitars", Type::acousticGuitars },
         { "electricGuitars", Type::electricGuitars },
-        { "orchestral", Type::synths },
         { "percussionLoops", Type::loop },
         { "percussion", Type::loop },
         { "transitionNoise", Type::transitionNoise },
@@ -136,8 +135,9 @@ Instrument::Type Instrument::getType (j::String typeStr)
     {
         juce::Logger::writeToLog ("Type " + typeStr + " does not exist in table");
         jassertfalse;
+        return Type::synths; // defined fallback for unknown type
     }
-    else return itg.operator->()->second;
+    return itg.operator->()->second;
 }
 
 int Instrument::getInstrumentId (const j::var &instrumentData)
@@ -150,5 +150,6 @@ int Instrument::getInstrumentId (const j::var &instrumentData)
     {
         juce::Logger::writeToLog ("Instrument " + instrumentData["id"].toString() + " does not exist");
         jassertfalse;
+        return -1; // defined sentinel for missing id
     }
 }

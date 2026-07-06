@@ -108,7 +108,7 @@ private:
             {
                 shortIds.get()->setProperty(sampleObj->getProperty("note").toString(), (int)sampleObj->getProperty("id"));
             }
-            sampleObj->clear();
+            // don't clear(): sampleObj is shared song JSON; only harvest ids.
         }
         
         shortNotesSamplerPlugin = edit.getPluginCache().createNewPlugin (SamplerPlugin::xmlTypeName, {});
@@ -159,7 +159,8 @@ private:
         auto samplerPluginLong = dynamic_cast<SamplerPlugin*> (longNotesSamplerPlugin.get());
     
         juce::var parsedNoteData = juce::JSON::parse (juce::String (noteDataStr));
-        auto timeNotes = getRealNotes (parsedNoteData, *new Chord ("C"), *new Chord ("C"));
+        Chord c{"C"};
+        auto timeNotes = getRealNotes (parsedNoteData, c, c);
         
         juce::BigInteger shortKeysHeldDown, longKeysHeldDown;
         samplerPluginShort->playNotes (shortKeysHeldDown); //We let go of all of the keys
@@ -257,6 +258,3 @@ private:
 
     j::var sampleData;
 };
-
-#undef USE_TE_SAMPLER
-#undef USE_CASPERAKI_SAMPLER

@@ -19,7 +19,9 @@ namespace casperaki::matchering
 // Run the legacy matchering chain on `src`, write the result to `dst`.
 // `shouldLimit` controls the final Casperaki_NC17 brickwall pass; passing
 // true matches the legacy InstrumentalGenerator behaviour.
-void masterAgainstAtemlos (const juce::File& src,
+// Returns true on success, false on any early-out/failure (e.g. missing src),
+// so callers can fold a failed master into their return code.
+bool masterAgainstAtemlos (const juce::File& src,
                            const juce::File& dst,
                            bool shouldLimit = true);
 

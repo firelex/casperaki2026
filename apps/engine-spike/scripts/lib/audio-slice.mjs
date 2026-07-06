@@ -26,7 +26,7 @@
 // slicing, use audio-normalize.mjs.)
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs';
 import { basename, join, resolve as resolvePath } from 'node:path';
 
 import { classifyByExtension } from './audio-normalize.mjs';
@@ -114,8 +114,8 @@ export function sliceCacheKey({ sourcePath, size, mtimeMs, startSec, endSec, tar
 /**
  * Build the deterministic ffmpeg argv for a slice transcode.
  *   ffmpeg -y -hide_banner -loglevel error
- *     -ss <start> -to <end>      # input-side seek + end (re-encoded for accuracy)
  *     -i <source>
+ *     -ss <start> -to <end>      # output-side seek + end (re-encoded for accuracy)
  *     -ac 2 -ar 44100 -c:a libvorbis -q:a 5
  *     <preparedPath>
  *
@@ -236,9 +236,13 @@ export function prepareNormalizedSlice(opts) {
     }
   }
 
+  // Write to a temp sibling and atomically rename on success, so a
+  // killed/crashed ffmpeg can't leave a truncated file that the
+  // `fileExists && size>0` check above would treat as a permanent cache hit.
+  const tmpPath = `${preparedPath}.tmp`;
   const args = buildSliceFfmpegArgs({
     sourcePath,
-    preparedPath,
+    preparedPath: tmpPath,
     startSec: sliceStart,
     endSec: sliceEnd,
     targetFormat,
@@ -246,6 +250,7 @@ export function prepareNormalizedSlice(opts) {
   try {
     runFfmpeg(ffmpegPath, args);
   } catch (err) {
+    rmSync(tmpPath, { force: true });
     const msg = err instanceof Error ? err.message : String(err);
     return {
       kind: 'error',
@@ -254,21 +259,23 @@ export function prepareNormalizedSlice(opts) {
     };
   }
 
-  if (!fileExists(preparedPath)) {
+  if (!fileExists(tmpPath)) {
     return {
       kind: 'error',
       sourceFormat,
       error: `ffmpeg ran but no slice output at ${preparedPath}`,
     };
   }
-  const outStat = stat(preparedPath);
+  const outStat = stat(tmpPath);
   if (outStat.size === 0) {
+    rmSync(tmpPath, { force: true });
     return {
       kind: 'error',
       sourceFormat,
       error: `ffmpeg produced an empty slice at ${preparedPath}`,
     };
   }
+  renameSync(tmpPath, preparedPath);
   return {
     kind: 'transcoded',
     preparedPath,

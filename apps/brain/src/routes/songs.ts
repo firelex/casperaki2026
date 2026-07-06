@@ -7,7 +7,7 @@
 // endpoint hashes against — see `apps/brain/src/store.ts`.
 
 import { createHash } from 'node:crypto';
-import { Router, type Request, type Response } from 'express';
+import { Router, type Response } from 'express';
 import { z } from 'zod';
 
 import { orchestrate, type GenerateParams } from '@casperaki/arrangement';

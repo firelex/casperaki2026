@@ -231,9 +231,12 @@ void CasperakiSamplerPlugin::handleAsyncUpdate()
         const juce::ScopedLock sl (lock);
         allNotesOff();
         soundList.swapWith (newSounds);
-
-        sourceMediaChanged();
     }
+
+    // Load the sample data OUTSIDE the audio lock — sourceMediaChanged() performs
+    // blocking disk reads, and holding `lock` across them would stall the realtime
+    // applyToBuffer callback (dropouts / priority inversion).
+    sourceMediaChanged();
 
     newSounds.clear();
     changed();
@@ -624,8 +627,15 @@ void CasperakiSamplerPlugin::reassignReferencedItem (const ReferencedItem& item,
 
 void CasperakiSamplerPlugin::sourceMediaChanged()
 {
-    const juce::ScopedLock sl (lock);
+    // Stop any live notes first (under the lock) so nothing indexes a SamplerSound
+    // buffer that refreshFile() is about to reallocate — mirrors handleAsyncUpdate.
+    {
+        const juce::ScopedLock sl (lock);
+        allNotesOff();
+    }
 
+    // The actual file loading below can block on disk for up to ~2s per sound; do
+    // it WITHOUT the audio lock held so the realtime callback isn't blocked.
     for (auto s : soundList)
         s->refreshFile();
 }

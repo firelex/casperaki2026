@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import { readCookie, requireSession, attachSession, SESSION_COOKIE } from '../../src/auth/middleware.ts';
 import { openAuthDb } from '../../src/auth/authDb.ts';
 import { SessionBundleRepo } from '../../src/auth/SessionBundleRepo.ts';
+import { OidcTokenError } from '../../src/auth/OidcClient.ts';
 
 describe('readCookie', () => {
   it('extracts a named cookie from the header', () => {
@@ -99,5 +100,33 @@ describe('attachSession', () => {
     await expect(attachSession(sessions, oidc)(req, res, next)).resolves.toBeUndefined();
     expect((req as any).user).toBeUndefined();
     expect(next).toHaveBeenCalled();
+  });
+
+  it('KEEPS the session on a transient (5xx) refresh error', async () => {
+    const sessions = new SessionBundleRepo(openAuthDb(':memory:'), 'secret');
+    const created = sessions.create({
+      sub: 'u4', email: 'e4@x.com', name: 'E4', refreshToken: 'r', accessToken: 'a',
+      accessTokenExpiresAt: new Date(Date.now() - 70_000).toISOString(),
+    });
+    const oidc = { refresh: async () => { throw new OidcTokenError(503, 'unavailable'); } } as any;
+    const req = { headers: { cookie: `${SESSION_COOKIE}=${encodeURIComponent(created.sessionId)}` } } as unknown as Request;
+    const res = { setHeader: vi.fn() } as unknown as Response;
+    await attachSession(sessions, oidc)(req, res, vi.fn());
+    // A brief IdP outage must not log the user out — the row survives.
+    expect(sessions.get(created.sessionId)).not.toBeNull();
+  });
+
+  it('DELETES the session on an invalid_grant refresh error', async () => {
+    const sessions = new SessionBundleRepo(openAuthDb(':memory:'), 'secret');
+    const created = sessions.create({
+      sub: 'u5', email: 'e5@x.com', name: 'E5', refreshToken: 'r', accessToken: 'a',
+      accessTokenExpiresAt: new Date(Date.now() - 70_000).toISOString(),
+    });
+    const oidc = { refresh: async () => { throw new OidcTokenError(400, '{"error":"invalid_grant"}'); } } as any;
+    const req = { headers: { cookie: `${SESSION_COOKIE}=${encodeURIComponent(created.sessionId)}` } } as unknown as Request;
+    const res = { setHeader: vi.fn() } as unknown as Response;
+    await attachSession(sessions, oidc)(req, res, vi.fn());
+    expect(sessions.get(created.sessionId)).toBeNull();
+    expect(res.setHeader).toHaveBeenCalled(); // cookie cleared
   });
 });

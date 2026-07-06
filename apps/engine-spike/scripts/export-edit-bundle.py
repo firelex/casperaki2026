@@ -11,7 +11,8 @@
 # producer extracts and opens edit.trkedit in Waveform/Tracktion.
 #
 # Usage: export-edit-bundle.py <edit.trkedit> <out.zip>
-import os, re, sys, zipfile
+import os, sys, zipfile
+import xml.etree.ElementTree as ET
 
 if len(sys.argv) != 3:
     sys.exit("usage: export-edit-bundle.py <edit.trkedit> <out.zip>")
@@ -24,13 +25,20 @@ parent = os.path.dirname(edit_dir)           # .../Temporary  (zip root)
 # edit-vst3.trkedit) so the producer just opens edit.trkedit.
 edit_arc = os.path.relpath(os.path.join(edit_dir, "edit.trkedit"), parent)
 
-xml = open(edit_path, encoding="utf-8").read()
-refs = re.findall(r'source="([^"]+\.(?:ogg|wav))"', xml)
+# Parse the trkedit as XML and collect every `source` attribute (any
+# extension). ElementTree unescapes XML entities automatically, so a path
+# containing &amp; resolves to the real on-disk name rather than a false miss.
+root = ET.parse(edit_path).getroot()
+refs = [el.get("source") for el in root.iter() if el.get("source")]
 
-added, missing = {}, []
+added, missing, unsafe = {}, [], []
 for r in dict.fromkeys(refs):                # de-dup, keep order
     real = os.path.normpath(os.path.join(edit_dir, r))
     arc = os.path.relpath(real, parent)
+    # Reject arcnames that escape the zip root (absolute or ../ prefixed).
+    if os.path.isabs(arc) or arc == os.pardir or arc.startswith(os.pardir + os.sep):
+        unsafe.append(r)
+        continue
     if arc in added:
         continue
     if os.path.exists(real):
@@ -46,7 +54,12 @@ with zipfile.ZipFile(out_zip, "w", zipfile.ZIP_DEFLATED) as z:
 
 size = os.path.getsize(out_zip)
 print(f"[bundle] {out_zip}  ({size//1024} KiB): {edit_arc} + {len(added)} samples"
-      + (f", {len(missing)} MISSING" if missing else ""))
+      + (f", {len(missing)} MISSING" if missing else "")
+      + (f", {len(unsafe)} UNSAFE" if unsafe else ""))
+if unsafe:
+    print("  unsafe (escaped zip root, skipped):",
+          ", ".join(unsafe[:10]) + (" ..." if len(unsafe) > 10 else ""))
 if missing:
     print("  missing:", ", ".join(missing[:10]) + (" ..." if len(missing) > 10 else ""))
+if missing or unsafe:
     sys.exit(2)

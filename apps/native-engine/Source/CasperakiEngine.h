@@ -200,6 +200,9 @@ public:
     
     ~CasperakiEngine()
     {
+        // Stop the HighResolutionTimer FIRST so a tick can't fire into a
+        // half-destroyed object during teardown.
+        stopTimer();
 
 #if !SHOULD_RETAIN_PROJECT_FILES
         getEdit()->engine.getTemporaryFileManager().getTempFile("casperaki").setAsCurrentWorkingDirectory();
@@ -207,42 +210,6 @@ public:
         auto editParentFolder = getEdit ()->editFileRetriever ().getParentDirectory ();
         editParentFolder.getParentDirectory ().getChildFile ("edit_" + getEdit ()->getProjectItemID ().toStringSuitableForFilename ()).deleteRecursively ();
         editParentFolder.deleteRecursively();
-//        if (editParentFolder.exists())
-//        {
-//            editParentFolder.getParentDirectory().getChildFile ("edit_" + getEdit()->getProjectItemID().toStringSuitableForFilename()).deleteRecursively ();
-//            editParentFolder.deleteRecursively();
-//            if (editParentFolder.exists())
-//            {
-//                try
-//                {
-//                    fs::remove_all (editParentFolder.getFullPathName().toStdString());
-//                    if (editParentFolder.exists())
-//                    {
-//                        std::string deleteCommand;
-//#ifdef _WIN32 // Windows
-//                        deleteCommand = "rmdir \"" + editParentFolder.getFullPathName().toStdString() + "\"";
-//                        std::cout<<"Running command: " <<deleteCommand<<std::endl;
-//#else // Unix-like systems (Linux, macOS)
-//                        deleteCommand = "rm -rf \"" + editParentFolder.getFullPathName().toStdString() + "\"";
-//#endif
-//
-//                        int result = std::system (deleteCommand.c_str());
-//                        if (result == 0)
-//                        {
-//                            // Deletion succeeded
-//                        }
-//                        else
-//                        {
-//                            // Deletion failed, handle the error
-//                        }
-//                    }
-//                }
-//                catch (const std::filesystem::filesystem_error& e)
-//                {
-//                    std::cerr << "Error deleting folder: " << e.what() << std::endl;
-//                }
-//            }
-//        }
 #endif
         DBG ("CasperakiEngine DESTROYED!!!!");
     };
@@ -278,17 +245,6 @@ public:
     void addInstrument (std::string instrumentData, juce::String baseURL);
     
     void addInstrumentAsync (std::string instrumentDataStr, Callback finishedCallback, juce::String baseURL);
-    
-    template <typename Fn>
-    void runAsync (Fn function, Callback finishedCallback)
-    {
-        auto runAsync = juce::Thread::launch ([&] 
-        { 
-            function(); 
-            if (finishedCallback)
-                finishedCallback();
-        });
-    }
 
     void removeInstrument (int instrumentId);
 
@@ -305,8 +261,6 @@ public:
     void seekTo (std::string segment, int bar, double step);
 
     void save();
-
-    void testAsync (std::function<void()> callback);
 
     std::string createZipFile();
 

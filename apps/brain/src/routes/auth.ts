@@ -2,7 +2,7 @@
 import { Router } from 'express';
 import type { OidcClient } from '../auth/OidcClient.js';
 import type { SessionBundleRepo } from '../auth/SessionBundleRepo.js';
-import { clearSessionCookie, readCookie, SESSION_COOKIE, SESSION_TTL_MS } from '../auth/middleware.js';
+import { buildCookie, clearSessionCookie, readCookie, SESSION_COOKIE, SESSION_TTL_MS } from '../auth/middleware.js';
 
 const STATE_COOKIE = 'casperaki_oidc_state';
 const STATE_COOKIE_TTL_SECONDS = 300;
@@ -11,22 +11,22 @@ export interface AuthRouterDeps {
   sessions: SessionBundleRepo;
   oidc: OidcClient;
   webOrigin: string; // e.g. http://localhost:5173
+  /** Optional post-login default target (OIDC_POST_LOGIN_DEFAULT). Falls
+   *  back to `${webOrigin}/` when unset. Passed in from config so this route
+   *  never reads process.env directly. */
+  postLoginDefault?: string;
 }
 
 export function authRouter(deps: AuthRouterDeps): Router {
   const r = Router();
-  const { sessions, oidc, webOrigin } = deps;
+  const { sessions, oidc, webOrigin, postLoginDefault } = deps;
 
   r.get('/login', async (req, res) => {
-    const returnTo = normalizeReturnTo(req.query.return_to, webOrigin);
+    const returnTo = normalizeReturnTo(req.query.return_to, webOrigin, postLoginDefault);
     try {
       const { url, state, codeVerifier } = await oidc.buildAuthorizationUrl({ returnTo });
       const payload = Buffer.from(JSON.stringify({ state, codeVerifier, returnTo })).toString('base64url');
-      const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-      res.setHeader(
-        'Set-Cookie',
-        `${STATE_COOKIE}=${payload}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${STATE_COOKIE_TTL_SECONDS}${secure}`,
-      );
+      res.setHeader('Set-Cookie', buildCookie(STATE_COOKIE, payload, STATE_COOKIE_TTL_SECONDS));
       res.redirect(url);
     } catch (err: any) {
       res.status(503).json({ error: 'auth service unavailable', message: String(err?.message ?? err) });
@@ -56,23 +56,29 @@ export function authRouter(deps: AuthRouterDeps): Router {
       if (!tokens.refresh_token || !tokens.id_token) {
         return res.status(502).send('Auth server did not return refresh_token + id_token.');
       }
-      const idPayload = JSON.parse(
-        Buffer.from(tokens.id_token.split('.')[1], 'base64url').toString('utf8'),
-      ) as { sub: string; email: string; name?: string };
+      const idPayload = decodeIdTokenClaims(tokens.id_token);
+      if (!idPayload) {
+        return res.status(502).send('Auth server returned a malformed id_token.');
+      }
+      if (!idPayload.sub || !idPayload.email) {
+        return res.status(502).send('Auth server id_token is missing required claims (sub, email).');
+      }
 
+      // OAuth makes expires_in optional; default so a missing value can't
+      // produce an Invalid-time-value throw at new Date(NaN).toISOString().
+      const expiresInSec = Number.isFinite(tokens.expires_in) ? (tokens.expires_in as number) : 300;
       const bundle = sessions.create({
         sub: idPayload.sub,
         email: idPayload.email,
         name: idPayload.name ?? '',
         refreshToken: tokens.refresh_token,
         accessToken: tokens.access_token,
-        accessTokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+        accessTokenExpiresAt: new Date(Date.now() + expiresInSec * 1000).toISOString(),
       });
-      const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
       const sessionTtl = Math.floor(SESSION_TTL_MS / 1000);
       res.setHeader('Set-Cookie', [
-        `${SESSION_COOKIE}=${encodeURIComponent(bundle.sessionId)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${sessionTtl}${secure}`,
-        `${STATE_COOKIE}=; Path=/; HttpOnly; Max-Age=0`,
+        buildCookie(SESSION_COOKIE, encodeURIComponent(bundle.sessionId), sessionTtl),
+        buildCookie(STATE_COOKIE, '', 0),
       ]);
       res.redirect(parsed.returnTo);
     } catch (err: any) {
@@ -83,11 +89,15 @@ export function authRouter(deps: AuthRouterDeps): Router {
   r.post('/logout', async (req, res) => {
     const sid = readCookie(req, SESSION_COOKIE);
     if (sid) {
-      const bundle = sessions.get(sid);
+      // sessions.get() can throw if the bundle can't be decrypted (e.g. the
+      // session secret rotated). Logout must still clear the cookie and delete
+      // the row rather than 500 and strand the user in a signed-in state.
+      let bundle = null;
+      try { bundle = sessions.get(sid); } catch { /* undecryptable — fall through to delete */ }
       if (bundle) {
         try { await oidc.revoke(bundle.refreshToken); } catch { /* best effort */ }
-        sessions.delete(sid);
       }
+      try { sessions.delete(sid); } catch { /* best effort */ }
     }
     clearSessionCookie(res);
     res.json({ ok: true });
@@ -101,14 +111,40 @@ export function authRouter(deps: AuthRouterDeps): Router {
   return r;
 }
 
-export function normalizeReturnTo(raw: unknown, webOrigin: string): string {
-  const fallback = (process.env.OIDC_POST_LOGIN_DEFAULT || webOrigin) + '/';
+/** Decode an id_token's payload claims without verifying its signature.
+ *  Returns null when the token is structurally malformed (so the caller can
+ *  502 rather than crash on `split('.')[1]` being undefined). NOTE: this does
+ *  not validate iss/aud/exp or the signature — the token comes straight from
+ *  the token endpoint over TLS with client auth. A jwks_uri signature check is
+ *  a worthwhile follow-up (the discovery type already carries jwks_uri). */
+function decodeIdTokenClaims(idToken: string): { sub?: string; email?: string; name?: string } | null {
+  const parts = idToken.split('.');
+  if (parts.length !== 3 || !parts[1]) return null;
+  try {
+    return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+}
+
+export function normalizeReturnTo(raw: unknown, webOrigin: string, postLoginDefault?: string): string {
+  const base = postLoginDefault || webOrigin;
+  const fallback = base.endsWith('/') ? base : `${base}/`;
   const value = typeof raw === 'string' ? raw : '';
   if (!value) return fallback;
-  if (value.startsWith('/') && !value.startsWith('//')) return new URL(value, fallback).toString();
+  const allowedOrigin = new URL(webOrigin).origin;
+  // Path-relative target: must start with a single '/' and contain NO
+  // backslash. The WHATWG URL parser treats '\' as '/', so '/\evil.com/x'
+  // and '/\/evil.com' would otherwise resolve to an off-origin host. We also
+  // re-check the resolved origin as defense-in-depth.
+  if (value.startsWith('/') && !value.startsWith('//') && !value.includes('\\')) {
+    const resolved = new URL(value, allowedOrigin);
+    if (resolved.origin === allowedOrigin) return resolved.toString();
+    return fallback;
+  }
   try {
     const url = new URL(value);
-    if (url.origin === new URL(webOrigin).origin) return url.toString();
+    if (url.origin === allowedOrigin) return url.toString();
   } catch { /* fall through */ }
   return fallback;
 }

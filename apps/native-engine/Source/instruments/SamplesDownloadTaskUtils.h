@@ -1,4 +1,19 @@
 #include <fstream>
+
+/* Auth token for the sample server. Prefer the CASPERAKI_SAMPLE_JWT environment
+ * variable; fall back to the historical baked-in literal so default behaviour is
+ * unchanged. Single source of truth shared by SamplesDownloadTask.cpp and
+ * SamplesDownloadTask-emscripten.cpp. (The literal is an expired token from
+ * Aug 2023 and should be supplied via the env var in production.) */
+inline juce::String getSampleDownloadAuthToken()
+{
+  const juce::String envToken = juce::SystemStats::getEnvironmentVariable ("CASPERAKI_SAMPLE_JWT", {});
+  if (envToken.isNotEmpty())
+    return envToken;
+
+  return "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTaW1wbGUgQXV0aCIsInN1YiI6NCwibmFtZSI6InNhbm1hcmlubyIsImF1ZCI6InNpbXBsZWF1dGgiLCJpYXQiOjE2ODI0MTQxMjgsImV4cCI6MTY5MTA1NDEyOCwianRpIjoiZjZjZGM5NTAtOGUxZi00MDc3LTg0ZmUtNDUzNDA2NzQzYzU0In0.kfeEy4vuc7isKEh3_3lE2knbSxjMwWfAQFmikl8cjBTIR7WlVBifLL1EhjZx-UrtKTm1ORJvzCdQfG5RybKcMQ";
+}
+
 /* File Helpers */
 
 juce::File exportFileToWAV(juce::AudioBuffer<float> bufferToExport, juce::String name)
@@ -22,16 +37,15 @@ juce::AudioBuffer<float> readAudioFromBasicFormats(juce::File file, tracktion_en
 {
   juce::AudioFormatManager formatManager;
   formatManager.registerBasicFormats();
-  std::ifstream in(file.getFullPathName().toUTF8());
 
   if (file != juce::File{}) // [9]
   {
-    auto reader = formatManager.createReaderFor(file.createInputStream());
-    juce::AudioBuffer<float> readBuffer;
-    readBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(file.createInputStream()));
 
     if (reader != nullptr)
     {
+      juce::AudioBuffer<float> readBuffer;
+      readBuffer.setSize(reader->numChannels, (int)reader->lengthInSamples);
 
       DBG("Length " + juce::String(reader->lengthInSamples));
 

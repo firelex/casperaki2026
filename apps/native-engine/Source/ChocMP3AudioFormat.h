@@ -46,8 +46,14 @@ public:
 
     ChocMP3AudioFormatReader (juce::InputStream* in, juce::String formatName) : AudioFormatReader(in, formatName)
     {
+        // Own the decoder so it is not leaked. If the cast fails, streamReader
+        // still owns (and frees) the object when it goes out of scope.
         auto streamReader = mp3Format.createReader(in);
-        reader = dynamic_cast<choc::audio::AudioFileReader*> (streamReader.release());
+        if (auto* casted = dynamic_cast<choc::audio::AudioFileReader*> (streamReader.get()))
+        {
+            streamReader.release();
+            reader.reset (casted);
+        }
 
         if (reader == nullptr)
         {
@@ -63,12 +69,9 @@ public:
         numChannels = reader->getProperties().numChannels;
         bitsPerSample = 16;
 
-        if (reader != nullptr)
-            loadedOk = true;
-        else
-            loadedOk = false;
+        loadedOk = true;
     }
-    
+
 
     bool readSamples (int* const* destChannels,
                       int numDestChannels,
@@ -76,26 +79,40 @@ public:
                       juce::int64 startSampleInFile,
                       int numSamples) override
     {
+        if (reader == nullptr || numSamples <= 0)
+            return false;
+
         float* const* const dst = reinterpret_cast<float* const*> (destChannels);
-        
-        auto beader = dynamic_cast<choc::audio::AudioFileReader*> (reader);
-        juce::AudioBuffer<float> buf (numDestChannels, numSamples);
-        choc::buffer::ChannelArrayView<float> result = choc::buffer::createChannelArrayView (buf.getArrayOfWritePointers(), buf.getNumChannels(), buf.getNumSamples());
-        bool loaded = beader->readFrames (startOffsetInDestBuffer, result);
-       
-        
-        auto outL = buf.getWritePointer (0);
-        for (int i = 0; i < buf.getNumSamples(); ++i)
+
+        // Decode the requested region starting at startSampleInFile.
+        const int srcChannels = juce::jmax (1, (int) numChannels);
+        juce::AudioBuffer<float> buf (srcChannels, numSamples);
+        buf.clear();
+
+        auto result = choc::buffer::createChannelArrayView (buf.getArrayOfWritePointers(),
+                                                            (uint32_t) buf.getNumChannels(),
+                                                            (uint32_t) buf.getNumSamples());
+        bool loaded = reader->readFrames ((uint64_t) startSampleInFile, result);
+
+        // Honour numDestChannels and startOffsetInDestBuffer; never write past the
+        // destination channels (dst[1] on a mono buffer would be out of bounds).
+        for (int destChan = 0; destChan < numDestChannels; ++destChan)
         {
-            dst[0][i] = outL[i];
-            dst[1][i] = outL[i];
+            if (dst[destChan] == nullptr)
+                continue;
+
+            const int srcChan = juce::jmin (destChan, buf.getNumChannels() - 1);
+            const float* src = buf.getReadPointer (srcChan);
+
+            for (int i = 0; i < numSamples; ++i)
+                dst[destChan][startOffsetInDestBuffer + i] = src[i];
         }
-         
-        return loaded;        
+
+        return loaded;
     }
-    
+
     choc::audio::MP3AudioFileFormat mp3Format;
-    choc::audio::AudioFileReader* reader;
+    std::unique_ptr<choc::audio::AudioFileReader> reader;
 };
 
 class ChocMP3AudioFormat : public juce::AudioFormat
@@ -116,8 +133,9 @@ public:
 
     juce::AudioFormatReader* createReaderFor (juce::InputStream* sourceStream, bool deleteStreamIfOpeningFails) override
     {
+        // JUCE contract: return nullptr on failure (callers do not expect exceptions).
         if (sourceStream == nullptr)
-            throw std::invalid_argument ("sourceStream is null!");
+            return nullptr;
 
         std::unique_ptr<ChocMP3AudioFormatReader> r;
 
@@ -125,18 +143,19 @@ public:
         {
             r = std::make_unique<ChocMP3AudioFormatReader> (sourceStream, "MP3");
         }
-        catch (const std::exception& e)
+        catch (const std::exception&)
         {
-            throw std::runtime_error ("Failed to create ChocMP3AudioFormatReader: " + std::string (e.what()));
+            return nullptr;
         }
 
         if (r->loadedOk)
             return r.release();
 
+        // On failure, only detach the stream when the caller wants to keep it.
         if (!deleteStreamIfOpeningFails)
             r->input = nullptr;
 
-        throw std::runtime_error ("ChocMP3AudioFormatReader failed to load.");
+        return nullptr;
     }
 
 

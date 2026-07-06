@@ -53,6 +53,10 @@ export function analyseWav(path) {
   if (!fmt) throw new Error('wav missing fmt chunk');
   if (dataStart < 0) throw new Error('wav missing data chunk');
 
+  // A truncated WAV can declare a dataSize larger than the bytes actually
+  // present; clamp to the real buffer tail so we never read past the end.
+  dataSize = Math.min(dataSize, buf.length - dataStart);
+
   const { channels, sampleRate, bitsPerSample, audioFormat } = fmt;
   if (channels < 1) throw new Error(`bad channel count: ${channels}`);
   if (sampleRate <= 0) throw new Error(`bad sample rate: ${sampleRate}`);

@@ -58,11 +58,15 @@ public:
             bulkDownload(idsProps);
         } 
 
-        // fill files map
+        // fill files map — only map ids whose file actually downloaded (a failed
+        // fetch must not register a non-existent/empty sample as valid).
         for (auto it = idsProps.begin(); it != idsProps.end(); it++)
         {
             juce::File tempFile = cacheFolder.getChildFile(filePrefix + "-" + it->value.toString() + ".ogg");
-            files.get()->insert(std::make_pair(it->name.toString(), getEditDirCopyFile(edit, tempFile)));
+            if (tempFile.existsAsFile() && tempFile.getSize() > 0)
+                files.get()->insert(std::make_pair(it->name.toString(), getEditDirCopyFile(edit, tempFile)));
+            else
+                DBG("Skipping missing/empty sample file: " << tempFile.getFullPathName());
         }
     }
 
@@ -149,8 +153,10 @@ private:
         attr.userData = this;
         attr.attributes = EMSCRIPTEN_FETCH_LOAD_TO_MEMORY | EMSCRIPTEN_FETCH_SYNCHRONOUS;
 
+        // Keep the auth header string alive for the duration of the fetch.
+        std::string authHeaderStr = ("JWT " + getSampleDownloadAuthToken()).toStdString();
         const char* headers[] = {"Accept", "*/*",
-        "Authorization", "JWT eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJTaW1wbGUgQXV0aCIsInN1YiI6NCwibmFtZSI6InNhbm1hcmlubyIsImF1ZCI6InNpbXBsZWF1dGgiLCJpYXQiOjE2ODI0MTQxMjgsImV4cCI6MTY5MTA1NDEyOCwianRpIjoiZjZjZGM5NTAtOGUxZi00MDc3LTg0ZmUtNDUzNDA2NzQzYzU0In0.kfeEy4vuc7isKEh3_3lE2knbSxjMwWfAQFmikl8cjBTIR7WlVBifLL1EhjZx-UrtKTm1ORJvzCdQfG5RybKcMQ",
+        "Authorization", authHeaderStr.c_str(),
         "Content-Type", "application/json", NULL};
         attr.requestHeaders = headers;
 
@@ -158,24 +164,26 @@ private:
         postData["vstIds"] = vstIds;
         postData["instrumentIds"] = sampleIds;
         postData["format"] = "ogg";
+        // std::string owns the body (no raw new/leak); it stays alive through the
+        // synchronous emscripten_fetch call below.
         std::string postDataStr = postData.dump();
-        char* postDataCStr = new char [postDataStr.length() + 1];
-        std::strcpy(postDataCStr, postDataStr.c_str());
 
-        attr.requestData = postDataCStr;
+        attr.requestData = postDataStr.c_str();
         attr.requestDataSize = postDataStr.length();
 
         emscripten_fetch_t *fetch = emscripten_fetch(&attr, urlStr.toRawUTF8());
-        if (fetch->status == 200)
+        const bool fetchSucceeded = (fetch->status == 200);
+        if (fetchSucceeded)
         {
             zipFile.replaceWithData(fetch->data, fetch->numBytes);
         }
         else
         {
             printf("Downloading %s failed, HTTP failure status code: %d.\n", fetch->url, fetch->status);
-            return;
         }
-        emscripten_fetch_close(fetch);
+        emscripten_fetch_close(fetch); // close on all paths
+        if (!fetchSucceeded)
+            return;
 
         juce::File unzippedFolder = tempDir.getChildFile ("unzip");
         juce::ZipFile zip (zipFile);

@@ -401,7 +401,11 @@ public:
             auto s = cfg.instrumentFxSends (fxGroup.toStdString());
             return FXSendParameters{ s.reverb, s.delay, s.chorus };
         }
-        return instrumentFxSettings.at (fxGroup);
+        auto it = instrumentFxSettings.find (fxGroup);
+        if (it != instrumentFxSettings.end())
+            return it->second;
+
+        return FXSendParameters{ -25.0f, -100.0f, -100.0f }; // drums fallback for unmapped groups
     }
 
     // docs/65 — the per-lane aux-send levels the engine actually writes: the
@@ -450,6 +454,7 @@ public:
 		}
 
 		jassertfalse;
+		return "drums"; // fallback for an unknown enum value
 	}
 
     juce::String extractFileNameWithType (const juce::String& jucePath)

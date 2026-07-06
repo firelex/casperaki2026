@@ -69,7 +69,7 @@ public:
         te::TimeDuration clipOffset = te::TimeDuration::fromSeconds((double)transitionData["sequenceStartPositionOffsetInSeconds"]);
 
         te::TimeRange playTimeRange = edit.tempoSequence.toTime(clipBeatRange);
-        playTimeRange.movedToStartAt(playTimeRange.getStart() + clipOffset);
+        playTimeRange = playTimeRange.movedToStartAt(playTimeRange.getStart() + clipOffset);
 
         te::Clip *clip = track->insertNewClip (te::TrackItem::Type::step, segName, playTimeRange, nullptr);
         auto stepClip = dynamic_cast<te::StepClip *> (clip);
@@ -81,25 +81,40 @@ public:
 
         // apply pattern
 
-        int channelIndex = 0;
         for (auto channelDrumPattern : transitionData["config"]["details"]["pattern"].getDynamicObject()->getProperties()) {
+            j::String subInstrumentName = channelDrumPattern.name.toString();
             j::String songDrumPatternString = channelDrumPattern.value.toString().toLowerCase().retainCharacters("0x");
+
+            // match the pattern row to a sampler channel by name (channels are
+            // named after the sampler sound in prepareClip). Relying on
+            // unordered_map iteration order fired the wrong samples.
+            int channelIndex = -1;
+            for (int i = 0; i < stepClip->getChannels().size(); i++) {
+                if (stepClip->getChannels()[i]->name == subInstrumentName) {
+                    channelIndex = i;
+                    break;
+                }
+            }
+
+            if (channelIndex == -1) {
+                DBG("couldn't find channel for " << subInstrumentName);
+                continue;
+            }
 
             for (int i = 0; i <  songDrumPatternString.length(); i++ ) {
                 if (songDrumPatternString[i] == 'x'){
                     clipPattern.setNote(channelIndex, i, true);
                 }
             }
-
-            channelIndex++;
         }
     }
 
     int getPatternBarsCount(j::var drumsInstrumentPattern) override {
         auto drumsPattern = drumsInstrumentPattern["pattern"];
+        if (drumsPattern.getDynamicObject() == nullptr) return 0;
         if (drumsPattern.getDynamicObject()->getProperties().size() == 0) return 0;
-        auto firstDrumsPatternValue = drumsPattern.getDynamicObject()->getProperties().begin()->value.toString().toLowerCase().retainCharacters("0x");
-        return firstDrumsPatternValue.length() / 32;
+        auto firstDrumsPatternValue = drumsPattern.getDynamicObject()->getProperties().begin()->value.toString().toLowerCase().retainCharacters("0x-");
+        return (int)std::ceil(firstDrumsPatternValue.length() / 32.0);
     }
 
     void initTracks() override {

@@ -9,6 +9,8 @@
 // Independent JUCEApplication — does NOT link CasperakiEngine or touch the
 // production render path. See docs/57b for the rationale.
 
+#include <cmath>
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -32,10 +34,31 @@ std::string jsonEscape (const std::string& s)
             case '\n': out += "\\n";  break;
             case '\r': out += "\\r";  break;
             case '\t': out += "\\t";  break;
-            default:   out += c;
+            default:
+                if (static_cast<unsigned char> (c) < 0x20)
+                {
+                    // Other control chars are invalid raw in JSON strings.
+                    char buf[8];
+                    std::snprintf (buf, sizeof (buf), "\\u%04x",
+                                   static_cast<unsigned> (static_cast<unsigned char> (c)));
+                    out += buf;
+                }
+                else
+                    out += c;
         }
     }
     return out;
+}
+
+// Serialize a float as a valid JSON number; JSON has no nan/inf, so emit null
+// for any non-finite value (this output is machine-consumed).
+std::string jsonNum (double x)
+{
+    if (! std::isfinite (x))
+        return "null";
+    std::ostringstream ss;
+    ss << x;
+    return ss.str();
 }
 
 struct LegacyPluginEntry
@@ -263,9 +286,9 @@ private:
         json << "  \"pyewacket\": { "
              << "\"ran\": "       << (pyewacketRms.ran ? "true" : "false")
              << ", \"diverged\": " << (pyewacketRms.diverged ? "true" : "false")
-             << ", \"inRms\": "    << pyewacketRms.inRms
-             << ", \"outRms\": "   << pyewacketRms.outRms
-             << ", \"ratio\": "    << ratio
+             << ", \"inRms\": "    << jsonNum (pyewacketRms.inRms)
+             << ", \"outRms\": "   << jsonNum (pyewacketRms.outRms)
+             << ", \"ratio\": "    << jsonNum (ratio)
              << ", \"samples\": "  << pyewacketRms.samples
              << " },\n";
 
@@ -368,7 +391,7 @@ private:
                         json << "\n      { \"index\": " << p
                              << ", \"name\": \"" << jsonEscape (param->getName (64).toStdString()) << "\""
                              << ", \"label\": \"" << jsonEscape (param->getLabel().toStdString()) << "\""
-                             << ", \"defaultValue\": " << param->getDefaultValue()
+                             << ", \"defaultValue\": " << jsonNum (param->getDefaultValue())
                              << ", \"numSteps\": " << param->getNumSteps()
                              << ", \"isDiscrete\": " << (param->isDiscrete() ? "true" : "false");
 

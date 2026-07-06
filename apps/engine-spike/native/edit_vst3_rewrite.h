@@ -14,6 +14,7 @@
 // by the TU (harness.cpp).
 #pragma once
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -57,7 +58,12 @@ inline std::vector<float> readInternalParams (const juce::ValueTree& s)
     else if (s.hasProperty (te::IDs::state))
     {
         juce::MemoryBlock mb;
-        mb.fromBase64Encoding (s.getProperty (te::IDs::state).toString());
+        if (! mb.fromBase64Encoding (s.getProperty (te::IDs::state).toString()))
+        {
+            // Malformed base64 would otherwise decode to garbage silently.
+            std::cerr << "[vst3] malformed base64 state; skipping param decode" << std::endl;
+            return v;   // empty -> caller skips param transfer for this plugin
+        }
         const auto n = mb.getSize() / sizeof (float);
         auto* f = static_cast<const float*> (mb.getData());
         for (size_t i = 0; i < n; ++i) v.push_back (f[i]);
@@ -134,8 +140,9 @@ inline int rewriteEditToVst3 (te::Edit& edit, const juce::File& vst3Dir,
 
         // SimpleSide: the active control-point count is a trailing param (last),
         // not part of casperakiFxParams; derive it from the param list length.
-        if (it->first == "casperaki_simpleside" && ps.size() > 0)
+        if (it->first == "casperaki_simpleside" && ps.size() > 0 && vals.size() >= 2)
         {
+            // Guard vals.size() >= 2 so np can't underflow negative.
             const int np = ((int) vals.size() - 2) / 3;
             auto* npParam = ps[ps.size() - 1];
             npParam->setValue (npParam->getValueForText (juce::String (np)));
@@ -170,47 +177,6 @@ inline int rewriteEditToVst3 (te::Edit& edit, const juce::File& vst3Dir,
 
     report += "  swapped=" + std::to_string (swapped) + " skipped=" + std::to_string (skipped) + "\n";
     return swapped;
-}
-
-// Pump the message loop until no external plugin is still loading async (or
-// timeout) — VST3 instances in a freshly-loaded edit instantiate asynchronously.
-inline void pumpPluginLoads (te::Edit& edit, int maxMs)
-{
-    // A freshly-loaded edit doesn't instantiate plugins until played/rendered —
-    // explicitly kick off each external plugin's (async) instantiation first.
-    for (auto p : te::getAllPlugins (edit, true))
-        if (auto* xp = dynamic_cast<te::ExternalPlugin*> (p))
-            xp->initialiseFully();
-
-    for (int waited = 0; waited < maxMs; waited += 50)
-    {
-        bool anyAsync = false;
-        for (auto p : te::getAllPlugins (edit, true))
-            if (auto* xp = dynamic_cast<te::ExternalPlugin*> (p))
-                if (xp->isInitialisingAsync() || xp->getAudioPluginInstance() == nullptr)
-                    { anyAsync = true; break; }
-        if (! anyAsync) return;
-        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
-    }
-}
-
-// Reload a rewritten edit and report any plugin that failed to resolve.
-inline int countUnresolvedPlugins (te::Edit& edit, std::string& report)
-{
-    int bad = 0;
-    for (auto p : te::getAllPlugins (edit, true))
-    {
-        if (auto* xp = dynamic_cast<te::ExternalPlugin*> (p))
-        {
-            auto err = xp->getLoadError();
-            if (err.isNotEmpty())
-            {
-                report += "  UNRESOLVED: " + xp->getName().toStdString() + " - " + err.toStdString() + "\n";
-                ++bad;
-            }
-        }
-    }
-    return bad;
 }
 
 } // namespace casperaki_export

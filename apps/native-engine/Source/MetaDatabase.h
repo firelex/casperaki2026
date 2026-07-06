@@ -1,3 +1,5 @@
+#pragma once
+#include <JuceHeader.h>
 #include <iostream>
 #include "./json.hpp"
 
@@ -30,10 +32,22 @@ public:
 	nlohmann::json getMetaData(juce::String instrumentId)
 	{
 		nlohmann::json retrievedData;
-		if (databaseDirectory.getChildFile(instrumentId + ".json").existsAsFile())
+		juce::File cacheFile = databaseDirectory.getChildFile(instrumentId + ".json");
+		if (cacheFile.existsAsFile())
 		{
-			juce::String data = databaseDirectory.getChildFile(instrumentId + ".json").loadFileAsString();
-			retrievedData = nlohmann::json::parse(data.toRawUTF8());
+			juce::String data = cacheFile.loadFileAsString();
+			try
+			{
+				retrievedData = nlohmann::json::parse(data.toRawUTF8());
+			}
+			catch (const std::exception& e)
+			{
+				// Corrupt cache entry — treat as a miss and delete it so it
+				// gets re-fetched instead of poisoning every subsequent read.
+				juce::Logger::writeToLog("Corrupt metadata cache for " + instrumentId + ": " + juce::String(e.what()));
+				cacheFile.deleteFile();
+				return {};
+			}
 		}
 		return retrievedData;
 	}

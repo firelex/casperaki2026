@@ -112,6 +112,7 @@ struct Chord {
       {
           DBG("Could not find chord type: " << typeStr);
           jassertfalse;
+          return invalidChord;
       }
 
       return itg.operator-> ()->second;
@@ -129,6 +130,7 @@ struct Chord {
           }
       }
       jassertfalse;
+      return shortFormat ? "" : "major"; // defined fallback for unknown type
   }
 
   // Cord ==================================================
@@ -499,7 +501,8 @@ struct GuitarChord {
       {
           chordSuffixStr = "sus4";
       }
-      const j::var guitarChordJSON = j::JSON::parse (BinaryData::ChordData_json);
+      // Parse the (large) chord DB once, not on every GuitarChord construction.
+      static const j::var guitarChordJSON = j::JSON::parse (BinaryData::ChordData_json);
 
       jassert(chordRootStr.isNotEmpty ());
 
@@ -549,6 +552,12 @@ struct GuitarChord {
 //              }
 //          }
 //      }
+
+      if (positions.isEmpty ())
+      {
+          DBG("GuitarChord has no positions for " << chord.toString ());
+          return {};
+      }
 
       return positions[lowestPos].midi;
   }

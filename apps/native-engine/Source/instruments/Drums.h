@@ -152,7 +152,7 @@ public:
         }
         else if (fillType == FillType::patternEndOfSegment)
         {
-            startBar = barsCount - patternBarsCount - 1;
+            startBar = std::max (0, barsCount - patternBarsCount);
         }
 
         applyPattern (fillPattern, startBar, startBar + patternBarsCount );
@@ -260,13 +260,18 @@ public:
             {
                 for (int i = 0; i <  songDrumPatternString.length(); i++ )
                 {
+                    const int noteIndex = (currentBar * 32) + i;
+                    // don't write past the clip end when (endBar-startBar) isn't
+                    // a multiple of patternBarsCount
+                    if (noteIndex >= endBar * 32) break;
+
                     if (songDrumPatternString[i] == 'x')
                     {
-                        clipPattern.setNote(channelIndex, (currentBar * 32) + i, true);
+                        clipPattern.setNote(channelIndex, noteIndex, true);
                     }
                     else if (songDrumPatternString[i] == '0')
                     {
-                        clipPattern.setNote(channelIndex, (currentBar * 32) + i, false);
+                        clipPattern.setNote(channelIndex, noteIndex, false);
                     }
                 }
             }
@@ -528,23 +533,10 @@ private:
     }
 
     void prepareClip (te::StepClip *pClip, tracktion_engine::SamplerPlugin::Ptr _samplerPlugin) {
-        tracktion_engine::SamplerPlugin* samplerPlugin = dynamic_cast<tracktion_engine::SamplerPlugin *>(_samplerPlugin.get());
-
-        // remove all channels
-        for (int i = pClip->getChannels().size(); --i >= 0;) {
-            pClip->removeChannel(i);
-        }
-
-        // create channels according to sampler
-        for (int i = 0; i < samplerPlugin->getNumSounds(); i++){
-            pClip->insertNewChannel(i);
-            auto soundName = samplerPlugin->getSoundName(i);
-            auto channel = pClip->getChannels()[i];
-            channel->noteNumber = getSampleNoteNumber(soundName);
-            channel->name = soundName;
-        }
+        // forward to the raw-pointer overload (identical body)
+        prepareClip (pClip, dynamic_cast<tracktion_engine::SamplerPlugin *>(_samplerPlugin.get()));
     }
-    
+
     void prepareClip (te::StepClip *pClip, tracktion_engine::SamplerPlugin* samplerPlugin)
     {
         // remove all channels
@@ -601,5 +593,5 @@ public:
     tracktion_engine::SamplerPlugin::Ptr tomsSamplerPlugin;
     tracktion_engine::SamplerPlugin::Ptr restSamplerPlugin;
     
-    te::StepClip *kicksStepClip, *restStepClip, *snaresStepClip, *tomsStepClip = nullptr;
+    te::StepClip *kicksStepClip = nullptr, *restStepClip = nullptr, *snaresStepClip = nullptr, *tomsStepClip = nullptr;
 };

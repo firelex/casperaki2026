@@ -16,8 +16,20 @@ export interface OidcTokenResponse {
   access_token: string;
   refresh_token?: string;
   id_token?: string;
-  expires_in: number;
+  // Optional per OAuth 2.0 (RFC 6749 §5.1). Callers must default a missing
+  // value rather than assume it is present — see tokenRefresh / auth route.
+  expires_in?: number;
   token_type: string;
+}
+
+/** Thrown by token-endpoint calls on a non-2xx response. Carries the raw
+ *  status + body so callers can distinguish a definitive `invalid_grant`
+ *  (session is dead) from a transient 5xx (leave the session intact). */
+export class OidcTokenError extends Error {
+  constructor(readonly status: number, readonly body: string) {
+    super(`token endpoint ${status}: ${body}`);
+    this.name = 'OidcTokenError';
+  }
 }
 
 export interface CreateOpts {
@@ -42,10 +54,17 @@ export class OidcClient {
     if (this.discovery) return this.discovery;
     if (!this.discoveryPromise) {
       const discover = this.opts.discoverImpl ?? defaultDiscover(this.opts.fetchImpl);
-      this.discoveryPromise = discover(this.opts.issuerUrl).then((d) => {
-        this.discovery = d;
-        return d;
-      });
+      this.discoveryPromise = discover(this.opts.issuerUrl)
+        .then((d) => {
+          this.discovery = d;
+          return d;
+        })
+        .catch((err) => {
+          // Don't cache a rejected discovery forever — otherwise one failed
+          // fetch at boot (IdP not up yet) bricks auth until process restart.
+          this.discoveryPromise = null;
+          throw err;
+        });
     }
     return this.discoveryPromise;
   }
@@ -106,7 +125,7 @@ export class OidcClient {
       }).toString(),
     });
     const text = await res.text();
-    if (!res.ok) throw new Error(`token endpoint ${res.status}: ${text}`);
+    if (!res.ok) throw new OidcTokenError(res.status, text);
     return JSON.parse(text) as OidcTokenResponse;
   }
 }
@@ -114,7 +133,11 @@ export class OidcClient {
 function defaultDiscover(fetchImpl?: typeof fetch) {
   return async (issuerUrl: string): Promise<OidcDiscovery> => {
     const f = fetchImpl ?? fetch;
-    const url = new URL('/.well-known/openid-configuration', issuerUrl).toString();
+    // Append the well-known suffix to the FULL issuer (including any path),
+    // per OpenID Connect Discovery. `new URL('/.well-known/...', issuer)`
+    // would discard a path-based issuer like `https://idp/realms/x`.
+    const base = issuerUrl.endsWith('/') ? issuerUrl : `${issuerUrl}/`;
+    const url = new URL('.well-known/openid-configuration', base).toString();
     const res = await f(url);
     if (!res.ok) throw new Error(`OIDC discovery failed: ${res.status}`);
     return res.json() as Promise<OidcDiscovery>;

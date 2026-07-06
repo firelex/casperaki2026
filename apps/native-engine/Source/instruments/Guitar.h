@@ -196,7 +196,7 @@ class Guitar : public TonalInstrument {
           {
               shortNoteIds.get ()->setProperty (sampleObj->getProperty ("note").toString (), (int) sampleObj->getProperty ("id"));
           }
-          sampleObj->clear ();
+          // don't clear(): sampleObj is shared song JSON; only harvest ids.
       }
 
       shortNotesSamplerPlugin = edit.getPluginCache ().createNewPlugin (te::SamplerPlugin::xmlTypeName, {});
@@ -241,6 +241,11 @@ class Guitar : public TonalInstrument {
 
       guitarStrumsSamplerPlugin = edit.getPluginCache ().createNewPlugin (te::SamplerPlugin::xmlTypeName, {});
       jassert(guitarStrumsSamplerPlugin != nullptr);
+
+      // mirror Bass/Synths/Drums: mark ready once plugins are set up. The fret
+      // noise sampler is optional (skipped when fretNoiseData.isVoid()), so
+      // relying on createFretNoiseSampler alone left the guitar never ready.
+      ready = true;
   }
 
   int ensureSampleMidiNote (TimeStrums timeStrums, te::StepClip *stepClip)
@@ -430,8 +435,9 @@ class Guitar : public TonalInstrument {
       //      auto samplerPluginFrets = dynamic_cast<te::SamplerPlugin *>(fretNoisesSamplerPlugin.get());
 
       juce::var parsedNoteData = juce::JSON::parse (juce::String (noteDataStr));
+      Chord c{"C"};
       auto timeNotes =
-          getRealNotes (parsedNoteData, *new Chord ("C"), *new Chord ("C"));
+          getRealNotes (parsedNoteData, c, c);
 
       juce::BigInteger noteKeysHeldDown, fretKeysHeldDown, strummedChordKeysHeldDown;
       samplerPluginNotes->playNotes (

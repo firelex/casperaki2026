@@ -54,3 +54,6 @@ apps/models/services/.cache/
 apps/models/services/sam-audio/*.wav
 apps/models/services/soulx-singer/*.wav
 apps/models/services/matchering/*.wav
+
+# Brain dev session secret (persisted, per-machine — never commit)
+apps/brain/data/.dev-session-secret

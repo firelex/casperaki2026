@@ -67,9 +67,9 @@ void CasperakiFxPluginBase::deinitialise()
 void CasperakiFxPluginBase::restorePluginStateFromValueTree (const juce::ValueTree& v)
 {
     copyValueTree (state, v, getUndoManager());
-    loadParamsFromState();
 
     const juce::ScopedLock sl (lock);
+    loadParamsFromState();
     applyParams();
 }
 

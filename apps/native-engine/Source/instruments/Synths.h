@@ -130,7 +130,8 @@ private:
 
         juce::var parsedNoteData = juce::JSON::parse(juce::String(noteDataStr));
 
-        auto timeNotes = getRealNotes(parsedNoteData, *new Chord("C"), *new Chord("C"));
+        Chord c{"C"};
+        auto timeNotes = getRealNotes(parsedNoteData, c, c);
 
         juce::BigInteger keysHeldDown;
         samplerPlugin->playNotes(keysHeldDown); // We let go of all of the keys
@@ -202,6 +203,3 @@ private:
 
     j::var sampleData;
 };
-
-#undef USE_TE_SAMPLER
-#undef USE_CASPERAKI_SAMPLER

@@ -1,6 +1,7 @@
 // apps/brain/src/auth/SessionBundleRepo.ts
 import type Database from 'better-sqlite3';
 import { randomBytes, createCipheriv, createDecipheriv, scryptSync } from 'node:crypto';
+import { SESSION_TTL_MS } from './middleware.js';
 
 export interface SessionBundle {
   sessionId: string;
@@ -15,13 +16,31 @@ export interface SessionBundle {
   createdAt: string;
 }
 
-const TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// Session lifetime shared with the cookie Max-Age (see middleware).
+const TTL_MS = SESSION_TTL_MS;
 
 export class SessionBundleRepo {
   private key: Buffer;
+  // Prepared once at open — better-sqlite3 has no internal statement cache,
+  // so re-preparing on every authenticated request (via get) recompiles SQL.
+  private insertStmt: Database.Statement;
+  private getStmt: Database.Statement;
+  private updateStmt: Database.Statement;
+  private deleteStmt: Database.Statement;
+  private purgeStmt: Database.Statement;
 
   constructor(private db: Database.Database, secret: string) {
     this.key = scryptSync(secret, 'casperaki-session-bundle', 32);
+    this.insertStmt = db.prepare(
+      `INSERT INTO user_sessions (session_id, sub, email, name, refresh_token_enc, access_token, access_token_expires_at, last_seen_at, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    this.getStmt = db.prepare(`SELECT * FROM user_sessions WHERE session_id = ?`);
+    this.updateStmt = db.prepare(
+      `UPDATE user_sessions SET refresh_token_enc = ?, access_token = ?, access_token_expires_at = ?, last_seen_at = ? WHERE session_id = ?`,
+    );
+    this.deleteStmt = db.prepare(`DELETE FROM user_sessions WHERE session_id = ?`);
+    this.purgeStmt = db.prepare(`DELETE FROM user_sessions WHERE expires_at < ?`);
   }
 
   private encrypt(plain: string): string {
@@ -55,17 +74,14 @@ export class SessionBundleRepo {
       expiresAt: new Date(now.getTime() + TTL_MS).toISOString(),
       createdAt: now.toISOString(),
     };
-    this.db.prepare(
-      `INSERT INTO user_sessions (session_id, sub, email, name, refresh_token_enc, access_token, access_token_expires_at, last_seen_at, expires_at, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(sessionId, input.sub, input.email, input.name,
+    this.insertStmt.run(sessionId, input.sub, input.email, input.name,
           this.encrypt(input.refreshToken), input.accessToken, input.accessTokenExpiresAt,
           bundle.lastSeenAt, bundle.expiresAt, bundle.createdAt);
     return bundle;
   }
 
   get(sessionId: string): SessionBundle | null {
-    const row = this.db.prepare(`SELECT * FROM user_sessions WHERE session_id = ?`).get(sessionId) as any;
+    const row = this.getStmt.get(sessionId) as any;
     if (!row) return null;
     return {
       sessionId: row.session_id, sub: row.sub, email: row.email, name: row.name,
@@ -77,16 +93,14 @@ export class SessionBundleRepo {
   }
 
   updateTokens(sessionId: string, t: { refreshToken: string; accessToken: string; accessTokenExpiresAt: string }): void {
-    this.db.prepare(
-      `UPDATE user_sessions SET refresh_token_enc = ?, access_token = ?, access_token_expires_at = ?, last_seen_at = ? WHERE session_id = ?`,
-    ).run(this.encrypt(t.refreshToken), t.accessToken, t.accessTokenExpiresAt, new Date().toISOString(), sessionId);
+    this.updateStmt.run(this.encrypt(t.refreshToken), t.accessToken, t.accessTokenExpiresAt, new Date().toISOString(), sessionId);
   }
 
   delete(sessionId: string): void {
-    this.db.prepare(`DELETE FROM user_sessions WHERE session_id = ?`).run(sessionId);
+    this.deleteStmt.run(sessionId);
   }
 
   purgeExpired(): void {
-    this.db.prepare(`DELETE FROM user_sessions WHERE expires_at < ?`).run(new Date().toISOString());
+    this.purgeStmt.run(new Date().toISOString());
   }
 }
