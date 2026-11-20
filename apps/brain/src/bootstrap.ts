@@ -57,7 +57,9 @@ function resolveDevSessionSecret(authDbPath: string): string {
 
 export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Express {
   const app = express();
-  app.use(express.json({ limit: '1mb' }));
+  // Songs are sent whole on save (PUT /api/songs/:id); a long song's JSON runs to
+  // several hundred kB compact, so leave generous headroom.
+  app.use(express.json({ limit: '16mb' }));
 
   // Cleanup hooks for resources createApp itself owns (never for injected
   // deps — tests own those). Invoked by startServer().stop().
