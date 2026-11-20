@@ -34,6 +34,20 @@ const ConfigSchema = z.object({
   // Where /login sends the user when no (valid, same-origin) return_to is
   // given. Falls back to `${webOrigin}/` in the route when unset.
   postLoginDefault: z.string().optional(),
+  // --- Per-song server-side rendering (see src/render/renderService.ts) ---
+  // Rendering is enabled only when the sample library root is set; every
+  // other path has a repo-relative default (cwd = apps/brain).
+  rendersDir: z.string().default('./data/renders'),
+  renderEmitScript: z.string().default('../engine-spike/scripts/emit-brain-roundtrip.mjs'),
+  renderBin: z.string().default('../web/wasm/engine/build/casperaki_render'),
+  renderStubSamplesDir: z.string().default('../engine-spike/samples'),
+  sampleLibraryRoot: z.string().optional(),
+  renderMix: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
+  ffmpegBin: z.string().default('ffmpeg'),
+  // --- Production web serving ---
+  // When set, the brain serves the built web app (apps/web/dist) at / with
+  // an SPA fallback, so one origin carries both the UI and /api.
+  webDistDir: z.string().optional(),
 });
 
 export type BrainConfig = z.infer<typeof ConfigSchema>;
@@ -41,6 +55,9 @@ export type BrainConfig = z.infer<typeof ConfigSchema>;
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
   if (env.NODE_ENV === 'production' && !env.SESSION_SECRET) {
     throw new Error('SESSION_SECRET is required in production');
+  }
+  if (env.NODE_ENV === 'production' && !env.CASPERAKI_SAMPLE_LIBRARY_ROOT) {
+    throw new Error('CASPERAKI_SAMPLE_LIBRARY_ROOT is required in production (per-song rendering)');
   }
   return ConfigSchema.parse({
     port: env.BRAIN_PORT,
@@ -58,6 +75,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     oidcRedirectUri: env.OIDC_REDIRECT_URI,
     oidcResource: env.OIDC_RESOURCE,
     postLoginDefault: env.OIDC_POST_LOGIN_DEFAULT,
+    rendersDir: env.BRAIN_RENDERS_DIR,
+    renderEmitScript: env.BRAIN_RENDER_EMIT_SCRIPT,
+    renderBin: env.BRAIN_RENDER_BIN,
+    renderStubSamplesDir: env.BRAIN_RENDER_STUB_SAMPLES_DIR,
+    sampleLibraryRoot: env.CASPERAKI_SAMPLE_LIBRARY_ROOT,
+    renderMix: env.BRAIN_RENDER_MIX,
+    ffmpegBin: env.FFMPEG_BIN,
+    webDistDir: env.BRAIN_WEB_DIST_DIR,
   });
 }
 

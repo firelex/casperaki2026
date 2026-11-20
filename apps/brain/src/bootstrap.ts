@@ -22,6 +22,7 @@ import { openAuthDb } from './auth/authDb.js';
 import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
 import { OidcClient } from './auth/OidcClient.js';
 import { attachSession, requireSession } from './auth/middleware.js';
+import { RenderService } from './render/renderService.js';
 import { authRouter } from './routes/auth.js';
 
 export interface CreateAppDeps {
@@ -29,6 +30,9 @@ export interface CreateAppDeps {
    *  uses the configured songsDbPath when no store is provided. */
   readonly store?: SongsStore;
   readonly auth?: { sessions: SessionBundleRepo; oidc: OidcClient };
+  /** Optional injected render service (tests). Bootstrap builds one when
+   *  CASPERAKI_SAMPLE_LIBRARY_ROOT is configured. */
+  readonly renders?: RenderService;
 }
 
 /** A stable dev session secret persisted next to the auth DB. Regenerating
@@ -111,9 +115,50 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     console.warn('[brain] OIDC not configured — auth routes and gate are DISABLED (dev mode).');
   }
 
-  app.use(createSongsRouter({ store }));
+  const renders =
+    deps.renders ??
+    (config.sampleLibraryRoot
+      ? new RenderService({
+          rendersDir: resolve(config.rendersDir),
+          emitScript: resolve(config.renderEmitScript),
+          renderBin: resolve(config.renderBin),
+          stubSamplesDir: resolve(config.renderStubSamplesDir),
+          sampleLibraryRoot: config.sampleLibraryRoot,
+          mix: config.renderMix,
+          ffmpegBin: config.ffmpegBin,
+          nodeBin: process.execPath,
+        })
+      : undefined);
+  if (!renders) {
+    console.warn('[brain] CASPERAKI_SAMPLE_LIBRARY_ROOT not set — per-song rendering is DISABLED (render routes answer 503).');
+  }
+
+  app.use(createSongsRouter({ store, renders }));
   app.use(createRendersRouter({ artifactPath: config.renderArtifactPath }));
   app.use(createCatalogRouter());
+
+  // Unknown /api routes answer JSON 404 rather than falling into the SPA.
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'not_found' });
+  });
+
+  if (config.webDistDir) {
+    const dist = resolve(config.webDistDir);
+    const indexHtml = join(dist, 'index.html');
+    readFileSync(indexHtml); // fail at startup, naming the path, if the web build is missing
+    // Same cross-origin isolation headers the Vite dev/preview servers send
+    // (the in-browser WASM engine pages need SharedArrayBuffer).
+    app.use((_req, res, next) => {
+      res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+      next();
+    });
+    app.use(express.static(dist, { index: false, maxAge: '1h' }));
+    app.get('*', (_req, res) => {
+      res.setHeader('cache-control', 'no-cache');
+      res.sendFile(indexHtml);
+    });
+  }
 
   // Expose owned-resource cleanup so startServer().stop() can dispose the
   // sqlite handles (checkpointing WAL) and the purge interval on shutdown.

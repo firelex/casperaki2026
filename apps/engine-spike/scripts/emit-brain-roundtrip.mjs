@@ -34,7 +34,7 @@ import {
   resolveAssetPath,
 } from '@casperaki/arrangement';
 import { toEngineFixture } from '@casperaki/engine-adapter';
-import { canonicalStringifySong, contentHash } from '@casperaki/song-schema';
+import { canonicalStringifySong, contentHash, parseSong } from '@casperaki/song-schema';
 
 import { resolveMultisampleSlots } from './lib/multisample-resolver.mjs';
 import { readFileSync as _readFileSync } from 'node:fs';
@@ -124,12 +124,23 @@ const SEED_PARAMS = Object.freeze({
     seed: 'urban-coverage-smoke',
   }),
 });
+// `BRAIN_SONG_FILE` — lower an already-generated canonical Song (the brain's
+// per-song render route writes the stored song there) instead of
+// orchestrating one of the fixed SEED_PARAMS slices. Edited songs have no
+// replayable params, so the file is the only faithful input.
+const SONG_FILE = process.env.BRAIN_SONG_FILE;
 const SEED_KEY = process.env.SEED && SEED_PARAMS[process.env.SEED] ? process.env.SEED : 'brightPop';
 const PARAMS = SEED_PARAMS[SEED_KEY];
 
-const song = orchestrate(PARAMS);
+const song = SONG_FILE
+  ? parseSong(JSON.parse(_readFileSync(resolve(process.cwd(), SONG_FILE), 'utf8')))
+  : orchestrate(PARAMS);
 const hash = contentHash(song);
-console.error(`[brain] orchestrate(${JSON.stringify(PARAMS)}) → hash=${hash}`);
+console.error(
+  SONG_FILE
+    ? `[brain] loaded song from ${SONG_FILE} → hash=${hash}`
+    : `[brain] orchestrate(${JSON.stringify(PARAMS)}) → hash=${hash}`,
+);
 
 // Asset-resolver lookup for the brain-selected Bass / Keys / Pad rows.
 // The resolver answers "for the brain's chosen preset, which sample-

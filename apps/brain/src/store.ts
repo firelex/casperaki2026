@@ -21,9 +21,33 @@ export interface StoredSong {
   readonly createdAt: string;
 }
 
+/** One row of a user's project list: a song the user owns, with the
+ *  display metadata the projects page shows. Songs themselves are
+ *  content-addressed and shared; ownership lives here. */
+export interface ProjectRow {
+  readonly ownerId: string;
+  readonly songId: string;
+  readonly title: string;
+  readonly genre: string | null;
+  readonly key: string;
+  readonly bpm: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export interface SongsStore {
   put(input: { id: string; song: Song; canonical: string; hash: string; createdAt: string }): void;
   get(id: string): StoredSong | undefined;
+  /** Create or update the owner's project row for a song. */
+  upsertProject(input: { ownerId: string; songId: string; title: string; createdAt: string; updatedAt: string }): void;
+  getProject(ownerId: string, songId: string): ProjectRow | undefined;
+  listProjects(ownerId: string): ProjectRow[];
+  /** Replace the song a project points at (an edit saved under a new
+   *  content id), keeping its title and created date. Returns false if
+   *  the owner has no project for `fromSongId`. */
+  moveProject(input: { ownerId: string; fromSongId: string; toSongId: string; updatedAt: string }): boolean;
+  renameProject(input: { ownerId: string; songId: string; title: string; updatedAt: string }): boolean;
+  deleteProject(ownerId: string, songId: string): boolean;
   close(): void;
 }
 
@@ -38,6 +62,15 @@ const SONGS_SCHEMA = `
     generator_seed TEXT NOT NULL,
     created_at    TEXT NOT NULL
   );
+  CREATE TABLE IF NOT EXISTS projects (
+    owner_id    TEXT NOT NULL,
+    song_id     TEXT NOT NULL REFERENCES songs(id),
+    title       TEXT NOT NULL,
+    created_at  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL,
+    PRIMARY KEY (owner_id, song_id)
+  );
+  CREATE INDEX IF NOT EXISTS projects_owner_updated ON projects(owner_id, updated_at DESC);
 `;
 
 export interface OpenStoreOptions {
@@ -60,6 +93,39 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
      VALUES (@id, @hash, @canonical, @genre, @key_text, @bpm, @seed, @createdAt)`,
   );
   const selectStmt = db.prepare(`SELECT * FROM songs WHERE id = ?`);
+  const upsertProjectStmt = db.prepare(
+    `INSERT INTO projects (owner_id, song_id, title, created_at, updated_at)
+     VALUES (@ownerId, @songId, @title, @createdAt, @updatedAt)
+     ON CONFLICT(owner_id, song_id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at`,
+  );
+  const projectSelect = `SELECT p.owner_id, p.song_id, p.title, p.created_at, p.updated_at,
+                                s.genre, s.key_text, s.bpm
+                           FROM projects p JOIN songs s ON s.id = p.song_id`;
+  const getProjectStmt = db.prepare(`${projectSelect} WHERE p.owner_id = ? AND p.song_id = ?`);
+  const listProjectsStmt = db.prepare(`${projectSelect} WHERE p.owner_id = ? ORDER BY p.updated_at DESC`);
+  const deleteProjectStmt = db.prepare(`DELETE FROM projects WHERE owner_id = ? AND song_id = ?`);
+  const renameProjectStmt = db.prepare(
+    `UPDATE projects SET title = ?, updated_at = ? WHERE owner_id = ? AND song_id = ?`,
+  );
+  const moveProject = db.transaction(
+    (input: { ownerId: string; fromSongId: string; toSongId: string; updatedAt: string }): boolean => {
+      const from = getProjectStmt.get(input.ownerId, input.fromSongId) as ProjectDbRow | undefined;
+      if (!from) return false;
+      if (input.fromSongId === input.toSongId) {
+        renameProjectStmt.run(from.title, input.updatedAt, input.ownerId, input.fromSongId);
+        return true;
+      }
+      deleteProjectStmt.run(input.ownerId, input.fromSongId);
+      upsertProjectStmt.run({
+        ownerId: input.ownerId,
+        songId: input.toSongId,
+        title: from.title,
+        createdAt: from.created_at,
+        updatedAt: input.updatedAt,
+      });
+      return true;
+    },
+  );
 
   return {
     put({ id, song, canonical, hash, createdAt }) {
@@ -97,10 +163,53 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
         createdAt: row.created_at,
       };
     },
+    upsertProject(input) {
+      upsertProjectStmt.run(input);
+    },
+    getProject(ownerId, songId) {
+      const row = getProjectStmt.get(ownerId, songId) as ProjectDbRow | undefined;
+      return row ? toProjectRow(row) : undefined;
+    },
+    listProjects(ownerId) {
+      return (listProjectsStmt.all(ownerId) as ProjectDbRow[]).map(toProjectRow);
+    },
+    moveProject(input) {
+      return moveProject(input);
+    },
+    renameProject({ ownerId, songId, title, updatedAt }) {
+      return renameProjectStmt.run(title, updatedAt, ownerId, songId).changes > 0;
+    },
+    deleteProject(ownerId, songId) {
+      return deleteProjectStmt.run(ownerId, songId).changes > 0;
+    },
     close() {
       db.close();
     },
   } satisfies SongsStore;
+}
+
+interface ProjectDbRow {
+  owner_id: string;
+  song_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  genre: string | null;
+  key_text: string;
+  bpm: number;
+}
+
+function toProjectRow(row: ProjectDbRow): ProjectRow {
+  return {
+    ownerId: row.owner_id,
+    songId: row.song_id,
+    title: row.title,
+    genre: row.genre,
+    key: row.key_text,
+    bpm: row.bpm,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 export type { BetterSqliteDatabase };
