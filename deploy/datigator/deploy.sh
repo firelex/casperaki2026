@@ -5,7 +5,7 @@ set -euo pipefail
 CA=$HOME/apps/casperaki
 TS=$HOME/apps/open_teamsuzie
 cd "$CA"
-if [ -n "$(git status --porcelain -- apps packages)" ]; then echo "uncommitted changes under apps/ or packages/; commit first" >&2; exit 1; fi
+if [ -n "$(git status --porcelain -- apps packages ':(exclude,glob)**/~$*' ':(exclude,glob)**/*.tsbuildinfo')" ]; then echo "uncommitted changes under apps/ or packages/; commit first" >&2; exit 1; fi
 pnpm install --frozen-lockfile
 (cd "$TS" && pnpm --filter "@teamsuzie/ui..." --filter "@teamsuzie/theme..." --filter "@teamsuzie/auth..." build)
 pnpm -r --filter "./packages/*" build
