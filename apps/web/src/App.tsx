@@ -1,13 +1,17 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { SessionProvider } from './state/session';
 import { useAuth } from './auth/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 import { ProjectsPage } from './pages/ProjectsPage';
-import { EditorPage } from './pages/EditorPage';
-import { CatalogPage } from './pages/CatalogPage';
-import { WasmTonePage } from './pages/WasmTonePage';
-import { WasmRenderPage } from './pages/WasmRenderPage';
+
+// Code-split: the signed-out landing and the projects list load first; the
+// editor, catalog and dev WASM pages are fetched when first opened.
+const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
+const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
+const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
+const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
 
 /**
  * Routes mirror rory-fe's three screens (LoginView, ProjectsView, Editor):
@@ -29,6 +33,7 @@ export function App() {
 
   return (
     <SessionProvider>
+      <Suspense fallback={<PageSplash />}>
       <Routes>
         <Route path="/" element={<ProjectsPage />} />
         <Route path="/catalog" element={<CatalogPage />} />
@@ -42,6 +47,7 @@ export function App() {
         <Route path="/editor/:songId/structure" element={<EditorPage tab="structure" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </SessionProvider>
   );
 }
@@ -49,6 +55,14 @@ export function App() {
 function BootSplash() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-[#e2e2e2] text-sm text-black/50">
+      Loading…
+    </div>
+  );
+}
+
+function PageSplash() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-bg text-sm text-muted">
       Loading…
     </div>
   );
