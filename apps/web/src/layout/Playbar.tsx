@@ -1,17 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
-import { rendersApi, rendersQueryKeys, type RenderMetadata } from '../api/renders';
-import {
-  describeRenderStatus,
-  fmtBytesLabel,
-  fmtClock,
-  fmtDbLabel,
-  fmtFormatLabel,
-  fmtSecondsLabel,
-} from './playbarRenderStatus';
+import { songsApi, songsQueryKeys, type RenderInfo } from '../api/songs';
+import { describeRenderStatus, fmtClock, fmtSecondsLabel } from './playbarRenderStatus';
 import { WaveformLane } from './WaveformLane';
 import { useSession } from '../state/session';
+import { useRenderStatus } from '../state/useSongActions';
 import { summarizeStructure } from '../types/song';
 
 const WAVEFORM_BINS = 512;
@@ -19,34 +13,25 @@ const WAVEFORM_BINS = 512;
 /**
  * Editor Playbar — mirrors rory-fe `components/editor/Playbar.vue`.
  *
- * The transport binds to the latest local render artifact when it
- * exists (see docs/54c-ui-render-artifact.md). This is a dev/local
- * bridge: a single configurable WAV exposed by the brain. The browser
- * does not trigger native rendering and there is no per-song mapping;
- * if the artifact is absent the transport collapses to a chrome-only
- * disabled state and a "no local render" status hint.
+ * The transport plays the open song's own server-side render
+ * (GET /api/songs/:id/render.mp3) once it exists; the editor header's
+ * Render button starts one. Until then the transport is disabled and the
+ * status strip says what to do. The waveform comes from the render's
+ * peaks.
  */
 export function Playbar() {
-  const { activeSong, viewSong, renderStale } = useSession();
-  const queryClient = useQueryClient();
+  const { activeSong, viewSong, editorDirty } = useSession();
+  const songId = activeSong?.id;
 
-  const renderQuery = useQuery({
-    queryKey: rendersQueryKeys.latest(),
-    queryFn: ({ signal }) => rendersApi.latest(signal),
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
-  });
+  const renderQuery = useRenderStatus(songId);
   const render = renderQuery.data;
+  const done = render?.state === 'done';
   const peaksQuery = useQuery({
-    queryKey: rendersQueryKeys.peaks(WAVEFORM_BINS),
-    queryFn: ({ signal }) => rendersApi.peaks(WAVEFORM_BINS, signal),
-    enabled: Boolean(render?.exists),
-    staleTime: 60_000,
+    queryKey: songsQueryKeys.peaks(songId ?? '', WAVEFORM_BINS),
+    queryFn: ({ signal }) => songsApi.renderPeaks(songId as string, WAVEFORM_BINS, signal),
+    enabled: Boolean(songId) && done,
+    staleTime: Infinity,
   });
-  const refreshRender = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: rendersQueryKeys.latest() });
-    void queryClient.invalidateQueries({ queryKey: rendersQueryKeys.peaks(WAVEFORM_BINS) });
-  }, [queryClient]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioReady, setAudioReady] = useState(false);
@@ -63,28 +48,22 @@ export function Playbar() {
   );
   const totalBars = summary.reduce((sum, s) => sum + s.bars, 0);
   const bpm = viewSong?.bpm ?? 120;
-  // `activeSong` is referenced only to keep the artifact tied to the
-  // brain-returned identity — once the working copy diverges, the
-  // render is marked stale below.
-  void activeSong;
   const songSeconds = (totalBars * 4 * 60) / bpm;
 
-  const renderSeconds = render?.exists ? render.durationSec : undefined;
-  const totalSeconds = audioDuration ?? renderSeconds ?? songSeconds;
+  const totalSeconds = audioDuration ?? peaksQuery.data?.durationSec ?? songSeconds;
   const safeTotalSeconds = totalSeconds > 0 ? totalSeconds : 0;
   const position = safeTotalSeconds > 0 ? Math.min(1, currentSeconds / safeTotalSeconds) : 0;
-  const audioSrc = render?.exists ? rendersApi.latestWavUrl() : undefined;
+  const audioSrc = done ? render.mp3Url : undefined;
 
-  // Hard-reset transport state when the artifact appears / disappears or
-  // its bytes change (updatedAt drift). Without this the stale audio
-  // element would silently keep its old src.
+  // Hard-reset transport state when the song or its render changes.
+  // Without this the audio element would keep the previous song's src.
   useEffect(() => {
     setAudioReady(false);
     setAudioError(undefined);
     setPlaying(false);
     setCurrentSeconds(0);
     setAudioDuration(undefined);
-  }, [audioSrc, render?.updatedAt]);
+  }, [audioSrc]);
 
   const handlePlayPause = useCallback(() => {
     const el = audioRef.current;
@@ -153,16 +132,6 @@ export function Playbar() {
         </button>
 
         <div className="flex items-center gap-6 flex-1 justify-center max-w-[64%]">
-          <button
-            type="button"
-            onClick={refreshRender}
-            className="h-10 w-10 rounded-full flex items-center justify-center text-[18px] text-white/80 hover:text-white hover:bg-white/10 transition-colors disabled:opacity-30"
-            title="Refresh local render metadata"
-            aria-label="Refresh local render metadata"
-          >
-            ⟳
-          </button>
-
           <div
             className="flex-1 max-w-[42vw] h-[60px] flex items-center gap-4 px-3 rounded-lg"
             style={{
@@ -176,9 +145,9 @@ export function Playbar() {
               disabled={!audioSrc}
               className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] hover:bg-white/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
               aria-label={playing ? 'Pause' : 'Play'}
-              title={audioSrc ? (playing ? 'Pause' : 'Play') : 'No local render available'}
+              title={audioSrc ? (playing ? 'Pause' : 'Play') : 'Render the song to play it'}
             >
-              {playing ? '⏸' : '▶'}
+              {playing ? '❚❚' : '▶'}
             </button>
 
             <span className="font-mono text-[14px] text-white tabular-nums w-[44px] text-right">
@@ -240,7 +209,7 @@ export function Playbar() {
 
       <WaveformLane
         peaks={peaksQuery.data}
-        loading={peaksQuery.isPending && Boolean(render?.exists)}
+        loading={peaksQuery.isPending && done}
         durationSec={safeTotalSeconds}
         positionSec={currentSeconds}
         segments={summary}
@@ -254,7 +223,8 @@ export function Playbar() {
         loading={renderQuery.isPending}
         audioReady={audioReady}
         audioError={audioError}
-        stale={renderStale}
+        dirty={editorDirty}
+        durationSec={audioDuration}
       />
 
       {audioSrc ? (
@@ -290,46 +260,42 @@ export function Playbar() {
 }
 
 interface RenderStatusStripProps {
-  readonly render: RenderMetadata | undefined;
+  readonly render: RenderInfo | undefined;
   readonly loading: boolean;
   readonly audioReady: boolean;
   readonly audioError: string | undefined;
-  readonly stale?: boolean;
+  readonly dirty: boolean;
+  readonly durationSec: number | undefined;
 }
 
-function RenderStatusStrip({ render, loading, audioReady, audioError, stale }: RenderStatusStripProps) {
-  const { tone, label } = describeRenderStatus({ render, loading, audioReady, audioError });
-
-  const effectiveTone = stale && render?.exists ? 'missing' : tone;
-  const effectiveLabel = stale && render?.exists ? `${label} · stale (edited)` : label;
+function RenderStatusStrip({ render, loading, audioReady, audioError, dirty, durationSec }: RenderStatusStripProps) {
+  const { tone, label } = describeRenderStatus({ render, loading, audioReady, audioError, dirty });
 
   const dotColor =
-    effectiveTone === 'ready'
+    tone === 'ready'
       ? 'bg-emerald-400'
-      : effectiveTone === 'error'
+      : tone === 'error'
         ? 'bg-accent'
-        : effectiveTone === 'missing'
+        : tone === 'missing'
           ? 'bg-yellow-400/80'
-          : 'bg-white/40';
+          : 'bg-white/40 animate-pulse';
 
   return (
     <div className="flex items-center justify-between gap-6 px-[60px] py-2 text-[11px] uppercase tracking-[0.16em] text-dim border-t border-line/40 bg-[#0b0c14]">
-      <div className="flex items-center gap-3">
-        <span className={`h-2 w-2 rounded-full ${dotColor}`} aria-hidden />
-        <span>{effectiveLabel}</span>
+      <div className="flex items-center gap-3 min-w-0">
+        <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} aria-hidden />
+        <span className="truncate" title={render?.error}>{label}</span>
       </div>
-      <div className="flex items-center gap-5 font-mono normal-case tracking-normal text-[11px] text-dim">
-        {render?.exists ? (
+      <div className="flex items-center gap-5 font-mono normal-case tracking-normal text-[11px] text-dim shrink-0">
+        {render?.state === 'done' ? (
           <>
-            <RenderStat label="dur" value={fmtSecondsLabel(render.durationSec)} />
-            <RenderStat
-              label="fmt"
-              value={fmtFormatLabel(render.sampleRate, render.bitDepth, render.channels)}
-            />
-            <RenderStat label="rms" value={fmtDbLabel(render.rmsDb)} />
-            <RenderStat label="peak" value={fmtDbLabel(render.peakDb)} />
-            <RenderStat label="size" value={fmtBytesLabel(render.sizeBytes)} />
-            <RenderStat label="updated" value={fmtUpdated(render.updatedAt)} />
+            <RenderStat label="dur" value={fmtSecondsLabel(durationSec)} />
+            <a className="text-white/85 hover:text-white underline-offset-2 hover:underline" href={`${render.mp3Url}?download=1`}>
+              Download MP3
+            </a>
+            <a className="text-white/85 hover:text-white underline-offset-2 hover:underline" href={`${render.wavUrl}?download=1`}>
+              Download WAV
+            </a>
           </>
         ) : (
           <span className="text-dim/70">{'— · — · —'}</span>
@@ -346,11 +312,4 @@ function RenderStat({ label, value }: { label: string; value: string }) {
       <span className="tabular-nums text-white/85">{value}</span>
     </span>
   );
-}
-
-function fmtUpdated(updatedAt: string | undefined): string {
-  if (!updatedAt) return '—';
-  const d = new Date(updatedAt);
-  if (Number.isNaN(d.getTime())) return '—';
-  return d.toISOString().slice(11, 19) + 'Z';
 }

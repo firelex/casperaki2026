@@ -32,7 +32,8 @@ export interface GenerateDialogProps {
 
 export function GenerateDialog({ open, onClose, onCreated }: GenerateDialogProps) {
   const queryClient = useQueryClient();
-  const { addSong, setActiveSong } = useSession();
+  const { setActiveSong } = useSession();
+  const [title, setTitle] = useState('');
   const [genre, setGenre] = useState<Genre>('brightPop');
   const [key, setKey] = useState('C');
   const [bpm, setBpm] = useState(DEFAULT_BPM_BY_GENRE.brightPop);
@@ -46,10 +47,11 @@ export function GenerateDialog({ open, onClose, onCreated }: GenerateDialogProps
         key,
         bpm,
         seed: /^-?\d+$/u.test(seed) ? Number(seed) : seed,
+        ...(title.trim() ? { title: title.trim() } : {}),
       }),
     onSuccess: (data) => {
-      addSong(data, { seed, genre });
       setActiveSong(data);
+      void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
       queryClient.setQueryData(songsQueryKeys.song(data.id), data);
       onCreated(data.id);
     },
@@ -96,6 +98,16 @@ export function GenerateDialog({ open, onClose, onCreated }: GenerateDialogProps
             mutation.mutate();
           }}
         >
+          <div className="col-span-2">
+            <Field label="Title" hint="optional — defaults to style and key">
+              <TextInput
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Untitled"
+                maxLength={120}
+              />
+            </Field>
+          </div>
           <Field label="Genre" hint="canonical brain vocabulary">
             <Select
               value={genre}
@@ -130,12 +142,23 @@ export function GenerateDialog({ open, onClose, onCreated }: GenerateDialogProps
             />
           </Field>
           <Field label="Seed" hint="number or string">
-            <TextInput
-              value={seed}
-              onChange={(e) => setSeed(e.target.value)}
-              spellCheck={false}
-              className="font-mono"
-            />
+            <div className="flex gap-2">
+              <TextInput
+                value={seed}
+                onChange={(e) => setSeed(e.target.value)}
+                spellCheck={false}
+                className="font-mono"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                title="New random seed"
+                aria-label="New random seed"
+                onClick={() => setSeed(`seed-${Math.random().toString(36).slice(2, 8)}`)}
+              >
+                ⟳
+              </Button>
+            </div>
           </Field>
 
           <div className="col-span-2 flex items-center justify-between pt-5 mt-2 border-t border-line">

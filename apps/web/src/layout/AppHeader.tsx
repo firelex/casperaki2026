@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { AccountMenu } from './AccountMenu';
 
 /**
@@ -7,6 +7,7 @@ import { AccountMenu } from './AccountMenu';
  * on active, profile chip on the right.
  */
 export function AppHeader() {
+  const navigate = useNavigate();
   return (
     <header className="flex items-center w-full h-[72px] px-4 md:px-10 border-b border-line/60">
       <div className="flex-1 flex items-center gap-3 min-w-0">
@@ -31,6 +32,7 @@ export function AppHeader() {
         </span>
         <button
           type="button"
+          onClick={() => navigate('/?create=1')}
           className="h-9 px-4 rounded-full bg-accent text-white text-[13px] font-semibold hover:bg-accent/90 transition-colors"
         >
           Create

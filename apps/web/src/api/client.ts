@@ -51,6 +51,18 @@ export class BrainClient {
     return this.request<T>('POST', path, body, opts);
   }
 
+  async put<T>(path: string, body: unknown, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>('PUT', path, body, opts);
+  }
+
+  async patch<T>(path: string, body: unknown, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>('PATCH', path, body, opts);
+  }
+
+  async delete<T = void>(path: string, opts: RequestOptions = {}): Promise<T> {
+    return this.request<T>('DELETE', path, undefined, opts);
+  }
+
   private async request<T>(
     method: string,
     path: string,

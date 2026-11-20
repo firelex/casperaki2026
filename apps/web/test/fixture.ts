@@ -12,6 +12,16 @@ export function makeFixtureSong(): GeneratedSong {
   return {
     id: 'abc123def4567890',
     hash: 'a'.repeat(64),
+    project: {
+      id: 'abc123def4567890',
+      title: 'Test Track',
+      genre: 'brightPop',
+      key: 'C',
+      bpm: 120,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      render: { state: 'none' },
+    },
     song: {
       schemaVersion: '1',
       title: 'Test Track',

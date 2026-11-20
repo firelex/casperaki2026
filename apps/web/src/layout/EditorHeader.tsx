@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { songsApi, type ReplayResult } from '../api/songs';
+import { renderInFlight, renderLabel, songsApi, type ReplayResult } from '../api/songs';
 import { useSession } from '../state/session';
+import { useRenderStatus, useSaveSong, useStartRender } from '../state/useSongActions';
 import type { EditorTab } from '../pages/EditorPage';
 
 /**
@@ -13,9 +14,10 @@ import type { EditorTab } from '../pages/EditorPage';
  *   └──────────────────────────────────────────────────────────────┘
  *
  * Active tab carries a 4px red top-underline (rory's `nav a.active::before`).
- * Publish is currently a placeholder mutation — uses POST /replay so
- * the button has a real workflow (verifies determinism). When the
- * publish endpoint lands on the brain, it becomes a real publish.
+ * Right side: Save (when there are unsaved edits) and Render, the
+ * primary action. Render works on the saved song, so with unsaved edits
+ * it saves first ("Save & render"). The ⟳ button replays the generator
+ * to verify determinism.
  */
 export function EditorHeader({ tab }: { tab: EditorTab }) {
   const navigate = useNavigate();
@@ -29,6 +31,18 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
     editorDirty,
     applyEdit,
   } = useSession();
+
+  const save = useSaveSong();
+  const renderStatus = useRenderStatus(activeSong?.id);
+  const startRender = useStartRender();
+  const rendering = renderInFlight(renderStatus.data) || startRender.isPending;
+  const rendered = renderStatus.data?.state === 'done';
+  const onRender = async () => {
+    if (!activeSong) return;
+    const id = editorDirty ? (await save.mutateAsync()).id : activeSong.id;
+    startRender.mutate(id);
+  };
+  const actionError = save.error ?? startRender.error;
 
   const replay = useMutation<ReplayResult, Error>({
     mutationFn: () => songsApi.replay(activeSong!.id),
@@ -63,16 +77,19 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
           editor
         </span>
         {activeSong ? (
-          <span className="ml-3 font-mono text-[12px] text-white/80">
-            #{activeSong.id}
+          <span
+            className="ml-3 text-[14px] text-white/90 font-semibold truncate max-w-[22vw]"
+            title={`#${activeSong.id}`}
+          >
+            {activeSong.project.title}
           </span>
         ) : null}
         {editorDirty ? (
           <span
             className="ml-3 text-[10px] uppercase tracking-[0.18em] text-accent font-semibold"
-            title="Unsaved local edits — no backend persistence yet"
+            title="Unsaved edits — press Save to keep them"
           >
-            ● edited
+            ● unsaved
           </span>
         ) : null}
       </div>
@@ -117,16 +134,42 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
         >
           ⟳
         </IconBtn>
-        <IconBtn label="Settings" disabled>
-          ⚙
-        </IconBtn>
+        {actionError ? (
+          <span className="text-err text-[11px] max-w-[220px] truncate" title={actionError.message}>
+            {actionError.message}
+          </span>
+        ) : null}
+        {editorDirty ? (
+          <button
+            type="button"
+            onClick={() => save.mutate()}
+            disabled={save.isPending}
+            className="h-11 px-5 rounded-full border border-line text-white text-[14px] font-semibold uppercase tracking-wide hover:border-accent disabled:opacity-50"
+            title="Save the edited song to your projects"
+          >
+            {save.isPending ? 'Saving…' : 'Save'}
+          </button>
+        ) : null}
         <button
           type="button"
-          className="h-11 px-7 rounded-full bg-accent text-white text-[15px] font-semibold uppercase tracking-wide hover:bg-accent/90 transition-colors"
-          disabled
-          title="Publish endpoint not on the brain yet"
+          onClick={() => void onRender()}
+          disabled={!activeSong || rendering || save.isPending || (rendered && !editorDirty)}
+          className="h-11 px-7 rounded-full bg-accent text-white text-[15px] font-semibold uppercase tracking-wide hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          title={
+            rendered && !editorDirty
+              ? 'This version is rendered — play it below'
+              : 'Render this song to audio on the server'
+          }
         >
-          Publish
+          {rendering
+            ? renderLabel(renderStatus.data)
+            : editorDirty
+              ? 'Save & render'
+              : rendered
+                ? 'Rendered'
+                : renderStatus.data?.state === 'failed'
+                  ? 'Retry render'
+                  : 'Render'}
         </button>
       </div>
     </header>

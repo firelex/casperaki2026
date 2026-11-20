@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { RenderMetadata } from '../src/api/renders';
+import type { RenderInfo } from '../src/api/songs';
 import {
   describeRenderStatus,
   fmtBytesLabel,
@@ -10,64 +10,65 @@ import {
   fmtSecondsLabel,
 } from '../src/layout/playbarRenderStatus';
 
-const READY_META: RenderMetadata = {
-  exists: true,
-  durationSec: 210,
-  peakDb: -3.42,
-  rmsDb: -19.58,
-  sampleRate: 44100,
-  bitDepth: 24,
-  channels: 2,
-  sizeBytes: 55_566_816,
-  updatedAt: '2026-06-06T22:33:00.000Z',
-  url: '/api/renders/latest.wav',
+const DONE: RenderInfo = {
+  state: 'done',
+  mp3Url: '/api/songs/abc/render.mp3',
+  wavUrl: '/api/songs/abc/render.wav',
 };
 
 describe('describeRenderStatus', () => {
   it('reports "checking" while the first request is in flight', () => {
-    const status = describeRenderStatus({
-      render: undefined,
-      loading: true,
-      audioReady: false,
-    });
+    const status = describeRenderStatus({ render: undefined, loading: true, audioReady: false });
     expect(status.tone).toBe('pending');
     expect(status.label).toMatch(/checking/u);
   });
 
-  it('reports "missing" when the brain says exists:false', () => {
-    const status = describeRenderStatus({
-      render: { exists: false },
-      loading: false,
-      audioReady: false,
-    });
+  it('tells the user to press Render when the song was never rendered', () => {
+    const status = describeRenderStatus({ render: { state: 'none' }, loading: false, audioReady: false });
     expect(status.tone).toBe('missing');
-    expect(status.label).toMatch(/none found/u);
-    expect(status.label).toMatch(/engine-spike/u);
+    expect(status.label).toMatch(/press Render/u);
   });
 
-  it('reports "loading bytes" once metadata is back but audio hasn\'t decoded yet', () => {
+  it('reports queue position and running step', () => {
+    expect(
+      describeRenderStatus({ render: { state: 'queued', queuePosition: 2 }, loading: false, audioReady: false }).label,
+    ).toMatch(/2 ahead/u);
+    const running = describeRenderStatus({ render: { state: 'running', step: 'render' }, loading: false, audioReady: false });
+    expect(running.tone).toBe('pending');
+    expect(running.label).toMatch(/mixing/u);
+  });
+
+  it('shows the first line of a render failure', () => {
     const status = describeRenderStatus({
-      render: READY_META,
+      render: { state: 'failed', error: 'casperaki_render failed: exit 3\nmore' },
       loading: false,
       audioReady: false,
     });
+    expect(status.tone).toBe('error');
+    expect(status.label).toBe('Render failed — casperaki_render failed: exit 3');
+  });
+
+  it('reports "loading audio" once done but audio hasn\'t decoded yet', () => {
+    const status = describeRenderStatus({ render: DONE, loading: false, audioReady: false });
     expect(status.tone).toBe('pending');
-    expect(status.label).toMatch(/loading bytes/u);
+    expect(status.label).toMatch(/loading audio/u);
   });
 
   it('reports "ready" once the audio element has metadata', () => {
-    const status = describeRenderStatus({
-      render: READY_META,
-      loading: false,
-      audioReady: true,
-    });
+    const status = describeRenderStatus({ render: DONE, loading: false, audioReady: true });
     expect(status.tone).toBe('ready');
     expect(status.label).toMatch(/ready/u);
   });
 
+  it('warns that the render is of the saved version while there are unsaved edits', () => {
+    const status = describeRenderStatus({ render: DONE, loading: false, audioReady: true, dirty: true });
+    expect(status.tone).toBe('missing');
+    expect(status.label).toMatch(/unsaved edits/u);
+  });
+
   it('surfaces audio element errors over everything else', () => {
     const status = describeRenderStatus({
-      render: READY_META,
+      render: DONE,
       loading: false,
       audioReady: true,
       audioError: 'decode failed',

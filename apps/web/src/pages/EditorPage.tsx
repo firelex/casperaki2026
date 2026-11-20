@@ -120,8 +120,8 @@ function LoadingState({
         <>
           <p className="text-err text-[14px] font-mono">{error.message}</p>
           <p className="text-dim text-[12px]">
-            The brain may not know this song id (the M0 session store is
-            in-memory). Go back to Projects and generate a new one.
+            This song is not in your projects (it may have been deleted, or
+            saved under a new id). Go back to Projects and open it from there.
           </p>
         </>
       ) : (

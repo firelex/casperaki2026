@@ -6,7 +6,8 @@ import { useAuth } from '../auth/AuthContext';
  *
  * 50/50 split: left panel carries the brand boxes / play glyph and
  * staggered entrance animations; right panel offers OIDC sign-in CTAs.
- * All three buttons trigger the same OIDC redirect via useAuth().signIn().
+ * The button triggers the OIDC redirect via useAuth().signIn(); the
+ * sign-in form itself is the auth server's (open_teamsuzie platform auth).
  */
 export function LoginPage() {
   const { signIn } = useAuth();
@@ -91,7 +92,7 @@ export function LoginPage() {
 
       {/* Right — sign-in CTAs */}
       <div
-        className={`absolute right-0 top-0 bottom-0 w-1/2 bg-black z-10 transition-all duration-600 ease-[cubic-bezier(0,0,0,1.08)] ${
+        className={`absolute right-0 top-0 bottom-0 w-full md:w-1/2 bg-black z-10 transition-all duration-600 ease-[cubic-bezier(0,0,0,1.08)] ${
           animForm ? 'translate-x-0 opacity-100' : 'translate-x-[5%] opacity-0'
         }`}
       >
@@ -112,25 +113,18 @@ function SignUpPanel({ onContinue }: { onContinue(): void }) {
         Welcome to <span className="text-accent">Casperaki</span>
       </h2>
       <p className="text-center text-white/60 text-[14px] mt-3 mb-10 leading-relaxed">
-        Sign in or create an account to make royalty-free music and videos,
-        follow users, and explore content.
+        Sign in to generate songs, shape them in the editor and render them
+        to audio.
       </p>
       <button
         type="button"
         onClick={onContinue}
         className="h-14 rounded-full bg-accent text-white text-[16px] font-semibold mb-3 hover:bg-accent/90 transition-colors"
       >
-        Use phone or email
-      </button>
-      <button
-        type="button"
-        onClick={onContinue}
-        className="h-14 rounded-full border-2 border-white/10 text-white text-[16px] font-semibold mb-3 hover:border-white/30 transition-colors"
-      >
-        Continue with Google
+        Sign in with email
       </button>
       <p className="text-center text-white/30 text-[11px] mt-6 leading-relaxed max-w-[280px] mx-auto">
-        By continuing you agree to our terms of service and privacy policy.
+        No account yet? Accounts are created by an administrator.
       </p>
     </>
   );

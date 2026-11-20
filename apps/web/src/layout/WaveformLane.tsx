@@ -169,7 +169,9 @@ function Peaks({ peaks, rms }: { peaks: readonly number[]; rms: readonly number[
         const rmsH = Math.max(1, r * 100);
         return (
           <div key={i} className="flex-1 flex items-center justify-center">
-            <div className="relative w-full px-px">
+            {/* h-full + flex centring: the bars' percentage heights need a
+                definite-height parent, otherwise they collapse to zero. */}
+            <div className="relative w-full h-full px-px flex items-center">
               <div
                 className="mx-auto rounded-[1px] bg-white/35"
                 style={{ height: `${peakH}%`, width: '100%' }}

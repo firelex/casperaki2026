@@ -16,25 +16,15 @@ import {
 /**
  * Session state.
  *
- * Holds the list of songs generated this session (no brain index
- * endpoint yet) plus the currently-active song and segment, and the
- * last replay outcome. This is the single read/write boundary between
- * the Projects view (which writes via `addSong`) and the Editor view
- * (which reads `activeSong` + writes `activeSegment`).
+ * Holds the currently-active song and segment, the editor session and
+ * the last replay outcome. The project list itself is server state
+ * (GET /api/songs via TanStack Query), not held here.
  *
  * NOT the typed editor store described in docs/54 — that lands with M2
  * once mutations are real.
  */
 
-export interface ProjectListItem {
-  readonly song: GeneratedSong;
-  readonly createdAt: number;
-  readonly seed: string;
-  readonly genre: string;
-}
-
 export interface SessionState {
-  readonly songs: readonly ProjectListItem[];
   readonly activeSong: GeneratedSong | undefined;
   readonly activeSegment: string | undefined;
   /** Currently-focused bar within `activeSegment`. Read-only highlight today. */
@@ -53,8 +43,6 @@ export interface SessionState {
   readonly canRedo: boolean;
   readonly editorDirty: boolean;
   readonly renderStale: boolean;
-  addSong(song: GeneratedSong, meta: { seed: string; genre: string }): void;
-  removeSong(id: string): void;
   setActiveSong(song: GeneratedSong | undefined): void;
   setActiveSegment(segmentName: string | undefined): void;
   setActiveBarIndex(barIndex: number | undefined): void;
@@ -65,30 +53,11 @@ export interface SessionState {
 const SessionContext = createContext<SessionState | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [songs, setSongs] = useState<ProjectListItem[]>([]);
   const [activeSong, setActiveSongState] = useState<GeneratedSong | undefined>(undefined);
   const [activeSegment, setActiveSegmentState] = useState<string | undefined>(undefined);
   const [activeBarIndex, setActiveBarIndexState] = useState<number | undefined>(undefined);
   const [lastReplay, setLastReplayState] = useState<ReplayResult | undefined>(undefined);
   const [editor, setEditorState] = useState<EditState | undefined>(undefined);
-
-  const addSong = useCallback(
-    (song: GeneratedSong, meta: { seed: string; genre: string }) => {
-      setSongs((prev) => {
-        const filtered = prev.filter((p) => p.song.id !== song.id);
-        return [
-          { song, createdAt: Date.now(), seed: meta.seed, genre: meta.genre },
-          ...filtered,
-        ];
-      });
-    },
-    [],
-  );
-
-  const removeSong = useCallback((id: string) => {
-    setSongs((prev) => prev.filter((p) => p.song.id !== id));
-    setActiveSongState((cur) => (cur?.id === id ? undefined : cur));
-  }, []);
 
   const setActiveSong = useCallback((song: GeneratedSong | undefined) => {
     setActiveSongState(song);
@@ -149,7 +118,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<SessionState>(
     () => ({
-      songs,
       activeSong,
       activeSegment,
       activeBarIndex,
@@ -160,8 +128,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       canRedo,
       editorDirty,
       renderStale,
-      addSong,
-      removeSong,
       setActiveSong,
       setActiveSegment,
       setActiveBarIndex,
@@ -169,7 +135,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       applyEdit,
     }),
     [
-      songs,
       activeSong,
       activeSegment,
       activeBarIndex,
@@ -180,8 +145,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       canRedo,
       editorDirty,
       renderStale,
-      addSong,
-      removeSong,
       setActiveSong,
       setActiveSegment,
       setActiveBarIndex,

@@ -1,37 +1,54 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { AppHeader } from '../layout/AppHeader';
 import { defaultBrainClient } from '../api/client';
-import { useSession, type ProjectListItem } from '../state/session';
+import {
+  renderInFlight,
+  renderLabel,
+  songsApi,
+  songsQueryKeys,
+  type Project,
+} from '../api/songs';
 import { GenerateDialog } from '../editor/GenerateDialog';
-import { generatorView, summarizeStructure } from '../types/song';
+
+type SortKey = 'updated' | 'created' | 'title';
 
 /**
  * Projects screen.
  *
  * Mirrors `rory-fe/src/views/ProjectsView.vue`: header + 20%/70% split
- * between sidebar nav and listing main. Right side has search + sort
- * + a vertical list of project cards (rory's `<ListingItem>`). Bottom-
- * left has the circular Create FAB with rory's red-magenta-blue
- * gradient — clicking it opens the generate dialog rather than
- * exploding into a new screen (that animation is theatre we'll add
- * later if it earns its keep).
+ * between sidebar nav and listing main. The list is the signed-in user's
+ * projects from the brain (GET /api/songs). Each card can open the
+ * editor, render the song on the server, play the render, download it as
+ * WAV, rename and delete. Bottom-left has the circular Create FAB with
+ * rory's red-magenta-blue gradient, which opens the generate dialog.
  */
 export function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { songs, removeSong } = useSession();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showPage, setShowPage] = useState(false);
   const [searchActive, setSearchActive] = useState(false);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortKey>('updated');
   const [createOpen, setCreateOpen] = useState(false);
+  const [playingId, setPlayingId] = useState<string | undefined>(undefined);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setShowPage(true), 80);
     return () => clearTimeout(t);
   }, []);
+
+  // The header's Create button links here with ?create=1.
+  useEffect(() => {
+    if (searchParams.get('create') === '1') {
+      setCreateOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const health = useQuery({
     queryKey: ['health'],
@@ -41,23 +58,66 @@ export function ProjectsPage() {
   });
   const brainOk = health.data?.ok === true;
 
+  const projectsQuery = useQuery({
+    queryKey: songsQueryKeys.list,
+    queryFn: ({ signal }) => songsApi.list(signal),
+    // Poll while any render is queued or running so cards update by themselves.
+    refetchInterval: (q) =>
+      q.state.data?.projects.some((p) => renderInFlight(p.render)) ? 2000 : false,
+  });
+  const projects = projectsQuery.data?.projects ?? [];
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
+
   const removal = useMutation({
-    mutationFn: async (id: string) => {
-      removeSong(id);
-      queryClient.removeQueries({ queryKey: ['song', id] });
+    mutationFn: (id: string) => songsApi.remove(id),
+    onSuccess: (_d, id) => {
+      if (playingId === id) setPlayingId(undefined);
+      queryClient.removeQueries({ queryKey: songsQueryKeys.song(id) });
+      void invalidate();
     },
   });
-
-  const filtered = songs.filter((p) => {
-    if (!search.trim()) return true;
-    const needle = search.trim().toLowerCase();
-    return (
-      p.song.id.toLowerCase().includes(needle) ||
-      p.genre.toLowerCase().includes(needle) ||
-      (p.song.song.title ?? '').toLowerCase().includes(needle) ||
-      p.seed.toLowerCase().includes(needle)
-    );
+  const rename = useMutation({
+    mutationFn: ({ id, title }: { id: string; title: string }) => songsApi.rename(id, title),
+    onSuccess: () => void invalidate(),
   });
+  const render = useMutation({
+    mutationFn: (id: string) => songsApi.render(id),
+    onSuccess: () => void invalidate(),
+  });
+
+  const togglePlay = (p: Project) => {
+    const audio = audioRef.current;
+    if (!audio || !p.render.mp3Url) return;
+    if (playingId === p.id && !audio.paused) {
+      audio.pause();
+      return;
+    }
+    if (playingId !== p.id) {
+      audio.src = p.render.mp3Url;
+      setPlayingId(p.id);
+    }
+    void audio.play();
+  };
+  const [paused, setPaused] = useState(true);
+
+  const needle = search.trim().toLowerCase();
+  const filtered = projects
+    .filter(
+      (p) =>
+        !needle ||
+        p.title.toLowerCase().includes(needle) ||
+        (p.genre ?? '').toLowerCase().includes(needle) ||
+        p.key.toLowerCase().includes(needle) ||
+        p.id.includes(needle),
+    )
+    .sort((a, b) =>
+      sort === 'title'
+        ? a.title.localeCompare(b.title)
+        : sort === 'created'
+          ? b.createdAt.localeCompare(a.createdAt)
+          : b.updatedAt.localeCompare(a.updatedAt),
+    );
 
   return (
     <div
@@ -72,10 +132,7 @@ export function ProjectsPage() {
           {/* Sidebar */}
           <aside className="w-full md:w-1/5 md:min-w-[180px] flex md:flex-col flex-row flex-wrap items-center md:items-start gap-x-5 gap-y-1 md:sticky md:top-6 md:self-start">
             <SidebarLink active>Projects</SidebarLink>
-            <SidebarLink>Templates</SidebarLink>
-            <SidebarLink>Vibes</SidebarLink>
-            <SidebarLink>Profile</SidebarLink>
-            <SidebarLink>Settings</SidebarLink>
+            <SidebarLink onClick={() => navigate('/catalog')}>Catalog</SidebarLink>
 
             <div className="hidden md:block mt-12 text-[11px] uppercase tracking-[0.18em] text-dim/70 w-full">
               brain
@@ -88,11 +145,7 @@ export function ProjectsPage() {
                 aria-hidden="true"
               />
               <span className="text-muted">
-                {health.isLoading
-                  ? 'connecting'
-                  : brainOk
-                    ? '@casperaki/brain · 16500'
-                    : 'unreachable'}
+                {health.isLoading ? 'connecting' : brainOk ? 'connected' : 'unreachable'}
               </span>
             </div>
           </aside>
@@ -103,7 +156,7 @@ export function ProjectsPage() {
               <div
                 className={`relative transition-all duration-300 ${
                   searchActive ? 'w-[34%]' : 'w-[22%]'
-                }`}
+                } min-w-[160px]`}
               >
                 <input
                   type="text"
@@ -122,13 +175,21 @@ export function ProjectsPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <label className="text-[13px] uppercase tracking-[0.12em] text-muted font-semibold">
+                <label
+                  htmlFor="projects-sort"
+                  className="text-[13px] uppercase tracking-[0.12em] text-muted font-semibold"
+                >
                   Sort by
                 </label>
-                <select className="h-[45px] rounded-lg bg-[#14171b] text-white text-[15px] px-5 pr-10 outline-none border-0">
-                  <option>Last updated</option>
-                  <option>Date created</option>
-                  <option>Project length</option>
+                <select
+                  id="projects-sort"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as SortKey)}
+                  className="h-[45px] rounded-lg bg-[#14171b] text-white text-[15px] px-5 pr-10 outline-none border-0"
+                >
+                  <option value="updated">Last updated</option>
+                  <option value="created">Date created</option>
+                  <option value="title">Title</option>
                 </select>
               </div>
             </header>
@@ -138,31 +199,55 @@ export function ProjectsPage() {
                 searchActive ? 'opacity-60' : 'opacity-100'
               }`}
             >
-              {filtered.length === 0 ? (
-                <EmptyState onCreate={() => setCreateOpen(true)} />
+              {projectsQuery.isLoading ? (
+                <p className="text-muted text-[15px]">Loading projects…</p>
+              ) : projectsQuery.isError ? (
+                <p className="text-err text-[14px]">
+                  Could not load projects: {projectsQuery.error.message}
+                </p>
+              ) : filtered.length === 0 ? (
+                projects.length === 0 ? (
+                  <EmptyState onCreate={() => setCreateOpen(true)} />
+                ) : (
+                  <p className="text-muted text-[15px]">No project matches “{search}”.</p>
+                )
               ) : (
                 filtered.map((p) => (
                   <ListingItem
-                    key={p.song.id}
+                    key={p.id}
                     project={p}
-                    onOpen={() => navigate(`/editor/${p.song.id}/timeline`)}
-                    onDelete={() => removal.mutate(p.song.id)}
+                    playing={playingId === p.id && !paused}
+                    onOpen={() => navigate(`/editor/${p.id}/timeline`)}
+                    onDelete={() => removal.mutate(p.id)}
+                    onRename={(title) => rename.mutate({ id: p.id, title })}
+                    onRender={() => render.mutate(p.id)}
+                    onTogglePlay={() => togglePlay(p)}
                   />
                 ))
               )}
+              {removal.isError || rename.isError || render.isError ? (
+                <p className="text-err text-[13px]">
+                  {(removal.error ?? rename.error ?? render.error)?.message}
+                </p>
+              ) : null}
             </div>
 
             <footer className="flex items-center justify-between pt-10 text-[13px] text-muted">
               <p>
-                {filtered.length} of {songs.length} projects
+                {filtered.length} of {projects.length} projects
               </p>
-              <button className="text-white/60 hover:text-white text-[13px]" disabled>
-                Next →
-              </button>
             </footer>
           </main>
         </section>
       </div>
+
+      <audio
+        ref={audioRef}
+        className="hidden"
+        onPlay={() => setPaused(false)}
+        onPause={() => setPaused(true)}
+        onEnded={() => setPaused(true)}
+      />
 
       {/* Create FAB — rory `.create` gradient */}
       <button
@@ -193,18 +278,22 @@ export function ProjectsPage() {
 function SidebarLink({
   children,
   active = false,
+  onClick,
 }: {
   children: React.ReactNode;
   active?: boolean;
+  onClick?: () => void;
 }) {
   return (
-    <a
-      className={`py-[5px] text-[22px] leading-tight cursor-pointer transition-colors ${
+    <button
+      type="button"
+      onClick={onClick}
+      className={`py-[5px] text-[22px] leading-tight text-left transition-colors ${
         active ? 'text-white font-semibold' : 'text-white/60 hover:text-white/90'
       }`}
     >
       {children}
-    </a>
+    </button>
   );
 }
 
@@ -216,8 +305,8 @@ function EmptyState({ onCreate }: { onCreate(): void }) {
       </h2>
       <p className="text-muted text-[15px] max-w-[460px] leading-relaxed">
         Hit <span className="text-white font-semibold">Create</span> (or the big
-        round button bottom-left) to generate your first deterministic song via
-        the brain.
+        round button bottom-left) to generate your first song. Then open it in the
+        editor, or render it to audio straight from this list.
       </p>
       <button
         type="button"
@@ -232,76 +321,154 @@ function EmptyState({ onCreate }: { onCreate(): void }) {
 
 function ListingItem({
   project,
+  playing,
   onOpen,
   onDelete,
+  onRename,
+  onRender,
+  onTogglePlay,
 }: {
-  project: ProjectListItem;
+  project: Project;
+  playing: boolean;
   onOpen(): void;
   onDelete(): void;
+  onRename(title: string): void;
+  onRender(): void;
+  onTogglePlay(): void;
 }) {
-  const summary = summarizeStructure(project.song.song);
-  const totalBars = summary.reduce((sum, s) => sum + s.bars, 0);
-  const seconds = Math.round((totalBars * 4 * 60) / project.song.song.bpm);
-  const mm = Math.floor(seconds / 60);
-  const ss = String(seconds % 60).padStart(2, '0');
-  const gen = generatorView(project.song.song);
-  const title = project.song.song.title || `${project.genre} · ${project.seed}`;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(project.title);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const r = project.render;
+  const busy = renderInFlight(r);
+  const updated = new Date(project.updatedAt);
+  const stop = (fn: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fn();
+  };
 
   return (
     <div
-      className="group relative flex justify-between items-start gap-6 bg-[rgba(38,43,51,0.7)] rounded-[15px] p-9 cursor-pointer overflow-hidden hover:bg-[rgba(48,53,61,0.7)] transition-colors"
-      onClick={onOpen}
+      className="group relative flex flex-col sm:flex-row justify-between items-start gap-6 bg-[rgba(38,43,51,0.7)] rounded-[15px] p-7 sm:p-9 cursor-pointer overflow-hidden hover:bg-[rgba(48,53,61,0.7)] transition-colors"
+      onClick={() => !editing && onOpen()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !editing && e.target === e.currentTarget) onOpen();
+      }}
       role="button"
       tabIndex={0}
     >
       <div className="flex flex-col gap-3 min-w-0">
-        <h3 className="text-white text-[24px] font-semibold leading-tight truncate max-w-[520px]">
-          {title}
-        </h3>
+        {editing ? (
+          <form
+            className="flex gap-2"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const t = draft.trim();
+              if (t && t !== project.title) onRename(t);
+              setEditing(false);
+            }}
+          >
+            <input
+              autoFocus
+              value={draft}
+              maxLength={120}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  setDraft(project.title);
+                  setEditing(false);
+                }
+              }}
+              className="h-10 rounded-lg bg-[#14171b] text-white text-[20px] px-3 outline-none min-w-[240px]"
+              aria-label="Project title"
+            />
+            <button type="submit" className="px-3 rounded-lg bg-accent text-white text-[13px] font-semibold">
+              Save
+            </button>
+          </form>
+        ) : (
+          <h3 className="text-white text-[24px] font-semibold leading-tight truncate max-w-[520px]">
+            {project.title}
+          </h3>
+        )}
         <ul className="flex flex-wrap gap-x-8 gap-y-1 text-[14px] text-muted">
           <li>
-            Genre <strong className="text-white font-semibold ml-1.5">{project.genre}</strong>
+            Genre <strong className="text-white font-semibold ml-1.5">{project.genre ?? '—'}</strong>
           </li>
           <li>
-            Length <strong className="text-white font-semibold ml-1.5">{mm}m {ss}s</strong>
+            Key <strong className="text-white font-semibold ml-1.5">{project.key}</strong>
           </li>
           <li>
-            Segments <strong className="text-white font-semibold ml-1.5">{summary.length}</strong>
+            BPM <strong className="text-white font-semibold ml-1.5">{project.bpm}</strong>
           </li>
           <li>
-            BPM <strong className="text-white font-semibold ml-1.5">{project.song.song.bpm}</strong>
-          </li>
-          <li>
-            Seed{' '}
-            <strong className="text-white font-mono font-semibold ml-1.5">
-              {gen?.seed ?? project.seed}
+            Updated{' '}
+            <strong className="text-white font-semibold ml-1.5">
+              {updated.toLocaleDateString()} {updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </strong>
           </li>
         </ul>
-        <div className="font-mono text-[11px] text-dim mt-1 break-all">
-          #{project.song.id} · {project.song.hash.slice(0, 32)}…
+        <div className="flex items-center gap-2 text-[12px]">
+          <span
+            className={`h-2 w-2 rounded-full ${
+              r.state === 'done' ? 'bg-ok' : r.state === 'failed' ? 'bg-err' : busy ? 'bg-accent animate-pulse' : 'bg-dim'
+            }`}
+            aria-hidden="true"
+          />
+          <span className={r.state === 'failed' ? 'text-err' : 'text-muted'}>{renderLabel(r)}</span>
+          {r.state === 'failed' && r.error ? (
+            <span className="text-dim font-mono truncate max-w-[420px]" title={r.error}>
+              {r.error.split('\n')[0]}
+            </span>
+          ) : null}
         </div>
       </div>
 
       <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
+        <IconButton glyph="↗" label="Open in editor" onClick={stop(onOpen)} />
+        {r.state === 'done' ? (
+          <>
+            <IconButton glyph={playing ? '❚❚' : '▶'} label={playing ? 'Pause' : 'Play'} onClick={stop(onTogglePlay)} />
+            <a
+              href={`${r.wavUrl}?download=1`}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Download WAV"
+              title="Download WAV"
+              className="h-10 w-10 rounded-full flex items-center justify-center text-[17px] text-white/70 hover:text-white hover:bg-white/10"
+            >
+              ↓
+            </a>
+          </>
+        ) : (
+          <IconButton
+            glyph={busy ? '…' : '♫'}
+            label={busy ? renderLabel(r) : r.state === 'failed' ? 'Retry render' : 'Render audio'}
+            disabled={busy}
+            onClick={stop(onRender)}
+          />
+        )}
         <IconButton
-          glyph="↗"
-          label="Open"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen();
-          }}
+          glyph="✎"
+          label="Rename"
+          onClick={stop(() => {
+            setDraft(project.title);
+            setEditing(true);
+          })}
         />
-        <IconButton glyph="▶" label="Play" disabled />
-        <IconButton glyph="↓" label="Download" disabled />
-        <IconButton
-          glyph="✕"
-          label="Delete"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-        />
+        {confirmDelete ? (
+          <button
+            type="button"
+            onClick={stop(onDelete)}
+            onBlur={() => setConfirmDelete(false)}
+            autoFocus
+            className="h-10 px-3 rounded-full bg-err/80 text-white text-[13px] font-semibold"
+          >
+            Delete?
+          </button>
+        ) : (
+          <IconButton glyph="✕" label="Delete" onClick={stop(() => setConfirmDelete(true))} />
+        )}
       </div>
     </div>
   );
