@@ -47,6 +47,8 @@ const ConfigSchema = z.object({
   // --- In-browser playback (docs/60) ---
   playbackDir: z.string().default('./data/playback'),
   sampleCacheDir: z.string().default('./data/sample-cache'),
+  /** casperaki_engine/config/mix-config.json; required for in-browser playback. */
+  mixConfigPath: z.string().optional(),
   // --- Production web serving ---
   // When set, the brain serves the built web app (apps/web/dist) at / with
   // an SPA fallback, so one origin carries both the UI and /api.
@@ -94,6 +96,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     ffmpegBin: env.FFMPEG_BIN,
     playbackDir: env.BRAIN_PLAYBACK_DIR,
     sampleCacheDir: env.BRAIN_SAMPLE_CACHE_DIR,
+    mixConfigPath: env.CASPERAKI_MIX_CONFIG,
     webDistDir: env.BRAIN_WEB_DIST_DIR,
     adminEmails: env.BRAIN_ADMIN_EMAILS,
   });

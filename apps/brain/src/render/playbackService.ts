@@ -31,6 +31,9 @@ export interface PlaybackServiceConfig {
   readonly ffmpegBin: string;
   /** The five engine fallback samples (kick, snare, hat, tone, bass-c2 .ogg). */
   readonly stubSamplesDir: string;
+  /** Shared mix tables (casperaki_engine/config/mix-config.json), handed to
+   *  the browser engine so the live mix matches the server render. */
+  readonly mixConfigPath: string;
 }
 
 export interface Envelope {
@@ -93,13 +96,19 @@ export class PlaybackService {
       ['emit script', config.emitScript],
       ['sample library root', config.sampleLibraryRoot],
       ['stub samples dir', config.stubSamplesDir],
+      ['mix config', config.mixConfigPath],
     ] as const) {
       if (!existsSync(p)) throw new Error(`PlaybackService: ${name} not found at ${p}`);
     }
     mkdirSync(config.playbackDir, { recursive: true });
     mkdirSync(config.sampleCacheDir, { recursive: true });
     this.libraryRoot = resolve(config.sampleLibraryRoot);
+    this.mixConfig = readFileSync(config.mixConfigPath, 'utf8');
+    JSON.parse(this.mixConfig); // fail at startup on a broken file
   }
+
+  /** mix-config.json text, for the browser engine. */
+  readonly mixConfig: string;
 
   /** Lower the song (once per id) and return the engine input files. */
   async envelope(songId: string, canonical: string): Promise<Envelope> {

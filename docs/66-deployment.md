@@ -60,8 +60,9 @@ so `deploy.sh` builds it) mixes them in real time in an AudioWorklet. The editor
 screen, unsaved edits included (`POST /api/playback`). The server render is now only **Export**
 (WAV / MP3 downloads).
 
-Status: the live path plays without the mix and effects (the WASM mix runs only ~1.1-1.8x real time,
-too tight to stream); seeking works; the level is a fixed gain with a limiter.
+The live path plays the full mix and effects like the server render (the brain hands the browser
+`CASPERAKI_MIX_CONFIG`, i.e. casperaki_engine/config/mix-config.json; required). The WASM mix runs
+7.6-11.4x real time. Seeking renders 1.5 s silently first so reverb and delay tails are back.
 
 ## Pattern lab (admins)
 

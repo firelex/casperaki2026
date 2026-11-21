@@ -44,6 +44,7 @@ writeFileSync(o + '/asset-manifest.json', JSON.stringify({
     sampleLibraryRoot: lib,
     ffmpegBin: ffmpeg,
     stubSamplesDir: stubs,
+    mixConfigPath: (() => { const f = join(dir, 'mix-config.json'); writeFileSync(f, '{}'); return f; })(),
   });
 }
 

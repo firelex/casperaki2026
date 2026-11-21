@@ -39,10 +39,13 @@ interface RealSample {
   sampleRate: number;
 }
 
-/** Fixed real-time master gain. The server render peak-normalises the whole
- *  song, which a live stream can't; this level plus the limiter below keeps
- *  songs loud without clipping. */
-const MASTER_GAIN = 0.35;
+/** Real-time master gain. The server peak-normalises the whole song, which a
+ *  stream can't; with the mix on its normalise gain is ~1.0 (the mix already
+ *  peaks near 0.9), so unity plus the limiter below matches it. */
+const MASTER_GAIN = 1.0;
+/** After a seek the engine renders this much silently so reverb and delay
+ *  tails are back (the mix's effects carry state). */
+const SEEK_PREROLL_SEC = 1.5;
 /** The server renders at 44.1 kHz; the engine runs at the context's rate. */
 const SAMPLE_RATE = 44100;
 const utf8 = new TextEncoder();
@@ -115,6 +118,8 @@ class LivePlayer {
           wasmBytes: wasmBytes.slice(0),
           sampleRate: ctx.sampleRate,
           masterGain: MASTER_GAIN,
+          mixConfig: utf8.encode(payload.mixConfig),
+          seekPrerollFrames: Math.round(SEEK_PREROLL_SEC * ctx.sampleRate),
           // The worklet scope has no TextEncoder: hand it UTF-8 bytes.
           song: utf8.encode(payload.song),
           insts: payload.insts.map((t) => utf8.encode(t)),

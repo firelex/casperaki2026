@@ -21,6 +21,8 @@ export interface PlaybackPayload {
   readonly samples: PlaybackSample[];
   /** The engine's five fallback samples, role order kick, snare, hat, tone, bass. */
   readonly stubs: string[];
+  /** mix-config.json text: the per-lane mix and rack FX, as on the server. */
+  readonly mixConfig: string;
 }
 
 export const playbackApi = {

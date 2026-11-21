@@ -20,6 +20,10 @@
 //   insts       Uint8Array[]   inst-N.json, UTF-8 bytes, ascending id order
 //               (bytes, not strings: AudioWorkletGlobalScope has no TextEncoder
 //               in Chrome, so the main thread encodes)
+//   mixConfig   Uint8Array     optional: mix-config.json (UTF-8). When given, the
+//               per-lane mix and rack FX are on, like the server render.
+//   seekPrerollFrames number   frames rendered silently after a seek so reverb /
+//               delay tails refill (only matters with the mix on)
 //   samples     Float32Array[] decoded mono PCM, role order [kick,snare,hat,tone,bass]
 //   realSamples  {key: Uint8Array (UTF-8), ch0, ch1?, sampleRate}[]  decoded real library PCM, keyed by
 //                the join id (tonal slot id / drum name / "playsample-<id>.ogg");
@@ -36,6 +40,7 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     this.done = false;
     this.frames = 128;
     this.masterGain = options.processorOptions.masterGain ?? 0.15;
+    this.seekPreroll = options.processorOptions.seekPrerollFrames ?? 0;
 
     try {
       const o = options.processorOptions;
@@ -72,7 +77,7 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       this.port.onmessage = (ev) => {
         const d = ev.data;
         if (!d || d.type !== 'seek') return;
-        const pos = this.e.mixer_seek(Math.max(0, Math.floor(d.frame)), 0);
+        const pos = this.e.mixer_seek(Math.max(0, Math.floor(d.frame)), this.seekPreroll);
         if (pos < 0) {
           this.port.postMessage({ type: 'error', message: 'mixer_seek failed' });
           return;
@@ -138,6 +143,16 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     }
     this.realCount = real.length;
 
+    // The mix (per-lane gains + rack FX) needs its tables before the build.
+    if (o.mixConfig) {
+      const cfg = bytes(o.mixConfig, 'mixConfig');
+      const p = writeBytes(cfg);
+      e.mixer_set_mix_enabled(1);
+      const ok = e.mixer_set_mix_config(p, cfg.length);
+      e.free(p);
+      if (ok !== 1) throw new Error(`mixer_set_mix_config failed: ${this.lastError()}`);
+    }
+
     // song.json + the concatenated inst-N.json blob + its per-file lengths.
     const songBytes = bytes(o.song, 'song');
     const songPtr = writeBytes(songBytes);
@@ -154,12 +169,24 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     new Int32Array(e.memory.buffer, lensPtr, lens.length).set(lens);
 
     this.totalFrames = e.mixer_build(songPtr, songBytes.length, blobPtr, lensPtr, instBytes.length);
-    if (e.mixer_last_error() !== 0) throw new Error('mixer_build failed (resolve/build threw)');
+    if (e.mixer_last_error() !== 0) throw new Error(`mixer_build failed: ${this.lastError()}`);
     e.mixer_set_master_gain(this.masterGain);
 
     e.free(songPtr);
     e.free(blobPtr);
     e.free(lensPtr);
+  }
+
+  /** The engine's last error message (NUL-terminated; ASCII is enough here,
+   *  no TextDecoder in this scope either). */
+  lastError() {
+    const p = this.e.mixer_last_error_message();
+    const heap = new Uint8Array(this.e.memory.buffer);
+    let end = p;
+    while (heap[end] !== 0) end++;
+    let s = '';
+    for (let i = p; i < end; i++) s += String.fromCharCode(heap[i]);
+    return s;
   }
 
   process(_inputs, outputs) {

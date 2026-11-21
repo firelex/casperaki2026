@@ -40,6 +40,7 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
     insts: env.insts,
     samples,
     stubs: STUB_SAMPLES.map((n) => `/api/playback/stubs/${n}`),
+    mixConfig: service.mixConfig,
   };
 }
 

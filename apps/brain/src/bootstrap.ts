@@ -154,6 +154,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           sampleLibraryRoot: config.sampleLibraryRoot,
           ffmpegBin: config.ffmpegBin,
           stubSamplesDir: resolve(config.renderStubSamplesDir),
+          mixConfigPath: requireMixConfig(config.mixConfigPath),
         })
       : undefined);
 
@@ -224,4 +225,9 @@ export function startServer(): { stop: () => Promise<void> } {
         });
       }),
   };
+}
+
+function requireMixConfig(path: string | undefined): string {
+  if (!path) throw new Error('CASPERAKI_MIX_CONFIG is required for in-browser playback (path to casperaki_engine/config/mix-config.json)');
+  return resolve(path);
 }
