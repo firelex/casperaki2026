@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
-import { playbackApi } from '../api/playback';
 import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type RenderInfo } from '../api/songs';
 import { livePlayer } from '../audio/livePlayer';
-import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
+import { useLiveTransport } from '../audio/useLiveTransport';
 import { fmtClock } from './playbarRenderStatus';
 import { WaveformLane } from './WaveformLane';
 import { useSession } from '../state/session';
@@ -35,16 +34,8 @@ export function Playbar() {
     staleTime: Infinity,
   });
 
-  // What Play plays: the saved song, or the working copy when it has edits.
-  const liveKey = useMemo(
-    () => (viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId),
-    [viewSong, editorDirty, songId],
-  );
-  const live = useLiveState();
-  const isThisSong = live.key !== undefined && live.key === liveKey;
-  const playing = isThisSong && live.status === 'playing';
-  const loading = isThisSong && live.status === 'loading';
-  const currentSeconds = useLivePosition(playing) * (isThisSong ? 1 : 0);
+  const { liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause: handlePlayPause, seek: seekToSeconds } =
+    useLiveTransport();
 
   const summary = useMemo(
     () => (viewSong ? summarizeStructure(viewSong) : []),
@@ -64,47 +55,13 @@ export function Playbar() {
   // once: right away for the saved song, a moment after editing stops.
   useEffect(() => {
     if (!liveKey || !viewSong) return;
-    const song = viewSong;
-    const savedId = songId;
-    const fetchPayload = (signal: AbortSignal) =>
-      editorDirty || !savedId ? playbackApi.forSong(song, signal) : playbackApi.forSaved(savedId, signal);
     const t = setTimeout(() => livePlayer.prepare(liveKey, fetchPayload), editorDirty ? 1200 : 0);
     return () => clearTimeout(t);
-  }, [liveKey, viewSong, editorDirty, songId]);
+  }, [liveKey, viewSong, editorDirty, fetchPayload]);
 
-  const startPlaying = useCallback(async () => {
-    if (!liveKey || !viewSong) return;
-    const song = viewSong;
-    const savedId = songId;
-    await livePlayer.play(liveKey, (signal) =>
-      editorDirty || !savedId ? playbackApi.forSong(song, signal) : playbackApi.forSaved(savedId, signal),
-    );
-  }, [liveKey, viewSong, editorDirty, songId]);
-
-  const handlePlayPause = useCallback(() => {
-    if (playing) void livePlayer.pause();
-    else void startPlaying();
-  }, [playing, startPlaying]);
-
-  // Scrubbing: jump in the loaded song; if this version isn't loaded yet,
-  // start it and then jump.
-  const seekToSeconds = useCallback(
-    (seconds: number) => {
-      if (!liveKey || !Number.isFinite(seconds)) return;
-      if (livePlayer.isLoaded(liveKey)) {
-        livePlayer.seek(seconds);
-        return;
-      }
-      void startPlaying().then(() => {
-        if (livePlayer.isLoaded(liveKey)) livePlayer.seek(seconds);
-      });
-    },
-    [liveKey, startPlaying],
-  );
-
-  const currentBar = totalBars > 0 ? Math.max(1, Math.floor(position * totalBars) + 1) : 1;
-  const currentBeat =
-    totalBars > 0 ? Math.max(1, Math.floor((position * totalBars * 4) % 4) + 1) : 1;
+  const beatsIn = (currentSeconds * bpm) / 60;
+  const currentBar = Math.min(Math.max(1, totalBars), Math.floor(beatsIn / 4) + 1);
+  const currentBeat = Math.floor(beatsIn % 4) + 1;
 
   return (
     <footer className="flex flex-col w-full border-t border-line/60 bg-[#0d0d17]">
@@ -277,12 +234,3 @@ function LiveStatusStrip({ status, step, error, dirty, render }: LiveStatusStrip
   );
 }
 
-/** 32-bit FNV-1a of a string, as hex: a cheap key for the working copy. */
-function fnv1a(text: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16);
-}
