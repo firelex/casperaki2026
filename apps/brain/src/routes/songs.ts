@@ -72,7 +72,7 @@ export interface SongsRouterDeps {
  *  when auth is configured; without auth (dev mode) everything belongs to
  *  one local owner. */
 export const DEV_OWNER_ID = 'local-dev';
-function ownerOf(req: Request): string {
+export function ownerOf(req: Request): string {
   return req.user?.id ?? DEV_OWNER_ID;
 }
 

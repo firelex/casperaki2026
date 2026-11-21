@@ -16,10 +16,12 @@
 //   wasmBytes   ArrayBuffer    engine-render.wasm
 //   sampleRate  number         the AudioContext rate (mixer + decoded PCM rate)
 //   masterGain  number         fixed RT gain (no look-ahead normalisation)
-//   song        string         song.json text
-//   insts       string[]       inst-N.json texts, ascending id order
+//   song        Uint8Array     song.json, UTF-8 bytes
+//   insts       Uint8Array[]   inst-N.json, UTF-8 bytes, ascending id order
+//               (bytes, not strings: AudioWorkletGlobalScope has no TextEncoder
+//               in Chrome, so the main thread encodes)
 //   samples     Float32Array[] decoded mono PCM, role order [kick,snare,hat,tone,bass]
-//   realSamples  {key,ch0,ch1?,sampleRate}[]  decoded real library PCM, keyed by
+//   realSamples  {key: Uint8Array (UTF-8), ch0, ch1?, sampleRate}[]  decoded real library PCM, keyed by
 //                the join id (tonal slot id / drum name / "playsample-<id>.ogg");
 //                tonal slices are already cut on the main thread. Optional — when
 //                present they override the stubs per key; absent keys still fall
@@ -77,7 +79,10 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
 
   buildMixer(o) {
     const e = this.e;
-    const enc = new TextEncoder();
+    const bytes = (v, what) => {
+      if (!(v instanceof Uint8Array)) throw new Error(`${what} must be UTF-8 bytes (Uint8Array)`);
+      return v;
+    };
     const heapU8 = () => new Uint8Array(e.memory.buffer);
     const writeBytes = (bytes) => {
       const p = e.malloc(bytes.length);
@@ -107,7 +112,7 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       const ch1 = rs.ch1 || null;
       const frames = ch0.length;
       const channels = ch1 ? 2 : 1;
-      const keyBytes = enc.encode(rs.key);
+      const keyBytes = bytes(rs.key, 'realSamples[].key');
       const keyPtr = e.malloc(keyBytes.length);
       const p0 = e.malloc(frames * 4);
       const p1 = ch1 ? e.malloc(frames * 4) : 0;
@@ -120,10 +125,10 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     this.realCount = real.length;
 
     // song.json + the concatenated inst-N.json blob + its per-file lengths.
-    const songBytes = enc.encode(o.song);
+    const songBytes = bytes(o.song, 'song');
     const songPtr = writeBytes(songBytes);
 
-    const instBytes = o.insts.map((s) => enc.encode(s));
+    const instBytes = o.insts.map((s, i) => bytes(s, `insts[${i}]`));
     const blobLen = instBytes.reduce((n, b) => n + b.length, 0);
     const blob = new Uint8Array(blobLen);
     let off = 0;

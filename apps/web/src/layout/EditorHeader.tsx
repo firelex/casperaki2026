@@ -154,22 +154,22 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
           type="button"
           onClick={() => void onRender()}
           disabled={!activeSong || rendering || save.isPending || (rendered && !editorDirty)}
-          className="h-11 px-7 rounded-full bg-accent text-white text-[15px] font-semibold uppercase tracking-wide hover:bg-accent/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className="h-11 px-6 rounded-full border border-line text-white text-[14px] font-semibold uppercase tracking-wide hover:border-white/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           title={
             rendered && !editorDirty
-              ? 'This version is rendered — play it below'
-              : 'Render this song to audio on the server'
+              ? 'WAV and MP3 are ready: download them from the bar below'
+              : 'Make WAV and MP3 files of this song (playing needs no export)'
           }
         >
           {rendering
-            ? renderLabel(renderStatus.data)
+            ? `Exporting: ${renderLabel(renderStatus.data)}`
             : editorDirty
-              ? 'Save & render'
+              ? 'Save & export'
               : rendered
-                ? 'Rendered'
+                ? 'Export ready'
                 : renderStatus.data?.state === 'failed'
-                  ? 'Retry render'
-                  : 'Render'}
+                  ? 'Retry export'
+                  : 'Export'}
         </button>
       </div>
     </header>

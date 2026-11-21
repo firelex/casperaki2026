@@ -68,7 +68,7 @@ export function WaveformLane({
   const peakValues = peaks?.peaks ?? [];
   const rmsValues = peaks?.rms ?? [];
   const lanePlaceholder = !artifactExists
-    ? 'no local render'
+    ? 'waveform appears after export'
     : loading
       ? 'analysing waveform…'
       : peakValues.length === 0

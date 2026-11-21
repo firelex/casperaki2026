@@ -16,7 +16,9 @@ import express, { type Express } from 'express';
 import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
-import { createSongsRouter } from './routes/songs.js';
+import { createSongsRouter, ownerOf } from './routes/songs.js';
+import { createPlaybackRouter } from './routes/playback.js';
+import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
 import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
@@ -33,6 +35,7 @@ export interface CreateAppDeps {
   /** Optional injected render service (tests). Bootstrap builds one when
    *  CASPERAKI_SAMPLE_LIBRARY_ROOT is configured. */
   readonly renders?: RenderService;
+  readonly playback?: PlaybackService;
 }
 
 /** A stable dev session secret persisted next to the auth DB. Regenerating
@@ -139,7 +142,22 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     console.warn('[brain] CASPERAKI_SAMPLE_LIBRARY_ROOT not set — per-song rendering is DISABLED (render routes answer 503).');
   }
 
+  const playback =
+    deps.playback ??
+    (config.sampleLibraryRoot
+      ? new PlaybackService({
+          playbackDir: resolve(config.playbackDir),
+          sampleCacheDir: resolve(config.sampleCacheDir),
+          emitScript: resolve(config.renderEmitScript),
+          nodeBin: process.execPath,
+          sampleLibraryRoot: config.sampleLibraryRoot,
+          ffmpegBin: config.ffmpegBin,
+          stubSamplesDir: resolve(config.renderStubSamplesDir),
+        })
+      : undefined);
+
   app.use(createSongsRouter({ store, renders }));
+  app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createRendersRouter({ artifactPath: config.renderArtifactPath }));
   // Browsing the catalog is for admins (it lists source library / preset
   // names). Single-entry lookups stay open: the editor needs them.

@@ -188,7 +188,7 @@ export class RenderService {
 
 /** Run a child process, writing its combined output to `logPath`. Rejects
  *  with the last lines of output when it exits non-zero or times out. */
-function runLogged(
+export function runLogged(
   cmd: string,
   args: string[],
   env: NodeJS.ProcessEnv,

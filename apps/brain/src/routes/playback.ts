@@ -1,0 +1,106 @@
+// In-browser playback endpoints (docs/60). The browser's WASM engine plays the
+// song in real time; these hand it the lowered song and the sample slices.
+//
+//   GET  /api/songs/:id/playback          a saved song the caller owns
+//   POST /api/playback  { song }          any song (e.g. the editor's unsaved edits)
+//     -> { songId, song, insts[], samples[{key, kind, url, index?, count?}], stubs[] }
+//   GET  /api/playback/samples/:id.ogg    one sample slice (immutable)
+//   GET  /api/playback/stubs/:name        the engine's five fallback samples
+
+import { createHash } from 'node:crypto';
+import { Router, type Request, type Response } from 'express';
+import { z } from 'zod';
+
+import { canonicalStringifySong, parseSong } from '@casperaki/song-schema';
+
+import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
+import type { SongsStore } from '../store.js';
+
+export interface PlaybackRouterDeps {
+  readonly store: SongsStore;
+  readonly playback: PlaybackService | undefined;
+  /** The caller's owner id (signed-in user, or the dev owner with auth off). */
+  readonly ownerOf: (req: Request) => string;
+}
+
+const PlayBodySchema = z.object({ song: z.unknown() }).strict();
+
+export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRouterDeps): Router {
+  const router = Router();
+
+  const notConfigured = (res: Response) =>
+    res.status(503).json({
+      error: 'playback_not_configured',
+      message: 'In-browser playback is off: CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.',
+    });
+
+  const respond = async (res: Response, service: PlaybackService, songId: string, canonical: string) => {
+    const env = await service.envelope(songId, canonical);
+    const samples = service.plan(songId).map((e) => ({
+      key: e.key,
+      kind: e.kind,
+      url: `/api/playback/samples/${e.sampleId}.ogg`,
+      ...(e.index !== undefined ? { index: e.index, count: e.count } : {}),
+    }));
+    res.json({
+      songId,
+      song: env.song,
+      insts: env.insts,
+      samples,
+      stubs: STUB_SAMPLES.map((n) => `/api/playback/stubs/${n}`),
+    });
+  };
+
+  router.get('/api/songs/:id/playback', async (req, res) => {
+    if (!playback) return notConfigured(res);
+    const id = req.params.id;
+    if (!store.getProject(ownerOf(req), id)) return res.status(404).json({ error: 'not_found', id });
+    const stored = store.get(id);
+    if (!stored) return res.status(404).json({ error: 'not_found', id });
+    try {
+      await respond(res, playback, id, stored.canonical);
+    } catch (err) {
+      res.status(500).json({ error: 'playback_failed', message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  router.post('/api/playback', async (req, res) => {
+    if (!playback) return notConfigured(res);
+    const body = PlayBodySchema.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body' });
+    let canonical: string;
+    try {
+      canonical = canonicalStringifySong(parseSong(body.data.song), 2);
+    } catch (err) {
+      return res.status(400).json({ error: 'invalid_song', message: err instanceof Error ? err.message : String(err) });
+    }
+    const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
+    try {
+      await respond(res, playback, id, canonical);
+    } catch (err) {
+      res.status(500).json({ error: 'playback_failed', message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  router.get('/api/playback/samples/:file', async (req, res) => {
+    if (!playback) return notConfigured(res);
+    const m = /^([0-9a-f]{24})\.ogg$/u.exec(req.params.file);
+    if (!m || !playback.knowsSample(m[1]!)) return res.status(404).json({ error: 'not_found' });
+    try {
+      const path = await playback.sampleFile(m[1]!);
+      res.setHeader('Cache-Control', 'private, max-age=31536000, immutable');
+      res.type('audio/ogg').sendFile(path);
+    } catch (err) {
+      res.status(500).json({ error: 'sample_failed', message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  router.get('/api/playback/stubs/:name', (req, res) => {
+    if (!playback) return notConfigured(res);
+    if (!(STUB_SAMPLES as readonly string[]).includes(req.params.name)) return res.status(404).json({ error: 'not_found' });
+    res.setHeader('Cache-Control', 'private, max-age=86400');
+    res.type('audio/ogg').sendFile(playback.stubFile(req.params.name));
+  });
+
+  return router;
+}

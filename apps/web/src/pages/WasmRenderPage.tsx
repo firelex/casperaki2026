@@ -172,10 +172,10 @@ export function WasmRenderPage() {
           wasmBytes,
           sampleRate: ctx.sampleRate,
           masterGain: 0.15,
-          song,
-          insts,
+          song: new TextEncoder().encode(song),
+          insts: insts.map((t) => new TextEncoder().encode(t)),
           samples,
-          realSamples,
+          realSamples: realSamples.map((r) => ({ ...r, key: new TextEncoder().encode(r.key) })),
         },
       });
       node.port.onmessage = (ev) => {

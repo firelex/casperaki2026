@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Genre } from '@casperaki/song-schema/schemas';
@@ -10,8 +10,12 @@ import {
   DropdownMenuTrigger,
 } from '@teamsuzie/ui';
 
+import { playbackApi } from '../api/playback';
+import { livePlayer } from '../audio/livePlayer';
+import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { AppHeader } from '../layout/AppHeader';
 import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type Project } from '../api/songs';
+import type { LiveStatus } from '../audio/livePlayer';
 import { GenerateDialog } from '../editor/GenerateDialog';
 import { sectionColor } from '../editor/sectionColor';
 import { GENRE_BLURBS, GENRE_LABELS, genreLabel } from '../types/genres';
@@ -32,10 +36,8 @@ export function ProjectsPage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('updated');
   const [create, setCreate] = useState<{ open: boolean; genre?: Genre }>({ open: false });
-  const [playingId, setPlayingId] = useState<string | undefined>(undefined);
-  const [paused, setPaused] = useState(true);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const live = useLiveState();
+  const livePos = useLivePosition(live.status === 'playing');
 
   useEffect(() => {
     if (searchParams.get('create') === '1') {
@@ -56,10 +58,7 @@ export function ProjectsPage() {
   const removal = useMutation({
     mutationFn: (id: string) => songsApi.remove(id),
     onSuccess: (_d, id) => {
-      if (playingId === id) {
-        audioRef.current?.pause();
-        setPlayingId(undefined);
-      }
+      if (live.key === id) livePlayer.stop();
       queryClient.removeQueries({ queryKey: songsQueryKeys.song(id) });
       void invalidate();
     },
@@ -73,20 +72,13 @@ export function ProjectsPage() {
     onSuccess: () => void invalidate(),
   });
 
+  // Play renders the song live in the browser; no server render needed.
   const togglePlay = (p: Project) => {
-    const audio = audioRef.current;
-    if (!audio) throw new Error('Audio element is not mounted.');
-    if (!p.render.mp3Url) throw new Error(`Song ${p.id} has no rendered audio to play.`);
-    if (playingId === p.id && !audio.paused) {
-      audio.pause();
+    if (live.key === p.id && live.status === 'playing') {
+      void livePlayer.pause();
       return;
     }
-    if (playingId !== p.id) {
-      audio.src = p.render.mp3Url;
-      setPlayingId(p.id);
-      setProgress(0);
-    }
-    void audio.play();
+    void livePlayer.play(p.id, (signal) => playbackApi.forSaved(p.id, signal));
   };
 
   const needle = search.trim().toLowerCase();
@@ -164,8 +156,10 @@ export function ProjectsPage() {
                 <li key={p.id}>
                   <SongCard
                     project={p}
-                    playing={playingId === p.id && !paused}
-                    progress={playingId === p.id ? progress : 0}
+                    live={live.key === p.id ? live.status : 'idle'}
+                    liveStep={live.key === p.id ? live.step : ''}
+                    liveError={live.key === p.id ? live.error : undefined}
+                    progress={live.key === p.id && live.durationSec > 0 ? livePos / live.durationSec : 0}
                     onOpen={() => navigate(`/editor/${p.id}/timeline`)}
                     onDelete={() => removal.mutate(p.id)}
                     onRename={(title) => rename.mutate({ id: p.id, title })}
@@ -178,21 +172,6 @@ export function ProjectsPage() {
           )}
         </div>
       </main>
-
-      <audio
-        ref={audioRef}
-        className="hidden"
-        onPlay={() => setPaused(false)}
-        onPause={() => setPaused(true)}
-        onEnded={() => {
-          setPaused(true);
-          setProgress(0);
-        }}
-        onTimeUpdate={(e) => {
-          const a = e.currentTarget;
-          if (a.duration > 0) setProgress(a.currentTime / a.duration);
-        }}
-      />
 
       <GenerateDialog
         open={create.open}
@@ -237,7 +216,9 @@ function EmptyState({ onStart }: { onStart(genre?: Genre): void }) {
 
 function SongCard({
   project,
-  playing,
+  live,
+  liveStep,
+  liveError,
   progress,
   onOpen,
   onDelete,
@@ -246,7 +227,9 @@ function SongCard({
   onTogglePlay,
 }: {
   project: Project;
-  playing: boolean;
+  live: LiveStatus;
+  liveStep: string;
+  liveError: string | undefined;
   progress: number;
   onOpen(): void;
   onDelete(): void;
@@ -331,7 +314,8 @@ function SongCard({
           </div>
         ) : (
           <div className="mt-4 flex items-center gap-3">
-            <MainAction project={project} playing={playing} onRender={onRender} onTogglePlay={onTogglePlay} />
+            <PlayButton project={project} live={live} onTogglePlay={onTogglePlay} />
+            {live === 'loading' ? <span className="truncate text-[13px] text-white/55">{liveStep}</span> : null}
             <div className="ml-auto pointer-events-auto">
               <SongMenu
                 project={project}
@@ -341,13 +325,19 @@ function SongCard({
                   setEditing(true);
                 }}
                 onDelete={() => setConfirmDelete(true)}
+                onRender={onRender}
               />
             </div>
           </div>
         )}
+        {live === 'error' && liveError ? (
+          <p className="mt-2 text-[12px] text-err" role="alert">
+            Playback failed: {liveError}
+          </p>
+        ) : null}
         {r.state === 'failed' && r.error ? (
           <p className="mt-2 truncate text-[12px] text-err" title={r.error}>
-            {r.error.split('\n')[0]}
+            Export failed: {r.error.split('\n')[0]}
           </p>
         ) : null}
       </div>
@@ -382,44 +372,27 @@ function SectionStrip({ project, progress }: { project: Project; progress: numbe
   );
 }
 
-function MainAction({
+function PlayButton({
   project,
-  playing,
-  onRender,
+  live,
   onTogglePlay,
 }: {
   project: Project;
-  playing: boolean;
-  onRender(): void;
+  live: LiveStatus;
   onTogglePlay(): void;
 }) {
-  const r = project.render;
-  const base =
-    'pointer-events-auto inline-flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-colors';
-  if (r.state === 'done') {
-    return (
-      <button
-        type="button"
-        onClick={onTogglePlay}
-        className={`${base} bg-white text-black hover:bg-white/85`}
-        aria-label={playing ? `Pause ${project.title}` : `Play ${project.title}`}
-      >
-        <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
-        {playing ? 'Pause' : 'Play'}
-      </button>
-    );
-  }
-  if (renderInFlight(r)) {
-    return (
-      <span className={`${base} bg-white/10 text-white/75`} role="status">
-        <span className="h-2 w-2 animate-pulse rounded-full bg-accent" aria-hidden="true" />
-        {renderLabel(r)}
-      </span>
-    );
-  }
+  const playing = live === 'playing';
+  const loading = live === 'loading';
   return (
-    <button type="button" onClick={onRender} className={`${base} border border-white/30 text-white hover:border-white/60`}>
-      {r.state === 'failed' ? 'Retry render' : 'Render to listen'}
+    <button
+      type="button"
+      onClick={onTogglePlay}
+      disabled={loading}
+      className="pointer-events-auto inline-flex h-10 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-[14px] font-semibold text-black transition-colors hover:bg-white/85 disabled:opacity-70"
+      aria-label={playing ? `Pause ${project.title}` : `Play ${project.title}`}
+    >
+      <span aria-hidden="true">{loading ? '…' : playing ? '❚❚' : '▶'}</span>
+      {loading ? 'Loading' : playing ? 'Pause' : 'Play'}
     </button>
   );
 }
@@ -429,11 +402,13 @@ function SongMenu({
   onOpen,
   onRename,
   onDelete,
+  onRender,
 }: {
   project: Project;
   onOpen(): void;
   onRename(): void;
   onDelete(): void;
+  onRender(): void;
 }) {
   const r = project.render;
   const item = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10';
@@ -465,7 +440,15 @@ function SongMenu({
               <a href={`${r.mp3Url}?download=1`}>Download MP3</a>
             </DropdownMenuItem>
           </>
-        ) : null}
+        ) : renderInFlight(r) ? (
+          <DropdownMenuItem className={`${item} text-white/50`} disabled>
+            Exporting: {renderLabel(r)}
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem className={item} onSelect={onRender}>
+            {r.state === 'failed' ? 'Retry export (WAV / MP3)' : 'Export WAV / MP3'}
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
         <DropdownMenuItem className={`${item} text-err`} onSelect={onDelete}>
           Delete
