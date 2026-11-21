@@ -23,6 +23,8 @@ browser ──https──> Cloudflare tunnel "jeffhub-api" (~/.cloudflared/jeffh
   `https://casperaki.com/api/auth/callback`. Registration is closed: an admin creates accounts with
   `echo -n "$PW" | node scripts/create-user.mjs <email> "<name>" [admin]`. Run that in
   `open_teamsuzie/apps/platform/auth`, with `set -a; . ~/.config/casperaki/auth/.env; set +a` first.
+  A demo account `demo@example.com` (normal user, short password set at the owner's request; the script's
+  12-character minimum was bypassed by calling `UserService.create` directly) exists for trying the app.
   Postgres is the docker container `casperaki-pg` (127.0.0.1:5452, volume `casperaki-pg-data`, restarts
   itself). Redis is the system Redis (key prefix `casperaki-auth`).
 - **Brain** (`apps/brain`) serves `/api/*` and, because `BRAIN_WEB_DIST_DIR` is set, the built web app with an SPA
