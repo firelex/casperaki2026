@@ -61,6 +61,11 @@ const BankIndexSchema = z.object({
   rootMidiOctave: z.number().int().min(-1).max(8),
   styles: z.record(z.string().min(1), z.object({ file: z.string().min(1) })),
   genreStyles: z.record(z.string().min(1), z.array(z.string().min(1)).min(1)),
+  // Casperaki-written banks approved in the pattern lab. They are offered
+  // alongside a genre's legacy bass styles (see bass.ts), not instead of them.
+  authored: z
+    .record(z.string().min(1), z.object({ file: z.string().min(1), genres: z.array(z.string().min(1)).min(1) }))
+    .optional(),
 });
 
 // ---- public types ----
@@ -96,6 +101,7 @@ const BANK_INDEX_META: DataAssetMeta = {
 interface ResolvedBank {
   readonly index: z.infer<typeof BankIndexSchema>;
   readonly styles: ReadonlyMap<string, BassStyleBank>;
+  readonly authored: ReadonlyMap<string, BassStyleBank & { readonly genres: readonly string[] }>;
 }
 
 let cached: ResolvedBank | undefined;
@@ -123,6 +129,7 @@ function loadBank(): ResolvedBank {
   const index = indexParse.data;
 
   const styles = new Map<string, BassStyleBank>();
+  const authored = new Map<string, BassStyleBank & { readonly genres: readonly string[] }>();
   for (const [styleName, { file }] of Object.entries(index.styles)) {
     const styleMeta: DataAssetMeta = {
       filename: file,
@@ -154,6 +161,17 @@ function loadBank(): ResolvedBank {
     });
   }
 
+  for (const [styleName, entry] of Object.entries(index.authored ?? {})) {
+    const meta: DataAssetMeta = { filename: entry.file, legacyPath: 'Casperaki-written (pattern lab)', extractedAt: 'n/a' };
+    const parsed = StyleBankSchema.safeParse(JSON.parse(readFileSync(resolve(DATA_DIR, entry.file), 'utf8')));
+    if (!parsed.success) throw new DataAssetError(meta, `bank is malformed: ${parsed.error.issues[0]?.message ?? 'unknown'}`);
+    authored.set(styleName, {
+      styleName,
+      genres: entry.genres,
+      patterns: parsed.data.map((p) => Object.freeze(p.map((h) => Object.freeze([...h]) as BassHit)) as BassPattern),
+    });
+  }
+
   for (const [genre, styleList] of Object.entries(index.genreStyles)) {
     for (const styleName of styleList) {
       if (!styles.has(styleName)) {
@@ -165,7 +183,7 @@ function loadBank(): ResolvedBank {
     }
   }
 
-  cached = { index, styles };
+  cached = { index, styles, authored };
   return cached;
 }
 
@@ -231,6 +249,19 @@ export function selectBassPattern(rng: Rng, genre: string): BassBankSelection {
     patternBars: patternBars(pattern),
     rootMidiOctave: bank.index.rootMidiOctave,
   };
+}
+
+/** Pick one pattern from a list as a chord-relative selection. */
+export function chordRelativeSelection(rng: Rng, styleName: string, patterns: readonly BassPattern[]): BassBankSelection {
+  if (patterns.length === 0) throw new Error(`bass style "${styleName}" has no patterns`);
+  const patternIndex = rng.int(0, patterns.length - 1);
+  const pattern = patterns[patternIndex]!;
+  return { styleName, patternIndex, pattern, patternBars: patternBars(pattern), rootMidiOctave: loadBank().index.rootMidiOctave };
+}
+
+/** Casperaki-written bass styles approved for `genre` (pattern lab). */
+export function authoredBassStylesFor(genre: string): ReadonlyArray<{ styleName: string; patterns: readonly BassPattern[] }> {
+  return [...loadBank().authored.values()].filter((s) => s.genres.includes(genre));
 }
 
 /** Read-only introspection of the bank for tests / docs / studio. */

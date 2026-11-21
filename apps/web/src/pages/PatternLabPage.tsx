@@ -6,6 +6,7 @@ import { patternsApi, patternsQueryKey, type PatternProposal } from '../api/patt
 import { livePlayer } from '../audio/livePlayer';
 import { useLiveState } from '../audio/useLivePlayer';
 import { AppHeader } from '../layout/AppHeader';
+import { BassGrid } from '../patterns/BassGrid';
 import { DrumGrid } from '../patterns/DrumGrid';
 import { GENRE_LABELS } from '../types/genres';
 
@@ -104,7 +105,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         <div>
           <h2 className="text-[20px] font-semibold text-white">{p.name}</h2>
           <p className="mt-1 text-[14px] text-white/55">
-            Drums · {p.kind === 'algo' ? 'generator (new variations every song)' : `${p.blueprints.length} fixed patterns`} ·{' '}
+            {p.family === 'bass' ? 'Bass' : 'Drums'} ·{' '}
+            {p.kind === 'algo' ? 'generator (new variations every song)' : `${p.kind === 'bassPatterns' ? p.patterns.length : p.blueprints.length} fixed patterns`} ·{' '}
             {p.genres.map((g) => GENRE_LABELS[g]).join(', ')}
           </p>
         </div>
@@ -113,11 +115,11 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
 
       <p className="mt-4 max-w-[80ch] text-[15px] leading-relaxed text-white/75">{p.rationale}</p>
 
-      {p.kind === 'blueprints' ? (
+      {p.kind !== 'algo' ? (
         <div className="mt-5">
-          {p.blueprints.length > 1 ? (
+          {takes(p) > 1 ? (
             <div className="mb-3 flex gap-2">
-              {p.blueprints.map((_, i) => (
+              {Array.from({ length: takes(p) }, (_, i) => (
                 <button
                   key={i}
                   type="button"
@@ -129,8 +131,13 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
               ))}
             </div>
           ) : null}
-          <DrumGrid blueprint={p.blueprints[take]!} />
-          <p className="mt-2 text-[12px] text-white/40">Two bars, 32nd-note steps. A song picks among these patterns section by section.</p>
+          {p.kind === 'bassPatterns' ? <BassGrid pattern={p.patterns[take]!} /> : <DrumGrid blueprint={p.blueprints[take]!} />}
+          <p className="mt-2 text-[12px] text-white/40">
+            {p.kind === 'bassPatterns'
+              ? 'Two bars; each note is an interval from the current chord root, so the line follows the chords.'
+              : 'Two bars, 32nd-note steps.'}{' '}
+            A song picks among these patterns section by section.
+          </p>
         </div>
       ) : (
         <p className="mt-5 text-[14px] text-white/50">Generated fresh for every song and section: listen to hear it.</p>
@@ -161,7 +168,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
           ) : null,
         )}
       </div>
-      <p className="mt-2 text-[12px] text-white/40">Both play the same {GENRE_LABELS[genre]} song; only the drums differ.</p>
+      <p className="mt-2 text-[12px] text-white/40">Both play the same {GENRE_LABELS[genre]} song; only {p.family === 'bass' ? 'the bass differs' : 'the drums differ (and parts that follow them)'}.</p>
 
       <div className="mt-6 flex flex-col gap-3 border-t border-line/60 pt-5 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-2">
@@ -208,6 +215,10 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       ) : null}
     </article>
   );
+}
+
+function takes(p: PatternProposal): number {
+  return p.kind === 'bassPatterns' ? p.patterns.length : p.kind === 'blueprints' ? p.blueprints.length : 0;
 }
 
 function ListenButton({ state, onClick, label, primary }: { state: string; onClick(): void; label: string; primary?: boolean }) {

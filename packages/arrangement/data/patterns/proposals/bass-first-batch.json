@@ -1,0 +1,47 @@
+[
+  {
+    "id": "schlager-octave-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Discofox octave bass",
+    "genres": ["schlager"],
+    "rationale": "The defining Schlager / Discofox bass: the root on every beat and the octave above on every off-beat, so the bass bounces against the four-on-the-floor kick. Schlager currently borrows the EDM bass generators, which never play this. Four takes: straight octaves, octaves with a fifth on beat 3 for movement, a root-fifth-octave walk, and a lighter verse version with quarter notes and an octave pickup into each bar.",
+    "patterns": [
+      [[0, 0.5, 0], [0.5, 0.5, 12], [1, 0.5, 0], [1.5, 0.5, 12], [2, 0.5, 0], [2.5, 0.5, 12], [3, 0.5, 0], [3.5, 0.5, 12],
+       [4, 0.5, 0], [4.5, 0.5, 12], [5, 0.5, 0], [5.5, 0.5, 12], [6, 0.5, 0], [6.5, 0.5, 12], [7, 0.5, 0], [7.5, 0.5, 12]],
+      [[0, 0.5, 0], [0.5, 0.5, 12], [1, 0.5, 0], [1.5, 0.5, 12], [2, 0.5, 7], [2.5, 0.5, 19], [3, 0.5, 0], [3.5, 0.5, 12],
+       [4, 0.5, 0], [4.5, 0.5, 12], [5, 0.5, 0], [5.5, 0.5, 12], [6, 0.5, 7], [6.5, 0.5, 19], [7, 0.5, 7], [7.5, 0.5, 12]],
+      [[0, 0.5, 0], [0.5, 0.5, 12], [1, 0.5, 7], [1.5, 0.5, 12], [2, 0.5, 0], [2.5, 0.5, 12], [3, 0.5, 7], [3.5, 0.5, 5],
+       [4, 0.5, 0], [4.5, 0.5, 12], [5, 0.5, 7], [5.5, 0.5, 12], [6, 0.5, 0], [6.5, 0.5, 12], [7, 0.5, 7], [7.5, 0.5, 12]],
+      [[0, 0.9, 0], [1, 0.9, 0], [2, 0.9, 0], [3, 0.4, 0], [3.5, 0.5, 12],
+       [4, 0.9, 0], [5, 0.9, 0], [6, 0.9, 7], [7, 0.4, 0], [7.5, 0.5, 12]]
+    ]
+  },
+  {
+    "id": "edm-offbeat-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Off-beat house bass",
+    "genres": ["edm"],
+    "rationale": "House and EDM bass that sits between the kicks: short notes on every off-beat, leaving the downbeat to the kick drum, which keeps the low end clean and makes the groove pump. EDM's soft bass bank has only three patterns. Three takes: plain off-beats, off-beats that jump to the octave at the end of each bar, and a rolling version with two 16ths after each kick.",
+    "patterns": [
+      [[0.5, 0.4, 0], [1.5, 0.4, 0], [2.5, 0.4, 0], [3.5, 0.4, 0], [4.5, 0.4, 0], [5.5, 0.4, 0], [6.5, 0.4, 0], [7.5, 0.4, 0]],
+      [[0.5, 0.4, 0], [1.5, 0.4, 0], [2.5, 0.4, 0], [3.5, 0.4, 12], [4.5, 0.4, 0], [5.5, 0.4, 0], [6.5, 0.4, 12], [7.5, 0.4, 12]],
+      [[0.5, 0.25, 0], [0.75, 0.25, 0], [1.5, 0.25, 0], [1.75, 0.25, 0], [2.5, 0.25, 0], [2.75, 0.25, 0], [3.5, 0.25, 0], [3.75, 0.25, 12],
+       [4.5, 0.25, 0], [4.75, 0.25, 0], [5.5, 0.25, 0], [5.75, 0.25, 0], [6.5, 0.25, 0], [6.75, 0.25, 0], [7.5, 0.25, 7], [7.75, 0.25, 12]]
+    ]
+  },
+  {
+    "id": "urban-808-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "808-style sustained bass",
+    "genres": ["urban"],
+    "rationale": "Modern hip-hop and trap bass behaves like an 808: long, sustained roots that ring under the beat, retriggered on syncopated 16ths that line up with a typical trap kick, with the odd jump to the fifth or octave for a hook. Urban's own bass generator follows the drums but has no long-note style, and its fallback bank is small. Three takes from sparse to busier.",
+    "patterns": [
+      [[0, 1.5, 0], [1.75, 1.25, 0], [3, 1, 7], [4, 1.5, 0], [5.75, 2.25, 0]],
+      [[0, 0.75, 0], [0.75, 1.25, 0], [2.5, 1.5, 0], [4, 0.75, 0], [4.75, 1.25, 0], [6.5, 1, 12], [7.5, 0.5, 7]],
+      [[0, 1, 0], [1.5, 0.5, 0], [2.25, 0.75, 0], [3, 1, 5], [4, 1, 0], [5.5, 0.5, 0], [6.25, 0.75, 12], [7, 1, 7]]
+    ]
+  }
+]

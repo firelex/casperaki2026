@@ -83,6 +83,7 @@ export {
   PatternProposalSchema,
   PROPOSALS_DIR,
   DRUM_BANK_DIR,
+  BASS_BANK_DIR,
   authoredStyleName,
   type PatternProposal,
 } from './patterns/proposals.js';

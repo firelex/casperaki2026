@@ -25,16 +25,22 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const PROPOSALS_DIR = resolve(HERE, '..', '..', 'data', 'patterns', 'proposals');
 /** The drum bank (bank-index.json + bank files) approved proposals are exported into. */
 export const DRUM_BANK_DIR = resolve(HERE, '..', '..', 'data', 'patterns', 'drums');
+/** The bass bank approved bass proposals are exported into (bank-index.json `authored`). */
+export const BASS_BANK_DIR = resolve(HERE, '..', '..', 'data', 'patterns', 'bass');
 
 /** bank-index.json style name of an exported proposal. */
 export const authoredStyleName = (proposalId: string) => `authored-${proposalId}`;
 
 const DrumBlueprintSchema = z.record(z.string().min(1), z.array(z.number().min(0)).min(1));
 
+/** A bass note relative to the chord: [beat position, length in beats,
+ *  semitones from the chord root], over whole 4-beat bars (legacy SM format). */
+export const BassHitSchema = z.tuple([z.number().min(0), z.number().positive(), z.number().int().min(-24).max(24)]);
+export const BassPatternSchema = z.array(BassHitSchema).min(1);
+
 const ProposalBase = z.object({
   /** Stable id, kebab-case; the review decision is keyed on it. */
   id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/u),
-  family: z.literal('drums'),
   name: z.string().min(1),
   /** Genres this pattern is meant for; previews and export use them. */
   genres: z.array(GenreSchema).min(1),
@@ -43,8 +49,9 @@ const ProposalBase = z.object({
 });
 
 export const PatternProposalSchema = z.discriminatedUnion('kind', [
-  ProposalBase.extend({ kind: z.literal('blueprints'), blueprints: z.array(DrumBlueprintSchema).min(1) }),
-  ProposalBase.extend({ kind: z.literal('algo'), algo: z.string().min(1) }),
+  ProposalBase.extend({ family: z.literal('drums'), kind: z.literal('blueprints'), blueprints: z.array(DrumBlueprintSchema).min(1) }),
+  ProposalBase.extend({ family: z.literal('drums'), kind: z.literal('algo'), algo: z.string().min(1) }),
+  ProposalBase.extend({ family: z.literal('bass'), kind: z.literal('bassPatterns'), patterns: z.array(BassPatternSchema).min(1) }),
 ]);
 export type PatternProposal = z.infer<typeof PatternProposalSchema>;
 
@@ -81,6 +88,7 @@ export function loadPatternProposals(dir: string = PROPOSALS_DIR): PatternPropos
 
 /** The generator-params value that previews a proposal. */
 export function previewParamsFor(p: PatternProposal): Record<string, unknown> {
+  if (p.kind === 'bassPatterns') return { bassPreview: { patterns: p.patterns } };
   const drumPreview: DrumPreview =
     p.kind === 'algo' ? { kind: 'algo', algo: p.algo } : { kind: 'blueprints', blueprints: p.blueprints };
   return { drumPreview };
@@ -96,5 +104,16 @@ export function drumPreviewFromParams(params: Readonly<Record<string, unknown>> 
   if (!params || params.drumPreview === undefined) return undefined;
   const parsed = DrumPreviewSchema.safeParse(params.drumPreview);
   if (!parsed.success) throw new Error(`invalid drumPreview: ${parsed.error.issues[0]?.message}`);
+  return parsed.data;
+}
+
+const BassPreviewSchema = z.object({ patterns: z.array(BassPatternSchema).min(1) });
+export type BassPreview = z.infer<typeof BassPreviewSchema>;
+
+/** Read `bassPreview` from GenerateParams.params, if present. */
+export function bassPreviewFromParams(params: Readonly<Record<string, unknown>> | undefined): BassPreview | undefined {
+  if (!params || params.bassPreview === undefined) return undefined;
+  const parsed = BassPreviewSchema.safeParse(params.bassPreview);
+  if (!parsed.success) throw new Error(`invalid bassPreview: ${parsed.error.issues[0]?.message}`);
   return parsed.data;
 }

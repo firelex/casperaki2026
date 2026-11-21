@@ -67,4 +67,14 @@ describe('pattern proposals', () => {
     // Legacy generators untouched by the authored registry.
     expect(generateAlgoBlueprint(createRng(7), 'urban', () => ({}))).toEqual(generateAlgoBlueprint(createRng(7), 'urban', () => ({})));
   });
+
+  it('a bass preview plays the proposed chord-relative line', () => {
+    const p = loadPatternProposals().find((x) => x.kind === 'bassPatterns')!;
+    const params = { genre: p.genres[0]!, key: 'C', bpm: 120, seed: 'bass-preview' };
+    const song = orchestrate({ ...params, params: previewParamsFor(p) });
+    const again = orchestrate({ ...params, params: previewParamsFor(p) });
+    expect(JSON.stringify(song)).toBe(JSON.stringify(again));
+    expect(JSON.stringify(song.arrangement)).not.toBe(JSON.stringify(orchestrate(params).arrangement));
+    expect(() => loadPatternProposals(tmpProposals([{ ...base, family: 'bass', id: 'b', kind: 'bassPatterns', patterns: [[[0, 1, 40]]] }]))).toThrow();
+  });
 });

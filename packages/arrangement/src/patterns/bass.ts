@@ -25,7 +25,8 @@ import { parseChord, parseKey } from '@casperaki/music-theory';
 import { MidiNoteSchema, type Segment } from '@casperaki/song-schema';
 
 import type { GeneratorContext } from '../context.js';
-import { BASS_BEATS_PER_LEGACY_BAR, selectBassPattern } from './bass-bank.js';
+import { authoredBassStylesFor, BASS_BEATS_PER_LEGACY_BAR, chordRelativeSelection, selectBassPattern } from './bass-bank.js';
+import { bassPreviewFromParams } from './proposals.js';
 import {
   selectHipHopBassPattern,
   selectRealBassPattern,
@@ -49,7 +50,18 @@ export function generateBassPattern(
   // drums this segment) it falls back to the orphan SM bank.
   const scale = parseKey(ctx.params.key).mode;
   let real: RealBassSelection | null = null;
-  if (ctx.params.genre === 'urban' && drumPattern) {
+  // Pattern lab: a preview forces the proposed patterns.
+  const preview = bassPreviewFromParams(ctx.params.params);
+  // Approved Casperaki-written styles join the genre's legacy styles. The
+  // draw only happens when a genre has some, so other songs are unchanged.
+  const authored = preview ? [] : authoredBassStylesFor(ctx.params.genre);
+  const useAuthored = authored.length > 0 && rng.next() < authored.length / (authored.length + 1);
+  if (preview) {
+    real = { mode: 'chordRelative', ...chordRelativeSelection(rng, 'preview', preview.patterns) };
+  } else if (useAuthored) {
+    const style = rng.pick(authored);
+    real = { mode: 'chordRelative', ...chordRelativeSelection(rng, style.styleName, style.patterns) };
+  } else if (ctx.params.genre === 'urban' && drumPattern) {
     real = selectHipHopBassPattern(rng, drumPattern, rng.pick([1, 2, 3] as const));
   } else {
     real = selectRealBassPattern(rng, ctx.params.genre, scale);

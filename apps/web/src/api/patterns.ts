@@ -13,9 +13,11 @@ export interface PatternReview {
   readonly decidedAt: string;
 }
 
+/** [beat position, length in beats, semitones from the chord root] */
+export type BassHit = readonly [number, number, number];
+
 interface ProposalBase {
   readonly id: string;
-  readonly family: 'drums';
   readonly name: string;
   readonly genres: Genre[];
   readonly rationale: string;
@@ -25,8 +27,9 @@ interface ProposalBase {
 }
 
 export type PatternProposal =
-  | (ProposalBase & { readonly kind: 'blueprints'; readonly blueprints: DrumBlueprint[] })
-  | (ProposalBase & { readonly kind: 'algo'; readonly algo: string });
+  | (ProposalBase & { readonly family: 'drums'; readonly kind: 'blueprints'; readonly blueprints: DrumBlueprint[] })
+  | (ProposalBase & { readonly family: 'drums'; readonly kind: 'algo'; readonly algo: string })
+  | (ProposalBase & { readonly family: 'bass'; readonly kind: 'bassPatterns'; readonly patterns: BassHit[][] });
 
 export const patternsApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ proposals: PatternProposal[] }>('/api/patterns', { signal }),

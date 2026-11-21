@@ -18,6 +18,7 @@ import { z } from 'zod';
 
 import {
   authoredStyleName,
+  BASS_BANK_DIR,
   DRUM_BANK_DIR,
   loadPatternProposals,
   orchestrate,
@@ -50,8 +51,9 @@ const PreviewBody = z
   .strict();
 
 function exportedStyles(): Set<string> {
-  const index = JSON.parse(readFileSync(join(DRUM_BANK_DIR, 'bank-index.json'), 'utf8')) as { styles: Record<string, unknown> };
-  return new Set(Object.keys(index.styles));
+  const drums = JSON.parse(readFileSync(join(DRUM_BANK_DIR, 'bank-index.json'), 'utf8')) as { styles: Record<string, unknown> };
+  const bass = JSON.parse(readFileSync(join(BASS_BANK_DIR, 'bank-index.json'), 'utf8')) as { authored?: Record<string, unknown> };
+  return new Set([...Object.keys(drums.styles), ...Object.keys(bass.authored ?? {})]);
 }
 
 export function createPatternsRouter({ store, playback, isAdminRequest, reviewerOf }: PatternsRouterDeps): Router {
