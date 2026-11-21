@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { SessionProvider } from './state/session';
 import { useAuth } from './auth/AuthContext';
-import { LoginPage } from './pages/LoginPage';
+import { LandingPage } from './pages/landing/LandingPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 
 // Code-split: the signed-out landing and the projects list load first; the
@@ -23,13 +23,13 @@ const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => (
  *   /editor/:songId/timeline   → Editor · Timeline tab
  *   /editor/:songId/structure  → Editor · Structure tab
  *
- * Signed-out users see only the landing (LoginPage). Signed-in users get
+ * Signed-out users see only the landing (LandingPage). Signed-in users get
  * the full route tree wrapped in <SessionProvider>.
  */
 export function App() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <BootSplash />;
-  if (!user) return <LoginPage />; // public landing for everyone signed out
+  if (!user) return <LandingPage />; // public landing for everyone signed out
 
   return (
     <SessionProvider>
@@ -54,7 +54,7 @@ export function App() {
 
 function BootSplash() {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-[#e2e2e2] text-sm text-black/50">
+    <div className="fixed inset-0 flex items-center justify-center bg-bg text-sm text-muted">
       Loading…
     </div>
   );

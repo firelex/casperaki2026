@@ -118,3 +118,186 @@ body {
     transparent 60%
   );
 }
+
+/* ---------------------------------------------------------------------
+ * Landing page (src/pages/landing). Archivo's width axis carries the
+ * type: expanded heavy for display, normal width for reading, condensed
+ * for small secondary labels. Colour stays in the music: lane and
+ * section colours appear only in the arrangement; brand red is kept for
+ * the primary action and the playhead.
+ * ------------------------------------------------------------------- */
+.landing {
+  font-family: 'Archivo Variable', var(--font-sans);
+  font-stretch: 100%;
+  background: var(--color-bg);
+}
+.landing-display {
+  font-stretch: 125%;
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.landing-heading {
+  font-stretch: 118%;
+  font-weight: 700;
+  font-size: clamp(30px, 3.6vw, 52px);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  color: #fff;
+}
+.landing-subheading {
+  font-stretch: 115%;
+  font-weight: 700;
+  font-size: clamp(24px, 2.4vw, 32px);
+  line-height: 1.15;
+  color: #fff;
+}
+.landing-wordmark {
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.landing-narrow {
+  font-stretch: 75%;
+}
+.landing-step-number {
+  font-stretch: 125%;
+  font-weight: 300;
+  font-size: 44px;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.35);
+}
+.landing-link:hover {
+  color: #fff;
+}
+.landing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 150ms, border-color 150ms, color 150ms;
+}
+.landing-btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+}
+.landing-btn-primary:hover {
+  background: #e00000;
+}
+.landing-btn-quiet {
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+.landing-btn-quiet:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.landing a:focus-visible,
+.landing button:focus-visible,
+.landing summary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Hero arrangement: one sweep of the playhead on load. */
+.landing-arrangement {
+  position: relative;
+  --sweep: 2.6s;
+}
+.landing-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: var(--color-accent);
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  animation: landing-sweep var(--sweep) cubic-bezier(0.45, 0, 0.55, 1) 300ms both;
+}
+.landing-reveal {
+  animation: landing-reveal 260ms ease-out both;
+  animation-delay: calc(300ms + var(--i) * (var(--sweep) / 9));
+}
+@keyframes landing-sweep {
+  0% { left: 0; opacity: 1; }
+  92% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+@keyframes landing-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-playhead { display: none; }
+  .landing-reveal { animation: none; }
+}
+
+.landing-table th,
+.landing-table td {
+  padding: 18px 20px 18px 0;
+  vertical-align: top;
+  font-size: 16px;
+  line-height: 1.55;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.landing-table thead th {
+  border-top: none;
+  font-weight: 600;
+  font-size: 15px;
+  padding-bottom: 14px;
+}
+.landing-table tbody th {
+  font-weight: 600;
+}
+
+.landing-placeholder {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 14px),
+    var(--color-canvas);
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+}
+
+.landing-facts {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.landing-faq {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.landing-faq:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.landing-faq summary::-webkit-details-marker {
+  display: none;
+}
+.landing-faq-mark {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.landing-faq-mark::before,
+.landing-faq-mark::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.6);
+  transition: transform 150ms;
+}
+.landing-faq-mark::after {
+  transform: rotate(90deg);
+}
+.landing-faq[open] .landing-faq-mark::after {
+  transform: rotate(0deg);
+}
