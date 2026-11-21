@@ -9,6 +9,7 @@ import { ProjectsPage } from './pages/ProjectsPage';
 // Code-split: the signed-out landing and the projects list load first; the
 // editor, catalog and dev WASM pages are fetched when first opened.
 const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
+const PatternLabPage = lazy(() => import('./pages/PatternLabPage').then((m) => ({ default: m.PatternLabPage })));
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
@@ -38,6 +39,7 @@ export function App() {
         <Route path="/" element={<ProjectsPage />} />
         {/* The sound library lists source names: admins only. */}
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
+        {user.isAdmin ? <Route path="/patterns" element={<PatternLabPage />} /> : null}
         {/* dev-only WASM spikes stay reachable when signed in */}
         <Route path="/wasm-tone" element={<WasmTonePage />} />
         <Route path="/wasm-render" element={<WasmRenderPage />} />

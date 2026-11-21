@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 namespace casperaki {
@@ -177,6 +178,23 @@ public:
         }
     }
 
+    // Seek support: fast-forward a freshly init()'d voice (no start delay) by
+    // `numFrames` output frames, leaving it exactly where a full render would have
+    // it — same input offset, same resampler ring + phase, same samples left. The
+    // caller guarantees numFrames < samplesLeftToPlay (the voice is still playing).
+    void skipFrames(int numFrames) {
+        if (offset != 0 || numFrames >= samplesLeftToPlay)
+            throw std::logic_error("SampledNote::skipFrames: voice not fresh or skip past its end");
+        int numUsed = 0;
+        const int srcCh = data_->audio.getNumChannels();
+        for (int i = 2; --i >= 0;)
+            numUsed = resampler_[i].skip(playbackRatio,
+                                         data_->audio.getReadPointer(std::min(i, srcCh - 1), offset),
+                                         numFrames);
+        offset += numUsed;
+        samplesLeftToPlay -= numFrames;
+    }
+
     // Upper bound on the stop-fade scratch length this voice can ask for, so the
     // Sampler can size the shared buffer once. numSamps in the fade path is capped
     // at 100; numSampsNeeded = 2 + lround((numSamps+2)*playbackRatio).
@@ -249,6 +267,34 @@ public:
                 ensureFadeScratch(v->maxFadeScratchLen());
                 playing_.push_back(v);
             }
+        }
+    }
+
+    // Seek support: silence every voice and return it to the pool (no allocation).
+    void allVoicesOff() {
+        for (auto* v : playing_) free_.push_back(v);
+        playing_.clear();
+    }
+
+    // Seek support: recreate the voices of a note that started `elapsed` output
+    // frames before the seek point, as a full render would have them now. Zones
+    // whose sample has already run out are skipped; so are non-open-ended zones
+    // when the note was already released (`released`) — what is left of those is
+    // at most the ~100-sample stop fade. Same layering + 32-voice cap as noteOn.
+    void restoreNote(int note, float velocity, long elapsed, bool released) {
+        for (auto& ss : soundList_) {
+            if (!(ss.minNote <= note && ss.maxNote >= note && ss.data && ss.data->frames > 0))
+                continue;
+            if (released && !ss.openEnded) continue;
+            if ((int)playing_.size() >= kMaxVoices) return;
+            SampledNote* v = free_.back();
+            v->init(note, ss.keyNote, velocity, ss.data, engineSampleRate_, 0, ss.data->frames,
+                    ss.gainDb, ss.pan, ss.openEnded);
+            if (elapsed >= (long)v->samplesLeftToPlay) continue;  // already ran out
+            free_.pop_back();
+            v->skipFrames((int)elapsed);
+            ensureFadeScratch(v->maxFadeScratchLen());
+            playing_.push_back(v);
         }
     }
 

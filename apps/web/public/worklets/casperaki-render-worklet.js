@@ -67,6 +67,20 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       this.left = new Float32Array(e.memory.buffer, this.leftPtr, this.frames);
       this.right = new Float32Array(e.memory.buffer, this.rightPtr, this.frames);
 
+      // Seeking: the main thread posts { type: 'seek', frame }. Handled here on
+      // the audio thread, between process() calls, so a pull never races it.
+      this.port.onmessage = (ev) => {
+        const d = ev.data;
+        if (!d || d.type !== 'seek') return;
+        const pos = this.e.mixer_seek(Math.max(0, Math.floor(d.frame)), 0);
+        if (pos < 0) {
+          this.port.postMessage({ type: 'error', message: 'mixer_seek failed' });
+          return;
+        }
+        this.done = false;
+        this.port.postMessage({ type: 'seeked', frame: pos });
+      };
+
       this.ready = true;
       this.port.postMessage({
         type: 'ready', totalFrames: this.totalFrames, sampleRate: o.sampleRate,

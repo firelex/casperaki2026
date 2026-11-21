@@ -17,6 +17,7 @@
 #include "MixTables.h"
 #include "MixConfig.h"   // runtime rack chains + master volume (docs/64)
 #include "airwindows/AwPlugins.h"
+#include "airwindows/AwRand.h"
 
 #include <map>
 #include <memory>
@@ -65,6 +66,7 @@ struct Rack {
         for (auto& p : plugins) p->process(ch, ch, n);
     }
     void setTransport(double spb, double t) { for (auto& p : plugins) p->setTransport(spb, t); }
+    void seek(long long songSample) { for (auto& p : plugins) p->seek(songSample); }
     bool empty() const { return plugins.empty(); }
 };
 
@@ -95,6 +97,9 @@ public:
     // Build the master + the 3 aux-return racks, and one submix per present fxGroup.
     void build(const mix::MixConfig* cfg, const std::set<std::string>& fxGroups) {
         cfg_ = cfg;
+        // The plugins seed their noise from rand() as they are constructed below:
+        // start from the fresh-process state so every build is the same.
+        aw::seedPortableRand(1);
         master_.rack = buildRack(cfg, "master", sr_);
         returns_[0].rack = buildRack(cfg, "fxPlateReverb", sr_);   // bus 0
         returns_[1].rack = buildRack(cfg, "fxStereoDelay", sr_);   // bus 1
@@ -120,6 +125,14 @@ public:
         master_.rack.setTransport(secPerBeat, timeSec);
         for (auto& r : returns_) r.rack.setTransport(secPerBeat, timeSec);
         for (auto& kv : submixes_) kv.second.rack.setTransport(secPerBeat, timeSec);
+    }
+
+    // A play-position jump: every rack's position-derived state (LFO phases)
+    // follows to `songSample` (see aw::Plugin::seek).
+    void seek(long long songSample) {
+        master_.rack.seek(songSample);
+        for (auto& r : returns_) r.rack.seek(songSample);
+        for (auto& kv : submixes_) kv.second.rack.seek(songSample);
     }
 
     // Add a lane's rendered audio to its fxGroup submix (dry).

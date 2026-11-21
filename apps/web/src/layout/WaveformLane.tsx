@@ -59,7 +59,7 @@ export function WaveformLane({
   const position = Math.min(1, Math.max(0, positionSec / safeDuration));
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!artifactExists || safeDuration <= 0) return;
+    if (safeDuration <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     onSeek(fraction * safeDuration);
@@ -91,7 +91,7 @@ export function WaveformLane({
 
       <div
         className={`relative h-[64px] rounded-md overflow-hidden border border-line/40 ${
-          artifactExists && peakValues.length > 0 ? 'cursor-pointer' : 'cursor-default'
+          safeDuration > 0 ? 'cursor-pointer' : 'cursor-default'
         }`}
         style={{ background: 'rgba(20, 22, 32, 0.85)' }}
         onClick={handleClick}

@@ -49,6 +49,21 @@ public:
     virtual void getParameterName(VstInt32 index, char *text);    // name of the parameter
     virtual void getParameterDisplay(VstInt32 index, char *text); // text description of the current value    
     virtual VstInt32 canDo(char *text);
+    // casperaki patch (not upstream): put the LFO where processReplacing would
+    // have it after `songSample` samples from construction (the sweep advances by
+    // `speed` once per chorus sample and wraps at 2*pi; see StereoChorusProc.cpp).
+    void casperakiSeek(long long songSample) {
+        double overallscale = getSampleRate() / 44100.0;
+        int cycleEnd = (int)floor(overallscale);
+        if (cycleEnd < 1) cycleEnd = 1;
+        if (cycleEnd > 4) cycleEnd = 4;
+        const double speed = pow(0.32 + (A / 6), 10);
+        const double tupi = 3.141592653589793238 * 2.0;
+        const double steps = (double)(songSample / cycleEnd);
+        cycle = (int)(songSample % cycleEnd);
+        sweepL = fmod(3.141592653589793238 / 2.7 + steps * speed, tupi);
+        sweepR = fmod(3.141592653589793238 + steps * speed, tupi);
+    }
 private:
     char _programName[kVstMaxProgNameLen + 1];
     std::set< std::string > _canDo;

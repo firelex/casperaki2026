@@ -20,6 +20,7 @@
 #include "AwPlugins.h"
 
 #include <cmath>
+#include <stdexcept>
 #include <vector>
 
 namespace casperaki {
@@ -97,6 +98,9 @@ struct Channel {
 // Map a normalised [0,1] cutoff knob to Hz over a log range.
 static double cutoffHz(double v, double lo, double hi) { return lo * std::pow(hi / lo, v); }
 
+// shift knob -> Hz (0.5 = 0 Hz, ±10 Hz).
+static double shiftHzOf(double shiftKnob) { return (shiftKnob - 0.5) * 20.0; }
+
 struct FreqShiftEchoImpl : Plugin {
     Channel L, R;
     double sr = 44100, secPerBeat = 0.5;
@@ -106,8 +110,17 @@ struct FreqShiftEchoImpl : Plugin {
     bool inited = false;
 
     int  numParams() const override { return 6; }
-    void setSampleRate(double s) override { sr = s; }
+    // Allocate the delay lines here (build time), not on the first audio block.
+    void setSampleRate(double s) override { sr = s; L.init(sr); R.init(sr); inited = true; }
     void setTransport(double spb, double) override { secPerBeat = spb; }
+    // The frequency shifter's oscillator phase advances 2*pi*shiftHz/sr per sample
+    // from 0: put it where a render from the start would have it at songSample.
+    void seek(long long songSample) override {
+        const double cycles = shiftHzOf(shift) * (double)songSample / sr;
+        const double ph = 2.0 * kPi * (cycles - std::floor(cycles));
+        L.phase = ph;
+        R.phase = ph;
+    }
     void setParam(int i, float v) override {
         switch (i) {
             case 0: wetDryMix = v; break;
@@ -119,12 +132,12 @@ struct FreqShiftEchoImpl : Plugin {
         }
     }
     void process(float* const* in, float* const* out, int n) override {
-        if (!inited) { L.init(sr); R.init(sr); inited = true; }
+        if (!inited) throw std::logic_error("FreqShiftEcho: process before setSampleRate");
 
         // The XML shift value is a UI knob, not a direct Hz value. Keep this very
         // gentle: the reference reads more like a faint FreqEcho color than an
         // obviously retuned delay note.
-        const double shiftHz = (shift - 0.5) * 20.0;    // ±10 Hz; 0.6441 -> +2.9 Hz
+        const double shiftHz = shiftHzOf(shift);        // ±10 Hz; 0.6441 -> +2.9 Hz
         // sync -> delay. Valhalla's exact sync table is unknown; the decoded 0.2174
         // lands one beat later than the previous 1-beat mapping in the reference
         // render, so treat this preset as a 2-beat (1/2-note) echo.

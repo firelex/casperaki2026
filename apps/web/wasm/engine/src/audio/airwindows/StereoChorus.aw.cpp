@@ -20,5 +20,10 @@ namespace casperaki { namespace aw { namespace stereochorus {
 #include "AwAdapter.h"
 
 namespace casperaki { namespace aw {
-std::unique_ptr<Plugin> makeStereoChorus() { return std::make_unique<AwAdapter<stereochorus::StereoChorus>>(stereochorus::kNumParameters); }
+// The chorus LFO phase is position-derived state, so it follows a seek.
+struct StereoChorusAdapter : AwAdapter<stereochorus::StereoChorus> {
+    StereoChorusAdapter() : AwAdapter(stereochorus::kNumParameters) {}
+    void seek(long long songSample) override { p.casperakiSeek(songSample); }
+};
+std::unique_ptr<Plugin> makeStereoChorus() { return std::make_unique<StereoChorusAdapter>(); }
 }}

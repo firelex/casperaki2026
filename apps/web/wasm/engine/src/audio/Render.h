@@ -104,9 +104,14 @@ public:
                 master.copyFrom(ch, (int)b, block, ch, 0, n);
         }
 
-        if (!cfg_.noNormalize) peakNormalize(master, 0.9f);
+        lastNormalizeGain_ = cfg_.noNormalize ? 1.0f : peakNormalize(master, 0.9f);
         return master;
     }
+
+    // The gain the last render's peak-normalise multiplied the whole song by (1.0
+    // when skipped or silent). A real-time player that wants the same level as
+    // this WAV applies it as its fixed master gain (mixer_set_master_gain).
+    float lastNormalizeGain() const { return lastNormalizeGain_; }
 
 private:
     // ---- fixtures (native OGG decode) -------------------------------------
@@ -142,7 +147,7 @@ private:
         return data;
     }
 
-    void peakNormalize(AudioBuffer& buf, float target) {
+    float peakNormalize(AudioBuffer& buf, float target) {
         float peak = 0.0f;
         for (int ch = 0; ch < buf.getNumChannels(); ++ch) {
             const float* d = buf.getReadPointer(ch);
@@ -154,12 +159,13 @@ private:
         // lane, or denormal/dither floor) got its noise floor amplified all the
         // way up to `target` -> audible white noise. ~-80 dBFS cleanly separates
         // silence from any real musical content (which peaks far higher).
-        if (peak <= 1e-4f) return;
+        if (peak <= 1e-4f) return 1.0f;
         const float g = target / peak;
         for (int ch = 0; ch < buf.getNumChannels(); ++ch) {
             float* d = buf.getWritePointer(ch);
             for (int i = 0; i < buf.getNumSamples(); ++i) d[i] *= g;
         }
+        return g;
     }
 
     static constexpr int kPad = 8192;
@@ -167,6 +173,7 @@ private:
     RenderConfig cfg_;
     StubSamples stubs_;
     SampleLibraryStats libStats_;
+    float lastNormalizeGain_ = 1.0f;
 };
 
 } // namespace casperaki

@@ -141,6 +141,42 @@ int main() {
         checkNear(peak, 2.0f * std::pow(10.0f, -5.0f / 20.0f), 0.08, "two layered voices != 2x gain");
     }
 
+    // (5) Seek: restoreNote(elapsed) recreates a voice exactly where a render from
+    //     the note-on has it (pitched up a fifth so the resampler phase matters),
+    //     and a released note / a voice past its sample end is not recreated.
+    {
+        SamplerSound snd;
+        snd.data = makeSine(FRAMES, 32.0, SR);
+        snd.keyNote = 60; snd.minNote = 0; snd.maxNote = 127;
+        const int SKIP = 1000 + 37;  // not block-aligned
+        Sampler full(SR);
+        full.addSound(snd);
+        full.noteOn(67, 0, 0.6f);
+        AudioBuffer ref = renderAll(full, SKIP + 2000);
+
+        Sampler sought(SR);
+        sought.addSound(snd);
+        sought.restoreNote(67, 0.6f, SKIP, false);
+        check(sought.hasActiveVoices(), "restoreNote should recreate a sounding voice");
+        AudioBuffer got = renderAll(sought, 2000);
+        double maxDiff = 0.0;
+        for (int ch = 0; ch < 2; ++ch)
+            for (int i = 0; i < 2000; ++i)
+                maxDiff = std::max(maxDiff, (double)std::fabs(got.getReadPointer(ch)[i]
+                                                              - ref.getReadPointer(ch)[SKIP + i]));
+        check(maxDiff == 0.0, "restored voice must match the full render sample-exactly");
+
+        Sampler released(SR);
+        released.addSound(snd);
+        released.restoreNote(67, 0.6f, SKIP, true);
+        check(!released.hasActiveVoices(), "a released note should not be recreated");
+
+        Sampler ended(SR);
+        ended.addSound(snd);
+        ended.restoreNote(60, 0.6f, FRAMES + 10, false);
+        check(!ended.hasActiveVoices(), "a voice past its sample end should not be recreated");
+    }
+
     if (failures == 0) std::printf("sampler_test: OK\n");
     else std::printf("sampler_test: %d FAILURE(S)\n", failures);
     return failures == 0 ? 0 : 1;

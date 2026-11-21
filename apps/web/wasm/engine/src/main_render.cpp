@@ -139,6 +139,10 @@ int main(int argc, char** argv) {
         std::cerr << "rendered " << ev.genre << ": " << master.getNumSamples()
                   << " frames (" << durSec << " s), " << ev.tracks.size()
                   << " tracks -> " << outPath << "  [samples: " << samplesDir << "]\n";
+        // The browser player matches this WAV's level by using this as its fixed
+        // master gain (mixer_set_master_gain).
+        std::cerr << "  normalize gain: " << renderer.lastNormalizeGain()
+                  << " (mix " << (cfg.mixEnabled ? "on" : "off") << ")\n";
         if (ls.loaded)
             std::cerr << "  real library [" << libraryRoot << "]: "
                       << ls.filesDecoded << " files decoded (" << ls.decodeFailures << " failed), "

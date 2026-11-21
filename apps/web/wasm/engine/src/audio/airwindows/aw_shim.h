@@ -20,7 +20,15 @@
 #define __audioeffect__
 
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
+#include <stdlib.h>
+
+// Every rand() in the vendored plugin code -> the portable glibc-identical
+// generator (AwRand.h), so native and wasm renders draw the same numbers. The C
+// headers are included first so their own rand declarations are not rewritten.
+#include "AwRand.h"
+#define rand() ::casperaki::aw::portableRand()
 
 using VstInt32 = std::int32_t;
 using audioMasterCallback = void*;

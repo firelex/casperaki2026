@@ -52,6 +52,7 @@
 #include <cstdlib>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -116,6 +117,7 @@ public:
         lanes_.clear();
         graph_.reset();
         pos_ = 0;
+        seekScratch_.setSize(2, blockSize_);
 
         for (const auto& track : ev.tracks)
             buildTrack(track);
@@ -173,6 +175,7 @@ public:
                 for (auto& s : lane.sources) s->addAuxSends(pos_, (int)n, laneScratch_, *graph_);
             }
             graph_->render(out, (int)n);
+            applyMasterGain(out, (int)n);
         } else {
             // Flat path (mix disabled): every lane's sources add into `out` in the
             // old append order -> byte-identical to Phase 1.
@@ -181,15 +184,48 @@ public:
                 for (auto& s : lane.sources)
                     s->addBlock(pos_, (int)n, out);
             }
-            if (masterGain_ != 1.0f) {
-                for (int ch = 0; ch < out.getNumChannels(); ++ch) {
-                    float* d = out.getWritePointer(ch);
-                    for (int i = 0; i < n; ++i) d[i] *= masterGain_;
-                }
-            }
+            applyMasterGain(out, (int)n);
         }
         pos_ += numFrames;
         return pos_ < totalFrames_;
+    }
+
+    // The play position (frames from song start) the next pullBlock renders from.
+    long position() const { return pos_; }
+
+    // Move the play position so the next pullBlock continues from `frame`.
+    // Allocation-free (safe between real-time pulls). State is rebuilt as a full
+    // render from 0 would have it at the seek point:
+    //   - sampler lanes: every voice whose note started before the point and is
+    //     still sounding there is recreated mid-sample (exact resampler phase);
+    //     already-released notes are dropped (only their ~100-sample stop fade
+    //     would remain); the event cursor skips to the first event at/after it.
+    //   - noise risers: RNG, envelope and filter replayed up to the point (exact).
+    //   - wave clips: stateless (position-addressed).
+    //   - FX LFO / oscillator phases (chorus sweep, frequency-shifter phase):
+    //     set from the song position (aw::Plugin::seek).
+    // The FX racks (reverb/delay tails, compressors) and the automation low-pass
+    // carry memory that cannot be rebuilt directly, so the state is rebuilt at
+    // `frame - prerollFrames` and the remaining span is rendered silently: the
+    // racks then hold the real tail of the preceding `prerollFrames` of music.
+    // Use prerollFrames = 0 for an instant seek (racks keep their old content).
+    void seek(long frame, long prerollFrames) {
+        if (frame < 0 || frame > totalFrames_)
+            throw std::out_of_range("Mixer::seek: frame " + std::to_string(frame)
+                                    + " outside [0, " + std::to_string(totalFrames_) + "]");
+        if (prerollFrames < 0)
+            throw std::out_of_range("Mixer::seek: negative prerollFrames");
+        const long start = std::max(0L, frame - prerollFrames);
+        if (graph_) graph_->seek(start);
+        for (auto& lane : lanes_) {
+            if (lane.lp) lane.lp->reset();
+            for (auto& src : lane.sources) src->seek(start, blockSize_);
+        }
+        pos_ = start;
+        while (pos_ < frame) {
+            const int n = (int)std::min((long)blockSize_, frame - pos_);
+            pullBlock(seekScratch_, n);
+        }
     }
 
 private:
@@ -207,6 +243,9 @@ private:
         // Optional per-source aux sends. Most sources use the lane-level send; the
         // shared transition wave lane needs per-clip sends while keeping one dry lane.
         virtual void addAuxSends(long, int, AudioBuffer&, MixGraph&) {}
+        // Rebuild internal state as a render from 0 would have it at `frame`
+        // (see Mixer::seek). `blockSize` = the pull grid. Stateless sources: no-op.
+        virtual void seek(long /*frame*/, int /*blockSize*/) {}
     };
 
     // A Sampler fed by a sorted note-on/off event list (midi clips or drum hits).
@@ -239,6 +278,27 @@ private:
                 const float* src = scratch.getReadPointer(ch);
                 float* dst = out.getWritePointer(ch);
                 for (int i = 0; i < n; ++i) dst[i] += src[i];
+            }
+        }
+
+        void seek(long frame, int /*blockSize*/) override {
+            sampler.allVoicesOff();
+            // Index of the last note-off per pitch before `frame` (a note-off cuts
+            // EVERY sounding voice of its pitch, so a note is released if any
+            // note-off of that pitch follows its note-on).
+            long lastOff[128];
+            for (long& v : lastOff) v = -1;
+            size_t i = 0;
+            for (; i < events.size() && events[i].sample < frame; ++i) {
+                const Event& e = events[i];
+                if (e.note < 0 || e.note > 127)
+                    throw std::out_of_range("Mixer::seek: MIDI note " + std::to_string(e.note) + " outside 0..127");
+                if (!e.on) lastOff[e.note] = (long)i;
+            }
+            cursor = i;
+            for (size_t k = 0; k < i; ++k) {
+                const Event& e = events[k];
+                if (e.on) sampler.restoreNote(e.note, e.vel, frame - e.sample, lastOff[e.note] > (long)k);
             }
         }
     };
@@ -325,7 +385,7 @@ private:
         NoiseSource(double sr, int64_t seed)
             // Decorrelated L/R streams (the legacy 4OSC runs an independent Gaussian
             // generator per stereo channel — tracktion_Oscillators.cpp:265-286).
-            : sr_(sr), lp_(sr), rngL_(seed), rngR_((seed ^ 0x5DEECE66DLL) & 0xffffffffffffLL) {
+            : sr_(sr), lp_(sr), seed_(seed), rngL_(seed), rngR_((seed ^ 0x5DEECE66DLL) & 0xffffffffffffLL) {
             // 4OSC amp envelope = ExpEnvelope (analog), attack/decay 0.1s, sustain
             // 0.8 (tracktion_Envelope.cpp:21-43; preset ampAttack/Decay=0.1,
             // ampSustain=80%). Coeffs depend only on sample rate.
@@ -350,23 +410,50 @@ private:
             lp_.setCutoff(cutoffAt(lo - start));
             for (long i = lo; i < hi; ++i) {
                 const long rel = i - start;
-                const double ampE = ampEnvNext();             // 4OSC amp ADSR (shared L/R)
+                double xL, xR;
+                nextFiltered(xL, xR);
                 const double volG = volGainAt(rel);           // track volume automation
                 const int local = (int)(i - pos);
-                // Per-channel Gaussian noise (sigma 0.1), osc level + masterLevel = 0 dB
-                // (unity), * velocity gain * amp env; then the track LowPassPlugin
-                // sweep, then the fader-position volume automation, then the mix-stage
+                // ... then the fader-position volume automation, then the mix-stage
                 // fxNoiseRise target volume (baseGain).
-                const double nL = nextGaussian(rngL_, spareL_, hasSpareL_) * NOISE_SIGMA;
-                const double nR = nextGaussian(rngR_, spareR_, hasSpareR_) * NOISE_SIGMA;
-                const double xL = lp_.processSample(0, (float)(nL * velocityGain_ * ampE));
-                const double xR = lp_.processSample(1, (float)(nR * velocityGain_ * ampE));
                 out.getWritePointer(0)[local] += (float)(xL * volG * baseGain);
                 out.getWritePointer(1)[local] += (float)(xR * volG * baseGain);
             }
         }
 
+        // Replay the noise state from the riser start up to `frame` on the same
+        // block grid a render from 0 uses (the cutoff is re-read once per block).
+        void seek(long frame, int blockSize) override {
+            rngL_ = casperaki::Random(seed_);
+            rngR_ = casperaki::Random((seed_ ^ 0x5DEECE66DLL) & 0xffffffffffffLL);
+            spareL_ = spareR_ = 0;
+            hasSpareL_ = hasSpareR_ = false;
+            ampVal_ = 0;
+            ampStage_ = 0;
+            lp_.reset();
+            const long stop = std::min(frame, end);
+            for (long b = (start / blockSize) * blockSize; b < stop; b += blockSize) {
+                const long lo = std::max(start, b);
+                const long hi = std::min(stop, b + blockSize);
+                if (lo >= hi) continue;
+                lp_.setCutoff(cutoffAt(lo - start));
+                double xL, xR;
+                for (long i = lo; i < hi; ++i) nextFiltered(xL, xR);
+            }
+        }
+
     private:
+        // One sample of the riser before its volume stages: per-channel Gaussian
+        // noise (sigma 0.1), osc level + masterLevel = 0 dB (unity), * velocity
+        // gain * the 4OSC amp ADSR (shared L/R), then the track LowPassPlugin sweep.
+        void nextFiltered(double& xL, double& xR) {
+            const double ampE = ampEnvNext();
+            const double nL = nextGaussian(rngL_, spareL_, hasSpareL_) * NOISE_SIGMA;
+            const double nR = nextGaussian(rngR_, spareR_, hasSpareR_) * NOISE_SIGMA;
+            xL = lp_.processSample(0, (float)(nL * velocityGain_ * ampE));
+            xR = lp_.processSample(1, (float)(nR * velocityGain_ * ampE));
+        }
+
         // 4OSC noise oscillator: N(0, 0.1) per sample (tracktion_Oscillators.h:81-82).
         static constexpr double NOISE_SIGMA = 0.1;
         static constexpr double AMP_SUSTAIN = 0.8;  // ampSustain 80% (preset)
@@ -444,6 +531,7 @@ private:
 
         double sr_;
         LowPass lp_;
+        int64_t seed_;
         casperaki::Random rngL_, rngR_;
         double spareL_ = 0, spareR_ = 0;
         bool hasSpareL_ = false, hasSpareR_ = false;
@@ -917,6 +1005,15 @@ private:
         return mixCfg_ ? mixCfg_->laneSends(group, t, genre_) : mix::laneSendsDb(group, t, genre_);
     }
 
+    // Streaming master gain (setMasterGain); 1.0 is a no-op (byte-identical).
+    void applyMasterGain(AudioBuffer& out, int n) {
+        if (masterGain_ == 1.0f) return;
+        for (int ch = 0; ch < out.getNumChannels(); ++ch) {
+            float* d = out.getWritePointer(ch);
+            for (int i = 0; i < n; ++i) d[i] *= masterGain_;
+        }
+    }
+
     // Scope D — apply this lane's signalProcessors automation to laneScratch_ for
     // the block at song time `tSec`: a lowpass cutoff sweep + a dB volume ramp
     // (cutoff/gain held per block — fine for the multi-second risers).
@@ -1038,6 +1135,7 @@ private:
     std::vector<Lane> lanes_;
     std::unique_ptr<MixGraph> graph_;     // built only when mixEnabled_ (Scope B)
     AudioBuffer laneScratch_;             // per-lane render buffer (graph path)
+    AudioBuffer seekScratch_;             // discarded output of the seek pre-roll
     std::unordered_map<std::string, const nlohmann::json*> instByName_;
     std::unordered_map<std::string, std::shared_ptr<SampleData>> samplesById_;
 };

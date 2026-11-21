@@ -18,6 +18,12 @@ struct Plugin {
     // Transport for tempo-synced FX (SimpleSide). secPerBeat = 60/bpm; timeSec =
     // the absolute song time at the START of the next block. AirWindows ignore it.
     virtual void setTransport(double /*secPerBeat*/, double /*timeSec*/) {}
+    // A play-position jump (Mixer::seek): set any state that is a pure function of
+    // how many samples have been processed since the start — an LFO / oscillator
+    // phase — to its value at `songSample`, so a seek lands on the same phase as a
+    // render from the start. State that decays (delay lines, filters, envelopes)
+    // is left alone: the seek pre-roll refills it. Default: nothing to do.
+    virtual void seek(long long /*songSample*/) {}
     // Process `frames` of stereo audio IN PLACE-capable form: in/out are 2 planar
     // float channel pointers (may alias). AirWindows processReplacing semantics.
     virtual void process(float* const* in, float* const* out, int frames) = 0;

@@ -105,8 +105,15 @@ Two modules:
   `WebAssembly.instantiate()` the raw bytes directly (the `../tone.c` precedent). Its
   C ABI: `mixer_config` → `mixer_set_sample` ×5 (role-keyed stub PCM) + any number of
   `mixer_set_sample_id` (real PCM keyed by the join id — tonal slot id / drum name /
-  `playsample-<id>.ogg`) → `mixer_build` (runs the Resolver + the track→sampler join)
-  → per-quantum `mixer_pull` / `mixer_left` / `mixer_right`. The five WASI stdio
+  `playsample-<id>.ogg`) → optionally `mixer_set_mix_enabled(1)` +
+  `mixer_set_mix_config(jsonPtr, len)` (the text of `casperaki_engine/config/mix-config.json`;
+  required when the mix is on — the same switch as native `CASPERAKI_MIX=1`) → `mixer_build`
+  (runs the Resolver + the track→sampler join) → optionally `mixer_set_master_gain(g)`
+  → per-quantum `mixer_pull` / `mixer_left` / `mixer_right`. `mixer_seek(frame, prerollFrames)`
+  moves the play position without allocating (voices sounding at `frame` are recreated
+  mid-note; FX LFO phases follow the song position; `prerollFrames` of music before
+  `frame` are rendered silently to refill reverb/delay tails), `mixer_position()` reads it.
+  Failures return 0/-1 and set `mixer_last_error()` + `mixer_last_error_message()`. The five WASI stdio
   imports are unused (worklet stubs them); memory growth is ON for the real library
   (tens of MB/genre) and adds `env.emscripten_notify_memory_growth` — a no-op, safe
   because all heap growth happens during build (before the L/R views are taken) and
@@ -237,6 +244,14 @@ tolerance) — **all 8 genres pass** (NRMSE 0.016–1.6 %, organicVibes the dens
 high-water mark). A real port bug diverges on a broad swath and trips both checks.
 Bit-exact wasm↔native would need deterministic transcendentals, which is
 Phase-2-gated (along with FX/dither) — see docs/61 §2.
+
+The guard also checks the **mix on** (wasm with `mixer_set_mix_config` vs the native
+probe's `--mix <mix-config.json>`) and **seeking** (wasm `mixer_seek` vs the same span of
+an unseeked render; mix off with no pre-roll is sample-exact, mix on uses a 3 s pre-roll).
+Mix-on checks gate on the short-time RMS envelope, not per sample: TexturizeMS's noise
+walk flips on the sign of its input, so a last-ULP libm difference or a seek yields a
+different (statistically identical) texture. The AirWindows plugins' `rand()` is mapped
+to a glibc-identical generator (`airwindows/AwRand.h`) so both builds seed the same noise.
 
 **Real sample library — done.** The id-keyed join binds the actual multisample
 library (asset-manifest.json → relativePath + per-slot `[sliceStart, sliceEnd]`)

@@ -72,18 +72,35 @@ export function Playbar() {
     return () => clearTimeout(t);
   }, [liveKey, viewSong, editorDirty, songId]);
 
-  const handlePlayPause = useCallback(() => {
+  const startPlaying = useCallback(async () => {
     if (!liveKey || !viewSong) return;
-    if (playing) {
-      void livePlayer.pause();
-      return;
-    }
     const song = viewSong;
     const savedId = songId;
-    void livePlayer.play(liveKey, (signal) =>
+    await livePlayer.play(liveKey, (signal) =>
       editorDirty || !savedId ? playbackApi.forSong(song, signal) : playbackApi.forSaved(savedId, signal),
     );
-  }, [liveKey, viewSong, playing, editorDirty, songId]);
+  }, [liveKey, viewSong, editorDirty, songId]);
+
+  const handlePlayPause = useCallback(() => {
+    if (playing) void livePlayer.pause();
+    else void startPlaying();
+  }, [playing, startPlaying]);
+
+  // Scrubbing: jump in the loaded song; if this version isn't loaded yet,
+  // start it and then jump.
+  const seekToSeconds = useCallback(
+    (seconds: number) => {
+      if (!liveKey || !Number.isFinite(seconds)) return;
+      if (livePlayer.isLoaded(liveKey)) {
+        livePlayer.seek(seconds);
+        return;
+      }
+      void startPlaying().then(() => {
+        if (livePlayer.isLoaded(liveKey)) livePlayer.seek(seconds);
+      });
+    },
+    [liveKey, startPlaying],
+  );
 
   const currentBar = totalBars > 0 ? Math.max(1, Math.floor(position * totalBars) + 1) : 1;
   const currentBeat =
@@ -131,10 +148,9 @@ export function Playbar() {
                 min={0}
                 max={1000}
                 value={Math.round(position * 1000)}
-                readOnly
-                className="absolute inset-0 opacity-0 z-10 cursor-default"
+                onChange={(e) => seekToSeconds((Number(e.target.value) / 1000) * safeTotalSeconds)}
+                className="absolute inset-0 opacity-0 cursor-pointer z-10"
                 aria-label="Playhead position"
-                disabled
               />
               <div className="absolute left-0 right-0 h-1.5 rounded-full bg-black/40" />
               <div
@@ -185,7 +201,7 @@ export function Playbar() {
         positionSec={currentSeconds}
         segments={summary}
         bpm={bpm}
-        onSeek={() => undefined}
+        onSeek={seekToSeconds}
         artifactExists={Boolean(peaks)}
       />
 

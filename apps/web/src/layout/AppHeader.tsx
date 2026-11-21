@@ -20,6 +20,7 @@ export function AppHeader() {
         <nav className="hidden h-full items-center gap-6 text-[15px] sm:flex" aria-label="Main">
           <HeaderLink to="/">Songs</HeaderLink>
           {user?.isAdmin ? <HeaderLink to="/catalog">Sound library</HeaderLink> : null}
+          {user?.isAdmin ? <HeaderLink to="/patterns">Pattern lab</HeaderLink> : null}
         </nav>
         <div className="ml-auto flex items-center gap-3">
           <button

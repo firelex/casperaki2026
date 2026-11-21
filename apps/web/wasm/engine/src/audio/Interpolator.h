@@ -48,6 +48,24 @@ public:
         return numUsed;
     }
 
+    // Advance exactly as processAdding would over `numOutputSamples`, but produce
+    // no output (seek: fast-forward a voice that is already sounding). The input
+    // ring + sub-sample phase end up bit-identical to having rendered the span.
+    // Returns the number of input samples consumed.
+    int skip(double speedRatio, const float* inputSamples, int numOutputSamples) {
+        int numUsed = 0;
+        double pos = subSamplePos_;
+        for (int i = 0; i < numOutputSamples; ++i) {
+            while (pos >= 1.0) {
+                pushInterpolationSample(inputSamples[numUsed++]);
+                pos -= 1.0;
+            }
+            pos += speedRatio;
+        }
+        subSamplePos_ = pos;
+        return numUsed;
+    }
+
 private:
     void pushInterpolationSample(float newValue) {
         lastInputSamples_[indexBuffer_] = newValue;

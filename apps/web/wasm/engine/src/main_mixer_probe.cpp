@@ -6,12 +6,19 @@
 // bit-for-bit (modulo libm). This is the native side of scripts/validate-wasm-parity.mjs.
 //
 //   usage: casperaki_mixer_probe <envelope-dir> <stub-pcm-file> <numBlocks> <out-raw>
+//                                [--mix <mix-config.json>] [--seek <frame> <prerollFrames>]
+//
+// --mix turns on the per-lane mix + rack FX with that config (= CASPERAKI_MIX=1).
+// --seek calls Mixer::seek(frame, prerollFrames) before pulling, so the dump is
+// numBlocks starting at `frame` (the seek parity check diffs it against the same
+// span of an unseeked dump).
 //
 // stub-pcm-file: 5 roles (kick,snare,hat,tone,bass) in order, each
 //   int32 frames, int32 channels, int32 sampleRate, then channels*frames float32
 //   (planar). out-raw: numBlocks * (2 * 128) float32, planar per block (L then R).
 
 #include "Resolver.h"
+#include "audio/MixConfig.h"
 #include "audio/Mixer.h"
 #include "../vendor/json.hpp"
 
@@ -66,6 +73,20 @@ int main(int argc, char** argv) {
     const std::string outPath = argv[4];
     const int blockSize = 128;
 
+    std::string mixConfigPath;
+    long seekFrame = -1, seekPreroll = 0;
+    for (int i = 5; i < argc; ++i) {
+        const std::string a = argv[i];
+        if (a == "--mix" && i + 1 < argc) mixConfigPath = argv[++i];
+        else if (a == "--seek" && i + 2 < argc) {
+            seekFrame = std::stol(argv[++i]);
+            seekPreroll = std::stol(argv[++i]);
+        } else {
+            std::cerr << "probe error: unknown or incomplete argument " << a << "\n";
+            return 2;
+        }
+    }
+
     try {
         // --- stub PCM (byte-identical to what the WASM harness feeds) ---
         std::ifstream pf(pcmPath, std::ios::binary);
@@ -102,7 +123,14 @@ int main(int argc, char** argv) {
         ResolvedEvents ev = resolver.resolve(songJson, instStrings);
 
         Mixer mixer(44100.0, blockSize, 2.5, stubs);
+        std::unique_ptr<mix::MixConfig> mixCfg;
+        if (!mixConfigPath.empty()) {
+            mixCfg = std::make_unique<mix::MixConfig>(mix::MixConfig::fromFile(mixConfigPath));
+            mixer.setMixEnabled(true);
+            mixer.setMixConfig(*mixCfg);
+        }
         mixer.build(ev, instJsons);
+        if (seekFrame >= 0) mixer.seek(seekFrame, seekPreroll);
 
         std::ofstream out(outPath, std::ios::binary);
         if (!out) throw std::runtime_error("cannot write " + outPath);

@@ -39,14 +39,18 @@ interface RealSample {
   sampleRate: number;
 }
 
-/** Fixed real-time master gain (the real-time path has no look-ahead
- *  normaliser; see docs/60). */
-const MASTER_GAIN = 0.15;
+/** Fixed real-time master gain. The server render peak-normalises the whole
+ *  song, which a live stream can't; this level plus the limiter below keeps
+ *  songs loud without clipping. */
+const MASTER_GAIN = 0.35;
+/** The server renders at 44.1 kHz; the engine runs at the context's rate. */
+const SAMPLE_RATE = 44100;
 const utf8 = new TextEncoder();
 
 class LivePlayer {
   private ctx: AudioContext | undefined;
   private node: AudioWorkletNode | undefined;
+  private limiter: DynamicsCompressorNode | undefined;
   private wasmBytes: Promise<ArrayBuffer> | undefined;
   private workletAdded: Promise<void> | undefined;
   private readonly decoded = new Map<string, Promise<AudioBuffer>>();
@@ -82,7 +86,8 @@ class LivePlayer {
     const ctx = this.context();
     // Resume inside the gesture, before any await, so the browser allows audio.
     const resumed = ctx.resume();
-    if (this.state.key === key && this.node && (this.state.status === 'paused' || this.state.status === 'playing')) {
+    if (this.state.key === key && this.node && ['paused', 'playing', 'ended'].includes(this.state.status)) {
+      if (this.state.status === 'ended') this.seek(0);
       await resumed;
       this.set({ status: 'playing' });
       return;
@@ -132,7 +137,7 @@ class LivePlayer {
         return;
       }
       await resumed;
-      node.connect(ctx.destination);
+      node.connect(this.output(ctx));
       this.startedAt = ctx.currentTime;
       this.set({ status: 'playing', durationSec, step: '' });
     } catch (err) {
@@ -152,6 +157,20 @@ class LivePlayer {
       // play() will retry and show the error; keep a trace for debugging.
       console.warn(`[live] preparing ${key} failed:`, err);
     });
+  }
+
+  /** Jump to `seconds` into the loaded song (playing or paused). */
+  seek(seconds: number): void {
+    if (!this.node || !this.ctx) return;
+    const target = Math.min(Math.max(0, seconds), this.state.durationSec);
+    this.node.port.postMessage({ type: 'seek', frame: Math.round(target * this.ctx.sampleRate) });
+    this.startedAt = this.ctx.currentTime - target;
+    if (this.state.status === 'ended') this.set({ status: 'paused' });
+  }
+
+  /** Whether `key` is loaded and can be sought without reloading. */
+  isLoaded(key: string): boolean {
+    return this.state.key === key && this.node !== undefined && this.state.status !== 'loading';
   }
 
   async pause(): Promise<void> {
@@ -191,8 +210,24 @@ class LivePlayer {
   }
 
   private context(): AudioContext {
-    if (!this.ctx) this.ctx = new AudioContext({ latencyHint: 'playback' });
+    if (!this.ctx) this.ctx = new AudioContext({ latencyHint: 'playback', sampleRate: SAMPLE_RATE });
     return this.ctx;
+  }
+
+  /** Safety limiter in front of the speakers (the engine's own clamp is a
+   *  hard clip; this catches peaks gently first). */
+  private output(ctx: AudioContext): AudioNode {
+    if (!this.limiter) {
+      const l = ctx.createDynamicsCompressor();
+      l.threshold.value = -3;
+      l.knee.value = 3;
+      l.ratio.value = 20;
+      l.attack.value = 0.002;
+      l.release.value = 0.15;
+      l.connect(ctx.destination);
+      this.limiter = l;
+    }
+    return this.limiter;
   }
 
   private teardown(): void {

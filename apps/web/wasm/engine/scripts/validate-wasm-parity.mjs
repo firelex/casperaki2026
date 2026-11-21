@@ -14,8 +14,31 @@
 // tolerance absorbs libm last-ULP differences (native glibc vs emscripten musl in
 // pow/exp/sin); a real port bug blows past it immediately.
 //
+// Each genre is checked three ways (dry, mix, seek):
+//   dry   — mix off (the Phase-1 path): wasm vs native.
+//   mix   — mix on with the shared mix-config.json (= native CASPERAKI_MIX=1:
+//           per-lane gains, real velocities, submix + aux-return + master racks):
+//           wasm vs native.
+//   seek  — wasm only: build, mixer_seek to SEEK_BLOCK, pull the rest; must match
+//           the same span of the unseeked render. Mix off seeks with no pre-roll
+//           (voices are rebuilt exactly); mix on pre-rolls SEEK_PREROLL_SEC so the
+//           FX racks carry the real tail. The mix-on no-pre-roll error is printed
+//           for information only (it is what an instant seek costs).
+//
+// Mix-on checks compare LOUDNESS ENVELOPES, not samples. The TexturizeMS rack
+// plugin (keys/synths/drums/fx/... submixes) adds a noise "texture" from a random
+// walk whose direction flips on the sign of its input: one last-ULP libm
+// difference (native glibc vs wasm musl) near a zero crossing, or any seek (the
+// walk's state is the whole song so far), gives a different — statistically
+// identical — noise realization. That moves 1-25% of samples past the per-sample
+// tolerance while the music is the same; with TexturizeMS removed both mix checks
+// match per-sample (NRMSE <= 0.13%, bad <= 0.01%). So mix-on asserts the
+// short-time RMS envelope (ENV_WIN frames per window, per channel) agrees to
+// MAX_ENV_NRMSE, and prints the per-sample figures for information.
+//
 // Requires the wasm build: ./build-wasm.sh (engine-render.wasm) and the native
 // build: cmake --build build (casperaki_mixer_probe + casperaki_resolve).
+// The mix config is CASPERAKI_MIX_CONFIG, else the sibling casperaki_engine repo's.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdtempSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -36,6 +59,10 @@ const NUM_BLOCKS = 4000;        // ~11.6 s at 44100/128 — covers many note ons
 const BLOCK = 128;
 const SR = 44100;
 const ROLE_FRAMES = 8000;       // stub length per role (mono)
+const SEEK_BLOCK = 2067;        // seek point ~6.0 s in (block-aligned)
+const SEEK_PREROLL_SEC = 3;     // pre-roll for the mix-on seek
+const MIX_CONFIG = process.env.CASPERAKI_MIX_CONFIG
+  || '/home/roli79/apps/casperaki_engine/config/mix-config.json';
 
 // Pass criteria. Native (glibc) and wasm (musl) differ only by last-ULP libm
 // (powf in the playback ratio, exp/log in the gain); that occasionally cascades
@@ -50,8 +77,12 @@ const MAX_NRMSE = 0.03;         // normalized RMS error (rmsDiff / rmsSignal)
 const BAD_FLOOR = 5e-3;         // a sample disagrees past this abs floor ...
 const BAD_REL = 0.05;           // ... or this fraction of |native|
 const MAX_BAD_FRAC = 0.01;      // at most 1% of nonzero samples may disagree
+const ENV_WIN = 2048;           // mix-on: RMS window (~46 ms) for the envelope compare
+const MAX_ENV_NRMSE = 0.01;     // mix-on: envelope NRMSE limit (observed <= 0.28%; a seek
+                                // with no pre-roll, i.e. missing FX tails, reaches 0.6-3.6%)
 
-for (const [bin, hint] of [[PROBE_BIN, 'cmake --build build'], [WASM, './build-wasm.sh']]) {
+for (const [bin, hint] of [[PROBE_BIN, 'cmake --build build'], [WASM, './build-wasm.sh'],
+                           [MIX_CONFIG, 'set CASPERAKI_MIX_CONFIG to mix-config.json']]) {
   if (!existsSync(bin)) {
     console.error(`missing ${bin}\n  build it: ${hint}`);
     process.exit(2);
@@ -106,8 +137,9 @@ function loadEnvelope(genre) {
   return { dir, song, insts };
 }
 
-// --- WASM render of the first N blocks ---------------------------------------
-async function wasmRender(env) {
+// --- WASM render of N blocks (optionally mix on, optionally after a seek) -----
+// opts: { mix: bool, seekFrame?: number, prerollFrames?: number }
+async function wasmRender(env, opts = {}) {
   const bytes = readFileSync(WASM);
   const mod = await WebAssembly.compile(bytes);
   // The standalone build pulls in 5 unused WASI stdio imports; stub them. Memory
@@ -137,6 +169,13 @@ async function wasmRender(env) {
     return p;
   };
 
+  const errMsg = () => {
+    const p = e.mixer_last_error_message();
+    const u8 = new Uint8Array(heap());
+    let end = p; while (u8[end] !== 0) end++;
+    return new TextDecoder().decode(u8.subarray(p, end));
+  };
+
   e.mixer_config(SR, BLOCK);
   STUBS.forEach((pcm, role) => {
     const ptr = writeFloats(pcm);
@@ -151,11 +190,31 @@ async function wasmRender(env) {
   const lensPtr = malloc(lens.byteLength);
   new Int32Array(heap(), lensPtr, lens.length).set(lens);
 
-  const total = e.mixer_build(songPtr, env.song.length, blobPtr, lensPtr, env.insts.length);
-  if (e.mixer_last_error() !== 0) throw new Error('wasm mixer_build failed');
+  e.mixer_set_mix_enabled(opts.mix ? 1 : 0);
+  if (opts.mix) {
+    const cfg = readFileSync(MIX_CONFIG);
+    const cfgPtr = writeBytes(cfg);
+    const ok = e.mixer_set_mix_config(cfgPtr, cfg.length);
+    e.free(cfgPtr);
+    if (!ok) throw new Error(`wasm mixer_set_mix_config failed: ${errMsg()}`);
+  }
 
-  const out = new Float32Array(NUM_BLOCKS * 2 * BLOCK);
-  for (let b = 0; b < NUM_BLOCKS; b++) {
+  const total = e.mixer_build(songPtr, env.song.length, blobPtr, lensPtr, env.insts.length);
+  if (e.mixer_last_error() !== 0) throw new Error(`wasm mixer_build failed: ${errMsg()}`);
+
+  let numBlocks = NUM_BLOCKS;
+  let seekMs = 0;
+  if (opts.seekFrame !== undefined) {
+    const t0 = performance.now();
+    const p = e.mixer_seek(opts.seekFrame, opts.prerollFrames ?? 0);
+    seekMs = performance.now() - t0;
+    if (p !== opts.seekFrame) throw new Error(`wasm mixer_seek returned ${p}: ${errMsg()}`);
+    if (e.mixer_position() !== opts.seekFrame) throw new Error('mixer_position != seek frame');
+    numBlocks = NUM_BLOCKS - opts.seekFrame / BLOCK;
+  }
+
+  const out = new Float32Array(numBlocks * 2 * BLOCK);
+  for (let b = 0; b < numBlocks; b++) {
     e.mixer_pull(BLOCK);
     const lPtr = e.mixer_left(), rPtr = e.mixer_right();
     const L = new Float32Array(heap(), lPtr, BLOCK);
@@ -163,22 +222,20 @@ async function wasmRender(env) {
     out.set(L, b * 2 * BLOCK);
     out.set(R, b * 2 * BLOCK + BLOCK);
   }
-  return { out, total };
+  return { out, total, seekMs };
 }
 
 // --- per-genre compare -------------------------------------------------------
-async function checkGenre(genre, pcmFile) {
-  const env = loadEnvelope(genre);
-  const tmp = mkdtempSync(join(tmpdir(), `cspr-parity-${genre}-`));
-  const nativeRaw = join(tmp, 'native.raw');
-  execFileSync(PROBE_BIN, [env.dir, pcmFile, String(NUM_BLOCKS), nativeRaw],
+function nativeRender(env, pcmFile, tmp, tag, extraArgs) {
+  const nativeRaw = join(tmp, `native-${tag}.raw`);
+  execFileSync(PROBE_BIN, [env.dir, pcmFile, String(NUM_BLOCKS), nativeRaw, ...extraArgs],
     { stdio: ['ignore', 'ignore', 'inherit'] });
   const nativeBuf = readFileSync(nativeRaw);
-  const native = new Float32Array(nativeBuf.buffer, nativeBuf.byteOffset,
-    nativeBuf.byteLength / 4);
+  return new Float32Array(nativeBuf.buffer, nativeBuf.byteOffset, nativeBuf.byteLength / 4);
+}
 
-  const { out: wasm, total } = await wasmRender(env);
-
+// `native` is the reference, `wasm` the candidate (same block-planar layout).
+function compare(native, wasm) {
   const nN = Math.min(native.length, wasm.length);
   let maxAbs = 0, sumSqDiff = 0, sumSqSig = 0, nonZero = 0, bad = 0, firstBad = -1;
   for (let i = 0; i < nN; i++) {
@@ -211,13 +268,71 @@ async function checkGenre(genre, pcmFile) {
   }
   const fails = [];
   if (native.length !== wasm.length)
-    fails.push(`length ${native.length} (native) vs ${wasm.length} (wasm)`);
-  if (nonZero === 0) fails.push('native output all zero (probe produced silence)');
+    fails.push(`length ${native.length} (reference) vs ${wasm.length} (candidate)`);
+  if (nonZero === 0) fails.push('reference output all zero (silence)');
   if (nrmse > MAX_NRMSE)
     fails.push(`NRMSE ${(nrmse * 100).toFixed(3)}% > ${(MAX_NRMSE * 100)}% (systematic divergence)`);
   if (badFrac > MAX_BAD_FRAC)
     fails.push(`disagreeing ${(badFrac * 100).toFixed(3)}% > ${(MAX_BAD_FRAC * 100)}% of nonzero samples (first @${firstBad})`);
-  return { genre, fails, maxAbs, rms, nrmse, badFrac, nonZero, total, samples: nN };
+  return { fails, maxAbs, rms, nrmse, badFrac, nonZero, samples: nN };
+}
+
+// Short-time RMS envelope compare (mix-on checks; see the header). Inputs are
+// block-planar (BLOCK L then BLOCK R per block).
+function envelope(buf) {
+  const frames = buf.length / 2;
+  const nWin = Math.floor(frames / ENV_WIN);
+  const env = new Float64Array(nWin * 2);
+  for (let i = 0; i < nWin * ENV_WIN; i++) {
+    const blk = Math.floor(i / BLOCK), f = i % BLOCK;
+    const L = buf[blk * 2 * BLOCK + f], R = buf[blk * 2 * BLOCK + BLOCK + f];
+    const w = Math.floor(i / ENV_WIN);
+    env[2 * w] += L * L; env[2 * w + 1] += R * R;
+  }
+  for (let k = 0; k < env.length; k++) env[k] = Math.sqrt(env[k] / ENV_WIN);
+  return env;
+}
+
+function compareMix(native, wasm) {
+  const r = compare(native, wasm);
+  const ea = envelope(native), eb = envelope(wasm);
+  let d = 0, sig = 0;
+  for (let k = 0; k < Math.min(ea.length, eb.length); k++) { d += (ea[k] - eb[k]) ** 2; sig += ea[k] ** 2; }
+  const envNrmse = sig > 0 ? Math.sqrt(d / sig) : Infinity;
+  const fails = [];
+  if (native.length !== wasm.length)
+    fails.push(`length ${native.length} (reference) vs ${wasm.length} (candidate)`);
+  if (r.nonZero === 0) fails.push('reference output all zero (silence)');
+  if (envNrmse > MAX_ENV_NRMSE)
+    fails.push(`envelope NRMSE ${(envNrmse * 100).toFixed(3)}% > ${MAX_ENV_NRMSE * 100}%`);
+  return { ...r, fails, envNrmse };
+}
+
+async function checkGenre(genre, pcmFile) {
+  const env = loadEnvelope(genre);
+  const tmp = mkdtempSync(join(tmpdir(), `cspr-parity-${genre}-`));
+  const seekFrame = SEEK_BLOCK * BLOCK;
+  const prerollFrames = SEEK_PREROLL_SEC * SR;
+  const tail = (full) => full.subarray(SEEK_BLOCK * 2 * BLOCK);
+  const rows = [];
+
+  for (const mix of [false, true]) {
+    const tag = mix ? 'mix' : 'dry';
+    const native = nativeRender(env, pcmFile, tmp, tag, mix ? ['--mix', MIX_CONFIG] : []);
+    const full = await wasmRender(env, { mix });
+    const cmp = mix ? compareMix : compare;
+    rows.push({ check: `${tag} wasm=native`, total: full.total, ...cmp(native, full.out) });
+
+    const pre = mix ? prerollFrames : 0;
+    const sk = await wasmRender(env, { mix, seekFrame, prerollFrames: pre });
+    rows.push({ check: `${tag} seek pre=${pre / SR}s`, seekMs: sk.seekMs, ...cmp(tail(full.out), sk.out) });
+    if (mix) {
+      const sk0 = await wasmRender(env, { mix, seekFrame, prerollFrames: 0 });
+      rows.push({ check: `${tag} seek pre=0 (info)`, info: true, seekMs: sk0.seekMs,
+                  ...compareMix(tail(full.out), sk0.out) });
+    }
+  }
+  return rows;
 }
 
 // --- run ---------------------------------------------------------------------
@@ -226,23 +341,29 @@ const pcmFile = join(tmpRoot, 'stubs.pcm');
 writeStubPcmFile(pcmFile);
 
 let anyFail = false;
-console.log(`wasm parity guard — ${NUM_BLOCKS} blocks @ ${SR}/${BLOCK}, NRMSE<${MAX_NRMSE * 100}% bad<${MAX_BAD_FRAC * 100}%\n`);
+console.log(`wasm parity guard — ${NUM_BLOCKS} blocks @ ${SR}/${BLOCK}; dry: NRMSE<${MAX_NRMSE * 100}% bad<${MAX_BAD_FRAC * 100}%; ` +
+  `mix: envelope NRMSE<${MAX_ENV_NRMSE * 100}% (sample figures informational)\n`);
 for (const g of genres) {
-  let r;
+  let rows;
   try {
-    r = await checkGenre(g, pcmFile);
+    rows = await checkGenre(g, pcmFile);
   } catch (e) {
     console.log(`${g.padEnd(13)} ERROR ${e.message}`);
     anyFail = true;
     continue;
   }
-  const status = r.fails.length ? 'FAIL' : 'PASS';
-  if (r.fails.length) anyFail = true;
-  console.log(
-    `${g.padEnd(13)} ${status}  NRMSE=${(r.nrmse * 100).toFixed(4)}% ` +
-    `bad=${(r.badFrac * 100).toFixed(4)}% maxAbs=${r.maxAbs.toExponential(2)} ` +
-    `nonZero=${r.nonZero}/${r.samples} totalFrames=${r.total}`);
-  for (const f of r.fails) console.log(`              - ${f}`);
+  for (const r of rows) {
+    const status = r.info ? 'INFO' : (r.fails.length ? 'FAIL' : 'PASS');
+    if (!r.info && r.fails.length) anyFail = true;
+    console.log(
+      `${g.padEnd(13)} ${r.check.padEnd(20)} ${status}  NRMSE=${(r.nrmse * 100).toFixed(4)}% ` +
+      `bad=${(r.badFrac * 100).toFixed(4)}% maxAbs=${r.maxAbs.toExponential(2)} ` +
+      (r.envNrmse !== undefined ? `env=${(r.envNrmse * 100).toFixed(3)}% ` : '') +
+      `nonZero=${r.nonZero}/${r.samples}` +
+      (r.total !== undefined ? ` totalFrames=${r.total}` : '') +
+      (r.seekMs !== undefined ? ` seek=${r.seekMs.toFixed(1)}ms` : ''));
+    if (!r.info) for (const f of r.fails) console.log(`              - ${f}`);
+  }
 }
 console.log(anyFail ? '\nFAIL' : '\nAll genres PASS');
 process.exit(anyFail ? 1 : 0);
