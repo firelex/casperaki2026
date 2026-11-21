@@ -28,7 +28,8 @@
 import { MidiNoteSchema, type Segment } from '@casperaki/song-schema';
 
 import type { GeneratorContext } from '../context.js';
-import { selectDrumBlueprint, BEATS_PER_LEGACY_BAR } from './drums-bank.js';
+import { selectDrumBlueprint, selectPreviewDrumBlueprint, BEATS_PER_LEGACY_BAR } from './drums-bank.js';
+import { drumPreviewFromParams } from './proposals.js';
 import { addNoteEvent, emptyBarPattern } from './shared.js';
 import type { BarPattern, FamilyPattern, InstrumentFamily } from './types.js';
 
@@ -40,7 +41,9 @@ export function generateDrumPattern(
   if (!activity.includes('drums')) return undefined;
   const rng = ctx.rng.fork('patterns/drums');
 
-  const selection = selectDrumBlueprint(rng, ctx.params.genre);
+  // Pattern lab: a preview forces a proposed pattern in place of the genre's styles.
+  const preview = drumPreviewFromParams(ctx.params.params);
+  const selection = preview ? selectPreviewDrumBlueprint(rng, preview) : selectDrumBlueprint(rng, ctx.params.genre);
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
   for (const [lane, positions] of Object.entries(selection.blueprint)) {

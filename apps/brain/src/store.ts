@@ -44,6 +44,14 @@ export interface ProjectSection {
   readonly bars: number;
 }
 
+export interface PatternReview {
+  readonly proposalId: string;
+  readonly status: 'approved' | 'rejected';
+  readonly note: string;
+  readonly reviewer: string;
+  readonly decidedAt: string;
+}
+
 export interface SongsStore {
   put(input: { id: string; song: Song; canonical: string; hash: string; createdAt: string }): void;
   get(id: string): StoredSong | undefined;
@@ -57,6 +65,10 @@ export interface SongsStore {
   moveProject(input: { ownerId: string; fromSongId: string; toSongId: string; updatedAt: string }): boolean;
   renameProject(input: { ownerId: string; songId: string; title: string; updatedAt: string }): boolean;
   deleteProject(ownerId: string, songId: string): boolean;
+  /** Pattern-lab decisions, keyed by proposal id. */
+  listPatternReviews(): PatternReview[];
+  setPatternReview(review: PatternReview): void;
+  clearPatternReview(proposalId: string): void;
   close(): void;
 }
 
@@ -80,6 +92,13 @@ const SONGS_SCHEMA = `
     PRIMARY KEY (owner_id, song_id)
   );
   CREATE INDEX IF NOT EXISTS projects_owner_updated ON projects(owner_id, updated_at DESC);
+  CREATE TABLE IF NOT EXISTS pattern_reviews (
+    proposal_id TEXT PRIMARY KEY,
+    status      TEXT NOT NULL CHECK (status IN ('approved', 'rejected')),
+    note        TEXT NOT NULL DEFAULT '',
+    reviewer    TEXT NOT NULL,
+    decided_at  TEXT NOT NULL
+  );
 `;
 
 export interface OpenStoreOptions {
@@ -188,6 +207,21 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     },
     renameProject({ ownerId, songId, title, updatedAt }) {
       return renameProjectStmt.run(title, updatedAt, ownerId, songId).changes > 0;
+    },
+    listPatternReviews() {
+      return (db.prepare('SELECT * FROM pattern_reviews ORDER BY proposal_id').all() as Array<{
+        proposal_id: string; status: 'approved' | 'rejected'; note: string; reviewer: string; decided_at: string;
+      }>).map((r) => ({ proposalId: r.proposal_id, status: r.status, note: r.note, reviewer: r.reviewer, decidedAt: r.decided_at }));
+    },
+    setPatternReview(r) {
+      db.prepare(
+        `INSERT INTO pattern_reviews (proposal_id, status, note, reviewer, decided_at) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(proposal_id) DO UPDATE SET status = excluded.status, note = excluded.note,
+           reviewer = excluded.reviewer, decided_at = excluded.decided_at`,
+      ).run(r.proposalId, r.status, r.note, r.reviewer, r.decidedAt);
+    },
+    clearPatternReview(proposalId) {
+      db.prepare('DELETE FROM pattern_reviews WHERE proposal_id = ?').run(proposalId);
     },
     deleteProject(ownerId, songId) {
       return deleteProjectStmt.run(ownerId, songId).changes > 0;

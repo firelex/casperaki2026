@@ -78,6 +78,16 @@ export {
 } from './catalog/build-snapshot.js';
 export { loadPublicNames, publicNameOf } from './catalog/public-names.js';
 export {
+  loadPatternProposals,
+  previewParamsFor,
+  PatternProposalSchema,
+  PROPOSALS_DIR,
+  DRUM_BANK_DIR,
+  authoredStyleName,
+  type PatternProposal,
+} from './patterns/proposals.js';
+export { AUTHORED_DRUM_ALGOS } from './patterns/drums-authored.js';
+export {
   resolveAliases,
   buildAliasRegistry,
   deriveSoundIdentity,

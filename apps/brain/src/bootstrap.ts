@@ -18,6 +18,7 @@ import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, ownerOf } from './routes/songs.js';
 import { createPlaybackRouter } from './routes/playback.js';
+import { createPatternsRouter } from './routes/patterns.js';
 import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
@@ -158,6 +159,14 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
 
   app.use(createSongsRouter({ store, renders }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
+  app.use(
+    createPatternsRouter({
+      store,
+      playback,
+      isAdminRequest: (req) => (auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
+      reviewerOf: (req) => req.user?.email ?? 'local-dev',
+    }),
+  );
   app.use(createRendersRouter({ artifactPath: config.renderArtifactPath }));
   // Browsing the catalog is for admins (it lists source library / preset
   // names). Single-entry lookups stay open: the editor needs them.

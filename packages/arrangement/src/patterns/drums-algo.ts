@@ -34,7 +34,8 @@ export type LibraryPick = (styleName: string) => DrumBlueprint;
 
 // ---- base grid helpers (DrumPatternGeneratorBaseClass.js) ----
 
-type Grid = Record<string, string>;
+/** Lane → 64-char '0'/'x' string (2 bars × 32 slots, 8 slots per beat). */
+export type Grid = Record<string, string>;
 
 function blankLane(): string {
   return '0'.repeat(PATTERN_LENGTH);
@@ -50,7 +51,7 @@ function blankLane(): string {
  * exact behavioural match (and the `while (!addHit(...))` retry loops read
  * naturally).
  */
-function addHit(
+export function addHit(
   grid: Grid,
   drum: string,
   hit: number,
@@ -77,21 +78,21 @@ function addHit(
 }
 
 /** Mutes a single slot (legacy roll logic overwrites hiHatClosed1 with '0'). */
-function muteSlot(grid: Grid, drum: string, slot: number): void {
+export function muteSlot(grid: Grid, drum: string, slot: number): void {
   const lane = grid[drum];
   if (lane === undefined || slot < 0 || slot >= lane.length) return;
   grid[drum] = lane.substring(0, slot) + '0' + lane.substring(slot + 1);
 }
 
 /** Copies bar 1 (slots 0-31) over bar 2 — legacy `s.substring(0,32)*2`. */
-function duplicateFirstBar(grid: Grid, drum: string): void {
+export function duplicateFirstBar(grid: Grid, drum: string): void {
   const lane = grid[drum];
   if (lane === undefined) return;
   grid[drum] = lane.substring(0, 32) + lane.substring(0, 32);
 }
 
 /** Convert the finished grid to lane → beat positions, dropping empties. */
-function gridToBlueprint(grid: Grid): DrumBlueprint {
+export function gridToBlueprint(grid: Grid): DrumBlueprint {
   const blueprint: Record<string, number[]> = {};
   for (const [lane, value] of Object.entries(grid)) {
     const positions: number[] = [];

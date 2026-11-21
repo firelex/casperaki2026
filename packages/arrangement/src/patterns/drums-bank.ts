@@ -39,6 +39,7 @@ import {
   type AlgoStyleName,
   type LibraryPick,
 } from './drums-algo.js';
+import { AUTHORED_DRUM_ALGOS } from './drums-authored.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = resolve(HERE, '..', '..', 'data', 'patterns', 'drums');
@@ -67,6 +68,9 @@ const LaneSchema = z.object({
 const StyleEntrySchema = z.union([
   z.object({ file: z.string().min(1) }),
   z.object({ algo: z.string().min(1) }),
+  // A Casperaki-written generator (drums-authored.ts), wired in when its
+  // proposal is approved in the pattern lab.
+  z.object({ authoredAlgo: z.string().min(1) }),
 ]);
 
 const BankIndexSchema = z.object({
@@ -87,9 +91,11 @@ export type DrumBlueprint = Readonly<Record<string, readonly number[]>>;
 export interface DrumStyleBank {
   readonly styleName: string;
   /** `'library'` = fixed JSON blueprints; `'algo'` = generator (drums-algo). */
-  readonly kind: 'library' | 'algo';
+  readonly kind: 'library' | 'algo' | 'authoredAlgo';
   /** Generator name when `kind === 'algo'` (see `ALGO_STYLE_NAMES`). */
   readonly algoName?: AlgoStyleName;
+  /** Generator name when `kind === 'authoredAlgo'` (see `AUTHORED_DRUM_ALGOS`). */
+  readonly authoredAlgoName?: string;
   readonly blueprints: readonly DrumBlueprint[];
   readonly laneMidi: Readonly<Record<string, number>>;
 }
@@ -160,6 +166,22 @@ function loadBank(): ResolvedBank {
         styleName,
         kind: 'algo',
         algoName: entry.algo,
+        blueprints: [],
+        laneMidi: laneMidiFrozen,
+      });
+      continue;
+    }
+    if ('authoredAlgo' in entry) {
+      if (!(entry.authoredAlgo in AUTHORED_DRUM_ALGOS)) {
+        throw new DataAssetError(
+          BANK_INDEX_META,
+          `style "${styleName}" references unknown authored generator "${entry.authoredAlgo}" — known: ${Object.keys(AUTHORED_DRUM_ALGOS).join(', ')}`,
+        );
+      }
+      styles.set(styleName, {
+        styleName,
+        kind: 'authoredAlgo',
+        authoredAlgoName: entry.authoredAlgo,
         blueprints: [],
         laneMidi: laneMidiFrozen,
       });
@@ -243,7 +265,7 @@ function blueprintBars(blueprint: DrumBlueprint): number {
   return Math.max(1, slots / 32);
 }
 
-function styleForGenre(genre: Genre): string {
+function styleForGenre(genre: Genre, rng: Rng): string {
   const bank = loadBank();
   const list = bank.index.genreStyles[genre];
   if (!list || list.length === 0) {
@@ -252,7 +274,9 @@ function styleForGenre(genre: Genre): string {
       `no drum style is mapped to genre "${genre}" — extend bank-index.json's genreStyles, or import a dedicated bank file under data/patterns/drums/`,
     );
   }
-  return list[0]!;
+  // One style: no draw, so songs from before a genre gained a second style
+  // keep their exact drums. Several (legacy + Casperaki-written): pick one.
+  return list.length === 1 ? list[0]! : rng.pick(list);
 }
 
 /**
@@ -272,8 +296,13 @@ export function selectDrumBlueprint(rng: Rng, genre: string): DrumBankSelection 
     );
   }
   const bank = loadBank();
-  const styleName = styleForGenre(parsed.data);
+  const styleName = styleForGenre(parsed.data, rng);
   const style = bank.styles.get(styleName)!;
+
+  if (style.kind === 'authoredAlgo') {
+    const blueprint = AUTHORED_DRUM_ALGOS[style.authoredAlgoName!]!(rng, makeLibraryPick(bank, rng));
+    return { styleName, blueprintIndex: -1, blueprint, blueprintBars: blueprintBars(blueprint), laneMidi: style.laneMidi };
+  }
 
   if (style.kind === 'algo') {
     // Algorithmic generators consume `rng` to roll busyness + the legacy
@@ -298,6 +327,38 @@ export function selectDrumBlueprint(rng: Rng, genre: string): DrumBankSelection 
     blueprintBars: blueprintBars(blueprint),
     laneMidi: style.laneMidi,
   };
+}
+
+/** What the pattern lab previews: proposed blueprints, or a proposed
+ *  Casperaki-written generator, forced in place of the genre's styles. */
+export type DrumPreview =
+  | { readonly kind: 'blueprints'; readonly blueprints: readonly DrumBlueprint[] }
+  | { readonly kind: 'algo'; readonly algo: string };
+
+/** Pick a blueprint from a pattern-lab preview instead of the genre's styles. */
+export function selectPreviewDrumBlueprint(rng: Rng, preview: DrumPreview): DrumBankSelection {
+  const bank = loadBank();
+  const laneMidi = bank.styles.values().next().value!.laneMidi;
+  let blueprint: DrumBlueprint;
+  let blueprintIndex = -1;
+  if (preview.kind === 'algo') {
+    const gen = AUTHORED_DRUM_ALGOS[preview.algo];
+    if (!gen) throw new Error(`unknown authored drum generator "${preview.algo}"`);
+    blueprint = gen(rng, makeLibraryPick(bank, rng));
+  } else {
+    if (preview.blueprints.length === 0) throw new Error('drum preview has no blueprints');
+    blueprintIndex = rng.int(0, preview.blueprints.length - 1);
+    blueprint = preview.blueprints[blueprintIndex]!;
+  }
+  for (const lane of Object.keys(blueprint)) {
+    if (laneMidi[lane] === undefined) throw new Error(`drum preview uses unknown lane "${lane}"`);
+  }
+  return { styleName: 'preview', blueprintIndex, blueprint, blueprintBars: blueprintBars(blueprint), laneMidi };
+}
+
+/** Lane names a drum blueprint may use (bank-index.json's lanes). */
+export function drumLaneNames(): readonly string[] {
+  return Object.keys(loadBank().index.lanes);
 }
 
 /** Picks a random blueprint from a LIBRARY style (for popRock's drLuke/rock). */

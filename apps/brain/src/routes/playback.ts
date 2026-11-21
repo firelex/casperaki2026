@@ -25,6 +25,24 @@ export interface PlaybackRouterDeps {
 
 const PlayBodySchema = z.object({ song: z.unknown() }).strict();
 
+/** Lower a song and list its samples: the body of every playback response. */
+export async function playbackPayload(service: PlaybackService, songId: string, canonical: string) {
+  const env = await service.envelope(songId, canonical);
+  const samples = service.plan(songId).map((e) => ({
+    key: e.key,
+    kind: e.kind,
+    url: `/api/playback/samples/${e.sampleId}.ogg`,
+    ...(e.index !== undefined ? { index: e.index, count: e.count } : {}),
+  }));
+  return {
+    songId,
+    song: env.song,
+    insts: env.insts,
+    samples,
+    stubs: STUB_SAMPLES.map((n) => `/api/playback/stubs/${n}`),
+  };
+}
+
 export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRouterDeps): Router {
   const router = Router();
 
@@ -35,20 +53,7 @@ export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRoute
     });
 
   const respond = async (res: Response, service: PlaybackService, songId: string, canonical: string) => {
-    const env = await service.envelope(songId, canonical);
-    const samples = service.plan(songId).map((e) => ({
-      key: e.key,
-      kind: e.kind,
-      url: `/api/playback/samples/${e.sampleId}.ogg`,
-      ...(e.index !== undefined ? { index: e.index, count: e.count } : {}),
-    }));
-    res.json({
-      songId,
-      song: env.song,
-      insts: env.insts,
-      samples,
-      stubs: STUB_SAMPLES.map((n) => `/api/playback/stubs/${n}`),
-    });
+    res.json(await playbackPayload(service, songId, canonical));
   };
 
   router.get('/api/songs/:id/playback', async (req, res) => {
