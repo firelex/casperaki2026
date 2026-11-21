@@ -3,12 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 
 import { catalogApi, catalogQueryKeys } from '../api/catalog';
+import { livePlayer, type LaneMeters } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
 import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqTrack, type SequencerModel } from './sequencerModel';
 
-const HEADER_W = 176;
+const HEADER_W = 212;
 const ROW_H = 52;
 const RULER_H = 54;
 const CHORD_H = 28;
@@ -26,7 +27,28 @@ export function TimelineView() {
   const { viewSong, activeSegment, setActiveSegment } = useSession();
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
-  const { currentSeconds, playing, isThisSong, seek } = useLiveTransport();
+  const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live } = useLiveTransport();
+  const [meters, setMeters] = useState<LaneMeters | undefined>(undefined);
+
+  // Per-track waveforms: measured in a background worker for the version on
+  // screen (a moment after editing stops), filling in as it runs.
+  useEffect(() => {
+    setMeters(undefined);
+    if (!liveKey) return;
+    let cancel: (() => void) | undefined;
+    const t = setTimeout(() => {
+      cancel = livePlayer.meters(liveKey, fetchPayload, setMeters);
+    }, editorDirty ? 1500 : 300);
+    return () => {
+      clearTimeout(t);
+      cancel?.();
+    };
+  }, [liveKey, fetchPayload, editorDirty]);
+  const meterMax = useMemo(() => {
+    let m = 0;
+    for (const arr of meters?.peaks ?? []) for (const v of arr) if (v > m) m = v;
+    return m;
+  }, [meters]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [pxPerBar, setPxPerBar] = useState<number | undefined>(undefined);
   const [follow, setFollow] = useState(true);
@@ -76,6 +98,11 @@ export function TimelineView() {
   return (
     <div className="flex h-full flex-col text-white">
       <div className="flex shrink-0 items-center gap-2 border-b border-line/50 px-4 py-2 text-[13px]">
+        {meters && !meters.done ? (
+          <span className="mr-3 text-white/45" role="status">
+            Measuring track levels {Math.round((meters.doneBins / Math.max(1, meters.binCount)) * 100)}%
+          </span>
+        ) : null}
         <span className="mr-2 text-white/55">
           {model.tracks.length} tracks · {model.totalBars} bars · {Math.round(model.totalBars * secondsPerBar / 60)}:
           {String(Math.round(model.totalBars * secondsPerBar) % 60).padStart(2, '0')}
@@ -139,7 +166,12 @@ export function TimelineView() {
                 style={{ width: HEADER_W }}
               >
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: t.color }} aria-hidden="true" />
-                <TrackName name={t.name} catalogId={catalogIdOf(defs.get(t.name)?.id)} />
+                <TrackName
+                  name={t.name}
+                  catalogId={catalogIdOf(defs.get(t.name)?.id)}
+                  notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
+                />
+                <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
               </div>
               <div
                 className="relative shrink-0 cursor-pointer border-b border-line/25"
@@ -149,7 +181,16 @@ export function TimelineView() {
                   if (sec) setActiveSegment(sec.name);
                 }}
               >
-                <TrackCanvas track={t} model={model} px={px} />
+                <TrackCanvas
+                  track={t}
+                  model={model}
+                  px={px}
+                  secondsPerBar={secondsPerBar}
+                  peaks={meters?.peaks[meters.names.indexOf(t.name)]}
+                  binSec={meters?.binSec ?? 0}
+                  meterMax={meterMax}
+                  dimmed={live.solo.length > 0 ? !live.solo.includes(t.name) : live.muted.includes(t.name)}
+                />
               </div>
             </div>
           ))}
@@ -200,7 +241,7 @@ function catalogIdOf(id: unknown): string | undefined {
 }
 
 /** Track name, with the public name of its sound underneath when it is a catalog sound. */
-function TrackName({ name, catalogId }: { name: string; catalogId: string | undefined }) {
+function TrackName({ name, catalogId, notPlayed }: { name: string; catalogId: string | undefined; notPlayed: boolean }) {
   const entry = useQuery({
     queryKey: catalogQueryKeys.entry(catalogId ?? ''),
     queryFn: ({ signal }) => catalogApi.get(catalogId as string, signal),
@@ -211,7 +252,48 @@ function TrackName({ name, catalogId }: { name: string; catalogId: string | unde
   return (
     <span className="flex min-w-0 flex-col leading-tight">
       <span className="truncate text-[13px] text-white/90" title={name}>{name}</span>
-      {sound ? <span className="truncate text-[11px] text-white/45" title={sound}>{sound}</span> : null}
+      {notPlayed ? (
+        <span className="truncate text-[11px] text-white/35" title="The playback engine has no voice for this track yet">
+          Not in playback yet
+        </span>
+      ) : sound ? (
+        <span className="truncate text-[11px] text-white/45" title={sound}>{sound}</span>
+      ) : null}
+    </span>
+  );
+}
+
+/** Mute / solo for a track; applies live to the playing song. */
+function MuteSolo({ lane, muted, solo, anySolo }: { lane: string; muted: boolean; solo: boolean; anySolo: boolean }) {
+  const btn = 'h-6 w-6 rounded-[4px] border text-[11px] font-bold leading-none';
+  return (
+    <span className="ml-auto flex shrink-0 gap-1">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          livePlayer.setMuted(lane, !muted);
+        }}
+        aria-pressed={muted}
+        aria-label={`${muted ? 'Unmute' : 'Mute'} ${lane}`}
+        title={muted ? 'Unmute' : 'Mute'}
+        className={`${btn} ${muted ? 'border-yellow-400 bg-yellow-400 text-black' : anySolo && !solo ? 'border-line text-white/30' : 'border-line text-white/60 hover:text-white'}`}
+      >
+        M
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          livePlayer.setSolo(lane, !solo);
+        }}
+        aria-pressed={solo}
+        aria-label={`${solo ? 'Unsolo' : 'Solo'} ${lane}`}
+        title={solo ? 'Unsolo' : 'Solo (hear only soloed tracks)'}
+        className={`${btn} ${solo ? 'border-emerald-400 bg-emerald-400 text-black' : 'border-line text-white/60 hover:text-white'}`}
+      >
+        S
+      </button>
     </span>
   );
 }
@@ -263,7 +345,28 @@ function resolveColor(css: string): string {
 }
 
 /** One track's clips and notes, drawn on a canvas sized to the row. */
-function TrackCanvas({ track, model, px }: { track: SeqTrack; model: SequencerModel; px: number }) {
+function TrackCanvas({
+  track,
+  model,
+  px,
+  secondsPerBar,
+  peaks,
+  binSec,
+  meterMax,
+  dimmed,
+}: {
+  track: SeqTrack;
+  model: SequencerModel;
+  px: number;
+  secondsPerBar: number;
+  /** This track's peak level per meter bin, when measured. */
+  peaks: Float32Array | undefined;
+  binSec: number;
+  /** Loudest bin across all tracks, so heights compare between tracks. */
+  meterMax: number;
+  /** Muted, or not soloed while others are. */
+  dimmed: boolean;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const width = Math.max(1, Math.round(model.totalBars * px));
 
@@ -280,6 +383,32 @@ function TrackCanvas({ track, model, px }: { track: SeqTrack; model: SequencerMo
     const color = resolveColor(track.color);
     const pad = 5;
     const innerH = ROW_H - pad * 2;
+    if (dimmed) g.globalAlpha = 0.35;
+    const baseAlpha = dimmed ? 0.35 : 1;
+
+    // Waveform: peak per pixel column, mirrored around the row's middle.
+    if (peaks && peaks.length > 0 && meterMax > 0 && binSec > 0) {
+      const binsPerPx = secondsPerBar / px / binSec;
+      const mid = ROW_H / 2;
+      g.fillStyle = color;
+      g.globalAlpha = 0.28 * baseAlpha;
+      g.beginPath();
+      g.moveTo(0, mid);
+      const cols = Math.min(width, Math.ceil(peaks.length / binsPerPx));
+      const tops: number[] = [];
+      for (let x = 0; x < cols; x++) {
+        let m = 0;
+        const from = Math.floor(x * binsPerPx);
+        const to = Math.min(peaks.length, Math.max(from + 1, Math.floor((x + 1) * binsPerPx)));
+        for (let i = from; i < to; i++) if (peaks[i]! > m) m = peaks[i]!;
+        const h = Math.sqrt(m / meterMax) * (ROW_H / 2 - 2);
+        tops.push(h);
+        g.lineTo(x, mid - h);
+      }
+      for (let x = cols - 1; x >= 0; x--) g.lineTo(x, mid + tops[x]!);
+      g.closePath();
+      g.fill();
+    }
 
     // Drum kits: one thin lane per drum present; pitched parts: by pitch.
     const drumLanes = track.isDrums
@@ -300,12 +429,12 @@ function TrackCanvas({ track, model, px }: { track: SeqTrack; model: SequencerMo
     for (const clip of track.clips) {
       const x = clip.startBar * px;
       const w = clip.bars * px;
-      g.globalAlpha = 0.16;
+      g.globalAlpha = 0.16 * baseAlpha;
       g.fillStyle = color;
       g.fillRect(x + 1, pad - 2, Math.max(1, w - 2), innerH + 4);
-      g.globalAlpha = 0.9;
+      g.globalAlpha = 0.9 * baseAlpha;
       g.fillRect(x + 1, pad - 2, 2, innerH + 4);
-      g.globalAlpha = 0.85;
+      g.globalAlpha = (peaks ? 0.7 : 0.85) * baseAlpha;
       for (const n of clip.notes) {
         const nx = (n.start / BEATS_PER_BAR) * px;
         const nw = Math.max(1.2, (n.length / BEATS_PER_BAR) * px - 0.5);
@@ -314,7 +443,7 @@ function TrackCanvas({ track, model, px }: { track: SeqTrack; model: SequencerMo
       }
     }
     g.globalAlpha = 1;
-  }, [track, model, px, width]);
+  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed]);
 
   return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }

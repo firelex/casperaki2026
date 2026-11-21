@@ -22,7 +22,29 @@ export interface LiveState {
   /** What the loader is doing, for the UI ("Loading sounds 12/139"). */
   readonly step: string;
   readonly error: string | undefined;
+  /** The loaded song's mixer lanes (one per instrument name). */
+  readonly laneNames: readonly string[];
+  /** Lanes muted / soloed by the user (kept across songs, by lane name). */
+  readonly muted: readonly string[];
+  readonly solo: readonly string[];
 }
+
+/** Per-track levels of one song version, filled in as the meter worker runs. */
+export interface LaneMeters {
+  readonly names: readonly string[];
+  /** Seconds per bin. */
+  readonly binSec: number;
+  readonly binCount: number;
+  /** Bins measured so far (== binCount when done). */
+  readonly doneBins: number;
+  /** Peak level per bin, one array per lane (length doneBins). */
+  readonly peaks: readonly Float32Array[];
+  readonly done: boolean;
+}
+
+/** Meter resolution: 1024 frames ≈ 23 ms at 44.1 kHz. */
+const METER_BIN_FRAMES = 1024;
+const METERS_CACHED = 4;
 
 interface Prepared {
   payload: PlaybackPayload;
@@ -62,7 +84,11 @@ class LivePlayer {
   private readonly prepared = new Map<string, Promise<Prepared>>();
   /** ctx.currentTime when playback started at song position 0. */
   private startedAt = 0;
-  private state: LiveState = { status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined };
+  private state: LiveState = {
+    status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined, laneNames: [], muted: [], solo: [],
+  };
+  private meterWorker: Worker | undefined;
+  private readonly meterCache = new Map<string, LaneMeters>();
   private readonly listeners = new Set<(s: LiveState) => void>();
 
   getState(): LiveState {
@@ -120,6 +146,7 @@ class LivePlayer {
           masterGain: MASTER_GAIN,
           mixConfig: utf8.encode(payload.mixConfig),
           seekPrerollFrames: Math.round(SEEK_PREROLL_SEC * ctx.sampleRate),
+          laneGains: {},
           // The worklet scope has no TextEncoder: hand it UTF-8 bytes.
           song: utf8.encode(payload.song),
           insts: payload.insts.map((t) => utf8.encode(t)),
@@ -129,14 +156,19 @@ class LivePlayer {
       });
       const ready = new Promise<number>((resolve, reject) => {
         node.port.onmessage = (ev: MessageEvent) => {
-          const d = ev.data as { type: string; totalFrames?: number; sampleRate?: number; message?: string };
-          if (d.type === 'ready') resolve((d.totalFrames ?? 0) / (d.sampleRate ?? ctx.sampleRate));
+          const d = ev.data as { type: string; totalFrames?: number; sampleRate?: number; message?: string; laneNames?: string[] };
+          if (d.type === 'ready') {
+            this.set({ laneNames: d.laneNames ?? [] });
+            resolve((d.totalFrames ?? 0) / (d.sampleRate ?? ctx.sampleRate));
+          } else if (d.type === 'error' && node === this.node && this.state.status !== 'loading')
+            this.set({ status: 'error', error: `The audio engine failed: ${d.message}` });
           else if (d.type === 'error') reject(new Error(`The audio engine failed: ${d.message}`));
           else if (d.type === 'ended' && node === this.node) this.set({ status: 'ended' });
         };
       });
       this.node = node;
       const durationSec = await ready;
+      this.postLaneGains();
       if (token !== this.loadToken) {
         node.disconnect();
         return;
@@ -162,6 +194,99 @@ class LivePlayer {
       // play() will retry and show the error; keep a trace for debugging.
       console.warn(`[live] preparing ${key} failed:`, err);
     });
+  }
+
+  /** Mute or unmute a track (by lane name). Applies live. */
+  setMuted(lane: string, on: boolean): void {
+    const muted = new Set(this.state.muted);
+    if (on) muted.add(lane);
+    else muted.delete(lane);
+    this.set({ muted: [...muted] });
+    this.postLaneGains();
+  }
+
+  /** Solo or unsolo a track. With any track soloed, only soloed tracks play. */
+  setSolo(lane: string, on: boolean): void {
+    const solo = new Set(this.state.solo);
+    if (on) solo.add(lane);
+    else solo.delete(lane);
+    this.set({ solo: [...solo] });
+    this.postLaneGains();
+  }
+
+  private postLaneGains(): void {
+    if (!this.node) return;
+    const { laneNames, muted, solo } = this.state;
+    const gains: Record<string, number> = {};
+    for (const lane of laneNames) {
+      const audible = solo.length > 0 ? solo.includes(lane) : !muted.includes(lane);
+      gains[lane] = audible ? 1 : 0;
+    }
+    this.node.port.postMessage({ type: 'laneGains', gains });
+  }
+
+  /**
+   * Measure every track's level for one song version in a background worker
+   * (the engine renders it as fast as it can, silently). `onUpdate` gets the
+   * levels as they fill in. Returns a function that cancels the run. Results
+   * are cached per key.
+   */
+  meters(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>, onUpdate: (m: LaneMeters) => void): () => void {
+    const cached = this.meterCache.get(key);
+    if (cached) {
+      onUpdate(cached);
+      return () => undefined;
+    }
+    this.meterWorker?.terminate();
+    let cancelled = false;
+    const worker = new Worker('/workers/casperaki-meter-worker.js', { type: 'module' });
+    this.meterWorker = worker;
+    const ctx = this.context();
+    void Promise.all([this.ensurePrepared(key, fetchPayload, () => undefined), this.wasm(), this.stubs(ctx)])
+      .then(([{ payload, realSamples }, wasmBytes, stubs]) => {
+        if (cancelled) return;
+        let names: string[] = [];
+        let binSec = 0;
+        let binCount = 0;
+        worker.onmessage = (ev: MessageEvent) => {
+          const d = ev.data as { type: string; names?: string[]; binSec?: number; binCount?: number; doneBins?: number; peaks?: Float32Array[]; message?: string };
+          if (d.type === 'lanes') {
+            names = d.names!;
+            binSec = d.binSec!;
+            binCount = d.binCount!;
+          } else if (d.type === 'progress' || d.type === 'done') {
+            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, done: d.type === 'done' };
+            if (m.done) {
+              this.meterCache.set(key, m);
+              while (this.meterCache.size > METERS_CACHED) this.meterCache.delete(this.meterCache.keys().next().value!);
+              worker.terminate();
+            }
+            if (!cancelled) onUpdate(m);
+          } else if (d.type === 'error') {
+            worker.terminate();
+            console.error(`[live] measuring track levels failed: ${d.message}`);
+          }
+        };
+        worker.postMessage({
+          type: 'meter',
+          wasmBytes: wasmBytes.slice(0),
+          sampleRate: ctx.sampleRate,
+          meterBinFrames: METER_BIN_FRAMES,
+          song: utf8.encode(payload.song),
+          insts: payload.insts.map((t) => utf8.encode(t)),
+          samples: stubs,
+          realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
+          mixConfig: utf8.encode(payload.mixConfig),
+        });
+      })
+      .catch((err: unknown) => console.error('[live] preparing track levels failed:', err));
+    return () => {
+      cancelled = true;
+      if (this.meterWorker === worker) {
+        worker.terminate();
+        this.meterWorker = undefined;
+      }
+    };
   }
 
   /** Jump to `seconds` into the loaded song (playing or paused). */
