@@ -132,14 +132,14 @@ body {
   background: var(--color-bg);
 }
 .landing-display {
-  font-stretch: 125%;
-  font-weight: 800;
-  line-height: 0.98;
+  font-stretch: 108%;
+  font-weight: 760;
+  line-height: 1;
   letter-spacing: -0.02em;
   color: #fff;
 }
 .landing-heading {
-  font-stretch: 118%;
+  font-stretch: 106%;
   font-weight: 700;
   font-size: clamp(30px, 3.6vw, 52px);
   line-height: 1.06;
@@ -147,7 +147,7 @@ body {
   color: #fff;
 }
 .landing-subheading {
-  font-stretch: 115%;
+  font-stretch: 104%;
   font-weight: 700;
   font-size: clamp(24px, 2.4vw, 32px);
   line-height: 1.15;
@@ -315,7 +315,7 @@ body {
   }
 }
 .landing-tagline {
-  font-stretch: 125%;
+  font-stretch: 100%;
   font-weight: 300;
   line-height: 1.05;
   letter-spacing: -0.01em;

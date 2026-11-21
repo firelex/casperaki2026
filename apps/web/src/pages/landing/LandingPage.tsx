@@ -87,8 +87,8 @@ function Hero({ onStart }: { onStart(): void }) {
         </picture>
         <div className="landing-hero-shade absolute inset-0 -z-10" aria-hidden="true" />
         <Wrap className="flex min-h-[min(86vh,760px)] md:min-h-[min(82vh,52vw)] flex-col justify-start md:justify-center pt-20 pb-16 md:py-24">
-          <h1 className="landing-display text-[clamp(48px,8.6vw,136px)] max-w-[12ch]">Pop deserves better.</h1>
-          <p className="landing-tagline mt-4 text-[clamp(26px,3.4vw,50px)]">Let&rsquo;s make it so.</p>
+          <h1 className="landing-display text-[clamp(42px,6vw,92px)] max-w-[12ch]">Pop deserves better.</h1>
+          <p className="landing-tagline mt-3 text-[clamp(22px,2.4vw,36px)]">Let&rsquo;s make it so.</p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <PrimaryButton onClick={onStart}>Start a song</PrimaryButton>
             <a href="#how" className="landing-btn landing-btn-quiet landing-btn-glass">See how it works</a>
@@ -96,12 +96,13 @@ function Hero({ onStart }: { onStart(): void }) {
         </Wrap>
       </div>
       <Wrap className="pt-14 sm:pt-20 pb-20 sm:pb-28">
-        <div className="flex max-w-[60ch] flex-col gap-6">
-          <p className="text-[clamp(21px,2vw,26px)] leading-[1.5] text-white/90">
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-16">
+          <p className="max-w-[60ch] text-[clamp(21px,2vw,26px)] leading-[1.5] text-white/90">
             Casperaki isn&rsquo;t just another AI music generator. It&rsquo;s an AI-driven sequencer built around the
             sounds, rhythms, arrangements and production techniques that defined pop music before it fell off a cliff
             in the mid-2010s.
           </p>
+          <div className="flex max-w-[60ch] flex-col gap-6 lg:pt-1">
           <p className="text-[18px] sm:text-[19px] leading-[1.65] text-white/70">
             Inspired by the producers behind that era&rsquo;s biggest hits, Casperaki puts their creative building
             blocks in your hands, giving you the freedom to make something entirely new.
@@ -109,6 +110,7 @@ function Hero({ onStart }: { onStart(): void }) {
           <p className="landing-subheading">
             Their secrets. Your ideas. Let&rsquo;s bring back the magic of pop&rsquo;s golden era.
           </p>
+          </div>
         </div>
         <div className="mt-16 sm:mt-20">
         <ArrangementHero />
@@ -313,7 +315,7 @@ function Fact({ term, value }: { term: string; value: string }) {
   return (
     <div className="bg-panel px-6 py-7">
       <dt className="text-[14px] text-white/55">{term}</dt>
-      <dd className="landing-display mt-2 text-[40px]">{value}</dd>
+      <dd className="landing-display mt-2 text-[36px]">{value}</dd>
     </div>
   );
 }
@@ -366,7 +368,7 @@ function FinalCall({ onStart }: { onStart(): void }) {
   return (
     <section className="border-t border-white/[0.06] py-24 sm:py-32">
       <Wrap className="flex flex-col items-start gap-8">
-        <h2 className="landing-display text-[clamp(36px,5.4vw,80px)] max-w-[16ch]">
+        <h2 className="landing-display text-[clamp(34px,4.4vw,64px)] max-w-[16ch]">
           Your next song is a draft away.
         </h2>
         <div className="flex flex-wrap items-center gap-5">
