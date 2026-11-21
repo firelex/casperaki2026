@@ -104,6 +104,16 @@ describe('projects', () => {
     expect(list.projects[0]).toMatchObject({ id, genre: 'edm', bpm: 124, render: { state: 'none' } });
   });
 
+  it('lists each song with its section outline', async () => {
+    const { song } = await generate(h);
+    const list = (await (await fetch(`${h.url}/api/songs`)).json()) as {
+      projects: Array<{ sections: Array<{ name: string; type: string | null; bars: number }> }>;
+    };
+    const structure = (song as { songStructure: Array<{ name: string; bars: unknown[] }> }).songStructure;
+    expect(list.projects[0]!.sections.map((s) => s.name)).toEqual(structure.map((s) => s.name));
+    for (const s of list.projects[0]!.sections) expect(s.bars).toBeGreaterThan(0);
+  });
+
   it('accepts a title and rejects a blank one', async () => {
     const { project } = await generate(h, { title: 'Night drive' });
     expect(project.title).toBe('Night drive');

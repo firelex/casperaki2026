@@ -306,6 +306,7 @@ function projectJson(p: ProjectRow, renders: RenderService | undefined) {
     bpm: p.bpm,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
+    sections: p.sections,
     render: renderJson(p.songId, renders),
   };
 }

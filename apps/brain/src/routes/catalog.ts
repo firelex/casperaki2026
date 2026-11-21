@@ -50,6 +50,9 @@ export interface CatalogRouterDeps {
   /** Optional injection points for tests. Default to the package loaders. */
   readonly loadCatalog?: () => ValidatedCatalog;
   readonly loadSnapshot?: () => InstrumentCatalogSnapshot;
+  /** Whether this request may browse the catalog (summary, lists). Single
+   *  entries by id are always served. Defaults to everyone. */
+  readonly canBrowse?: (req: Request) => boolean;
   /** Public name of an entry; defaults to the instrument-aliases registry. */
   readonly publicName?: (entry: ValidatedCatalogEntry) => string;
 }
@@ -61,6 +64,15 @@ export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
   const router = Router();
   const loadCat = deps.loadCatalog ?? loadValidatedCatalog;
   const loadSnap = deps.loadSnapshot ?? loadInstrumentCatalogSnapshot;
+  const browseGate = (req: Request, res: Response, next: () => void) => {
+    if (deps.canBrowse && !deps.canBrowse(req)) {
+      res.status(403).json({ error: 'admin_only', message: 'Browsing the sound catalog is limited to admins.' });
+      return;
+    }
+    next();
+  };
+  router.use(['/api/catalog/summary', '/api/catalog/low-levels', '/api/catalog/audit-summary'], browseGate);
+  router.get('/api/catalog/instruments', browseGate);
   const nameOf = deps.publicName ?? ((e: ValidatedCatalogEntry) => publicNameOf(e));
   const withName = (e: ValidatedCatalogEntry): PublicCatalogEntry => ({ ...e, publicName: nameOf(e) });
 

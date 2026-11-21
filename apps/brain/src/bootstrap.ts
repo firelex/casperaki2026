@@ -96,7 +96,10 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     res.json({ ok: true, service: '@casperaki/brain' });
   });
 
+  const admins = new Set(config.adminEmails);
+  const isAdmin = (email: string) => admins.has(email.toLowerCase());
   if (auth) {
+    if (admins.size === 0) console.warn('[brain] BRAIN_ADMIN_EMAILS is empty — nobody can browse the sound catalog.');
     // Session resolution runs on every request; never rejects.
     app.use(attachSession(auth.sessions, auth.oidc));
     // Auth endpoints mounted BEFORE the gate so login/callback/me/logout
@@ -106,6 +109,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       oidc: auth.oidc,
       webOrigin: config.webOrigin,
       postLoginDefault: config.postLoginDefault,
+      isAdmin,
     }));
     // Everything else under /api requires a valid session.
     app.use('/api', requireSession());
@@ -137,7 +141,13 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
 
   app.use(createSongsRouter({ store, renders }));
   app.use(createRendersRouter({ artifactPath: config.renderArtifactPath }));
-  app.use(createCatalogRouter());
+  // Browsing the catalog is for admins (it lists source library / preset
+  // names). Single-entry lookups stay open: the editor needs them.
+  app.use(
+    createCatalogRouter({
+      canBrowse: (req) => (auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
+    }),
+  );
 
   // Unknown /api routes answer JSON 404 rather than falling into the SPA.
   app.use('/api', (_req, res) => {

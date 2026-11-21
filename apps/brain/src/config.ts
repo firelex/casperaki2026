@@ -48,6 +48,13 @@ const ConfigSchema = z.object({
   // When set, the brain serves the built web app (apps/web/dist) at / with
   // an SPA fallback, so one origin carries both the UI and /api.
   webDistDir: z.string().optional(),
+  // --- Admins ---
+  // Comma-separated sign-in emails that may browse the sound catalog (it
+  // shows the source library / preset names). Unset = nobody.
+  adminEmails: z
+    .string()
+    .default('')
+    .transform((v) => v.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)),
 });
 
 export type BrainConfig = z.infer<typeof ConfigSchema>;
@@ -83,6 +90,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     renderMix: env.BRAIN_RENDER_MIX,
     ffmpegBin: env.FFMPEG_BIN,
     webDistDir: env.BRAIN_WEB_DIST_DIR,
+    adminEmails: env.BRAIN_ADMIN_EMAILS,
   });
 }
 

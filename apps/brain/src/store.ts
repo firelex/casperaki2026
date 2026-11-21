@@ -33,6 +33,15 @@ export interface ProjectRow {
   readonly bpm: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /** The song's sections in order (name, brain type tag, length in bars),
+   *  for an outline of the song without loading it whole. */
+  readonly sections: readonly ProjectSection[];
+}
+
+export interface ProjectSection {
+  readonly name: string;
+  readonly type: string | null;
+  readonly bars: number;
 }
 
 export interface SongsStore {
@@ -99,7 +108,8 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
      ON CONFLICT(owner_id, song_id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at`,
   );
   const projectSelect = `SELECT p.owner_id, p.song_id, p.title, p.created_at, p.updated_at,
-                                s.genre, s.key_text, s.bpm
+                                s.genre, s.key_text, s.bpm,
+                                json_extract(s.canonical, '$.songStructure') AS structure
                            FROM projects p JOIN songs s ON s.id = p.song_id`;
   const getProjectStmt = db.prepare(`${projectSelect} WHERE p.owner_id = ? AND p.song_id = ?`);
   const listProjectsStmt = db.prepare(`${projectSelect} WHERE p.owner_id = ? ORDER BY p.updated_at DESC`);
@@ -197,6 +207,7 @@ interface ProjectDbRow {
   genre: string | null;
   key_text: string;
   bpm: number;
+  structure: string | null;
 }
 
 function toProjectRow(row: ProjectDbRow): ProjectRow {
@@ -209,7 +220,23 @@ function toProjectRow(row: ProjectDbRow): ProjectRow {
     bpm: row.bpm,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    sections: sectionsOf(row.song_id, row.structure),
   };
+}
+
+function sectionsOf(songId: string, structure: string | null): ProjectSection[] {
+  if (structure === null) throw new Error(`Stored song ${songId} has no songStructure.`);
+  const segments = JSON.parse(structure) as Array<{
+    name: string;
+    type?: string;
+    bars?: unknown[];
+    lengthInBars?: number;
+  }>;
+  return segments.map((seg) => {
+    const bars = seg.lengthInBars ?? seg.bars?.length;
+    if (typeof bars !== 'number') throw new Error(`Stored song ${songId}: section ${seg.name} has no length.`);
+    return { name: seg.name, type: seg.type ?? null, bars };
+  });
 }
 
 export type { BetterSqliteDatabase };

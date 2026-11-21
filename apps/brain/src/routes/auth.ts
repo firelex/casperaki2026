@@ -15,11 +15,13 @@ export interface AuthRouterDeps {
    *  back to `${webOrigin}/` when unset. Passed in from config so this route
    *  never reads process.env directly. */
   postLoginDefault?: string;
+  /** Whether a signed-in email is an admin (BRAIN_ADMIN_EMAILS). */
+  isAdmin(email: string): boolean;
 }
 
 export function authRouter(deps: AuthRouterDeps): Router {
   const r = Router();
-  const { sessions, oidc, webOrigin, postLoginDefault } = deps;
+  const { sessions, oidc, webOrigin, postLoginDefault, isAdmin } = deps;
 
   r.get('/login', async (req, res) => {
     const returnTo = normalizeReturnTo(req.query.return_to, webOrigin, postLoginDefault);
@@ -105,7 +107,7 @@ export function authRouter(deps: AuthRouterDeps): Router {
 
   r.get('/me', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Not signed in' });
-    res.json({ id: req.user.id, email: req.user.email, name: req.user.name });
+    res.json({ id: req.user.id, email: req.user.email, name: req.user.name, isAdmin: isAdmin(req.user.email) });
   });
 
   return r;

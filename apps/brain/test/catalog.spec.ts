@@ -12,6 +12,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
+import express from 'express';
+import { createCatalogRouter } from '../src/routes/catalog.js';
 
 interface Harness {
   url: string;
@@ -347,6 +349,36 @@ describe('GET /api/catalog/audit-summary', () => {
     for (const fam of families) {
       const f = body.perFamily[fam]!;
       expect(f.rowsChecked).toBe(f.matched + f.missing);
+    }
+  });
+});
+
+describe('catalog admin gate', () => {
+  it('refuses browsing when canBrowse is false but still serves single entries', async () => {
+    const app = express();
+    app.use(createCatalogRouter({ canBrowse: () => false }));
+    const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+      const s = app.listen(0, '127.0.0.1', () => resolve(s));
+    });
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    try {
+      for (const path of ['/api/catalog/summary', '/api/catalog/instruments?limit=1', '/api/catalog/low-levels', '/api/catalog/audit-summary']) {
+        const res = await fetch(url + path);
+        expect(res.status, path).toBe(403);
+      }
+      const open = createCatalogRouter();
+      const app2 = express();
+      app2.use(open);
+      const s2 = await new Promise<ReturnType<typeof app2.listen>>((resolve) => {
+        const s = app2.listen(0, '127.0.0.1', () => resolve(s));
+      });
+      const url2 = `http://127.0.0.1:${(s2.address() as AddressInfo).port}`;
+      const first = (await (await fetch(`${url2}/api/catalog/instruments?limit=1`)).json()) as { entries: Array<{ id: string }> };
+      s2.close();
+      const one = await fetch(`${url}/api/catalog/instruments/${first.entries[0]!.id}`);
+      expect(one.status).toBe(200);
+    } finally {
+      server.close();
     }
   });
 });

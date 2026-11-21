@@ -102,15 +102,10 @@ function Hero({ onStart }: { onStart(): void }) {
             sounds, rhythms, arrangements and production techniques that defined pop music before it fell off a cliff
             in the mid-2010s.
           </p>
-          <div className="flex max-w-[60ch] flex-col gap-6 lg:pt-1">
-          <p className="text-[18px] sm:text-[19px] leading-[1.65] text-white/70">
+          <p className="max-w-[60ch] text-[clamp(21px,2vw,26px)] leading-[1.5] text-white/90">
             Inspired by the producers behind that era&rsquo;s biggest hits, Casperaki puts their creative building
             blocks in your hands, giving you the freedom to make something entirely new.
           </p>
-          <p className="landing-subheading">
-            Their secrets. Your ideas. Let&rsquo;s bring back the magic of pop&rsquo;s golden era.
-          </p>
-          </div>
         </div>
         <div className="mt-16 sm:mt-20">
         <ArrangementHero />
