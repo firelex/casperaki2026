@@ -17,8 +17,8 @@ void ADClip7::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
     double overallscale = 1.0;
     overallscale /= 44100.0;
     overallscale *= getSampleRate();
-    long double fpOld = 0.618033988749894848204586; //golden ratio!
-    long double fpNew = 1.0 - fpOld;
+    double fpOld = 0.618033988749894848204586; //golden ratio!
+    double fpNew = 1.0 - fpOld;
     double inputGain = pow(10.0,(A*18.0)/20.0);
     double softness = B * fpNew;
     double hardness = 1.0 - softness;
@@ -28,7 +28,7 @@ void ADClip7::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
     double calibsubs = subslift/53;
     double invcalibsubs = 1.0 - calibsubs;
     double subs = 0.81 + (calibsubs*2);
-    long double bridgerectifier;
+    double bridgerectifier;
     int mode = (int) floor(D*2.999)+1;
     double overshootL;
     double overshootR;
@@ -55,8 +55,8 @@ void ADClip7::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
     double highsR = 0.0;
     int count = 0;
 
-    long double inputSampleL;
-    long double inputSampleR;
+    double inputSampleL;
+    double inputSampleR;
 
     while (--sampleFrames >= 0)
     {
@@ -449,7 +449,7 @@ void ADClip7::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
 
         //stereo 32 bit dither, made small and tidy.
         int expon; frexpf((float)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexpf((float)inputSampleR, &expon);
         dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
@@ -476,8 +476,8 @@ void ADClip7::processDoubleReplacing(double **inputs, double **outputs, VstInt32
     double overallscale = 1.0;
     overallscale /= 44100.0;
     overallscale *= getSampleRate();
-    long double fpOld = 0.618033988749894848204586; //golden ratio!
-    long double fpNew = 1.0 - fpOld;
+    double fpOld = 0.618033988749894848204586; //golden ratio!
+    double fpNew = 1.0 - fpOld;
     double inputGain = pow(10.0,(A*18.0)/20.0);
     double softness = B * fpNew;
     double hardness = 1.0 - softness;
@@ -487,7 +487,7 @@ void ADClip7::processDoubleReplacing(double **inputs, double **outputs, VstInt32
     double calibsubs = subslift/53;
     double invcalibsubs = 1.0 - calibsubs;
     double subs = 0.81 + (calibsubs*2);
-    long double bridgerectifier;
+    double bridgerectifier;
     int mode = (int) floor(D*2.999)+1;
     double overshootL;
     double overshootR;
@@ -514,8 +514,8 @@ void ADClip7::processDoubleReplacing(double **inputs, double **outputs, VstInt32
     double highsR = 0.0;
     int count = 0;
 
-    long double inputSampleL;
-    long double inputSampleR;
+    double inputSampleL;
+    double inputSampleR;
 
 
     while (--sampleFrames >= 0)
@@ -909,7 +909,7 @@ void ADClip7::processDoubleReplacing(double **inputs, double **outputs, VstInt32
 
         //stereo 64 bit dither, made small and tidy.
         int expon; frexp((double)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         dither /= 536870912.0; //needs this to scale to 64 bit zone
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexp((double)inputSampleR, &expon);

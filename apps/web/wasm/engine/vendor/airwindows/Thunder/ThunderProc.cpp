@@ -40,8 +40,8 @@ void Thunder::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
     double resultML;
     double resultMR;
 
-    long double inputSampleL;
-    long double inputSampleR;
+    double inputSampleL;
+    double inputSampleR;
 
     while (--sampleFrames >= 0)
     {
@@ -224,7 +224,7 @@ void Thunder::processReplacing(float **inputs, float **outputs, VstInt32 sampleF
 
         //stereo 32 bit dither, made small and tidy.
         int expon; frexpf((float)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexpf((float)inputSampleR, &expon);
         dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
@@ -275,8 +275,8 @@ void Thunder::processDoubleReplacing(double **inputs, double **outputs, VstInt32
     double resultML;
     double resultMR;
 
-    long double inputSampleL;
-    long double inputSampleR;
+    double inputSampleL;
+    double inputSampleR;
 
     while (--sampleFrames >= 0)
     {
@@ -459,7 +459,7 @@ void Thunder::processDoubleReplacing(double **inputs, double **outputs, VstInt32
 
         //stereo 64 bit dither, made small and tidy.
         int expon; frexp((double)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         dither /= 536870912.0; //needs this to scale to 64 bit zone
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexp((double)inputSampleR, &expon);

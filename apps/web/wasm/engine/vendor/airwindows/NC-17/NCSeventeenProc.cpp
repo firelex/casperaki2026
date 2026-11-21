@@ -39,13 +39,13 @@ void NCSeventeen::processReplacing(float **inputs, float **outputs, VstInt32 sam
     double maxfeedTreb = 0.972;
     double maxfeed = 0.975;
     double bridgerectifier;
-    long double inputSampleL;
+    double inputSampleL;
     double lowSampleL = 0.0;
     double highSampleL;
     double distSampleL;
     double minusSampleL;
     double plusSampleL;
-    long double inputSampleR;
+    double inputSampleR;
     double lowSampleR = 0.0;
     double highSampleR;
     double distSampleR;
@@ -346,7 +346,7 @@ void NCSeventeen::processReplacing(float **inputs, float **outputs, VstInt32 sam
 
         //stereo 32 bit dither, made small and tidy.
         int expon; frexpf((float)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexpf((float)inputSampleR, &expon);
         dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
@@ -395,13 +395,13 @@ void NCSeventeen::processDoubleReplacing(double **inputs, double **outputs, VstI
     double maxfeedTreb = 0.972;
     double maxfeed = 0.975;
     double bridgerectifier;
-    long double inputSampleL;
+    double inputSampleL;
     double lowSampleL = 0.0;
     double highSampleL;
     double distSampleL;
     double minusSampleL;
     double plusSampleL;
-    long double inputSampleR;
+    double inputSampleR;
     double lowSampleR = 0.0;
     double highSampleR;
     double distSampleR;
@@ -701,7 +701,7 @@ void NCSeventeen::processDoubleReplacing(double **inputs, double **outputs, VstI
 
         //stereo 64 bit dither, made small and tidy.
         int expon; frexp((double)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         dither /= 536870912.0; //needs this to scale to 64 bit zone
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexp((double)inputSampleR, &expon);

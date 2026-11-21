@@ -253,6 +253,15 @@ walk flips on the sign of its input, so a last-ULP libm difference or a seek yie
 different (statistically identical) texture. The AirWindows plugins' `rand()` is mapped
 to a glibc-identical generator (`airwindows/AwRand.h`) so both builds seed the same noise.
 
+**Vendored AirWindows patch: `long double` → `double`.** The vendored plugins used
+`long double` (and `5.5e-36l` / `1.1e-44l` literals) in their per-sample dither and a few
+state variables. WebAssembly has no extended float, so clang emulated them as 128-bit
+software floats — about 65% of the mix-on render time, holding it to ~1.1–1.6x real
+time. Every `long double` and those two literals under `vendor/airwindows/` were replaced
+by `double` (mechanical edit), so native and wasm compute at the same precision. The
+native render moved by at most 0.014% sample NRMSE / 0.013% envelope NRMSE (real-sample
+mix-on full songs); the mix-on wasm render is now ~10x real time.
+
 **Real sample library — done.** The id-keyed join binds the actual multisample
 library (asset-manifest.json → relativePath + per-slot `[sliceStart, sliceEnd]`)
 in both the native render and the browser. Validation:

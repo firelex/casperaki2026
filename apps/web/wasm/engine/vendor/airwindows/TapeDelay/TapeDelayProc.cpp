@@ -35,8 +35,8 @@ void TapeDelay::processReplacing(float **inputs, float **outputs, VstInt32 sampl
 
     while (--sampleFrames >= 0)
     {
-        long double inputSampleL = *in1;
-        long double inputSampleR = *in2;
+        double inputSampleL = *in1;
+        double inputSampleR = *in2;
 
         static int noisesourceL = 0;
         static int noisesourceR = 850010;
@@ -158,7 +158,7 @@ void TapeDelay::processReplacing(float **inputs, float **outputs, VstInt32 sampl
 
         //stereo 32 bit dither, made small and tidy.
         int expon; frexpf((float)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexpf((float)inputSampleR, &expon);
         dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
@@ -202,8 +202,8 @@ void TapeDelay::processDoubleReplacing(double **inputs, double **outputs, VstInt
 
     while (--sampleFrames >= 0)
     {
-        long double inputSampleL = *in1;
-        long double inputSampleR = *in2;
+        double inputSampleL = *in1;
+        double inputSampleR = *in2;
 
         static int noisesourceL = 0;
         static int noisesourceR = 850010;
@@ -325,7 +325,7 @@ void TapeDelay::processDoubleReplacing(double **inputs, double **outputs, VstInt
 
         //stereo 64 bit dither, made small and tidy.
         int expon; frexp((double)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         dither /= 536870912.0; //needs this to scale to 64 bit zone
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexp((double)inputSampleR, &expon);

@@ -21,8 +21,8 @@ void EQ::processReplacing(float **inputs, float **outputs, VstInt32 sampleFrames
     compscale = compscale * overallscale;
     //compscale is the one that's 1 or something like 2.2 for 96K rates
 
-    long double inputSampleL;
-    long double inputSampleR;
+    double inputSampleL;
+    double inputSampleR;
 
     double highSampleL = 0.0;
     double midSampleL = 0.0;
@@ -433,7 +433,7 @@ void EQ::processReplacing(float **inputs, float **outputs, VstInt32 sampleFrames
 
         //stereo 32 bit dither, made small and tidy.
         int expon; frexpf((float)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexpf((float)inputSampleR, &expon);
         dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
@@ -464,8 +464,8 @@ void EQ::processDoubleReplacing(double **inputs, double **outputs, VstInt32 samp
     compscale = compscale * overallscale;
     //compscale is the one that's 1 or something like 2.2 for 96K rates
 
-    long double inputSampleL;
-    long double inputSampleR;
+    double inputSampleL;
+    double inputSampleR;
 
     double highSampleL = 0.0;
     double midSampleL = 0.0;
@@ -876,7 +876,7 @@ void EQ::processDoubleReplacing(double **inputs, double **outputs, VstInt32 samp
 
         //stereo 64 bit dither, made small and tidy.
         int expon; frexp((double)inputSampleL, &expon);
-        long double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
+        double dither = (rand()/(RAND_MAX*7.737125245533627e+25))*pow(2,expon+62);
         dither /= 536870912.0; //needs this to scale to 64 bit zone
         inputSampleL += (dither-fpNShapeL); fpNShapeL = dither;
         frexp((double)inputSampleR, &expon);

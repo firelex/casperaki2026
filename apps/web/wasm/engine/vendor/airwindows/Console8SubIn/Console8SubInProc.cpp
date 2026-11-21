@@ -113,10 +113,10 @@ void Console8SubIn::processReplacing(float **inputs, float **outputs, VstInt32 s
 		//begin 32 bit stereo floating point dither
 		int expon; frexpf((float)inputSampleL, &expon);
 		fpdL ^= fpdL << 13; fpdL ^= fpdL >> 17; fpdL ^= fpdL << 5;
-		inputSampleL += ((double(fpdL)-uint32_t(0x7fffffff)) * 5.5e-36l * pow(2,expon+62));
+		inputSampleL += ((double(fpdL)-uint32_t(0x7fffffff)) * 5.5e-36 * pow(2,expon+62));
 		frexpf((float)inputSampleR, &expon);
 		fpdR ^= fpdR << 13; fpdR ^= fpdR >> 17; fpdR ^= fpdR << 5;
-		inputSampleR += ((double(fpdR)-uint32_t(0x7fffffff)) * 5.5e-36l * pow(2,expon+62));
+		inputSampleR += ((double(fpdR)-uint32_t(0x7fffffff)) * 5.5e-36 * pow(2,expon+62));
 		//end 32 bit stereo floating point dither
 		
 		*out1 = inputSampleL;
@@ -235,10 +235,10 @@ void Console8SubIn::processDoubleReplacing(double **inputs, double **outputs, Vs
 		//begin 64 bit stereo floating point dither
 		//int expon; frexp((double)inputSampleL, &expon);
 		fpdL ^= fpdL << 13; fpdL ^= fpdL >> 17; fpdL ^= fpdL << 5;
-		//inputSampleL += ((double(fpdL)-uint32_t(0x7fffffff)) * 1.1e-44l * pow(2,expon+62));
+		//inputSampleL += ((double(fpdL)-uint32_t(0x7fffffff)) * 1.1e-44 * pow(2,expon+62));
 		//frexp((double)inputSampleR, &expon);
 		fpdR ^= fpdR << 13; fpdR ^= fpdR >> 17; fpdR ^= fpdR << 5;
-		//inputSampleR += ((double(fpdR)-uint32_t(0x7fffffff)) * 1.1e-44l * pow(2,expon+62));
+		//inputSampleR += ((double(fpdR)-uint32_t(0x7fffffff)) * 1.1e-44 * pow(2,expon+62));
 		//end 64 bit stereo floating point dither
 		
 		*out1 = inputSampleL;

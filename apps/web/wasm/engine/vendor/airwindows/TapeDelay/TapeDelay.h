@@ -66,8 +66,8 @@ private:
     int maxdelay;
     int chase;
 
-    long double fpNShapeL;
-    long double fpNShapeR;
+    double fpNShapeL;
+    double fpNShapeR;
     //default stuff
 
     float A;

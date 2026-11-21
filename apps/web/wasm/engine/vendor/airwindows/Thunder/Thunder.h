@@ -69,8 +69,8 @@ private:
     double iirSampleAM;
     double iirSampleBM;
     double iirSampleCM;
-    long double fpNShapeL;
-    long double fpNShapeR;
+    double fpNShapeL;
+    double fpNShapeR;
     bool flip;
 
     float A;

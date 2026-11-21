@@ -55,11 +55,11 @@ private:
     char _programName[kVstMaxProgNameLen + 1];
     std::set< std::string > _canDo;
 
-    long double fpNShapeL;
-    long double fpNShapeR;
+    double fpNShapeL;
+    double fpNShapeR;
     //default stuff
-    long double lastSampleL;
-    long double lastSampleR;
+    double lastSampleL;
+    double lastSampleR;
     float bL[22200];
     float bR[22200];
     int gcount;
@@ -69,8 +69,8 @@ private:
     double iirLowsAR;
     double iirLowsBL;
     double iirLowsBR;
-    long double refclipL;
-    long double refclipR;
+    double refclipL;
+    double refclipR;
 
     float A;
     float B;
