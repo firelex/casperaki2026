@@ -24,6 +24,14 @@ export interface LiveState {
   readonly error: string | undefined;
 }
 
+interface Prepared {
+  payload: PlaybackPayload;
+  realSamples: RealSample[];
+}
+
+/** How many prepared songs to keep ready (current song, its last edits). */
+const PREPARED_LIMIT = 4;
+
 interface RealSample {
   key: string;
   ch0: Float32Array;
@@ -44,6 +52,7 @@ class LivePlayer {
   private readonly decoded = new Map<string, Promise<AudioBuffer>>();
   private stubPcm: Promise<Float32Array[]> | undefined;
   private loadToken = 0;
+  private readonly prepared = new Map<string, Promise<Prepared>>();
   /** ctx.currentTime when playback started at song position 0. */
   private startedAt = 0;
   private state: LiveState = { status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined };
@@ -79,20 +88,17 @@ class LivePlayer {
       return;
     }
     const token = ++this.loadToken;
-    const abort = new AbortController();
     this.teardown();
     this.set({ status: 'loading', key, durationSec: 0, step: 'Preparing the song…', error: undefined });
     try {
-      const [payload, wasmBytes, stubs] = await Promise.all([
-        fetchPayload(abort.signal),
+      const [{ payload, realSamples }, wasmBytes, stubs] = await Promise.all([
+        this.ensurePrepared(key, fetchPayload, (done, total) => {
+          if (token === this.loadToken) this.set({ step: `Loading sounds ${done}/${total}` });
+        }),
         this.wasm(),
         this.stubs(ctx),
         this.worklet(ctx),
       ]);
-      if (token !== this.loadToken) return;
-      const realSamples = await this.loadSamples(ctx, payload.samples, (done, total) => {
-        if (token === this.loadToken) this.set({ step: `Loading sounds ${done}/${total}` });
-      });
       if (token !== this.loadToken) return;
       this.set({ step: 'Starting the engine…' });
 
@@ -136,6 +142,18 @@ class LivePlayer {
     }
   }
 
+  /**
+   * Get a song ready in the background (lowered, samples fetched and
+   * decoded) so a later play() only has to start the engine. Safe to call
+   * often: an already prepared or preparing song is not fetched again.
+   */
+  prepare(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): void {
+    this.ensurePrepared(key, fetchPayload, () => undefined).catch((err: unknown) => {
+      // play() will retry and show the error; keep a trace for debugging.
+      console.warn(`[live] preparing ${key} failed:`, err);
+    });
+  }
+
   async pause(): Promise<void> {
     if (!this.ctx || this.state.status !== 'playing') return;
     await this.ctx.suspend();
@@ -147,6 +165,29 @@ class LivePlayer {
     this.loadToken++;
     this.teardown();
     this.set({ status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined });
+  }
+
+  private ensurePrepared(
+    key: string,
+    fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+    progress: (done: number, total: number) => void,
+  ): Promise<Prepared> {
+    const existing = this.prepared.get(key);
+    if (existing) {
+      // Most recently used goes last.
+      this.prepared.delete(key);
+      this.prepared.set(key, existing);
+      return existing;
+    }
+    const ctx = this.context();
+    const job = fetchPayload(new AbortController().signal).then(async (payload) => ({
+      payload,
+      realSamples: await this.loadSamples(ctx, payload.samples, progress),
+    }));
+    job.catch(() => this.prepared.delete(key));
+    this.prepared.set(key, job);
+    while (this.prepared.size > PREPARED_LIMIT) this.prepared.delete(this.prepared.keys().next().value!);
+    return job;
   }
 
   private context(): AudioContext {

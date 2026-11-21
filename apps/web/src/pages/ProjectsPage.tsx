@@ -25,7 +25,7 @@ type SortKey = 'updated' | 'created' | 'title';
 
 /**
  * Songs: the signed-in home screen. A grid of the user's songs, each drawn
- * as its section outline, with one main action (render, then play) and a
+ * as its section outline, with Play (live in the browser, no server render) and a
  * "…" menu for the rest. "New song" (header) opens the dialog via
  * ?create=1; a new user sees the genres as quick starts instead.
  */
@@ -165,6 +165,7 @@ export function ProjectsPage() {
                     onRename={(title) => rename.mutate({ id: p.id, title })}
                     onRender={() => render.mutate(p.id)}
                     onTogglePlay={() => togglePlay(p)}
+                    onPrepare={() => livePlayer.prepare(p.id, (signal) => playbackApi.forSaved(p.id, signal))}
                   />
                 </li>
               ))}
@@ -225,6 +226,7 @@ function SongCard({
   onRename,
   onRender,
   onTogglePlay,
+  onPrepare,
 }: {
   project: Project;
   live: LiveStatus;
@@ -236,6 +238,8 @@ function SongCard({
   onRename(title: string): void;
   onRender(): void;
   onTogglePlay(): void;
+  /** Hovered or focused: get the song ready so Play starts at once. */
+  onPrepare(): void;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(project.title);
@@ -246,7 +250,11 @@ function SongCard({
     .join(' · ');
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-line/60 bg-panel transition-colors hover:border-line-2">
+    <article
+      className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-line/60 bg-panel transition-colors hover:border-line-2"
+      onPointerEnter={onPrepare}
+      onFocus={onPrepare}
+    >
       {/* The whole card opens the song; controls sit above this layer. */}
       <button
         type="button"

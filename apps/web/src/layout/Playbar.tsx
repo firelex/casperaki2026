@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { playbackApi } from '../api/playback';
@@ -59,6 +59,18 @@ export function Playbar() {
   const position = safeTotalSeconds > 0 ? Math.min(1, currentSeconds / safeTotalSeconds) : 0;
   // The render's waveform only matches the saved song.
   const peaks = done && !editorDirty ? peaksQuery.data : undefined;
+
+  // Get the version on screen ready in the background, so Play starts at
+  // once: right away for the saved song, a moment after editing stops.
+  useEffect(() => {
+    if (!liveKey || !viewSong) return;
+    const song = viewSong;
+    const savedId = songId;
+    const fetchPayload = (signal: AbortSignal) =>
+      editorDirty || !savedId ? playbackApi.forSong(song, signal) : playbackApi.forSaved(savedId, signal);
+    const t = setTimeout(() => livePlayer.prepare(liveKey, fetchPayload), editorDirty ? 1200 : 0);
+    return () => clearTimeout(t);
+  }, [liveKey, viewSong, editorDirty, songId]);
 
   const handlePlayPause = useCallback(() => {
     if (!liveKey || !viewSong) return;
