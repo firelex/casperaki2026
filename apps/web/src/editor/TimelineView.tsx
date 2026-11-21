@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 
+import { catalogApi, catalogQueryKeys } from '../api/catalog';
 import { useLiveTransport } from '../audio/useLiveTransport';
+import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqTrack, type SequencerModel } from './sequencerModel';
 
@@ -22,6 +25,7 @@ const MAX_PX_PER_BAR = 120;
 export function TimelineView() {
   const { viewSong, activeSegment, setActiveSegment } = useSession();
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
+  const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
   const { currentSeconds, playing, isThisSong, seek } = useLiveTransport();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [pxPerBar, setPxPerBar] = useState<number | undefined>(undefined);
@@ -135,7 +139,7 @@ export function TimelineView() {
                 style={{ width: HEADER_W }}
               >
                 <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: t.color }} aria-hidden="true" />
-                <span className="truncate text-[13px] text-white/90" title={t.name}>{t.name}</span>
+                <TrackName name={t.name} catalogId={catalogIdOf(defs.get(t.name)?.id)} />
               </div>
               <div
                 className="relative shrink-0 cursor-pointer border-b border-line/25"
@@ -187,6 +191,28 @@ export function TimelineView() {
         </div>
       </div>
     </div>
+  );
+}
+
+const CATALOG_ID = /^[0-9a-f]{16}$/u;
+function catalogIdOf(id: unknown): string | undefined {
+  return typeof id === 'string' && CATALOG_ID.test(id) ? id : undefined;
+}
+
+/** Track name, with the public name of its sound underneath when it is a catalog sound. */
+function TrackName({ name, catalogId }: { name: string; catalogId: string | undefined }) {
+  const entry = useQuery({
+    queryKey: catalogQueryKeys.entry(catalogId ?? ''),
+    queryFn: ({ signal }) => catalogApi.get(catalogId as string, signal),
+    enabled: Boolean(catalogId),
+    staleTime: 5 * 60_000,
+  });
+  const sound = entry.data?.entry.publicName;
+  return (
+    <span className="flex min-w-0 flex-col leading-tight">
+      <span className="truncate text-[13px] text-white/90" title={name}>{name}</span>
+      {sound ? <span className="truncate text-[11px] text-white/45" title={sound}>{sound}</span> : null}
+    </span>
   );
 }
 

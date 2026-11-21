@@ -59,6 +59,19 @@ export function Playbar() {
     return () => clearTimeout(t);
   }, [liveKey, viewSong, editorDirty, fetchPayload]);
 
+  // Space bar plays / pauses, unless typing in a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || e.repeat) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(t.tagName))) return;
+      e.preventDefault();
+      handlePlayPause();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handlePlayPause]);
+
   const beatsIn = (currentSeconds * bpm) / 60;
   const currentBar = Math.min(Math.max(1, totalBars), Math.floor(beatsIn / 4) + 1);
   const currentBeat = Math.floor(beatsIn % 4) + 1;
