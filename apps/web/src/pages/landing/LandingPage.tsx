@@ -70,46 +70,53 @@ function Hero({ onStart }: { onStart(): void }) {
   return (
     <section id="top">
       <div className="relative isolate overflow-hidden">
-        <img
-          src="/landing/studio-neon.webp"
-          srcSet="/landing/studio-neon-900.webp 900w, /landing/studio-neon.webp 1672w"
-          sizes="100vw"
-          alt="A recording studio at night: mixing desk, monitors, keyboard and a gold record on the wall"
-          fetchPriority="high"
-          className="absolute inset-0 -z-10 h-full w-full object-cover object-[62%_center]"
-        />
+        <picture>
+          <source
+            media="(max-width: 767px)"
+            srcSet="/landing/studio-portrait-750.webp 750w, /landing/studio-portrait.webp 1122w"
+            sizes="100vw"
+          />
+          <img
+            src="/landing/studio-wide.webp"
+            srcSet="/landing/studio-wide-1100.webp 1100w, /landing/studio-wide.webp 1774w"
+            sizes="100vw"
+            alt="A recording studio at night: mixing desk, monitors, keyboard and a gold record on the wall"
+            fetchPriority="high"
+            className="absolute inset-0 -z-10 h-full w-full object-cover object-[center_bottom] md:object-[left_center]"
+          />
+        </picture>
         <div className="landing-hero-shade absolute inset-0 -z-10" aria-hidden="true" />
-        <Wrap className="flex min-h-[min(88vh,820px)] flex-col justify-end pt-32 pb-16 sm:pb-24">
+        <Wrap className="flex min-h-[min(86vh,760px)] md:min-h-[min(82vh,52vw)] flex-col justify-start md:justify-center pt-20 pb-16 md:py-24">
           <h1 className="landing-display text-[clamp(48px,8.6vw,136px)] max-w-[12ch]">Pop deserves better.</h1>
           <p className="landing-tagline mt-4 text-[clamp(26px,3.4vw,50px)]">Let&rsquo;s make it so.</p>
-          <div className="mt-10 grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-            <div className="flex max-w-[58ch] flex-col gap-4 text-[18px] sm:text-[19px] leading-[1.6] text-white/80">
-              <p>
-                Casperaki isn&rsquo;t just another AI music generator. It&rsquo;s an AI-driven sequencer built around
-                the sounds, rhythms, arrangements and production techniques that defined pop music before it fell off
-                a cliff in the mid-2010s.
-              </p>
-              <p>
-                Inspired by the producers behind that era&rsquo;s biggest hits, Casperaki puts their creative building
-                blocks in your hands, giving you the freedom to make something entirely new.
-              </p>
-              <p className="text-white">
-                Their secrets. Your ideas. Let&rsquo;s bring back the magic of pop&rsquo;s golden era.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <PrimaryButton onClick={onStart}>Start a song</PrimaryButton>
-              <a href="#how" className="landing-btn landing-btn-quiet landing-btn-glass">See how it works</a>
-            </div>
+          <div className="mt-10 flex flex-wrap items-center gap-4">
+            <PrimaryButton onClick={onStart}>Start a song</PrimaryButton>
+            <a href="#how" className="landing-btn landing-btn-quiet landing-btn-glass">See how it works</a>
           </div>
         </Wrap>
       </div>
-      <Wrap className="pt-16 sm:pt-20 pb-20 sm:pb-28">
+      <Wrap className="pt-14 sm:pt-20 pb-20 sm:pb-28">
+        <div className="flex max-w-[60ch] flex-col gap-6">
+          <p className="text-[clamp(21px,2vw,26px)] leading-[1.5] text-white/90">
+            Casperaki isn&rsquo;t just another AI music generator. It&rsquo;s an AI-driven sequencer built around the
+            sounds, rhythms, arrangements and production techniques that defined pop music before it fell off a cliff
+            in the mid-2010s.
+          </p>
+          <p className="text-[18px] sm:text-[19px] leading-[1.65] text-white/70">
+            Inspired by the producers behind that era&rsquo;s biggest hits, Casperaki puts their creative building
+            blocks in your hands, giving you the freedom to make something entirely new.
+          </p>
+          <p className="landing-subheading">
+            Their secrets. Your ideas. Let&rsquo;s bring back the magic of pop&rsquo;s golden era.
+          </p>
+        </div>
+        <div className="mt-16 sm:mt-20">
         <ArrangementHero />
         <p className="mt-5 text-[14px] text-white/45 max-w-[70ch]">
           A song in Casperaki: nine sections, five instruments. Each lane is a named sound from the library,
           and each block is something you can move, stretch, copy or replace.
         </p>
+        </div>
       </Wrap>
     </section>
   );
