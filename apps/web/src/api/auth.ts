@@ -10,6 +10,8 @@ export interface MeResponse {
   readonly id: string;
   readonly email: string;
   readonly name: string;
+  /** May browse the sound catalog (BRAIN_ADMIN_EMAILS on the brain). */
+  readonly isAdmin: boolean;
 }
 
 export const auth = {

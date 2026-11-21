@@ -325,3 +325,20 @@ body {
   background: rgba(13, 13, 23, 0.35);
   backdrop-filter: blur(6px);
 }
+
+/* Signed-in app chrome shares the landing page's typeface for headings. */
+.font-archivo {
+  font-family: 'Archivo Variable', var(--font-sans);
+}
+.app-wordmark {
+  font-family: 'Archivo Variable', var(--font-sans);
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.app-heading {
+  font-family: 'Archivo Variable', var(--font-sans);
+  font-stretch: 106%;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}

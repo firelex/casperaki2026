@@ -36,7 +36,8 @@ export function App() {
       <Suspense fallback={<PageSplash />}>
       <Routes>
         <Route path="/" element={<ProjectsPage />} />
-        <Route path="/catalog" element={<CatalogPage />} />
+        {/* The sound library lists source names: admins only. */}
+        {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
         {/* dev-only WASM spikes stay reachable when signed in */}
         <Route path="/wasm-tone" element={<WasmTonePage />} />
         <Route path="/wasm-render" element={<WasmRenderPage />} />

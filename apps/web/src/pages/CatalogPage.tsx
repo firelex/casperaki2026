@@ -18,7 +18,7 @@ export function CatalogPage() {
       <AppHeader />
       <main className="flex-1 min-h-0 flex flex-col">
         <header className="px-8 pt-6 pb-3">
-          <h1 className="text-[24px] font-semibold leading-tight">Sample Library Catalog</h1>
+          <h1 className="app-heading text-[28px] leading-tight">Sound library</h1>
           <p className="text-[12px] text-muted mt-1 max-w-[640px]">
             Read-only browser over the validated catalog — the audit-passing
             intersection of the xlsx instrument snapshot and the sample-library

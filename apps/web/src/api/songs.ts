@@ -48,7 +48,16 @@ export interface Project {
   readonly bpm: number;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /** The song's sections in order, for drawing its shape. */
+  readonly sections: readonly ProjectSection[];
   readonly render: RenderInfo;
+}
+
+export interface ProjectSection {
+  readonly name: string;
+  /** The brain's section type tag (intro / verse / chorus / ...), if any. */
+  readonly type: string | null;
+  readonly bars: number;
 }
 
 export interface GeneratedSong {

@@ -1,78 +1,65 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { Genre } from '@casperaki/song-schema/schemas';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@teamsuzie/ui';
 
 import { AppHeader } from '../layout/AppHeader';
-import { defaultBrainClient } from '../api/client';
-import {
-  renderInFlight,
-  renderLabel,
-  songsApi,
-  songsQueryKeys,
-  type Project,
-} from '../api/songs';
+import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type Project } from '../api/songs';
 import { GenerateDialog } from '../editor/GenerateDialog';
+import { sectionColor } from '../editor/sectionColor';
+import { GENRE_BLURBS, GENRE_LABELS, genreLabel } from '../types/genres';
+import { CANONICAL_GENRES } from '../types/song';
 
 type SortKey = 'updated' | 'created' | 'title';
 
 /**
- * Projects screen.
- *
- * Mirrors `rory-fe/src/views/ProjectsView.vue`: header + 20%/70% split
- * between sidebar nav and listing main. The list is the signed-in user's
- * projects from the brain (GET /api/songs). Each card can open the
- * editor, render the song on the server, play the render, download it as
- * WAV, rename and delete. Bottom-left has the circular Create FAB with
- * rory's red-magenta-blue gradient, which opens the generate dialog.
+ * Songs: the signed-in home screen. A grid of the user's songs, each drawn
+ * as its section outline, with one main action (render, then play) and a
+ * "…" menu for the rest. "New song" (header) opens the dialog via
+ * ?create=1; a new user sees the genres as quick starts instead.
  */
 export function ProjectsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showPage, setShowPage] = useState(false);
-  const [searchActive, setSearchActive] = useState(false);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortKey>('updated');
-  const [createOpen, setCreateOpen] = useState(false);
+  const [create, setCreate] = useState<{ open: boolean; genre?: Genre }>({ open: false });
   const [playingId, setPlayingId] = useState<string | undefined>(undefined);
+  const [paused, setPaused] = useState(true);
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowPage(true), 80);
-    return () => clearTimeout(t);
-  }, []);
-
-  // The header's Create button links here with ?create=1.
-  useEffect(() => {
     if (searchParams.get('create') === '1') {
-      setCreateOpen(true);
+      setCreate({ open: true });
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
-
-  const health = useQuery({
-    queryKey: ['health'],
-    queryFn: () => defaultBrainClient.get<{ ok: boolean; service: string }>('/healthz'),
-    refetchInterval: 15_000,
-    retry: 0,
-  });
-  const brainOk = health.data?.ok === true;
 
   const projectsQuery = useQuery({
     queryKey: songsQueryKeys.list,
     queryFn: ({ signal }) => songsApi.list(signal),
     // Poll while any render is queued or running so cards update by themselves.
-    refetchInterval: (q) =>
-      q.state.data?.projects.some((p) => renderInFlight(p.render)) ? 2000 : false,
+    refetchInterval: (q) => (q.state.data?.projects.some((p) => renderInFlight(p.render)) ? 2000 : false),
   });
   const projects = projectsQuery.data?.projects ?? [];
-
   const invalidate = () => queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
 
   const removal = useMutation({
     mutationFn: (id: string) => songsApi.remove(id),
     onSuccess: (_d, id) => {
-      if (playingId === id) setPlayingId(undefined);
+      if (playingId === id) {
+        audioRef.current?.pause();
+        setPlayingId(undefined);
+      }
       queryClient.removeQueries({ queryKey: songsQueryKeys.song(id) });
       void invalidate();
     },
@@ -88,7 +75,8 @@ export function ProjectsPage() {
 
   const togglePlay = (p: Project) => {
     const audio = audioRef.current;
-    if (!audio || !p.render.mp3Url) return;
+    if (!audio) throw new Error('Audio element is not mounted.');
+    if (!p.render.mp3Url) throw new Error(`Song ${p.id} has no rendered audio to play.`);
     if (playingId === p.id && !audio.paused) {
       audio.pause();
       return;
@@ -96,10 +84,10 @@ export function ProjectsPage() {
     if (playingId !== p.id) {
       audio.src = p.render.mp3Url;
       setPlayingId(p.id);
+      setProgress(0);
     }
     void audio.play();
   };
-  const [paused, setPaused] = useState(true);
 
   const needle = search.trim().toLowerCase();
   const filtered = projects
@@ -107,9 +95,7 @@ export function ProjectsPage() {
       (p) =>
         !needle ||
         p.title.toLowerCase().includes(needle) ||
-        (p.genre ?? '').toLowerCase().includes(needle) ||
-        p.key.toLowerCase().includes(needle) ||
-        p.id.includes(needle),
+        (p.genre !== null && genreLabel(p.genre).toLowerCase().includes(needle)),
     )
     .sort((a, b) =>
       sort === 'title'
@@ -118,156 +104,102 @@ export function ProjectsPage() {
           ? b.createdAt.localeCompare(a.createdAt)
           : b.updatedAt.localeCompare(a.updatedAt),
     );
+  const actionError = removal.error ?? rename.error ?? render.error;
 
   return (
-    <div
-      className={`min-h-screen w-full bg-bg text-fg transition-opacity duration-400 ${
-        showPage ? 'opacity-100' : 'opacity-0'
-      }`}
-    >
-      <div className="max-w-[1800px] mx-auto px-[6vw]">
-        <AppHeader />
-
-        <section className="flex flex-col md:flex-row justify-between pt-[3vw] md:pt-[5vw] gap-8 md:gap-12">
-          {/* Sidebar */}
-          <aside className="w-full md:w-1/5 md:min-w-[180px] flex md:flex-col flex-row flex-wrap items-center md:items-start gap-x-5 gap-y-1 md:sticky md:top-6 md:self-start">
-            <SidebarLink active>Projects</SidebarLink>
-            <SidebarLink onClick={() => navigate('/catalog')}>Catalog</SidebarLink>
-
-            <div className="hidden md:block mt-12 text-[11px] uppercase tracking-[0.18em] text-dim/70 w-full">
-              brain
-            </div>
-            <div className="md:mt-2 flex items-center gap-2 text-[12px]">
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  health.isLoading ? 'bg-dim' : brainOk ? 'bg-ok' : 'bg-err'
-                }`}
-                aria-hidden="true"
+    <div className="min-h-screen w-full bg-bg text-fg">
+      <AppHeader />
+      <main className="mx-auto w-full max-w-[1240px] px-4 pb-24 pt-10 sm:px-8 sm:pt-14">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+          <div>
+            <h1 className="app-heading text-[30px] leading-tight text-white sm:text-[36px]">Your songs</h1>
+            {projects.length > 0 ? (
+              <p className="mt-1 text-[14px] text-white/50">
+                {projects.length === 1 ? '1 song' : `${projects.length} songs`}
+              </p>
+            ) : null}
+          </div>
+          {projects.length > 0 ? (
+            <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+              <input
+                type="search"
+                placeholder="Search songs"
+                aria-label="Search songs"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10 min-w-0 flex-1 rounded-[8px] border border-line bg-panel px-3 text-[14px] text-white outline-none placeholder:text-white/40 focus:border-white/50 sm:w-[240px] sm:flex-none"
               />
-              <span className="text-muted">
-                {health.isLoading ? 'connecting' : brainOk ? 'connected' : 'unreachable'}
-              </span>
-            </div>
-          </aside>
-
-          {/* Main */}
-          <main className="flex-1 flex flex-col mr-0 lg:mr-[60px] min-h-[60vh] pb-32">
-            <header className="flex items-center justify-between gap-6 mb-2">
-              <div
-                className={`relative transition-all duration-300 ${
-                  searchActive ? 'w-[34%]' : 'w-[22%]'
-                } min-w-[160px]`}
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortKey)}
+                aria-label="Sort songs"
+                className="h-10 rounded-[8px] border border-line bg-panel px-3 text-[14px] text-white outline-none focus:border-white/50"
               >
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onFocus={() => setSearchActive(true)}
-                  onBlur={() => setSearchActive(false)}
-                  className={`w-full h-[45px] rounded-lg text-[15px] px-5 outline-none transition-colors text-white placeholder:text-dim/70 ${
-                    searchActive ? 'bg-[#22252c]' : 'bg-[#14171b]'
-                  }`}
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-dim text-[16px]">
-                  ⌕
-                </span>
-              </div>
+                <option value="updated">Last edited</option>
+                <option value="created">Newest</option>
+                <option value="title">Title</option>
+              </select>
+            </div>
+          ) : null}
+        </div>
 
-              <div className="flex items-center gap-3">
-                <label
-                  htmlFor="projects-sort"
-                  className="text-[13px] uppercase tracking-[0.12em] text-muted font-semibold"
-                >
-                  Sort by
-                </label>
-                <select
-                  id="projects-sort"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="h-[45px] rounded-lg bg-[#14171b] text-white text-[15px] px-5 pr-10 outline-none border-0"
-                >
-                  <option value="updated">Last updated</option>
-                  <option value="created">Date created</option>
-                  <option value="title">Title</option>
-                </select>
-              </div>
-            </header>
+        {actionError ? (
+          <p className="mt-6 text-[14px] text-err" role="alert">
+            {actionError.message}
+          </p>
+        ) : null}
 
-            <div
-              className={`flex flex-col gap-6 pt-12 transition-opacity ${
-                searchActive ? 'opacity-60' : 'opacity-100'
-              }`}
-            >
-              {projectsQuery.isLoading ? (
-                <p className="text-muted text-[15px]">Loading projects…</p>
-              ) : projectsQuery.isError ? (
-                <p className="text-err text-[14px]">
-                  Could not load projects: {projectsQuery.error.message}
-                </p>
-              ) : filtered.length === 0 ? (
-                projects.length === 0 ? (
-                  <EmptyState onCreate={() => setCreateOpen(true)} />
-                ) : (
-                  <p className="text-muted text-[15px]">No project matches “{search}”.</p>
-                )
-              ) : (
-                filtered.map((p) => (
-                  <ListingItem
-                    key={p.id}
+        <div className="mt-8">
+          {projectsQuery.isLoading ? (
+            <p className="text-[15px] text-white/55">Loading your songs…</p>
+          ) : projectsQuery.isError ? (
+            <p className="text-[15px] text-err">Your songs could not be loaded: {projectsQuery.error.message}</p>
+          ) : projects.length === 0 ? (
+            <EmptyState onStart={(genre) => setCreate({ open: true, genre })} />
+          ) : filtered.length === 0 ? (
+            <p className="text-[15px] text-white/55">No song matches “{search}”.</p>
+          ) : (
+            <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {filtered.map((p) => (
+                <li key={p.id}>
+                  <SongCard
                     project={p}
                     playing={playingId === p.id && !paused}
+                    progress={playingId === p.id ? progress : 0}
                     onOpen={() => navigate(`/editor/${p.id}/timeline`)}
                     onDelete={() => removal.mutate(p.id)}
                     onRename={(title) => rename.mutate({ id: p.id, title })}
                     onRender={() => render.mutate(p.id)}
                     onTogglePlay={() => togglePlay(p)}
                   />
-                ))
-              )}
-              {removal.isError || rename.isError || render.isError ? (
-                <p className="text-err text-[13px]">
-                  {(removal.error ?? rename.error ?? render.error)?.message}
-                </p>
-              ) : null}
-            </div>
-
-            <footer className="flex items-center justify-between pt-10 text-[13px] text-muted">
-              <p>
-                {filtered.length} of {projects.length} projects
-              </p>
-            </footer>
-          </main>
-        </section>
-      </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </main>
 
       <audio
         ref={audioRef}
         className="hidden"
         onPlay={() => setPaused(false)}
         onPause={() => setPaused(true)}
-        onEnded={() => setPaused(true)}
+        onEnded={() => {
+          setPaused(true);
+          setProgress(0);
+        }}
+        onTimeUpdate={(e) => {
+          const a = e.currentTarget;
+          if (a.duration > 0) setProgress(a.currentTime / a.duration);
+        }}
       />
 
-      {/* Create FAB — rory `.create` gradient */}
-      <button
-        type="button"
-        onClick={() => setCreateOpen(true)}
-        className="fixed left-6 bottom-6 md:left-[120px] md:bottom-[120px] z-30 w-[88px] h-[88px] md:w-[126px] md:h-[126px] rounded-full flex items-center justify-center text-white text-[36px] md:text-[44px] font-light shadow-2xl transition-transform hover:scale-110 active:scale-95"
-        style={{
-          background:
-            'linear-gradient(77.45deg, #ff0000 -2.37%, #cd24c6 68.41%, #1e70eb 129.34%)',
-        }}
-        aria-label="Create new project"
-      >
-        <span className="transition-transform hover:rotate-90">+</span>
-      </button>
-
       <GenerateDialog
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        open={create.open}
+        initialGenre={create.genre}
+        onClose={() => setCreate({ open: false })}
         onCreated={(id) => {
-          setCreateOpen(false);
+          setCreate({ open: false });
           navigate(`/editor/${id}/timeline`);
         }}
       />
@@ -275,53 +207,38 @@ export function ProjectsPage() {
   );
 }
 
-function SidebarLink({
-  children,
-  active = false,
-  onClick,
-}: {
-  children: React.ReactNode;
-  active?: boolean;
-  onClick?: () => void;
-}) {
+function EmptyState({ onStart }: { onStart(genre?: Genre): void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`py-[5px] text-[22px] leading-tight text-left transition-colors ${
-        active ? 'text-white font-semibold' : 'text-white/60 hover:text-white/90'
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function EmptyState({ onCreate }: { onCreate(): void }) {
-  return (
-    <div className="rounded-2xl bg-[rgba(38,43,51,0.55)] px-10 py-12 flex flex-col items-start gap-4 border border-line/40">
-      <h2 className="text-white text-[24px] font-semibold leading-tight">
-        No projects yet
+    <section className="rounded-[16px] border border-line/60 bg-panel/60 px-6 py-10 sm:px-10 sm:py-14">
+      <h2 className="app-heading max-w-[26ch] text-[28px] leading-tight text-white sm:text-[34px]">
+        Your first song is a draft away.
       </h2>
-      <p className="text-muted text-[15px] max-w-[460px] leading-relaxed">
-        Hit <span className="text-white font-semibold">Create</span> (or the big
-        round button bottom-left) to generate your first song. Then open it in the
-        editor, or render it to audio straight from this list.
+      <p className="mt-3 max-w-[56ch] text-[16px] leading-relaxed text-white/65">
+        Pick a genre and Casperaki writes a complete first draft from recorded instruments. Then shape it in the
+        editor and render it to audio.
       </p>
-      <button
-        type="button"
-        onClick={onCreate}
-        className="h-11 px-6 rounded-full bg-accent text-white text-[14px] font-semibold mt-2 hover:bg-accent/90 transition-colors"
-      >
-        Generate a song
-      </button>
-    </div>
+      <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {CANONICAL_GENRES.map((g) => (
+          <li key={g}>
+            <button
+              type="button"
+              onClick={() => onStart(g)}
+              className="flex h-full w-full flex-col gap-1 rounded-[10px] border border-line bg-panel-2/60 px-4 py-4 text-left transition-colors hover:border-white/40"
+            >
+              <span className="text-[16px] font-semibold text-white">{GENRE_LABELS[g]}</span>
+              <span className="text-[13px] leading-snug text-white/55">{GENRE_BLURBS[g]}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
-function ListingItem({
+function SongCard({
   project,
   playing,
+  progress,
   onOpen,
   onDelete,
   onRename,
@@ -330,6 +247,7 @@ function ListingItem({
 }: {
   project: Project;
   playing: boolean;
+  progress: number;
   onOpen(): void;
   onDelete(): void;
   onRename(title: string): void;
@@ -340,28 +258,24 @@ function ListingItem({
   const [draft, setDraft] = useState(project.title);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const r = project.render;
-  const busy = renderInFlight(r);
-  const updated = new Date(project.updatedAt);
-  const stop = (fn: () => void) => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    fn();
-  };
+  const meta = [project.genre === null ? null : genreLabel(project.genre), `${project.bpm} BPM`, project.key]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
-    <div
-      className="group relative flex flex-col sm:flex-row justify-between items-start gap-6 bg-[rgba(38,43,51,0.7)] rounded-[15px] p-7 sm:p-9 cursor-pointer overflow-hidden hover:bg-[rgba(48,53,61,0.7)] transition-colors"
-      onClick={() => !editing && onOpen()}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !editing && e.target === e.currentTarget) onOpen();
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <div className="flex flex-col gap-3 min-w-0">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-[14px] border border-line/60 bg-panel transition-colors hover:border-line-2">
+      {/* The whole card opens the song; controls sit above this layer. */}
+      <button
+        type="button"
+        onClick={onOpen}
+        className="absolute inset-0 z-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        aria-label={`Open ${project.title} in the editor`}
+      />
+      <SectionStrip project={project} progress={progress} />
+      <div className="pointer-events-none relative z-10 flex flex-1 flex-col gap-1 px-5 pb-4 pt-4">
         {editing ? (
           <form
-            className="flex gap-2"
-            onClick={(e) => e.stopPropagation()}
+            className="pointer-events-auto flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
               const t = draft.trim();
@@ -380,125 +294,197 @@ function ListingItem({
                   setEditing(false);
                 }
               }}
-              className="h-10 rounded-lg bg-[#14171b] text-white text-[20px] px-3 outline-none min-w-[240px]"
-              aria-label="Project title"
+              aria-label="Song title"
+              className="h-9 min-w-0 flex-1 rounded-[6px] border border-line bg-bg px-2 text-[16px] text-white outline-none focus:border-white/50"
             />
-            <button type="submit" className="px-3 rounded-lg bg-accent text-white text-[13px] font-semibold">
+            <button type="submit" className="rounded-[6px] bg-accent px-3 text-[13px] font-semibold text-white">
               Save
             </button>
           </form>
         ) : (
-          <h3 className="text-white text-[24px] font-semibold leading-tight truncate max-w-[520px]">
+          <h3 className="truncate text-[18px] font-semibold text-white" title={project.title}>
             {project.title}
           </h3>
         )}
-        <ul className="flex flex-wrap gap-x-8 gap-y-1 text-[14px] text-muted">
-          <li>
-            Genre <strong className="text-white font-semibold ml-1.5">{project.genre ?? '—'}</strong>
-          </li>
-          <li>
-            Key <strong className="text-white font-semibold ml-1.5">{project.key}</strong>
-          </li>
-          <li>
-            BPM <strong className="text-white font-semibold ml-1.5">{project.bpm}</strong>
-          </li>
-          <li>
-            Updated{' '}
-            <strong className="text-white font-semibold ml-1.5">
-              {updated.toLocaleDateString()} {updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </strong>
-          </li>
-        </ul>
-        <div className="flex items-center gap-2 text-[12px]">
-          <span
-            className={`h-2 w-2 rounded-full ${
-              r.state === 'done' ? 'bg-ok' : r.state === 'failed' ? 'bg-err' : busy ? 'bg-accent animate-pulse' : 'bg-dim'
-            }`}
-            aria-hidden="true"
-          />
-          <span className={r.state === 'failed' ? 'text-err' : 'text-muted'}>{renderLabel(r)}</span>
-          {r.state === 'failed' && r.error ? (
-            <span className="text-dim font-mono truncate max-w-[420px]" title={r.error}>
-              {r.error.split('\n')[0]}
-            </span>
-          ) : null}
-        </div>
-      </div>
+        <p className="text-[14px] text-white/60">{meta}</p>
+        <p className="text-[13px] text-white/40">Edited {timeAgo(project.updatedAt)}</p>
 
-      <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-        <IconButton glyph="↗" label="Open in editor" onClick={stop(onOpen)} />
-        {r.state === 'done' ? (
-          <>
-            <IconButton glyph={playing ? '❚❚' : '▶'} label={playing ? 'Pause' : 'Play'} onClick={stop(onTogglePlay)} />
-            <a
-              href={`${r.wavUrl}?download=1`}
-              onClick={(e) => e.stopPropagation()}
-              aria-label="Download WAV"
-              title="Download WAV"
-              className="h-10 w-10 rounded-full flex items-center justify-center text-[17px] text-white/70 hover:text-white hover:bg-white/10"
-            >
-              ↓
-            </a>
-          </>
-        ) : (
-          <IconButton
-            glyph={busy ? '…' : '♫'}
-            label={busy ? renderLabel(r) : r.state === 'failed' ? 'Retry render' : 'Render audio'}
-            disabled={busy}
-            onClick={stop(onRender)}
-          />
-        )}
-        <IconButton
-          glyph="✎"
-          label="Rename"
-          onClick={stop(() => {
-            setDraft(project.title);
-            setEditing(true);
-          })}
-        />
         {confirmDelete ? (
-          <button
-            type="button"
-            onClick={stop(onDelete)}
-            onBlur={() => setConfirmDelete(false)}
-            autoFocus
-            className="h-10 px-3 rounded-full bg-err/80 text-white text-[13px] font-semibold"
-          >
-            Delete?
-          </button>
+          <div className="pointer-events-auto mt-4 flex items-center justify-between gap-3 rounded-[8px] bg-err/10 px-3 py-2">
+            <span className="text-[14px] text-white">Delete this song?</span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="h-8 rounded-full px-3 text-[13px] text-white/75 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className="h-8 rounded-full bg-err px-3 text-[13px] font-semibold text-white"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ) : (
-          <IconButton glyph="✕" label="Delete" onClick={stop(() => setConfirmDelete(true))} />
+          <div className="mt-4 flex items-center gap-3">
+            <MainAction project={project} playing={playing} onRender={onRender} onTogglePlay={onTogglePlay} />
+            <div className="ml-auto pointer-events-auto">
+              <SongMenu
+                project={project}
+                onOpen={onOpen}
+                onRename={() => {
+                  setDraft(project.title);
+                  setEditing(true);
+                }}
+                onDelete={() => setConfirmDelete(true)}
+              />
+            </div>
+          </div>
         )}
+        {r.state === 'failed' && r.error ? (
+          <p className="mt-2 truncate text-[12px] text-err" title={r.error}>
+            {r.error.split('\n')[0]}
+          </p>
+        ) : null}
       </div>
+    </article>
+  );
+}
+
+/** The song's sections as coloured blocks sized by length; while it plays
+ *  the played part is shown brighter. */
+function SectionStrip({ project, progress }: { project: Project; progress: number }) {
+  const total = project.sections.reduce((n, s) => n + s.bars, 0);
+  return (
+    <div className="relative px-5 pt-5" aria-hidden="true">
+      <div className="flex h-12 gap-[2px]">
+        {project.sections.map((s, i) => (
+          <div
+            key={`${s.name}-${i}`}
+            className="min-w-0 rounded-[3px]"
+            style={{ flexGrow: s.bars, flexBasis: 0, background: sectionColor(s.type ?? s.name), opacity: 0.7 }}
+          />
+        ))}
+      </div>
+      {progress > 0 ? (
+        <div className="pointer-events-none absolute bottom-0 left-5 right-5 top-5">
+          <div className="h-full bg-white/25" style={{ width: `${progress * 100}%` }} />
+        </div>
+      ) : null}
+      <p className="sr-only">
+        {project.sections.length} sections, {total} bars
+      </p>
     </div>
   );
 }
 
-function IconButton({
-  glyph,
-  label,
-  onClick,
-  disabled,
+function MainAction({
+  project,
+  playing,
+  onRender,
+  onTogglePlay,
 }: {
-  glyph: string;
-  label: string;
-  onClick?: (e: React.MouseEvent) => void;
-  disabled?: boolean;
+  project: Project;
+  playing: boolean;
+  onRender(): void;
+  onTogglePlay(): void;
 }) {
+  const r = project.render;
+  const base =
+    'pointer-events-auto inline-flex h-10 items-center gap-2 rounded-full px-4 text-[14px] font-semibold transition-colors';
+  if (r.state === 'done') {
+    return (
+      <button
+        type="button"
+        onClick={onTogglePlay}
+        className={`${base} bg-white text-black hover:bg-white/85`}
+        aria-label={playing ? `Pause ${project.title}` : `Play ${project.title}`}
+      >
+        <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
+        {playing ? 'Pause' : 'Play'}
+      </button>
+    );
+  }
+  if (renderInFlight(r)) {
+    return (
+      <span className={`${base} bg-white/10 text-white/75`} role="status">
+        <span className="h-2 w-2 animate-pulse rounded-full bg-accent" aria-hidden="true" />
+        {renderLabel(r)}
+      </span>
+    );
+  }
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      aria-label={label}
-      title={label}
-      className={`h-10 w-10 rounded-full flex items-center justify-center text-[17px] transition-all ${
-        disabled
-          ? 'text-white/30 cursor-not-allowed'
-          : 'text-white/70 hover:text-white hover:bg-white/10'
-      }`}
-    >
-      {glyph}
+    <button type="button" onClick={onRender} className={`${base} border border-white/30 text-white hover:border-white/60`}>
+      {r.state === 'failed' ? 'Retry render' : 'Render to listen'}
     </button>
   );
+}
+
+function SongMenu({
+  project,
+  onOpen,
+  onRename,
+  onDelete,
+}: {
+  project: Project;
+  onOpen(): void;
+  onRename(): void;
+  onDelete(): void;
+}) {
+  const r = project.render;
+  const item = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10';
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="flex h-10 w-10 items-center justify-center rounded-full text-[18px] text-white/70 outline-none hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white/70"
+        aria-label={`More actions for ${project.title}`}
+      >
+        …
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={6}
+        className="z-50 min-w-[200px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl"
+      >
+        <DropdownMenuItem className={item} onSelect={onOpen}>
+          Open in editor
+        </DropdownMenuItem>
+        <DropdownMenuItem className={item} onSelect={onRename}>
+          Rename
+        </DropdownMenuItem>
+        {r.state === 'done' && r.wavUrl && r.mp3Url ? (
+          <>
+            <DropdownMenuItem className={item} asChild>
+              <a href={`${r.wavUrl}?download=1`}>Download WAV</a>
+            </DropdownMenuItem>
+            <DropdownMenuItem className={item} asChild>
+              <a href={`${r.mp3Url}?download=1`}>Download MP3</a>
+            </DropdownMenuItem>
+          </>
+        ) : null}
+        <DropdownMenuSeparator className="my-1 h-px bg-line" />
+        <DropdownMenuItem className={`${item} text-err`} onSelect={onDelete}>
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+const RELATIVE = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+/** "just now", "5 minutes ago", "yesterday", or a date for older edits. */
+function timeAgo(iso: string): string {
+  const then = new Date(iso);
+  const seconds = (then.getTime() - Date.now()) / 1000;
+  const abs = Math.abs(seconds);
+  if (abs < 45) return 'just now';
+  if (abs < 3600) return RELATIVE.format(Math.round(seconds / 60), 'minute');
+  if (abs < 86400) return RELATIVE.format(Math.round(seconds / 3600), 'hour');
+  if (abs < 7 * 86400) return RELATIVE.format(Math.round(seconds / 86400), 'day');
+  return `on ${then.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
 }

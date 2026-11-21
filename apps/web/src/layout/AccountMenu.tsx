@@ -1,21 +1,42 @@
-import { Button } from '@teamsuzie/ui';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@teamsuzie/ui';
+
 import { useAuth } from '../auth/AuthContext';
 
-/**
- * Signed-in account chip: shows the current user's email and a sign-out
- * action built from @teamsuzie/ui Button primitives.
- * Returns null when no user is signed in so the header stays clean on the
- * landing / unauthenticated views.
- */
+/** Account button (the user's initial) opening a menu with the signed-in
+ *  email and "Sign out". */
 export function AccountMenu() {
   const { user, signOut } = useAuth();
   if (!user) return null;
+  const initial = (user.name || user.email).trim().charAt(0).toUpperCase();
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-white/60 hidden sm:inline">{user.email}</span>
-      <Button variant="outline" size="sm" onClick={() => void signOut()}>
-        Sign out
-      </Button>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-panel-2 text-[14px] font-semibold text-white outline-none ring-white/60 hover:bg-line focus-visible:ring-2"
+        aria-label={`Account: ${user.email}`}
+      >
+        {initial}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        sideOffset={8}
+        className="z-50 min-w-[220px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl"
+      >
+        <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">{user.email}</DropdownMenuLabel>
+        <DropdownMenuSeparator className="my-1 h-px bg-line" />
+        <DropdownMenuItem
+          className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10"
+          onSelect={() => void signOut()}
+        >
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

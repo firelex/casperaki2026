@@ -1,3 +1,4 @@
+import { sectionColor } from './sectionColor';
 import { useMemo, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 
@@ -404,17 +405,6 @@ function CardBtn({
   );
 }
 
-function sectionColor(kind: string): string {
-  const k = kind.toLowerCase();
-  if (k.includes('verse')) return 'var(--color-seg-verse)';
-  if (k.includes('break')) return 'var(--color-seg-break)';
-  if (k.includes('chorus')) return 'var(--color-seg-chorus)';
-  if (k.includes('bridge')) return 'var(--color-seg-bridge)';
-  if (k.includes('intro')) return 'var(--color-seg-intro)';
-  if (k.includes('outro')) return 'var(--color-seg-outro)';
-  if (k.includes('pre')) return 'var(--color-seg-prechorus)';
-  return 'var(--color-seg-bridge)';
-}
 
 function fmtDuration(bars: number, bpm: number): string {
   const seconds = (bars * 4 * 60) / bpm;

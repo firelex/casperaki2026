@@ -1,3 +1,4 @@
+import { useAuth } from '../auth/AuthContext';
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -206,6 +207,7 @@ function InstrumentCard({ card }: { card: CardData }) {
     card.totalSegments > 0 ? Math.min(1, card.inSegments / card.totalSegments) : 0;
   const { provenance } = card;
   const isCatalog = provenance.provenance === 'catalog';
+  const isAdmin = useAuth().user?.isAdmin === true;
   return (
     <article
       className="shrink-0 w-[300px] flex flex-col rounded-[15px] overflow-hidden"
@@ -280,7 +282,7 @@ function InstrumentCard({ card }: { card: CardData }) {
 
 
       <div className="mt-auto" />
-      {isCatalog && provenance.catalogId ? (
+      {isCatalog && provenance.catalogId && !isAdmin ? null : isCatalog && provenance.catalogId ? (
         <Link
           to={`/catalog?focus=${provenance.catalogId}`}
           className="mx-5 mt-4 mb-2 px-5 h-10 rounded-lg flex items-center justify-between text-[12px] text-white/85 hover:text-white border border-line hover:border-accent transition-colors"

@@ -20,6 +20,7 @@ export function makeFixtureSong(): GeneratedSong {
       bpm: 120,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      sections: [{ name: 'intro', type: 'intro', bars: 4 }],
       render: { state: 'none' },
     },
     song: {

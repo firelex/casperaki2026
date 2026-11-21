@@ -55,7 +55,7 @@ If `casperaki_render` is missing (`build/` is not committed), rebuild it in `app
 | File | What |
 |---|---|
 | `~/.config/casperaki/auth/.env` | auth service (production: issuer `https://auth.casperaki.com`) |
-| `~/.config/casperaki/brain.env` | brain (production: `https://casperaki.com`) |
+| `~/.config/casperaki/brain.env` | brain (production: `https://casperaki.com`) ; `BRAIN_ADMIN_EMAILS` lists who may open the sound library |
 | `~/.config/casperaki/*.localhost` | the same files for localhost testing (`http://localhost:16500` and `:16505`) |
 | `~/.config/casperaki/admin-password.txt` | password of the first admin, `admin@casperaki.com` |
 | `~/.config/casperaki/pg-password`, `brain-client-secret` | Postgres password; OIDC client secret (in both env files) |

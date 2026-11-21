@@ -1,3 +1,4 @@
+import { useAuth } from '../auth/AuthContext';
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -355,6 +356,7 @@ export function SegmentInspector() {
 function InstrumentProvenanceRow({ info }: { info: InstrumentProvenanceInfo }) {
   const color = familyColor(info.name);
   const isCatalog = info.provenance === 'catalog';
+  const isAdmin = useAuth().user?.isAdmin === true;
   const tone = isCatalog
     ? 'border-ok/40 bg-ok/10 text-ok'
     : info.provenance === 'unknown'
@@ -401,7 +403,7 @@ function InstrumentProvenanceRow({ info }: { info: InstrumentProvenanceInfo }) {
           }
         />
       </div>
-      {isCatalog && info.catalogId ? (
+      {isCatalog && info.catalogId && isAdmin ? (
         <Link
           to={`/catalog?focus=${info.catalogId}`}
           className="ml-4 mr-1 mt-1 inline-flex items-center justify-between gap-2 px-2.5 h-7 rounded text-[10.5px] text-white/85 hover:text-white border border-line hover:border-accent transition-colors"
