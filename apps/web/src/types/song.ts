@@ -438,6 +438,10 @@ export interface InstrumentProvenanceInfo {
   readonly mainStyle: string | undefined;
   readonly addStyles: readonly string[];
   readonly matchedPath: string | undefined;
+  /** Public instrument name from the catalog (data/instrument-aliases.json).
+   *  Set once the catalog entry is known; the library / preset names stay
+   *  internal and are not shown to users. */
+  readonly publicName: string | undefined;
   /** Plain-language label for the provenance — what the card should
    *  display where it currently says "brainRoundtrip" or similar. */
   readonly badge: string;
@@ -479,6 +483,7 @@ export interface CatalogEntryProjection {
   readonly library?: string | null;
   readonly preset?: string | null;
   readonly matchedPath?: string | null;
+  readonly publicName?: string;
 }
 
 /**
@@ -590,8 +595,19 @@ export function resolveInstrumentProvenance(
     mainStyle,
     addStyles,
     matchedPath,
+    publicName: catalogEntry?.publicName,
     badge,
   };
+}
+
+/** What the UI calls an instrument's sound: its public catalog name. A
+ *  catalog sound whose entry is still loading shows "…"; a legacy or
+ *  fixture definition (no catalog row, so no public name) shows its
+ *  definition's shortName. */
+export function soundLabel(info: InstrumentProvenanceInfo): string {
+  if (info.publicName) return info.publicName;
+  if (info.provenance === 'catalog') return '…';
+  return info.shortName ?? '—';
 }
 
 /** Index a song's instrument definitions by display name so the views

@@ -13,6 +13,7 @@ import {
 function makeEntry(overrides: Partial<CatalogEntry> = {}): CatalogEntry {
   return {
     id: '0123456789abcdef',
+    publicName: 'Iron Knocker',
     family: 'kickDrums',
     lowLevel: 'kickDrumsAcoustic',
     mainStyle: 'brightPop',
@@ -35,9 +36,9 @@ function makeEntry(overrides: Partial<CatalogEntry> = {}): CatalogEntry {
 }
 
 describe('catalog view helpers', () => {
-  it('projectEntry composes a display name from library + preset', () => {
+  it('projectEntry shows the public name, not library + preset', () => {
     const row = projectEntry(makeEntry());
-    expect(row.displayName).toBe('addictiveDrums — A Fair Ballad');
+    expect(row.displayName).toBe('Iron Knocker');
     expect(row.familyLowLevel).toBe('kickDrums / kickDrumsAcoustic');
     expect(row.styleLabel).toBe('brightPop +edm,rock');
     expect(row.libraryLabel).toBe('addictiveDrums');
@@ -46,9 +47,9 @@ describe('catalog view helpers', () => {
     expect(row.matchedPath).toContain('kickDrums - kickDrumsAcoustic');
   });
 
-  it('projectEntry falls back to lowLevel when library + preset are blank', () => {
+  it('projectEntry labels a missing library', () => {
     const row = projectEntry(makeEntry({ library: null, preset: null }));
-    expect(row.displayName).toBe('kickDrumsAcoustic');
+    expect(row.displayName).toBe('Iron Knocker');
     expect(row.libraryLabel).toBe('— none —');
   });
 

@@ -405,7 +405,7 @@ function FiltersRow(props: FiltersRowProps) {
           type="search"
           value={props.q}
           onChange={(e) => props.onQChange(e.target.value)}
-          placeholder="lowLevel / preset / library / path…"
+          placeholder="name / lowLevel / preset / library / path…"
           className="h-9 mt-1 px-3 rounded-md bg-panel border border-line text-[13px] text-white placeholder:text-dim focus:outline-none focus:border-accent w-[240px]"
         />
       </div>
@@ -593,8 +593,9 @@ function DetailRail({
           {selectedEntry ? (
             <div className="border-t border-line/40 px-5 py-4 flex flex-col gap-3 text-[12px]">
               <DetailRow label="Catalog id" value={selectedEntry.id} mono />
-              <DetailRow label="Preset" value={selectedEntry.preset ?? '—'} />
-              <DetailRow label="Library" value={selectedEntry.library ?? '—'} />
+              <DetailRow label="Name" value={selectedEntry.publicName} />
+              <DetailRow label="Source preset" value={selectedEntry.preset ?? '—'} />
+              <DetailRow label="Source library" value={selectedEntry.library ?? '—'} />
               <DetailRow
                 label="Styles"
                 value={`${selectedEntry.mainStyle ?? '—'}${

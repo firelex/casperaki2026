@@ -12,6 +12,7 @@ import {
   indexInstrumentDefinitions,
   patternTypesForInstrument,
   resolveInstrumentProvenance,
+  soundLabel,
   summarizeStructure,
   type InstrumentProvenanceInfo,
 } from '../types/song';
@@ -77,6 +78,7 @@ export function SoundDesignView() {
           mainStyle: entry.mainStyle ?? card.provenance.mainStyle,
           addStyles: entry.addStyles.length > 0 ? entry.addStyles : card.provenance.addStyles,
           matchedPath: entry.matchedPath ?? card.provenance.matchedPath,
+          publicName: entry.publicName,
         },
       } satisfies CardData;
     });
@@ -233,8 +235,7 @@ function InstrumentCard({ card }: { card: CardData }) {
       </div>
 
       <div className="px-7 pt-3 flex flex-col gap-2">
-        <CardKV label="Preset" value={provenance.preset ?? provenance.shortName ?? '—'} />
-        <CardKV label="Library" value={provenance.library ?? '—'} />
+        <CardKV label="Sound" value={soundLabel(provenance)} />
         <CardKV
           label="Family / lowLevel"
           value={
@@ -277,14 +278,6 @@ function InstrumentCard({ card }: { card: CardData }) {
         </div>
       </div>
 
-      {provenance.matchedPath ? (
-        <div
-          className="mx-7 mt-3 text-[10px] uppercase tracking-[0.14em] text-dim/80 truncate font-mono"
-          title={provenance.matchedPath}
-        >
-          {provenance.matchedPath}
-        </div>
-      ) : null}
 
       <div className="mt-auto" />
       {isCatalog && provenance.catalogId ? (

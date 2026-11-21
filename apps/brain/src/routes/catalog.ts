@@ -22,6 +22,7 @@ import { z } from 'zod';
 import {
   loadInstrumentCatalogSnapshot,
   loadValidatedCatalog,
+  publicNameOf,
   type InstrumentCatalogSnapshot,
   type ValidatedCatalog,
   type ValidatedCatalogEntry,
@@ -49,12 +50,19 @@ export interface CatalogRouterDeps {
   /** Optional injection points for tests. Default to the package loaders. */
   readonly loadCatalog?: () => ValidatedCatalog;
   readonly loadSnapshot?: () => InstrumentCatalogSnapshot;
+  /** Public name of an entry; defaults to the instrument-aliases registry. */
+  readonly publicName?: (entry: ValidatedCatalogEntry) => string;
 }
+
+/** A catalog entry as the API sends it: with its public instrument name. */
+export type PublicCatalogEntry = ValidatedCatalogEntry & { readonly publicName: string };
 
 export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
   const router = Router();
   const loadCat = deps.loadCatalog ?? loadValidatedCatalog;
   const loadSnap = deps.loadSnapshot ?? loadInstrumentCatalogSnapshot;
+  const nameOf = deps.publicName ?? ((e: ValidatedCatalogEntry) => publicNameOf(e));
+  const withName = (e: ValidatedCatalogEntry): PublicCatalogEntry => ({ ...e, publicName: nameOf(e) });
 
   router.get('/api/catalog/summary', (_req: Request, res: Response) => {
     const catalog = loadCat();
@@ -76,8 +84,8 @@ export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
     const catalog = loadCat();
     const limit = parsed.data.limit ?? 50;
     const cursor = parsed.data.cursor ?? 0;
-    const filtered = filterEntries(catalog.entries, parsed.data);
-    const page = filtered.slice(cursor, cursor + limit);
+    const filtered = filterEntries(catalog.entries, parsed.data, nameOf);
+    const page = filtered.slice(cursor, cursor + limit).map(withName);
     const nextCursor = cursor + page.length < filtered.length ? cursor + page.length : null;
     return res.json({
       total: filtered.length,
@@ -107,7 +115,7 @@ export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
     // The frontend asks for "unique lowLevels". One row per (family,
     // lowLevel); we keep family in the key so e.g. the `keys` /
     // `synths` families never collide on a shared lowLevel name.
-    const filtered = filterEntries(catalog.entries, { ...parsed.data, lowLevel: undefined });
+    const filtered = filterEntries(catalog.entries, { ...parsed.data, lowLevel: undefined }, nameOf);
     const groups = groupByLowLevel(filtered);
     const page = groups.slice(cursor, cursor + limit);
     const nextCursor = cursor + page.length < groups.length ? cursor + page.length : null;
@@ -129,7 +137,7 @@ export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
       return res.status(404).json({ error: 'not_found', id: req.params.id });
     }
     return res.json({
-      entry,
+      entry: withName(entry),
       catalogContentHash: catalog.catalogContentHash,
       auditContentHash: catalog.auditContentHash,
     });
@@ -166,6 +174,7 @@ interface FilterOptions {
 export function filterEntries(
   entries: readonly ValidatedCatalogEntry[],
   opts: FilterOptions,
+  publicName?: (entry: ValidatedCatalogEntry) => string,
 ): readonly ValidatedCatalogEntry[] {
   const qLower = opts.q?.trim().toLowerCase();
   return entries.filter((e) => {
@@ -184,6 +193,7 @@ export function filterEntries(
     }
     if (qLower) {
       const hay = [
+        publicName?.(e),
         e.preset,
         e.library,
         e.lowLevel,

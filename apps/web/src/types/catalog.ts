@@ -53,8 +53,7 @@ export function filterOptionsFromVocabulary(
 /** Row projection consumed by the catalog table component. */
 export interface CatalogEntryRow {
   readonly id: string;
-  /** Display title: `library - preset` when both present, else the preset
-   *  or `lowLevel`, etc. */
+  /** Display title: the entry's public instrument name. */
   readonly displayName: string;
   readonly family: string;
   readonly lowLevel: string;
@@ -71,7 +70,7 @@ export interface CatalogEntryRow {
 export function projectEntry(entry: CatalogEntry): CatalogEntryRow {
   return {
     id: entry.id,
-    displayName: deriveDisplayName(entry),
+    displayName: entry.publicName,
     family: entry.family,
     lowLevel: entry.lowLevel,
     familyLowLevel: `${entry.family} / ${entry.lowLevel}`,
@@ -82,14 +81,6 @@ export function projectEntry(entry: CatalogEntry): CatalogEntryRow {
     sourceLabel: `${entry.sourceSheet} row ${entry.sourceRow}`,
     matchedRule: entry.matchedRule,
   };
-}
-
-function deriveDisplayName(entry: CatalogEntry): string {
-  const parts: string[] = [];
-  if (entry.library) parts.push(entry.library);
-  if (entry.preset) parts.push(entry.preset);
-  if (parts.length === 0) return entry.lowLevel;
-  return parts.join(' — ');
 }
 
 /** Compose `mainStyle` + `addStyles` into a single human label, e.g.

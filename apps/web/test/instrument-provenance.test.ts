@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   resolveInstrumentProvenance,
+  soundLabel,
   splitShortName,
 } from '../src/types/song';
 import type { InstrumentDefinition } from '@casperaki/song-schema';
@@ -64,6 +65,16 @@ describe('resolveInstrumentProvenance', () => {
     expect(info.mainStyle).toBe('brightPop');
     expect(info.addStyles).toEqual(['edm', 'rock']);
     expect(info.matchedPath).toBe('/D/samples/x.wav');
+  });
+
+  it('labels a catalog sound by its public name, never library / preset', () => {
+    const before = resolveInstrumentProvenance('Drums', catalogDef, []);
+    expect(soundLabel(before)).toBe('…');
+    const after = resolveInstrumentProvenance('Drums', catalogDef, [], {
+      id: 'f91e64bd0b4d2991',
+      publicName: 'Iron Knocker',
+    });
+    expect(soundLabel(after)).toBe('Iron Knocker');
   });
 
   it('marks vocaloid fixture ids as an adapter fixture, not catalog', () => {

@@ -39,6 +39,8 @@ export interface CatalogSummary {
  *  `ValidatedCatalogEntry`. */
 export interface CatalogEntry {
   readonly id: string;
+  /** Public instrument name shown to users instead of library / preset. */
+  readonly publicName: string;
   readonly family: string;
   readonly lowLevel: string;
   readonly mainStyle: string | null;

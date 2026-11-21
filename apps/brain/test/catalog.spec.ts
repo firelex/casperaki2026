@@ -130,6 +130,21 @@ describe('GET /api/catalog/instruments', () => {
     await h.stop();
   });
 
+  it('gives every entry its public name and finds entries by it', async () => {
+    const res = await fetch(`${h.url}/api/catalog/instruments?limit=20`);
+    const body = (await res.json()) as { entries: Array<{ id: string; publicName: string; preset: string | null }> };
+    for (const e of body.entries) expect(e.publicName).toMatch(/^[A-Z][a-z]+ [A-Z][a-z]+$/u);
+    const first = body.entries[0]!;
+    const one = (await (await fetch(`${h.url}/api/catalog/instruments/${first.id}`)).json()) as {
+      entry: { publicName: string };
+    };
+    expect(one.entry.publicName).toBe(first.publicName);
+    const found = (await (
+      await fetch(`${h.url}/api/catalog/instruments?q=${encodeURIComponent(first.publicName)}&limit=500`)
+    ).json()) as { entries: Array<{ id: string }> };
+    expect(found.entries.map((e) => e.id)).toContain(first.id);
+  });
+
   it('paginates with cursor + nextCursor and surfaces total', async () => {
     const res = await fetch(`${h.url}/api/catalog/instruments?limit=3`);
     expect(res.status).toBe(200);

@@ -76,6 +76,7 @@ export {
   type BuildSnapshotInput,
   type SheetRows,
 } from './catalog/build-snapshot.js';
+export { loadPublicNames, publicNameOf } from './catalog/public-names.js';
 export {
   resolveAliases,
   buildAliasRegistry,

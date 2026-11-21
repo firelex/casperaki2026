@@ -8,6 +8,7 @@ import {
   indexInstrumentDefinitions,
   patternTypesForInstrument,
   resolveInstrumentProvenance,
+  soundLabel,
   type SegmentDetail,
   type InstrumentPatternSummary,
   type InstrumentProvenanceInfo,
@@ -94,6 +95,7 @@ export function SegmentInspector() {
         mainStyle: entry.mainStyle ?? info.mainStyle,
         addStyles: entry.addStyles.length > 0 ? entry.addStyles : info.addStyles,
         matchedPath: entry.matchedPath ?? info.matchedPath,
+        publicName: entry.publicName,
       } satisfies InstrumentProvenanceInfo;
     });
   }, [provenanceBase, catalogQueries, catalogIds]);
@@ -358,7 +360,7 @@ function InstrumentProvenanceRow({ info }: { info: InstrumentProvenanceInfo }) {
     : info.provenance === 'unknown'
       ? 'border-line bg-white/[0.04] text-white/55'
       : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-300';
-  const presetLabel = info.preset ?? info.shortName ?? '—';
+  const presetLabel = soundLabel(info);
   return (
     <div className="flex flex-col gap-1 px-2.5 py-2 rounded-[10px] bg-white/[0.04]">
       <div className="flex items-center gap-2">
@@ -381,7 +383,6 @@ function InstrumentProvenanceRow({ info }: { info: InstrumentProvenanceInfo }) {
         {presetLabel}
       </div>
       <div className="pl-4 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10.5px] text-dim">
-        <KVRow label="library" value={info.library ?? '—'} />
         <KVRow label="family" value={info.family ?? '—'} />
         <KVRow label="lowLevel" value={info.lowLevel ?? '—'} />
         <KVRow
@@ -400,14 +401,6 @@ function InstrumentProvenanceRow({ info }: { info: InstrumentProvenanceInfo }) {
           }
         />
       </div>
-      {info.matchedPath ? (
-        <div
-          className="pl-4 text-[10px] font-mono text-dim/85 truncate"
-          title={info.matchedPath}
-        >
-          {info.matchedPath}
-        </div>
-      ) : null}
       {isCatalog && info.catalogId ? (
         <Link
           to={`/catalog?focus=${info.catalogId}`}
