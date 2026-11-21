@@ -50,6 +50,34 @@ directory.
 If `casperaki_render` is missing (`build/` is not committed), rebuild it in `apps/web/wasm/engine`:
 `cmake -S . -B build && cmake --build build` (that folder's README).
 
+## Live playback in the browser
+
+Play needs no server render. The brain lowers the song (about 1 s, cached per song id in
+`BRAIN_PLAYBACK_DIR`) and serves the sample slices it plays as small OGGs (`BRAIN_SAMPLE_CACHE_DIR`;
+cut from the library on first use, pre-warmed when a song is opened). The browser's WASM engine
+(`apps/web/public/wasm/engine-render.wasm`, built by `apps/web/wasm/engine/build-wasm.sh`; gitignored,
+so `deploy.sh` builds it) mixes them in real time in an AudioWorklet. The editor plays the version on
+screen, unsaved edits included (`POST /api/playback`). The server render is now only **Export**
+(WAV / MP3 downloads).
+
+Status: the live path plays without the mix and effects (the WASM mix runs only ~1.1-1.8x real time,
+too tight to stream); seeking works; the level is a fixed gain with a limiter.
+
+## Pattern lab (admins)
+
+`/patterns`: Casperaki-written pattern proposals (`packages/arrangement/data/patterns/proposals/*.json`,
+fixed drum blueprints or a generator in `src/patterns/drums-authored.ts`). Each can be heard in a full
+song with the proposal or with the current library on the same seed, then approved or rejected
+(stored in `songs.sqlite`, table `pattern_reviews`). Approved ones reach new songs after:
+
+```sh
+cd apps/brain && set -a && . ~/.config/casperaki/brain.env && set +a
+node_modules/.bin/tsx scripts/export-approved-patterns.ts   # writes data/patterns/drums (authored-<id> styles)
+```
+
+then commit, push and `deploy.sh`. The reviewer account is `reviewer@casperaki.com` (password in
+`~/.config/casperaki/reviewer-password.txt`); admins are listed in `BRAIN_ADMIN_EMAILS`.
+
 ## Configuration (outside the repos)
 
 | File | What |
@@ -58,6 +86,7 @@ If `casperaki_render` is missing (`build/` is not committed), rebuild it in `app
 | `~/.config/casperaki/brain.env` | brain (production: `https://casperaki.com`) ; `BRAIN_ADMIN_EMAILS` lists who may open the sound library |
 | `~/.config/casperaki/*.localhost` | the same files for localhost testing (`http://localhost:16500` and `:16505`) |
 | `~/.config/casperaki/admin-password.txt` | password of the first admin, `admin@casperaki.com` |
+| `~/.config/casperaki/reviewer-password.txt` | password of the pattern-lab reviewer, `reviewer@casperaki.com` |
 | `~/.config/casperaki/pg-password`, `brain-client-secret` | Postgres password; OIDC client secret (in both env files) |
 
 To test locally, copy the `.localhost` files over the production ones and restart both services. Then open
