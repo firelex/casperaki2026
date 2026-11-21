@@ -301,3 +301,22 @@ body {
 .landing-faq[open] .landing-faq-mark::after {
   transform: rotate(0deg);
 }
+
+/* Hero photo: darkened towards the bottom and left so the headline reads,
+ * fading into the page background below. */
+.landing-hero-shade {
+  background:
+    linear-gradient(to top, var(--color-bg) 0%, rgba(13, 13, 23, 0.8) 30%, rgba(13, 13, 23, 0.1) 66%, rgba(13, 13, 23, 0.3) 100%),
+    linear-gradient(to right, rgba(13, 13, 23, 0.6) 0%, rgba(13, 13, 23, 0) 55%);
+}
+.landing-tagline {
+  font-stretch: 125%;
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.82);
+}
+.landing-btn-glass {
+  background: rgba(13, 13, 23, 0.35);
+  backdrop-filter: blur(6px);
+}

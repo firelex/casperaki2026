@@ -68,29 +68,39 @@ function Nav({ onSignIn }: { onSignIn(): void }) {
 
 function Hero({ onStart }: { onStart(): void }) {
   return (
-    <section id="top" className="pt-16 sm:pt-24 pb-20 sm:pb-28">
-      <Wrap>
-        <h1 className="landing-display text-[clamp(42px,7.4vw,112px)] max-w-[14ch]">
-          Songs you direct, bar by bar.
-        </h1>
-        <div className="mt-8 grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-          <p className="max-w-[56ch] text-[18px] sm:text-[19px] leading-[1.6] text-white/75">
-            Casperaki writes a full song from recorded instruments, the way a producer would, then hands you
-            every part of it. Change the structure, swap any sound, lengthen a chorus, render it again. AI makes
-            suggestions; you make the decisions.
-          </p>
-          <div className="flex flex-wrap items-center gap-4">
-            <PrimaryButton onClick={onStart}>Start a song</PrimaryButton>
-            <a href="#how" className="landing-btn landing-btn-quiet">See how it works</a>
+    <section id="top">
+      <div className="relative isolate overflow-hidden">
+        <img
+          src="/landing/studio-neon.webp"
+          srcSet="/landing/studio-neon-900.webp 900w, /landing/studio-neon.webp 1672w"
+          sizes="100vw"
+          alt="A recording studio at night: mixing desk, monitors, keyboard and a gold record on the wall"
+          fetchPriority="high"
+          className="absolute inset-0 -z-10 h-full w-full object-cover object-[62%_center]"
+        />
+        <div className="landing-hero-shade absolute inset-0 -z-10" aria-hidden="true" />
+        <Wrap className="flex min-h-[min(88vh,820px)] flex-col justify-end pt-32 pb-16 sm:pb-24">
+          <h1 className="landing-display text-[clamp(48px,8.6vw,136px)] max-w-[12ch]">Pop deserves better.</h1>
+          <p className="landing-tagline mt-4 text-[clamp(26px,3.4vw,50px)]">Let&rsquo;s make it so.</p>
+          <div className="mt-10 grid gap-8 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <p className="max-w-[56ch] text-[18px] sm:text-[19px] leading-[1.6] text-white/80">
+              Casperaki writes a full song from recorded instruments, the way a producer would, then hands you
+              every part of it. Change the structure, swap any sound, lengthen a chorus, render it again. AI makes
+              suggestions; you make the decisions.
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <PrimaryButton onClick={onStart}>Start a song</PrimaryButton>
+              <a href="#how" className="landing-btn landing-btn-quiet landing-btn-glass">See how it works</a>
+            </div>
           </div>
-        </div>
-        <div className="mt-16 sm:mt-20">
-          <ArrangementHero />
-          <p className="mt-5 text-[14px] text-white/45 max-w-[70ch]">
-            A song in Casperaki: nine sections, five instruments. Each lane is a named sound from the library,
-            and each block is something you can move, stretch, copy or replace.
-          </p>
-        </div>
+        </Wrap>
+      </div>
+      <Wrap className="pt-16 sm:pt-20 pb-20 sm:pb-28">
+        <ArrangementHero />
+        <p className="mt-5 text-[14px] text-white/45 max-w-[70ch]">
+          A song in Casperaki: nine sections, five instruments. Each lane is a named sound from the library,
+          and each block is something you can move, stretch, copy or replace.
+        </p>
       </Wrap>
     </section>
   );
