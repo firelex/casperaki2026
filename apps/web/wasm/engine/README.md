@@ -113,7 +113,16 @@ Two modules:
   moves the play position without allocating (voices sounding at `frame` are recreated
   mid-note; FX LFO phases follow the song position; `prerollFrames` of music before
   `frame` are rendered silently to refill reverb/delay tails), `mixer_position()` reads it.
-  Failures return 0/-1 and set `mixer_last_error()` + `mixer_last_error_message()`. The five WASI stdio
+  Failures return 0/-1 and set `mixer_last_error()` + `mixer_last_error_message()`.
+  **Instrument lanes** (sequencer rows, one per inst-N.json `name`; the shared transition
+  track + risers are "Sample Transitions FX"): `mixer_lane_count()`, `mixer_lane_name(i)` /
+  `mixer_lane_name_length(i)`, `mixer_set_lane_gain(i, gain)` (mute/solo; 10 ms ramp, no
+  allocation, also scales the lane's aux sends). `mixer_enable_meters(binFrames)` (before
+  `mixer_build`) records per lane and per bin the peak and RMS of the lane's signal after its
+  gain and automation, before its fxGroup submix rack, the aux returns and the master
+  (`mixer_meter_bin_count()`, `mixer_lane_peaks(i)`, `mixer_lane_rms(i)`); arrays are sized
+  at build, pulls never allocate; meant for one straight pull pass (the seek pre-roll is not
+  metered). `lanes_test` (ctest) checks the names, meters == a solo render, and muting. The five WASI stdio
   imports are unused (worklet stubs them); memory growth is ON for the real library
   (tens of MB/genre) and adds `env.emscripten_notify_memory_growth` — a no-op, safe
   because all heap growth happens during build (before the L/R views are taken) and

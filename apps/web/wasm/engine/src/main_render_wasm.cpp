@@ -16,6 +16,12 @@
 //     mixer_left() / mixer_right()     -- planar float* into the wasm heap
 //     mixer_seek(frame, prerollFrames) -- move the play position (no allocation)
 //     mixer_position()                 -- frame the next pull renders from
+//   instrument lanes (sequencer rows), after mixer_build:
+//     mixer_lane_count(), mixer_lane_name(i) + mixer_lane_name_length(i)
+//     mixer_set_lane_gain(i, gain)     -- mute/solo, 10 ms ramp, no allocation
+//     mixer_enable_meters(binFrames)   -- before mixer_build (or right after,
+//                                         before taking the L/R views)
+//     mixer_meter_bin_count(), mixer_lane_peaks(i), mixer_lane_rms(i)
 //   errors: a call that fails returns 0 / -1 and sets mixer_last_error() and
 //   mixer_last_error_message() (NUL-terminated UTF-8 in the heap).
 //
@@ -59,10 +65,12 @@ struct State {
     int blockSize = 128;
     double tailSec = 2.5;
     // 0 ok, 1 resolve/build threw, 2 mix on but no mix config, 3 mix config
-    // invalid, 4 seek failed. lastErrorMessage says what went wrong.
+    // invalid, 4 seek failed, 5 lane/meter call failed. lastErrorMessage says
+    // what went wrong.
     int lastError = 0;
     std::string lastErrorMessage;
     bool mixEnabled = false;     // Phase 2 Scope A — set before mixer_build
+    int meterBinFrames = 0;      // mixer_enable_meters before build (0 = off)
     // The shared mix-config.json (volumes, sends, fxGroups, rack chains), parsed
     // from text JS hands in. The Mixer keeps a pointer, so it lives here.
     std::unique_ptr<mix::MixConfig> mixConfig;
@@ -77,6 +85,23 @@ void setError(State& s, int code, const std::string& message) {
     s.lastError = code;
     s.lastErrorMessage = message;
 }
+
+// Runs `f` on the built mixer; on failure records error 5 and returns `bad`.
+template <class R, class F>
+R laneCall(const char* what, R bad, F f) {
+    State& s = state();
+    if (!s.mixer) {
+        setError(s, 5, std::string(what) + ": no mixer (mixer_build has not succeeded)");
+        return bad;
+    }
+    try {
+        return f(*s.mixer);
+    } catch (const std::exception& e) {
+        setError(s, 5, std::string(what) + ": " + e.what());
+        return bad;
+    }
+}
+
 
 // SampleData with the same +pad margin the native loader uses, so the Lagrange
 // lookahead / pitch-up overshoot can never read past the end.
@@ -175,6 +200,7 @@ int mixer_build(const char* song, int songLen, const char* instBlob,
         // Same switch as the native CASPERAKI_MIX=1 render (Render.h).
         s.mixer->setMixEnabled(s.mixEnabled);
         if (s.mixEnabled) s.mixer->setMixConfig(*s.mixConfig);
+        if (s.meterBinFrames > 0) s.mixer->enableMeters(s.meterBinFrames);
         for (auto& kv : s.idSamples) s.mixer->setSample(kv.first, kv.second);
         s.mixer->build(ev, instJsons);
         return (int)s.mixer->totalFrames();
@@ -257,6 +283,65 @@ int mixer_seek(int frame, int prerollFrames) {
         setError(s, 4, e.what());
         return -1;
     }
+}
+
+// ---- instrument lanes ---------------------------------------------------------
+// Number of instrument lanes (one per instrument name, in track order), -1 on error.
+int mixer_lane_count() {
+    return laneCall("mixer_lane_count", -1, [](Mixer& m) { return m.laneCount(); });
+}
+
+// Lane i's name: NUL-terminated UTF-8 (the inst-N.json `name`, e.g. "Bass"), or
+// null on error. mixer_lane_name_length gives its byte length (-1 on error).
+const char* mixer_lane_name(int lane) {
+    return laneCall("mixer_lane_name", (const char*)nullptr,
+                    [lane](Mixer& m) { return m.laneName(lane).c_str(); });
+}
+int mixer_lane_name_length(int lane) {
+    return laneCall("mixer_lane_name_length", -1,
+                    [lane](Mixer& m) { return (int)m.laneName(lane).size(); });
+}
+
+// Live lane gain (0 = mute), ramped over 10 ms from the next pull. Safe between
+// pulls on the audio thread (no allocation). Returns 1, or 0 on error.
+int mixer_set_lane_gain(int lane, float gain) {
+    return laneCall("mixer_set_lane_gain", 0, [lane, gain](Mixer& m) {
+        m.setLaneGain(lane, gain);
+        return 1;
+    });
+}
+
+// Opt into per-lane meters with bins of `binFrames` frames. Before mixer_build it
+// is remembered and applied at build; after it, the arrays are allocated now
+// (heap growth: take the L/R views afterwards). Returns 1, or 0 on error.
+int mixer_enable_meters(int binFrames) {
+    State& s = state();
+    if (binFrames <= 0) {
+        setError(s, 5, "mixer_enable_meters: binFrames must be > 0");
+        return 0;
+    }
+    s.meterBinFrames = binFrames;
+    if (!s.mixer) return 1;
+    return laneCall("mixer_enable_meters", 0, [binFrames](Mixer& m) {
+        m.enableMeters(binFrames);
+        return 1;
+    });
+}
+
+// Bins per lane (ceil(totalFrames / binFrames)), -1 on error.
+int mixer_meter_bin_count() {
+    return laneCall("mixer_meter_bin_count", -1, [](Mixer& m) { return m.meterBinCount(); });
+}
+
+// Lane i's per-bin peak / RMS (float[mixer_meter_bin_count()] in the heap), or
+// null on error. Filled in as the song is pulled.
+const float* mixer_lane_peaks(int lane) {
+    return laneCall("mixer_lane_peaks", (const float*)nullptr,
+                    [lane](Mixer& m) { return m.lanePeaks(lane); });
+}
+const float* mixer_lane_rms(int lane) {
+    return laneCall("mixer_lane_rms", (const float*)nullptr,
+                    [lane](Mixer& m) { return m.laneRms(lane); });
 }
 
 // The frame the next mixer_pull renders from (0 with no mixer).

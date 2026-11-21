@@ -87,6 +87,13 @@ add_executable(mixconfig_test test/mixconfig_test.cpp)
 target_compile_definitions(mixconfig_test PRIVATE
     MIXCONFIG_JSON_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
 
+# Instrument lanes: names, per-lane meters, live lane gain (mute/solo).
+add_executable(lanes_test test/lanes_test.cpp)
+target_link_libraries(lanes_test PRIVATE aw_fx)
+target_compile_definitions(lanes_test PRIVATE
+    LANES_GENRE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../engine-spike/out/all-genre-render-smoke/latin"
+    LANES_MIX_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
+
 enable_testing()
 add_test(NAME random_test COMMAND random_test)
 add_test(NAME audio_test COMMAND audio_test)
@@ -95,3 +102,4 @@ add_test(NAME realsample_test COMMAND realsample_test)
 add_test(NAME airwindows_test COMMAND airwindows_test)
 add_test(NAME noise_source_test COMMAND noise_source_test)
 add_test(NAME mixconfig_test COMMAND mixconfig_test)
+add_test(NAME lanes_test COMMAND lanes_test)

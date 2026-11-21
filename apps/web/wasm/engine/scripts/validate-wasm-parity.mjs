@@ -138,7 +138,8 @@ function loadEnvelope(genre) {
 }
 
 // --- WASM render of N blocks (optionally mix on, optionally after a seek) -----
-// opts: { mix: bool, seekFrame?: number, prerollFrames?: number }
+// opts: { mix: bool, seekFrame?: number, prerollFrames?: number,
+//         meterBin?: number, laneGains?: [lane, gain][] }
 async function wasmRender(env, opts = {}) {
   const bytes = readFileSync(WASM);
   const mod = await WebAssembly.compile(bytes);
@@ -199,8 +200,12 @@ async function wasmRender(env, opts = {}) {
     if (!ok) throw new Error(`wasm mixer_set_mix_config failed: ${errMsg()}`);
   }
 
+  if (opts.meterBin && !e.mixer_enable_meters(opts.meterBin))
+    throw new Error(`wasm mixer_enable_meters failed: ${errMsg()}`);
   const total = e.mixer_build(songPtr, env.song.length, blobPtr, lensPtr, env.insts.length);
   if (e.mixer_last_error() !== 0) throw new Error(`wasm mixer_build failed: ${errMsg()}`);
+  for (const [lane, gain] of opts.laneGains ?? [])
+    if (!e.mixer_set_lane_gain(lane, gain)) throw new Error(`wasm mixer_set_lane_gain failed: ${errMsg()}`);
 
   let numBlocks = NUM_BLOCKS;
   let seekMs = 0;
@@ -222,7 +227,22 @@ async function wasmRender(env, opts = {}) {
     out.set(L, b * 2 * BLOCK);
     out.set(R, b * 2 * BLOCK + BLOCK);
   }
-  return { out, total, seekMs };
+  let lanes;
+  if (opts.meterBin) {
+    const count = e.mixer_lane_count();
+    const bins = Math.min(e.mixer_meter_bin_count(), Math.ceil(numBlocks * BLOCK / opts.meterBin));
+    if (count < 0 || bins < 0) throw new Error(`wasm lane/meter query failed: ${errMsg()}`);
+    lanes = [];
+    for (let l = 0; l < count; l++) {
+      const np = e.mixer_lane_name(l), nl = e.mixer_lane_name_length(l);
+      if (!np || nl < 0) throw new Error(`wasm mixer_lane_name failed: ${errMsg()}`);
+      const name = new TextDecoder().decode(new Uint8Array(heap(), np, nl));
+      const peak = Array.from(new Float32Array(heap(), e.mixer_lane_peaks(l), bins));
+      const rms = Array.from(new Float32Array(heap(), e.mixer_lane_rms(l), bins));
+      lanes.push({ name, peak, rms });
+    }
+  }
+  return { out, total, seekMs, lanes };
 }
 
 // --- per-genre compare -------------------------------------------------------
@@ -316,6 +336,42 @@ async function checkGenre(genre, pcmFile) {
   const tail = (full) => full.subarray(SEEK_BLOCK * 2 * BLOCK);
   const rows = [];
 
+  // Lanes (mix on): names + per-lane meters wasm vs native; meters must not
+  // change the audio; a muted lane must meter 0 after the 10 ms ramp.
+  {
+    const METER_BIN = 1024;
+    const metersFile = join(tmp, 'meters.json');
+    const nativeOut = nativeRender(env, pcmFile, tmp, 'meters', ['--mix', MIX_CONFIG, '--meters', String(METER_BIN), metersFile]);
+    const nat = JSON.parse(readFileSync(metersFile, 'utf-8')).lanes;
+    const plain = await wasmRender(env, { mix: true });
+    const met = await wasmRender(env, { mix: true, meterBin: METER_BIN });
+    const fails = [];
+    const names = met.lanes.map((l) => l.name);
+    if (names.join('|') !== nat.map((l) => l.name).join('|'))
+      fails.push(`lane names differ: wasm [${names.join(', ')}] native [${nat.map((l) => l.name).join(', ')}]`);
+    let d = 0, sig = 0;
+    met.lanes.forEach((l, i) => {
+      for (const key of ['peak', 'rms'])
+        l[key].forEach((v, b) => { const r = nat[i]?.[key][b] ?? 0; d += (v - r) ** 2; sig += r * r; });
+    });
+    const meterNrmse = sig > 0 ? Math.sqrt(d / sig) : Infinity;
+    if (meterNrmse > MAX_ENV_NRMSE) fails.push(`meter NRMSE ${(meterNrmse * 100).toFixed(3)}% > ${MAX_ENV_NRMSE * 100}%`);
+    let same = plain.out.length === met.out.length;
+    for (let i = 0; same && i < plain.out.length; i++) if (plain.out[i] !== met.out[i]) same = false;
+    if (!same) fails.push('meters on changed the rendered audio');
+    // mute the loudest lane
+    const energy = met.lanes.map((l) => l.rms.reduce((a, v) => a + v, 0));
+    const loud = energy.indexOf(Math.max(...energy));
+    const muted = await wasmRender(env, { mix: true, meterBin: METER_BIN, laneGains: [[loud, 0]] });
+    const after = Math.max(...muted.lanes[loud].peak.slice(1));
+    if (after !== 0) fails.push(`muted lane "${names[loud]}" still meters ${after} after the ramp`);
+    const mutedVsPlain = compare(plain.out, muted.out).nrmse;
+    if (!(mutedVsPlain > 0.05)) fails.push(`muting "${names[loud]}" barely changed the master (NRMSE ${(mutedVsPlain * 100).toFixed(2)}%)`);
+    rows.push({ check: 'lanes+meters+mute', fails, nrmse: meterNrmse, badFrac: 0, maxAbs: 0,
+                nonZero: names.length, samples: nativeOut.length,
+                extra: ` lanes=${names.length} meterNRMSE=${(meterNrmse * 100).toFixed(4)}% muted="${names[loud]}" masterΔ=${(mutedVsPlain * 100).toFixed(1)}%` });
+  }
+
   for (const mix of [false, true]) {
     const tag = mix ? 'mix' : 'dry';
     const native = nativeRender(env, pcmFile, tmp, tag, mix ? ['--mix', MIX_CONFIG] : []);
@@ -361,7 +417,7 @@ for (const g of genres) {
       (r.envNrmse !== undefined ? `env=${(r.envNrmse * 100).toFixed(3)}% ` : '') +
       `nonZero=${r.nonZero}/${r.samples}` +
       (r.total !== undefined ? ` totalFrames=${r.total}` : '') +
-      (r.seekMs !== undefined ? ` seek=${r.seekMs.toFixed(1)}ms` : ''));
+      (r.seekMs !== undefined ? ` seek=${r.seekMs.toFixed(1)}ms` : '') + (r.extra ?? ''));
     if (!r.info) for (const f of r.fails) console.log(`              - ${f}`);
   }
 }

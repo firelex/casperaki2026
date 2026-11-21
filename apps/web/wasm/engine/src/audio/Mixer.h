@@ -130,10 +130,29 @@ public:
         // transition FX submix (legacy parity).
         buildNoiseRiseLanes(ev);
 
+        // One instrument lane per instrument name (the track names' baseName:
+        // "Drums-kicks"/"-snares"/... -> "Drums", "Guitar(strums)" -> "Guitar"),
+        // in first-track order. Lane gain + meters work on these groups.
+        laneScratch_.setSize(2, blockSize_);
+        groups_.clear();
+        for (auto& l : lanes_) {
+            const std::string nm = baseName(l.name);
+            int gi = -1;
+            for (int k = 0; k < (int)groups_.size(); ++k)
+                if (groups_[(size_t)k].name == nm) { gi = k; break; }
+            if (gi < 0) {
+                gi = (int)groups_.size();
+                groups_.emplace_back();
+                groups_.back().name = nm;
+            }
+            l.group = gi;
+        }
+        gainRampFrames_ = std::max(1, (int)std::lround(kGainRampSec * sampleRate_));
+        if (meterBinFrames_ > 0) allocateMeters();
+
         // Scope B: build the routing graph (submix per present fxGroup + the 3 aux
         // returns + master). Gated — only when the host opted into the mix/FX.
         if (mixEnabled_) {
-            laneScratch_.setSize(2, blockSize_);
             // Scope D: attach each instrument's signalProcessors automation to every
             // lane whose baseName matches (drums -> its 4 step tracks, etc.).
             for (const auto& a : ev.automation)
@@ -158,6 +177,10 @@ public:
         const long n = std::min((long)numFrames, std::max(0L, totalFrames_ - pos_));
         if (n <= 0) { pos_ += numFrames; return false; }
 
+        const bool metering = meterBinFrames_ > 0 && !meterSuspended_;
+        if (metering)
+            for (auto& g : groups_) g.sum.clear();
+
         if (graph_) {
             // Scope B graph path: render each lane to its own buffer, route the dry
             // signal to its fxGroup submix + the 3 aux sends, then run the submix /
@@ -170,13 +193,16 @@ public:
                 laneScratch_.clear();
                 for (auto& s : lane.sources) s->addBlock(pos_, (int)n, laneScratch_);
                 applyLaneAutomation(lane, blockTimeSec, (int)n);
+                Group& g = groups_[(size_t)lane.group];
+                g.ramp.apply(laneScratch_, (int)n);           // mute/solo gain (pre-sends)
+                if (metering) addInto(g.sum, laneScratch_, (int)n);
                 graph_->addDry(lane.fxGroup, laneScratch_, (int)n);
                 for (int k = 0; k < 3; ++k) graph_->addSend(k, laneScratch_, lane.sendGain[k], (int)n);
-                for (auto& s : lane.sources) s->addAuxSends(pos_, (int)n, laneScratch_, *graph_);
+                for (auto& s : lane.sources) s->addAuxSends(pos_, (int)n, laneScratch_, *graph_, g.ramp);
             }
             graph_->render(out, (int)n);
             applyMasterGain(out, (int)n);
-        } else {
+        } else if (!metering && allGainsUnity()) {
             // Flat path (mix disabled): every lane's sources add into `out` in the
             // old append order -> byte-identical to Phase 1.
             for (auto& lane : lanes_) {
@@ -185,13 +211,61 @@ public:
                     s->addBlock(pos_, (int)n, out);
             }
             applyMasterGain(out, (int)n);
+        } else {
+            // Flat path with a lane gain or meters: each lane renders to its own
+            // buffer first (same signal; float summation grouping differs by ULPs).
+            for (auto& lane : lanes_) {
+                if (!soloMatch(lane)) continue;   // DEBUG: CASPERAKI_SOLO lane/fxGroup filter
+                laneScratch_.clear();
+                for (auto& s : lane.sources) s->addBlock(pos_, (int)n, laneScratch_);
+                Group& g = groups_[(size_t)lane.group];
+                g.ramp.apply(laneScratch_, (int)n);
+                if (metering) addInto(g.sum, laneScratch_, (int)n);
+                addInto(out, laneScratch_, (int)n);
+            }
+            applyMasterGain(out, (int)n);
         }
+        if (metering)
+            for (auto& g : groups_) meterGroup(g, (int)n);
+        for (auto& g : groups_) g.ramp.advance((int)n);
         pos_ += numFrames;
         return pos_ < totalFrames_;
     }
 
     // The play position (frames from song start) the next pullBlock renders from.
     long position() const { return pos_; }
+
+    // ---- instrument lanes (sequencer rows) ---------------------------------
+    // One lane per instrument name, in track order (valid after build()). The
+    // shared transition track + noise risers form the "Sample Transitions FX" lane.
+    int laneCount() const { return (int)groups_.size(); }
+    const std::string& laneName(int lane) const { return group(lane).name; }
+
+    // Live lane gain (mute = 0, solo = 0 on the others). Takes effect on the next
+    // pull as a linear ramp over kGainRampSec (no click). Allocation-free; call
+    // between pulls. Applied to the lane's signal before its submix and aux sends.
+    void setLaneGain(int lane, float gain) {
+        if (!(gain >= 0.0f) || !std::isfinite(gain))
+            throw std::out_of_range("Mixer::setLaneGain: gain must be finite and >= 0");
+        group(lane).ramp.setTarget(gain, gainRampFrames_);
+    }
+
+    // Level meters: every pull records, per lane and per bin of `binFrames`
+    // frames of song time, the peak |sample| (max over L/R) and the RMS (over
+    // L+R) of the lane's own signal — after its gain and automation, BEFORE its
+    // fxGroup submix rack, the aux returns and the master (those are shared by
+    // several lanes). Arrays are allocated here (or in build) from totalFrames,
+    // so pulls never allocate. Meant for one straight pull pass: re-pulling a
+    // span adds to its RMS (seek pre-roll is not metered). Call before or after
+    // build (before allocating the live instance's L/R views).
+    void enableMeters(int binFrames) {
+        if (binFrames <= 0) throw std::out_of_range("Mixer::enableMeters: binFrames must be > 0");
+        meterBinFrames_ = binFrames;
+        if (!groups_.empty() || totalFrames_ > 0) allocateMeters();
+    }
+    int meterBinCount() const { return meterBins_; }
+    const float* lanePeaks(int lane) const { requireMeters(); return group(lane).peak.data(); }
+    const float* laneRms(int lane) const { requireMeters(); return group(lane).rms.data(); }
 
     // Move the play position so the next pullBlock continues from `frame`.
     // Allocation-free (safe between real-time pulls). State is rebuilt as a full
@@ -222,10 +296,12 @@ public:
             for (auto& src : lane.sources) src->seek(start, blockSize_);
         }
         pos_ = start;
+        meterSuspended_ = true;
         while (pos_ < frame) {
             const int n = (int)std::min((long)blockSize_, frame - pos_);
             pullBlock(seekScratch_, n);
         }
+        meterSuspended_ = false;
     }
 
 private:
@@ -235,6 +311,32 @@ private:
     // legacy no-mix constant (kept when mixEnabled is off for byte-identity).
     struct Event { long sample; bool on; int note; float vel = 0.75f; };
 
+    // A lane's live gain: `gain` now, ramping linearly to `target` over `left`
+    // more frames. Unity and settled -> apply() is a no-op (byte-identical).
+    struct GainRamp {
+        float gain = 1.0f, target = 1.0f, step = 0.0f;
+        int left = 0;
+        bool unity() const { return left == 0 && gain == 1.0f; }
+        float at(int i) const { return i < left ? gain + step * (float)(i + 1) : target; }
+        void setTarget(float g, int rampFrames) {
+            target = g;
+            left = rampFrames;
+            step = (target - gain) / (float)rampFrames;
+        }
+        void apply(AudioBuffer& b, int n) const {
+            if (unity()) return;
+            for (int ch = 0; ch < 2; ++ch) {
+                float* d = b.getWritePointer(ch);
+                for (int i = 0; i < n; ++i) d[i] *= at(i);
+            }
+        }
+        void advance(int n) {
+            if (left == 0) return;
+            if (n >= left) { gain = target; left = 0; }
+            else { gain += step * (float)n; left -= n; }
+        }
+    };
+
     struct Source {
         virtual ~Source() = default;
         // Add this source's contribution for [pos, pos+n) into `out` (already
@@ -242,7 +344,7 @@ private:
         virtual void addBlock(long pos, int n, AudioBuffer& out) = 0;
         // Optional per-source aux sends. Most sources use the lane-level send; the
         // shared transition wave lane needs per-clip sends while keeping one dry lane.
-        virtual void addAuxSends(long, int, AudioBuffer&, MixGraph&) {}
+        virtual void addAuxSends(long, int, AudioBuffer&, MixGraph&, const GainRamp&) {}
         // Rebuild internal state as a render from 0 would have it at `frame`
         // (see Mixer::seek). `blockSize` = the pull grid. Stateless sources: no-op.
         virtual void seek(long /*frame*/, int /*blockSize*/) {}
@@ -328,7 +430,8 @@ private:
             for (const auto& c : clips) addClipBlock(c, pos, n, out, 1.0f);
         }
 
-        void addAuxSends(long pos, int n, AudioBuffer& scratch, MixGraph& graph) override {
+        void addAuxSends(long pos, int n, AudioBuffer& scratch, MixGraph& graph,
+                         const GainRamp& laneGain) override {
             for (int k = 0; k < 3; ++k) {
                 scratch.clear();
                 bool hasSend = false;
@@ -338,8 +441,10 @@ private:
                     hasSend = true;
                     addClipBlock(c, pos, n, scratch, sg);
                 }
-                if (hasSend)
+                if (hasSend) {
+                    laneGain.apply(scratch, n);   // mute/solo reaches the sends too
                     graph.addSend(k, scratch, 1.0f, n);
+                }
             }
         }
 
@@ -552,7 +657,78 @@ private:
         // the lowpass instance (allocated only when lpAuto is non-empty).
         std::vector<AutoPoint> lpAuto, volAuto;
         std::unique_ptr<LowPass> lp;
+        int group = -1;         // index into groups_ (the instrument lane)
     };
+
+    // An instrument lane (sequencer row): every IR track of one instrument name.
+    struct Group {
+        std::string name;
+        GainRamp ramp;
+        AudioBuffer sum;                    // this block's lane signal (meters only)
+        std::vector<float> peak, rms;       // per meter bin
+        std::vector<double> sumSq;          // per meter bin, L^2 + R^2
+    };
+
+    const Group& group(int lane) const {
+        if (lane < 0 || lane >= (int)groups_.size())
+            throw std::out_of_range("Mixer: lane " + std::to_string(lane) + " outside [0, "
+                                    + std::to_string(groups_.size()) + ")");
+        return groups_[(size_t)lane];
+    }
+    Group& group(int lane) { return const_cast<Group&>(static_cast<const Mixer*>(this)->group(lane)); }
+
+    void requireMeters() const {
+        if (meterBinFrames_ <= 0 || meterBins_ <= 0)
+            throw std::logic_error("Mixer: meters are not enabled (enableMeters) or not built");
+    }
+
+    void allocateMeters() {
+        meterBins_ = (int)((totalFrames_ + meterBinFrames_ - 1) / meterBinFrames_);
+        for (auto& g : groups_) {
+            g.sum.setSize(2, blockSize_);
+            g.peak.assign((size_t)meterBins_, 0.0f);
+            g.rms.assign((size_t)meterBins_, 0.0f);
+            g.sumSq.assign((size_t)meterBins_, 0.0);
+        }
+    }
+
+    // Fold this block of a lane's signal (g.sum, frames [pos_, pos_+n)) into its bins.
+    void meterGroup(Group& g, int n) {
+        const float* L = g.sum.getReadPointer(0);
+        const float* R = g.sum.getReadPointer(1);
+        int i = 0;
+        while (i < n) {
+            const long f = pos_ + i;
+            const long b = f / meterBinFrames_;
+            if (b >= meterBins_) break;
+            const int end = (int)std::min((long)n, (b + 1) * meterBinFrames_ - pos_);
+            float pk = g.peak[(size_t)b];
+            double ss = 0.0;
+            for (int j = i; j < end; ++j) {
+                const float a = std::fabs(L[j]), c = std::fabs(R[j]);
+                pk = std::max(pk, std::max(a, c));
+                ss += (double)L[j] * L[j] + (double)R[j] * R[j];
+            }
+            g.peak[(size_t)b] = pk;
+            g.sumSq[(size_t)b] += ss;
+            const long binLen = std::min((long)meterBinFrames_, totalFrames_ - b * meterBinFrames_);
+            g.rms[(size_t)b] = (float)std::sqrt(g.sumSq[(size_t)b] / (2.0 * (double)binLen));
+            i = end;
+        }
+    }
+
+    bool allGainsUnity() const {
+        for (const auto& g : groups_) if (!g.ramp.unity()) return false;
+        return true;
+    }
+
+    static void addInto(AudioBuffer& dst, const AudioBuffer& src, int n) {
+        for (int ch = 0; ch < 2; ++ch) {
+            const float* a = src.getReadPointer(ch);
+            float* d = dst.getWritePointer(ch);
+            for (int i = 0; i < n; ++i) d[i] += a[i];
+        }
+    }
 
     // DEBUG (throwaway): CASPERAKI_SOLO=<fxGroup|name-substr> renders only the
     // matching lane(s) through the full graph (others muted) — used to localize a
@@ -1136,6 +1312,12 @@ private:
     std::unique_ptr<MixGraph> graph_;     // built only when mixEnabled_ (Scope B)
     AudioBuffer laneScratch_;             // per-lane render buffer (graph path)
     AudioBuffer seekScratch_;             // discarded output of the seek pre-roll
+    std::vector<Group> groups_;           // instrument lanes (gain + meters)
+    static constexpr double kGainRampSec = 0.010;  // lane-gain ramp (10 ms, click-free)
+    int gainRampFrames_ = 441;
+    int meterBinFrames_ = 0;              // 0 = meters off
+    int meterBins_ = 0;
+    bool meterSuspended_ = false;         // seek pre-roll is not metered
     std::unordered_map<std::string, const nlohmann::json*> instByName_;
     std::unordered_map<std::string, std::shared_ptr<SampleData>> samplesById_;
 };

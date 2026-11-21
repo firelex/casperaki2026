@@ -7,11 +7,14 @@
 //
 //   usage: casperaki_mixer_probe <envelope-dir> <stub-pcm-file> <numBlocks> <out-raw>
 //                                [--mix <mix-config.json>] [--seek <frame> <prerollFrames>]
+//                                [--meters <binFrames> <out.json>]
 //
 // --mix turns on the per-lane mix + rack FX with that config (= CASPERAKI_MIX=1).
 // --seek calls Mixer::seek(frame, prerollFrames) before pulling, so the dump is
 // numBlocks starting at `frame` (the seek parity check diffs it against the same
 // span of an unseeked dump).
+// --meters turns on the per-lane meters and writes {"binFrames", "lanes":
+// [{"name", "peak": [...], "rms": [...]}]} (the bins the pulled span covers).
 //
 // stub-pcm-file: 5 roles (kick,snare,hat,tone,bass) in order, each
 //   int32 frames, int32 channels, int32 sampleRate, then channels*frames float32
@@ -75,12 +78,17 @@ int main(int argc, char** argv) {
 
     std::string mixConfigPath;
     long seekFrame = -1, seekPreroll = 0;
+    int meterBin = 0;
+    std::string meterPath;
     for (int i = 5; i < argc; ++i) {
         const std::string a = argv[i];
         if (a == "--mix" && i + 1 < argc) mixConfigPath = argv[++i];
         else if (a == "--seek" && i + 2 < argc) {
             seekFrame = std::stol(argv[++i]);
             seekPreroll = std::stol(argv[++i]);
+        } else if (a == "--meters" && i + 2 < argc) {
+            meterBin = std::stoi(argv[++i]);
+            meterPath = argv[++i];
         } else {
             std::cerr << "probe error: unknown or incomplete argument " << a << "\n";
             return 2;
@@ -129,6 +137,7 @@ int main(int argc, char** argv) {
             mixer.setMixEnabled(true);
             mixer.setMixConfig(*mixCfg);
         }
+        if (meterBin > 0) mixer.enableMeters(meterBin);
         mixer.build(ev, instJsons);
         if (seekFrame >= 0) mixer.seek(seekFrame, seekPreroll);
 
@@ -140,6 +149,23 @@ int main(int argc, char** argv) {
             for (int ch = 0; ch < 2; ++ch)
                 out.write(reinterpret_cast<const char*>(block.getReadPointer(ch)),
                           (std::streamsize)sizeof(float) * blockSize);
+        }
+        if (meterBin > 0) {
+            const long pulled = (long)numBlocks * blockSize;
+            const int bins = (int)std::min<long>(mixer.meterBinCount(), (pulled + meterBin - 1) / meterBin);
+            nlohmann::json j;
+            j["binFrames"] = meterBin;
+            j["lanes"] = nlohmann::json::array();
+            for (int l = 0; l < mixer.laneCount(); ++l) {
+                nlohmann::json lane;
+                lane["name"] = mixer.laneName(l);
+                lane["peak"] = std::vector<float>(mixer.lanePeaks(l), mixer.lanePeaks(l) + bins);
+                lane["rms"] = std::vector<float>(mixer.laneRms(l), mixer.laneRms(l) + bins);
+                j["lanes"].push_back(std::move(lane));
+            }
+            std::ofstream mf(meterPath);
+            if (!mf) throw std::runtime_error("cannot write " + meterPath);
+            mf << j.dump();
         }
         std::cerr << "probe " << ev.genre << ": " << numBlocks << " blocks, "
                   << mixer.totalFrames() << " total frames -> " << outPath << "\n";
