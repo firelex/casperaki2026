@@ -123,5 +123,5 @@ http://localhost:16500.
   dist/index.js` runs no migrations. Fix: also copy `src/migrations` to `dist/migrations`.
 - open_teamsuzie `packages/ui`: there is no `"sideEffects": false`, so importing one `Button` bundles the whole
   package (mermaid included). The web app's main chunk is 1.35 MB (414 kB gzip).
-- `apps/brain/test/catalog.spec.ts`: 2 tests fail on main as well (catalog counts: `missing` comes out negative).
+- (fixed 2026-11-21) `apps/brain/test/catalog.spec.ts` counted catalog totals against the xlsx-only snapshot; now the effective (xlsx ∪ disk) one.
   This predates this work.

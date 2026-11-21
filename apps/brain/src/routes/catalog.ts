@@ -3,7 +3,7 @@
 // Surfaces the audit-passing validated catalog plus the snapshot's
 // vocabulary so the frontend Catalog tab can browse what the brain
 // would actually pick from. Never walks the live sample folder; reads
-// only `loadValidatedCatalog()` + `loadInstrumentCatalogSnapshot()`.
+// only `loadValidatedCatalog()` + `loadEffectiveCatalogSnapshot()`.
 //
 //   GET /api/catalog/summary
 //     counts, hashes, vocabularies, top library list, matched/missing.
@@ -20,7 +20,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import {
-  loadInstrumentCatalogSnapshot,
+  loadEffectiveCatalogSnapshot,
   loadValidatedCatalog,
   publicNameOf,
   type InstrumentCatalogSnapshot,
@@ -63,7 +63,9 @@ export type PublicCatalogEntry = ValidatedCatalogEntry & { readonly publicName: 
 export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
   const router = Router();
   const loadCat = deps.loadCatalog ?? loadValidatedCatalog;
-  const loadSnap = deps.loadSnapshot ?? loadInstrumentCatalogSnapshot;
+  // The validated catalog is built from the effective snapshot (xlsx ∪ disk,
+  // docs/58h), so totals and "missing" must be counted against that too.
+  const loadSnap = deps.loadSnapshot ?? loadEffectiveCatalogSnapshot;
   const browseGate = (req: Request, res: Response, next: () => void) => {
     if (deps.canBrowse && !deps.canBrowse(req)) {
       res.status(403).json({ error: 'admin_only', message: 'Browsing the sound catalog is limited to admins.' });
