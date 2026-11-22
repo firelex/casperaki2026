@@ -213,3 +213,29 @@ RMS now matches the goldens within 0.15 dB in every genre except latin (+0.35 dB
 
 Pre-existing, not from this work: `validate-resolution.mjs` fails all 8 genres at HEAD too
 (README's "all 8 pass" is stale).
+
+### Reference version (2026-11-22, later)
+
+The owner names the **final 2023 engine, `casperaki_engine` 1c80774** (2023-12-28) as the
+original. It is 27 commits before 90dc0f4 (2024-05-22), the commit this audit read. For sound
+they are the same: both `USE_TE_SAMPLER` (stock `te::SamplerPlugin`, no ADSR, no release);
+neither has a sustain tail; the VST (`#if JUCE_PLUGINHOST_VST`) rack chains and ballad presets
+in `PresetManager.h` are byte-identical (only the unused `#else` block changed); mastering is the
+same `masterSongAtemlos(..., true, true)` call, and the pinned matchering versions (9236f5f vs
+2394f41) differ only in the output file name; samples are downloaded as OGG in both. The rest
+of the diff is download refactoring and build plumbing. So every finding above holds for 1c80774.
+
+- **Sustain tail removed** (commit 44ad299, other session, owner's decision): the +2-beat
+  `SUSTAIN_TAIL_BEATS` in `Resolver.h emitSynthsClip/emitBassClips` was never in 1c80774 or
+  90dc0f4 — it came from the modified native copy (docs/58a, `casperaki_engine` c9f7b48); notes
+  now keep their written length, as in the 2023 engine.
+- **Guitar** (audit, 2026-11-22): the short-notes lane now gets only the non-`longNote` samples
+  (legacy `Guitar.h:187-221`; it used the 4.8 s long notes); MIDI velocity is clamped to 0..127
+  and velocity-0 notes are silent (Tracktion). Parity (isolated): rock 0.069 → 0.024 dB,
+  organicVibes 0.16 → 0.13, others unchanged. Verified match: per-note slices bit-identical to
+  legacy files, strum timing/offsets/velocity 65/open-ended, target volumes and sends.
+  Open: (a) the adapter keys strum samples on the literal chord ("Fmaj7") while the engine looks
+  up the mapped suffix ("F7", suffixes "", 7, m, m7, sus2, sus4, 6, 9) → a miss aborts that
+  segment's strums (faithful to legacy, whose pool held every suffix file so it never missed);
+  fix the adapter (`packages/engine-adapter/src/guitars.ts`). (b) Fret noises are silent in both
+  engines today (no `fretNoise` events, and nothing in casperaki2 filled `fx.fxFretNoise`).

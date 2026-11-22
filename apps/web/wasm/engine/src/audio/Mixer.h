@@ -1041,7 +1041,11 @@ private:
                 }
                 const double onSec = c.startSec + nt.startBeat * secPerBeat_;
                 const double offSec = std::min(c.startSec + endBeat * secPerBeat_, c.endSec) - 0.0001;
-                const float vel = mixEnabled_ ? (float)nt.vel / 127.0f : 0.75f;
+                // Tracktion clamps MIDI velocity to 0..127 and a velocity-0 note never
+                // sounds (te::MidiNote, tracktion_MidiList.cpp:371,664).
+                const int midiVel = std::max(0, std::min(127, (int)nt.vel));
+                if (mixEnabled_ && midiVel == 0) continue;
+                const float vel = mixEnabled_ ? (float)midiVel / 127.0f : 0.75f;
                 src->events.push_back({(long)std::lround(onSec * sampleRate_), true, nt.n, vel});
                 if (useNoteUp)
                     src->events.push_back({(long)std::lround(offSec * sampleRate_), false, nt.n, vel});
@@ -1234,11 +1238,12 @@ private:
         const bool isBass = (type == "basses");
         auto fixture = isBass ? stubs_.bass : stubs_.tone;
 
+        // Basses and guitars split into a long-notes and a short-notes lane, each with
+        // its own sampler: longNote samples on the long lane, every other sample on the
+        // short lane (legacy Bass.h and Guitar.h:187-221 initPlugins).
         int laneFilter = 0;  // 0 = all, 1 = longNote only, 2 = short only
-        if (isBass) {
-            if (endsWith(track.name, "(long notes)")) laneFilter = 1;
-            else if (endsWith(track.name, "(short notes)")) laneFilter = 2;
-        }
+        if (endsWith(track.name, "(long notes)")) laneFilter = 1;
+        else if (endsWith(track.name, "(short notes)")) laneFilter = 2;
 
         // Root MIDI note -> the slot id recorded at that root (first sample wins,
         // matching the old std::map dedup). The id keys the real sliced PCM the
