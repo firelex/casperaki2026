@@ -506,7 +506,26 @@ describe('toEngineFixture — Guitar production wiring', () => {
   });
 
   it('lowers Guitar chord events to engine chord+chordType shape', () => {
-    const song = orchestrate(GUITAR_PARAMS);
+    // Generated guitars play the Virtual Guitarist pattern (strum and
+    // virtualGuitarist events, as the legacy does); plain chord events still
+    // occur in songs saved earlier, so put one in and check its lowering.
+    const generated = orchestrate(GUITAR_PARAMS);
+    const segName = generated.songStructure.find((seg) => generated.arrangement[seg.name]?.overrides?.['Guitar']?.bars?.length)!.name;
+    const guitarPart = generated.arrangement[segName]!.overrides['Guitar']!;
+    const firstBar = guitarPart.bars![0]!;
+    const song = {
+      ...generated,
+      arrangement: {
+        ...generated.arrangement,
+        [segName]: {
+          ...generated.arrangement[segName]!,
+          overrides: {
+            ...generated.arrangement[segName]!.overrides,
+            Guitar: { ...guitarPart, bars: [{ ...firstBar, notes: { ...firstBar.notes, '0.0': [{ type: 'chord', chord: 'C', duration: 2 }] } }, ...guitarPart.bars!.slice(1)] },
+          },
+        },
+      },
+    } as typeof generated;
     const fixture = toEngineFixture(song, {
       brainHash: 'fake-hash',
       generatorParams: GUITAR_PARAMS,
