@@ -151,11 +151,16 @@ const PositionalBankSchema = z.array(z.array(PositionalTripleSchema).min(1)).min
 
 // edmComplex / Library: array of patterns carrying scale-specific note banks.
 // Each note bank maps a (possibly fractional) absolute beat position to a list
-// of `{ midi, duration }` notes. We keep `note` for provenance but only `midi`
-// + `duration` are consumed (legacy getNoteIndexFull(note) === note.midi for
-// standard MIDI, with note.midi the documented fallback).
+// of `{ note, midi, duration }` notes. The legacy reads the note NAME (its
+// table index, MIDI - 12) and falls back to `midi` for names outside its table;
+// see selectCenteredBankPattern.
+// Data fix (2026-11-22): the Library banks (brightPop / latin / rock /
+// organicVibes) carried ~30,000 keyswitch notes recorded with the bass parts:
+// octave -1 / 0 (below a bass's lowest string), 1/16 long, always sounding
+// with a real note. The legacy played them as notes (sub-audible rumble, and
+// they pulled the centring average down); they were removed from the data.
 const CenteredNoteSchema = z
-  .object({ midi: z.number().int(), duration: z.number().positive() })
+  .object({ note: z.string().min(1), midi: z.number().int(), duration: z.number().positive() })
   .passthrough();
 const CenteredPatternSchema = z
   .object({
@@ -268,6 +273,17 @@ const CENTERED_BEATS_PER_BAR = 4;
 const MIDI_MIN = 0;
 const MIDI_MAX = 127;
 
+const LEGACY_PC: Readonly<Record<string, number>> = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+
+/** A note name's index in the legacy note table ('c0' = 0), or undefined when the table has no such note (octave -1). */
+function legacyIndex(name: string): number | undefined {
+  const m = /^([a-g])(#|b)?(-?\d+)$/u.exec(name.toLowerCase());
+  if (!m) throw new Error(`bass bank: unreadable note name "${name}"`);
+  const octave = Number(m[3]);
+  if (octave < 0) return undefined;
+  return octave * 12 + LEGACY_PC[m[1]!]! + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+}
+
 export function selectCenteredBankPattern(
   rng: Rng,
   style: string,
@@ -278,18 +294,20 @@ export function selectCenteredBankPattern(
   const pattern = bank[index]!;
   const noteBank = scale === 'minor' ? pattern.notesMinor : pattern.notesMajor;
 
-  let minMidi = Number.POSITIVE_INFINITY;
-  let sumMidi = 0;
-  let count = 0;
-  for (const notes of Object.values(noteBank)) {
-    for (const n of notes) {
-      if (n.midi < minMidi) minMidi = n.midi;
-      sumMidi += n.midi;
-      count++;
-    }
+  // Legacy LibraryBassPatternGeneratorClass (54-113) works in its note-table
+  // indices (index 0 = 'c0', which the engine plays as MIDI 12), read from the
+  // note NAME. A name it cannot index (octave -1) falls back to the stored
+  // MIDI number ("too low, so we effectively transpose it one octave up"); so
+  // does 'c0' when averaging, its index 0 being falsy in JavaScript.
+  const all = Object.values(noteBank).flat();
+  const statIndex = (n: { note: string; midi: number }) => legacyIndex(n.note) || n.midi;
+  const outIndex = (n: { note: string; midi: number }) => legacyIndex(n.note) ?? n.midi;
+  let cNeighbor = 0;
+  if (all.length > 0) {
+    const idx = all.map(statIndex);
+    cNeighbor = Math.round(idx.reduce((a, b) => a + b, 0) / idx.length / 12) * 12;
+    if (Math.min(...idx) + 24 - cNeighbor < 0) cNeighbor -= 12;
   }
-  let centerOffset = count > 0 ? Math.round(sumMidi / count / 12) * 12 : 0;
-  if (minMidi + 24 - centerOffset < 0) centerOffset -= 12;
 
   const events: AbsBassEvent[] = [];
   let lastBeatEnd = 0;
@@ -299,7 +317,9 @@ export function selectCenteredBankPattern(
     const bar = Math.floor(absHit / CENTERED_BEATS_PER_BAR);
     const beat = absHit % CENTERED_BEATS_PER_BAR;
     for (const n of notes) {
-      let midi = n.midi + 24 - centerOffset;
+      // index + 24 - cNeighbor, then from table index to MIDI (+ 12). (The
+      // first port computed midi + 24 - centre in MIDI, an octave low.)
+      let midi = outIndex(n) + 24 - cNeighbor + 12;
       while (midi < MIDI_MIN) midi += 12;
       while (midi > MIDI_MAX) midi -= 12;
       events.push({ bar, beat, midi, duration: n.duration });
