@@ -454,6 +454,7 @@
         },
         "fxReverse": {
           "placement": "beginningOfSegment",
+          "soundId": "18fe33f75a508a49",
           "type": "fxReverse"
         }
       }
@@ -5507,14 +5508,17 @@
       "transitions": {
         "cymbalsCrashHit": {
           "placement": "beginningOfSegment",
+          "soundId": "d40fefe39957f440",
           "type": "cymbalsCrashHit"
         },
         "fxDownlifter": {
           "placement": "beginningOfSegment",
+          "soundId": "78e126b549e6bc42",
           "type": "fxDownlifter"
         },
         "percussionBreaksFills": {
           "placement": "midSegment",
+          "soundId": "a333abd5cb3bd812",
           "type": "percussionBreaksFills"
         }
       }
@@ -10566,9 +10570,24 @@
       },
       "signalProcessors": {},
       "transitions": {
+        "cymbalsCrashHit": {
+          "placement": "beginningOfSegment",
+          "soundId": "d40fefe39957f440",
+          "type": "cymbalsCrashHit"
+        },
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "78e126b549e6bc42",
+          "type": "fxDownlifter"
+        },
         "fxNoiseRise": {
           "placement": "endOfSegment",
           "type": "fxNoiseRise"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "a333abd5cb3bd812",
+          "type": "percussionBreaksFills"
         }
       }
     },
@@ -15618,7 +15637,23 @@
         }
       },
       "signalProcessors": {},
-      "transitions": {}
+      "transitions": {
+        "cymbalsCrashHit": {
+          "placement": "beginningOfSegment",
+          "soundId": "d40fefe39957f440",
+          "type": "cymbalsCrashHit"
+        },
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "78e126b549e6bc42",
+          "type": "fxDownlifter"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "a333abd5cb3bd812",
+          "type": "percussionBreaksFills"
+        }
+      }
     },
     "chorus4": {
       "fills": {
@@ -20669,11 +20704,22 @@
       "transitions": {
         "cymbalsCrashHit": {
           "placement": "beginningOfSegment",
+          "soundId": "d40fefe39957f440",
           "type": "cymbalsCrashHit"
+        },
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "78e126b549e6bc42",
+          "type": "fxDownlifter"
         },
         "fxNoiseRise": {
           "placement": "endOfSegment",
           "type": "fxNoiseRise"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "a333abd5cb3bd812",
+          "type": "percussionBreaksFills"
         }
       }
     },
@@ -25723,7 +25769,23 @@
         }
       },
       "signalProcessors": {},
-      "transitions": {}
+      "transitions": {
+        "cymbalsCrashHit": {
+          "placement": "beginningOfSegment",
+          "soundId": "d40fefe39957f440",
+          "type": "cymbalsCrashHit"
+        },
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "78e126b549e6bc42",
+          "type": "fxDownlifter"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "a333abd5cb3bd812",
+          "type": "percussionBreaksFills"
+        }
+      }
     },
     "intro": {
       "fills": {},
@@ -29560,6 +29622,7 @@
       "transitions": {
         "fxTonalReverse": {
           "placement": "beginningOfSegment",
+          "soundId": "16df0f689e8cca1f",
           "type": "fxTonalReverse"
         }
       }
@@ -35552,10 +35615,12 @@
       "transitions": {
         "fxDownlifter": {
           "placement": "beginningOfSegment",
+          "soundId": "48c5323fbea7fc36",
           "type": "fxDownlifter"
         },
         "fxLowImpact": {
           "placement": "beginningOfSegment",
+          "soundId": "2347fedb7c467c30",
           "type": "fxLowImpact"
         },
         "fxNoiseRise": {
@@ -35564,10 +35629,12 @@
         },
         "fxReverse": {
           "placement": "endOfSegment",
+          "soundId": "850d2cb44da1e2cb",
           "type": "fxReverse"
         },
         "percussionBreaksBuildups": {
           "placement": "midSegment",
+          "soundId": "9208827010e73f71",
           "type": "percussionBreaksBuildups"
         }
       }
@@ -38208,9 +38275,29 @@
       },
       "signalProcessors": {},
       "transitions": {
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "48c5323fbea7fc36",
+          "type": "fxDownlifter"
+        },
+        "fxLowImpact": {
+          "placement": "beginningOfSegment",
+          "soundId": "2347fedb7c467c30",
+          "type": "fxLowImpact"
+        },
         "fxNoiseRise": {
           "placement": "endOfSegment",
           "type": "fxNoiseRise"
+        },
+        "fxReverse": {
+          "placement": "endOfSegment",
+          "soundId": "850d2cb44da1e2cb",
+          "type": "fxReverse"
+        },
+        "percussionBreaksBuildups": {
+          "placement": "midSegment",
+          "soundId": "9208827010e73f71",
+          "type": "percussionBreaksBuildups"
         }
       }
     },
@@ -41823,14 +41910,17 @@
       "transitions": {
         "fxDownlifter": {
           "placement": "beginningOfSegment",
+          "soundId": "cef2046429dc6e9a",
           "type": "fxDownlifter"
         },
         "fxTonalReverse": {
           "placement": "endOfSegment",
+          "soundId": "3f047c8630f03180",
           "type": "fxTonalReverse"
         },
         "percussionBreaksFills": {
           "placement": "midSegment",
+          "soundId": "915cb199ad6e0183",
           "type": "percussionBreaksFills"
         }
       }
@@ -45441,7 +45531,23 @@
         }
       },
       "signalProcessors": {},
-      "transitions": {}
+      "transitions": {
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "cef2046429dc6e9a",
+          "type": "fxDownlifter"
+        },
+        "fxTonalReverse": {
+          "placement": "endOfSegment",
+          "soundId": "3f047c8630f03180",
+          "type": "fxTonalReverse"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "915cb199ad6e0183",
+          "type": "percussionBreaksFills"
+        }
+      }
     },
     "verse3": {
       "fills": {
@@ -49049,7 +49155,23 @@
         }
       },
       "signalProcessors": {},
-      "transitions": {}
+      "transitions": {
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "cef2046429dc6e9a",
+          "type": "fxDownlifter"
+        },
+        "fxTonalReverse": {
+          "placement": "endOfSegment",
+          "soundId": "3f047c8630f03180",
+          "type": "fxTonalReverse"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "915cb199ad6e0183",
+          "type": "percussionBreaksFills"
+        }
+      }
     },
     "verse4": {
       "fills": {
@@ -52657,7 +52779,23 @@
         }
       },
       "signalProcessors": {},
-      "transitions": {}
+      "transitions": {
+        "fxDownlifter": {
+          "placement": "beginningOfSegment",
+          "soundId": "cef2046429dc6e9a",
+          "type": "fxDownlifter"
+        },
+        "fxTonalReverse": {
+          "placement": "endOfSegment",
+          "soundId": "3f047c8630f03180",
+          "type": "fxTonalReverse"
+        },
+        "percussionBreaksFills": {
+          "placement": "midSegment",
+          "soundId": "915cb199ad6e0183",
+          "type": "percussionBreaksFills"
+        }
+      }
     }
   },
   "bpm": 120,

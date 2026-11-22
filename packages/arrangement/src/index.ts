@@ -318,6 +318,19 @@ export {
   type TrackOptions,
 } from './edits/track-edits.js';
 export { addSection, nextSectionName } from './edits/add-section.js';
+export {
+  finalChordRootForSegment,
+  isSwappableTransition,
+  isTransitionSoundFor,
+  pickTransitionSound,
+  resolveTransitionSound,
+  transitionPackKey,
+  transitionSoundChoices,
+  TRANSITION_SOUND_LANES,
+  type PickedTransitionSound,
+  type TransitionSoundContext,
+  type TransitionSoundLane,
+} from './transitions/sound.js';
 export { setTransition, TRANSITION_TYPES, type SetTransitionRequest, type TransitionPlacement as UserTransitionPlacement } from './edits/transitions.js';
 export {
   DRUM_ROLE_FAMILIES,

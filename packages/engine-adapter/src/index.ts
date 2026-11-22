@@ -69,6 +69,7 @@
 import { readFileSync } from 'node:fs';
 
 import type { ValidatedCatalog, ValidatedCatalogEntry } from '@casperaki/arrangement';
+import { resolveTransitionSound } from '@casperaki/arrangement';
 import type {
   AdapterDiagnostic,
   InstrumentDefinition,
@@ -1323,7 +1324,7 @@ export function toEngineFixture(
     segment: string;
     tag: string;
     catalogId: string;
-    source: 'genre' | 'fallback';
+    source: 'genre' | 'fallback' | 'chosen';
     startPos32: number;
     duration: number;
   }> = [];
@@ -1394,7 +1395,19 @@ export function toEngineFixture(
           transitionsDropped.push({ segment: seg.name, tag, reason: 'tag not in TRANSITION_TAG_TO_LOW_LEVEL (unsupported lane)' });
           continue;
         }
-        const resolved = resolveTransitionRow({
+        // A stored soundId (generator / user choice) names the recording or
+        // pack to play; it must resolve (fail loudly). Entries without one
+        // (songs saved before soundIds) keep the old seeded pick.
+        const storedSoundId = (entry as { soundId?: unknown }).soundId;
+        const resolved = typeof storedSoundId === 'string'
+          ? {
+              entry: resolveTransitionSound(cat, tag, storedSoundId, {
+                tempo,
+                finalChordRoot: finalChordRootForSegment(seg.bars as ReadonlyArray<{ chords?: readonly string[] }> | undefined),
+              }),
+              source: 'chosen' as const,
+            }
+          : resolveTransitionRow({
           catalog: cat, tag, segmentName: seg.name, genre, seed: options.brainHash,
           // percussionBreaks* are bpm-matched (one pre-rendered row per integer
           // bpm; no live time-stretch) — pass song tempo so the resolver picks
@@ -1634,7 +1647,7 @@ export function toEngineFixture(
   }
   if (transitionSummary.length > 0 || transitionsDropped.length > 0) {
     const byTag: Record<string, number> = {};
-    const bySource: Record<string, number> = { genre: 0, fallback: 0 };
+    const bySource: Record<string, number> = { genre: 0, fallback: 0, chosen: 0 };
     for (const t of transitionSummary) {
       byTag[t.tag] = (byTag[t.tag] ?? 0) + 1;
       bySource[t.source]++;
@@ -1646,7 +1659,7 @@ export function toEngineFixture(
         `Lowered ${transitionSummary.length} transitionSample inst(s) across ` +
         `${new Set(transitionSummary.map((t) => t.segment)).size} segment(s). ` +
         `By tag: ${Object.entries(byTag).map(([k, v]) => `${k}=${v}`).join(' ')}. ` +
-        `Catalog source: genre=${bySource.genre} fallback=${bySource.fallback}. ` +
+        `Catalog source: genre=${bySource.genre} fallback=${bySource.fallback} chosen=${bySource.chosen}. ` +
         (transitionsDropped.length > 0
           ? `Dropped ${transitionsDropped.length}: ${transitionsDropped.map((d) => `${d.segment}/${d.tag}(${d.reason})`).join('; ')}.`
           : 'No drops.'),

@@ -40,7 +40,8 @@ import { ReverbPanel } from './devices/ReverbPanel';
 import { DEVICES } from './devices/deviceDefs';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog, DrumSoundDialog } from './sequencer/TrackDialogs';
-import { AddSectionDialog, RenameSectionDialog, TransitionsDialog, type SectionTransitions } from './sequencer/SectionDialogs';
+import { AddSectionDialog, RenameSectionDialog } from './sequencer/SectionDialogs';
+import { TransitionsWindow } from './sequencer/TransitionsWindow';
 import { tracksApi, type DrumKitRow } from '../api/tracks';
 import { useTrackEdits } from './sequencer/useTrackEdits';
 
@@ -122,6 +123,18 @@ export function TimelineView() {
     staleTime: Infinity,
   });
   const [drumDialog, setDrumDialog] = useState<DrumKitRow | undefined>(undefined);
+  // Every section's transitions with their sounds, while the transitions window is open.
+  const transitionsOpen = sectionDialog?.kind === 'transitions';
+  const transitionState = useQuery({
+    queryKey: ['transition-state', JSON.stringify(viewSong ? Object.fromEntries(Object.entries(viewSong.arrangement).map(([k, v]) => [k, v.transitions ?? {}])) : null), viewSong?.songStructure.map((x) => x.name).join(',')],
+    queryFn: ({ signal }) => {
+      if (!viewSong) throw new Error('No song is open.');
+      return tracksApi.transitionState(viewSong, signal);
+    },
+    enabled: Boolean(transitionsOpen && viewSong),
+    staleTime: Infinity,
+    placeholderData: (prev) => prev,
+  });
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
   /** Where the last right-click landed: which track, which section. */
   const [menuAt, setMenuAt] = useState<{ track: string; section: number | undefined; inSelection: boolean } | undefined>(undefined);
@@ -788,35 +801,20 @@ export function TimelineView() {
           }}
         />
       ) : sectionDialog?.kind === 'transitions' ? (
-        (() => {
-          const sec = model.sections.find((x) => x.name === sectionDialog.name);
-          if (!sec) throw new Error(`No section ${sectionDialog.name}.`);
-          const same = model.sections.filter((x) => x.kind === sec.kind).map((x) => x.name);
-          const current: SectionTransitions = Object.fromEntries(
-            model.sections.map((x) => [
-              x.name,
-              Object.fromEntries(
-                Object.entries(viewSong.arrangement[x.name]?.transitions ?? {}).map(([type, e]) => [type, (e as { placement: 'beginningOfSegment' | 'midSegment' | 'endOfSegment' }).placement]),
-              ),
-            ]),
-          );
-          return (
-            <TransitionsDialog
-              section={sec.name}
-              sameKind={same}
-              kindLabel={pluralKind(sec.kind)}
-              current={current}
-              busy={edits.busy}
-              error={edits.error}
-              onClose={() => setSectionDialog(undefined)}
-              onToggle={(segments, type, placement, on) =>
-                void edits.runSongEdit(on ? 'Adding the transition' : 'Removing the transition', async (song) =>
-                  (await tracksApi.setTransition(song, segments, type, placement, on)).song,
-                )
-              }
-            />
-          );
-        })()
+        <TransitionsWindow
+          section={sectionDialog.name}
+          sections={model.sections.map((x) => ({ name: x.name, kind: x.kind }))}
+          state={transitionState.data ?? (transitionState.isError ? { error: transitionState.error.message } : undefined)}
+          busy={edits.busy}
+          error={edits.error}
+          onSelectSection={(name) => setSectionDialog({ kind: 'transitions', name })}
+          onClose={() => setSectionDialog(undefined)}
+          onSet={(op) =>
+            void edits.runSongEdit(op.on ? (op.soundId ? 'Changing the sound' : 'Adding the transition') : 'Removing the transition', async (song) =>
+              (await tracksApi.setTransition(song, op)).song,
+            )
+          }
+        />
       ) : sectionDialog?.kind === 'add' ? (
         <AddSectionDialog
           where={sectionDialog.where}
@@ -1217,8 +1215,3 @@ function writeNumberPref(key: string, value: number): void {
   }
 }
 
-/** "chorus" → "choruses", "preChorus" → "pre-choruses". */
-function pluralKind(kind: string): string {
-  const k = kind.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase();
-  return /(s|x|ch|sh)$/u.test(k) ? `${k}es` : `${k}s`;
-}

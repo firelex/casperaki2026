@@ -25,6 +25,8 @@ const ListQuery = z
     family: z.string().min(1).optional(),
     /** Sounds that can go on a track of this kind (e.g. guitar: acoustic and electric). */
     useAs: z.string().min(1).optional(),
+    /** Sounds a transition type can play (e.g. fxDownlifter). */
+    transition: z.string().min(1).optional(),
     q: z.string().max(200).optional(),
     style: z.string().max(40).optional(),
     cursor: z.coerce.number().int().min(0).optional(),
@@ -69,6 +71,7 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
       searchSounds({
         ...(q.data.family !== undefined ? { family: q.data.family } : {}),
         ...(q.data.useAs !== undefined ? { useAs: q.data.useAs } : {}),
+        ...(q.data.transition !== undefined ? { transition: q.data.transition } : {}),
         ...(q.data.q !== undefined ? { q: q.data.q } : {}),
         ...(q.data.style !== undefined ? { style: q.data.style } : {}),
         cursor: q.data.cursor ?? 0,

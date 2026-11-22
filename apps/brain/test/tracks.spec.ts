@@ -127,9 +127,31 @@ describe('POST /api/transitions/set', () => {
       const ok = await send({ song, segments: ['verse1', 'verse2'], type: 'fxUplifter', placement: 'endOfSegment', on: true });
       expect(ok.status).toBe(200);
       const body = (await ok.json()) as { song: Song };
-      expect(body.song.arrangement['verse2']!.transitions!['fxUplifter']).toEqual({ type: 'fxUplifter', placement: 'endOfSegment' });
+      expect(body.song.arrangement['verse2']!.transitions!['fxUplifter']).toMatchObject({ type: 'fxUplifter', placement: 'endOfSegment' });
+      expect((body.song.arrangement['verse2']!.transitions!['fxUplifter'] as unknown as { soundId: string }).soundId).toMatch(/^[0-9a-f]{16}$/u);
       const bad = await send({ song, segments: ['verse1'], type: 'fxBoom', placement: 'endOfSegment', on: true });
       expect(bad.status).toBe(400);
+      // Every chorus carries chorus1's transitions (legacy lockSegments), with sounds.
+      const stateUrl = url.replace('/set', '/state');
+      const st = await fetch(stateUrl, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ song }) });
+      expect(st.status).toBe(200);
+      const state = (await st.json()) as {
+        types: { type: string; swappable: boolean }[];
+        sections: Record<string, { type: string; placement: string; soundId: string | null; soundName: string | null }[]>;
+      };
+      expect(state.types.find((t) => t.type === 'fxNoiseRise')!.swappable).toBe(false);
+      const chorusTags = (n: string) => state.sections[n]!.filter((t) => t.type !== 'fxNoiseRise' && t.type !== 'cymbalsCrashHit').map((t) => t.type).sort();
+      const choruses = song.songStructure.map((x) => x.name).filter((n) => n.startsWith('chorus'));
+      for (const c of choruses) expect(chorusTags(c)).toEqual(chorusTags('chorus1'));
+      for (const list of Object.values(state.sections)) {
+        for (const t of list) {
+          if (t.type === 'fxNoiseRise' || t.type === 'edmSnareDrumRoll') continue;
+          expect(t.soundId).toMatch(/^[0-9a-f]{16}$/u);
+          expect(typeof t.soundName).toBe('string');
+          expect(JSON.stringify(t)).not.toMatch(/\.mp3|bigZ|kontakt/u);
+        }
+      }
+
     } finally {
       server.close();
     }

@@ -16,6 +16,7 @@
 // The 54o `cymbalsCrashHit` fixture (proven render) is the contract.
 
 import type { ValidatedCatalog, ValidatedCatalogEntry } from '@casperaki/arrangement';
+import { pickTransitionSound } from '@casperaki/arrangement';
 
 // ---- Tag → catalog (family, lowLevel) -----------------------------------
 // Every brain transition tag we currently honour maps to one (family,
@@ -77,125 +78,31 @@ export interface ResolveTransitionInput {
   tempo?: number;
 }
 
-// Lanes the legacy selected by exact `sampleDetails.bpm = tempo` (casperaki2
-// TransitionsClass.js:457) — the percussionBreaks library is pre-stretched
-// offline to one row per integer bpm, so the engine plays the matched row at
-// native rate (no live time-stretch). Any other tag ignores bpm.
-const BPM_MATCHED_TAGS: ReadonlySet<string> = new Set([
-  'percussionBreaksBuildups',
-  'percussionBreaksFills',
-]);
-
-// Enharmonic-aware pitch-class index (0..11), so a brain chord rooted on
-// `Bb` matches a catalog row keyed `A#`. Returns null for anything that
-// isn't a recognised note name.
-const PITCH_CLASS: Readonly<Record<string, number>> = {
-  C: 0, 'B#': 0,
-  'C#': 1, Db: 1,
-  D: 2,
-  'D#': 3, Eb: 3,
-  E: 4, Fb: 4,
-  F: 5, 'E#': 5,
-  'F#': 6, Gb: 6,
-  G: 7,
-  'G#': 8, Ab: 8,
-  A: 9,
-  'A#': 10, Bb: 10,
-  B: 11, Cb: 11,
-};
-function pitchClassOf(name: string | null | undefined): number | null {
-  if (!name) return null;
-  const m = /^([A-G][#b]?)/u.exec(name.trim());
-  if (!m) return null;
-  return PITCH_CLASS[m[1]!] ?? null;
-}
-
-/** Root pitch-class name of a segment's final chord — the last chord token
- *  of the last bar. Mirrors legacy `Tools.getFinalChordForSegment`
- *  (casperaki1 tools.js:1633): strip the chord quality and keep the root
- *  (`Am7` → `A`, `G#m` → `G#`). Returns null when the segment has no
- *  chords. */
-export function finalChordRootForSegment(
-  bars: ReadonlyArray<{ chords?: readonly string[] }> | undefined,
-): string | null {
-  if (!bars || bars.length === 0) return null;
-  for (let b = bars.length - 1; b >= 0; b--) {
-    const chords = bars[b]?.chords;
-    if (!chords || chords.length === 0) continue;
-    const last = chords[chords.length - 1];
-    const m = /[A-G][#b]?/u.exec(last ?? '');
-    if (m) return m[0];
-  }
-  return null;
-}
+/** Root of a section's final chord — shared with the generator (see
+ *  @casperaki/arrangement transitions/sound.ts). */
+export { finalChordRootForSegment } from '@casperaki/arrangement';
 
 export interface ResolvedTransitionRow {
   entry: ValidatedCatalogEntry;
-  /** 'brightPop' if the pick came from the genre-tagged subset; 'fallback' if we had to fall back. */
-  source: 'genre' | 'fallback';
+  /** 'genre' if the pick came from the genre-tagged subset; 'fallback' if we had to fall back; 'chosen' for a stored soundId. */
+  source: 'genre' | 'fallback' | 'chosen';
 }
 
 /** Deterministic catalog pick. brightPop subset first; if empty (true for
  *  every `fx*` row in today's audit — see docs/54n §2), fall back to the
  *  full validated subset for the tag's (family, lowLevel) and pick again. */
 export function resolveTransitionRow(input: ResolveTransitionInput): ResolvedTransitionRow | null {
-  const map = TRANSITION_TAG_TO_LOW_LEVEL[input.tag];
-  if (!map) return null;
-  let all = input.catalog.entries.filter((e) => e.family === map.family && e.lowLevel === map.lowLevel);
-  if (all.length === 0) return null;
-
-  // Tonal transitions (fxTonalReverse) carry a pitch: the legacy never
-  // pitch-shifted them — it selected the recording whose key equals the
-  // segment's final-chord root (TransitionsClass.js:349). The catalog ships
-  // one row per chromatic key, so filter to the key-matched subset first.
-  // No match → drop the transition (legacy `continue`), rather than firing a
-  // reverse in the wrong key.
-  if (map.tonal) {
-    const wantPc = pitchClassOf(input.finalChordRoot);
-    if (wantPc === null) return null;
-    const keyed = all.filter((e) => pitchClassOf(e.key) === wantPc);
-    if (keyed.length === 0) return null;
-    all = keyed;
-  }
-
-  // BPM-matched lanes (percussionBreaks*) — the library is pre-rendered to one
-  // row per integer bpm and is NOT time-stretched at play time, so we must pick
-  // the song-tempo variant up front (legacy `sampleDetails.bpm = tempo` hard
-  // filter). Narrow to the exact-bpm subset; if the snapshot has no exact row
-  // for this tempo, fall back to the nearest available bpm (deterministic:
-  // smallest |Δ|, ties resolve to the lower bpm) rather than dropping the
-  // transition or firing a wrong-tempo fill.
-  if (BPM_MATCHED_TAGS.has(input.tag) && input.tempo != null) {
-    const withBpm = all.filter((e): e is ValidatedCatalogEntry & { bpm: number } =>
-      typeof e.bpm === 'number');
-    if (withBpm.length > 0) {
-      const exact = withBpm.filter((e) => e.bpm === input.tempo);
-      if (exact.length > 0) {
-        all = exact;
-      } else {
-        let nearest = withBpm[0]!.bpm;
-        for (const e of withBpm) {
-          const d = Math.abs(e.bpm - input.tempo);
-          const best = Math.abs(nearest - input.tempo);
-          if (d < best || (d === best && e.bpm < nearest)) nearest = e.bpm;
-        }
-        all = withBpm.filter((e) => e.bpm === nearest);
-      }
-    }
-  }
-
-  // brightPop-first (mainStyle or addStyles); fall back to all rows.
-  // (Genre is typed as a literal union in the catalog schema; we accept any
-  // string here and let `===` / `.includes` do the matching at runtime —
-  // a tag that isn't a known genre yields the fallback subset.)
-  const inGenre = all.filter((e) => e.mainStyle === input.genre ||
-    ((e.addStyles ?? []) as readonly string[]).includes(input.genre));
-  const pool = inGenre.length > 0 ? inGenre : all;
-
-  // Deterministic pick: sort by id, index = hash(seed + segmentName + tag) % pool.length
-  const sorted = pool.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const idx = fnv1a(`${input.seed}:${input.segmentName}:${input.tag}`) % sorted.length;
-  return { entry: sorted[idx]!, source: inGenre.length > 0 ? 'genre' : 'fallback' };
+  // The pick lives in @casperaki/arrangement (transitions/sound.ts), shared
+  // with the generator — which now stores it in the entry (`soundId`). This
+  // seeded path only serves entries saved without one.
+  if (!TRANSITION_TAG_TO_LOW_LEVEL[input.tag]) return null;
+  return pickTransitionSound(
+    input.catalog,
+    input.tag,
+    { genre: input.genre, tempo: input.tempo ?? NaN, finalChordRoot: input.finalChordRoot ?? null },
+    input.seed,
+    input.segmentName,
+  );
 }
 
 function fnv1a(s: string): number {

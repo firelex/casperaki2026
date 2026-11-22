@@ -27,6 +27,15 @@ export type TrackEdit =
   /** Replace one drum of the kit (null: back to the style's own). */
   | { readonly kind: 'setDrumSound'; readonly role: string; readonly soundId: string | null };
 
+export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
+
+export interface TransitionState {
+  readonly types: readonly { readonly type: string; readonly label: string; readonly placements: readonly TransitionPlacement[]; readonly swappable: boolean }[];
+  readonly sections: Readonly<
+    Record<string, readonly { readonly type: string; readonly placement: TransitionPlacement; readonly soundId: string | null; readonly soundName: string | null }[]>
+  >;
+}
+
 /** One drum of the song's kit: its part (engine role), label, library family and sound. */
 export interface DrumKitRow {
   readonly role: string;
@@ -45,8 +54,13 @@ export const tracksApi = {
   edit: (song: Song, op: TrackEdit, signal?: AbortSignal) =>
     defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op }, { signal }),
   /** Switch a transition on or off in sections (the brain writes snare-roll grids). */
-  setTransition: (song: Song, segments: readonly string[], type: string, placement: string, on: boolean, signal?: AbortSignal) =>
-    defaultBrainClient.post<{ song: Song }>('/api/transitions/set', { song, segments, type, placement, on }, { signal }),
+  setTransition: (
+    song: Song,
+    op: { segments: readonly string[]; type: string; placement: TransitionPlacement; on: boolean; soundId?: string },
+    signal?: AbortSignal,
+  ) => defaultBrainClient.post<{ song: Song }>('/api/transitions/set', { song, ...op }, { signal }),
+  /** Every section's transitions with the sound each plays, and the transition types. */
+  transitionState: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<TransitionState>('/api/transitions/state', { song }, { signal }),
   /** The drums of the song's kit and the sound each plays. */
   drumKit: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<{ kit: DrumKitRow[] }>('/api/tracks/drum-kit', { song }, { signal }),
   /** A new section written by the generator, inserted at `index` (0 = first). */

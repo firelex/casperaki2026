@@ -24,6 +24,12 @@ import { z } from 'zod';
 import {
   addSection,
   setTransition,
+  finalChordRootForSegment,
+  isSwappableTransition,
+  loadValidatedCatalog,
+  pickTransitionSound,
+  resolveTransitionSound,
+  TRANSITION_TYPES,
   DRUM_ROLE_LABELS,
   drumKit,
   editTrack,
@@ -33,7 +39,7 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { parseSong, type Song } from '@casperaki/song-schema';
+import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
 const EditBody = z.object({ song: z.unknown(), op: TrackEditRequestSchema }).strict();
@@ -45,6 +51,8 @@ const SetTransitionBody = z
     type: z.string().min(1),
     placement: z.enum(['beginningOfSegment', 'midSegment', 'endOfSegment']),
     on: z.boolean(),
+    /** The sound to play (library-sound transitions; a pack for tonal reverses / percussion fills). */
+    soundId: z.string().min(1).optional(),
   })
   .strict();
 
@@ -106,6 +114,15 @@ export function createTracksRouter(): Router {
     return run(res, () => addSection(song, body.data.type, body.data.index, body.data.bars));
   });
 
+  // Every section's transitions with their sounds (public names only), and the types there are.
+  router.post('/api/transitions/state', (req, res) => {
+    const body = OptionsBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.issues[0]?.message });
+    const song = songOf(body.data.song, res);
+    if (!song) return;
+    return run(res, () => transitionState(song));
+  });
+
   // Switch a transition on or off in sections: { song, segments, type, placement, on } -> { song }.
   router.post('/api/transitions/set', (req, res) => {
     const body = SetTransitionBody.safeParse(req.body);
@@ -138,4 +155,35 @@ function run(res: Response, fn: () => unknown) {
     if (err instanceof TrackEditError) return res.status(err.status).json({ error: err.code, message: err.message });
     return res.status(500).json({ error: 'track_edit_failed', message: err instanceof Error ? err.message : String(err) });
   }
+}
+
+/**
+ * The song's transitions per section with the sound each plays. A stored
+ * soundId names it (for packs the row played in that section is named); a
+ * transition saved without one shows what lowering picks for it (the same
+ * seeded pick, seed = the song's content hash).
+ */
+function transitionState(song: Song) {
+  const catalog = loadValidatedCatalog();
+  const hash = contentHash(song);
+  const sections: Record<string, { type: string; placement: string; soundId: string | null; soundName: string | null }[]> = {};
+  for (const seg of song.songStructure) {
+    const entries = Object.entries((song.arrangement[seg.name]?.transitions ?? {}) as Record<string, { type?: string; placement?: string; soundId?: string }>);
+    sections[seg.name] = entries.map(([tag, e]) => {
+      if (typeof e.placement !== 'string') throw new Error(`${seg.name}/${tag}: transition has no placement`);
+      if (!isSwappableTransition(tag)) return { type: tag, placement: e.placement, soundId: null, soundName: null };
+      const ctx = { tempo: song.bpm, finalChordRoot: finalChordRootForSegment(seg.bars) };
+      if (typeof e.soundId === 'string') {
+        const played = resolveTransitionSound(catalog, tag, e.soundId, ctx);
+        return { type: tag, placement: e.placement, soundId: e.soundId, soundName: publicNameOf(played) };
+      }
+      if (!song.genre) throw new Error('the song has no genre');
+      const picked = pickTransitionSound(catalog, tag, { genre: song.genre, ...ctx }, hash, seg.name);
+      return { type: tag, placement: e.placement, soundId: null, soundName: picked ? publicNameOf(picked.entry) : null };
+    });
+  }
+  return {
+    types: TRANSITION_TYPES.map((t) => ({ type: t.type, label: t.label, placements: t.placements, swappable: isSwappableTransition(t.type) })),
+    sections,
+  };
 }

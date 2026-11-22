@@ -143,3 +143,18 @@ describe('pattern preview options', () => {
     expect(notes(a)).not.toBe(notes(b));
   });
 });
+
+describe('transition sounds', () => {
+  it('lists the sounds a transition can play: one per pack for tonal reverses and percussion fills', async () => {
+    const { searchSounds } = await import('../src/sounds/soundCatalog.js');
+    const down = searchSounds({ transition: 'fxDownlifter', cursor: 0, limit: 100 });
+    expect(down.total).toBeGreaterThan(5);
+    expect(down.items.every((i) => i.family === 'fx' && i.preview === 'audio')).toBe(true);
+    const tonal = searchSounds({ transition: 'fxTonalReverse', cursor: 0, limit: 100 });
+    // 120 rows = 10 packs in 12 keys.
+    expect(tonal.total).toBe(10);
+    const fills = searchSounds({ transition: 'percussionBreaksFills', cursor: 0, limit: 100 });
+    expect(fills.total).toBeLessThan(944 / 5);
+    expect(() => searchSounds({ transition: 'fxNoiseRise', cursor: 0, limit: 10 })).toThrow(/no sounds to choose/);
+  });
+});

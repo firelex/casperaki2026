@@ -12,7 +12,11 @@ const STYLES = ['brightPop', 'edm', 'latin', 'urban', 'ballad', 'rock', 'schlage
 const ROW = 'grid grid-cols-[44px_minmax(160px,2fr)_minmax(120px,1.2fr)_minmax(120px,1.4fr)_100px_96px] items-center gap-3';
 
 /** Which sounds to list: one library family, or every sound a track kind can use. */
-export type SoundSource = { readonly family: string } | { readonly useAs: NonNullable<SoundItem['useAs']> };
+export type SoundSource =
+  | { readonly family: string }
+  | { readonly useAs: NonNullable<SoundItem['useAs']> }
+  /** The sounds a transition type can play (e.g. fxDownlifter). */
+  | { readonly transition: string };
 
 /**
  * A sound browser (the Sounds page, Change sound): search, style filter and
@@ -29,6 +33,7 @@ export function SoundBrowser({
   highlight,
   status,
   autoFocus,
+  playOnce,
 }: {
   source: SoundSource;
   title: string;
@@ -38,11 +43,13 @@ export function SoundBrowser({
   /** Shown at the right of the toolbar (busy / error of the caller's edits). */
   status?: ReactNode;
   autoFocus?: boolean;
+  /** Play audio sounds once (transitions), not as a groove or loop. */
+  playOnce?: boolean;
 }) {
   const [query, setQuery] = useState('');
   const [q, setQ] = useState('');
   const [style, setStyle] = useState('');
-  const sourceKey = 'family' in source ? `family:${source.family}` : `useAs:${source.useAs}`;
+  const sourceKey = 'family' in source ? `family:${source.family}` : 'useAs' in source ? `useAs:${source.useAs}` : `transition:${source.transition}`;
 
   // Search as you type, a moment after typing stops.
   useEffect(() => {
@@ -69,11 +76,11 @@ export function SoundBrowser({
       e.preventDefault();
       e.stopPropagation();
       const s = lastSound ?? items.find((i) => i.preview !== 'none');
-      if (s) void togglePreview(s, style);
+      if (s) void togglePreview(s, style, Boolean(playOnce));
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [items, style]);
+  }, [items, style, playOnce]);
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col" data-owns-space="" data-sound-browser="">
@@ -123,7 +130,7 @@ export function SoundBrowser({
             </div>
           <div role="list">
             {items.map((s) => (
-              <SoundRow key={s.id} s={s} highlighted={s.id === highlight} prefer={style} action={action(s)} />
+              <SoundRow key={s.id} s={s} highlighted={s.id === highlight} prefer={style} once={Boolean(playOnce)} action={action(s)} />
             ))}
             {list.hasNextPage ? (
               <div className="flex justify-center p-4">
@@ -159,7 +166,7 @@ function StyleChip({ label, active, onClick }: { label: string; active: boolean;
 }
 
 /** One sound: play, name, type, styles, tempo/key, and the caller's action. */
-function SoundRow({ s, highlighted, prefer, action }: { s: SoundItem; highlighted: boolean; prefer: string; action: ReactNode }) {
+function SoundRow({ s, highlighted, prefer, once, action }: { s: SoundItem; highlighted: boolean; prefer: string; once: boolean; action: ReactNode }) {
   const state = usePreviewState(s.id);
   const playing = state === 'playing';
   return (
@@ -171,7 +178,7 @@ function SoundRow({ s, highlighted, prefer, action }: { s: SoundItem; highlighte
     >
       <button
         type="button"
-        onClick={() => void togglePreview(s, prefer)}
+        onClick={() => void togglePreview(s, prefer, once)}
         disabled={s.preview === 'none'}
         aria-label={playing ? `Stop ${s.name}` : `Play ${s.name}`}
         title={s.preview === 'none' ? 'No preview for this sound yet' : s.preview === 'pattern' ? 'Hear a pattern played with it' : 'Hear it'}
@@ -246,7 +253,7 @@ let lastSound: SoundItem | undefined;
 
 
 /** Start or stop a sound's preview (one at a time; the song pauses). */
-async function togglePreview(s: SoundItem, prefer: string): Promise<void> {
+async function togglePreview(s: SoundItem, prefer: string, once = false): Promise<void> {
   lastSound = s;
   for (const fn of nowListeners) fn();
   const pat = patternPlayer.getState();
@@ -257,7 +264,7 @@ async function togglePreview(s: SoundItem, prefer: string): Promise<void> {
   if (pat.status === 'playing') await patternPlayer.pause();
   if (s.preview === 'audio') {
     setPatternNow(undefined);
-    return audition.play(s.id, soundsApi.audioUrl(s.id), s.family);
+    return audition.play(s.id, soundsApi.audioUrl(s.id), once ? 'fx' : s.family);
   }
   if (s.preview === 'pattern') {
     // Keep the pattern playing (or last played) while comparing sounds.

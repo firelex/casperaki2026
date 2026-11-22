@@ -12,7 +12,17 @@
 //     // length in bars, consumed by the engine-adapter TransitionPattern path:
 //     pattern?: { snareDrum1: '<grid>', snareDrum2?: '<grid>' },
 //     lengthInBars?: number,
+//     // library-sound transitions — the chosen recording (or pack, for tonal /
+//     // bpm-matched lanes): see ../transitions/sound.ts. Stored so the sound
+//     // stays the same when the song is edited, and can be swapped by the user.
+//     soundId?: string,
 //   };
+//
+// Every section of a type gets that type's transitions (legacy
+// transitions.js:237 sets `lockSegments = true`, and TransitionsClass.js:
+// 604-631 copies each transition — the same sample — to every related
+// section of the type), except an impact on a verse right after a verse
+// (TransitionsClass.js:609-614).
 //
 // The legacy renderer / `TransitionsClass.getTransition` post-processes
 // these tags into per-segment sample placements; that lowering is engine-
@@ -31,6 +41,8 @@ import {
 import { buildEdmSnareRollPattern } from './edm-snare-roll.js';
 import type { DrumOverrideDecision } from './overrides.js';
 import { isTransitionAnchorSegment, segmentType } from './segment-type.js';
+import { loadValidatedCatalog, type ValidatedCatalog } from '../catalog/validated-catalog.js';
+import { finalChordRootForSegment, isSwappableTransition, pickTransitionSound } from '../transitions/sound.js';
 
 // docs/54n — `edmSnareDrumRoll` is a `TransitionPattern`: its snare-roll step
 // grid is generated here (a per-song random decision) and carried on the
@@ -91,6 +103,8 @@ export function generateTransitions(
   const useChorusCrash = CHORUS_CRASH_GENRES.has(genre);
 
   const bySegment: Record<string, Record<string, TransitionEntry>> = {};
+  const catalog = loadValidatedCatalog();
+  const sounds: SoundPicker = { catalog, genre, tempo: ctx.params.bpm, seed: String(ctx.params.seed) };
 
   for (let i = 0; i < structure.length; i++) {
     const segment = structure[i]!;
@@ -110,9 +124,25 @@ export function generateTransitions(
 
     const block: Record<string, TransitionEntry> = {};
     for (const pick of picks) {
-      block[pick.type] = materializeEntry(pick, segment, rollRng);
+      const entry = materializeEntry(pick, segment, rollRng, sounds);
+      if (entry) block[pick.type] = entry;
     }
-    bySegment[segment.name] = block;
+    if (Object.keys(block).length === 0) continue;
+    bySegment[segment.name] = { ...(bySegment[segment.name] ?? {}), ...block };
+
+    // lockSegments (legacy transitions.js:237 → TransitionsClass.js:604-631):
+    // the same transitions — same sound, same snare-roll grid — go on every
+    // other section of this type, except an impact on a verse that directly
+    // follows a verse (TransitionsClass.js:609-614).
+    for (let j = 0; j < structure.length; j++) {
+      const related = structure[j]!;
+      if (related.name === segment.name || segmentType(related.name) !== type) continue;
+      const prevType = j > 0 ? segmentType(structure[j - 1]!.name) : undefined;
+      for (const [tag, entry] of Object.entries(block)) {
+        if (type === 'verse' && prevType === 'verse' && (tag === 'fxLowImpact' || tag === 'fxHighImpact')) continue;
+        (bySegment[related.name] ??= {})[tag] = structuredClone(entry);
+      }
+    }
   }
 
   // docs/62 B4 — cross-segment post-passes (legacy transitions.js:254-315).
@@ -120,7 +150,7 @@ export function generateTransitions(
   // segment name with no inheritance, so writing into non-anchor segments is
   // safe and matches the legacy per-segment injection.
   injectNoiseRiseBeforeChorus(structure, genre, bySegment);
-  injectCrashAfterFxReverse(structure, bySegment);
+  injectCrashAfterFxReverse(structure, bySegment, sounds);
 
   return { bySegment };
 }
@@ -129,10 +159,18 @@ export function generateTransitions(
  *  `edmSnareDrumRoll` tag (its own per-segment fork). */
 function materializeEntry(
   pick: TransitionPick,
-  segment: { name: string; bars: readonly unknown[] },
+  segment: { name: string; bars: ReadonlyArray<{ chords?: readonly string[] }> },
   rollRng: Rng,
-): TransitionEntry {
+  sounds: SoundPicker,
+): TransitionEntry | undefined {
   const entry: Record<string, unknown> = { type: pick.type, placement: pick.placement };
+  if (isSwappableTransition(pick.type)) {
+    const soundId = pickSound(sounds, pick.type, segment);
+    // No recording fits (e.g. no tonal reverse in this key): the legacy
+    // skipped the transition (TransitionsClass.js:373, 464 `continue`).
+    if (!soundId) return undefined;
+    entry['soundId'] = soundId;
+  }
   if (pick.type === EDM_SNARE_DRUM_ROLL) {
     const cappedBars = Math.min(segment.bars.length, EDM_SNARE_ROLL_MAX_BARS);
     const roll = buildEdmSnareRollPattern(rollRng.fork(segment.name), cappedBars);
@@ -316,16 +354,42 @@ function injectNoiseRiseBeforeChorus(
 function injectCrashAfterFxReverse(
   structure: SongStructure,
   bySegment: Record<string, Record<string, TransitionEntry>>,
+  sounds: SoundPicker,
 ): void {
   let prevHadFxReverse = false;
   for (const segment of structure) {
     const name = segment.name;
     if (prevHadFxReverse && !bySegment[name]?.[CYMBALS_CRASH_HIT]) {
-      (bySegment[name] ??= {})[CYMBALS_CRASH_HIT] = {
-        type: CYMBALS_CRASH_HIT,
-        placement: 'beginningOfSegment',
-      } as unknown as TransitionEntry;
+      // lockSegments = false here (legacy transitions.js:297): a crash of its
+      // own for this section only.
+      const soundId = pickSound(sounds, CYMBALS_CRASH_HIT, segment);
+      if (soundId) {
+        (bySegment[name] ??= {})[CYMBALS_CRASH_HIT] = {
+          type: CYMBALS_CRASH_HIT,
+          placement: 'beginningOfSegment',
+          soundId,
+        } as unknown as TransitionEntry;
+      }
     }
     prevHadFxReverse = Boolean(bySegment[name]?.[FX_REVERSE]);
   }
+}
+
+interface SoundPicker {
+  readonly catalog: ValidatedCatalog;
+  readonly genre: string;
+  readonly tempo: number;
+  readonly seed: string;
+}
+
+/** The recording a transition plays in a section (deterministic; see ../transitions/sound.ts). */
+function pickSound(sounds: SoundPicker, tag: string, segment: { name: string; bars: ReadonlyArray<{ chords?: readonly string[] }> }): string | undefined {
+  const picked = pickTransitionSound(
+    sounds.catalog,
+    tag,
+    { genre: sounds.genre, tempo: sounds.tempo, finalChordRoot: finalChordRootForSegment(segment.bars) },
+    sounds.seed,
+    segment.name,
+  );
+  return picked?.entry.id;
 }

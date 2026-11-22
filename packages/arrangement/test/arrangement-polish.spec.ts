@@ -293,18 +293,45 @@ describe('generateFills — EDM vs non-EDM style branch (to-do #4)', () => {
 });
 
 describe('generateTransitions', () => {
-  it('main transitions land on anchors; B4 post-passes may add fxNoiseRise/cymbalsCrashHit elsewhere', () => {
-    // docs/62 B4 — the cross-segment post-passes inject fxNoiseRise before a
-    // chorus and cymbalsCrashHit after an fxReverse, which can land on
-    // non-anchor segments. Any non-anchor entry must therefore carry ONLY those
-    // two post-pass tags.
-    const POST_PASS_TAGS = new Set(['fxNoiseRise', 'cymbalsCrashHit']);
+  it('every section of a type carries its anchor\'s transitions, same sound (legacy lockSegments)', () => {
+    // Legacy transitions.js:237 sets lockSegments = true; TransitionsClass.js:
+    // 604-631 copies each transition (same sample) to every related section,
+    // except an impact on a verse right after a verse (:609-614). The B4
+    // post-passes (fxNoiseRise before a chorus, crash after a reverse) may add
+    // more on top.
+    const p = pipeline('brightPop-vertical-slice');
+    const result = generateTransitions(p.ctx, p.structure);
+    const names = p.structure.map((s) => s.name);
+    let checked = 0;
+    for (const anchor of names.filter((n) => isTransitionAnchorSegment(n))) {
+      const type = anchor.replace(/[0-9]+$/u, '');
+      const block = result.bySegment[anchor] ?? {};
+      for (let j = 0; j < names.length; j++) {
+        const rel = names[j]!;
+        if (rel === anchor || rel.replace(/[0-9]+$/u, '') !== type) continue;
+        const prevType = j > 0 ? names[j - 1]!.replace(/[0-9]+$/u, '') : undefined;
+        for (const [tag, entry] of Object.entries(block)) {
+          if (tag === 'fxNoiseRise' || tag === 'cymbalsCrashHit') continue; // post-pass tags vary per section
+          if (type === 'verse' && prevType === 'verse' && (tag === 'fxLowImpact' || tag === 'fxHighImpact')) {
+            expect(result.bySegment[rel]?.[tag], `${rel} must not repeat ${tag}`).toBeUndefined();
+            continue;
+          }
+          expect(result.bySegment[rel]?.[tag], `${rel} lacks ${anchor}'s ${tag}`).toEqual(entry);
+          checked++;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it('stores the chosen recording of every library-sound transition (soundId)', () => {
     const p = pipeline('brightPop-vertical-slice');
     const result = generateTransitions(p.ctx, p.structure);
     for (const [name, block] of Object.entries(result.bySegment)) {
-      if (isTransitionAnchorSegment(name)) continue;
-      for (const tag of Object.keys(block)) {
-        expect(POST_PASS_TAGS.has(tag), `${name} has non-post-pass tag "${tag}"`).toBe(true);
+      for (const [tag, entry] of Object.entries(block)) {
+        const e = entry as unknown as { soundId?: string };
+        if (tag === 'fxNoiseRise' || tag === 'edmSnareDrumRoll') expect(e.soundId, `${name}/${tag}`).toBeUndefined();
+        else expect(typeof e.soundId, `${name}/${tag}`).toBe('string');
       }
     }
   });

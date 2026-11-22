@@ -42,10 +42,11 @@ export const soundsQueryKeys = {
 
 export const soundsApi = {
   families: (signal?: AbortSignal) => defaultBrainClient.get<{ families: SoundFamily[] }>('/api/sounds/families', { signal }),
-  list: (p: ({ family: string } | { useAs: string }) & { q: string; style: string; cursor: number; limit?: number }, signal?: AbortSignal) => {
+  list: (p: ({ family: string } | { useAs: string } | { transition: string }) & { q: string; style: string; cursor: number; limit?: number }, signal?: AbortSignal) => {
     const qs = new URLSearchParams({ cursor: String(p.cursor), limit: String(p.limit ?? 60) });
     if ('family' in p) qs.set('family', p.family);
-    else qs.set('useAs', p.useAs);
+    else if ('useAs' in p) qs.set('useAs', p.useAs);
+    else qs.set('transition', p.transition);
     if (p.q) qs.set('q', p.q);
     if (p.style) qs.set('style', p.style);
     return defaultBrainClient.get<SoundList>(`/api/sounds?${qs}`, { signal });

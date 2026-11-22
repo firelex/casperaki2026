@@ -21,6 +21,8 @@ import {
   type InstrumentFamily,
   type ValidatedCatalogEntry,
   userSoundFamily,
+  isSwappableTransition,
+  transitionSoundChoices,
   drumRolesForFamily,
 } from '@casperaki/arrangement';
 import { GenreSchema } from '@casperaki/song-schema';
@@ -259,7 +261,7 @@ export function soundFamilies(): SoundFamily[] {
   return FAMILIES.map((f) => ({ ...f, count: counts.get(f.id) ?? 0 }));
 }
 
-export function searchSounds(q: { family?: string; useAs?: string; q?: string; style?: string; cursor: number; limit: number }): {
+export function searchSounds(q: { family?: string; useAs?: string; transition?: string; q?: string; style?: string; cursor: number; limit: number }): {
   total: number;
   items: SoundItem[];
   nextCursor: number | null;
@@ -268,12 +270,21 @@ export function searchSounds(q: { family?: string; useAs?: string; q?: string; s
   if (q.useAs !== undefined && !(InstrumentFamilySchema.options as readonly string[]).includes(q.useAs)) {
     throw new SoundError(400, 'unknown_track_kind', `Unknown track kind "${q.useAs}".`);
   }
+  // Sounds a transition can play: one per recording, or one per pack for tonal
+  // reverses and percussion fills / build-ups (see @casperaki/arrangement
+  // transitions/sound.ts).
+  let transitionIds: ReadonlySet<string> | undefined;
+  if (q.transition !== undefined) {
+    if (!isSwappableTransition(q.transition)) throw new SoundError(400, 'not_swappable', `Transition "${q.transition}" has no sounds to choose from.`);
+    transitionIds = new Set(transitionSoundChoices(loadValidatedCatalog(), q.transition).map((e) => e.id));
+  }
   const text = q.q?.trim().toLowerCase();
   const style = q.style?.trim();
   const matches = soundCatalog().items.filter(
     (i) =>
       (q.family === undefined || i.family === q.family) &&
       (q.useAs === undefined || i.useAs === q.useAs) &&
+      (transitionIds === undefined || transitionIds.has(i.id)) &&
       (!style || i.styles.includes(style)) &&
       (!text || i.name.toLowerCase().includes(text) || i.type.toLowerCase().includes(text) || i.styles.some((s) => s.toLowerCase().includes(text))),
   );
