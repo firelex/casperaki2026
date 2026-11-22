@@ -38,6 +38,7 @@ type Dialog =
   | { kind: 'sound'; track: string }
   | { kind: 'add'; sections: string[] };
 
+const DEFAULT_MIXER_H = 360;
 const MENU = 'z-50 min-w-[220px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl';
 const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40';
 
@@ -126,13 +127,35 @@ export function TimelineView() {
   const [follow, setFollow] = useState(true);
   const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
   // Mixer height: drag the divider above it; remembered.
-  const [mixerH, setMixerH] = useState(() => readNumberPref('casperaki.mixerHeight', 360));
+  const [mixerH, setMixerH] = useState(() => readNumberPref('casperaki.mixerHeight', DEFAULT_MIXER_H));
+  const rootRef = useRef<HTMLDivElement>(null);
+  /** Mixer height that leaves the toolbar and a little of the tracks: "mixer fills the view". */
+  const largeMixerH = () => {
+    const el = rootRef.current;
+    if (!el) throw new Error('The track view is not mounted.');
+    return Math.max(DEFAULT_MIXER_H, el.clientHeight - 160);
+  };
+  const showMixer = useCallback((open: boolean, height?: number) => {
+    setMixerOpen(open);
+    writePref('casperaki.mixerOpen', open);
+    if (height !== undefined) {
+      setMixerH(height);
+      writeNumberPref('casperaki.mixerHeight', height);
+    }
+  }, []);
+  /** Double-click on the divider: default → large → hidden (X or the Mixer button bring it back). */
+  const cycleMixer = () => {
+    const large = largeMixerH();
+    if (Math.abs(mixerH - DEFAULT_MIXER_H) < 8) showMixer(true, large);
+    else if (mixerH >= large - 8) showMixer(false, DEFAULT_MIXER_H);
+    else showMixer(true, DEFAULT_MIXER_H);
+  };
   const startMixerDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
     e.preventDefault();
     const y0 = e.clientY;
     const h0 = mixerH;
-    const room = (e.currentTarget.parentElement?.parentElement?.clientHeight ?? 900) - 160;
+    const room = largeMixerH();
     let h = h0;
     const move = (ev: PointerEvent) => {
       h = Math.max(150, Math.min(room, h0 + (y0 - ev.clientY)));
@@ -154,18 +177,22 @@ export function TimelineView() {
       return !o;
     });
   }, []);
-  // X shows or hides the mixer (as in Logic).
+  // X shows or hides the mixer (as in Logic); Shift+X switches between the
+  // tracks filling the view and the mixer filling it.
+  const mixerFull = mixerOpen && rootRef.current !== null && mixerH >= largeMixerH() - 8;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'KeyX' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
       e.preventDefault();
-      toggleMixer();
+      if (!e.shiftKey) toggleMixer();
+      else if (mixerFull) showMixer(false);
+      else showMixer(true, largeMixerH());
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [toggleMixer]);
+  });
 
   const bpm = viewSong?.bpm ?? 120;
   const secondsPerBar = (BEATS_PER_BAR * 60) / bpm;
@@ -374,7 +401,7 @@ export function TimelineView() {
   const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
 
   return (
-    <div className="flex h-full flex-col text-white">
+    <div ref={rootRef} className="flex h-full flex-col text-white">
       <div className="flex shrink-0 items-center gap-2 border-b border-line/50 px-4 py-2 text-[13px]">
         <span className="mr-2 text-white/55">
           {model.tracks.length} tracks · {model.totalBars} bars · {Math.floor((model.totalBars * secondsPerBar) / 60)}:
@@ -434,7 +461,7 @@ export function TimelineView() {
             type="button"
             onClick={toggleMixer}
             aria-pressed={mixerOpen}
-            title="Show or hide the mixer (X)"
+            title="Show or hide the mixer (X). Shift+X: tracks or mixer full view"
             className={`ml-3 h-8 rounded-[5px] border border-black/60 px-3 text-[12px] font-semibold ${mixerOpen ? 'bg-[#4a4c53] text-white' : 'bg-[#2b2c31] text-[#c4c5cb] hover:text-white'}`}
           >
             Mixer
@@ -642,14 +669,11 @@ export function TimelineView() {
           <div
             className="absolute inset-x-0 -top-[5px] z-20 h-[8px] cursor-row-resize hover:bg-white/15"
             onPointerDown={startMixerDrag}
-            onDoubleClick={() => {
-              setMixerH(360);
-              writeNumberPref('casperaki.mixerHeight', 360);
-            }}
+            onDoubleClick={cycleMixer}
             role="separator"
             aria-orientation="horizontal"
-            aria-label="Drag to resize the mixer (double-click: default height)"
-            title="Drag to resize the mixer (double-click: default height)"
+            aria-label="Drag to resize the mixer (double-click: default, large, hidden)"
+            title="Drag to resize the mixer. Double-click: default → large → hidden. X shows/hides it; Shift+X: tracks or mixer full view"
           />
           <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} />
         </div>
