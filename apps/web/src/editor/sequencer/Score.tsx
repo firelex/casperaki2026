@@ -21,6 +21,8 @@ export function Score({
   beat,
   marks,
   barNumbers,
+  title,
+  subtitle,
 }: {
   notes: readonly ScoreNote[];
   beats: number;
@@ -32,6 +34,9 @@ export function Score({
   marks?: ReadonlyMap<number, string>;
   /** Number every bar (whole-song scores). */
   barNumbers?: boolean;
+  /** Title and subtitle above the score (whole-song scores). */
+  title?: string;
+  subtitle?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const timings = useRef<NoteTimingEvent[]>([]);
@@ -41,7 +46,7 @@ export function Score({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const abc = notesToAbc(notes, { beats, key: songKey, bpm, ...(marks ? { marks } : {}), ...(barNumbers ? { barNumbers } : {}) });
+    const abc = notesToAbc(notes, { beats, key: songKey, bpm, ...(marks ? { marks } : {}), ...(barNumbers ? { barNumbers } : {}), ...(title ? { title } : {}), ...(subtitle ? { subtitle } : {}) });
     const [tune] = abcjs.renderAbc(el, abc, {
       responsive: 'resize',
       staffwidth: Math.max(480, el.clientWidth - 48),
@@ -67,7 +72,7 @@ export function Score({
     svg.appendChild(line);
     cursor.current = line;
     lit.current = [];
-  }, [notes, beats, songKey, bpm, marks, barNumbers]);
+  }, [notes, beats, songKey, bpm, marks, barNumbers, title, subtitle]);
 
   // Follow the player: cursor at the last note event at or before the position.
   useEffect(() => {
@@ -109,7 +114,7 @@ export function Score({
 
   return (
     <div className="p-4">
-      <div ref={ref} className="score-sheet rounded-[6px] bg-[#fbfbfa] shadow-[0_2px_10px_rgba(0,0,0,0.4)]" aria-label="Score" />
+      <div ref={ref} className="score-sheet rounded-[6px] bg-[#fbfbfa] text-[#15161a] shadow-[0_2px_10px_rgba(0,0,0,0.4)]" aria-label="Score" />
       <p className="mt-2 text-[11px] text-white/45">
         The notes the engine plays, rounded to 16ths; parts spanning middle C go on a grand staff.
       </p>

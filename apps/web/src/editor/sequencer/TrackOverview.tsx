@@ -69,7 +69,13 @@ export function TrackOverview({
       });
       setPdf('idle');
     } catch (err) {
-      setPdf({ error: err instanceof Error ? err.message : String(err) });
+      const message = err instanceof Error ? err.message : String(err);
+      // A page loaded before an update asks for code files the new build renamed.
+      setPdf({
+        error: /dynamically imported module|Importing a module script failed/u.test(message)
+          ? 'Casperaki was updated since this page was opened. Reload the page and export again.'
+          : message,
+      });
     }
   };
 
@@ -131,7 +137,11 @@ export function TrackOverview({
           ) : notes.notes.length === 0 ? (
             <p className="px-5 py-10 text-[14px] text-white/55">The engine plays no notes for this track.</p>
           ) : view === 'score' ? (
-            <Score notes={scoreNotes} beats={beats} songKey={songKey} bpm={bpm} beat={playheadBeat} marks={marks} barNumbers />
+            <Score notes={scoreNotes} beats={beats} songKey={songKey} bpm={bpm} beat={playheadBeat} marks={marks}
+              barNumbers
+              title={songTitle}
+              subtitle={`Part: ${soundName ? `${track.name} (${soundName})` : track.name}`}
+            />
           ) : (
             <div className="relative">
               <SectionStrip sections={sections} pxPerBeat={pxPerBeat} />

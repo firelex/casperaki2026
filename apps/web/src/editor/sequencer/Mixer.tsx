@@ -78,7 +78,11 @@ export function Mixer({
   const laneOrder = [...tracks.map((t) => t.name).filter((n) => byLane.has(n)), ...[...byLane.keys()].filter((n) => !tracks.some((t) => t.name === n))];
 
   return (
-    <div className="flex h-full overflow-x-auto overflow-y-hidden bg-[#202124]">
+    // Strips keep their natural height (every insert listed); a lower mixer
+    // scrolls instead of squashing them, a taller one adds room above the faders.
+    <div className="h-full min-h-0 overflow-auto bg-[#202124]">
+      {/* All strips as tall as the tallest, so their faders line up. */}
+      <div className="flex min-h-full w-max items-stretch">
       {laneOrder.map((lane) => (
         <ChannelStrip
           key={lane}
@@ -105,6 +109,7 @@ export function Mixer({
         volumeDb={mix.config.constants.masterVolumeDb}
         level={busLevel(3)}
       />
+      </div>
     </div>
   );
 }
@@ -241,11 +246,11 @@ function Strip({
 }) {
   return (
     <div
-      className="flex h-full shrink-0 flex-col border-r border-black/60 bg-gradient-to-b from-[#2e2f34] to-[#26272b] px-1.5 pb-1 pt-1.5"
+      className="flex min-h-full shrink-0 flex-col border-r border-black/60 bg-gradient-to-b from-[#2e2f34] to-[#26272b] px-1.5 pb-1 pt-1.5"
       style={{ width: STRIP_W }}
       title={title}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{children}</div>
+      <div className="flex-1">{children}</div>
       <div className="shrink-0 border-t border-black/40 pt-1">{bottom}</div>
       {/* Name plate, as at the foot of a console strip. */}
       <div className="mt-1 rounded-[3px] border border-black/60 px-1 py-0.5" style={{ background: `color-mix(in srgb, ${color} 55%, #1d1e21)` }}>

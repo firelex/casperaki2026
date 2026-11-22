@@ -251,6 +251,8 @@ export function notesToAbc(
     marks?: ReadonlyMap<number, string>;
     /** Tune title (T:), e.g. for a printed score. */
     title?: string;
+    /** Second title line (subtitle), e.g. which part this is. */
+    subtitle?: string;
     /** Number every bar (whole-song scores). */
     barNumbers?: boolean;
   },
@@ -264,6 +266,7 @@ export function notesToAbc(
   const head = [
     'X:1',
     ...(opts.title ? [`T:${opts.title.replace(/\n/gu, ' ')}`] : []),
+    ...(opts.subtitle ? [`T:${opts.subtitle.replace(/\n/gu, ' ')}`] : []),
     'M:4/4',
     'L:1/16',
     ...(opts.barNumbers ? ['%%barnumbers 1'] : []),
