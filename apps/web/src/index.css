@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@source '../node_modules/@teamsuzie/ui/dist';
 
 /*
  * Casperaki workbench theme.

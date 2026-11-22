@@ -795,3 +795,40 @@ function segmentType(name: string): string {
   if (name.startsWith('break')) return 'break';
   return name;
 }
+
+// ===========================================================================
+// Track editing support (sequencer: change sound / add track)
+// ===========================================================================
+
+const ALL_LANE_SPECS: readonly LaneSpec[] = [
+  DRUMS_SPEC, BASS_SPEC, SOFT_PAD, BRIGHT_PAD, ACOUSTIC_GUITAR, ELECTRIC_GUITAR_CLEAN,
+  ELECTRIC_GUITAR_DIST, PIANO_ACOUSTIC, PIANO_ELECTRONIC, LEAD_SOFT, LEAD_BRIGHT, LEAD_ANALOG,
+  PLUCKED, STRINGS, BRASS,
+];
+
+/** Lane display-name base per family (`Keys`, `Pad`, …); duplicates add ` 2`, ` 3`. */
+export const LANE_BASE_NAMES: Readonly<Record<InstrumentFamily, string>> = LANE_BASE_NAME;
+
+/** The family of a lane by its display name (`Keys 2` → keys), or undefined
+ *  for lanes that are not generator families (Vocal, Loop, transitions). */
+export function laneFamilyOf(lane: string): InstrumentFamily | undefined {
+  const base = lane.replace(/\s+\d+$/u, '');
+  const hit = (Object.entries(LANE_BASE_NAME) as [InstrumentFamily, string][]).find(([, b]) => b === base);
+  return hit?.[0];
+}
+
+/** Every catalog sound a lane of `family` may use in `genre`: the union of the
+ *  pools of all the family's lane specs (the same filters and genre preference
+ *  the selection step uses), sorted by id. Empty when the genre has no pattern
+ *  coverage for the family (orchestral gate) or the catalog has no candidate. */
+export function familySoundPool(family: InstrumentFamily, genre: string): readonly ValidatedCatalogEntry[] {
+  if (!SUPPORTED_GENRES.has(genre)) throw new Error(`familySoundPool: unsupported genre "${genre}"`);
+  if (!laneSupportedForGenre(family, genre)) return [];
+  const entries = loadValidatedCatalog().entries;
+  const byId = new Map<string, ValidatedCatalogEntry>();
+  for (const spec of ALL_LANE_SPECS) {
+    if (spec.familyClass !== family) continue;
+    for (const e of candidatesFor(entries, spec.cfg, genre).candidates) byId.set(e.id, e);
+  }
+  return sortById([...byId.values()]);
+}

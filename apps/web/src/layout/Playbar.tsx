@@ -34,8 +34,9 @@ export function Playbar() {
     staleTime: Infinity,
   });
 
-  const { liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause: handlePlayPause, seek: seekToSeconds } =
-    useLiveTransport();
+  const {
+    liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause: handlePlayPause, seek: seekToSeconds, stop, toggleLoop,
+  } = useLiveTransport();
 
   const summary = useMemo(
     () => (viewSong ? summarizeStructure(viewSong) : []),
@@ -62,19 +63,23 @@ export function Playbar() {
   // Space bar plays / pauses, unless typing in a field.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || e.repeat) return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.code !== 'Space' && e.code !== 'KeyL' && e.code !== 'Enter') return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(t.tagName))) return;
       e.preventDefault();
-      handlePlayPause();
+      if (e.code === 'Space') handlePlayPause();
+      else if (e.code === 'KeyL') {
+        if (live.loopRange) toggleLoop();
+      } else stop(true);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handlePlayPause]);
+  }, [handlePlayPause, toggleLoop, stop, live.loopRange]);
 
-  const beatsIn = (currentSeconds * bpm) / 60;
-  const currentBar = Math.min(Math.max(1, totalBars), Math.floor(beatsIn / 4) + 1);
-  const currentBeat = Math.floor(beatsIn % 4) + 1;
+  const loaded = Boolean(liveKey) && isThisSong && live.status !== 'loading' && live.status !== 'idle';
+  const tbtn =
+    'h-10 w-10 rounded-[8px] flex items-center justify-center text-white hover:bg-white/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent';
 
   return (
     <footer className="flex flex-col w-full border-t border-line/60 bg-[#0d0d17]">
@@ -99,13 +104,35 @@ export function Playbar() {
           >
             <button
               type="button"
+              onClick={() => stop(false)}
+              onDoubleClick={() => stop(true)}
+              disabled={!loaded}
+              className={tbtn}
+              aria-label="Stop"
+              title="Stop and go back to where play started (double-click: back to the beginning)"
+            >
+              <span className="block h-3 w-3 rounded-[2px] bg-current" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
               onClick={handlePlayPause}
               disabled={!liveKey || loading}
-              className="h-10 w-10 rounded-full flex items-center justify-center text-white text-[15px] hover:bg-white/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+              className={`${tbtn} text-[15px]`}
               aria-label={playing ? 'Pause' : 'Play'}
-              title={playing ? 'Pause' : 'Play'}
+              title={playing ? 'Pause (space)' : 'Play (space)'}
             >
               {loading ? '…' : playing ? '❚❚' : '▶'}
+            </button>
+            <button
+              type="button"
+              onClick={toggleLoop}
+              disabled={!live.loopRange}
+              aria-pressed={live.looping}
+              className={`${tbtn} ${live.looping ? 'bg-sky-400/20 text-sky-300 hover:bg-sky-400/30' : ''}`}
+              aria-label={live.looping ? 'Turn loop off' : 'Loop the selected range'}
+              title={live.loopRange ? (live.looping ? 'Loop on (L)' : 'Loop the selected range (L)') : 'Drag across the bar above the tracks to choose a range to loop'}
+            >
+              <LoopIcon />
             </button>
 
             <span className="font-mono text-[14px] text-white tabular-nums w-[44px] text-right">
@@ -138,20 +165,7 @@ export function Playbar() {
             </span>
           </div>
 
-          <div className="flex items-baseline gap-4">
-            <div className="flex flex-col items-center px-2">
-              <strong className="text-[20px] text-white font-semibold leading-tight tabular-nums">
-                {currentBar}
-              </strong>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-dim">Bar</span>
-            </div>
-            <div className="flex flex-col items-center px-2">
-              <strong className="text-[20px] text-white font-semibold leading-tight tabular-nums">
-                {currentBeat}
-              </strong>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-dim">Beat</span>
-            </div>
-          </div>
+          <Counter seconds={currentSeconds} bpm={bpm} />
         </div>
 
         <div className="flex flex-col items-end gap-0.5">
@@ -183,6 +197,42 @@ export function Playbar() {
         render={render}
       />
     </footer>
+  );
+}
+
+const TICKS_PER_BEAT = 960;
+
+/** DAW-style counter: bars | beats | ticks, with minutes:seconds underneath. */
+function Counter({ seconds, bpm }: { seconds: number; bpm: number }) {
+  const beatsIn = Math.max(0, (seconds * bpm) / 60);
+  const bar = Math.floor(beatsIn / 4) + 1;
+  const beat = Math.floor(beatsIn % 4) + 1;
+  const ticks = Math.floor((beatsIn % 1) * TICKS_PER_BEAT);
+  const m = Math.floor(seconds / 60);
+  const sec = seconds - m * 60;
+  return (
+    <div
+      className="flex min-w-[150px] flex-col items-end rounded-[8px] border border-line/60 bg-black/50 px-3 py-1.5 font-mono tabular-nums"
+      aria-label={`Bar ${bar}, beat ${beat}`}
+    >
+      <span className="text-[20px] leading-tight text-emerald-300">
+        {String(bar).padStart(3, '\u2007')}|{beat}|{String(ticks).padStart(3, '0')}
+      </span>
+      <span className="text-[12px] leading-tight text-white/50">
+        {m}:{sec.toFixed(3).padStart(6, '0')}
+      </span>
+    </div>
+  );
+}
+
+function LoopIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M17 2l4 4-4 4" />
+      <path d="M3 11V9a3 3 0 0 1 3-3h15" />
+      <path d="M7 22l-4-4 4-4" />
+      <path d="M21 13v2a3 3 0 0 1-3 3H3" />
+    </svg>
   );
 }
 

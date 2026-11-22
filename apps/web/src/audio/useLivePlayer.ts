@@ -13,6 +13,7 @@ export function useLiveState(): LiveState {
 /** Playback position in seconds, refreshed every animation frame while playing. */
 export function useLivePosition(active: boolean): number {
   const [pos, setPos] = useState(() => livePlayer.position());
+  useEffect(() => livePlayer.onPositionJump(() => setPos(livePlayer.position())), []);
   useEffect(() => {
     setPos(livePlayer.position());
     if (!active) return;

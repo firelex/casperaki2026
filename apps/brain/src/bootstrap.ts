@@ -19,6 +19,7 @@ import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, ownerOf } from './routes/songs.js';
 import { createPlaybackRouter } from './routes/playback.js';
 import { createPatternsRouter } from './routes/patterns.js';
+import { createTracksRouter } from './routes/tracks.js';
 import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
@@ -160,6 +161,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
 
   app.use(createSongsRouter({ store, renders }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
+  app.use(createTracksRouter());
   app.use(
     createPatternsRouter({
       store,

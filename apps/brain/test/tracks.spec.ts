@@ -1,0 +1,86 @@
+// Sequencer track editing routes: options and edits over a generated song.
+
+import type { AddressInfo } from 'node:net';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { orchestrate } from '@casperaki/arrangement';
+import type { Song } from '@casperaki/song-schema';
+
+import { createApp } from '../src/bootstrap.js';
+import { loadConfig } from '../src/config.js';
+import { openSongsStore, type SongsStore } from '../src/store.js';
+
+interface Harness { url: string; stop: () => Promise<void> }
+
+async function boot(): Promise<Harness> {
+  const store: SongsStore = openSongsStore({ path: ':memory:' });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store });
+  const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+    const s = app.listen(0, '127.0.0.1', () => resolve(s));
+  });
+  return {
+    url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
+  };
+}
+
+const post = (url: string, body: unknown) =>
+  fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+const song = (): Song => orchestrate({ genre: 'edm', key: 'Am', bpm: 126, seed: 'tracks-route-1' });
+
+interface Options {
+  tracks: Record<string, { family: string | null; soundId: string | null; editable: boolean }>;
+  families: { family: string; label: string; sounds: { id: string; name: string }[] }[];
+}
+
+describe('track editing routes', () => {
+  let h: Harness;
+  beforeEach(async () => { h = await boot(); });
+  afterEach(async () => { await h.stop(); });
+
+  it('lists each track and the sounds per family', async () => {
+    const res = await post(`${h.url}/api/tracks/options`, { song: song() });
+    expect(res.status).toBe(200);
+    const o = (await res.json()) as Options;
+    expect(o.tracks.Drums).toMatchObject({ family: 'drums', editable: true });
+    expect(o.tracks.Vocal).toMatchObject({ family: null, soundId: null, editable: false });
+    const bass = o.families.find((f) => f.family === 'bass')!;
+    expect(bass.label).toBe('Bass');
+    expect(bass.sounds.length).toBeGreaterThan(1);
+    expect(bass.sounds.map((s) => s.id)).toContain(o.tracks.Bass!.soundId);
+  });
+
+  it('changes a sound, makes a new pattern and adds a track', async () => {
+    const s0 = song();
+    const o = (await (await post(`${h.url}/api/tracks/options`, { song: s0 })).json()) as Options;
+    const other = o.families.find((f) => f.family === 'bass')!.sounds.find((x) => x.id !== o.tracks.Bass!.soundId)!;
+    const a = (await (await post(`${h.url}/api/tracks/edit`, { song: s0, op: { kind: 'changeSound', track: 'Bass', soundId: other.id } })).json()) as { song: Song; track: string };
+    expect(a.track).toBe('Bass');
+    expect(a.song.instrumentDefinitions.find((d) => d.name === 'Bass')!.id).toBe(other.id);
+
+    const b = await post(`${h.url}/api/tracks/edit`, { song: a.song, op: { kind: 'newPattern', track: 'Drums' } });
+    expect(b.status).toBe(200);
+
+    const chorus = s0.songStructure.filter((x) => x.name.startsWith('chorus')).map((x) => x.name);
+    const c = (await (await post(`${h.url}/api/tracks/edit`, { song: ((await b.json()) as { song: Song }).song, op: { kind: 'addTrack', family: 'keys', segments: chorus } })).json()) as { song: Song; track: string };
+    expect(c.track).toMatch(/^Keys( \d+)?$/u);
+    for (const seg of s0.songStructure) expect(c.song.arrangement[seg.name]!.instruments[c.track]).toBe(chorus.includes(seg.name));
+  });
+
+  it('fails loudly on bad requests', async () => {
+    const s0 = song();
+    const o = (await (await post(`${h.url}/api/tracks/options`, { song: s0 })).json()) as Options;
+    const keys = o.families.find((f) => f.family === 'keys')!.sounds[0]!;
+    const wrongFamily = await post(`${h.url}/api/tracks/edit`, { song: s0, op: { kind: 'changeSound', track: 'Bass', soundId: keys.id } });
+    expect(wrongFamily.status).toBe(400);
+    expect(((await wrongFamily.json()) as { error: string }).error).toBe('sound_not_in_family');
+    expect((await post(`${h.url}/api/tracks/edit`, { song: s0, op: { kind: 'newPattern', track: 'Nope' } })).status).toBe(400);
+    expect((await post(`${h.url}/api/tracks/edit`, { song: s0, op: { kind: 'newPattern', track: 'Vocal' } })).status).toBe(400);
+    expect((await post(`${h.url}/api/tracks/edit`, { song: s0, op: { kind: 'addTrack', family: 'keys', segments: ['nope'] } })).status).toBe(400);
+    expect((await post(`${h.url}/api/tracks/edit`, { song: s0, op: { kind: 'explode' } })).status).toBe(400);
+    expect((await post(`${h.url}/api/tracks/edit`, { song: { bogus: true }, op: { kind: 'newPattern', track: 'Drums' } })).status).toBe(400);
+    const { generator: _g, ...bare } = s0;
+    expect((await post(`${h.url}/api/tracks/edit`, { song: bare, op: { kind: 'newPattern', track: 'Drums' } })).status).toBe(409);
+  });
+});

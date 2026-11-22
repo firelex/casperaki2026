@@ -412,3 +412,34 @@ describe('nextUniqueSegmentName', () => {
     expect(nextUniqueSegmentName('intro', new Set(['intro']))).toBe('intro2');
   });
 });
+
+describe('removeTrack', () => {
+  it('takes the track out of every section and its definition, undoably', () => {
+    const song = makeValidSong();
+    const track = Object.keys(Object.values(song.arrangement)[0]!.instruments)[0]!;
+    const state = applyCommand(initEditState(song), { kind: 'removeTrack', track });
+    expect(state.lastError).toBeUndefined();
+    expect(state.working.instrumentDefinitions.some((d) => d.name === track)).toBe(false);
+    for (const payload of Object.values(state.working.arrangement)) {
+      expect(track in (payload.instruments ?? {})).toBe(false);
+      expect(track in (payload.overrides ?? {})).toBe(false);
+    }
+    expect(applyCommand(state, { kind: 'undo' }).working).toBe(song);
+  });
+
+  it('reports a track that is not in the song', () => {
+    const state = applyCommand(initEditState(makeValidSong()), { kind: 'removeTrack', track: 'Nope' });
+    expect(state.lastError).toMatch(/not in this song/);
+  });
+});
+
+describe('replaceSong', () => {
+  it('swaps in a new working song that undo restores', () => {
+    const song = makeValidSong();
+    const next = { ...song, title: 'Edited' };
+    const state = applyCommand(initEditState(song), { kind: 'replaceSong', song: next });
+    expect(state.working).toBe(next);
+    expect(state.dirty).toBe(true);
+    expect(applyCommand(state, { kind: 'undo' }).working).toBe(song);
+  });
+});

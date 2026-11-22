@@ -18,6 +18,9 @@
 //   laneGains          {[lane: string]: number}  initial mute/solo gains
 //
 // Messages in:  { type: 'seek', frame }  { type: 'laneGains', gains: {[lane]: gain} }
+//               { type: 'loop', start, end } (frames; start null = no loop). Playback
+//               that crosses `end` from inside the loop jumps to `start` on the exact
+//               frame (instant seek: effect tails carry over, as in a DAW).
 // Messages out: { type: 'ready', totalFrames, sampleRate, laneNames, realCount }
 //               { type: 'seeked', frame }  { type: 'ended' }  { type: 'error', message }
 
@@ -33,6 +36,8 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     const o = options.processorOptions;
     this.masterGain = o.masterGain ?? 0.15;
     this.seekPreroll = o.seekPrerollFrames ?? 0;
+    this.loopStart = -1;
+    this.loopEnd = -1;
 
     try {
       const e = instantiateEngine(o.wasmBytes);
@@ -58,6 +63,18 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
           }
           this.done = false;
           this.port.postMessage({ type: 'seeked', frame: pos });
+        } else if (d.type === 'loop') {
+          if (d.start === null) {
+            this.loopStart = this.loopEnd = -1;
+          } else {
+            const a = Math.floor(d.start), b = Math.floor(d.end);
+            if (!(a >= 0 && b > a && b <= this.totalFrames)) {
+              this.port.postMessage({ type: 'error', message: `bad loop ${a}..${b} (song has ${this.totalFrames} frames)` });
+              return;
+            }
+            this.loopStart = a;
+            this.loopEnd = b;
+          }
         } else if (d.type === 'laneGains') {
           try {
             this.applyLaneGains(d.gains);
@@ -91,6 +108,21 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     });
   }
 
+  /** Copy `n` frames of the engine's block into the outputs at `at`, hard-clamped
+   *  as a last safety net (the limiter after this node does the real work). */
+  copyOut(outL, outR, at, n) {
+    for (let i = 0; i < n; i++) {
+      const l = this.left[i];
+      outL[at + i] = l > 1 ? 1 : l < -1 ? -1 : l;
+    }
+    if (outR) {
+      for (let i = 0; i < n; i++) {
+        const r = this.right[i];
+        outR[at + i] = r > 1 ? 1 : r < -1 ? -1 : r;
+      }
+    }
+  }
+
   process(_inputs, outputs) {
     const output = outputs[0];
     if (!output || output.length === 0) return true;
@@ -98,19 +130,27 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       for (let c = 0; c < output.length; c++) output[c].fill(0);
       return true;
     }
-    const more = this.e.mixer_pull(BLOCK);
     const outL = output[0];
     const outR = output.length > 1 ? output[1] : null;
-    // Hard clamp as a last safety net (the limiter after this node does the real work).
-    for (let i = 0; i < outL.length; i++) {
-      const l = this.left[i];
-      outL[i] = l > 1 ? 1 : l < -1 ? -1 : l;
-    }
-    if (outR) {
-      for (let i = 0; i < outR.length; i++) {
-        const r = this.right[i];
-        outR[i] = r > 1 ? 1 : r < -1 ? -1 : r;
+    let more;
+    const pos = this.e.mixer_position();
+    if (this.loopEnd > 0 && pos < this.loopEnd && pos + BLOCK >= this.loopEnd) {
+      // The loop end falls inside (or at the end of) this quantum: play up to it,
+      // jump back, fill the rest from the loop start.
+      const head = this.loopEnd - pos;
+      this.e.mixer_pull(head);
+      this.copyOut(outL, outR, 0, head);
+      if (this.e.mixer_seek(this.loopStart, 0) < 0) {
+        this.port.postMessage({ type: 'error', message: `loop seek failed: ${lastError(this.e)}` });
       }
+      more = true;
+      if (head < BLOCK) {
+        more = this.e.mixer_pull(BLOCK - head);
+        this.copyOut(outL, outR, head, BLOCK - head);
+      }
+    } else {
+      more = this.e.mixer_pull(BLOCK);
+      this.copyOut(outL, outR, 0, BLOCK);
     }
     if (!more) {
       this.done = true;

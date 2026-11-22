@@ -26,8 +26,12 @@ export interface SeqNote {
   readonly start: number;
   /** Length in beats (events without one get a short default). */
   readonly length: number;
-  /** MIDI pitch, or null for events without a single pitch (chords, strums, arpeggios). */
+  /** MIDI pitch, or null for events without a pitch we can show (strums, guitar patterns). */
   readonly pitch: number | null;
+  /** 'chord': one note of a chord event (all its notes share start and length). */
+  readonly kind: 'note' | 'chord' | 'other';
+  /** Chord symbol (chord notes) or sung word (vocal notes), when there is one. */
+  readonly label?: string;
 }
 
 export interface SeqClip {
@@ -65,6 +69,74 @@ export function noteToMidi(note: unknown): number | null {
   if (m[2] === '#') pc += 1;
   else if (m[2] === 'b') pc -= 1;
   return (Number.parseInt(m[3]!, 10) + 1) * 12 + pc;
+}
+
+const CHORD_RE = /^([A-G])([#b]?)(.*)$/u;
+
+/**
+ * The pitches of a chord symbol (C, Am, F#m7, Gsus4, Bdim, Cmaj7…), in the
+ * octave a chord event of `chordType` plays in. For display (piano roll);
+ * null when the symbol isn't one we read.
+ */
+export function chordPitches(symbol: string, chordType?: string): number[] | null {
+  const m = CHORD_RE.exec(symbol.split('/')[0]!.trim());
+  if (!m) return null;
+  let root = PC[m[1]!]!;
+  if (m[2] === '#') root += 1;
+  else if (m[2] === 'b') root -= 1;
+  const q = m[3]!;
+  const minor = /^m(?!aj)/u.test(q) || q.startsWith('min');
+  const third = q.includes('sus2') ? 2 : q.includes('sus') ? 5 : minor || q.includes('dim') ? 3 : 4;
+  const fifth = q.includes('dim') ? 6 : q.includes('aug') || q.includes('+') ? 8 : 7;
+  const iv = [0, third, fifth];
+  if (q.includes('maj7')) iv.push(11);
+  else if (/7/u.test(q)) iv.push(q.includes('dim') ? 9 : 10);
+  if (/9/u.test(q)) iv.push(14);
+  const octave = chordType?.includes('twoOctave') ? 36 : chordType?.toLowerCase().includes('octavelow') ? 48 : 60;
+  return iv.map((i) => octave + ((root + 12) % 12) + i);
+}
+
+/** General MIDI drum names, for the drum editor. */
+const GM_DRUMS: Record<number, string> = {
+  35: 'Kick 2', 36: 'Kick', 37: 'Side stick', 38: 'Snare', 39: 'Clap', 40: 'Snare 2', 41: 'Low tom 2',
+  42: 'Closed hat', 43: 'Low tom', 44: 'Pedal hat', 45: 'Mid tom 2', 46: 'Open hat', 47: 'Mid tom',
+  48: 'High tom 2', 49: 'Crash', 50: 'High tom', 51: 'Ride', 52: 'China', 53: 'Ride bell', 54: 'Tambourine',
+  55: 'Splash', 56: 'Cowbell', 57: 'Crash 2', 59: 'Ride 2', 60: 'High bongo', 61: 'Low bongo', 62: 'Conga mute',
+  63: 'Conga high', 64: 'Conga low', 69: 'Cabasa', 70: 'Shaker', 75: 'Claves', 76: 'Wood block', 81: 'Triangle',
+};
+export function drumName(pitch: number): string {
+  return GM_DRUMS[pitch] ?? `Drum ${pitch}`;
+}
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export function midiName(pitch: number): string {
+  return `${NOTE_NAMES[((pitch % 12) + 12) % 12]}${Math.floor(pitch / 12) - 1}`;
+}
+
+interface RawEvent {
+  type: string;
+  note?: unknown;
+  duration?: number;
+  chord?: string;
+  chordType?: string;
+  distanceFromMiddleC?: number;
+  fullWord?: string;
+}
+
+/** One song event as sequencer notes (a chord becomes one note per pitch). */
+function eventNotes(ev: RawEvent, start: number): SeqNote[] {
+  const length = ev.duration && ev.duration > 0 ? ev.duration : ev.type === 'note' ? 0.25 : 1;
+  if (ev.type === 'note' || ev.type === 'vocalNote') {
+    return [{ start, length, pitch: noteToMidi(ev.note), kind: 'note', ...(ev.fullWord ? { label: ev.fullWord } : {}) }];
+  }
+  if (ev.type === 'noteRelative' && typeof ev.distanceFromMiddleC === 'number') {
+    return [{ start, length, pitch: 60 + ev.distanceFromMiddleC, kind: 'note' }];
+  }
+  if (ev.type === 'chord' && ev.chord) {
+    const pitches = chordPitches(ev.chord, ev.chordType);
+    if (pitches) return pitches.map((pitch) => ({ start, length, pitch, kind: 'chord', label: ev.chord }));
+  }
+  return [{ start, length, pitch: null, kind: 'other' }];
 }
 
 /** Track order: rhythm section first, then harmony, melody, vocals last. */
@@ -121,12 +193,8 @@ export function buildSequencerModel(song: Song): SequencerModel {
         for (const [beatKey, events] of Object.entries(b.notes ?? {})) {
           const beat = Number.parseFloat(beatKey);
           if (!Number.isFinite(beat)) throw new Error(`${sec.name}/${instrument}: bad beat key "${beatKey}"`);
-          for (const ev of (events ?? []) as Array<{ type: string; note?: unknown; duration?: number }>) {
-            notes.push({
-              start: (sec.startBar + barIdx) * BEATS_PER_BAR + beat,
-              length: ev.duration && ev.duration > 0 ? ev.duration : ev.type === 'note' ? 0.25 : 1,
-              pitch: ev.type === 'note' ? noteToMidi(ev.note) : null,
-            });
+          for (const ev of (events ?? []) as RawEvent[]) {
+            notes.push(...eventNotes(ev, (sec.startBar + barIdx) * BEATS_PER_BAR + beat));
           }
         }
       });

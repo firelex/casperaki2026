@@ -46,6 +46,7 @@ import { generatePatterns } from '../patterns/index.js';
 import { selectInstruments } from '../selection/index.js';
 import { generateSongStructure } from '../structure/index.js';
 import { generateVocalMelody } from '../vocals/index.js';
+import { applyTrackEditsToSelection, recordedTrackEdits } from '../edits/recorded.js';
 
 import type { ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
 import { LOOP_DISPLAY_NAME } from '../selection/index.js';
@@ -150,7 +151,14 @@ export function orchestrate(params: GenerateParams): Song {
   const ctx = { params, rng: createRng(params.seed) };
   const structure = generateSongStructure(ctx);
   const structureWithChords = generateChords(ctx, structure);
-  const selection = selectInstruments(ctx, structureWithChords);
+  // Sequencer track edits (generator params `trackEdits`): applied to the
+  // selection, so each edit only touches its own lane's streams.
+  const edited = applyTrackEditsToSelection(
+    selectInstruments(ctx, structureWithChords),
+    recordedTrackEdits(params.params),
+    params.genre,
+  );
+  const selection = edited.selection;
   // to-do #1 Phase B — bake the per-segment drum + bass override system into
   // the freshly-generated patterns (the engine reset path bypasses its own
   // mask branch, so masks bake into the emitted pattern). Forks the root rng,
@@ -168,7 +176,7 @@ export function orchestrate(params: GenerateParams): Song {
     ctx,
     structureWithChords,
     selection,
-    generatePatterns(ctx, structureWithChords, selection),
+    generatePatterns(ctx, structureWithChords, selection, edited.laneVariants),
     drumDecisions,
   );
   const vocals = generateVocalMelody(ctx, structureWithChords);

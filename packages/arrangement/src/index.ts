@@ -297,3 +297,22 @@ export {
   type SelectionResult,
 } from './selection/types.js';
 export { LOOP_DISPLAY_NAME, LOOP_GENRES } from './selection/index.js';
+export { familySoundPool, laneFamilyOf, LANE_BASE_NAMES } from './selection/index.js';
+export {
+  applyTrackEditsToSelection,
+  recordedTrackEdits,
+  RecordedTrackEditSchema,
+  TRACK_EDITS_PARAM,
+  type RecordedTrackEdit,
+} from './edits/recorded.js';
+export {
+  editTrack,
+  FAMILY_LABELS,
+  generatorParams,
+  spliceTrack,
+  TrackEditError,
+  TrackEditRequestSchema,
+  trackOptions,
+  type TrackEditRequest,
+  type TrackOptions,
+} from './edits/track-edits.js';

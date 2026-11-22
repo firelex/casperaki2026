@@ -58,7 +58,21 @@ export function useLiveTransport() {
     [liveKey, startPlaying],
   );
 
-  return { liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, seek, editorDirty };
+  /** Stop: back to where Play started; `toStart` (double-click) to the beginning. */
+  const stop = useCallback(
+    (toStart: boolean) => {
+      if (liveKey && livePlayer.isLoaded(liveKey)) void livePlayer.stopAndReturn(toStart);
+    },
+    [liveKey],
+  );
+
+  const toggleLoop = useCallback(() => {
+    livePlayer.setLooping(!live.looping);
+  }, [live.looping]);
+
+  return {
+    liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, seek, stop, toggleLoop, editorDirty,
+  };
 }
 
 /** 32-bit FNV-1a of a string, as hex: a cheap key for the working copy. */

@@ -54,6 +54,11 @@ export type EditCommand =
   | { kind: 'changeBarCount'; segmentName: string; delta: number; min?: number }
   | { kind: 'setBarCount'; segmentName: string; bars: number; min?: number }
   | { kind: 'renameSegment'; segmentName: string; newName: string }
+  /** Take a track out of every section and drop its instrument. */
+  | { kind: 'removeTrack'; track: string }
+  /** A whole new working song, e.g. the brain's answer to a track edit
+   *  (new sound, new pattern, added track). Undoable like any edit. */
+  | { kind: 'replaceSong'; song: Song }
   | { kind: 'revertToOriginal' }
   | { kind: 'undo' }
   | { kind: 'redo' };
@@ -252,6 +257,10 @@ function mutate(song: Song, command: EditCommand): Song {
     }
     case 'renameSegment':
       return renameSegment(song, command.segmentName, command.newName);
+    case 'removeTrack':
+      return removeTrack(song, command.track);
+    case 'replaceSong':
+      return command.song;
     default:
       throw new Error(`unreachable mutation kind ${(command as { kind: string }).kind}`);
   }
@@ -261,6 +270,32 @@ function findSegmentIndex(song: Song, name: string): number {
   const idx = song.songStructure.findIndex((s) => s.name === name);
   if (idx < 0) throw new Error(`segment '${name}' not found in songStructure`);
   return idx;
+}
+
+const TRACK_KEYED = ['instruments', 'overrides', 'fills', 'mutes', 'signalProcessors'] as const;
+
+function removeTrack(song: Song, track: string): Song {
+  let found = song.instrumentDefinitions.some((d) => d.name === track);
+  const arrangement: Arrangement = {};
+  for (const [seg, payload] of Object.entries(song.arrangement)) {
+    const next: SegmentPayload = { ...payload };
+    for (const field of TRACK_KEYED) {
+      const map = payload[field] as Record<string, unknown> | undefined;
+      if (map && track in map) {
+        found = true;
+        const copy = { ...map };
+        delete copy[track];
+        (next as Record<string, unknown>)[field] = copy;
+      }
+    }
+    arrangement[seg] = next;
+  }
+  if (!found) throw new Error(`track '${track}' is not in this song`);
+  return {
+    ...song,
+    arrangement,
+    instrumentDefinitions: song.instrumentDefinitions.filter((d) => d.name !== track),
+  };
 }
 
 function duplicateSegment(song: Song, name: string): Song {

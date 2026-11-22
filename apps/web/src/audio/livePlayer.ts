@@ -27,6 +27,15 @@ export interface LiveState {
   /** Lanes muted / soloed by the user (kept across songs, by lane name). */
   readonly muted: readonly string[];
   readonly solo: readonly string[];
+  /** The loop range in seconds (kept across songs), or undefined. */
+  readonly loopRange: LoopRange | undefined;
+  /** Whether playback repeats the loop range. */
+  readonly looping: boolean;
+}
+
+export interface LoopRange {
+  readonly start: number;
+  readonly end: number;
 }
 
 /** Per-track levels of one song version, filled in as the meter worker runs. */
@@ -82,14 +91,26 @@ class LivePlayer {
   private stubPcm: Promise<Float32Array[]> | undefined;
   private loadToken = 0;
   private readonly prepared = new Map<string, Promise<Prepared>>();
-  /** ctx.currentTime when playback started at song position 0. */
-  private startedAt = 0;
+  /** The clock: the song was at `anchorPos` seconds when the context time was
+   *  `anchorTime`. Re-anchored on every seek and loop change. */
+  private anchorTime = 0;
+  private anchorPos = 0;
+  /** Where the last Play started, for Stop (which returns there). */
+  private playStartPos = 0;
   private state: LiveState = {
     status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined, laneNames: [], muted: [], solo: [],
+    loopRange: undefined, looping: false,
   };
   private meterWorker: Worker | undefined;
   private readonly meterCache = new Map<string, LaneMeters>();
   private readonly listeners = new Set<(s: LiveState) => void>();
+  private readonly positionListeners = new Set<() => void>();
+
+  /** Called when the position jumps (seek), so paused displays redraw. */
+  onPositionJump(fn: () => void): () => void {
+    this.positionListeners.add(fn);
+    return () => this.positionListeners.delete(fn);
+  }
 
   getState(): LiveState {
     return this.state;
@@ -103,7 +124,76 @@ class LivePlayer {
   /** Seconds into the song. Advances only while the audio is running. */
   position(): number {
     if (!this.ctx || this.state.status === 'idle' || this.state.status === 'loading') return 0;
-    return Math.min(this.state.durationSec, Math.max(0, this.ctx.currentTime - this.startedAt));
+    let pos = this.anchorPos + (this.ctx.currentTime - this.anchorTime);
+    // Same rule as the worklet: crossing the loop end from inside jumps back.
+    const loop = this.activeLoop();
+    if (loop && this.anchorPos < loop.end && pos >= loop.end) {
+      pos = loop.start + ((pos - loop.end) % (loop.end - loop.start));
+    }
+    return Math.min(this.state.durationSec, Math.max(0, pos));
+  }
+
+  /** Set (or clear) the loop range. Applies live; kept across songs. */
+  setLoopRange(range: LoopRange | undefined): void {
+    if (range && !(range.start >= 0 && range.end > range.start)) {
+      throw new Error(`Bad loop range ${range.start}..${range.end}`);
+    }
+    this.reanchor();
+    this.set({ loopRange: range, looping: range ? this.state.looping : false });
+    this.postLoop();
+  }
+
+  /** Turn looping of the loop range on or off. */
+  setLooping(on: boolean): void {
+    if (on && !this.state.loopRange) throw new Error('Select a range to loop first.');
+    this.reanchor();
+    this.set({ looping: on });
+    this.postLoop();
+    // Turning the loop on outside the range starts it from the range.
+    const loop = this.activeLoop();
+    if (loop && this.node) {
+      const pos = this.position();
+      if (pos < loop.start || pos >= loop.end) this.seek(loop.start);
+    }
+  }
+
+  /**
+   * Stop: pause and go back to where the last Play started (or to the start
+   * of the song with `toStart`, the double-click on Stop).
+   */
+  async stopAndReturn(toStart: boolean): Promise<void> {
+    if (!this.node) return;
+    if (this.state.status === 'playing') await this.pause();
+    this.seek(toStart ? 0 : this.playStartPos);
+  }
+
+  private activeLoop(): LoopRange | undefined {
+    const { loopRange, looping, durationSec } = this.state;
+    if (!looping || !loopRange || durationSec <= 0) return undefined;
+    return loopRange.end <= durationSec ? loopRange : undefined;
+  }
+
+  private reanchor(): void {
+    if (!this.ctx) return;
+    this.anchorPos = this.position();
+    this.anchorTime = this.ctx.currentTime;
+  }
+
+  private postLoop(): void {
+    if (!this.node || !this.ctx) return;
+    const loop = this.activeLoop();
+    const sr = this.ctx.sampleRate;
+    this.node.port.postMessage(
+      loop ? { type: 'loop', start: Math.round(loop.start * sr), end: Math.round(loop.end * sr) } : { type: 'loop', start: null },
+    );
+  }
+
+  /** Before (re)starting: with the loop on, play from its start when outside it. */
+  private enterLoopIfOutside(): void {
+    const loop = this.activeLoop();
+    if (!loop) return;
+    const pos = this.position();
+    if (pos < loop.start || pos >= loop.end) this.seek(loop.start);
   }
 
   /**
@@ -117,6 +207,8 @@ class LivePlayer {
     const resumed = ctx.resume();
     if (this.state.key === key && this.node && ['paused', 'playing', 'ended'].includes(this.state.status)) {
       if (this.state.status === 'ended') this.seek(0);
+      this.enterLoopIfOutside();
+      if (this.state.status !== 'playing') this.playStartPos = this.position();
       await resumed;
       this.set({ status: 'playing' });
       return;
@@ -173,10 +265,19 @@ class LivePlayer {
         node.disconnect();
         return;
       }
+      // A loop past the end of this (shorter) version can't play: drop it, visibly.
+      const range = this.state.loopRange;
+      if (range && range.end > durationSec) this.set({ loopRange: undefined, looping: false });
+      this.set({ durationSec });
       await resumed;
       node.connect(this.output(ctx));
-      this.startedAt = ctx.currentTime;
-      this.set({ status: 'playing', durationSec, step: '' });
+      this.anchorTime = ctx.currentTime;
+      this.anchorPos = 0;
+      this.postLoop();
+      const loop = this.activeLoop();
+      if (loop) this.seek(loop.start);
+      this.playStartPos = loop ? loop.start : 0;
+      this.set({ status: 'playing', step: '' });
     } catch (err) {
       if (token !== this.loadToken) return;
       this.teardown();
@@ -294,7 +395,11 @@ class LivePlayer {
     if (!this.node || !this.ctx) return;
     const target = Math.min(Math.max(0, seconds), this.state.durationSec);
     this.node.port.postMessage({ type: 'seek', frame: Math.round(target * this.ctx.sampleRate) });
-    this.startedAt = this.ctx.currentTime - target;
+    this.anchorPos = target;
+    this.anchorTime = this.ctx.currentTime;
+    // A seek while stopped moves where Stop returns to (as in a DAW).
+    if (this.state.status !== 'playing') this.playStartPos = target;
+    this.positionListeners.forEach((fn) => fn());
     if (this.state.status === 'ended') this.set({ status: 'paused' });
   }
 

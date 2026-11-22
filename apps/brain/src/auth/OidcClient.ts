@@ -79,7 +79,9 @@ export class OidcClient {
     u.searchParams.set('redirect_uri', this.opts.redirectUri);
     u.searchParams.set('response_type', 'code');
     u.searchParams.set('scope', 'openid profile email tools offline_access');
-    u.searchParams.set('prompt', 'consent');
+    // 'login' makes the IdP ask for credentials every time, so signing out
+    // and back in can switch accounts (the IdP keeps its own session).
+    u.searchParams.set('prompt', 'login consent');
     u.searchParams.set('state', state);
     u.searchParams.set('code_challenge', codeChallenge);
     u.searchParams.set('code_challenge_method', 'S256');

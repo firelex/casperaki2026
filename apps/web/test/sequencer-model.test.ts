@@ -33,3 +33,17 @@ describe('sequencer model', () => {
     expect(noteToMidi('nope')).toBeNull();
   });
 });
+
+describe('chord pitches', () => {
+  it('reads triads, sevenths and suspended chords', async () => {
+    const { chordPitches } = await import('../src/editor/sequencerModel');
+    expect(chordPitches('C')).toEqual([60, 64, 67]);
+    expect(chordPitches('Am')).toEqual([69, 72, 76]);
+    expect(chordPitches('Am', 'oneOctaveLow')).toEqual([57, 60, 64]);
+    expect(chordPitches('Cmaj7')).toEqual([60, 64, 67, 71]);
+    expect(chordPitches('G7')).toEqual([67, 71, 74, 77]);
+    expect(chordPitches('Dsus4')).toEqual([62, 67, 69]);
+    expect(chordPitches('Bb')).toEqual([70, 74, 77]);
+    expect(chordPitches('?')).toBeNull();
+  });
+});

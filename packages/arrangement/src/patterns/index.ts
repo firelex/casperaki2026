@@ -60,7 +60,15 @@ export function generatePatterns(
   ctx: GeneratorContext,
   structure: SongStructure,
   selection: SelectionResult,
+  /** Per-lane pattern variation (sequencer "new pattern"): lane → variation
+   *  number. Variation n > 0 forks `lane/<name>#v<n>` instead of `lane/<name>`,
+   *  so only that lane's draws change. */
+  laneVariants: ReadonlyMap<string, number> = new Map(),
 ): PatternResult {
+  const laneFork = (laneName: string): string => {
+    const v = laneVariants.get(laneName);
+    return v ? `lane/${laneName}#v${v}` : `lane/${laneName}`;
+  };
   if (structure.length !== selection.segments.length) {
     throw new Error(
       `generatePatterns: structure has ${structure.length} segments, selection has ${selection.segments.length}`,
@@ -94,7 +102,7 @@ export function generatePatterns(
     for (const laneName of activity.activeLanes) {
       const family = familyByLane.get(laneName);
       if (!family || family === 'bass') continue;
-      const laneCtx: GeneratorContext = { ...ctx, rng: ctx.rng.fork(`lane/${laneName}`) };
+      const laneCtx: GeneratorContext = { ...ctx, rng: ctx.rng.fork(laneFork(laneName)) };
       // The synths generator needs the lane's lowLevel to force leadSynthsAnalog
       // (docs/62 A6); every other family uses the uniform 3-arg signature.
       const pattern =
@@ -110,7 +118,7 @@ export function generatePatterns(
     // the urban/HipHop generator; ignored by every other genre).
     for (const laneName of activity.activeLanes) {
       if (familyByLane.get(laneName) !== 'bass') continue;
-      const laneCtx: GeneratorContext = { ...ctx, rng: ctx.rng.fork(`lane/${laneName}`) };
+      const laneCtx: GeneratorContext = { ...ctx, rng: ctx.rng.fork(laneFork(laneName)) };
       const pattern = generateBassPattern(laneCtx, segment, ['bass'], drumPattern);
       if (pattern) lanes[laneName] = pattern;
     }

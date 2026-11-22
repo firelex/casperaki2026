@@ -1,34 +1,55 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@teamsuzie/ui';
 
 import { catalogApi, catalogQueryKeys } from '../api/catalog';
 import { livePlayer, type LaneMeters } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
 import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
-import { BEATS_PER_BAR, buildSequencerModel, type SeqTrack, type SequencerModel } from './sequencerModel';
+import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
+import { ClipDetail } from './sequencer/ClipDetail';
+import { BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MIN_PX_PER_BAR, ROW_H, RULER_H, TIME_H } from './sequencer/layout';
+import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
+import { TrackCanvas } from './sequencer/TrackCanvas';
+import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
+import { useTrackEdits } from './sequencer/useTrackEdits';
 
-const HEADER_W = 212;
-const ROW_H = 52;
-const RULER_H = 54;
-const CHORD_H = 28;
-const MIN_PX_PER_BAR = 6;
-const MAX_PX_PER_BAR = 120;
+type Dialog =
+  | { kind: 'detail'; track: string; section: number }
+  | { kind: 'sound'; track: string }
+  | { kind: 'add'; sections: string[] };
+
+const MENU = 'z-50 min-w-[220px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl';
+const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40';
 
 /**
- * Sequencer (Timeline tab): the whole song on one time axis. Sections run
- * along the top, each instrument is a row with a clip per section it plays
- * in, and the notes are drawn inside the clips. The red playhead follows
- * the live player; click the ruler to jump, click a clip or section to
- * select it for the inspector. Zoom with the − / + buttons or Fit.
+ * Sequencer (Timeline tab): the whole song on one time axis, laid out like a
+ * DAW. The ruler shows sections, bars|beats and minutes:seconds; drag across
+ * its bottom strip to choose a loop range. Each track is a row with a clip
+ * per section it plays in. Double-click a clip to look inside it (drum grid
+ * or piano roll); right-click a track for its menu (open, loop, change the
+ * sound, new pattern, remove, add a track).
  */
 export function TimelineView() {
   const { viewSong, activeSegment, setActiveSegment } = useSession();
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
-  const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live } = useLiveTransport();
+  const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live, playPause } = useLiveTransport();
+  const edits = useTrackEdits(liveKey);
   const [meters, setMeters] = useState<LaneMeters | undefined>(undefined);
+  const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
+  const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
+  /** Where the last right-click landed: which track, which section. */
+  const [menuAt, setMenuAt] = useState<{ track: string; section: number | undefined } | undefined>(undefined);
 
   // Per-track waveforms: measured in a background worker for the version on
   // screen (a moment after editing stops), filling in as it runs.
@@ -81,33 +102,95 @@ export function TimelineView() {
     if (playheadX < left || playheadX > right) el.scrollLeft = Math.max(0, playheadX - HEADER_W - 120);
   }, [playheadX, follow, playing]);
 
+  const range: BarRange | undefined = live.loopRange
+    ? { start: live.loopRange.start / secondsPerBar, end: live.loopRange.end / secondsPerBar }
+    : undefined;
+  const setRange = useCallback(
+    (r: BarRange | undefined) => livePlayer.setLoopRange(r ? { start: r.start * secondsPerBar, end: r.end * secondsPerBar } : undefined),
+    [secondsPerBar],
+  );
+
+  const loopSection = useCallback(
+    (sec: SeqSection) => {
+      setRange({ start: sec.startBar, end: sec.startBar + sec.bars });
+      livePlayer.setLooping(true);
+      setActiveSegment(sec.name);
+      if (!playing) {
+        if (liveKey && livePlayer.isLoaded(liveKey)) {
+          livePlayer.seek(sec.startBar * secondsPerBar);
+          playPause();
+        } else seek(sec.startBar * secondsPerBar);
+      }
+    },
+    [setRange, setActiveSegment, playing, liveKey, secondsPerBar, playPause, seek],
+  );
+
   if (!viewSong || !model) {
     return <div className="flex h-full items-center justify-center text-[15px] text-muted">No song loaded.</div>;
   }
 
   const width = model.totalBars * px;
-  const sectionAt = (bar: number) => model.sections.find((s) => bar >= s.startBar && bar < s.startBar + s.bars);
-  const active = model.sections.find((s) => s.name === activeSegment);
-
-  const zoom = (factor: number) => setPxPerBar(Math.min(MAX_PX_PER_BAR, Math.max(MIN_PX_PER_BAR, px * factor)));
+  const sectionIndexAt = (bar: number) => model.sections.findIndex((s) => bar >= s.startBar && bar < s.startBar + s.bars);
   const barFromEvent = (e: ReactMouseEvent<HTMLElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     return Math.max(0, Math.min(model.totalBars, (e.clientX - rect.left) / px));
   };
+  const zoom = (factor: number) => setPxPerBar(Math.min(MAX_PX_PER_BAR, Math.max(MIN_PX_PER_BAR, px * factor)));
+  const editable = (track: string) => edits.options.data?.tracks[track]?.editable === true;
+  /** Whether other sounds can be offered (drum kits are fixed per genre). */
+  const canChangeSound = (track: string) => {
+    const info = edits.options.data?.tracks[track];
+    if (!info?.editable || !info.family) return false;
+    return (edits.options.data?.families.find((f) => f.family === info.family)?.sounds.length ?? 0) > 0;
+  };
+  const openDetail = (track: SeqTrack, section: number) => {
+    if (track.clips.some((c) => c.section === section)) setDialog({ kind: 'detail', track: track.name, section });
+  };
+
+  const detail = dialog?.kind === 'detail' ? dialog : undefined;
+  const detailTrack = detail ? model.tracks.find((t) => t.name === detail.track) : undefined;
+  const detailClip = detail && detailTrack ? detailTrack.clips.find((c) => c.section === detail.section) : undefined;
+
+  const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
 
   return (
     <div className="flex h-full flex-col text-white">
       <div className="flex shrink-0 items-center gap-2 border-b border-line/50 px-4 py-2 text-[13px]">
-        {meters && !meters.done ? (
-          <span className="mr-3 text-white/45" role="status">
+        <span className="mr-2 text-white/55">
+          {model.tracks.length} tracks · {model.totalBars} bars · {Math.floor((model.totalBars * secondsPerBar) / 60)}:
+          {String(Math.round(model.totalBars * secondsPerBar) % 60).padStart(2, '0')}
+        </span>
+        {range ? (
+          <span className="mr-2 font-mono text-[12px] text-sky-300/90" title="Loop range (bars|beats)">
+            Range {fmtBar(range.start)} – {fmtBar(range.end)}
+          </span>
+        ) : null}
+        {edits.busy ? (
+          <span className="flex items-center gap-2 text-white/70" role="status">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-white/60" aria-hidden="true" />
+            {edits.busy}…
+          </span>
+        ) : edits.error ? (
+          <span className="flex items-center gap-2 text-err" role="alert">
+            {edits.error}
+            <button type="button" onClick={edits.clearError} className="text-white/60 hover:text-white" aria-label="Dismiss">
+              ✕
+            </button>
+          </span>
+        ) : meters && !meters.done ? (
+          <span className="text-white/45" role="status">
             Measuring track levels {Math.round((meters.doneBins / Math.max(1, meters.binCount)) * 100)}%
           </span>
         ) : null}
-        <span className="mr-2 text-white/55">
-          {model.tracks.length} tracks · {model.totalBars} bars · {Math.round(model.totalBars * secondsPerBar / 60)}:
-          {String(Math.round(model.totalBars * secondsPerBar) % 60).padStart(2, '0')}
-        </span>
         <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
+            disabled={!edits.options.data || Boolean(edits.busy)}
+            className="mr-3 h-8 rounded-full border border-white/30 px-3.5 text-[13px] font-semibold text-white hover:border-white/60 disabled:opacity-40"
+          >
+            + Add track
+          </button>
           <ToolButton onClick={() => zoom(1 / 1.5)} label="Zoom out">−</ToolButton>
           <ToolButton onClick={() => zoom(1.5)} label="Zoom in">+</ToolButton>
           <ToolButton onClick={fit} label="Fit the song to the window">Fit</ToolButton>
@@ -118,82 +201,139 @@ export function TimelineView() {
         </div>
       </div>
 
-      <div ref={scrollerRef} className="relative min-h-0 flex-1 overflow-auto">
+      <div ref={scrollerRef} className="relative min-h-0 flex-1 overflow-auto bg-[#0b0c15]">
         <div className="relative" style={{ width: HEADER_W + width, minHeight: '100%' }}>
-          {/* Ruler: sections and bar numbers. Click to jump there. */}
-          <div className="sticky top-0 z-20 flex bg-[#0d0d17]" style={{ height: RULER_H }}>
-            <div className="sticky left-0 z-30 shrink-0 border-b border-r border-line/50 bg-[#0d0d17]" style={{ width: HEADER_W }} />
+          {/* Ruler. */}
+          <div className="sticky top-0 z-30 flex bg-[#0d0d17]" style={{ height: RULER_H }}>
             <div
-              className="relative shrink-0 cursor-pointer border-b border-line/50"
-              style={{ width }}
-              onClick={(e) => {
-                const bar = barFromEvent(e);
-                const sec = sectionAt(bar);
-                if (sec) setActiveSegment(sec.name);
-                seek(bar * secondsPerBar);
-              }}
-              title="Click to play from here"
+              className="sticky left-0 z-40 flex shrink-0 flex-col border-b border-r border-line/60 bg-[#0d0d17] px-3 text-[10px] text-white/40"
+              style={{ width: HEADER_W }}
             >
-              {model.sections.map((s) => (
-                <div
-                  key={s.name}
-                  className="absolute top-0 flex h-[30px] items-center overflow-hidden border-l border-black/40 px-2"
-                  style={{
-                    left: s.startBar * px,
-                    width: s.bars * px,
-                    background: `color-mix(in srgb, ${s.color} ${s.name === activeSegment ? 55 : 30}%, transparent)`,
-                  }}
-                >
-                  {s.bars * px > 44 ? <span className="truncate text-[12px] font-semibold text-white">{s.name}</span> : null}
-                </div>
-              ))}
-              <BarNumbers totalBars={model.totalBars} px={px} />
+              <span style={{ height: MARKERS_H, lineHeight: `${MARKERS_H}px` }}>Sections</span>
+              <span style={{ height: BARS_H, lineHeight: `${BARS_H}px` }}>Bars|beats</span>
+              <span style={{ height: TIME_H, lineHeight: `${TIME_H}px` }}>Min:sec</span>
+              <span className="text-sky-300/70" style={{ height: LOOP_H, lineHeight: `${LOOP_H}px` }}>Loop (drag)</span>
             </div>
+            <div className="border-b border-line/60">
+              <Ruler
+                model={model}
+                px={px}
+                secondsPerBar={secondsPerBar}
+                activeSegment={activeSegment}
+                range={range}
+                looping={live.looping}
+                onSeekBar={(bar) => seek(bar * secondsPerBar)}
+                onSelectSection={setActiveSegment}
+                onRangeChange={setRange}
+              />
+            </div>
+            {isThisSong && playheadX >= HEADER_W ? (
+              <span
+                className="pointer-events-none absolute top-[22px] z-[35] h-0 w-0 -translate-x-1/2 border-x-[6px] border-t-[8px] border-x-transparent border-t-accent"
+                style={{ left: playheadX + 0.5 }}
+                aria-hidden="true"
+              />
+            ) : null}
           </div>
 
-          {/* Selected section, across every row. */}
-          {active ? (
+          {/* Loop range across the tracks. */}
+          {range ? (
             <div
-              className="pointer-events-none absolute z-0 border-x border-white/25 bg-white/[0.04]"
-              style={{ left: HEADER_W + active.startBar * px, width: active.bars * px, top: RULER_H, bottom: 0 }}
+              className={`pointer-events-none absolute z-0 border-x ${live.looping ? 'border-sky-300/60 bg-sky-400/[0.07]' : 'border-white/30 bg-white/[0.05]'}`}
+              style={{ left: HEADER_W + range.start * px, width: (range.end - range.start) * px, top: RULER_H, bottom: 0 }}
             />
           ) : null}
 
-          {model.tracks.map((t) => (
-            <div key={t.name} className="relative flex" style={{ height: ROW_H }}>
+          {model.tracks.map((t, i) => (
+            <TrackMenu
+              key={t.name}
+              track={t}
+              section={menuAt?.track === t.name ? menuAt.section : undefined}
+              sections={model.sections}
+              editable={editable(t.name)}
+              soundChangeable={canChangeSound(t.name)}
+              busy={Boolean(edits.busy) || !edits.options.data}
+              onOpen={(s) => openDetail(t, s)}
+              onLoop={(s) => loopSection(model.sections[s]!)}
+              onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
+              onNewPattern={() => newPattern(t.name)}
+              onRemove={() => edits.removeTrack(t.name)}
+              onAdd={(s) =>
+                setDialog({ kind: 'add', sections: s === undefined ? model.sections.map((x) => x.name) : [model.sections[s]!.name] })
+              }
+            >
               <div
-                className="sticky left-0 z-10 flex shrink-0 items-center gap-2.5 border-b border-r border-line/40 bg-[#10111b] px-4"
-                style={{ width: HEADER_W }}
-              >
-                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: t.color }} aria-hidden="true" />
-                <TrackName
-                  name={t.name}
-                  catalogId={catalogIdOf(defs.get(t.name)?.id)}
-                  notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
-                />
-                <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
-              </div>
-              <div
-                className="relative shrink-0 cursor-pointer border-b border-line/25"
-                style={{ width }}
-                onClick={(e) => {
-                  const sec = sectionAt(barFromEvent(e));
-                  if (sec) setActiveSegment(sec.name);
+                className={`relative flex ${i % 2 ? 'bg-white/[0.015]' : ''}`}
+                style={{ height: ROW_H }}
+                onContextMenu={(e) => {
+                  const lane = (e.target as HTMLElement).closest('[data-lane]');
+                  const bar = lane ? (e.clientX - lane.getBoundingClientRect().left) / px : undefined;
+                  const s = bar === undefined ? -1 : sectionIndexAt(bar);
+                  setMenuAt({ track: t.name, section: s >= 0 && t.clips.some((c) => c.section === s) ? s : undefined });
+                  setSelectedTrack(t.name);
                 }}
               >
-                <TrackCanvas
-                  track={t}
-                  model={model}
-                  px={px}
-                  secondsPerBar={secondsPerBar}
-                  peaks={meters?.peaks[meters.names.indexOf(t.name)]}
-                  binSec={meters?.binSec ?? 0}
-                  meterMax={meterMax}
-                  dimmed={live.solo.length > 0 ? !live.solo.includes(t.name) : live.muted.includes(t.name)}
-                />
+                <div
+                  className={`sticky left-0 z-10 flex shrink-0 cursor-default items-center gap-2.5 border-b border-r border-line/40 pr-3 ${
+                    selectedTrack === t.name ? 'bg-[#1a1c2b]' : 'bg-[#10111b]'
+                  }`}
+                  style={{ width: HEADER_W }}
+                  onClick={() => setSelectedTrack(t.name)}
+                >
+                  <span className="h-full w-[4px] shrink-0" style={{ background: t.color }} aria-hidden="true" />
+                  <span className="w-4 shrink-0 text-right font-mono text-[11px] text-white/35">{i + 1}</span>
+                  <TrackName
+                    name={t.name}
+                    catalogId={catalogIdOf(defs.get(t.name)?.id)}
+                    notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
+                  />
+                  <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
+                </div>
+                <div
+                  data-lane
+                  className="relative shrink-0 cursor-pointer border-b border-line/25"
+                  style={{ width }}
+                  onClick={(e) => {
+                    setSelectedTrack(t.name);
+                    const s = sectionIndexAt(barFromEvent(e));
+                    if (s >= 0) setActiveSegment(model.sections[s]!.name);
+                  }}
+                  onDoubleClick={(e) => {
+                    const s = sectionIndexAt(barFromEvent(e));
+                    if (s >= 0) openDetail(t, s);
+                  }}
+                  title="Double-click a clip to open it; right-click for more"
+                >
+                  <TrackCanvas
+                    track={t}
+                    model={model}
+                    px={px}
+                    secondsPerBar={secondsPerBar}
+                    peaks={meters?.peaks[meters.names.indexOf(t.name)]}
+                    binSec={meters?.binSec ?? 0}
+                    meterMax={meterMax}
+                    dimmed={live.solo.length > 0 ? !live.solo.includes(t.name) : live.muted.includes(t.name)}
+                    selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
+                  />
+                </div>
               </div>
-            </div>
+            </TrackMenu>
           ))}
+
+          {/* Add a track. */}
+          <div className="relative flex" style={{ height: 40 }}>
+            <div className="sticky left-0 z-10 flex shrink-0 items-center border-b border-r border-line/40 bg-[#10111b] px-4" style={{ width: HEADER_W }}>
+              <button
+                type="button"
+                onClick={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
+                disabled={!edits.options.data || Boolean(edits.busy)}
+                className="text-[13px] text-white/55 hover:text-white disabled:opacity-40"
+              >
+                + Add track
+              </button>
+            </div>
+            <div className="shrink-0 border-b border-line/25" style={{ width }} />
+          </div>
 
           {/* Chords per bar, when there is room to read them. */}
           <div className="relative flex" style={{ height: CHORD_H }}>
@@ -221,17 +361,125 @@ export function TimelineView() {
             </div>
           </div>
 
-          {/* Playhead. */}
+          {/* Playhead: a line through the tracks with a marker on the ruler. */}
           {isThisSong ? (
             <div
-              className="pointer-events-none absolute top-0 bottom-0 z-20 w-[2px] bg-accent shadow-[0_0_8px_rgba(255,0,0,0.6)]"
+              className="pointer-events-none absolute top-0 bottom-0 z-20 w-px bg-accent shadow-[0_0_6px_rgba(255,0,0,0.6)]"
               style={{ left: playheadX }}
               aria-hidden="true"
             />
           ) : null}
         </div>
       </div>
+
+      {detail && detailTrack && detailClip ? (
+        <ClipDetail
+          track={detailTrack}
+          clip={detailClip}
+          section={model.sections[detail.section]!}
+          playheadBeat={isThisSong ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
+          onClose={() => setDialog(undefined)}
+          onLoopSection={() => loopSection(model.sections[detail.section]!)}
+          onNewPattern={() => newPattern(detailTrack.name)}
+          onChangeSound={() => setDialog({ kind: 'sound', track: detailTrack.name })}
+          editable={editable(detailTrack.name)}
+          soundChangeable={canChangeSound(detailTrack.name)}
+          busy={Boolean(edits.busy)}
+        />
+      ) : null}
+      {dialog?.kind === 'sound' && edits.options.data ? (
+        <ChangeSoundDialog
+          track={dialog.track}
+          options={edits.options.data}
+          onClose={() => setDialog(undefined)}
+          onPick={(soundId) => {
+            setDialog(undefined);
+            void edits.run({ kind: 'changeSound', track: dialog.track, soundId }, `Changing the sound of ${dialog.track}`);
+          }}
+        />
+      ) : null}
+      {dialog?.kind === 'add' && edits.options.data ? (
+        <AddTrackDialog
+          options={edits.options.data}
+          hasDrums={model.tracks.some((t) => t.name === 'Drums')}
+          sections={model.sections}
+          initialSections={dialog.sections}
+          onClose={() => setDialog(undefined)}
+          onAdd={(family, segments, soundId) => {
+            setDialog(undefined);
+            void edits.run({ kind: 'addTrack', family, segments, ...(soundId ? { soundId } : {}) }, 'Adding a track');
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+/** Right-click menu for a track row. `section` is the clip under the pointer, if any. */
+function TrackMenu({
+  track,
+  section,
+  sections,
+  editable,
+  soundChangeable,
+  busy,
+  onOpen,
+  onLoop,
+  onChangeSound,
+  onNewPattern,
+  onRemove,
+  onAdd,
+  children,
+}: {
+  track: SeqTrack;
+  section: number | undefined;
+  sections: readonly SeqSection[];
+  editable: boolean;
+  soundChangeable: boolean;
+  busy: boolean;
+  onOpen(section: number): void;
+  onLoop(section: number): void;
+  onChangeSound(): void;
+  onNewPattern(): void;
+  onRemove(): void;
+  onAdd(section: number | undefined): void;
+  children: ReactNode;
+}) {
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+      <ContextMenuContent className={MENU}>
+        <ContextMenuLabel className="px-3 py-2 text-[12px] font-normal text-white/50">
+          {track.name}
+          {section !== undefined ? ` · ${sections[section]!.name}` : ''}
+        </ContextMenuLabel>
+        {section !== undefined ? (
+          <>
+            <ContextMenuItem className={ITEM} onSelect={() => onOpen(section)}>
+              Open <span className="ml-auto pl-6 text-[12px] text-white/40">Double-click</span>
+            </ContextMenuItem>
+            <ContextMenuItem className={ITEM} onSelect={() => onLoop(section)}>
+              Loop {sections[section]!.name}
+            </ContextMenuItem>
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+          </>
+        ) : null}
+        <ContextMenuItem className={ITEM} disabled={!soundChangeable || busy} onSelect={onChangeSound}>
+          Change sound…
+        </ContextMenuItem>
+        <ContextMenuItem className={ITEM} disabled={!editable || busy} onSelect={onNewPattern}>
+          New pattern
+        </ContextMenuItem>
+        <ContextMenuSeparator className="my-1 h-px bg-line" />
+        <ContextMenuItem className={`${ITEM} text-err`} disabled={busy} onSelect={onRemove}>
+          Remove track <span className="ml-auto pl-6 text-[12px] text-white/40">Undo: Ctrl+Z</span>
+        </ContextMenuItem>
+        <ContextMenuSeparator className="my-1 h-px bg-line" />
+        <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onAdd(section)}>
+          Add track…
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }
 
@@ -251,7 +499,7 @@ function TrackName({ name, catalogId, notPlayed }: { name: string; catalogId: st
   const sound = entry.data?.entry.publicName;
   return (
     <span className="flex min-w-0 flex-col leading-tight">
-      <span className="truncate text-[13px] text-white/90" title={name}>{name}</span>
+      <span className="truncate text-[13px] font-semibold text-white/90" title={name}>{name}</span>
       {notPlayed ? (
         <span className="truncate text-[11px] text-white/35" title="The playback engine has no voice for this track yet">
           Not in playback yet
@@ -312,138 +560,6 @@ function ToolButton({ onClick, label, children }: { onClick(): void; label: stri
   );
 }
 
-function BarNumbers({ totalBars, px }: { totalBars: number; px: number }) {
-  const every = px >= 28 ? 1 : px >= 14 ? 2 : px >= 8 ? 4 : 8;
-  const marks: number[] = [];
-  for (let b = 0; b < totalBars; b += every) marks.push(b);
-  return (
-    <>
-      {marks.map((b) => (
-        <span
-          key={b}
-          className="absolute bottom-0 h-[22px] border-l border-white/15 pl-1 font-mono text-[10px] leading-[22px] text-white/45"
-          style={{ left: b * px }}
-        >
-          {b + 1}
-        </span>
-      ))}
-    </>
-  );
-}
-
 function dedupe(chords: readonly string[]): string[] {
   return chords.filter((c, i) => i === 0 || c !== chords[i - 1]);
-}
-
-/** Resolve a `var(--x)` colour for canvas drawing. */
-function resolveColor(css: string): string {
-  const m = /^var\((--[\w-]+)\)$/u.exec(css);
-  if (!m) return css;
-  const v = getComputedStyle(document.documentElement).getPropertyValue(m[1]!).trim();
-  if (!v) throw new Error(`CSS colour ${m[1]} is not defined`);
-  return v;
-}
-
-/** One track's clips and notes, drawn on a canvas sized to the row. */
-function TrackCanvas({
-  track,
-  model,
-  px,
-  secondsPerBar,
-  peaks,
-  binSec,
-  meterMax,
-  dimmed,
-}: {
-  track: SeqTrack;
-  model: SequencerModel;
-  px: number;
-  secondsPerBar: number;
-  /** This track's peak level per meter bin, when measured. */
-  peaks: Float32Array | undefined;
-  binSec: number;
-  /** Loudest bin across all tracks, so heights compare between tracks. */
-  meterMax: number;
-  /** Muted, or not soloed while others are. */
-  dimmed: boolean;
-}) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const width = Math.max(1, Math.round(model.totalBars * px));
-
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = width * dpr;
-    canvas.height = ROW_H * dpr;
-    const g = canvas.getContext('2d');
-    if (!g) throw new Error('2D canvas is not available');
-    g.scale(dpr, dpr);
-    g.clearRect(0, 0, width, ROW_H);
-    const color = resolveColor(track.color);
-    const pad = 5;
-    const innerH = ROW_H - pad * 2;
-    if (dimmed) g.globalAlpha = 0.35;
-    const baseAlpha = dimmed ? 0.35 : 1;
-
-    // Waveform: peak per pixel column, mirrored around the row's middle.
-    if (peaks && peaks.length > 0 && meterMax > 0 && binSec > 0) {
-      const binsPerPx = secondsPerBar / px / binSec;
-      const mid = ROW_H / 2;
-      g.fillStyle = color;
-      g.globalAlpha = 0.28 * baseAlpha;
-      g.beginPath();
-      g.moveTo(0, mid);
-      const cols = Math.min(width, Math.ceil(peaks.length / binsPerPx));
-      const tops: number[] = [];
-      for (let x = 0; x < cols; x++) {
-        let m = 0;
-        const from = Math.floor(x * binsPerPx);
-        const to = Math.min(peaks.length, Math.max(from + 1, Math.floor((x + 1) * binsPerPx)));
-        for (let i = from; i < to; i++) if (peaks[i]! > m) m = peaks[i]!;
-        const h = Math.sqrt(m / meterMax) * (ROW_H / 2 - 2);
-        tops.push(h);
-        g.lineTo(x, mid - h);
-      }
-      for (let x = cols - 1; x >= 0; x--) g.lineTo(x, mid + tops[x]!);
-      g.closePath();
-      g.fill();
-    }
-
-    // Drum kits: one thin lane per drum present; pitched parts: by pitch.
-    const drumLanes = track.isDrums
-      ? [...new Set(track.clips.flatMap((c) => c.notes.map((n) => n.pitch).filter((p): p is number => p !== null)))].sort((a, b) => b - a)
-      : [];
-    const yFor = (pitch: number | null): number => {
-      if (pitch === null) return pad + innerH * 0.35;
-      if (track.isDrums) {
-        const i = drumLanes.indexOf(pitch);
-        return pad + 2 + (i / Math.max(1, drumLanes.length)) * (innerH - 4);
-      }
-      const r = track.pitchRange;
-      if (!r || r.high === r.low) return pad + innerH * 0.45;
-      return pad + 2 + (1 - (pitch - r.low) / (r.high - r.low)) * (innerH - 6);
-    };
-    const noteH = track.isDrums ? Math.max(1.5, (innerH - 4) / Math.max(1, drumLanes.length) - 1) : 3;
-
-    for (const clip of track.clips) {
-      const x = clip.startBar * px;
-      const w = clip.bars * px;
-      g.globalAlpha = 0.16 * baseAlpha;
-      g.fillStyle = color;
-      g.fillRect(x + 1, pad - 2, Math.max(1, w - 2), innerH + 4);
-      g.globalAlpha = 0.9 * baseAlpha;
-      g.fillRect(x + 1, pad - 2, 2, innerH + 4);
-      g.globalAlpha = (peaks ? 0.7 : 0.85) * baseAlpha;
-      for (const n of clip.notes) {
-        const nx = (n.start / BEATS_PER_BAR) * px;
-        const nw = Math.max(1.2, (n.length / BEATS_PER_BAR) * px - 0.5);
-        const y = yFor(n.pitch);
-        g.fillRect(nx, y, nw, n.pitch === null ? innerH * 0.3 : noteH);
-      }
-    }
-    g.globalAlpha = 1;
-  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed]);
-
-  return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }
