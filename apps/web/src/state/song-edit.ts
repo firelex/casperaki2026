@@ -54,6 +54,12 @@ export type EditCommand =
   | { kind: 'changeBarCount'; segmentName: string; delta: number; min?: number }
   | { kind: 'setBarCount'; segmentName: string; bars: number; min?: number }
   | { kind: 'renameSegment'; segmentName: string; newName: string }
+  /**
+   * Turn one drum hit on or off in the sections named, in every bar (the
+   * engine plays a section's drums as one repeating bar). `step` is in 32nd
+   * notes from the start of the bar (0..31); `pitch` the kit piece's note.
+   */
+  | { kind: 'setDrumHit'; segments: string[]; pitch: number; step: number; on: boolean }
   /** Take a track out of every section and drop its instrument. */
   | { kind: 'removeTrack'; track: string }
   /** A whole new working song, e.g. the brain's answer to a track edit
@@ -259,6 +265,8 @@ function mutate(song: Song, command: EditCommand): Song {
       return renameSegment(song, command.segmentName, command.newName);
     case 'removeTrack':
       return removeTrack(song, command.track);
+    case 'setDrumHit':
+      return setDrumHit(song, command.segments, command.pitch, command.step, command.on);
     case 'replaceSong':
       return command.song;
     default:
@@ -270,6 +278,54 @@ function findSegmentIndex(song: Song, name: string): number {
   const idx = song.songStructure.findIndex((s) => s.name === name);
   if (idx < 0) throw new Error(`segment '${name}' not found in songStructure`);
   return idx;
+}
+
+const DRUMS = 'Drums';
+const STEPS_PER_BAR = 32;
+
+/** Beat key as the generator writes it: "1.0", "0.5", "2.25", "0.125". */
+export function beatKey(beat: number): string {
+  return Number.isInteger(beat) ? beat.toFixed(1) : String(beat);
+}
+
+function setDrumHit(song: Song, segments: readonly string[], pitch: number, step: number, on: boolean): Song {
+  if (!Number.isInteger(step) || step < 0 || step >= STEPS_PER_BAR) throw new Error(`drum step ${step} is outside 0..31`);
+  if (segments.length === 0) throw new Error('setDrumHit: no sections given');
+  const beat = step / 8;
+  const arrangement: Arrangement = { ...song.arrangement };
+  let changed = false;
+  for (const name of segments) {
+    const seg = song.songStructure.find((x) => x.name === name);
+    if (!seg) throw new Error(`segment '${name}' not found in songStructure`);
+    const payload = song.arrangement[name];
+    if (!payload) throw new Error(`segment '${name}' has no arrangement`);
+    const barCount = seg.lengthInBars ?? seg.bars.length;
+    const existing = payload.overrides?.[DRUMS];
+    const bars = Array.from({ length: barCount }, (_, i) => cloneDeep(existing?.bars?.[i] ?? { notes: {} }));
+    for (const bar of bars) {
+      const notes = { ...(bar.notes ?? {}) } as Record<string, Array<{ type: string; note?: unknown }>>;
+      const key = Object.keys(notes).find((k) => Math.abs(Number.parseFloat(k) - beat) < 1e-6) ?? beatKey(beat);
+      const events = [...(notes[key] ?? [])];
+      const at = events.findIndex((ev) => ev.type === 'note' && ev.note === pitch);
+      if (on && at < 0) {
+        events.push({ note: pitch, type: 'note' });
+        changed = true;
+      } else if (!on && at >= 0) {
+        events.splice(at, 1);
+        changed = true;
+      }
+      if (events.length) notes[key] = events;
+      else delete notes[key];
+      (bar as { notes: unknown }).notes = notes;
+    }
+    arrangement[name] = {
+      ...payload,
+      instruments: { ...payload.instruments, [DRUMS]: true },
+      overrides: { ...payload.overrides, [DRUMS]: { ...(existing ?? {}), bars } },
+    };
+  }
+  if (!changed) throw new Error('setDrumHit: nothing to change');
+  return { ...song, arrangement };
 }
 
 const TRACK_KEYED = ['instruments', 'overrides', 'fills', 'mutes', 'signalProcessors'] as const;

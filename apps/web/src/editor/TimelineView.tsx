@@ -41,7 +41,7 @@ const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none da
  * sound, new pattern, remove, add a track).
  */
 export function TimelineView() {
-  const { viewSong, activeSegment, setActiveSegment } = useSession();
+  const { viewSong, activeSegment, setActiveSegment, applyEdit, editor } = useSession();
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
   const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live, playPause } = useLiveTransport();
@@ -434,6 +434,9 @@ export function TimelineView() {
           track={detailTrack}
           clip={detailClip}
           section={model.sections[detail.section]!}
+          sameKind={model.sections.filter((x) => x.kind === model.sections[detail.section]!.kind).map((x) => x.name)}
+          onSetDrumHit={(segments, pitch, step, on) => applyEdit({ kind: 'setDrumHit', segments, pitch, step, on })}
+          editError={editor?.lastError}
           playheadBeat={isThisSong ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
           onClose={() => setDialog(undefined)}
           onLoopSection={() => loopSection(model.sections[detail.section]!)}

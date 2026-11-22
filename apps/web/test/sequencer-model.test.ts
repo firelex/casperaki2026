@@ -47,3 +47,14 @@ describe('chord pitches', () => {
     expect(chordPitches('?')).toBeNull();
   });
 });
+
+describe('drum bar pattern', () => {
+  it('takes each drum from the first bar that plays it, on the 32nd grid', async () => {
+    const { drumBarPattern } = await import('../src/editor/sequencer/ClipDetail');
+    const n = (start: number, pitch: number) => ({ start, length: 0.25, pitch, kind: 'note' as const });
+    const p = drumBarPattern([n(0, 36), n(2, 36), n(4.5, 36), n(5, 38), n(5.375, 42)], 2);
+    expect([...p.get(36)!]).toEqual([0, 16]);
+    expect([...p.get(38)!]).toEqual([8]);
+    expect([...p.get(42)!]).toEqual([11]);
+  });
+});

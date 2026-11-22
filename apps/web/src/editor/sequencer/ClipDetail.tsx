@@ -1,60 +1,89 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
 import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
 import { resolveColor } from './layout';
 
-const CELL_W = 22;
-const DRUM_ROW_H = 24;
+const DRUM_ROW_H = 26;
 const KEY_ROW_H = 12;
-const LABEL_W = 92;
+const LABEL_W = 104;
+const MIN_PX_PER_BEAT = 24;
+const MAX_PX_PER_BEAT = 480;
+/** Grid choices: notes per bar, as on a DAW's grid menu. */
+const GRIDS = [4, 8, 16, 32] as const;
+type Grid = (typeof GRIDS)[number];
+/** Drum hits are stored on a 32nd-note grid: 8 steps per beat, 32 per bar. */
+const STEPS_PER_BEAT_32 = 8;
+
+export type DrumScope = 'this' | 'all';
 
 /**
- * A closer look at one track in one section (double-click a clip): a step
- * grid for drum kits, a piano roll for everything with pitches. Read-only:
- * parts come from the generator, so the actions offered are a new pattern
- * or a different sound, plus looping the section to listen.
+ * A closer look at one track in one section (double-click a clip). Drums get
+ * an editable step grid of the bar the engine repeats through the section;
+ * click a cell to add or remove a hit, in this section or in every section
+ * of the same kind. Everything with pitches gets a piano roll (view only).
+ * Zoom and grid resolution are adjustable for both.
  */
 export function ClipDetail({
   track,
   clip,
   section,
+  sameKind,
   playheadBeat,
   onClose,
   onLoopSection,
   onNewPattern,
   onChangeSound,
+  onSetDrumHit,
   editable,
   soundChangeable,
   busy,
+  editError,
 }: {
   track: SeqTrack;
   clip: SeqClip;
   section: SeqSection;
+  /** Names of every section of the same kind (this one included), in song order. */
+  sameKind: readonly string[];
   /** Playhead in beats from the song start, when this song is loaded. */
   playheadBeat: number | undefined;
   onClose(): void;
   onLoopSection(): void;
   onNewPattern(): void;
   onChangeSound(): void;
+  /** Add or remove a drum hit (step in 32nds of the bar) in the sections named. */
+  onSetDrumHit(segments: string[], pitch: number, step: number, on: boolean): void;
   editable: boolean;
   soundChangeable: boolean;
   busy: boolean;
+  /** The last edit's error, if it was refused. */
+  editError: string | undefined;
 }) {
   const startBeat = clip.startBar * BEATS_PER_BAR;
   const notes = useMemo(() => clip.notes.map((n) => ({ ...n, start: n.start - startBeat })), [clip, startBeat]);
-  // 16th steps, or 32nds when the part has hits between 16ths.
-  const stepsPerBeat = notes.some((n) => Math.abs(n.start * 4 - Math.round(n.start * 4)) > 1e-6) ? 8 : 4;
+  const offSixteenth = notes.some((n) => Math.abs(n.start * 4 - Math.round(n.start * 4)) > 1e-6);
+  const [grid, setGrid] = useState<Grid>(offSixteenth ? 32 : 16);
+  const [pxPerBeat, setPxPerBeat] = useState(track.isDrums ? 255 : 88);
+  // Which sections a drum edit changes; asked on the first edit when there is a choice.
+  const [scope, setScope] = useState<DrumScope | undefined>(sameKind.length > 1 ? undefined : 'this');
+  const [pending, setPending] = useState<{ pitch: number; step: number; on: boolean } | undefined>(undefined);
+
   const beats = clip.bars * BEATS_PER_BAR;
-  const cellW = stepsPerBeat === 8 ? CELL_W / 2 + 2 : CELL_W;
-  const gridW = beats * stepsPerBeat * cellW;
-  const head = playheadBeat !== undefined && playheadBeat >= startBeat && playheadBeat < startBeat + beats ? playheadBeat - startBeat : undefined;
+  const inSection = playheadBeat !== undefined && playheadBeat >= startBeat && playheadBeat < startBeat + beats;
   const color = resolveColor(track.color);
   const pitched = notes.filter((n) => n.pitch !== null);
+  const kindLabel = plural(section.kind);
+
+  const apply = (edit: { pitch: number; step: number; on: boolean }, s: DrumScope) =>
+    onSetDrumHit(s === 'all' ? [...sameKind] : [section.name], edit.pitch, edit.step, edit.on);
+  const onCell = (pitch: number, step: number, on: boolean) => {
+    if (scope === undefined) setPending({ pitch, step, on });
+    else apply({ pitch, step, on }, scope);
+  };
 
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
-      <DialogContent className="max-h-[86vh] w-[min(1100px,calc(100vw-2rem))] max-w-none gap-0 overflow-hidden rounded-[12px] border border-line bg-panel p-0 text-white sm:max-w-none">
+      <DialogContent className="max-h-[88vh] w-[min(1180px,calc(100vw-2rem))] max-w-none gap-0 overflow-hidden rounded-[12px] border border-line bg-panel p-0 text-white sm:max-w-none">
         <div className="flex flex-wrap items-center gap-3 border-b border-line/60 px-5 py-4 pr-12">
           <span className="h-3 w-3 rounded-full" style={{ background: track.color }} aria-hidden="true" />
           <div className="min-w-0">
@@ -62,7 +91,8 @@ export function ClipDetail({
               {track.name} · {section.name}
             </DialogTitle>
             <DialogDescription className="text-[12px] text-white/50">
-              Bars {section.startBar + 1}–{section.startBar + section.bars} · {notes.length} {track.isDrums ? 'hits' : 'notes'}
+              Bars {section.startBar + 1}–{section.startBar + section.bars}
+              {track.isDrums ? ' · the bar below repeats through the section' : ` · ${notes.length} notes`}
             </DialogDescription>
           </div>
           <div className="ml-auto flex flex-wrap gap-2">
@@ -76,23 +106,161 @@ export function ClipDetail({
           </div>
         </div>
 
-        <div className="max-h-[calc(86vh-140px)] overflow-auto bg-[#0d0e18]">
+        {/* Grid, zoom and (drums) which sections edits apply to. */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
+          <Segmented<Grid>
+            label="Grid"
+            value={grid}
+            options={GRIDS.map((g) => ({ value: g, label: `1/${g}` }))}
+            onChange={setGrid}
+          />
+          <span className="flex items-center gap-1">
+            <span className="mr-1 text-white/55">Zoom</span>
+            <SmallButton label="Zoom out" onClick={() => setPxPerBeat((z) => Math.max(MIN_PX_PER_BEAT, Math.round(z / 1.4)))}>−</SmallButton>
+            <SmallButton label="Zoom in" onClick={() => setPxPerBeat((z) => Math.min(MAX_PX_PER_BEAT, Math.round(z * 1.4)))}>+</SmallButton>
+          </span>
+          {track.isDrums && sameKind.length > 1 ? (
+            <Segmented<DrumScope>
+              label="Edits change"
+              value={scope}
+              options={[
+                { value: 'this' as const, label: `This ${section.kind} only` },
+                { value: 'all' as const, label: `All ${kindLabel} (${sameKind.length})` },
+              ]}
+              onChange={setScope}
+            />
+          ) : null}
+        </div>
+
+        <div className="max-h-[calc(88vh-190px)] overflow-auto bg-[#0d0e18]">
           {track.isDrums ? (
-            <DrumSteps notes={notes} beats={beats} stepsPerBeat={stepsPerBeat} cellW={cellW} gridW={gridW} color={color} head={head} />
+            <DrumBar
+              notes={notes}
+              barCount={clip.bars}
+              grid={grid}
+              pxPerBeat={pxPerBeat}
+              color={color}
+              head={inSection ? (playheadBeat! - startBeat) % BEATS_PER_BAR : undefined}
+              onCell={onCell}
+            />
           ) : pitched.length > 0 ? (
-            <PianoRoll notes={pitched} beats={beats} stepsPerBeat={stepsPerBeat} cellW={cellW} gridW={gridW} color={color} head={head} />
+            <PianoRoll
+              notes={pitched}
+              beats={beats}
+              grid={grid}
+              pxPerBeat={pxPerBeat}
+              color={color}
+              head={inSection ? playheadBeat! - startBeat : undefined}
+            />
           ) : (
             <p className="px-5 py-10 text-[14px] text-white/55">
               This part is played as patterns (strums or phrases) without single notes to show.
             </p>
           )}
         </div>
+        {editError ? <p className="border-t border-line/60 px-5 py-2 text-[13px] text-err" role="alert">{editError}</p> : null}
         <p className="border-t border-line/60 px-5 py-3 text-[12px] text-white/45">
-          Parts are written by Casperaki&rsquo;s generator, so they aren&rsquo;t edited note by note: ask for a new
-          pattern or another sound instead. Space plays and pauses.
+          {track.isDrums
+            ? 'Click a cell to add or remove a hit. Undo with Ctrl+Z. Fills at the ends of sections come on top of this bar. Space plays and pauses.'
+            : 'Parts with pitches are written by the generator and aren’t edited note by note: ask for a new pattern or another sound instead. Space plays and pauses.'}
         </p>
+
+        {pending ? (
+          <ScopeQuestion
+            section={section}
+            kindLabel={kindLabel}
+            count={sameKind.length}
+            onCancel={() => setPending(undefined)}
+            onChoose={(s) => {
+              setScope(s);
+              apply(pending, s);
+              setPending(undefined);
+            }}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** "verse" → "verses", "chorus" → "choruses". */
+function plural(kind: string): string {
+  return /(s|sh|ch|x)$/u.test(kind) ? `${kind}es` : `${kind}s`;
+}
+
+/** Asked on the first drum edit in a window when other sections share the kind. */
+function ScopeQuestion({
+  section,
+  kindLabel,
+  count,
+  onChoose,
+  onCancel,
+}: {
+  section: SeqSection;
+  kindLabel: string;
+  count: number;
+  onChoose(scope: DrumScope): void;
+  onCancel(): void;
+}) {
+  return (
+    <Dialog open onOpenChange={(o) => (o ? undefined : onCancel())}>
+      <DialogContent className="w-[min(460px,calc(100vw-2rem))] max-w-none gap-0 rounded-[12px] border border-line bg-panel p-0 text-white sm:max-w-none">
+        <div className="px-5 pb-2 pt-5 pr-12">
+          <DialogTitle className="text-[17px] font-semibold text-white">Change only {section.name}, or all {kindLabel}?</DialogTitle>
+          <DialogDescription className="mt-2 text-[14px] leading-relaxed text-white/60">
+            The song has {count} {kindLabel}. Your drum changes can apply to {section.name} alone or to every one of them.
+            You can switch this later in the editor.
+          </DialogDescription>
+        </div>
+        <div className="flex justify-end gap-2 px-5 pb-5 pt-4">
+          <button type="button" onClick={() => onChoose('this')} className="h-10 rounded-full border border-white/30 px-4 text-[14px] font-semibold text-white hover:border-white/60">
+            Only {section.name}
+          </button>
+          <button type="button" onClick={() => onChoose('all')} className="h-10 rounded-full bg-accent px-4 text-[14px] font-semibold text-white hover:bg-[#e00000]">
+            All {kindLabel}
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Segmented<T extends string | number>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T | undefined;
+  options: readonly { value: T; label: string }[];
+  onChange(v: T): void;
+}) {
+  return (
+    <span className="flex items-center gap-2" role="group" aria-label={label}>
+      <span className="text-white/55">{label}</span>
+      <span className="flex rounded-[7px] border border-line p-0.5">
+        {options.map((o) => (
+          <button
+            key={String(o.value)}
+            type="button"
+            aria-pressed={value === o.value}
+            onClick={() => onChange(o.value)}
+            className={`h-7 rounded-[5px] px-2.5 text-[12px] ${value === o.value ? 'bg-white text-black' : 'text-white/70 hover:text-white'}`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </span>
+    </span>
+  );
+}
+
+function SmallButton({ label, onClick, children }: { label: string; onClick(): void; children: string }) {
+  return (
+    <button type="button" onClick={onClick} aria-label={label} title={label} className="h-7 w-7 rounded-[6px] border border-line text-[14px] text-white/85 hover:border-white/50">
+      {children}
+    </button>
   );
 }
 
@@ -109,41 +277,43 @@ function ActionButton({ onClick, disabled, children }: { onClick(): void; disabl
   );
 }
 
-interface GridProps {
-  notes: SeqNote[];
-  beats: number;
-  stepsPerBeat: number;
-  cellW: number;
-  gridW: number;
-  color: string;
-  head: number | undefined;
-}
-
-/** Column backgrounds: bars, beats and steps, as in a step sequencer. */
-function StepColumns({ beats, stepsPerBeat, cellW, height }: { beats: number; stepsPerBeat: number; cellW: number; height: number }) {
+/** Column shading and lines for `beats` beats at `grid` notes per bar. */
+function GridColumns({ beats, grid, pxPerBeat, height }: { beats: number; grid: Grid; pxPerBeat: number; height: number }) {
+  const cellsPerBeat = grid / BEATS_PER_BAR;
+  const cellW = pxPerBeat / cellsPerBeat;
+  const cells = Math.round(beats * cellsPerBeat);
   return (
     <>
-      {Array.from({ length: beats }, (_, b) => (
-        <span
-          key={b}
-          className={`absolute top-0 ${Math.floor(b / BEATS_PER_BAR) % 2 ? 'bg-white/[0.025]' : ''} border-l ${b % BEATS_PER_BAR === 0 ? 'border-white/30' : 'border-white/10'}`}
-          style={{ left: b * stepsPerBeat * cellW, width: stepsPerBeat * cellW, height }}
-        />
-      ))}
+      {Array.from({ length: beats }, (_, b) =>
+        Math.floor(b / BEATS_PER_BAR) % 2 ? (
+          <span key={`s${b}`} className="absolute top-0 bg-white/[0.02]" style={{ left: b * pxPerBeat, width: pxPerBeat, height }} />
+        ) : null,
+      )}
+      {Array.from({ length: cells }, (_, c) => {
+        const onBar = (c / cellsPerBeat) % BEATS_PER_BAR === 0;
+        const onBeat = c % cellsPerBeat === 0;
+        return (
+          <span
+            key={c}
+            className={`absolute top-0 w-px ${onBar ? 'bg-white/35' : onBeat ? 'bg-white/15' : 'bg-white/[0.06]'}`}
+            style={{ left: c * cellW, height }}
+          />
+        );
+      })}
     </>
   );
 }
 
-function BeatHeader({ beats, stepsPerBeat, cellW }: { beats: number; stepsPerBeat: number; cellW: number }) {
+function BeatHeader({ beats, pxPerBeat }: { beats: number; pxPerBeat: number }) {
   return (
     <div className="sticky top-0 z-10 flex bg-[#151623]" style={{ height: 20 }}>
       <div className="sticky left-0 z-10 shrink-0 bg-[#151623]" style={{ width: LABEL_W }} />
-      <div className="relative" style={{ width: beats * stepsPerBeat * cellW }}>
+      <div className="relative" style={{ width: beats * pxPerBeat }}>
         {Array.from({ length: beats }, (_, b) => (
           <span
             key={b}
-            className={`absolute top-0 h-full border-l pl-1 font-mono text-[10px] leading-[20px] ${b % BEATS_PER_BAR === 0 ? 'border-white/40 text-white/80' : 'border-white/10 text-white/35'}`}
-            style={{ left: b * stepsPerBeat * cellW }}
+            className={`absolute top-0 h-full border-l pl-1 font-mono text-[10px] leading-[20px] ${b % BEATS_PER_BAR === 0 ? 'border-white/40 text-white/80' : 'border-white/10 text-white/40'}`}
+            style={{ left: b * pxPerBeat }}
           >
             {b % BEATS_PER_BAR === 0 ? Math.floor(b / BEATS_PER_BAR) + 1 : `.${(b % BEATS_PER_BAR) + 1}`}
           </span>
@@ -153,51 +323,147 @@ function BeatHeader({ beats, stepsPerBeat, cellW }: { beats: number; stepsPerBea
   );
 }
 
-function Playhead({ head, stepsPerBeat, cellW }: { head: number | undefined; stepsPerBeat: number; cellW: number }) {
+function Playhead({ head, pxPerBeat }: { head: number | undefined; pxPerBeat: number }) {
   if (head === undefined) return null;
-  return <span className="pointer-events-none absolute top-0 bottom-0 z-[5] w-[2px] bg-accent" style={{ left: head * stepsPerBeat * cellW }} />;
+  return <span className="pointer-events-none absolute top-0 bottom-0 z-[5] w-[2px] bg-accent" style={{ left: head * pxPerBeat }} />;
 }
 
-function DrumSteps({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: GridProps) {
+/**
+ * The bar the engine repeats: per kit piece, the hits of the first bar of
+ * the section that has that piece (as the engine adapter lowers it), on
+ * the 32nd grid. Returns piece pitch → set of 32nd steps.
+ */
+export function drumBarPattern(notes: readonly SeqNote[], barCount: number): Map<number, Set<number>> {
+  const byPitch = new Map<number, Map<number, Set<number>>>();
+  for (const n of notes) {
+    if (n.pitch === null) continue;
+    const bar = Math.floor(n.start / BEATS_PER_BAR + 1e-9);
+    if (bar < 0 || bar >= barCount) continue;
+    const step = Math.round((n.start - bar * BEATS_PER_BAR) * STEPS_PER_BEAT_32);
+    if (step < 0 || step >= 32) continue;
+    const bars = byPitch.get(n.pitch) ?? new Map<number, Set<number>>();
+    const set = bars.get(bar) ?? new Set<number>();
+    set.add(step);
+    bars.set(bar, set);
+    byPitch.set(n.pitch, bars);
+  }
+  const out = new Map<number, Set<number>>();
+  for (const [pitch, bars] of byPitch) out.set(pitch, bars.get(Math.min(...bars.keys()))!);
+  return out;
+}
+
+function DrumBar({
+  notes,
+  barCount,
+  grid,
+  pxPerBeat,
+  color,
+  head,
+  onCell,
+}: {
+  notes: SeqNote[];
+  barCount: number;
+  grid: Grid;
+  pxPerBeat: number;
+  color: string;
+  head: number | undefined;
+  onCell(pitch: number, step: number, on: boolean): void;
+}) {
+  const pattern = useMemo(() => drumBarPattern(notes, barCount), [notes, barCount]);
   // The whole kit, used pieces or not, plus any note outside it.
-  const used = new Set(notes.map((n) => n.pitch).filter((p): p is number => p !== null));
-  const pitches = [...DRUM_KIT.map((d) => d.pitch), ...[...used].filter((p) => !DRUM_KIT.some((d) => d.pitch === p))];
+  const pitches = [...DRUM_KIT.map((d) => d.pitch), ...[...pattern.keys()].filter((p) => !DRUM_KIT.some((d) => d.pitch === p))];
   const height = pitches.length * DRUM_ROW_H;
+  const stepsPerCell = 32 / grid;
+  const cellW = (pxPerBeat * BEATS_PER_BAR) / grid;
+  const stepW = pxPerBeat / STEPS_PER_BEAT_32;
+  const gridW = pxPerBeat * BEATS_PER_BAR;
+
   return (
     <div className="relative min-w-max">
-      <BeatHeader beats={beats} stepsPerBeat={stepsPerBeat} cellW={cellW} />
+      <BeatHeader beats={BEATS_PER_BAR} pxPerBeat={pxPerBeat} />
       <div className="flex">
         <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
           {pitches.map((p) => (
-            <div key={p} className={`truncate border-b border-white/5 px-3 text-[12px] ${used.has(p) ? 'text-white/85' : 'text-white/30'}`} style={{ height: DRUM_ROW_H, lineHeight: `${DRUM_ROW_H}px` }}>
+            <div
+              key={p}
+              className={`truncate border-b border-white/5 px-3 text-[12px] ${pattern.has(p) ? 'text-white/85' : 'text-white/30'}`}
+              style={{ height: DRUM_ROW_H, lineHeight: `${DRUM_ROW_H}px` }}
+            >
               {drumName(p)}
             </div>
           ))}
         </div>
         <div className="relative" style={{ width: gridW, height }}>
-          <StepColumns beats={beats} stepsPerBeat={stepsPerBeat} cellW={cellW} height={height} />
-          {pitches.map((p, row) => (
-            <div key={p} className="absolute left-0 right-0 border-b border-white/5" style={{ top: row * DRUM_ROW_H, height: DRUM_ROW_H }}>
-              {notes
-                .filter((n) => n.pitch === p)
-                .map((n, i) => (
-                  <span
-                    key={i}
-                    className="absolute top-[4px] rounded-[3px]"
-                    style={{ left: n.start * stepsPerBeat * cellW + 2, width: cellW - 4, height: DRUM_ROW_H - 8, background: color }}
-                    title={`${drumName(p)} at beat ${(n.start + 1).toFixed(2)}`}
-                  />
-                ))}
-            </div>
-          ))}
-          <Playhead head={head} stepsPerBeat={stepsPerBeat} cellW={cellW} />
+          <GridColumns beats={BEATS_PER_BAR} grid={grid} pxPerBeat={pxPerBeat} height={height} />
+          {pitches.map((p, row) => {
+            const steps = pattern.get(p) ?? new Set<number>();
+            return (
+              <div key={p} className="absolute left-0 right-0 border-b border-white/5" style={{ top: row * DRUM_ROW_H, height: DRUM_ROW_H }}>
+                {/* Clickable cells at the grid resolution. */}
+                {Array.from({ length: grid }, (_, c) => {
+                  const step = c * stepsPerCell;
+                  const on = steps.has(step);
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => onCell(p, step, !on)}
+                      aria-label={`${drumName(p)}, ${fmtStep(step)}: ${on ? 'remove hit' : 'add hit'}`}
+                      className="absolute top-0 h-full hover:bg-white/[0.08]"
+                      style={{ left: c * cellW, width: cellW }}
+                    />
+                  );
+                })}
+                {/* Hits, at their exact 32nd (also those between grid cells). */}
+                {[...steps].map((step) => {
+                  const aligned = step % stepsPerCell === 0;
+                  return (
+                    <span
+                      key={step}
+                      className="pointer-events-none absolute top-[4px] rounded-[3px]"
+                      style={{
+                        left: step * stepW + 2,
+                        width: Math.max(4, (aligned ? cellW : stepW) - 4),
+                        height: DRUM_ROW_H - 8,
+                        background: color,
+                        opacity: aligned ? 1 : 0.55,
+                      }}
+                      title={`${drumName(p)} at ${fmtStep(step)}`}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
+          <Playhead head={head} pxPerBeat={pxPerBeat} />
         </div>
       </div>
     </div>
   );
 }
 
-function PianoRoll({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: GridProps) {
+/** A 32nd step as beat.sub ("beat 2, 3rd 16th"). */
+function fmtStep(step: number): string {
+  const beat = Math.floor(step / 8) + 1;
+  const rest = step % 8;
+  return rest === 0 ? `beat ${beat}` : `beat ${beat} + ${rest}/32`;
+}
+
+function PianoRoll({
+  notes,
+  beats,
+  grid,
+  pxPerBeat,
+  color,
+  head,
+}: {
+  notes: SeqNote[];
+  beats: number;
+  grid: Grid;
+  pxPerBeat: number;
+  color: string;
+  head: number | undefined;
+}) {
   const ps = notes.map((n) => n.pitch!);
   // At least an octave and a half of keys, centred on the part.
   const spread = Math.max(...ps) - Math.min(...ps);
@@ -206,10 +472,11 @@ function PianoRoll({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: Gr
   const low = Math.min(...ps) - extra;
   const rows = high - low + 1;
   const height = rows * KEY_ROW_H;
+  const gridW = beats * pxPerBeat;
   const isBlack = (p: number) => [1, 3, 6, 8, 10].includes(((p % 12) + 12) % 12);
   return (
     <div className="relative min-w-max">
-      <BeatHeader beats={beats} stepsPerBeat={stepsPerBeat} cellW={cellW} />
+      <BeatHeader beats={beats} pxPerBeat={pxPerBeat} />
       <div className="flex">
         <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
           {Array.from({ length: rows }, (_, i) => high - i).map((p) => (
@@ -218,7 +485,7 @@ function PianoRoll({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: Gr
               className={`flex items-center justify-end border-b border-black/40 pr-2 font-mono text-[9px] ${isBlack(p) ? 'bg-black/60 text-white/30' : 'bg-white/[0.07] text-white/55'}`}
               style={{ height: KEY_ROW_H }}
             >
-              {p % 12 === 0 || !isBlack(p) ? midiName(p) : ''}
+              {isBlack(p) ? '' : midiName(p)}
             </div>
           ))}
         </div>
@@ -226,14 +493,14 @@ function PianoRoll({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: Gr
           {Array.from({ length: rows }, (_, i) => high - i).map((p, i) => (
             <span key={p} className={`absolute left-0 right-0 ${isBlack(p) ? 'bg-black/25' : ''} ${p % 12 === 0 ? 'border-b border-white/15' : ''}`} style={{ top: i * KEY_ROW_H, height: KEY_ROW_H }} />
           ))}
-          <StepColumns beats={beats} stepsPerBeat={stepsPerBeat} cellW={cellW} height={height} />
+          <GridColumns beats={beats} grid={grid} pxPerBeat={pxPerBeat} height={height} />
           {notes.map((n, i) => (
             <span
               key={i}
               className="absolute overflow-hidden whitespace-nowrap rounded-[2px] border border-black/40 px-0.5 text-[8px] leading-[10px] text-black/80"
               style={{
-                left: n.start * stepsPerBeat * cellW,
-                width: Math.max(4, n.length * stepsPerBeat * cellW - 1),
+                left: n.start * pxPerBeat,
+                width: Math.max(4, n.length * pxPerBeat - 1),
                 top: (high - n.pitch!) * KEY_ROW_H + 0.5,
                 height: KEY_ROW_H - 1,
                 background: color,
@@ -244,7 +511,7 @@ function PianoRoll({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: Gr
               {n.label && n.kind !== 'chord' ? n.label : ''}
             </span>
           ))}
-          <Playhead head={head} stepsPerBeat={stepsPerBeat} cellW={cellW} />
+          <Playhead head={head} pxPerBeat={pxPerBeat} />
         </div>
       </div>
     </div>

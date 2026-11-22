@@ -443,3 +443,47 @@ describe('replaceSong', () => {
     expect(applyCommand(state, { kind: 'undo' }).working).toBe(song);
   });
 });
+
+describe('setDrumHit', () => {
+  const drumSong = () => {
+    const song = makeValidSong();
+    const seg = song.songStructure[0]!;
+    const bars = seg.lengthInBars ?? seg.bars.length;
+    song.arrangement[seg.name] = {
+      ...song.arrangement[seg.name]!,
+      overrides: {
+        ...song.arrangement[seg.name]!.overrides,
+        Drums: { bars: Array.from({ length: bars }, () => ({ notes: { '0.0': [{ note: 36, type: 'note' }] } })) },
+      },
+    };
+    return { song, name: seg.name, bars };
+  };
+
+  it('adds a hit to every bar of the section', () => {
+    const { song, name, bars } = drumSong();
+    const s = applyCommand(initEditState(song), { kind: 'setDrumHit', segments: [name], pitch: 38, step: 8, on: true });
+    expect(s.lastError).toBeUndefined();
+    const out = s.working.arrangement[name]!.overrides.Drums!.bars!;
+    expect(out).toHaveLength(bars);
+    for (const b of out) expect((b.notes as Record<string, unknown[]>)['1.0']).toEqual([{ note: 38, type: 'note' }]);
+  });
+
+  it('removes a hit and drops empty beats', () => {
+    const { song, name } = drumSong();
+    const s = applyCommand(initEditState(song), { kind: 'setDrumHit', segments: [name], pitch: 36, step: 0, on: false });
+    expect(s.lastError).toBeUndefined();
+    for (const b of s.working.arrangement[name]!.overrides.Drums!.bars!) expect(b.notes).toEqual({});
+  });
+
+  it('uses the generator key format for off-beat steps', () => {
+    const { song, name } = drumSong();
+    const s = applyCommand(initEditState(song), { kind: 'setDrumHit', segments: [name], pitch: 42, step: 3, on: true });
+    expect(Object.keys(s.working.arrangement[name]!.overrides.Drums!.bars![0]!.notes!)).toContain('0.375');
+  });
+
+  it('reports a no-op', () => {
+    const { song, name } = drumSong();
+    const s = applyCommand(initEditState(song), { kind: 'setDrumHit', segments: [name], pitch: 36, step: 0, on: true });
+    expect(s.lastError).toMatch(/nothing to change/);
+  });
+});
