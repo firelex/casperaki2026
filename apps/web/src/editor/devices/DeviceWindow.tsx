@@ -1,12 +1,22 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 /**
  * A floating device window (as a DAW opens a plugin): stays over the
- * editor without blocking it, dragged by its title bar, closed with ✕.
+ * editor without blocking it, dragged by its title bar, closed with ✕ or Escape.
  */
 export function DeviceWindow({ title, subtitle, onClose, children }: { title: string; subtitle: string; onClose(): void; children: ReactNode }) {
   const [pos, setPos] = useState(() => ({ x: Math.max(16, window.innerWidth / 2 - 380), y: 96 }));
   const drag = useRef<{ dx: number; dy: number } | undefined>(undefined);
+  // Escape closes the window (as Escape closes a plugin window in a DAW).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      e.preventDefault();
+      onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
     <div
       className="fixed z-[45] overflow-hidden rounded-[10px] border border-black/80 bg-[#16171a] shadow-[0_18px_50px_rgba(0,0,0,0.7)]"

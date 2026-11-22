@@ -33,7 +33,11 @@ export function Transport() {
       if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code !== 'Space' && e.code !== 'KeyL' && e.code !== 'Enter') return;
       const t = e.target as HTMLElement | null;
-      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(t.tagName))) return;
+      // Typing in a field keeps its keys. Otherwise Space always plays/pauses, even
+      // with a button focused (preventDefault stops it from also clicking that button);
+      // Enter on a focused button still presses the button.
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
+      if (e.code === 'Enter' && t?.tagName === 'BUTTON') return;
       e.preventDefault();
       if (e.code === 'Space') playPause();
       else if (e.code === 'KeyL') {
