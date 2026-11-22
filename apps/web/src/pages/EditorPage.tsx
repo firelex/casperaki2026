@@ -5,11 +5,12 @@ import { useQuery } from '@tanstack/react-query';
 import { EditorHeader } from '../layout/EditorHeader';
 import { StatusBar } from '../layout/StatusBar';
 import { SoundsView } from '../editor/SoundsView';
+import { MusicVideoView } from '../editor/MusicVideoView';
 import { TimelineView } from '../editor/TimelineView';
 import { songsApi, songsQueryKeys } from '../api/songs';
 import { useSession } from '../state/session';
 
-export type EditorTab = 'sound' | 'timeline';
+export type EditorTab = 'sound' | 'timeline' | 'video';
 
 /**
  * Editor screen, laid out like a DAW window:
@@ -61,6 +62,7 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
       }
       if (e.code === 'Digit1') navigate(`/editor/${songId}/sound`);
       if (e.code === 'Digit2') navigate(`/editor/${songId}/timeline`);
+      if (e.code === 'Digit3') navigate(`/editor/${songId}/video`);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -87,6 +89,7 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
 
 function TabBody({ tab }: { tab: EditorTab }) {
   if (tab === 'sound') return <SoundsView />;
+  if (tab === 'video') return <MusicVideoView />;
   return <TimelineView />;
 }
 

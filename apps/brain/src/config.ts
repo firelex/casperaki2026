@@ -52,6 +52,9 @@ const ConfigSchema = z.object({
   sampleCacheDir: z.string().default('./data/sample-cache'),
   /** casperaki_engine/config/mix-config.json; required for in-browser playback. */
   mixConfigPath: z.string().optional(),
+  // --- Music videos (src/video/) ---
+  /** DeepSeek API key for the video scene planner; videos fail loudly without it. */
+  deepseekApiKey: z.string().min(1).optional(),
   // --- Production web serving ---
   // When set, the brain serves the built web app (apps/web/dist) at / with
   // an SPA fallback, so one origin carries both the UI and /api.
@@ -102,6 +105,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     sampleCacheDir: env.BRAIN_SAMPLE_CACHE_DIR,
     mixConfigPath: env.CASPERAKI_MIX_CONFIG,
     webDistDir: env.BRAIN_WEB_DIST_DIR,
+    deepseekApiKey: env.DEEPSEEK_API_KEY || undefined,
     adminEmails: env.BRAIN_ADMIN_EMAILS,
   });
 }

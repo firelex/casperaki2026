@@ -1,0 +1,165 @@
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
+import { videoApi, videoQueryKeys, type VideoOrientation, type VideoStatus } from '../api/video';
+import { useSession } from '../state/session';
+
+const STEP_LABEL: Readonly<Record<string, string>> = {
+  audio: 'Exporting the song’s mix',
+  planning: 'Planning the scenes',
+  rendering: 'Rendering the video',
+};
+
+const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string }[] = [
+  { id: 'landscape', label: 'Wide', hint: '1920 × 1080, for YouTube' },
+  { id: 'portrait', label: 'Tall', hint: '1080 × 1920, for TikTok, Reels and Shorts' },
+];
+
+/**
+ * Music Video tab: a cartoon music video of the saved song. Casperaki takes
+ * the song's mix (exporting it first if needed), its sections and the sung
+ * words, a language model plans the scenes (dancers, props, camera, lyric
+ * banners), and the video is rendered in the background, wide or tall.
+ */
+export function MusicVideoView() {
+  const { songId } = useParams<{ songId: string }>();
+  if (!songId) throw new Error('MusicVideoView: no song id in the route');
+  const { viewSong, editorDirty } = useSession();
+  const queryClient = useQueryClient();
+  const [orientation, setOrientation] = useState<VideoOrientation>('landscape');
+  const [artist, setArtist] = useState('Casperaki');
+
+  const jobs = useQuery({
+    queryKey: videoQueryKeys.jobs(songId),
+    queryFn: ({ signal }) => videoApi.jobs(songId, signal),
+    refetchInterval: (q) => (Object.values(q.state.data?.jobs ?? {}).some((j) => j && (j.state === 'queued' || j.state === 'running')) ? 2000 : false),
+  });
+  const start = useMutation({
+    mutationFn: () => videoApi.start(songId, orientation, artist.trim()),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: videoQueryKeys.jobs(songId) }),
+  });
+  const job = jobs.data?.jobs[orientation];
+  const plannerMissing = jobs.data?.plannerConfigured === false;
+  const busy = job?.state === 'queued' || job?.state === 'running';
+
+  return (
+    <div className="h-full overflow-y-auto bg-[#1b1c1f] text-white">
+      <div className="mx-auto flex max-w-[1100px] flex-col gap-6 px-6 py-8 lg:flex-row">
+        <section className="w-full shrink-0 lg:w-[340px]" aria-label="Video settings">
+          <h1 className="text-[22px] font-semibold">Music video</h1>
+          <p className="mt-1 text-[14px] text-white/60">
+            A cartoon video of {viewSong?.title ? <span className="text-white">{viewSong.title}</span> : 'this song'}: dancers, scenes and the sung words,
+            planned to the song&rsquo;s sections and beat.
+          </p>
+
+          <fieldset className="mt-6">
+            <legend className="mb-2 text-[13px] text-white/60">Format</legend>
+            <div className="flex gap-2">
+              {ORIENTATIONS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  aria-pressed={orientation === o.id}
+                  onClick={() => setOrientation(o.id)}
+                  className={`flex-1 rounded-[10px] border px-3 py-2 text-left ${orientation === o.id ? 'border-white bg-white/10' : 'border-line hover:border-white/40'}`}
+                >
+                  <span className="block text-[14px] font-semibold">{o.label}</span>
+                  <span className="block text-[12px] text-white/55">{o.hint}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="mt-5 block">
+            <span className="mb-2 block text-[13px] text-white/60">Artist name (shown in the scenes)</span>
+            <input
+              value={artist}
+              maxLength={60}
+              onChange={(e) => setArtist(e.target.value)}
+              className="h-10 w-full rounded-[8px] border border-line bg-[#151619] px-3 text-[14px] text-white outline-none focus:border-white/50"
+            />
+          </label>
+
+          {plannerMissing ? (
+            <p className="mt-4 rounded-[8px] bg-err/10 px-3 py-2 text-[13px] text-red-200">
+              Video making is not set up yet: the scene planner needs a DeepSeek API key on the server (DEEPSEEK_API_KEY in the brain&rsquo;s settings).
+            </p>
+          ) : null}
+          {editorDirty ? (
+            <p className="mt-4 rounded-[8px] bg-amber-400/10 px-3 py-2 text-[13px] text-amber-200">
+              The video is made from the saved song. Save your edits first to include them.
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            disabled={busy || start.isPending || !artist.trim() || plannerMissing}
+            onClick={() => start.mutate()}
+            className="mt-5 h-11 w-full rounded-full bg-accent text-[15px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-50"
+          >
+            {busy ? 'Making the video…' : job?.state === 'done' ? 'Make it again' : 'Make video'}
+          </button>
+          {start.error ? (
+            <p className="mt-3 text-[13px] text-err" role="alert">
+              {start.error.message}
+            </p>
+          ) : null}
+          <p className="mt-3 text-[12px] text-white/45">
+            It takes a few minutes. If the song has not been exported yet, its mix is made first.
+          </p>
+        </section>
+
+        <section className="min-w-0 flex-1" aria-label="Video">
+          {jobs.isError ? (
+            <p className="text-[14px] text-err">{jobs.error.message}</p>
+          ) : (
+            <VideoPanel job={job} orientation={orientation} title={viewSong?.title ?? 'Music video'} />
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function VideoPanel({ job, orientation, title }: { job: VideoStatus | undefined; orientation: VideoOrientation; title: string }) {
+  const frame = orientation === 'portrait' ? 'aspect-[9/16] max-h-[70vh] mx-auto' : 'aspect-video w-full';
+  if (!job) {
+    return (
+      <div className={`${frame} flex items-center justify-center rounded-[12px] border border-dashed border-line text-[14px] text-white/45`}>
+        No {orientation === 'portrait' ? 'tall' : 'wide'} video yet. Make one on the left.
+      </div>
+    );
+  }
+  if (job.state === 'failed') {
+    return (
+      <div className={`${frame} flex flex-col items-center justify-center gap-2 rounded-[12px] border border-err/50 p-6 text-center`}>
+        <p className="text-[15px] font-semibold text-err">The video could not be made</p>
+        <p className="max-w-[520px] text-[13px] text-white/70">{job.error ?? 'No reason was given.'}</p>
+      </div>
+    );
+  }
+  if (job.state !== 'done' || !job.url) {
+    const pct = typeof job.progress === 'number' ? Math.round(job.progress * 100) : undefined;
+    return (
+      <div className={`${frame} flex flex-col items-center justify-center gap-3 rounded-[12px] border border-line bg-black/30`} role="status">
+        <p className="text-[15px] text-white">{STEP_LABEL[job.step ?? ''] ?? 'Waiting to start'}…</p>
+        <div className="h-2 w-[60%] overflow-hidden rounded-full bg-white/10">
+          <div className="h-full bg-emerald-400 transition-all" style={{ width: `${pct ?? 8}%` }} />
+        </div>
+        {pct !== undefined ? <p className="font-mono text-[12px] text-white/55">{pct}%</p> : null}
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: music video`} />
+      <div className="flex items-center gap-3">
+        <a href={`${job.url}?download=1`} className="h-10 rounded-full border border-white/30 px-4 text-[14px] leading-10 text-white hover:border-white/60">
+          Download MP4
+        </a>
+        {job.finishedAt ? <span className="text-[12px] text-white/45">Made {new Date(job.finishedAt).toLocaleString('en-GB')}</span> : null}
+      </div>
+    </div>
+  );
+}

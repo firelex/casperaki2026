@@ -21,7 +21,8 @@ const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => (
  *   /editor                    → redirect to Projects
  *   /editor/:songId            → redirect to Timeline tab
  *   /editor/:songId/sound      → Editor · Sound Design tab
- *   /editor/:songId/timeline   → Editor · Timeline tab
+ *   /editor/:songId/timeline   → Editor · Song tab (the tracks)
+ *   /editor/:songId/video      → Editor · Music Video tab
  *   /editor/:songId/structure  → redirects to the track view (Structure was folded in)
  *
  * Signed-out users see only the landing (LandingPage). Signed-in users get
@@ -47,6 +48,7 @@ export function App() {
         <Route path="/editor/:songId" element={<Navigate to="timeline" replace />} />
         <Route path="/editor/:songId/sound" element={<EditorPage tab="sound" />} />
         <Route path="/editor/:songId/timeline" element={<EditorPage tab="timeline" />} />
+        <Route path="/editor/:songId/video" element={<EditorPage tab="video" />} />
         {/* The Structure view was folded into the track view (sections are edited from the ruler). */}
         <Route path="/editor/:songId/structure" element={<StructureRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />

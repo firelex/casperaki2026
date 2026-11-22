@@ -30,6 +30,10 @@ import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
 import { OidcClient } from './auth/OidcClient.js';
 import { attachSession, requireSession } from './auth/middleware.js';
 import { RenderService } from './render/renderService.js';
+import { renderVideo } from '@casperaki/video';
+import { createVideoRouter } from './routes/video.js';
+import { DeepSeekPlanner } from './video/planner.js';
+import { VideoService } from './video/videoService.js';
 import { authRouter } from './routes/auth.js';
 
 export interface CreateAppDeps {
@@ -40,6 +44,8 @@ export interface CreateAppDeps {
   /** Optional injected render service (tests). Bootstrap builds one when
    *  CASPERAKI_SAMPLE_LIBRARY_ROOT is configured. */
   readonly renders?: RenderService;
+  /** Music videos (tests inject one with a fake planner / renderer). */
+  readonly videos?: VideoService;
   readonly playback?: PlaybackService;
 }
 
@@ -155,6 +161,18 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         nodeBin: process.execPath,
       })
     : undefined;
+  // Music videos next to the renders: <rendersDir>/../videos.
+  const videos =
+    deps.videos ??
+    (renders
+      ? new VideoService({
+          config: { videosDir: join(dirname(resolve(config.rendersDir)), 'videos'), ffmpegBin: config.ffmpegBin },
+          store,
+          renders,
+          planner: new DeepSeekPlanner(config.deepseekApiKey),
+          renderVideo,
+        })
+      : undefined);
   if (!renders) {
     console.warn('[brain] CASPERAKI_SAMPLE_LIBRARY_ROOT not set — per-song rendering is DISABLED (render routes answer 503).');
   }
@@ -179,6 +197,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
   app.use(createSoundsRouter({ playback }));
+  app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || config.deepseekApiKey) }));
   app.use(
     createPatternsRouter({
       store,
