@@ -142,7 +142,8 @@ Real-world test sets (scoring only, never training):
 `scripts/train.py` uses Beat This!'s own data module, Lightning module, shift-tolerant weighted loss and
 cosine warm-up schedule, starting from `final0`. Whole model (about 20 M parameters, so an adapter would save
 nothing). Learning rate 1e-4 (theirs from scratch: 8e-4), 100 warm-up steps, cosine decay; one epoch with no
-oversampling, so every training clip is seen exactly once; batch 16; their online mask augmentation kept,
+oversampling, so every training clip is seen exactly once; batch 16; their online mask augmentation kept
+(each mask at most half the clip long: their 2 s masks crash on our shortest clips),
 their pre-computed pitch/tempo augmentations dropped (the generator already spreads tempo and pitch); no 5 s
 trim in evaluation. Spectrograms are computed exactly as Beat This! computes them at inference
 (`scripts/make_bt_data.py`).

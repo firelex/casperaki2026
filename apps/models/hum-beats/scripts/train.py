@@ -12,7 +12,10 @@ from-scratch recipe, and why:
     every spectrogram and add nothing here: the generator already draws tempo uniformly over 60-200 BPM and
     transposes every melody;
   * evaluation does not skip the first 5 s (theirs does, for full songs): our clips are 2-36 s long;
-  * validates on dev every 150 steps and logs the training loss every 10 steps to <run>/metrics.csv.
+  * validates on dev every 150 steps and logs the training loss every 10 steps to <run>/metrics.csv;
+  * their mask augmentation draws masks of 0.1-2 s and assumes pieces longer than that (full songs); our
+    shortest clips are about 2 s, where it fails (numpy "high <= 0"; the first run crashed on it at step
+    ~1,420). Here a mask is at most half the clip long; everything else about it is unchanged.
 """
 import argparse
 import json
@@ -23,10 +26,34 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import CSVLogger
 
+import numpy as np
+
+import beat_this.dataset.dataset as bt_dataset
 from beat_this.dataset import BeatDataModule
+from beat_this.dataset.augment import apply_mask_excerpt
 from beat_this.inference import load_checkpoint
 from beat_this.model.pl_module import PLBeatThis
 from beat_this.utils import replace_state_dict_key
+
+
+def augment_mask_short_safe(spect, augmentations: dict, fps: int):
+    """Beat This!'s augment_mask_ with each mask at most half the clip long (see the module docstring)."""
+    if "mask" not in augmentations:
+        return spect
+    p = augmentations["mask"]
+    count = np.random.randint(p["min_count"], p["max_count"] + 1)
+    max_len = min(int(p["max_len"] * fps), len(spect) // 2)
+    min_len = min(int(p["min_len"] * fps), max_len)
+    if max_len < 2:
+        raise ValueError(f"spectrogram of {len(spect)} frames is too short to mask")
+    for _ in range(count):
+        length = np.random.randint(min_len, max_len + 1)
+        start = np.random.randint(0, len(spect) - length)
+        apply_mask_excerpt(spect[start: start + length], p["kind"], p["min_parts"], p["max_parts"])
+    return spect
+
+
+bt_dataset.augment_mask_ = augment_mask_short_safe  # the dataset module calls it by this name
 
 
 class HumPL(PLBeatThis):
@@ -50,7 +77,16 @@ def main():
     ap.add_argument("--num-workers", type=int, default=8)
     ap.add_argument("--val-every", type=int, default=150)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--check-loader", action="store_true", help="only run every training item through the data loader once")
     args = ap.parse_args()
+    if args.check_loader:
+        dm = BeatDataModule(args.data_dir, batch_size=64, train_length=1500, num_workers=16,
+                            augmentations={"mask": {"kind": "permute", "min_count": 1, "max_count": 6, "min_len": 0.1, "max_len": 2, "min_parts": 5, "max_parts": 9}},
+                            test_dataset="humbeats-no-test", no_val=False, spect_fps=50, length_based_oversampling_factor=0)
+        dm.setup("fit")
+        n = sum(len(b["spect"]) for b in dm.train_dataloader())
+        print(f"data loader ok: {n} training items")
+        return
     if args.run_dir.exists() and any(args.run_dir.iterdir()):
         raise SystemExit(f"{args.run_dir} is not empty: one run per directory")
     args.run_dir.mkdir(parents=True, exist_ok=True)
