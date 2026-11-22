@@ -89,10 +89,13 @@ export function generateBassPattern(
   //   register, floored at C1 (MIDI 24).
   const sub = selection.styleName === 'edmSimple';
   if (songChordRoots.size === 0) throw new Error('generateBassPattern: the song has no chords');
-  const deltas = [...songChordRoots].map(nearestRootDelta);
+  const roots = [...songChordRoots];
   const template = templateNotes(selection);
   const shareBelow = (lift: number) =>
-    template.length === 0 ? 0 : template.reduce((n, t) => n + deltas.filter((d) => t + d + lift < LOWEST_BASS_STRING).length, 0) / (template.length * deltas.length);
+    template.length === 0
+      ? 0
+      : template.reduce((n, t) => n + roots.filter((r) => t.midi + nearestRootDelta(r - t.root) + lift < LOWEST_BASS_STRING).length, 0) /
+        (template.length * roots.length);
   let lift = 0;
   while (!sub && shareBelow(lift) > LOW_SHARE_TO_LIFT_LINE) lift += 12;
   const floor = sub ? SUB_BASS_FLOOR : LOWEST_BASS_STRING;
@@ -105,6 +108,7 @@ export function generateBassPattern(
   // Absolute (edmComplex / Library) — chord-independent MIDI events repeated
   // modulo the pattern's bar count across the segment.
   if (selection.mode === 'absolute') {
+    const barRoots = absoluteBarRoots(selection.events);
     for (let segBarIdx = 0; segBarIdx < bars.length; segBarIdx++) {
       const patternBar = segBarIdx % selection.patternBars;
       for (const ev of selection.events) {
@@ -116,14 +120,17 @@ export function generateBassPattern(
         const chordsThisBar = segment.bars[segBarIdx]!.chords;
         const chordSymbol = chordsThisBar[Math.floor(ev.beat)] ?? chordsThisBar[0];
         if (!chordSymbol) throw new Error(`generateBassPattern: segment "${segment.name}" bar ${segBarIdx} has no chords`);
-        let pitch = floorSub(ev.midi + nearestRootDelta(parseChord(chordSymbol).root) + lift);
+        // Re-rooted per bar: the bar's own root (its first note) moves to the
+        // chord root the nearest way, so a line that walks its own chords
+        // follows the song's instead (see templateNotes).
+        let pitch = floorSub(ev.midi + nearestRootDelta(parseChord(chordSymbol).root - barRoots.get(ev.bar)!) + lift);
         while (pitch < 0) pitch += 12;
         while (pitch > 127) pitch -= 12;
         const note = MidiNoteSchema.parse(pitch);
         addNoteEvent(bars[segBarIdx]!, ev.beat, { type: 'note', note, duration: ev.duration });
       }
     }
-    return { bars };
+    return { bars: bars.map(oneNotePerBeat) };
   }
 
   // Chord-relative (SimpleBass / edmSimple / SM fallback).
@@ -167,7 +174,46 @@ export function generateBassPattern(
     }
   }
 
-  return { bars };
+  return { bars: bars.map(oneNotePerBeat) };
+}
+
+/**
+ * A bass plays one note at a time: where several notes start on the same beat
+ * (bank lines carry 1/16 grace notes stacked on a long note, and duplicates),
+ * keep the longest (ties: the lowest). Casperaki data rule, not in the legacy.
+ */
+function oneNotePerBeat(bar: BarPattern): BarPattern {
+  const notes: BarPattern['notes'] = {};
+  for (const [beat, events] of Object.entries(bar.notes)) {
+    if (!events) continue;
+    if (events.length <= 1) {
+      notes[beat as keyof typeof notes] = events;
+      continue;
+    }
+    const best = [...events].sort((a, b) => {
+      const da = (a as { duration?: number }).duration ?? 0;
+      const db = (b as { duration?: number }).duration ?? 0;
+      return db - da || Number((a as { note?: number }).note) - Number((b as { note?: number }).note);
+    })[0]!;
+    notes[beat as keyof typeof notes] = [best];
+  }
+  return { ...bar, notes };
+}
+
+/**
+ * Each bar's own root in a bank line: the pitch class of the lowest note at
+ * the bar's first hit. Half the Library lines walk their own chords (a bar on
+ * C, a bar on A …); the legacy moved every note from C to the song chord, which
+ * shifted those bars twice. Re-rooting each bar keeps one-chord lines exactly
+ * as the legacy played them and makes walking lines follow the song's chords.
+ */
+function absoluteBarRoots(events: readonly { bar: number; beat: number; midi: number }[]): Map<number, number> {
+  const first = new Map<number, { beat: number; midi: number }>();
+  for (const e of events) {
+    const cur = first.get(e.bar);
+    if (!cur || e.beat < cur.beat || (e.beat === cur.beat && e.midi < cur.midi)) first.set(e.bar, { beat: e.beat, midi: e.midi });
+  }
+  return new Map([...first].map(([bar, f]) => [bar, ((f.midi % 12) + 12) % 12]));
 }
 
 /** E1: the lowest string of a (4-string) bass. */
@@ -177,9 +223,12 @@ const SUB_BASS_FLOOR = 24;
 /** Share of a line's notes below E1 above which the whole line goes up an octave. */
 const LOW_SHARE_TO_LIFT_LINE = 0.15;
 
-/** The bass line's notes on its C template (before the move to each chord root). */
-function templateNotes(selection: RealBassSelection): number[] {
-  if (selection.mode === 'absolute') return selection.events.map((e) => e.midi);
+/** The bass line's notes on its template, each with the root it is moved from (C, or its bar's own root for bank lines). */
+function templateNotes(selection: RealBassSelection): { midi: number; root: number }[] {
+  if (selection.mode === 'absolute') {
+    const barRoots = absoluteBarRoots(selection.events);
+    return selection.events.map((e) => ({ midi: e.midi, root: barRoots.get(e.bar)! }));
+  }
   const base = (selection.rootMidiOctave + 1) * 12;
-  return selection.pattern.filter(([position]) => position >= 0).map(([, , offset]) => base + offset);
+  return selection.pattern.filter(([position]) => position >= 0).map(([, , offset]) => ({ midi: base + offset, root: 0 }));
 }
