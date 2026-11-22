@@ -33,13 +33,13 @@ export function ClipDetail({
   sameKind,
   playheadBeat,
   onClose,
-  onLoopSection,
   onNewPattern,
   onChangeSound,
   onSetDrumHit,
-  soloPlaying,
-  onPlaySolo,
-  onPauseSolo,
+  previewPlaying,
+  onPlay,
+  onPause,
+  onSoloChange,
   editable,
   soundChangeable,
   busy,
@@ -53,16 +53,17 @@ export function ClipDetail({
   /** Playhead in beats from the song start, when this song is loaded. */
   playheadBeat: number | undefined;
   onClose(): void;
-  onLoopSection(): void;
   onNewPattern(): void;
   onChangeSound(): void;
   /** Add or remove a drum hit (step in 32nds of the bar) in the sections named. */
   onSetDrumHit(segments: string[], pitch: number, step: number, on: boolean): void;
-  /** Whether this track is playing soloed from this window. */
-  soloPlaying: boolean;
-  /** Loop song bars `fromBar`–`toBar` with only this track audible. */
-  onPlaySolo(fromBar: number, toBar: number): void;
-  onPauseSolo(): void;
+  /** Whether this window's Play is looping. */
+  previewPlaying: boolean;
+  /** Loop song bars `fromBar`–`toBar`; with `solo`, only this track is heard. */
+  onPlay(fromBar: number, toBar: number, solo: boolean): void;
+  onPause(): void;
+  /** Solo switched while playing. */
+  onSoloChange(solo: boolean): void;
   editable: boolean;
   soundChangeable: boolean;
   busy: boolean;
@@ -79,6 +80,8 @@ export function ClipDetail({
   const [pending, setPending] = useState<{ pitch: number; step: number; on: boolean } | undefined>(undefined);
   /** Selection in beats from the start of what's shown (the bar for drums, the section otherwise). */
   const [sel, setSel] = useState<BarRange | undefined>(undefined);
+  /** Play only this track (on by default). */
+  const [solo, setSolo] = useState(true);
 
   const beats = clip.bars * BEATS_PER_BAR;
   const inSection = playheadBeat !== undefined && playheadBeat >= startBeat && playheadBeat < startBeat + beats;
@@ -88,9 +91,9 @@ export function ClipDetail({
   const playSolo = () => {
     const from = sel ? sel.start : 0;
     const to = sel ? sel.end : beats;
-    onPlaySolo(clip.startBar + from / BEATS_PER_BAR, clip.startBar + to / BEATS_PER_BAR);
+    onPlay(clip.startBar + from / BEATS_PER_BAR, clip.startBar + to / BEATS_PER_BAR, solo);
   };
-  const selectionProps = { sel, onSel: setSel, looping: soloPlaying };
+  const selectionProps = { sel, onSel: setSel, looping: previewPlaying };
 
   const apply = (edit: { pitch: number; step: number; on: boolean }, s: DrumScope) =>
     onSetDrumHit(s === 'all' ? [...sameKind] : [section.name], edit.pitch, edit.step, edit.on);
@@ -114,7 +117,6 @@ export function ClipDetail({
             </DialogDescription>
           </div>
           <div className="ml-auto flex flex-wrap gap-2">
-            <ActionButton onClick={onLoopSection}>Loop this section</ActionButton>
             {editable ? (
               <>
                 <ActionButton onClick={onNewPattern} disabled={busy}>New pattern</ActionButton>
@@ -126,15 +128,29 @@ export function ClipDetail({
 
         {/* Grid, zoom and (drums) which sections edits apply to. */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
-          <button
-            type="button"
-            onClick={soloPlaying ? onPauseSolo : playSolo}
-            className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${soloPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'}`}
-            title={`Loop ${sel ? 'the selection' : 'this section'} with only ${track.name} playing`}
-          >
-            <span aria-hidden="true">{soloPlaying ? '❚❚' : '▶'}</span>
-            {soloPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'section'} solo`}
-          </button>
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={previewPlaying ? onPause : playSolo}
+              className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${previewPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'}`}
+              title={`Loop ${sel ? 'the selection' : 'this section'}${solo ? ` with only ${track.name} playing` : ' with every track'}`}
+            >
+              <span aria-hidden="true">{previewPlaying ? '❚❚' : '▶'}</span>
+              {previewPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'section'}`}
+            </button>
+            <button
+              type="button"
+              aria-pressed={solo}
+              onClick={() => {
+                setSolo(!solo);
+                if (previewPlaying) onSoloChange(!solo);
+              }}
+              title={solo ? `Only ${track.name} plays (click to hear every track)` : `Every track plays (click to hear only ${track.name})`}
+              className={`h-8 rounded-[6px] border px-2.5 text-[12px] font-bold ${solo ? 'border-emerald-400 bg-emerald-400 text-black' : 'border-line text-white/60 hover:text-white'}`}
+            >
+              Solo
+            </button>
+          </span>
           <Segmented<Grid>
             label="Grid"
             value={grid}

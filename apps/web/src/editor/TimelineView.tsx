@@ -135,14 +135,18 @@ export function TimelineView() {
   /** Before the detail window's solo play: the solo and loop to restore. */
   const savedForSolo = useRef<{ solo: readonly string[]; loopRange: typeof live.loopRange; looping: boolean } | undefined>(undefined);
 
-  /** Loop `fromBar`–`toBar` with only `track` audible (the detail window's Play). */
-  const playSolo = useCallback(
-    (track: string, fromBar: number, toBar: number) => {
+  /** Whether the detail window's Play started what is playing. */
+  const [previewActive, setPreviewActive] = useState(false);
+
+  /** The detail window's Play: loop `fromBar`–`toBar`, with only `track` audible when `solo`. */
+  const playPreview = useCallback(
+    (track: string, fromBar: number, toBar: number, solo: boolean) => {
       const st = livePlayer.getState();
       savedForSolo.current ??= { solo: st.solo, loopRange: st.loopRange, looping: st.looping };
-      livePlayer.setSoloSet([track]);
+      livePlayer.setSoloSet(solo ? [track] : savedForSolo.current.solo);
       livePlayer.setLoopRange({ start: fromBar * secondsPerBar, end: toBar * secondsPerBar });
       livePlayer.setLooping(true);
+      setPreviewActive(true);
       if (liveKey && livePlayer.isLoaded(liveKey)) {
         livePlayer.seek(fromBar * secondsPerBar);
         if (!playing) playPause();
@@ -156,6 +160,7 @@ export function TimelineView() {
     const saved = savedForSolo.current;
     if (!saved) return;
     savedForSolo.current = undefined;
+    setPreviewActive(false);
     void livePlayer.pause();
     livePlayer.setSoloSet(saved.solo);
     livePlayer.setLoopRange(saved.loopRange);
@@ -458,10 +463,14 @@ export function TimelineView() {
             endSolo();
             setDialog(undefined);
           }}
-          soloPlaying={playing && live.solo.length === 1 && live.solo[0] === detailTrack.name && live.looping}
-          onPlaySolo={(fromBar, toBar) => playSolo(detailTrack.name, fromBar, toBar)}
-          onPauseSolo={() => void livePlayer.pause()}
-          onLoopSection={() => loopSection(model.sections[detail.section]!)}
+          previewPlaying={previewActive && playing && live.looping}
+          onPlay={(fromBar, toBar, solo) => playPreview(detailTrack.name, fromBar, toBar, solo)}
+          onPause={() => void livePlayer.pause()}
+          onSoloChange={(solo) => {
+            const saved = savedForSolo.current;
+            if (!saved) throw new Error('Solo changed while the detail window was not playing.');
+            livePlayer.setSoloSet(solo ? [detailTrack.name] : saved.solo);
+          }}
           onNewPattern={() => newPattern(detailTrack.name)}
           onChangeSound={() => setDialog({ kind: 'sound', track: detailTrack.name })}
           editable={editable(detailTrack.name)}
