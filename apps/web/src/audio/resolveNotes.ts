@@ -21,7 +21,7 @@ declare global {
 export interface EngineNote {
   /** MIDI pitch. */
   readonly pitch: number;
-  /** Beats from the song start. */
+  /** Beats from the song start (clip offset included). */
   readonly start: number;
   readonly length: number;
   /** 0..127 */
@@ -31,7 +31,7 @@ export interface EngineNote {
 }
 
 interface ResolvedV1 {
-  tracks: { name: string; clips: { type: string; notes?: { n: number; startBeat: number; lenBeats: number; vel: number }[] }[] }[];
+  tracks: { name: string; clips: { type: string; startSec: number; notes?: { n: number; startBeat: number; lenBeats: number; vel: number }[] }[] }[];
 }
 
 let engine: Promise<ResolveModule> | undefined;
@@ -60,10 +60,20 @@ export async function resolveEngineNotes(payload: PlaybackPayload): Promise<Engi
   try {
     for (const t of payload.insts) insts.push_back(t);
     const out = JSON.parse(m.resolveSong(payload.song, insts)) as ResolvedV1;
+    // Note beats are relative to their clip (one per section): add the clip's start.
+    const tempo = (JSON.parse(payload.song) as { tempo?: number }).tempo;
+    if (typeof tempo !== 'number' || !(tempo > 0)) throw new Error('The lowered song has no tempo.');
+    const beatsPerSec = tempo / 60;
     return out.tracks.flatMap((t) =>
       t.clips.flatMap((c) =>
         c.type === 'midi' && c.notes
-          ? c.notes.map((n) => ({ pitch: n.n, start: n.startBeat, length: n.lenBeats, velocity: n.vel, track: t.name }))
+          ? c.notes.map((n) => ({
+              pitch: n.n,
+              start: c.startSec * beatsPerSec + n.startBeat,
+              length: n.lenBeats,
+              velocity: n.vel,
+              track: t.name,
+            }))
           : [],
       ),
     );

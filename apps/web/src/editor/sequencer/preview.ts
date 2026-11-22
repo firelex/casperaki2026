@@ -64,3 +64,28 @@ export function drumBarNotes(pattern: ReadonlyMap<number, ReadonlySet<number>>):
   }
   return { notes } as unknown as SongBar;
 }
+
+/**
+ * One track across the whole song, as a song of its own (every section, only
+ * that track, no fills or transitions): for the whole-track view, which asks
+ * the engine for the notes it plays.
+ */
+export function trackSong(song: Song, track: string): Song {
+  const def = song.instrumentDefinitions.find((d) => d.name === track);
+  if (!def) throw new Error(`${track} has no instrument definition.`);
+  const arrangement: Song['arrangement'] = {};
+  for (const [name, payload] of Object.entries(song.arrangement)) {
+    const override = payload.overrides?.[track];
+    const processors = payload.signalProcessors?.[track];
+    arrangement[name] = {
+      ...payload,
+      instruments: { [track]: payload.instruments?.[track] ?? false },
+      overrides: override ? { [track]: override } : {},
+      fills: {},
+      mutes: {},
+      transitions: {},
+      signalProcessors: processors ? { [track]: processors } : {},
+    };
+  }
+  return { ...song, arrangement, instrumentDefinitions: [def], aiArtifacts: [] };
+}

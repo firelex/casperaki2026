@@ -19,13 +19,16 @@ export function Score({
   songKey,
   bpm,
   beat,
+  marks,
 }: {
   notes: readonly ScoreNote[];
   beats: number;
   songKey: string;
   bpm: number;
-  /** The pattern player's position, in beats from the passage start (undefined when stopped). */
+  /** The player's position, in beats from the passage start (undefined when stopped). */
   beat: number | undefined;
+  /** Labels above bars (section names), for whole-track scores. */
+  marks?: ReadonlyMap<number, string>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const timings = useRef<NoteTimingEvent[]>([]);
@@ -35,7 +38,7 @@ export function Score({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const abc = notesToAbc(notes, { beats, key: songKey, bpm });
+    const abc = notesToAbc(notes, { beats, key: songKey, bpm, ...(marks ? { marks } : {}) });
     const [tune] = abcjs.renderAbc(el, abc, {
       responsive: 'resize',
       staffwidth: Math.max(480, el.clientWidth - 48),
@@ -61,7 +64,7 @@ export function Score({
     svg.appendChild(line);
     cursor.current = line;
     lit.current = [];
-  }, [notes, beats, songKey, bpm]);
+  }, [notes, beats, songKey, bpm, marks]);
 
   // Follow the player: cursor at the last note event at or before the position.
   useEffect(() => {

@@ -52,3 +52,25 @@ describe('notesToAbc', () => {
     expect(() => parseKey('H')).toThrow();
   });
 });
+
+describe('notesToAbc labels and title', () => {
+  it('puts section labels above the first note or rest of their bar', () => {
+    const abc = notesToAbc([n(60, 4, 4)], { beats: 8, key: 'C', marks: new Map([[0, 'intro'], [1, 'verse1']]), title: 'Song: Keys' });
+    expect(abc).toContain('T:Song: Keys');
+    expect(body(abc, 1)).toBe('"^intro"z16 | "^verse1"C16 |]');
+  });
+});
+
+describe('notesToAbc multi-bar rests', () => {
+  it('merges empty bars into multi-bar rests, broken at labelled bars', () => {
+    const abc = notesToAbc([n(60, 20, 4)], { beats: 24, key: 'C', marks: new Map([[0, 'intro'], [3, 'verse']]) });
+    expect(body(abc, 1)).toBe('"^intro"Z3 | "^verse"Z2 | C16 |]');
+  });
+});
+
+describe('notesToAbc labels after a rest', () => {
+  it('labels a bar that starts with the end of a longer rest', () => {
+    const abc = notesToAbc([n(60, 4.5, 3.5)], { beats: 8, key: 'C', marks: new Map([[0, 'a'], [1, 'b']]) });
+    expect(body(abc, 1).startsWith('"^a"z16 | "^b"z2 ')).toBe(true);
+  });
+});

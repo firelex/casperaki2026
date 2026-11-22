@@ -341,7 +341,7 @@ function ScopeQuestion({
   );
 }
 
-function Segmented<T extends string | number>({
+export function Segmented<T extends string | number>({
   label,
   value,
   options,
@@ -372,7 +372,7 @@ function Segmented<T extends string | number>({
   );
 }
 
-function SmallButton({ label, onClick, children }: { label: string; onClick(): void; children: string }) {
+export function SmallButton({ label, onClick, children }: { label: string; onClick(): void; children: string }) {
   return (
     <button type="button" onClick={onClick} aria-label={label} title={label} className="h-7 w-7 rounded-[6px] border border-line text-[14px] text-white/85 hover:border-white/50">
       {children}
@@ -408,6 +408,9 @@ function GridColumns({ beats, grid, pxPerBeat, height }: { beats: number; grid: 
       {Array.from({ length: cells }, (_, c) => {
         const onBar = (c / cellsPerBeat) % BEATS_PER_BAR === 0;
         const onBeat = c % cellsPerBeat === 0;
+        // Zoomed far out: only the lines that stay readable.
+        if (!onBar && !onBeat && cellW < 4) return null;
+        if (!onBar && pxPerBeat < 6) return null;
         return (
           <span
             key={c}
@@ -490,18 +493,28 @@ function Selectable({
 }
 
 function BeatMarks({ beats, pxPerBeat }: { beats: number; pxPerBeat: number }) {
+  // Beat labels when there is room; otherwise bar numbers, thinned out as needed.
+  const showBeats = pxPerBeat >= 22;
+  const barPx = pxPerBeat * BEATS_PER_BAR;
+  const barEvery = barPx >= 26 ? 1 : barPx >= 13 ? 2 : barPx >= 7 ? 4 : 8;
   return (
-      <>
-        {Array.from({ length: beats }, (_, b) => (
+    <>
+      {Array.from({ length: beats }, (_, b) => {
+        const onBar = b % BEATS_PER_BAR === 0;
+        const bar = Math.floor(b / BEATS_PER_BAR);
+        if (!onBar && !showBeats) return null;
+        if (onBar && bar % barEvery !== 0) return null;
+        return (
           <span
             key={b}
-            className={`absolute top-0 h-full border-l pl-1 font-mono text-[10px] leading-[20px] ${b % BEATS_PER_BAR === 0 ? 'border-white/40 text-white/80' : 'border-white/10 text-white/40'}`}
+            className={`absolute top-0 h-full border-l pl-1 font-mono text-[10px] leading-[20px] ${onBar ? 'border-white/40 text-white/80' : 'border-white/10 text-white/40'}`}
             style={{ left: b * pxPerBeat }}
           >
-            {b % BEATS_PER_BAR === 0 ? Math.floor(b / BEATS_PER_BAR) + 1 : `.${(b % BEATS_PER_BAR) + 1}`}
+            {onBar ? bar + 1 : `.${(b % BEATS_PER_BAR) + 1}`}
           </span>
-        ))}
-      </>
+        );
+      })}
+    </>
   );
 }
 
@@ -631,7 +644,7 @@ function fmtStep(step: number): string {
   return rest === 0 ? `beat ${beat}` : `beat ${beat} + ${rest}/32`;
 }
 
-function PianoRoll({
+export function PianoRoll({
   notes,
   beats,
   grid,

@@ -16,7 +16,8 @@ import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
 import { resolveEngineNotes } from '../audio/resolveNotes';
-import { drumBarNotes, patternSong } from './sequencer/preview';
+import { drumBarNotes, patternSong, trackSong } from './sequencer/preview';
+import { TrackOverview } from './sequencer/TrackOverview';
 import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
@@ -33,6 +34,7 @@ import { useTrackEdits } from './sequencer/useTrackEdits';
 
 type Dialog =
   | { kind: 'detail'; track: string; section: number }
+  | { kind: 'overview'; track: string }
   | { kind: 'sound'; track: string }
   | { kind: 'add'; sections: string[] };
 
@@ -48,7 +50,7 @@ const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none da
  * sound, new pattern, remove, add a track).
  */
 export function TimelineView() {
-  const { viewSong, activeSegment, setActiveSegment, applyEdit, editor } = useSession();
+  const { viewSong, activeSong, activeSegment, setActiveSegment, applyEdit, editor } = useSession();
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
   const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live, playPause } = useLiveTransport();
@@ -249,6 +251,30 @@ export function TimelineView() {
     };
   }, [preview, detailOpen, model, fetchPreview]);
 
+  // The whole-track view: the engine's notes for the track alone, across the song.
+  const overviewTrack = dialog?.kind === 'overview' ? dialog.track : undefined;
+  const [overviewNotes, setOverviewNotes] = useState<{ track: string; notes: SeqNote[] } | { track: string; error: string } | undefined>(undefined);
+  useEffect(() => {
+    if (!viewSong || !overviewTrack) return;
+    let cancelled = false;
+    const song = trackSong(viewSong, overviewTrack);
+    livePlayer
+      .payloadOf(`track:${fnv1a(JSON.stringify(song))}`, (signal) => playbackApi.forSong(song, signal))
+      .then(resolveEngineNotes)
+      .then(
+        (notes) =>
+          !cancelled &&
+          setOverviewNotes({
+            track: overviewTrack,
+            notes: notes.map((n) => ({ start: n.start, length: n.length, pitch: n.pitch, kind: 'note' as const, velocity: n.velocity })),
+          }),
+        (err: unknown) => !cancelled && setOverviewNotes({ track: overviewTrack, error: err instanceof Error ? err.message : String(err) }),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [viewSong, overviewTrack]);
+
   /** The detail window's Play: loop `from`–`to` (seconds into the pattern). */
   const playPreview = useCallback(
     (from: number, to: number) => {
@@ -444,6 +470,7 @@ export function TimelineView() {
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
               onRemove={() => edits.removeTrack(t.name)}
+              onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
                 setDialog({ kind: 'add', sections: s === undefined ? model.sections.map((x) => x.name) : [model.sections[s]!.name] })
               }
@@ -606,6 +633,20 @@ export function TimelineView() {
           busy={Boolean(edits.busy)}
         />
       ) : null}
+      {dialog?.kind === 'overview' ? (
+        <TrackOverview
+          track={model.tracks.find((t) => t.name === dialog.track)!}
+          sections={model.sections}
+          totalBars={model.totalBars}
+          songTitle={activeSong?.project.title ?? 'Untitled'}
+          soundName={soundNames[dialog.track]}
+          songKey={viewSong.key}
+          bpm={bpm}
+          notes={overviewNotes && overviewNotes.track === dialog.track ? overviewNotes : undefined}
+          playheadBeat={isThisSong && playing ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
+          onClose={() => setDialog(undefined)}
+        />
+      ) : null}
       {dialog?.kind === 'sound' && edits.options.data ? (
         <ChangeSoundDialog
           track={dialog.track}
@@ -649,6 +690,7 @@ function TrackMenu({
   onNewPattern,
   onRemove,
   onAdd,
+  onOverview,
   children,
 }: {
   track: SeqTrack;
@@ -665,6 +707,8 @@ function TrackMenu({
   onNewPattern(): void;
   onRemove(): void;
   onAdd(section: number | undefined): void;
+  /** Whole-track piano roll / score (pitched tracks). */
+  onOverview: (() => void) | undefined;
   children: ReactNode;
 }) {
   return (
@@ -692,6 +736,10 @@ function TrackMenu({
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>
         ) : null}
+        <ContextMenuItem className={ITEM} disabled={!onOverview} onSelect={() => onOverview?.()}>
+          Show whole track… <span className="ml-auto pl-6 text-[12px] text-white/40">roll / score</span>
+        </ContextMenuItem>
+        <ContextMenuSeparator className="my-1 h-px bg-line" />
         <ContextMenuItem className={ITEM} disabled={!soundChangeable || busy} onSelect={onChangeSound}>
           Change sound…
         </ContextMenuItem>

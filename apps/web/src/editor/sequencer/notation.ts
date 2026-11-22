@@ -135,7 +135,7 @@ function staffEvents(notes: readonly ScoreNote[], total: number): Event[] {
 }
 
 /** One staff's ABC body. Accidentals are tracked per bar (letter + octave). */
-function staffAbc(events: readonly Event[], fifths: number): string {
+function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<number, string> = new Map()): string {
   const keyAcc = keyAccidentals(fifths);
   let barAcc = new Map<string, number>();
   let out = '';
@@ -149,6 +149,55 @@ function staffAbc(events: readonly Event[], fifths: number): string {
     return mark + abcLetter(letter, octave);
   };
   for (const ev of events) {
+    // Whole empty bars become multi-bar rests (Z<n>), broken at labelled bars.
+    if (ev.pitches.length === 0) {
+      let start = ev.start;
+      let len = ev.length;
+      const lead = (STEPS_PER_BAR - (start % STEPS_PER_BAR)) % STEPS_PER_BAR;
+      if (lead > 0 && lead < len) {
+        for (const w of pieces(start, lead)) {
+          out += `z${w === 1 ? '' : w} `;
+          pos += w;
+        }
+        start += lead;
+        len -= lead;
+      }
+      if (start % STEPS_PER_BAR === 0 && len >= STEPS_PER_BAR) {
+        let bars = Math.floor(len / STEPS_PER_BAR);
+        let bar = start / STEPS_PER_BAR;
+        while (bars > 0) {
+          let run = 1;
+          while (run < bars && !marks.has(bar + run)) run++;
+          if (pos > 0) {
+            out += '| ';
+            barAcc = new Map();
+          }
+          const mark = marks.get(bar);
+          if (mark) out += `"^${mark.replace(/"/gu, "'")}"`;
+          out += run === 1 ? 'z16 ' : `Z${run} `;
+          pos += run * STEPS_PER_BAR;
+          bar += run;
+          bars -= run;
+        }
+        const tail = len % STEPS_PER_BAR;
+        if (tail === 0) continue;
+        start += len - tail;
+        len = tail;
+      }
+      if (start !== ev.start || len !== ev.length) {
+        for (const w of pieces(start, len)) {
+          if (pos > 0 && pos % STEPS_PER_BAR === 0) {
+            out += '| ';
+            barAcc = new Map();
+          }
+          const tailMark = pos % STEPS_PER_BAR === 0 ? marks.get(pos / STEPS_PER_BAR) : undefined;
+          if (tailMark) out += `"^${tailMark.replace(/"/gu, "'")}"`;
+          out += `z${w === 1 ? '' : w} `;
+          pos += w;
+        }
+        continue;
+      }
+    }
     const parts = pieces(ev.start, ev.length);
     parts.forEach((len, i) => {
       if (pos > 0 && pos % STEPS_PER_BAR === 0) {
@@ -156,6 +205,9 @@ function staffAbc(events: readonly Event[], fifths: number): string {
         barAcc = new Map();
       }
       const dur = len === 1 ? '' : String(len);
+      // A label above the bar (e.g. the section name), on its first note or rest.
+      const mark = pos % STEPS_PER_BAR === 0 ? marks.get(pos / STEPS_PER_BAR) : undefined;
+      if (mark) out += `"^${mark.replace(/"/gu, "'")}"`;
       if (ev.pitches.length === 0) out += `z${dur} `;
       else {
         const body = ev.pitches.map(pitchText).join('');
@@ -169,17 +221,35 @@ function staffAbc(events: readonly Event[], fifths: number): string {
 }
 
 /** The passage as an ABC tune on a grand staff. `beats` is its length (whole bars). */
-export function notesToAbc(notes: readonly ScoreNote[], opts: { beats: number; key: string; bpm?: number }): string {
+export function notesToAbc(
+  notes: readonly ScoreNote[],
+  opts: {
+    beats: number;
+    key: string;
+    bpm?: number;
+    /** Labels above bars (0-based bar index → text), e.g. section names. */
+    marks?: ReadonlyMap<number, string>;
+    /** Tune title (T:), e.g. for a printed score. */
+    title?: string;
+  },
+): string {
   const total = Math.round(opts.beats * STEPS_PER_BEAT);
   if (total <= 0 || total % STEPS_PER_BAR !== 0) throw new Error(`notesToAbc: ${opts.beats} beats is not whole bars of 4/4`);
   const key = parseKey(opts.key);
   const treble = notes.filter((n) => n.pitch >= SPLIT_PITCH);
   const bass = notes.filter((n) => n.pitch < SPLIT_PITCH);
-  const head = ['X:1', 'M:4/4', 'L:1/16', ...(opts.bpm ? [`Q:1/4=${Math.round(opts.bpm)}`] : [])];
+  const marks = opts.marks ?? new Map<number, string>();
+  const head = [
+    'X:1',
+    ...(opts.title ? [`T:${opts.title.replace(/\n/gu, ' ')}`] : []),
+    'M:4/4',
+    'L:1/16',
+    ...(opts.bpm ? [`Q:1/4=${Math.round(opts.bpm)}`] : []),
+  ];
   // A part that sits on one staff gets just that staff, in its clef.
   if (bass.length === 0 || treble.length === 0) {
     const clef = treble.length === 0 && bass.length > 0 ? 'bass' : 'treble';
-    return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, '[V:1] ' + staffAbc(staffEvents(notes, total), key.fifths)].join('\n');
+    return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, '[V:1] ' + staffAbc(staffEvents(notes, total), key.fifths, marks)].join('\n');
   }
   return [
     ...head,
@@ -187,7 +257,7 @@ export function notesToAbc(notes: readonly ScoreNote[], opts: { beats: number; k
     'V:1 clef=treble',
     'V:2 clef=bass',
     `K:${key.abc}`,
-    '[V:1] ' + staffAbc(staffEvents(treble, total), key.fifths),
+    '[V:1] ' + staffAbc(staffEvents(treble, total), key.fifths, marks),
     '[V:2] ' + staffAbc(staffEvents(bass, total), key.fifths),
   ].join('\n');
 }
