@@ -11,10 +11,13 @@ import { useSaveSong } from '../state/useSongActions';
 import { downloadBytes, fileStem, songMidiParts, toBase64 } from './exportMidi';
 import { mixExportStatus } from './mixExportProgress';
 
-type Format = 'mix' | 'midi' | DawFormat;
+type MixFormat = 'mp3' | 'wav';
+type Format = MixFormat | 'midi' | DawFormat;
+const isMix = (f: Format): f is MixFormat => f === 'mp3' || f === 'wav';
 
 const FORMATS: readonly { id: Format; name: string; detail: string }[] = [
-  { id: 'mix', name: 'Mix', detail: 'The finished song as WAV and MP3.' },
+  { id: 'mp3', name: 'MP3', detail: 'The finished song as MP3 (VBR -V2), mastered and unmastered.' },
+  { id: 'wav', name: 'WAV', detail: 'The finished song as 24-bit WAV, mastered and unmastered.' },
   { id: 'stems', name: 'Stems', detail: 'One 24-bit WAV per track, with effects, adding up to the mix.' },
   { id: 'midi', name: 'MIDI', detail: 'The parts as played, tempo, key and sections as markers.' },
   { id: 'reaper', name: 'REAPER project', detail: 'Stems on tracks, sections as regions, the MIDI in a muted folder.' },
@@ -82,7 +85,7 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
 
   if (!activeSong || !viewSong || !model) return null;
   const title = activeSong.project.title;
-  const tracksUsed = format !== 'mix';
+  const tracksUsed = !isMix(format);
   const choice = lanes.filter((l) => selected.has(l));
 
   const toggle = (name: string) => {
@@ -185,27 +188,17 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
           </div>
 
           <div className="flex flex-col p-5">
-            {format === 'mix' ? (
+            {isMix(format) ? (
               <div className="flex flex-col gap-3 text-[14px]">
                 {mixFiles ? (
                   <>
                     <p className="text-white/75">The mix of the version on screen is ready.</p>
-                    <p className="text-[12px] uppercase tracking-wide text-white/50">Mastered</p>
                     <div className="flex gap-2">
-                      <button type="button" className="h-10 rounded-full bg-white px-5 text-[14px] font-semibold text-black hover:bg-white/85" onClick={() => downloadBytes(mixFiles.masteredMp3, `${stem}.mp3`, 'audio/mpeg')}>
-                        Download MP3
+                      <button type="button" className="h-10 rounded-full bg-white px-5 text-[14px] font-semibold text-black hover:bg-white/85" onClick={() => (format === 'mp3' ? downloadBytes(mixFiles.masteredMp3, `${stem}.mp3`, 'audio/mpeg') : downloadBytes(mixFiles.masteredWav, `${stem}.wav`, 'audio/wav'))}>
+                        Download mastered {format.toUpperCase()}
                       </button>
-                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => downloadBytes(mixFiles.masteredWav, `${stem}.wav`, 'audio/wav')}>
-                        Download WAV
-                      </button>
-                    </div>
-                    <p className="text-[12px] uppercase tracking-wide text-white/50">Unmastered</p>
-                    <div className="flex gap-2">
-                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => downloadBytes(mixFiles.unmasteredMp3, `${stem} (unmastered).mp3`, 'audio/mpeg')}>
-                        Download MP3
-                      </button>
-                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => downloadBytes(mixFiles.unmasteredWav, `${stem} (unmastered).wav`, 'audio/wav')}>
-                        Download WAV
+                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => (format === 'mp3' ? downloadBytes(mixFiles.unmasteredMp3, `${stem} (unmastered).mp3`, 'audio/mpeg') : downloadBytes(mixFiles.unmasteredWav, `${stem} (unmastered).wav`, 'audio/wav'))}>
+                        Download unmastered {format.toUpperCase()}
                       </button>
                     </div>
                   </>
@@ -223,7 +216,7 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
                     <p className={mixJob && 'error' in mixJob ? 'text-err' : 'text-white/75'}>
                       {mixJob && 'error' in mixJob
                         ? `Making the mix failed: ${mixJob.error}`
-                        : `Render the ${editorDirty ? 'version on screen (your unsaved edits)' : 'song'} in your browser, mastered and unmastered, as WAV (24-bit) and MP3 (VBR -V2).`}
+                        : `Render the ${editorDirty ? 'version on screen (your unsaved edits)' : 'song'} in your browser, mastered and unmastered, as ${format === 'mp3' ? 'MP3 (VBR -V2)' : '24-bit WAV'}.`}
                     </p>
                     <button
                       type="button"
@@ -231,7 +224,7 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
                       onClick={() => void makeMix()}
                       className="h-10 w-fit rounded-full bg-accent px-5 text-[14px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-40"
                     >
-                      Make WAV + MP3
+                      Make {format.toUpperCase()}
                     </button>
                   </>
                 )}
