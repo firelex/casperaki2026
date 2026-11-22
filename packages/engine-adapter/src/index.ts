@@ -571,12 +571,20 @@ interface EngineEDMArpeggiatorEvent {
 // `distanceFromMiddleC` and snaps `Note{60+distanceFromMiddleC}` to
 // the segment's current chord nearest note. `chord` on the event is
 // INFORMATIONAL — engine uses `currentChord` directly.
-interface EngineNoteRelativeEvent {
-  type: 'noteRelative';
-  chord: string;
-  distanceFromMiddleC: number;
-  duration: number;
-}
+// The legacy chord-walk encoding (playful synths) instead carries octave +
+// direction + note + offset (+ numberOfNotes); see getRelativeNote's else branch.
+type EngineNoteRelativeEvent =
+  | { type: 'noteRelative'; chord: string; distanceFromMiddleC: number; duration: number }
+  | {
+      type: 'noteRelative';
+      chord: string;
+      octave: number;
+      direction: string;
+      note: number;
+      offset: number;
+      numberOfNotes?: number;
+      duration: number;
+    };
 // docs/58 — legacy `arpeggio` piano event. Engine path:
 // `SequencerUtils.h::getArpeggioNotes:160-178` builds base note
 // `C{octave}`, applies the inst octaveAdjustment, then walks the
@@ -2188,21 +2196,31 @@ function tonalBarsFromBrainBars(
             note: ev.note,
             duration,
           });
-        } else if (
-          ev?.type === 'noteRelative' &&
-          typeof ev.chord === 'string' &&
-          typeof ev.distanceFromMiddleC === 'number'
-        ) {
+        } else if (ev?.type === 'noteRelative' && typeof ev.chord === 'string') {
           // docs/55a — noteRelative passthrough. Engine
-          // SequencerUtils.h::getRelativeNote:175-186 reads
-          // distanceFromMiddleC + duration, snaps to currentChord's
-          // nearest note. `chord` is informational.
-          out.push({
-            type: 'noteRelative',
-            chord: ev.chord,
-            distanceFromMiddleC: ev.distanceFromMiddleC,
-            duration: typeof ev.duration === 'number' ? ev.duration : 1,
-          });
+          // SequencerUtils.h::getRelativeNote:175-218 reads either
+          // distanceFromMiddleC (snap to currentChord's nearest note) or the
+          // chord walk octave + direction + note + offset. `chord` is
+          // informational.
+          const duration = typeof ev.duration === 'number' ? ev.duration : 1;
+          if (typeof ev.distanceFromMiddleC === 'number') {
+            out.push({ type: 'noteRelative', chord: ev.chord, distanceFromMiddleC: ev.distanceFromMiddleC, duration });
+          } else if (typeof ev.octave === 'number' && typeof ev.direction === 'string' && typeof ev.note === 'number') {
+            out.push({
+              type: 'noteRelative',
+              chord: ev.chord,
+              octave: ev.octave,
+              direction: ev.direction,
+              note: ev.note,
+              offset: typeof ev.offset === 'number' ? ev.offset : 0,
+              ...(typeof ev.numberOfNotes === 'number' ? { numberOfNotes: ev.numberOfNotes } : {}),
+              duration,
+            });
+          } else {
+            throw new Error(
+              `noteRelative event at beat ${beatKey} has neither distanceFromMiddleC nor octave + direction + note: ${JSON.stringify(ev)}`,
+            );
+          }
         }
       }
       if (out.length > 0) notes[beatKey] = out;

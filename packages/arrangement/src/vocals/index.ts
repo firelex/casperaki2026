@@ -38,8 +38,8 @@ import { selectSeedPhrasePlan } from './lyrics-source/seed.js';
 import { expandMergedToSegment, selectMergedPrecedent, type MergedPrecedent } from './precedents.js';
 import { buildVocalScaffolding } from './scaffolding.js';
 import { buildContour } from './contour.js';
-import { MAX_NOTE, MIN_NOTE } from './range.js';
-import { keyOffsetFromC, mergedChordBars, refitNonChorus, sectionTransposition, transposeChordSymbol } from './fit.js';
+import { LEGACY_INDEX_TO_MIDI, MAX_NOTE, MIN_NOTE } from './range.js';
+import { fitRange, keyOffsetFromC, mergedChordBars, refitNonChorus, sectionTransposition, transposeChordSymbol } from './fit.js';
 import { applyLyricsToSegments } from './syllabify.js';
 import type { VocalBar, VocalResult, VocalSegment } from './types.js';
 import { formatBarBeat } from '@casperaki/music-theory';
@@ -193,7 +193,7 @@ function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent, kind: s
     // The key is fixed (legacy moved the whole song so the chorus peak sat on
     // the top note): when that leaves chorus notes under the range, re-fit
     // its octaves within the range, preferring high notes.
-    midis = buildContour(midis, { maxNote: MAX_NOTE, priority: 'highNotes' });
+    midis = fitRange(midis, 'highNotes');
   }
   const events = laid.map((ev, i) => ({ ...ev, midi: midis[i]! }));
 
@@ -202,7 +202,8 @@ function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent, kind: s
     const bar = bars[ev.barIndex]!;
     const evt: VocalNoteEvent = {
       type: 'vocalNote',
-      note: MidiNoteSchema.parse(ev.midi),
+      // Legacy note-table index → MIDI (range.ts).
+      note: MidiNoteSchema.parse(ev.midi + LEGACY_INDEX_TO_MIDI),
       duration: ev.duration,
     };
     const key = BarBeatSchema.parse(formatBarBeat(ev.beat));

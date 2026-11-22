@@ -62,7 +62,8 @@ const ChordStyleSchema = z
 const SingleNoteStyleSchema = z
   .object({
     kind: z.literal('singleNote'),
-    rootMidiOctave: z.number().int().min(-1).max(8),
+    /** Note-name octave of the legacy C template ('C5' → 5); see pad.ts. */
+    templateOctave: z.number().int().min(0).max(8),
   })
   .strict();
 

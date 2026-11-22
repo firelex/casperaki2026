@@ -17,6 +17,7 @@
 // wires emission into orchestrate.
 
 import { parseChord, type Rng } from '@casperaki/music-theory';
+import { nearestRootDelta } from '../patterns/pad.js';
 import { MidiNoteSchema, type Segment, type SongStructure } from '@casperaki/song-schema';
 
 import type { GeneratorContext } from '../context.js';
@@ -531,8 +532,12 @@ export function synthesizeBassOverrideForSegment(
       const chordsThisBar = segment.bars[bar]!.chords;
       const chordSymbol = chordsThisBar[beat] ?? chordsThisBar[0];
       if (!chordSymbol) continue;
+      // Legacy writes 'C2' on its default all-C template (the override gets no
+      // chords: BassPatternGeneratorClass.js:77-84, OverrideGeneratorClass.js:64)
+      // and the engine moves a plain note from C to the chord root the nearest
+      // way (Tonal.h getSimpleNote, Note::deltaTo compareRoots: -5..+6).
       const root = parseChord(chordSymbol).root;
-      let pitch = rootBaseMidi + root;
+      let pitch = rootBaseMidi + nearestRootDelta(root);
       while (pitch < 0) pitch += 12;
       while (pitch > 127) pitch -= 12;
       addNoteEvent(bars[bar]!, beat, {

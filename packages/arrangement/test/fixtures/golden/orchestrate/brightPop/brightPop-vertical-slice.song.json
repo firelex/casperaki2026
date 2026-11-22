@@ -73,7 +73,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -497,7 +497,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -511,7 +511,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -523,7 +523,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -537,7 +537,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -553,7 +553,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -566,7 +566,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -581,7 +581,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -597,7 +597,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -610,7 +610,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -623,7 +623,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -640,7 +640,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -654,7 +654,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -667,7 +667,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -684,7 +684,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -697,7 +697,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -711,7 +711,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -729,7 +729,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -741,7 +741,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -754,7 +754,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -768,7 +768,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -785,7 +785,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -800,7 +800,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -823,7 +823,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -837,7 +837,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -849,7 +849,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -863,7 +863,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -879,7 +879,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -892,7 +892,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -907,7 +907,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -923,7 +923,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -936,7 +936,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -949,7 +949,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -966,7 +966,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -980,7 +980,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -993,7 +993,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -1010,7 +1010,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -1023,7 +1023,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -1037,7 +1037,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -1055,7 +1055,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -1067,7 +1067,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -1080,7 +1080,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -1094,7 +1094,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -1111,7 +1111,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -1126,7 +1126,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -1244,28 +1244,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -1276,28 +1276,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -1308,28 +1308,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -1340,28 +1340,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -1860,7 +1860,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -1871,7 +1871,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -1882,7 +1882,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -1937,7 +1937,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -5185,7 +5185,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5199,7 +5199,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5211,7 +5211,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5225,7 +5225,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5241,7 +5241,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -5254,7 +5254,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5269,7 +5269,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5285,7 +5285,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5298,7 +5298,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5311,7 +5311,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -5328,7 +5328,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5342,7 +5342,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5355,7 +5355,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5372,7 +5372,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -5385,7 +5385,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -5399,7 +5399,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5417,7 +5417,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5429,7 +5429,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5442,7 +5442,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -5456,7 +5456,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -5473,7 +5473,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5488,7 +5488,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5561,7 +5561,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5575,7 +5575,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5587,7 +5587,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5601,7 +5601,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5617,7 +5617,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -5630,7 +5630,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5645,7 +5645,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5661,7 +5661,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5674,7 +5674,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5687,7 +5687,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -5704,7 +5704,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5718,7 +5718,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5731,7 +5731,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5748,7 +5748,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -5761,7 +5761,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -5775,7 +5775,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5793,7 +5793,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5805,7 +5805,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5818,7 +5818,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -5832,7 +5832,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -5849,7 +5849,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5864,7 +5864,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5887,7 +5887,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5901,7 +5901,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5913,7 +5913,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5927,7 +5927,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -5943,7 +5943,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -5956,7 +5956,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -5971,7 +5971,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -5987,7 +5987,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -6000,7 +6000,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -6013,7 +6013,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -6030,7 +6030,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -6044,7 +6044,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -6057,7 +6057,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -6074,7 +6074,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -6087,7 +6087,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -6101,7 +6101,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -6119,7 +6119,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -6131,7 +6131,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -6144,7 +6144,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -6158,7 +6158,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -6175,7 +6175,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -6190,7 +6190,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -6308,28 +6308,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -6340,28 +6340,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -6372,28 +6372,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -6404,28 +6404,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -6924,7 +6924,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -6935,7 +6935,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -6946,7 +6946,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -7001,7 +7001,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -10249,7 +10249,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10263,7 +10263,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10275,7 +10275,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10289,7 +10289,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10305,7 +10305,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -10318,7 +10318,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10333,7 +10333,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10349,7 +10349,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10362,7 +10362,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10375,7 +10375,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -10392,7 +10392,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10406,7 +10406,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10419,7 +10419,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10436,7 +10436,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -10449,7 +10449,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -10463,7 +10463,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10481,7 +10481,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10493,7 +10493,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10506,7 +10506,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -10520,7 +10520,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -10537,7 +10537,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10552,7 +10552,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10629,7 +10629,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10643,7 +10643,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10655,7 +10655,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10669,7 +10669,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10685,7 +10685,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -10698,7 +10698,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10713,7 +10713,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10729,7 +10729,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10742,7 +10742,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10755,7 +10755,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -10772,7 +10772,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10786,7 +10786,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10799,7 +10799,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10816,7 +10816,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -10829,7 +10829,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -10843,7 +10843,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10861,7 +10861,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10873,7 +10873,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10886,7 +10886,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -10900,7 +10900,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -10917,7 +10917,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10932,7 +10932,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10955,7 +10955,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -10969,7 +10969,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -10981,7 +10981,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -10995,7 +10995,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -11011,7 +11011,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -11024,7 +11024,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -11039,7 +11039,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -11055,7 +11055,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -11068,7 +11068,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -11081,7 +11081,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -11098,7 +11098,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -11112,7 +11112,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -11125,7 +11125,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -11142,7 +11142,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -11155,7 +11155,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -11169,7 +11169,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -11187,7 +11187,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -11199,7 +11199,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -11212,7 +11212,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -11226,7 +11226,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -11243,7 +11243,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -11258,7 +11258,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -11376,28 +11376,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -11408,28 +11408,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -11440,28 +11440,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -11472,28 +11472,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -11992,7 +11992,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -12003,7 +12003,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -12014,7 +12014,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -12069,7 +12069,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -15317,7 +15317,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15331,7 +15331,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15343,7 +15343,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15357,7 +15357,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15373,7 +15373,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -15386,7 +15386,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15401,7 +15401,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15417,7 +15417,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15430,7 +15430,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15443,7 +15443,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -15460,7 +15460,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15474,7 +15474,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15487,7 +15487,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15504,7 +15504,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -15517,7 +15517,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -15531,7 +15531,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15549,7 +15549,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15561,7 +15561,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15574,7 +15574,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -15588,7 +15588,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -15605,7 +15605,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15620,7 +15620,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15693,7 +15693,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15707,7 +15707,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15719,7 +15719,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15733,7 +15733,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15749,7 +15749,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -15762,7 +15762,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15777,7 +15777,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15793,7 +15793,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15806,7 +15806,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15819,7 +15819,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -15836,7 +15836,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15850,7 +15850,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15863,7 +15863,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15880,7 +15880,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -15893,7 +15893,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -15907,7 +15907,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15925,7 +15925,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -15937,7 +15937,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -15950,7 +15950,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -15964,7 +15964,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -15981,7 +15981,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -15996,7 +15996,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -16019,7 +16019,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -16033,7 +16033,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -16045,7 +16045,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -16059,7 +16059,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -16075,7 +16075,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -16088,7 +16088,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -16103,7 +16103,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -16119,7 +16119,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -16132,7 +16132,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -16145,7 +16145,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -16162,7 +16162,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -16176,7 +16176,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -16189,7 +16189,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -16206,7 +16206,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -16219,7 +16219,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -16233,7 +16233,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -16251,7 +16251,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -16263,7 +16263,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -16276,7 +16276,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -16290,7 +16290,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -16307,7 +16307,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -16322,7 +16322,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -16440,28 +16440,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -16472,28 +16472,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -16504,28 +16504,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -16536,28 +16536,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -17056,7 +17056,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -17067,7 +17067,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -17078,7 +17078,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -17133,7 +17133,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -20381,7 +20381,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20395,7 +20395,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20407,7 +20407,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20421,7 +20421,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20437,7 +20437,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -20450,7 +20450,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20465,7 +20465,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20481,7 +20481,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20494,7 +20494,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20507,7 +20507,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -20524,7 +20524,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20538,7 +20538,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20551,7 +20551,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20568,7 +20568,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -20581,7 +20581,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -20595,7 +20595,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20613,7 +20613,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20625,7 +20625,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20638,7 +20638,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -20652,7 +20652,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -20669,7 +20669,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20684,7 +20684,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20761,7 +20761,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20775,7 +20775,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20787,7 +20787,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20801,7 +20801,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20817,7 +20817,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -20830,7 +20830,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20845,7 +20845,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20861,7 +20861,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20874,7 +20874,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20887,7 +20887,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -20904,7 +20904,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20918,7 +20918,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -20931,7 +20931,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -20948,7 +20948,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -20961,7 +20961,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -20975,7 +20975,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -20993,7 +20993,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21005,7 +21005,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21018,7 +21018,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -21032,7 +21032,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -21049,7 +21049,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -21064,7 +21064,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21087,7 +21087,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -21101,7 +21101,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21113,7 +21113,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21127,7 +21127,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21143,7 +21143,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -21156,7 +21156,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -21171,7 +21171,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21187,7 +21187,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21200,7 +21200,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21213,7 +21213,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -21230,7 +21230,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -21244,7 +21244,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21257,7 +21257,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21274,7 +21274,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -21287,7 +21287,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -21301,7 +21301,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -21319,7 +21319,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21331,7 +21331,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -21344,7 +21344,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -21358,7 +21358,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -21375,7 +21375,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -21390,7 +21390,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -21508,28 +21508,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -21540,28 +21540,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -21572,28 +21572,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -21604,28 +21604,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -22124,7 +22124,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -22135,7 +22135,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -22146,7 +22146,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -22201,7 +22201,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -25449,7 +25449,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -25463,7 +25463,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -25475,7 +25475,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -25489,7 +25489,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "To-",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -25505,7 +25505,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -25518,7 +25518,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -25533,7 +25533,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -25549,7 +25549,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -25562,7 +25562,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "To-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -25575,7 +25575,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Night",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -25592,7 +25592,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -25606,7 +25606,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -25619,7 +25619,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -25636,7 +25636,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Rise",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -25649,7 +25649,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "And",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -25663,7 +25663,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -25681,7 +25681,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -25693,7 +25693,7 @@
                   {
                     "duration": 1.5,
                     "fullWord": "Tight",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -25706,7 +25706,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Rise",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "r",
@@ -25720,7 +25720,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -25737,7 +25737,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hold",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -25752,7 +25752,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "On",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "aa1",
@@ -25876,28 +25876,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ]
@@ -26004,28 +26004,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ]
@@ -26300,7 +26300,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -26311,51 +26311,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 50,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 58,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 50,
+                    "note": 62,
                     "type": "note"
                   }
                 ]
@@ -26377,7 +26333,51 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 62,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 58,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -29674,7 +29674,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ]
@@ -29718,7 +29718,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 46,
+                    "note": 34,
                     "type": "note"
                   }
                 ]
@@ -30100,7 +30100,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -30111,51 +30111,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 50,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 58,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 50,
+                    "note": 62,
                     "type": "note"
                   }
                 ]
@@ -30177,7 +30133,51 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 62,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 58,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -33174,28 +33174,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -33302,28 +33302,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -33502,7 +33502,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -33513,51 +33513,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 55,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -33579,7 +33535,51 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 65,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 55,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -35403,7 +35403,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Here",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -35417,7 +35417,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "We",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -35436,7 +35436,7 @@
                   {
                     "duration": 2,
                     "fullWord": "Go",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -35448,7 +35448,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Up",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -35460,7 +35460,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "High",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -35473,7 +35473,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Here",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -35490,7 +35490,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "We",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -35502,7 +35502,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Go",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -35515,7 +35515,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Up",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -35531,7 +35531,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Take",
-                    "note": 59,
+                    "note": 71,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -35545,7 +35545,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "My",
-                    "note": 59,
+                    "note": 71,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -35561,7 +35561,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hand",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -35576,7 +35576,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -35594,7 +35594,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "Fly",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "f",
@@ -35740,28 +35740,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -35868,28 +35868,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -36164,7 +36164,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -36175,51 +36175,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 53,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 55,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 48,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 53,
+                    "note": 65,
                     "type": "note"
                   }
                 ]
@@ -36241,7 +36197,51 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 65,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 55,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -38065,7 +38065,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Here",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -38079,7 +38079,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "We",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -38098,7 +38098,7 @@
                   {
                     "duration": 2,
                     "fullWord": "Go",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -38110,7 +38110,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Up",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -38122,7 +38122,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "High",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -38135,7 +38135,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Here",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -38152,7 +38152,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "We",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -38164,7 +38164,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Go",
-                    "note": 57,
+                    "note": 69,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -38177,7 +38177,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Up",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -38193,7 +38193,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Take",
-                    "note": 59,
+                    "note": 71,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "t",
@@ -38207,7 +38207,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "My",
-                    "note": 59,
+                    "note": 71,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -38223,7 +38223,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Hand",
-                    "note": 55,
+                    "note": 67,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -38238,7 +38238,7 @@
                     "duration": 3.5,
                     "endOfPhrase": true,
                     "fullWord": "And",
-                    "note": 53,
+                    "note": 65,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0",
@@ -38256,7 +38256,7 @@
                     "duration": 2.5,
                     "endOfPhrase": true,
                     "fullWord": "Fly",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "f",
@@ -38370,28 +38370,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -38434,28 +38434,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -38498,28 +38498,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -38562,28 +38562,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -39342,7 +39342,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -39364,7 +39364,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -39386,7 +39386,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -39408,7 +39408,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -41591,7 +41591,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -41604,7 +41604,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Ming",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -41618,7 +41618,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Of",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -41634,7 +41634,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -41645,7 +41645,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Brand",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -41661,7 +41661,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "New",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -41678,7 +41678,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Way",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -41694,7 +41694,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -41707,7 +41707,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Ming",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -41720,7 +41720,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Of",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -41732,7 +41732,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -41744,7 +41744,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Brand",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -41763,7 +41763,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -41775,7 +41775,7 @@
                   {
                     "duration": 1,
                     "fullWord": "King",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -41789,7 +41789,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -41806,7 +41806,7 @@
                   {
                     "duration": 1,
                     "fullWord": "The",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -41818,7 +41818,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Gol-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -41831,7 +41831,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Den",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "l",
@@ -41850,7 +41850,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Day",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -41866,7 +41866,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -41878,7 +41878,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "King",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -41892,7 +41892,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -41994,28 +41994,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -42058,28 +42058,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -42122,28 +42122,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -42186,28 +42186,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -42966,7 +42966,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -42988,7 +42988,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -43010,7 +43010,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -43032,7 +43032,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -45215,7 +45215,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -45228,7 +45228,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Ming",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -45242,7 +45242,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Of",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -45258,7 +45258,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -45269,7 +45269,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Brand",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -45285,7 +45285,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "New",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -45302,7 +45302,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Way",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -45318,7 +45318,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -45331,7 +45331,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Ming",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -45344,7 +45344,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Of",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -45356,7 +45356,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -45368,7 +45368,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Brand",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -45387,7 +45387,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -45399,7 +45399,7 @@
                   {
                     "duration": 1,
                     "fullWord": "King",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -45413,7 +45413,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -45430,7 +45430,7 @@
                   {
                     "duration": 1,
                     "fullWord": "The",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -45442,7 +45442,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Gol-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -45455,7 +45455,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Den",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "l",
@@ -45474,7 +45474,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Day",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -45490,7 +45490,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -45502,7 +45502,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "King",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -45516,7 +45516,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -45618,28 +45618,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -45682,28 +45682,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -45746,28 +45746,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -45810,28 +45810,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -46590,7 +46590,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -46612,7 +46612,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -46634,7 +46634,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -46656,7 +46656,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -48839,7 +48839,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -48852,7 +48852,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Ming",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -48866,7 +48866,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Of",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -48882,7 +48882,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -48893,7 +48893,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Brand",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -48909,7 +48909,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "New",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -48926,7 +48926,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Way",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -48942,7 +48942,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -48955,7 +48955,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Ming",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -48968,7 +48968,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Of",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -48980,7 +48980,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -48992,7 +48992,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Brand",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -49011,7 +49011,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -49023,7 +49023,7 @@
                   {
                     "duration": 1,
                     "fullWord": "King",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -49037,7 +49037,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -49054,7 +49054,7 @@
                   {
                     "duration": 1,
                     "fullWord": "The",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -49066,7 +49066,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Gol-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -49079,7 +49079,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Den",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "l",
@@ -49098,7 +49098,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Day",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -49114,7 +49114,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -49126,7 +49126,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "King",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -49140,7 +49140,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -49242,28 +49242,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -49306,28 +49306,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -49370,28 +49370,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 43,
+                    "note": 31,
                     "type": "note"
                   }
                 ]
@@ -49434,28 +49434,28 @@
                 "0.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "1.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ],
                 "3.5": [
                   {
                     "duration": 0.5,
-                    "note": 45,
+                    "note": 33,
                     "type": "note"
                   }
                 ]
@@ -50214,7 +50214,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -50236,7 +50236,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -50258,7 +50258,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -50280,7 +50280,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 48,
+                    "note": 60,
                     "type": "note"
                   }
                 ]
@@ -52463,7 +52463,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -52476,7 +52476,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Ming",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -52490,7 +52490,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Of",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -52506,7 +52506,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -52517,7 +52517,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Brand",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -52533,7 +52533,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "New",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
@@ -52550,7 +52550,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Way",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -52566,7 +52566,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Drea-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -52579,7 +52579,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Ming",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -52592,7 +52592,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Of",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah1",
@@ -52604,7 +52604,7 @@
                   {
                     "duration": 1,
                     "fullWord": "A",
-                    "note": 45,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "ah0"
@@ -52616,7 +52616,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Brand",
-                    "note": 43,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "b",
@@ -52635,7 +52635,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -52647,7 +52647,7 @@
                   {
                     "duration": 1,
                     "fullWord": "King",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -52661,7 +52661,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",
@@ -52678,7 +52678,7 @@
                   {
                     "duration": 1,
                     "fullWord": "The",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -52690,7 +52690,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Gol-",
-                    "note": 50,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "g",
@@ -52703,7 +52703,7 @@
                     "duration": 2,
                     "endOfPhrase": true,
                     "fullWord": "Den",
-                    "note": 48,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "l",
@@ -52722,7 +52722,7 @@
                     "duration": 1,
                     "endOfPhrase": true,
                     "fullWord": "Day",
-                    "note": 52,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "d",
@@ -52738,7 +52738,7 @@
                   {
                     "duration": 1,
                     "fullWord": "Wal-",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "w",
@@ -52750,7 +52750,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "King",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "k",
@@ -52764,7 +52764,7 @@
                     "duration": 1.5,
                     "endOfPhrase": true,
                     "fullWord": "Through",
-                    "note": 47,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "th",

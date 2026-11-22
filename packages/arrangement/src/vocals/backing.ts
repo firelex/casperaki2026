@@ -44,7 +44,16 @@
 
 import { parseChord } from '@casperaki/music-theory';
 
-import { MIN_NOTE, MAX_NOTE } from './range.js';
+import { LEGACY_INDEX_TO_MIDI, MIN_NOTE as MIN_INDEX, MAX_NOTE as MAX_INDEX } from './range.js';
+
+// Units: backings are built from the lead as written into the song, in MIDI.
+// The legacy guard (MelodyClass.js:3216-3267) compares note `midi` fields —
+// legacy note-table indices, MIDI - 12 — with `this.maxNote` = 59 ('b4'); in
+// MIDI that is 71. These are the legacy range in MIDI.
+/** Lowest singable note in MIDI (G3 = 55; legacy index 43). */
+export const MIN_NOTE = MIN_INDEX + LEGACY_INDEX_TO_MIDI;
+/** Highest singable note in MIDI (B4 = 71; legacy index 59): the octave-drop guard threshold. */
+export const MAX_NOTE = MAX_INDEX + LEGACY_INDEX_TO_MIDI;
 import type { VocalBar, VocalResult, VocalSegment, VocalNoteEvent } from './types.js';
 
 import {
@@ -125,7 +134,7 @@ export interface BackingOptions {
   /** Semitone shift applied to every lead note before chord-snap. */
   readonly pitchOffset: number;
   /** Upper MIDI bound (octave-drop guard threshold). Defaults to the
-   *  legacy `MelodyClass.maxNote` (B4 / 59). */
+   *  legacy `MelodyClass.maxNote` (B4: legacy index 59 = MIDI 71). */
   readonly maxNote?: number;
 }
 
@@ -290,4 +299,3 @@ export function backingMidiRange(segment: VocalSegment): { min: number; max: num
 
 // Re-export the range constants so the orchestrator + tests share the
 // same source of truth without reaching into ./range.js.
-export { MIN_NOTE, MAX_NOTE };

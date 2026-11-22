@@ -45,8 +45,8 @@ describe('vocal melody fits the song', () => {
         expect(st.inKey).toBeGreaterThan(0.97);
         expect(st.chordTones).toBeGreaterThan(0.5);
         fits.push(st.chordTones);
-        expect(st.lo).toBeGreaterThanOrEqual(43);
-        expect(st.hi).toBeLessThanOrEqual(59);
+        expect(st.lo).toBeGreaterThanOrEqual(55); // G3 (legacy index 43)
+        expect(st.hi).toBeLessThanOrEqual(71); // B4 (legacy index 59)
       }
     }
     expect(fits.reduce((a, b) => a + b, 0) / fits.length).toBeGreaterThan(0.62);

@@ -15,11 +15,11 @@
     "chordsTwoOctavesHigh": { "kind": "chord", "voicing": "twoOctavesHigh" },
     "chordsTwoOctavesMid":  { "kind": "chord", "voicing": "twoOctavesMid" },
     "chordsTwoOctavesLow":  { "kind": "chord", "voicing": "twoOctavesLow" },
-    "singleNoteHigh":       { "kind": "singleNote", "rootMidiOctave": 4 },
-    "singleNoteMid":        { "kind": "singleNote", "rootMidiOctave": 3 },
-    "singleNoteLow":        { "kind": "singleNote", "rootMidiOctave": 2 }
+    "singleNoteHigh":       { "kind": "singleNote", "templateOctave": 5 },
+    "singleNoteMid":        { "kind": "singleNote", "templateOctave": 4 },
+    "singleNoteLow":        { "kind": "singleNote", "templateOctave": 3 }
   },
-  "$singleNoteOctaveNote": "rootMidiOctave fixed 06-20 (docs/62 A3). Legacy emits chordBaseNote+'5'/'4'/'3' and converts via notesDecMap where c5=60 (c0=0 convention), i.e. MIDI 60/48/36. The rebuild's pad.ts uses (rootMidiOctave+1)*12+root (c-1=0 convention), so the matching octaves are 4/3/2 -> 60/48/36. Verified against BOTH casperaki1 and casperaki2 ChordsAndNotesPadPatternGeneratorClass.",
+  "$singleNoteOctaveNote": "templateOctave = the note-name octave of the legacy C template (ChordsAndNotesPadPatternGeneratorClass.js:61-73: chordBaseNote('C') + '5'/'4'/'3', template chords [[C,C,C,C],[C,C,C,C]] at :17). The legacy engine reads the NAME (SequencerUtils.h getSimpleNote: C5 = MIDI 72, middle C = C4) and moves it to the bar's chord root by Note::deltaTo(root, compareRoots) = the nearest way, -5..+6 semitones. pad.ts reproduces both. (docs/62 A3 had set 4/3/2 = 60/48/36, reading the name through notesDecMap, whose indices are MIDI - 12: an octave low for roots C..F#.)",
   "$genreStylesNote": "Legacy config.json#defaultStyleMappings.padPatterns maps EVERY genre uniformly to all 9 pad styles (verified 06-16). The rebuild matches that distribution directly (parity policy — no curated subset). Style order mirrors the legacy config array.",
   "genreStyles": {
     "ballad":       ["chordsOneOctaveHigh", "chordsOneOctaveMid", "chordsOneOctaveLow", "chordsTwoOctavesHigh", "chordsTwoOctavesMid", "chordsTwoOctavesLow", "singleNoteHigh", "singleNoteMid", "singleNoteLow"],

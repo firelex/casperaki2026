@@ -314,19 +314,12 @@ function emitPianoLibrary(
 //      offset, duration (0.25 or 0.5, random).
 //
 // The legacy engine reads `noteRelative` events with `note`+`offset`
-// when `distanceFromMiddleC` is absent and walks the segment's
-// current chord notes to resolve the pitch. Our brain port computes
-// `distanceFromMiddleC` here so the SAME noteRelative passthrough
-// already in the engine-adapter (54w / 55a / 56b) carries playful
-// events without needing a new field-passthrough branch. The
-// chord-tone walker:
-//   - Resolves the bar's first chord via `parseChord` + `chordNotes`
-//     at the picked octave.
-//   - Indexes by `note % chordSize` (chord size is 3 or 4 in practice;
-//     legacy `note` ranges 0..4 — values 3+ wrap to higher chord
-//     tones in the next octave).
-//   - Adds `offset` semitones.
-//   - distance = resolvedMidi - 60 (middle C).
+// when `distanceFromMiddleC` is absent and walks the segment's current
+// chord notes to resolve the pitch; the events are emitted as is and the
+// engine adapter passes the walk fields through. (The first port computed
+// a distance from middle C with chordNotes(octave) = (octave + 1) * 12,
+// an octave above the engine's root-pitch-class * octave * 12, and added
+// `offset` as semitones the engine then snapped back to a chord tone.)
 //
 // This approximation preserves the legacy rhythmic shape + voice-
 // leading state machine exactly; the per-note pitch differs from
@@ -500,33 +493,6 @@ function nextPlayfulStep(
   return { note, offset };
 }
 
-/** Resolve the playful `(note, offset, chord, octave)` step into a
- *  signed semitone offset from middle C (MIDI 60). Used to populate
- *  `distanceFromMiddleC` on the emitted noteRelative event.
- *
- *  Walk: parse the chord, list its triad notes at the picked octave,
- *  index by `note % chordSize`. For `note >= chordSize`, wrap to the
- *  next octave so `note = 3` lands on the root one octave higher than
- *  `note = 0`, `note = 4` lands on the third one octave higher than
- *  `note = 1`, etc. (mirrors the legacy chord-tone walker's behaviour
- *  for non-triad chords).
- *
- *  Add `offset` semitones at the end. */
-function playfulDistanceFromMiddleC(
-  symbol: string,
-  octave: number,
-  noteIdx: number,
-  offset: number,
-): number {
-  const parsed = parseChord(symbol);
-  const triad = chordNotes(parsed, octave);
-  if (triad.length === 0) return offset;
-  const wrap = Math.floor(noteIdx / triad.length);
-  const within = ((noteIdx % triad.length) + triad.length) % triad.length;
-  const midi = triad[within]! + wrap * 12;
-  return midi - 60 + offset;
-}
-
 function emitPlayful(
   rng: Rng,
   segment: Segment,
@@ -566,19 +532,21 @@ function emitPlayful(
       const symbol = chordsThisBar[beatIdx] ?? chordsThisBar[0];
       if (!symbol) continue;
       const chord = ChordSymbolSchema.parse(symbol);
-      const distanceFromMiddleC = playfulDistanceFromMiddleC(
-        symbol,
-        octave,
-        step.note,
-        step.offset,
-      );
       // Duration is picked per-hit (mirrors the legacy
       // `Tools.selectRandomly([0.25, 0.5])`).
       const duration = rng.pick(PLAYFUL_DURATIONS);
+      // The legacy event as is (PlayfulSynthPatternGeneratorClass
+      // _addNoteRelative): the engine walks it (getRelativeNote's chord-walk
+      // branch: the chord root as a bare pitch class at octave * 12, so octave
+      // 4 → C3..B3; `note + 1` chord tones around it; `offset` scale steps).
       addNoteEvent(bars[segBarIdx]!, hit, {
         type: 'noteRelative',
         chord,
-        distanceFromMiddleC,
+        octave,
+        direction: 'center',
+        numberOfNotes: 5,
+        note: step.note,
+        offset: step.offset,
         duration,
       });
     }

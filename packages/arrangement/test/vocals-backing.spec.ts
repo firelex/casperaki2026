@@ -319,8 +319,23 @@ describe('backing offsets match legacy', () => {
     expect(BACKING_OFFSET_1).toBe(-4);
     expect(BACKING_OFFSET_2).toBe(4);
   });
-  it('MIN_NOTE / MAX_NOTE match the MelodyClass range envelope', () => {
-    expect(MIN_NOTE).toBe(43);
-    expect(MAX_NOTE).toBe(59);
+  it('MIN_NOTE / MAX_NOTE are the MelodyClass range envelope in MIDI (legacy indices 43 / 59 + 12)', () => {
+    expect(MIN_NOTE).toBe(55);
+    expect(MAX_NOTE).toBe(71);
+  });
+});
+
+describe('backing octave-drop guard units', () => {
+  // Legacy MelodyClass.js:3216-3267 drops a backing lane an octave when a note
+  // exceeds maxNote = 59 in legacy table indices (MIDI - 12), i.e. MIDI 71.
+  const lead = (midi: number) => ({
+    segments: [{ segmentName: 'chorus1', bars: [{ notes: { '0.0': [{ type: 'vocalNote' as const, note: midi, duration: 1 }] } }] }],
+  });
+  const structure = [{ name: 'chorus1', bars: [{ chords: ['C', 'C', 'C', 'C'] }] }] as unknown as Parameters<typeof generateBackings>[1];
+  const backingNote = (midi: number, offset: number) =>
+    (generateBackings(lead(midi) as never, structure, { pitchOffset: offset })[0]!.bars[0]!.notes['0.0' as never]![0] as { note: number }).note;
+  it('keeps a lane at or below B4 (MIDI 71) and drops one above it', () => {
+    expect(backingNote(63, 4)).toBe(67); // D#4 + 4 → G4 (67) ≤ 71: kept (the old threshold 59 dropped it to G3)
+    expect(backingNote(72, 4)).toBe(64); // C5 + 4 → E5 (76) > 71 → dropped an octave → E4 (64)
   });
 });

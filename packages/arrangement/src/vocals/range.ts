@@ -20,13 +20,23 @@
 // uses it today, but the surface matches the legacy call shape so the
 // follow-up precedent-bank port lands without re-wiring.
 
-/** Lowest singable MIDI value (G3). Legacy: `MelodyClass.minNote`. */
+/**
+ * Units: the vocal pipeline works in the legacy note-table indices, the units
+ * of the precedent banks (`midi` fields) and of these legacy constants. A
+ * legacy index is MIDI - 12 (index 0 = 'c0', which the engine plays as MIDI
+ * 12; 'g3' = index 43 = MIDI 55). Notes are converted to MIDI once, when they
+ * are written into the song (LEGACY_INDEX_TO_MIDI). The first port wrote the
+ * indices as MIDI, so every melody sat an octave low.
+ */
+export const LEGACY_INDEX_TO_MIDI = 12;
+
+/** Lowest singable note, legacy index (G3 = MIDI 55). Legacy: `MelodyClass.minNote`. */
 export const MIN_NOTE = 43;
 
-/** Default highest singable MIDI value (B4). Legacy: `MelodyClass.maxNote`. */
+/** Default highest singable note, legacy index (B4 = MIDI 71). Legacy: `MelodyClass.maxNote`. */
 export const MAX_NOTE = 59;
 
-/** Anchor note used as the seed when no prior note is available (D4).
+/** Anchor note, legacy index (D4 = MIDI 62), used as the seed when no prior note is available.
  *  Legacy: `MelodyClass.medianNote`. */
 export const MEDIAN_NOTE = 50;
 

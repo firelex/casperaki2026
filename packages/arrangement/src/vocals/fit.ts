@@ -25,7 +25,7 @@ import { ChordSymbolSchema, type ChordSymbol } from '@casperaki/song-schema';
 
 import { buildContour, ContourBuildError } from './contour.js';
 import type { MergedPrecedent } from './precedents.js';
-import { MAX_NOTE } from './range.js';
+import { MAX_NOTE, MIN_NOTE } from './range.js';
 
 const PITCH_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
 const LETTER_PC: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -104,9 +104,26 @@ export function refitNonChorus(
     fitted = buildContour(seq, { maxNote: kindMaxNote });
   } catch (err) {
     if (!(err instanceof ContourBuildError)) throw err;
-    fitted = buildContour(seq, { maxNote: MAX_NOTE, priority: kind === 'verse' ? 'lowNotes' : 'highNotes' });
+    fitted = fitRange(seq, kind === 'verse' ? 'lowNotes' : 'highNotes');
   }
   return smoothReturns(fitted, chordAt, keyOffset);
+}
+
+/**
+ * The contour search over the whole range; when no octave assignment fits
+ * (possible here, not in the legacy: the key is chosen by the user, while the
+ * legacy chose the key so the melody fit), the octave of the whole line that
+ * leaves the fewest semitones outside the range (ties: as placed).
+ */
+export function fitRange(seq: readonly number[], priority: 'highNotes' | 'lowNotes'): number[] {
+  try {
+    return buildContour(seq, { maxNote: MAX_NOTE, priority });
+  } catch (err) {
+    if (!(err instanceof ContourBuildError)) throw err;
+    const outside = (t: number) => seq.reduce((sum, m) => sum + Math.max(0, MIN_NOTE - (m + t)) + Math.max(0, m + t - MAX_NOTE), 0);
+    const best = [0, 12, -12].reduce((a, b) => (outside(b) < outside(a) ? b : a));
+    return seq.map((m) => m + best);
+  }
 }
 
 /**

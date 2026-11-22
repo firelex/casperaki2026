@@ -85,7 +85,7 @@ describe('pad bank manifest', () => {
       if (style.kind === 'chord') {
         expect(style.voicing, `style ${name} missing voicing`).toBeDefined();
       } else {
-        expect(style.rootMidiOctave, `style ${name} missing octave`).toBeDefined();
+        expect(style.templateOctave, `style ${name} missing octave`).toBeDefined();
       }
     }
   });
@@ -256,6 +256,10 @@ describe('generatePadPattern invariants', () => {
           const expectedRoot = parseChord(expectedChord).root;
           const pitch = ev.note as number;
           expect(((pitch - expectedRoot) % 12 + 12) % 12).toBe(0);
+          // Legacy register: 'C' + 5/4/3 (MIDI 72/60/48) moved to the root the
+          // nearest way (-5..+6), so within [template - 5, template + 6].
+          const templates = [72, 60, 48];
+          expect(templates.some((t) => pitch - t >= -5 && pitch - t <= 6)).toBe(true);
         }
         inspected++;
       });

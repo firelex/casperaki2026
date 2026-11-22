@@ -3,7 +3,9 @@
 // Pins the faithful port of SimpleBassPatternGeneratorClass.js:
 //   - busyness filters the 20-pattern pool by hit count (1 -> <=8,
 //     2 -> 4..10, 3 -> >=6);
-//   - notes are the chord root at octave 2 (MIDI 36..47 for any key),
+//   - notes are the chord root around C2: the legacy writes 'C2' on its all-C
+//     template and the engine moves it to the root the nearest way, so
+//     roots C..F# sit at MIDI 36..42 and G..B at 31..35 (MIDI 31..42),
 //     i.e. semitone offset 0;
 //   - ballad routes through SimpleBass end-to-end (busyness forced to 1).
 
@@ -185,7 +187,7 @@ describe('HipHopBass (urban) — derived from drum kicks', () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
-  it('urban bass derives from drums end-to-end (octave-2 roots)', () => {
+  it('urban bass derives from drums end-to-end (roots around C2: MIDI 31..42)', () => {
     let sawBass = false;
     for (let seed = 0; seed < 12; seed++) {
       const song = orchestrate({ genre: 'urban', key: 'C', bpm: 95, seed });
@@ -198,8 +200,8 @@ describe('HipHopBass (urban) — derived from drum kicks', () => {
             for (const e of evs) {
               if (typeof e.note === 'number') {
                 sawBass = true;
-                expect(e.note).toBeGreaterThanOrEqual(36);
-                expect(e.note).toBeLessThanOrEqual(47);
+                expect(e.note).toBeGreaterThanOrEqual(31);
+                expect(e.note).toBeLessThanOrEqual(42);
               }
             }
           }
@@ -211,7 +213,7 @@ describe('HipHopBass (urban) — derived from drum kicks', () => {
 });
 
 describe('ballad bass routes through SimpleBass end-to-end', () => {
-  it('every ballad bass note is a chord root at octave 2 (MIDI 36..47)', () => {
+  it('every ballad bass note is a chord root around C2 (MIDI 31..42)', () => {
     let sawBass = false;
     for (let seed = 0; seed < 12; seed++) {
       const song = orchestrate({ genre: 'ballad', key: 'C', bpm: 90, seed });
@@ -224,8 +226,8 @@ describe('ballad bass routes through SimpleBass end-to-end', () => {
             for (const e of evs) {
               if (typeof e.note === 'number') {
                 sawBass = true;
-                expect(e.note).toBeGreaterThanOrEqual(36);
-                expect(e.note).toBeLessThanOrEqual(47);
+                expect(e.note).toBeGreaterThanOrEqual(31);
+                expect(e.note).toBeLessThanOrEqual(42);
               }
             }
           }

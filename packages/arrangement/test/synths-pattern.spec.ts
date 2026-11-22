@@ -108,9 +108,9 @@ describe('generateSynthsPattern', () => {
     throw new Error('expected at least one seed in [arp-seed-1..5] to pick EDMArpeggiator');
   });
 
-  it('noteRelative branch (when picked) carries distanceFromMiddleC + duration', () => {
-    // The canonical brightPop-vertical-slice seed lands on EDMSynthsStabs
-    // → noteRelative events. Confirm the schema fields are present.
+  it('noteRelative events carry one complete encoding + duration', () => {
+    // distanceFromMiddleC (piano-library styles) or the legacy chord walk
+    // octave + direction + note + offset (playful).
     const pattern = generateSynthsPattern(
       ctxFor('brightPop-vertical-slice'),
       fakeSegment('chorus1', 4),
@@ -121,9 +121,16 @@ describe('generateSynthsPattern', () => {
       for (const events of Object.values(bar.notes)) {
         for (const ev of events) {
           if (ev.type !== 'noteRelative') continue;
-          const e = ev as { chord: string; distanceFromMiddleC: number; duration: number };
+          const e = ev as { chord: string; distanceFromMiddleC?: number; octave?: number; direction?: string; note?: number; offset?: number; duration: number };
           expect(typeof e.chord).toBe('string');
-          expect(typeof e.distanceFromMiddleC).toBe('number');
+          if (e.distanceFromMiddleC === undefined) {
+            expect(typeof e.octave).toBe('number');
+            expect(typeof e.direction).toBe('string');
+            expect(typeof e.note).toBe('number');
+            expect(typeof e.offset).toBe('number');
+          } else {
+            expect(typeof e.distanceFromMiddleC).toBe('number');
+          }
           expect(typeof e.duration).toBe('number');
           noteRelativeCount++;
         }

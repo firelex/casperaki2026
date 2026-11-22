@@ -30,7 +30,7 @@ import {
   selectChordsStraightPattern,
   selectEdmHousePianoPattern,
 } from './keys-bank.js';
-import { generateKeysAlgoBlueprint, type KeysAlgoStyleName } from './keys-algo.js';
+import { generateKeysAlgoBlueprint, pianoHandChordType, type KeysAlgoStyleName } from './keys-algo.js';
 import {
   expandPianoLibraryPattern,
   pianoLibraryHasGenrePool,
@@ -70,6 +70,9 @@ export function generateKeysPattern(
 /** Legacy port of `chordsStraight` (ChordsPianoPatternGeneratorClass,
  *  classic substyle) — emits `type:'chord'` events. */
 function emitKeysChordsStraight(rng: Rng, segment: Segment): FamilyPattern {
+  // Legacy picks the hand first (PianoPatternGeneratorClass.js chordsStraight:
+  // selectRandomly(['leftHand','rightHand'])); it sets the engine voicing.
+  const chordType = pianoHandChordType(rng.pick(['leftHand', 'rightHand'] as const));
   const selection = selectChordsStraightPattern(rng);
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
@@ -97,7 +100,7 @@ function emitKeysChordsStraight(rng: Rng, segment: Segment): FamilyPattern {
         );
       }
       const chord = ChordSymbolSchema.parse(symbol);
-      addNoteEvent(bars[segBarIdx]!, beat, { type: 'chord', chord, duration });
+      addNoteEvent(bars[segBarIdx]!, beat, { type: 'chord', chord, chordType, duration });
     }
   }
 
@@ -120,9 +123,11 @@ function emitKeysEdmHousePiano(rng: Rng, segment: Segment): FamilyPattern {
       const symbol = chordsThisBar[chordIdx] ?? chordsThisBar[0];
       if (!symbol) continue;
       const chord = ChordSymbolSchema.parse(symbol);
+      // Legacy EDMPianoPatternGeneratorClass('rightHand') → pianoRightHand voicing.
       addNoteEvent(bars[segBarIdx]!, slot.beat, {
         type: 'chord',
         chord,
+        chordType: 'pianoRightHand',
         duration: slot.duration,
       });
     }
@@ -157,6 +162,7 @@ function emitKeysAlgo(
         addNoteEvent(bars[segBarIdx]!, ev.beat, {
           type: 'chord',
           chord,
+          chordType: ev.chordType,
           duration: ev.duration,
         });
       } else {

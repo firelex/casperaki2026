@@ -275,12 +275,12 @@ describe('synthesizeBassOverrideForSegment', () => {
     }
   });
 
-  it('follows the chord root (G2 = 43) and lays onTheBeat157 half-notes on odd bars', () => {
+  it('follows the chord root (G: C2 moved down to G1 = 31, the nearest way) and lays onTheBeat157 half-notes on odd bars', () => {
     const seg = chordSeg('verse1', 2, 'G');
     const { bars } = synthesizeBassOverrideForSegment(seg, 'onTheBeat157');
     // bar 0: whole note beat 0; bar 1: half notes beats 0 and 2.
     expect(Object.keys(bars[0]!.notes)).toEqual(['0.0']);
-    expect(bars[0]!.notes['0.0']![0]!.type === 'note' && bars[0]!.notes['0.0']![0]!.note).toBe(43);
+    expect(bars[0]!.notes['0.0']![0]!.type === 'note' && bars[0]!.notes['0.0']![0]!.note).toBe(31);
     expect(Object.keys(bars[1]!.notes).sort()).toEqual(['0.0', '2.0']);
     expect(bars[1]!.notes['2.0']![0]!.type === 'note' && bars[1]!.notes['2.0']![0]!.duration).toBe(2);
   });

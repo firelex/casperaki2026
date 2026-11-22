@@ -28,10 +28,21 @@ export const ChordEventSchema = BaseEvent.extend({
 }).passthrough();
 export type ChordEvent = z.infer<typeof ChordEventSchema>;
 
+// Two encodings, as the legacy engine reads them (SequencerUtils.h
+// getRelativeNote): `distanceFromMiddleC` (snap Note{60 + d} to the nearest
+// chord note), or the chord walk `octave` + `direction` + `note` (+ `offset`
+// scale steps): the chord root at octave * 12 (root as a bare pitch class,
+// so octave 4 → C3..B3), walked `note + 1` chord tones in `direction`
+// (PlayfulSynthPatternGeneratorClass). One of the two must be complete; the
+// engine adapter checks it (a discriminated-union member cannot refine).
 export const NoteRelativeEventSchema = BaseEvent.extend({
   type: z.literal('noteRelative'),
   chord: ChordSymbolSchema,
-  distanceFromMiddleC: z.number().int(),
+  distanceFromMiddleC: z.number().int().optional(),
+  octave: z.number().int().optional(),
+  direction: z.string().optional(),
+  note: z.number().int().optional(),
+  numberOfNotes: z.number().int().optional(),
   offset: z.number().optional(),
 }).passthrough();
 export type NoteRelativeEvent = z.infer<typeof NoteRelativeEventSchema>;

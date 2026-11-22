@@ -12,9 +12,10 @@
 //      the bank-declared `barDuration` (4 beats / one whole 4/4 bar):
 //        - `chords*` styles → `type: 'chord'` event carrying the bar's
 //          first chord symbol (legacy `_addChord(0, chord, chordType, 4)`).
-//        - `singleNote*` styles → `type: 'note'` event whose MIDI pitch
-//          is the chord root in the style's declared MIDI octave (legacy
-//          `_addNoteAbsolute(0, getChordBaseNote(chord) + <octave>, 4)`).
+//        - `singleNote*` styles → `type: 'note'` event: the legacy C template
+//          note 'C' + templateOctave moved to the chord root the nearest way
+//          (legacy `_addNoteAbsolute(0, getChordBaseNote('C') + <octave>, 4)`
+//          on template chords, transposed by the engine; see below).
 //
 // The legacy 'oneOctave' vs 'twoOctaves' distinction inside the chord
 // styles is the legacy `chordType` voicing tag. It is now surfaced on the
@@ -61,11 +62,14 @@ export function generatePadPattern(
         duration: selection.barDuration,
       });
     } else {
+      // Legacy writes a 2-bar template against C chords: the note NAME
+      // 'C' + templateOctave (ChordsAndNotesPadPatternGeneratorClass.js:61-73),
+      // which the engine reads as MIDI (octave + 1) * 12 (C5 = 72) and moves
+      // to the bar's chord root the nearest way (Note::deltaTo(root, true):
+      // -5..+6). The engine adapter cancels that move for brain notes, so the
+      // pitch is resolved here.
       const root = parseChord(symbol).root;
-      const raw = (selection.style.rootMidiOctave + 1) * 12 + root;
-      let pitch = raw;
-      while (pitch < 0) pitch += 12;
-      while (pitch > 127) pitch -= 12;
+      const pitch = (selection.style.templateOctave + 1) * 12 + nearestRootDelta(root);
       const note = MidiNoteSchema.parse(pitch);
       addNoteEvent(bars[segBarIdx]!, 0, {
         type: 'note',
@@ -76,4 +80,10 @@ export function generatePadPattern(
   }
 
   return { bars };
+}
+
+/** The legacy engine's move from C to a chord root: Note::deltaTo(root, compareRoots) = -5..+6 semitones. */
+export function nearestRootDelta(root: number): number {
+  const d = ((root % 12) + 12) % 12;
+  return d > 6 ? d - 12 : d;
 }

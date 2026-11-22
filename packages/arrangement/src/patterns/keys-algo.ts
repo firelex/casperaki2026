@@ -20,7 +20,13 @@ import type { Rng } from '@casperaki/music-theory';
 
 /** One algorithmically-generated keys event, chord resolved later. */
 export type KeysAlgoEvent =
-  | { readonly kind: 'chord'; readonly beat: number; readonly duration: number }
+  | {
+      readonly kind: 'chord';
+      readonly beat: number;
+      readonly duration: number;
+      /** Legacy voicing: the hand's chord type (ChordsPianoPatternGeneratorClass.js:13-29). */
+      readonly chordType: PianoHandChordType;
+    }
   | {
       readonly kind: 'arpeggio';
       readonly beat: number;
@@ -30,6 +36,13 @@ export type KeysAlgoEvent =
       readonly note: number;
       readonly duration: number;
     };
+
+/** The engine voices piano chords per hand (SequencerUtils.h getChordNotes):
+ *  left hand = 3 notes up from the key root in octave 3, right hand = 3 notes
+ *  down from octave 5. */
+export type PianoHandChordType = 'pianoLeftHand' | 'pianoRightHand';
+export const pianoHandChordType = (hand: 'leftHand' | 'rightHand'): PianoHandChordType =>
+  hand === 'leftHand' ? 'pianoLeftHand' : 'pianoRightHand';
 
 /** A 2-bar blueprint: `bars[barIdx]` is the ordered events for that bar. */
 export interface KeysAlgoBlueprint {
@@ -60,21 +73,22 @@ function resolveDuration(rng: Rng, length: LengthCategory): number {
 // pick one duration from the length-category pool, emit a chord slot.
 function addChordPattern(
   rng: Rng,
+  chordType: PianoHandChordType,
   out: KeysAlgoEvent[],
   hits: readonly number[],
   length: LengthCategory,
 ): void {
   const beat = rng.pick(hits);
   const duration = resolveDuration(rng, length);
-  out.push({ kind: 'chord', beat, duration });
+  out.push({ kind: 'chord', beat, duration, chordType });
 }
 
 function generateChordsMixed(rng: Rng): KeysAlgoBlueprint {
-  // Legacy picks a hand first (selectRandomly(['leftHand','rightHand'])).
-  // Both hands produce identical chord-slot structure (only the engine
-  // voicing label differs), so we consume the roll for stream fidelity
-  // but otherwise ignore it.
-  rng.pick(['leftHand', 'rightHand']);
+  // Legacy picks a hand first (PianoPatternGeneratorClass.js chordsMixed:
+  // selectRandomly(['leftHand','rightHand'])). Both hands produce the same
+  // chord slots; the hand sets the engine voicing (pianoLeftHand: octave 3
+  // up, pianoRightHand: octave 5 down), so it rides on every chord event.
+  const chordType = pianoHandChordType(rng.pick(['leftHand', 'rightHand'] as const));
 
   const handStyle = rng.pick(['shortChords', 'longAndShortChords'] as const);
   const busyness = rng.pick([1, 2, 3]);
@@ -95,51 +109,51 @@ function generateChordsMixed(rng: Rng): KeysAlgoBlueprint {
     const style = barStyle[bar];
     if (busyness === 1) {
       if (style === 'longChords') {
-        addChordPattern(rng, out, [0, 1], 'long');
+        addChordPattern(rng, chordType, out, [0, 1], 'long');
       } else {
-        addChordPattern(rng, out, [0, 0.5, 1, 1.5], 'short');
-        addChordPattern(rng, out, [2, 2.5, 3, 3.5], 'short');
+        addChordPattern(rng, chordType, out, [0, 0.5, 1, 1.5], 'short');
+        addChordPattern(rng, chordType, out, [2, 2.5, 3, 3.5], 'short');
       }
     } else if (busyness === 2) {
       if (style === 'longChords') {
         const half = rng.pick(['firstHalf', 'secondHalf'] as const);
         if (half === 'firstHalf') {
           if (bar === 0) {
-            addChordPattern(rng, out, [0, 0.5], 'medium');
-            addChordPattern(rng, out, [2, 2.5], 'medium');
+            addChordPattern(rng, chordType, out, [0, 0.5], 'medium');
+            addChordPattern(rng, chordType, out, [2, 2.5], 'medium');
           } else {
-            addChordPattern(rng, out, [0, 1], 'long');
+            addChordPattern(rng, chordType, out, [0, 1], 'long');
           }
         } else {
           if (bar === 0) {
-            addChordPattern(rng, out, [0, 1], 'long');
+            addChordPattern(rng, chordType, out, [0, 1], 'long');
           } else {
-            addChordPattern(rng, out, [0, 0.5], 'medium');
-            addChordPattern(rng, out, [2, 2.5], 'medium');
+            addChordPattern(rng, chordType, out, [0, 0.5], 'medium');
+            addChordPattern(rng, chordType, out, [2, 2.5], 'medium');
           }
         }
       } else {
         const half = rng.pick(['firstHalf', 'secondHalf'] as const);
         if (half === 'firstHalf') {
-          addChordPattern(rng, out, [0, 0.5], 'short');
-          addChordPattern(rng, out, [1, 1.5], 'short');
-          addChordPattern(rng, out, [2, 2.5, 3, 3.5], 'short');
+          addChordPattern(rng, chordType, out, [0, 0.5], 'short');
+          addChordPattern(rng, chordType, out, [1, 1.5], 'short');
+          addChordPattern(rng, chordType, out, [2, 2.5, 3, 3.5], 'short');
         } else {
-          addChordPattern(rng, out, [0, 0.5, 1, 1.5], 'short');
-          addChordPattern(rng, out, [2, 2.5], 'short');
-          addChordPattern(rng, out, [3, 3.5], 'short');
+          addChordPattern(rng, chordType, out, [0, 0.5, 1, 1.5], 'short');
+          addChordPattern(rng, chordType, out, [2, 2.5], 'short');
+          addChordPattern(rng, chordType, out, [3, 3.5], 'short');
         }
       }
     } else {
       // busyness === 3
       if (style === 'longChords') {
-        addChordPattern(rng, out, [0, 0.5, 1], 'medium');
-        addChordPattern(rng, out, [2, 2.5, 3], 'medium');
+        addChordPattern(rng, chordType, out, [0, 0.5, 1], 'medium');
+        addChordPattern(rng, chordType, out, [2, 2.5, 3], 'medium');
       } else {
-        addChordPattern(rng, out, [0, 0.5], 'short');
-        addChordPattern(rng, out, [1, 1.5], 'short');
-        addChordPattern(rng, out, [2, 2.5], 'short');
-        addChordPattern(rng, out, [3, 3.5], 'short');
+        addChordPattern(rng, chordType, out, [0, 0.5], 'short');
+        addChordPattern(rng, chordType, out, [1, 1.5], 'short');
+        addChordPattern(rng, chordType, out, [2, 2.5], 'short');
+        addChordPattern(rng, chordType, out, [3, 3.5], 'short');
       }
     }
   }

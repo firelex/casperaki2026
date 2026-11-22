@@ -27,6 +27,7 @@ import { MidiNoteSchema, type Segment } from '@casperaki/song-schema';
 import type { GeneratorContext } from '../context.js';
 import { authoredBassStylesFor, BASS_BEATS_PER_LEGACY_BAR, chordRelativeSelection, selectBassPattern } from './bass-bank.js';
 import { bassPreviewFromParams } from './proposals.js';
+import { nearestRootDelta } from './pad.js';
 import {
   selectHipHopBassPattern,
   selectRealBassPattern,
@@ -81,7 +82,17 @@ export function generateBassPattern(
       const patternBar = segBarIdx % selection.patternBars;
       for (const ev of selection.events) {
         if (ev.bar !== patternBar) continue;
-        const note = MidiNoteSchema.parse(ev.midi);
+        // Legacy bank lines are C-template lines (no chords reach the bass
+        // generator: BassPatternGeneratorClass.js:77-84) sent as plain notes,
+        // which the engine moves from C to each chord's root the nearest way
+        // (Tonal.h getSimpleNote). So the line follows the chords.
+        const chordsThisBar = segment.bars[segBarIdx]!.chords;
+        const chordSymbol = chordsThisBar[Math.floor(ev.beat)] ?? chordsThisBar[0];
+        if (!chordSymbol) throw new Error(`generateBassPattern: segment "${segment.name}" bar ${segBarIdx} has no chords`);
+        let pitch = ev.midi + nearestRootDelta(parseChord(chordSymbol).root);
+        while (pitch < 0) pitch += 12;
+        while (pitch > 127) pitch -= 12;
+        const note = MidiNoteSchema.parse(pitch);
         addNoteEvent(bars[segBarIdx]!, ev.beat, { type: 'note', note, duration: ev.duration });
       }
     }
@@ -106,8 +117,11 @@ export function generateBassPattern(
           `generateBassPattern: segment "${segment.name}" bar ${segBarIdx} has no chords`,
         );
       }
+      // Legacy builds the hit on its default all-C template ('C' + octave +
+      // offset) and the engine moves the plain note from C to the chord root
+      // the nearest way (-5..+6), not upwards: roots G..B sit below C.
       const root = parseChord(chordSymbol).root;
-      const raw = rootBaseMidi + root + semitoneOffset;
+      const raw = rootBaseMidi + nearestRootDelta(root) + semitoneOffset;
       // Clamp into MidiNote range. SM patterns can use offsets like
       // `-5` / `+7` / `+12` that, combined with extreme chord roots,
       // would theoretically push out of [0, 127]. Octave-shift back in
