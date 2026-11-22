@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
-import { BEATS_PER_BAR, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
+import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
 import { resolveColor } from './layout';
 
 const CELL_W = 22;
@@ -159,7 +159,9 @@ function Playhead({ head, stepsPerBeat, cellW }: { head: number | undefined; ste
 }
 
 function DrumSteps({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: GridProps) {
-  const pitches = [...new Set(notes.map((n) => n.pitch).filter((p): p is number => p !== null))].sort((a, b) => a - b);
+  // The whole kit, used pieces or not, plus any note outside it.
+  const used = new Set(notes.map((n) => n.pitch).filter((p): p is number => p !== null));
+  const pitches = [...DRUM_KIT.map((d) => d.pitch), ...[...used].filter((p) => !DRUM_KIT.some((d) => d.pitch === p))];
   const height = pitches.length * DRUM_ROW_H;
   return (
     <div className="relative min-w-max">
@@ -167,7 +169,7 @@ function DrumSteps({ notes, beats, stepsPerBeat, cellW, gridW, color, head }: Gr
       <div className="flex">
         <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
           {pitches.map((p) => (
-            <div key={p} className="truncate border-b border-white/5 px-3 text-[12px] text-white/75" style={{ height: DRUM_ROW_H, lineHeight: `${DRUM_ROW_H}px` }}>
+            <div key={p} className={`truncate border-b border-white/5 px-3 text-[12px] ${used.has(p) ? 'text-white/85' : 'text-white/30'}`} style={{ height: DRUM_ROW_H, lineHeight: `${DRUM_ROW_H}px` }}>
               {drumName(p)}
             </div>
           ))}

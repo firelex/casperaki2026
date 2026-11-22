@@ -104,7 +104,33 @@ const GM_DRUMS: Record<number, string> = {
   55: 'Splash', 56: 'Cowbell', 57: 'Crash 2', 59: 'Ride 2', 60: 'High bongo', 61: 'Low bongo', 62: 'Conga mute',
   63: 'Conga high', 64: 'Conga low', 69: 'Cabasa', 70: 'Shaker', 75: 'Claves', 76: 'Wood block', 81: 'Triangle',
 };
+/**
+ * The playback engine's drum kit, top to bottom as in a DAW drum editor:
+ * cymbals, hats, toms, percussion, snares, kicks. Note numbers as the
+ * engine maps them (packages/engine-adapter DRUM_MIDI).
+ */
+export const DRUM_KIT: readonly { readonly pitch: number; readonly name: string }[] = [
+  { pitch: 49, name: 'Crash' },
+  { pitch: 57, name: 'Crash 2' },
+  { pitch: 51, name: 'Ride' },
+  { pitch: 46, name: 'Open hat' },
+  { pitch: 42, name: 'Closed hat' },
+  { pitch: 44, name: 'Closed hat 2' },
+  { pitch: 50, name: 'Tom 1' },
+  { pitch: 47, name: 'Tom 2' },
+  { pitch: 43, name: 'Tom 3' },
+  { pitch: 70, name: 'Shaker' },
+  { pitch: 39, name: 'Clap' },
+  { pitch: 31, name: 'Snap' },
+  { pitch: 38, name: 'Snare' },
+  { pitch: 40, name: 'Snare 2' },
+  { pitch: 36, name: 'Kick' },
+  { pitch: 35, name: 'Kick 2' },
+];
+
 export function drumName(pitch: number): string {
+  const kit = DRUM_KIT.find((d) => d.pitch === pitch);
+  if (kit) return kit.name;
   return GM_DRUMS[pitch] ?? `Drum ${pitch}`;
 }
 

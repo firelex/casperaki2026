@@ -18,7 +18,7 @@ import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
 import { BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MIN_PX_PER_BAR, ROW_H, RULER_H, TIME_H } from './sequencer/layout';
-import { beginRangeDrag } from './sequencer/rangeDrag';
+import { beginEdgeDrag, beginRangeDrag } from './sequencer/rangeDrag';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
@@ -50,7 +50,7 @@ export function TimelineView() {
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
   /** Where the last right-click landed: which track, which section. */
-  const [menuAt, setMenuAt] = useState<{ track: string; section: number | undefined } | undefined>(undefined);
+  const [menuAt, setMenuAt] = useState<{ track: string; section: number | undefined; inSelection: boolean } | undefined>(undefined);
 
   // Per-track waveforms: measured in a background worker for the version on
   // screen (a moment after editing stops), filling in as it runs.
@@ -72,6 +72,7 @@ export function TimelineView() {
     return m;
   }, [meters]);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [pxPerBar, setPxPerBar] = useState<number | undefined>(undefined);
   const [follow, setFollow] = useState(true);
 
@@ -110,6 +111,25 @@ export function TimelineView() {
     (r: BarRange | undefined) => livePlayer.setLoopRange(r ? { start: r.start * secondsPerBar, end: r.end * secondsPerBar } : undefined),
     [secondsPerBar],
   );
+
+  const selectionMenu: SelectionActions = {
+    label: range ? `Selection ${fmtBar(range.start)} – ${fmtBar(range.end)}` : '',
+    looping: live.looping,
+    onLoop: () => {
+      if (!range) return;
+      livePlayer.setLooping(true);
+      if (!playing) {
+        if (liveKey && livePlayer.isLoaded(liveKey)) playPause();
+        else seek(range.start * secondsPerBar);
+      }
+    },
+    onPlay: () => {
+      if (!range) return;
+      seek(range.start * secondsPerBar);
+      if (!playing && liveKey && livePlayer.isLoaded(liveKey)) playPause();
+    },
+    onClear: () => setRange(undefined),
+  };
 
   const loopSection = useCallback(
     (sec: SeqSection) => {
@@ -203,7 +223,7 @@ export function TimelineView() {
       </div>
 
       <div ref={scrollerRef} className="relative min-h-0 flex-1 overflow-auto bg-[#0b0c15]">
-        <div className="relative" style={{ width: HEADER_W + width, minHeight: '100%' }}>
+        <div ref={contentRef} className="relative" style={{ width: HEADER_W + width, minHeight: '100%' }}>
           {/* Ruler. */}
           <div className="sticky top-0 z-30 flex bg-[#0d0d17]" style={{ height: RULER_H }}>
             <div
@@ -215,6 +235,7 @@ export function TimelineView() {
               <span style={{ height: TIME_H, lineHeight: `${TIME_H}px` }}>Min:sec</span>
               <span className="text-sky-300/70" style={{ height: LOOP_H, lineHeight: `${LOOP_H}px` }}>Loop (drag)</span>
             </div>
+            <SelectionMenu selection={range ? selectionMenu : undefined}>
             <div className="border-b border-line/60">
               <Ruler
                 model={model}
@@ -228,6 +249,7 @@ export function TimelineView() {
                 onRangeChange={setRange}
               />
             </div>
+            </SelectionMenu>
             {isThisSong && playheadX >= HEADER_W ? (
               <span
                 className="pointer-events-none absolute top-[22px] z-[35] h-0 w-0 -translate-x-1/2 border-x-[6px] border-t-[8px] border-x-transparent border-t-accent"
@@ -245,11 +267,33 @@ export function TimelineView() {
             />
           ) : null}
 
+          {/* Selection edges over the tracks: drag to adjust. */}
+          {range
+            ? ([0, 1] as const).map((i) => (
+                <div
+                  key={i}
+                  className="absolute z-[6] w-[11px] cursor-ew-resize"
+                  style={{ left: HEADER_W + (i === 0 ? range.start : range.end) * px - 5, top: RULER_H, bottom: 0 }}
+                  title="Drag to move this edge of the selection"
+                  onPointerDown={(e) =>
+                    beginEdgeDrag(e, {
+                      originX: () => contentRef.current!.getBoundingClientRect().left + HEADER_W,
+                      pxPerBar: px,
+                      totalBars: model.totalBars,
+                      fixed: i === 0 ? range.end : range.start,
+                      onRange: setRange,
+                    })
+                  }
+                />
+              ))
+            : null}
+
           {model.tracks.map((t, i) => (
             <TrackMenu
               key={t.name}
               track={t}
               section={menuAt?.track === t.name ? menuAt.section : undefined}
+              selection={menuAt?.track === t.name && menuAt.inSelection ? selectionMenu : undefined}
               sections={model.sections}
               editable={editable(t.name)}
               soundChangeable={canChangeSound(t.name)}
@@ -270,7 +314,11 @@ export function TimelineView() {
                   const lane = (e.target as HTMLElement).closest('[data-lane]');
                   const bar = lane ? (e.clientX - lane.getBoundingClientRect().left) / px : undefined;
                   const s = bar === undefined ? -1 : sectionIndexAt(bar);
-                  setMenuAt({ track: t.name, section: s >= 0 && t.clips.some((c) => c.section === s) ? s : undefined });
+                  setMenuAt({
+                    track: t.name,
+                    section: s >= 0 && t.clips.some((c) => c.section === s) ? s : undefined,
+                    inSelection: Boolean(range && bar !== undefined && bar >= range.start && bar <= range.end),
+                  });
                   setSelectedTrack(t.name);
                 }}
               >
@@ -428,6 +476,7 @@ export function TimelineView() {
 function TrackMenu({
   track,
   section,
+  selection,
   sections,
   editable,
   soundChangeable,
@@ -442,6 +491,8 @@ function TrackMenu({
 }: {
   track: SeqTrack;
   section: number | undefined;
+  /** Set when the right-click landed inside the selected range. */
+  selection: SelectionActions | undefined;
   sections: readonly SeqSection[];
   editable: boolean;
   soundChangeable: boolean;
@@ -462,6 +513,12 @@ function TrackMenu({
           {track.name}
           {section !== undefined ? ` · ${sections[section]!.name}` : ''}
         </ContextMenuLabel>
+        {selection ? (
+          <>
+            <SelectionItems selection={selection} />
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+          </>
+        ) : null}
         {section !== undefined ? (
           <>
             <ContextMenuItem className={ITEM} onSelect={() => onOpen(section)}>
@@ -487,6 +544,46 @@ function TrackMenu({
         <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onAdd(section)}>
           Add track…
         </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
+interface SelectionActions {
+  readonly label: string;
+  readonly looping: boolean;
+  onPlay(): void;
+  onLoop(): void;
+  onClear(): void;
+}
+
+function SelectionItems({ selection }: { selection: SelectionActions }) {
+  return (
+    <>
+      <ContextMenuLabel className="px-3 pb-1 pt-2 font-mono text-[11px] font-normal text-sky-300/80">{selection.label}</ContextMenuLabel>
+      <ContextMenuItem className={ITEM} onSelect={selection.onPlay}>
+        Play from selection start
+      </ContextMenuItem>
+      {selection.looping ? null : (
+        <ContextMenuItem className={ITEM} onSelect={selection.onLoop}>
+          Loop selection <span className="ml-auto pl-6 text-[12px] text-white/40">L</span>
+        </ContextMenuItem>
+      )}
+      <ContextMenuItem className={ITEM} onSelect={selection.onClear}>
+        Clear selection
+      </ContextMenuItem>
+    </>
+  );
+}
+
+/** Right-click menu for the ruler while a range is selected. */
+function SelectionMenu({ selection, children }: { selection: SelectionActions | undefined; children: ReactNode }) {
+  if (!selection) return <>{children}</>;
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+      <ContextMenuContent className={MENU}>
+        <SelectionItems selection={selection} />
       </ContextMenuContent>
     </ContextMenu>
   );

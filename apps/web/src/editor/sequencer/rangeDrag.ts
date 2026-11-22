@@ -63,3 +63,32 @@ export function beginRangeDrag(
   window.addEventListener('pointermove', move);
   window.addEventListener('pointerup', up);
 }
+
+/**
+ * Press on one edge of the selection: dragging moves that edge while the
+ * other stays put (dragging past it swaps them). `originX` gives the screen
+ * x of bar 0.
+ */
+export function beginEdgeDrag(
+  e: ReactPointerEvent<HTMLElement>,
+  opts: { originX(): number; pxPerBar: number; totalBars: number; fixed: number; onRange(range: BarRange): void },
+): void {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const { pxPerBar, totalBars, fixed } = opts;
+  const prevCursor = document.body.style.cursor;
+  document.body.style.cursor = 'ew-resize';
+  const move = (ev: PointerEvent) => {
+    ev.preventDefault();
+    const b = snapBar((ev.clientX - opts.originX()) / pxPerBar, pxPerBar, totalBars, ev.altKey);
+    if (b !== fixed) opts.onRange({ start: Math.min(b, fixed), end: Math.max(b, fixed) });
+  };
+  const up = () => {
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    document.body.style.cursor = prevCursor;
+  };
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+}

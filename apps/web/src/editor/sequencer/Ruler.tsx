@@ -4,7 +4,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { BEATS_PER_BAR, type SequencerModel } from '../sequencerModel';
 import { BARS_H, clockLabel, gridStep, LOOP_H, MARKERS_H, snapUnit, TIME_H } from './layout';
 
-import { beginRangeDrag, type BarRange } from './rangeDrag';
+import { beginEdgeDrag, beginRangeDrag, type BarRange } from './rangeDrag';
 
 export type { BarRange };
 
@@ -42,6 +42,7 @@ export function Ruler({
 }) {
   const width = model.totalBars * px;
   const loopRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<Drag | undefined>(undefined);
   const { beats, bars: barEvery } = gridStep(px);
   const labelEvery = px >= 34 ? 1 : px >= 16 ? 2 : px >= 9 ? 4 : 8;
@@ -95,20 +96,34 @@ export function Ruler({
   const rangeLabel = range ? `${fmtBar(range.start)} – ${fmtBar(range.end)}` : '';
 
   return (
-    <div className="relative shrink-0 select-none" style={{ width }}>
+    <div ref={rootRef} className="relative shrink-0 select-none" style={{ width }}>
       {/* Range start / end markers across the ruler. */}
       {range ? (
         <>
           {[range.start, range.end].map((b, i) => (
             <span
               key={i}
-              className={`pointer-events-none absolute top-0 bottom-0 z-10 w-px ${looping ? 'bg-sky-300' : 'bg-white/80'}`}
+              className={`pointer-events-none absolute top-0 bottom-0 z-20 w-px ${looping ? 'bg-sky-300' : 'bg-white/80'}`}
               style={{ left: b * px }}
             >
               <span
                 className={`absolute top-[22px] h-0 w-0 border-y-[5px] border-y-transparent ${
                   i === 0 ? `left-0 border-l-[7px] ${looping ? 'border-l-sky-300' : 'border-l-white/80'}` : `right-0 border-r-[7px] ${looping ? 'border-r-sky-300' : 'border-r-white/80'}`
                 }`}
+              />
+              {/* Grab area: drag to move this edge. */}
+              <span
+                className="pointer-events-auto absolute -left-[5px] top-0 bottom-0 w-[11px] cursor-ew-resize"
+                title="Drag to move this edge of the selection"
+                onPointerDown={(e) =>
+                  beginEdgeDrag(e, {
+                    originX: () => rootRef.current!.getBoundingClientRect().left,
+                    pxPerBar: px,
+                    totalBars: model.totalBars,
+                    fixed: i === 0 ? range.end : range.start,
+                    onRange: onRangeChange,
+                  })
+                }
               />
             </span>
           ))}
