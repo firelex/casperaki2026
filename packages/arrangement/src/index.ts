@@ -265,6 +265,7 @@ export {
   lowerToSong,
   orchestrate,
   type LowerInputs,
+  instrumentDefinitionFromCatalog,
 } from './orchestrate/index.js';
 export {
   VocalBarSchema,
@@ -297,7 +298,7 @@ export {
   type SelectionResult,
 } from './selection/types.js';
 export { LOOP_DISPLAY_NAME, LOOP_GENRES } from './selection/index.js';
-export { familySoundPool, laneFamilyOf, LANE_BASE_NAMES } from './selection/index.js';
+export { familySoundPool, laneFamilyOf, LANE_BASE_NAMES, userSoundFamily, userSoundFor } from './selection/index.js';
 export {
   applyTrackEditsToSelection,
   recordedTrackEdits,

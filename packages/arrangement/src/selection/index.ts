@@ -832,3 +832,41 @@ export function familySoundPool(family: InstrumentFamily, genre: string): readon
   }
   return sortById([...byId.values()]);
 }
+
+/**
+ * The track family a library sound can be used on when the user picks it
+ * (Use in song, Change sound), regardless of the genre's own pool:
+ * keys → keys, basses → bass, pads → pad, plucked synths → pluckedSynths,
+ * lead synths → synths, guitars → guitar, pop strings / brass → themselves.
+ * Undefined for sounds no track type plays (orchestral, wobble-bass tempo
+ * loops, drum hits, loops, fx).
+ */
+export function userSoundFamily(entry: Pick<ValidatedCatalogEntry, 'family' | 'lowLevel'>): InstrumentFamily | undefined {
+  switch (entry.family) {
+    case 'keys':
+      return 'keys';
+    case 'basses':
+      return entry.lowLevel === 'bassesSynthWobble' ? undefined : 'bass';
+    case 'synths':
+      return entry.lowLevel === 'synthsPlucked' ? 'pluckedSynths' : 'pad';
+    case 'leadSynths':
+      return 'synths';
+    case 'electricGuitars':
+    case 'acousticGuitars':
+      return 'guitar';
+    case 'popStrings':
+      return 'popStrings';
+    case 'popBrass':
+      return 'popBrass';
+    default:
+      return undefined;
+  }
+}
+
+/** A sound the user picked for a track of `family`: in the genre's pool, or any library sound of that family. */
+export function userSoundFor(family: InstrumentFamily, genre: string, soundId: string): ValidatedCatalogEntry | undefined {
+  const pooled = familySoundPool(family, genre).find((e) => e.id === soundId);
+  if (pooled) return pooled;
+  const entry = loadValidatedCatalog().entries.find((e) => e.id === soundId);
+  return entry && userSoundFamily(entry) === family ? entry : undefined;
+}

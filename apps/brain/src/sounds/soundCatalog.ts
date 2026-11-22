@@ -1,11 +1,16 @@
 // The public sound catalog behind the Sounds page: every sound with its public
 // name only (never library, preset, file path or other original names), the
 // families with counts, and how each sound can be previewed:
-//   'pattern' — a tonal sound the generator can use (in some genre's pool):
-//               previewed as a short pattern written for it
+//   'pattern' — a tonal sound whose file the audit matched: previewed as a
+//               short generated pattern. A sound a genre uses gets a pattern
+//               written for it; any other sound plays the pattern written for
+//               a similar sound a genre uses (its "donor": same kind where
+//               possible, e.g. a nylon mono guitar plays a nylon stereo
+//               guitar's part, a legato orchestral string section a pad part)
 //   'audio'   — a drum hit, loop / break or fx whose file the audit matched:
 //               previewed as its own audio
-//   'none'    — neither (e.g. a tonal sound no genre uses)
+//   'none'    — neither (its file is missing from the library)
+// Wobble basses are tempo loops, so they are previewed as audio (looped).
 
 import {
   familySoundPool,
@@ -15,6 +20,7 @@ import {
   publicNameOf,
   type InstrumentFamily,
   type ValidatedCatalogEntry,
+  userSoundFamily,
 } from '@casperaki/arrangement';
 import { GenreSchema } from '@casperaki/song-schema';
 import { readFileSync } from 'node:fs';
@@ -34,6 +40,8 @@ export interface SoundItem {
   readonly bpm: number | null;
   readonly key: string | null;
   readonly preview: SoundPreview;
+  /** The track kind it can be used on in a song (Use / Change sound), or null. */
+  readonly useAs: InstrumentFamily | null;
 }
 
 export interface SoundFamily {
@@ -89,13 +97,61 @@ export function typeLabel(family: string, lowLevel: string, familyLabel: string)
 interface Built {
   readonly items: readonly SoundItem[];
   readonly byId: ReadonlyMap<string, SoundItem>;
-  /** Pattern sounds: the generator family and genre to preview them in. */
-  readonly patternOf: ReadonlyMap<string, { family: InstrumentFamily; genre: string }>;
+  /** Pattern sounds: the generator family, genre and donor sound (itself when a genre uses it) to preview them with. */
+  readonly patternOf: ReadonlyMap<string, PatternPreview>;
   /** Audio sounds: the validated entry (its matched file). */
   readonly validated: ReadonlyMap<string, ValidatedCatalogEntry>;
 }
 
+export interface PatternPreview {
+  readonly family: InstrumentFamily;
+  /** Genres that use the donor, best first (the preview uses the first that writes a part). */
+  readonly genres: readonly string[];
+  /** The sound whose generated part is played (the sound itself when a genre uses it). */
+  readonly donorId: string;
+  /** The sound to play it with (validated: its file exists). */
+  readonly entry: ValidatedCatalogEntry;
+}
+
 let built: Built | undefined;
+
+/**
+ * For a tonal sound no genre uses: which generator family writes its part,
+ * and the donor kinds (lowLevels) to prefer, best first.
+ */
+function donorKind(family: string, lowLevel: string): { family: InstrumentFamily; prefer: string[] } {
+  const short = /Staccato|Pizzicato|Hit$/u.test(lowLevel);
+  const low = /Low|Bass|Cello/u.test(lowLevel);
+  switch (family) {
+    case 'keys':
+      return { family: 'keys', prefer: [lowLevel, lowLevel === 'keysOrgan' ? 'keysElectronicPiano' : 'keysAcousticPiano'] };
+    case 'synths':
+      return lowLevel === 'synthsPlucked' ? { family: 'pluckedSynths', prefer: [lowLevel] } : { family: 'pad', prefer: [lowLevel] };
+    case 'leadSynths':
+      return { family: 'synths', prefer: [lowLevel] };
+    case 'basses':
+      return { family: 'bass', prefer: [lowLevel] };
+    case 'electricGuitars':
+    case 'acousticGuitars':
+      // A mono sound plays the part of its stereo twin.
+      return { family: 'guitar', prefer: [lowLevel, lowLevel.replace(/Mono$/u, 'Stereo')] };
+    case 'popStrings':
+      return short ? { family: 'popStrings', prefer: [low ? 'popLowStringsStaccato' : 'popHighStringsStaccato'] } : { family: 'pad', prefer: [] };
+    case 'popBrass':
+      // The generator writes brass only as short phrase-end fills, too sparse
+      // for a demo: staccato brass plays the staccato string part, legato
+      // brass the pad's held chords.
+      return short ? { family: 'popStrings', prefer: ['popHighStringsStaccato'] } : { family: 'pad', prefer: [] };
+    case 'orchestral':
+      // No genre writes orchestral parts: they borrow the staccato string,
+      // pad or bass part that fits their articulation (hits play staccato).
+      if (short) return { family: 'popStrings', prefer: [low ? 'popLowStringsStaccato' : 'popHighStringsStaccato'] };
+      if (/Bass(Legato|Solo)$/u.test(lowLevel)) return { family: 'bass', prefer: ['bassesAcoustic'] };
+      return { family: 'pad', prefer: [] };
+    default:
+      throw new Error(`donorKind: no generator family plays "${family}" sounds`);
+  }
+}
 
 /** Which generator family / genre can play each tonal sound (drum kits are audio). */
 function buildPatternMap(): Map<string, { family: InstrumentFamily; genres: string[] }> {
@@ -118,18 +174,57 @@ export function soundCatalog(): Built {
   const snapshot = loadEffectiveCatalogSnapshot();
   const validated = loadValidatedCatalog();
   const pools = buildPatternMap();
-  const patternOf = new Map<string, { family: InstrumentFamily; genre: string }>();
+  const patternOf = new Map<string, PatternPreview>();
+  // Donor candidates per generator family: sounds a genre uses, with their genres.
+  const donors = new Map<InstrumentFamily, { id: string; lowLevel: string; genres: readonly string[] }[]>();
+  for (const [id, p] of pools) {
+    const v = validated.byId.get(id);
+    if (!v) continue;
+    const list = donors.get(p.family) ?? [];
+    list.push({ id, lowLevel: v.lowLevel, genres: p.genres });
+    donors.set(p.family, list);
+  }
+  for (const list of donors.values()) list.sort((a, b) => a.id.localeCompare(b.id));
+  // Genres that write parts for each track kind (in the schema's order).
+  const familyGenres = new Map<InstrumentFamily, string[]>();
+  for (const [family, list] of donors) {
+    const set = new Set(list.flatMap((d) => d.genres));
+    familyGenres.set(family, GenreSchema.options.filter((g) => set.has(g)));
+  }
   const items: SoundItem[] = [];
   for (const e of snapshot.entries) {
     const fam = FAMILY_BY_ID.get(e.family);
     if (!fam) continue;
-    const pool = pools.get(e.id);
     let preview: SoundPreview = 'none';
     if (fam.group === 'Instruments') {
-      if (pool) {
+      const entry = validated.byId.get(e.id);
+      if (entry && e.lowLevel === 'bassesSynthWobble') {
+        // Wobble basses are tempo loops ("… - 120"), not playable notes:
+        // heard as their own loop at one of their tempos.
+        preview = 'audio';
+      } else if (entry) {
+        // A sound a track kind can use gets its own part generated (in any
+        // genre that writes that kind). Brass (whose generated parts are
+        // sparse fills) and orchestral sounds borrow a part (see donorKind).
+        const own = userSoundFamily(entry);
+        let family: InstrumentFamily;
+        let donorId: string;
+        if (own && own !== 'popBrass') {
+          family = own;
+          donorId = e.id;
+        } else {
+          const kind = donorKind(e.family, e.lowLevel);
+          const list = donors.get(kind.family);
+          if (!list?.length) throw new Error(`soundCatalog: no genre uses any ${kind.family} sound to lend its part to ${e.id}`);
+          family = kind.family;
+          donorId = (kind.prefer.map((l) => list.find((d) => d.lowLevel === l)).find(Boolean) ?? list.find((d) => validated.byId.get(d.id)?.family === e.family) ?? list[0]!).id;
+        }
+        const all = familyGenres.get(family);
+        if (!all?.length) throw new Error(`soundCatalog: no genre writes ${family} parts (for ${e.id})`);
+        // The sound's own style first, then the rest.
+        const genres = e.mainStyle && all.includes(e.mainStyle) ? [e.mainStyle, ...all.filter((g) => g !== e.mainStyle)] : all;
         preview = 'pattern';
-        const genre = e.mainStyle && pool.genres.includes(e.mainStyle) ? e.mainStyle : pool.genres[0]!;
-        patternOf.set(e.id, { family: pool.family, genre });
+        patternOf.set(e.id, { family, genres, donorId, entry });
       }
     } else if (validated.byId.has(e.id)) {
       preview = 'audio';
@@ -144,6 +239,7 @@ export function soundCatalog(): Built {
       bpm: e.bpm ?? null,
       key: e.key ?? null,
       preview,
+      useAs: validated.byId.has(e.id) ? (userSoundFamily(e) ?? null) : null,
     });
   }
   items.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));

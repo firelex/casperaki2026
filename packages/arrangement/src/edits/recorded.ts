@@ -4,7 +4,7 @@
 import { z } from 'zod';
 
 import type { GenerateParams } from '../context.js';
-import { familySoundPool } from '../selection/index.js';
+import { userSoundFor } from '../selection/index.js';
 import { InstrumentFamilySchema, type InstrumentFamily, type SelectionResult } from '../selection/types.js';
 
 // ---- recorded edits (generator params) ----------------------------------------
@@ -53,7 +53,7 @@ export function applyTrackEditsToSelection(
     return lane;
   };
   const entryOf = (family: InstrumentFamily, soundId: string) => {
-    const entry = familySoundPool(family, genre).find((e) => e.id === soundId);
+    const entry = userSoundFor(family, genre, soundId);
     if (!entry) throw new Error(`trackEdits: sound ${soundId} is not a ${family} sound for ${genre}`);
     return entry;
   };

@@ -33,6 +33,9 @@ const ListQuery = z
 /** Loops and breaks are cut to this many seconds for previews. */
 const AUDIO_PREVIEW_SEC = 16;
 
+/** Pattern preview options: a style (genre) and which generated pattern (0, 1, 2, …). */
+const PreviewBody = z.object({ genre: z.string().min(1).optional(), variant: z.number().int().min(0).max(999).optional() }).strict();
+
 export function createSoundsRouter(deps: { playback: PlaybackService | undefined }): Router {
   const { playback } = deps;
   const router = Router();
@@ -69,10 +72,17 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
       if (item.preview !== 'pattern' || !target) {
         throw new SoundError(409, 'no_pattern_preview', `${item.name} is previewed as ${item.preview === 'audio' ? 'audio' : 'nothing'}, not as a pattern.`);
       }
-      const { song, bpm } = previewSong(item.id, target.family, target.genre);
+      const body = PreviewBody.safeParse(req.body ?? {});
+      if (!body.success) throw new SoundError(400, 'invalid_body', body.error.issues[0]?.message ?? 'invalid body');
+      const want = body.data.genre;
+      if (want !== undefined && !target.genres.includes(want)) {
+        throw new SoundError(400, 'unsupported_style', `No ${want} part can be written for ${item.name} (styles: ${target.genres.join(', ')}).`);
+      }
+      const variant = body.data.variant ?? 0;
+      const { song, bpm, genre } = previewSong(target.donorId, target.family, want ? [want] : target.genres, target.entry, variant);
       const canonical = canonicalStringifySong(song, 2);
       const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
-      return res.json({ ...(await playbackPayload(playback, id, canonical)), bpm, bars: PREVIEW_BARS, genre: target.genre });
+      return res.json({ ...(await playbackPayload(playback, id, canonical)), bpm, bars: PREVIEW_BARS, genre, genres: target.genres, variant });
     } catch (err) {
       return fail(res, err);
     }

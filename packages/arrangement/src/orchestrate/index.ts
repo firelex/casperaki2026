@@ -423,7 +423,7 @@ function loopInstrumentDefinition(loop: SelectionResult['loop']): InstrumentDefi
   } as InstrumentDefinition;
 }
 
-function instrumentDefinitionFromCatalog(
+export function instrumentDefinitionFromCatalog(
   lane: string,
   entry: ValidatedCatalogEntry,
 ): InstrumentDefinition {

@@ -8,6 +8,7 @@ describe('auditionKind', () => {
     expect(auditionKind('hiHatsClosed')).toBe('groove');
     expect(auditionKind('percussionLoops')).toBe('loop');
     expect(auditionKind('percussionBreaks')).toBe('loop');
+    expect(auditionKind('basses')).toBe('loop');
     expect(auditionKind('fx')).toBe('once');
   });
 });

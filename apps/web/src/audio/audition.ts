@@ -23,7 +23,8 @@ export type AuditionKind = 'groove' | 'loop' | 'once';
 
 export function auditionKind(family: string): AuditionKind {
   if (family in GROOVES) return 'groove';
-  if (family === 'percussionLoops' || family === 'percussionBreaks') return 'loop';
+  // Basses heard as audio are wobble-bass tempo loops.
+  if (family === 'percussionLoops' || family === 'percussionBreaks' || family === 'basses') return 'loop';
   return 'once';
 }
 

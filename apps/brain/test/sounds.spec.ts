@@ -110,3 +110,36 @@ describe('diskPathOf', () => {
     expect(diskPathOf('keys/keysAcousticPiano/z.mp3')).toBe('keys/keysAcousticPiano/z.mp3');
   });
 });
+
+describe('pattern previews for every tonal sound', () => {
+  it('lends a part to sounds no genre uses (orchestral, mono guitars, brass)', async () => {
+    const { soundCatalog } = await import('../src/sounds/soundCatalog.js');
+    const cat = soundCatalog();
+    const tonal = cat.items.filter((i) => ['acousticGuitars', 'orchestral', 'popBrass', 'keys'].includes(i.family));
+    const pattern = tonal.filter((i) => i.preview === 'pattern');
+    expect(pattern.length).toBeGreaterThan(tonal.length * 0.9);
+    const orch = pattern.find((i) => i.family === 'orchestral')!;
+    const p = cat.patternOf.get(orch.id)!;
+    expect(p.donorId).not.toBe(orch.id);
+    expect(p.entry.id).toBe(orch.id);
+    expect(['popStrings', 'pad', 'bass']).toContain(p.family);
+  });
+});
+
+describe('pattern preview options', () => {
+  it('writes a part in the chosen style, and another pattern per variant', async () => {
+    const { soundCatalog } = await import('../src/sounds/soundCatalog.js');
+    const { previewSong } = await import('../src/sounds/previewSong.js');
+    const cat = soundCatalog();
+    const keys = cat.items.find((i) => i.family === 'keys' && i.preview === 'pattern')!;
+    const p = cat.patternOf.get(keys.id)!;
+    expect(p.genres.length).toBeGreaterThan(1);
+    const genre = p.genres[1]!;
+    const a = previewSong(p.donorId, p.family, [genre], p.entry, 0);
+    const b = previewSong(p.donorId, p.family, [genre], p.entry, 1);
+    expect(a.genre).toBe(genre);
+    expect(a.song.genre).toBe(genre);
+    const notes = (x: typeof a) => JSON.stringify(Object.values(x.song.arrangement)[0]!.overrides);
+    expect(notes(a)).not.toBe(notes(b));
+  });
+});

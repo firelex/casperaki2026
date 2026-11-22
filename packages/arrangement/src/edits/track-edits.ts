@@ -22,7 +22,7 @@ import { segmentType } from '../arrangement-polish/segment-type.js';
 import { publicNameOf } from '../catalog/public-names.js';
 import type { GenerateParams } from '../context.js';
 import { orchestrate } from '../orchestrate/index.js';
-import { familySoundPool, LANE_BASE_NAMES, laneFamilyOf } from '../selection/index.js';
+import { familySoundPool, LANE_BASE_NAMES, laneFamilyOf, userSoundFor } from '../selection/index.js';
 import { InstrumentFamilySchema, type InstrumentFamily } from '../selection/types.js';
 import { recordedTrackEdits, TRACK_EDITS_PARAM, type RecordedTrackEdit } from './recorded.js';
 
@@ -239,8 +239,8 @@ function drumKitFixed(): TrackEditError {
 }
 
 function soundIn(family: InstrumentFamily, genre: string, soundId: string): string {
-  if (familySoundPool(family, genre).some((e) => e.id === soundId)) return soundId;
-  throw new TrackEditError(400, 'sound_not_in_family', `Sound ${soundId} is not one of the ${FAMILY_LABELS[family].toLowerCase()} sounds for this genre.`);
+  if (userSoundFor(family, genre, soundId)) return soundId;
+  throw new TrackEditError(400, 'sound_not_in_family', `Sound ${soundId} is not a ${FAMILY_LABELS[family].toLowerCase()} sound.`);
 }
 
 /** `Keys`, else `Keys 2`, `Keys 3`, … — the first name not taken. */
