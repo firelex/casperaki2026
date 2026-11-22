@@ -510,7 +510,7 @@ export class LivePlayer {
   }
 
   /** The lowered song for `key` (fetched once; kept while it is prepared or recent). */
-  private payloadOf(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<PlaybackPayload> {
+  payloadOf(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<PlaybackPayload> {
     let p = this.payloads.get(key);
     if (!p) {
       p = fetchPayload(new AbortController().signal);

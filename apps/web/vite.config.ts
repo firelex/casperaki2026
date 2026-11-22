@@ -305,6 +305,8 @@ const crossOriginIsolation = {
 // too: a new engine always has a new address.
 const ENGINE_FILES = [
   'public/wasm/engine-render.wasm',
+  'public/wasm/engine-resolve.js',
+  'public/wasm/engine-resolve.wasm',
   'public/engine/casperaki-engine.js',
   'public/worklets/casperaki-render-worklet.js',
   'public/workers/casperaki-meter-worker.js',

@@ -43,6 +43,8 @@ export function ClipDetail({
   soundChangeable,
   busy,
   editError,
+  engineNotes,
+  soundName,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -66,6 +68,10 @@ export function ClipDetail({
   busy: boolean;
   /** The last edit's error, if it was refused. */
   editError: string | undefined;
+  /** Pitched tracks: the notes the engine plays for this pattern (beats from its start), or why they could not be read. */
+  engineNotes: { notes: SeqNote[] } | { error: string } | undefined;
+  /** Public name of the track's sound. */
+  soundName: string | undefined;
 }) {
   const startBeat = clip.startBar * BEATS_PER_BAR;
   const notes = useMemo(() => clip.notes.map((n) => ({ ...n, start: n.start - startBeat })), [clip, startBeat]);
@@ -81,13 +87,13 @@ export function ClipDetail({
 
   const beats = clip.bars * BEATS_PER_BAR;
   const color = resolveColor(track.color);
-  const pitched = notes.filter((n) => n.pitch !== null);
   const kindLabel = plural(section.kind);
   // What Play loops: the selection, else the whole pattern shown (drums: the bar).
   const patternBeats = track.isDrums ? BEATS_PER_BAR : beats;
   /** Zoom so the whole pattern fits the window's width. */
   const fitTo = (el: HTMLElement) => {
-    const room = el.clientWidth - LABEL_W - 12;
+    // Leave room for a vertical scrollbar, which may appear once the notes are in.
+    const room = el.clientWidth - LABEL_W - 28;
     setPxPerBeat(Math.min(MAX_PX_PER_BEAT, Math.max(MIN_PX_PER_BEAT, room / patternBeats)));
   };
   const fit = () => {
@@ -135,10 +141,15 @@ export function ClipDetail({
           <div className="min-w-0">
             <DialogTitle className="text-[17px] font-semibold text-white">
               {track.name} · {section.name}
+              {soundName ? <span className="ml-2 text-[14px] font-normal text-white/60">{soundName}</span> : null}
             </DialogTitle>
             <DialogDescription className="text-[12px] text-white/50">
               Bars {section.startBar + 1}–{section.startBar + section.bars}
-              {track.isDrums ? ' · the bar below repeats through the section' : ` · ${notes.length} notes`}
+              {track.isDrums
+                ? ' · the bar below repeats through the section'
+                : engineNotes && 'notes' in engineNotes
+                  ? ` · ${engineNotes.notes.length} notes as played`
+                  : ''}
             </DialogDescription>
           </div>
           <div className="ml-auto flex flex-wrap gap-2">
@@ -201,9 +212,13 @@ export function ClipDetail({
               onCell={onCell}
               {...selectionProps}
             />
-          ) : pitched.length > 0 ? (
+          ) : engineNotes === undefined ? (
+            <p className="px-5 py-10 text-[14px] text-white/55">Reading the notes the engine plays…</p>
+          ) : 'error' in engineNotes ? (
+            <p className="px-5 py-10 text-[14px] text-err">{engineNotes.error}</p>
+          ) : engineNotes.notes.length > 0 ? (
             <PianoRoll
-              notes={pitched}
+              notes={engineNotes.notes}
               beats={beats}
               grid={grid}
               pxPerBeat={pxPerBeat}
@@ -221,7 +236,7 @@ export function ClipDetail({
         <p className="border-t border-line/60 px-5 py-3 text-[12px] text-white/45">
           {track.isDrums
             ? 'Click a cell to add or remove a hit. Undo with Ctrl+Z. Fills at the ends of sections come on top of this bar. Space plays and pauses.'
-            : 'Parts with pitches are written by the generator and aren’t edited note by note: ask for a new pattern or another sound instead. Space plays and pauses.'}
+            : 'The notes the playback engine plays (chords as it voices them). Parts with pitches are written by the generator: ask for a new pattern or another sound to change them. Space plays and pauses.'}
         </p>
 
         {pending ? (
@@ -614,7 +629,8 @@ function PianoRoll({
             </div>
           ))}
         </div>
-        <div className="relative" style={{ width: gridW, height }}>
+        {/* Notes that ring past the section's end are cut at its edge. */}
+        <div className="relative overflow-hidden" style={{ width: gridW, height }}>
           {Array.from({ length: rows }, (_, i) => high - i).map((p, i) => (
             <span key={p} className={`absolute left-0 right-0 ${isBlack(p) ? 'bg-black/25' : ''} ${p % 12 === 0 ? 'border-b border-white/15' : ''}`} style={{ top: i * KEY_ROW_H, height: KEY_ROW_H }} />
           ))}
@@ -622,16 +638,17 @@ function PianoRoll({
           {notes.map((n, i) => (
             <span
               key={i}
-              className="absolute overflow-hidden whitespace-nowrap rounded-[2px] border border-black/40 px-0.5 text-[8px] leading-[10px] text-black/80"
+              className="absolute overflow-hidden whitespace-nowrap rounded-[2px] border border-black/50 border-l-[3px] border-l-white px-0.5 text-[8px] leading-[10px] text-black/80"
               style={{
                 left: n.start * pxPerBeat,
-                width: Math.max(4, n.length * pxPerBeat - 1),
+                // A gap before the next note, so every onset is visible.
+                width: Math.max(4, n.length * pxPerBeat - 2),
                 top: (high - n.pitch!) * KEY_ROW_H + 0.5,
                 height: KEY_ROW_H - 1,
                 background: color,
-                opacity: n.kind === 'chord' ? 0.75 : 1,
+                opacity: n.velocity !== undefined ? 0.45 + 0.55 * (n.velocity / 127) : n.kind === 'chord' ? 0.75 : 1,
               }}
-              title={`${midiName(n.pitch!)}${n.label ? ` (${n.label})` : ''}, ${n.length} beat${n.length === 1 ? '' : 's'}`}
+              title={`${midiName(n.pitch!)}${n.label ? ` (${n.label})` : ''}, ${+n.length.toFixed(3)} beat${n.length === 1 ? '' : 's'}${n.velocity !== undefined ? `, velocity ${n.velocity}` : ''}`}
             >
               {n.label && n.kind !== 'chord' ? n.label : ''}
             </span>

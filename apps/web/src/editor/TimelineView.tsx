@@ -15,11 +15,12 @@ import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix } from '..
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
+import { resolveEngineNotes } from '../audio/resolveNotes';
 import { drumBarNotes, patternSong } from './sequencer/preview';
 import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
-import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
+import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
 import { ADD_ROW_H, BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MAX_ROW_H, MIN_PX_PER_BAR, MIN_ROW_H, RULER_H, TIME_H } from './sequencer/layout';
 import { beginRangeDrag } from './sequencer/rangeDrag';
@@ -74,6 +75,7 @@ export function TimelineView() {
     };
   }, [liveKey, fetchPayload, editorDirty]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
+  const detailSound = useSoundName(dialog?.kind === 'detail' ? catalogIdOf(defs.get(dialog.track)?.id) : undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
   /** Where the last right-click landed: which track, which section. */
   const [menuAt, setMenuAt] = useState<{ track: string; section: number | undefined; inSelection: boolean } | undefined>(undefined);
@@ -222,6 +224,29 @@ export function TimelineView() {
   const previewPlaying = pattern.status === 'playing';
   const previewLoaded = pattern.key !== undefined && pattern.status !== 'loading' && pattern.status !== 'idle';
   const previewSeconds = useLivePosition(pattern.status === 'playing', patternPlayer);
+
+  // What the engine plays for the open pattern (pitched tracks): its own
+  // resolver's notes, so the piano roll shows chord voicings exactly as heard.
+  const [engineNotes, setEngineNotes] = useState<{ key: string; notes: SeqNote[] } | { key: string; error: string } | undefined>(undefined);
+  useEffect(() => {
+    if (!preview || !detailOpen || model?.tracks.find((t) => t.name === detailOpen.track)?.isDrums) return;
+    let cancelled = false;
+    patternPlayer
+      .payloadOf(preview.key, fetchPreview)
+      .then(resolveEngineNotes)
+      .then(
+        (notes) =>
+          !cancelled &&
+          setEngineNotes({
+            key: preview.key,
+            notes: notes.map((n) => ({ start: n.start, length: n.length, pitch: n.pitch, kind: 'note' as const, velocity: n.velocity })),
+          }),
+        (err: unknown) => !cancelled && setEngineNotes({ key: preview.key, error: err instanceof Error ? err.message : String(err) }),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [preview, detailOpen, model, fetchPreview]);
 
   /** The detail window's Play: loop `from`–`to` (seconds into the pattern). */
   const playPreview = useCallback(
@@ -559,6 +584,8 @@ export function TimelineView() {
           sameKind={model.sections.filter((x) => x.kind === model.sections[detail.section]!.kind).map((x) => x.name)}
           onSetDrumHit={(segments, pitch, step, on) => applyEdit({ kind: 'setDrumHit', segments, pitch, step, on })}
           editError={editor?.lastError}
+          engineNotes={engineNotes && engineNotes.key === preview?.key ? engineNotes : undefined}
+          soundName={detailSound}
           onClose={() => {
             endPreview();
             setDialog(undefined);
@@ -732,14 +759,19 @@ function catalogIdOf(id: unknown): string | undefined {
 }
 
 /** Track name, with the public name of its sound underneath when it is a catalog sound. */
-function TrackName({ name, catalogId, notPlayed }: { name: string; catalogId: string | undefined; notPlayed: boolean }) {
+/** Public name of a catalog sound (undefined while loading or for non-catalog sounds). */
+function useSoundName(catalogId: string | undefined): string | undefined {
   const entry = useQuery({
     queryKey: catalogQueryKeys.entry(catalogId ?? ''),
     queryFn: ({ signal }) => catalogApi.get(catalogId as string, signal),
     enabled: Boolean(catalogId),
     staleTime: 5 * 60_000,
   });
-  const sound = entry.data?.entry.publicName;
+  return entry.data?.entry.publicName;
+}
+
+function TrackName({ name, catalogId, notPlayed }: { name: string; catalogId: string | undefined; notPlayed: boolean }) {
+  const sound = useSoundName(catalogId);
   return (
     <span className="flex min-w-0 flex-col leading-tight">
       <span className="truncate text-[13px] font-semibold text-white/90" title={name}>{name}</span>

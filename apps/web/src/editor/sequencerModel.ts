@@ -32,6 +32,8 @@ export interface SeqNote {
   readonly kind: 'note' | 'chord' | 'other';
   /** Chord symbol (chord notes) or sung word (vocal notes), when there is one. */
   readonly label?: string;
+  /** 0..127, when known (the engine's resolved notes). */
+  readonly velocity?: number;
 }
 
 export interface SeqClip {
