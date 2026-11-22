@@ -16,7 +16,7 @@
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import { runLogged } from './renderService.js';
 
@@ -102,6 +102,7 @@ export class PlaybackService {
     }
     mkdirSync(config.playbackDir, { recursive: true });
     mkdirSync(config.sampleCacheDir, { recursive: true });
+    this.loweringVersion = loweringFingerprint(config.emitScript);
     this.libraryRoot = resolve(config.sampleLibraryRoot);
     this.mixConfig = readFileSync(config.mixConfigPath, 'utf8');
     JSON.parse(this.mixConfig); // fail at startup on a broken file
@@ -110,7 +111,11 @@ export class PlaybackService {
   /** mix-config.json text, for the browser engine. */
   readonly mixConfig: string;
 
-  /** Lower the song (once per id) and return the engine input files. */
+  /** Fingerprint of the lowering code: cached envelopes are kept per version,
+   *  so a fix to the lowering (adapter, emit script) reaches songs already lowered. */
+  private readonly loweringVersion: string;
+
+  /** Lower the song (once per id and lowering version) and return the engine input files. */
   async envelope(songId: string, canonical: string): Promise<Envelope> {
     const dir = this.songDir(songId);
     if (!existsSync(join(dir, 'song.json'))) {
@@ -245,10 +250,11 @@ export class PlaybackService {
 
   private songDir(songId: string): string {
     if (!SONG_ID.test(songId)) throw new Error(`invalid song id: ${songId}`);
-    return join(this.config.playbackDir, songId);
+    return join(this.config.playbackDir, this.loweringVersion, songId);
   }
 
   private async lower(songId: string, canonical: string, dir: string): Promise<void> {
+    mkdirSync(dirname(dir), { recursive: true });
     // Lower into a temp dir and rename, so a half-written envelope is never served.
     const tmp = `${dir}.tmp-${process.pid}-${Date.now()}`;
     mkdirSync(tmp, { recursive: true });
@@ -310,4 +316,21 @@ export class PlaybackService {
     };
     for (let i = 0; i < Math.min(PREWARM_PARALLEL, todo.length); i++) void worker();
   }
+}
+
+/**
+ * Hash of the code that lowers a song: the emit script and the built
+ * @casperaki packages it imports (their dist/*.js, as linked next to it).
+ */
+function loweringFingerprint(emitScript: string): string {
+  const h = createHash('sha256').update(readFileSync(emitScript));
+  const scope = join(dirname(emitScript), '..', 'node_modules', '@casperaki');
+  if (!existsSync(scope)) throw new Error(`PlaybackService: ${scope} not found (the emit script's @casperaki packages)`);
+  for (const pkg of readdirSync(scope).sort()) {
+    const dist = join(scope, pkg, 'dist');
+    if (!existsSync(dist)) throw new Error(`PlaybackService: ${dist} not found: build @casperaki/${pkg}`);
+    const files = (readdirSync(dist, { recursive: true }) as string[]).filter((f) => f.endsWith('.js')).sort();
+    for (const f of files) h.update(f).update(readFileSync(join(dist, f)));
+  }
+  return h.digest('hex').slice(0, 12);
 }

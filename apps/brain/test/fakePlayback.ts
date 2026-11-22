@@ -17,7 +17,12 @@ export function fakePlayback(): PlaybackService {
   const stubs = join(dir, 'stubs');
   mkdirSync(stubs);
   for (const n of ['kick.ogg', 'snare.ogg', 'hat.ogg', 'tone.ogg', 'bass-c2.ogg']) writeFileSync(join(stubs, n), 'ogg');
-  const emit = join(dir, 'emit.mjs');
+  // Laid out like apps/engine-spike: scripts/<emit> beside node_modules/@casperaki/<pkg>/dist,
+  // which the playback service fingerprints to version its lowering cache.
+  mkdirSync(join(dir, 'scripts'), { recursive: true });
+  mkdirSync(join(dir, 'node_modules', '@casperaki', 'engine-adapter', 'dist'), { recursive: true });
+  writeFileSync(join(dir, 'node_modules', '@casperaki', 'engine-adapter', 'dist', 'index.js'), 'export {};\n');
+  const emit = join(dir, 'scripts', 'emit.mjs');
   writeFileSync(
     emit,
     `import { writeFileSync } from 'node:fs';

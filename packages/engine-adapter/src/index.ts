@@ -603,6 +603,7 @@ interface EngineTonalBar {
 }
 interface EngineDrumsOverride {
   type: string;
+  reset: true;
   pattern: Record<string, string>;
 }
 interface EngineBassOverride {
@@ -1181,8 +1182,13 @@ export function toEngineFixture(
         const grid = gridFromBrainBars(drumsBars, midi);
         if (grid.includes('x')) pattern[lane] = grid;
       }
+      // reset: the segment's pattern REPLACES the kit's base pattern. Without
+      // it the engine (Drums.h createSegmentClip / Resolver) plays the base
+      // pattern from patterns[0] — the fixture's fixed groove — and ignores
+      // this one, so generated and edited drums were never heard.
       segArr.overrides[DRUMS_DISPLAY_NAME] = {
         type: 'brainRoundtrip',
+        reset: true,
         pattern,
       };
     }

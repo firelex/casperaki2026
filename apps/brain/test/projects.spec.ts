@@ -2,7 +2,7 @@
 // jobs. The render pipeline runs against stand-in executables so the test
 // exercises the job lifecycle and file serving without the native engine.
 
-import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -23,7 +23,12 @@ interface Harness {
  *  writes a tiny valid WAV, the "ffmpeg" copies its input to its output. */
 function fakeRenderService(opts: { failRender?: boolean } = {}): RenderService {
   const dir = mkdtempSync(join(tmpdir(), 'casperaki-render-test-'));
-  const emit = join(dir, 'emit.mjs');
+  // Laid out like apps/engine-spike: scripts/<emit> beside node_modules/@casperaki/<pkg>/dist,
+  // which the playback service fingerprints to version its lowering cache.
+  mkdirSync(join(dir, 'scripts'), { recursive: true });
+  mkdirSync(join(dir, 'node_modules', '@casperaki', 'engine-adapter', 'dist'), { recursive: true });
+  writeFileSync(join(dir, 'node_modules', '@casperaki', 'engine-adapter', 'dist', 'index.js'), 'export {};\n');
+  const emit = join(dir, 'scripts', 'emit.mjs');
   writeFileSync(
     emit,
     `import { writeFileSync } from 'node:fs';\nwriteFileSync(process.env.OUT_DIR + '/song.json', '{}');\n`,

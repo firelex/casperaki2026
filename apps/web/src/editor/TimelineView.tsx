@@ -11,9 +11,9 @@ import {
 } from '@teamsuzie/ui';
 
 import { catalogApi, catalogQueryKeys } from '../api/catalog';
-import { livePlayer, type LaneMeters } from '../audio/livePlayer';
+import { livePlayer, patternPlayer, type LaneMeters } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
-import { useLivePosition } from '../audio/useLivePlayer';
+import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
 import { drumBarNotes, patternSong } from './sequencer/preview';
 import { drumBarPattern } from './sequencer/ClipDetail';
@@ -136,13 +136,6 @@ export function TimelineView() {
     onClear: () => setRange(undefined),
   };
 
-  /** Before the detail window's solo play: the solo and loop to restore. */
-  const savedForSolo = useRef<
-    { solo: readonly string[]; muted: readonly string[]; loopRange: typeof live.loopRange; looping: boolean } | undefined
-  >(undefined);
-
-  /** Whether the detail window's preview is in use (solo and loop saved). */
-  const [previewActive, setPreviewActive] = useState(false);
   const detailOpen = dialog?.kind === 'detail' ? dialog : undefined;
   // The open track's pattern in the open section, as a song of its own: what
   // the detail window plays. Drums: exactly the bar shown (the bar the engine repeats).
@@ -167,46 +160,41 @@ export function TimelineView() {
     },
     [preview],
   );
-  const previewLoaded = live.key?.startsWith('preview:') === true;
-  const previewPlaying = previewActive && previewLoaded && live.status === 'playing';
-  const previewSeconds = useLivePosition(previewPlaying);
+  // The detail window has its own player (patternPlayer): its loop, playhead
+  // and transport have nothing to do with the song's.
+  const pattern = useLiveState(patternPlayer);
+  // (While an edit is swapped in, the previous version keeps playing: still "playing".)
+  const previewPlaying = pattern.status === 'playing';
+  const previewLoaded = pattern.key !== undefined && pattern.status !== 'loading' && pattern.status !== 'idle';
+  const previewSeconds = useLivePosition(pattern.status === 'playing', patternPlayer);
 
   /** The detail window's Play: loop `from`–`to` (seconds into the pattern). */
   const playPreview = useCallback(
     (from: number, to: number) => {
       if (!preview) throw new Error('No pattern is open.');
-      const st = livePlayer.getState();
-      savedForSolo.current ??= { solo: st.solo, muted: st.muted, loopRange: st.loopRange, looping: st.looping };
-      // The pattern plays alone: set the tracks' mute/solo aside meanwhile.
-      livePlayer.setMuteSolo([], []);
-      livePlayer.setLoopRange({ start: from, end: to });
-      livePlayer.setLooping(true);
-      setPreviewActive(true);
-      if (livePlayer.isLoaded(preview.key)) livePlayer.seek(from);
-      void livePlayer.play(preview.key, fetchPreview);
+      // One thing plays at a time: the song pauses where it is.
+      void livePlayer.pause();
+      patternPlayer.setLoopRange({ start: from, end: to });
+      patternPlayer.setLooping(true);
+      if (patternPlayer.isLoaded(preview.key)) patternPlayer.seek(from);
+      void patternPlayer.play(preview.key, fetchPreview);
     },
     [preview, fetchPreview],
   );
 
-  // An edit while the preview plays: render the new version and switch to it
+  // An edit while the pattern plays: render the new version and switch to it
   // at the same position, without stopping.
   useEffect(() => {
-    if (!preview || !previewActive) return;
-    const st = livePlayer.getState();
-    if (st.status !== 'playing' || st.key === preview.key || !st.key?.startsWith('preview:')) return;
-    void livePlayer.play(preview.key, fetchPreview, { seamless: true });
-  }, [preview, previewActive, fetchPreview]);
+    if (!preview) return;
+    const st = patternPlayer.getState();
+    if (st.status !== 'playing' || st.key === preview.key) return;
+    void patternPlayer.play(preview.key, fetchPreview, { seamless: true });
+  }, [preview, fetchPreview]);
 
-  /** Leaving the detail window: stop its solo play and put solo and loop back. */
-  const endSolo = useCallback(() => {
-    const saved = savedForSolo.current;
-    if (!saved) return;
-    savedForSolo.current = undefined;
-    setPreviewActive(false);
-    if (livePlayer.getState().key?.startsWith('preview:')) livePlayer.stop();
-    livePlayer.setMuteSolo(saved.muted, saved.solo);
-    livePlayer.setLoopRange(saved.loopRange);
-    if (saved.looping && saved.loopRange) livePlayer.setLooping(true);
+  /** Leaving the detail window: stop its player. The song's is untouched. */
+  const endPreview = useCallback(() => {
+    patternPlayer.stop();
+    patternPlayer.setLoopRange(undefined);
   }, []);
 
   const loopSection = useCallback(
@@ -501,7 +489,7 @@ export function TimelineView() {
           onSetDrumHit={(segments, pitch, step, on) => applyEdit({ kind: 'setDrumHit', segments, pitch, step, on })}
           editError={editor?.lastError}
           onClose={() => {
-            endSolo();
+            endPreview();
             setDialog(undefined);
           }}
           previewPlaying={previewPlaying}
@@ -509,7 +497,7 @@ export function TimelineView() {
           onPlay={(fromBeat, toBeat) =>
             playPreview((fromBeat / BEATS_PER_BAR) * secondsPerBar, (toBeat / BEATS_PER_BAR) * secondsPerBar)
           }
-          onPause={() => void livePlayer.pause()}
+          onPause={() => void patternPlayer.pause()}
           onNewPattern={() => newPattern(detailTrack.name)}
           onChangeSound={() => setDialog({ kind: 'sound', track: detailTrack.name })}
           editable={editable(detailTrack.name)}

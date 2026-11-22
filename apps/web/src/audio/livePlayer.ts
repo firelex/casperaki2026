@@ -81,13 +81,15 @@ const SEEK_PREROLL_SEC = 1.5;
 const SAMPLE_RATE = 44100;
 const utf8 = new TextEncoder();
 
-class LivePlayer {
+/** Shared by every player: the engine binary and decoded samples (by URL). */
+let sharedWasm: Promise<ArrayBuffer> | undefined;
+const sharedDecoded = new Map<string, Promise<AudioBuffer>>();
+
+export class LivePlayer {
   private ctx: AudioContext | undefined;
   private node: AudioWorkletNode | undefined;
   private limiter: DynamicsCompressorNode | undefined;
-  private wasmBytes: Promise<ArrayBuffer> | undefined;
   private workletAdded: Promise<void> | undefined;
-  private readonly decoded = new Map<string, Promise<AudioBuffer>>();
   private stubPcm: Promise<Float32Array[]> | undefined;
   private loadToken = 0;
   private readonly prepared = new Map<string, Promise<Prepared>>();
@@ -352,12 +354,6 @@ class LivePlayer {
     this.postLaneGains();
   }
 
-  /** Set the muted and soloed tracks at once (e.g. to restore them). */
-  setMuteSolo(muted: readonly string[], solo: readonly string[]): void {
-    this.set({ muted: [...muted], solo: [...solo] });
-    this.postLaneGains();
-  }
-
   private postLaneGains(): void {
     if (!this.node) return;
     const { laneNames, muted, solo } = this.state;
@@ -517,8 +513,8 @@ class LivePlayer {
   }
 
   private wasm(): Promise<ArrayBuffer> {
-    this.wasmBytes ??= fetchOk('/wasm/engine-render.wasm').then((r) => r.arrayBuffer());
-    return this.wasmBytes;
+    sharedWasm ??= fetchOk('/wasm/engine-render.wasm').then((r) => r.arrayBuffer());
+    return sharedWasm;
   }
 
   private worklet(ctx: AudioContext): Promise<void> {
@@ -537,14 +533,14 @@ class LivePlayer {
   }
 
   private decode(ctx: AudioContext, url: string): Promise<AudioBuffer> {
-    let p = this.decoded.get(url);
+    let p = sharedDecoded.get(url);
     if (!p) {
       p = fetchOk(url)
         .then((r) => r.arrayBuffer())
         .then((b) => ctx.decodeAudioData(b));
       // A failed fetch must not stay cached.
-      p.catch(() => this.decoded.delete(url));
-      this.decoded.set(url, p);
+      p.catch(() => sharedDecoded.delete(url));
+      sharedDecoded.set(url, p);
     }
     return p;
   }
@@ -614,4 +610,12 @@ function samplerSample(key: string, ab: AudioBuffer, from: number, to: number): 
   return { key, ch0, ch1, sampleRate: ab.sampleRate };
 }
 
+/** The song's player: the play bar, songs list and sequencer. */
 export const livePlayer = new LivePlayer();
+/**
+ * The detail window's own player: plays the open pattern on its own, with
+ * its own loop and playhead, independent of the song's transport.
+ */
+export const patternPlayer = new LivePlayer();
+// For debugging from the browser console and automated browser tests.
+Object.assign(globalThis, { __casperakiLive: livePlayer, __casperakiPattern: patternPlayer });

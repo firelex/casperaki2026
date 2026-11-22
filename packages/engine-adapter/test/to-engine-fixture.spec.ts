@@ -186,6 +186,8 @@ describe('toEngineFixture (single-segment Drums-only)', () => {
     expect(pattern.snareDrum1).toBe('00000000x000000000000000x0000000');
     expect(pattern.hiHatClosed1).toBe('x000x000x000x000x000x000x000x000');
     expect(envelope.arrangement.chorus1!.overrides.Drums!.type).toBe('brainRoundtrip');
+    // The segment's pattern must replace the kit's base pattern, or the engine plays the base.
+    expect((envelope.arrangement.chorus1!.overrides.Drums as { reset?: boolean }).reset).toBe(true);
   });
 
   it('emits the full 17-id Drums kit as inst-1.json (engine constructor requirement)', () => {
