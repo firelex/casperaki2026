@@ -40,7 +40,9 @@ export function generateBassPattern(
   ctx: GeneratorContext,
   segment: Segment,
   activity: readonly InstrumentFamily[],
-  drumPattern?: FamilyPattern,
+  drumPattern: FamilyPattern | undefined,
+  /** Every chord root the song uses (all sections): the octave lift is decided on where the line really lands. */
+  songChordRoots: ReadonlySet<number>,
 ): FamilyPattern | undefined {
   if (!activity.includes('bass')) return undefined;
   const rng = ctx.rng.fork('patterns/bass');
@@ -75,6 +77,21 @@ export function generateBassPattern(
 
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
+  // Casperaki rules (owner, 2026-11-22; not in the legacy):
+  // - A bass line that can fall below E1 (MIDI 28, a bass's lowest string) on
+  //   some chord plays higher as a whole, by as many octaves as it takes, so
+  //   it never gets a lone high note and keeps one octave in every section
+  //   (decided on the C-template line moved to the song's chord roots: the
+  //   largest move down this song really makes).
+  // - Sub basses (edmSimple, written in octave 1 on purpose) keep their
+  //   register, floored at C1 (MIDI 24): a note below goes up an octave.
+  const sub = selection.styleName === 'edmSimple';
+  if (songChordRoots.size === 0) throw new Error('generateBassPattern: the song has no chords');
+  const templateLow = lowestTemplateNote(selection); // undefined: the line has no notes here (e.g. no kicks to follow)
+  const lowest = templateLow === undefined ? undefined : templateLow + Math.min(...[...songChordRoots].map(nearestRootDelta));
+  const lift = sub || lowest === undefined || lowest >= LOWEST_BASS_STRING ? 0 : Math.ceil((LOWEST_BASS_STRING - lowest) / 12) * 12;
+  const floorSub = (pitch: number) => (sub && pitch < SUB_BASS_FLOOR ? pitch + 12 : pitch);
+
   // Absolute (edmComplex / Library) — chord-independent MIDI events repeated
   // modulo the pattern's bar count across the segment.
   if (selection.mode === 'absolute') {
@@ -89,7 +106,7 @@ export function generateBassPattern(
         const chordsThisBar = segment.bars[segBarIdx]!.chords;
         const chordSymbol = chordsThisBar[Math.floor(ev.beat)] ?? chordsThisBar[0];
         if (!chordSymbol) throw new Error(`generateBassPattern: segment "${segment.name}" bar ${segBarIdx} has no chords`);
-        let pitch = ev.midi + nearestRootDelta(parseChord(chordSymbol).root);
+        let pitch = floorSub(ev.midi + nearestRootDelta(parseChord(chordSymbol).root) + lift);
         while (pitch < 0) pitch += 12;
         while (pitch > 127) pitch -= 12;
         const note = MidiNoteSchema.parse(pitch);
@@ -121,7 +138,7 @@ export function generateBassPattern(
       // offset) and the engine moves the plain note from C to the chord root
       // the nearest way (-5..+6), not upwards: roots G..B sit below C.
       const root = parseChord(chordSymbol).root;
-      const raw = rootBaseMidi + nearestRootDelta(root) + semitoneOffset;
+      const raw = floorSub(rootBaseMidi + nearestRootDelta(root) + semitoneOffset + lift);
       // Clamp into MidiNote range. SM patterns can use offsets like
       // `-5` / `+7` / `+12` that, combined with extreme chord roots,
       // would theoretically push out of [0, 127]. Octave-shift back in
@@ -141,4 +158,18 @@ export function generateBassPattern(
   }
 
   return { bars };
+}
+
+/** E1: the lowest string of a (4-string) bass. */
+const LOWEST_BASS_STRING = 28;
+/** C1: the lowest note a sub bass plays. */
+const SUB_BASS_FLOOR = 24;
+
+/** The lowest note of the bass line on its C template (before the move to each chord root); undefined when it has no notes. */
+function lowestTemplateNote(selection: RealBassSelection): number | undefined {
+  if (selection.mode === 'absolute') {
+    return selection.events.length ? Math.min(...selection.events.map((e) => e.midi)) : undefined;
+  }
+  const hits = selection.pattern.filter(([position]) => position >= 0);
+  return hits.length ? (selection.rootMidiOctave + 1) * 12 + Math.min(...hits.map(([, , offset]) => offset)) : undefined;
 }

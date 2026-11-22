@@ -11,6 +11,7 @@
 // family generator forks its own `patterns/<family>` stream, so reordering or
 // adding a lane never shifts another lane's draws.
 
+import { parseChord } from '@casperaki/music-theory';
 import type { GeneratorContext } from '../context.js';
 import type { Segment, SongStructure } from '@casperaki/song-schema';
 import { type InstrumentFamily, type SelectionResult } from '../selection/types.js';
@@ -46,7 +47,10 @@ type FamilyGenerator = (
 
 const GENERATOR_BY_FAMILY: Readonly<Record<InstrumentFamily, FamilyGenerator>> = {
   drums: generateDrumPattern,
-  bass: generateBassPattern,
+  // Bass is generated in its own pass (with the drum pattern and the song's chord roots).
+  bass: () => {
+    throw new Error('generatePatterns: bass is generated in pass 2, not through the family table');
+  },
   keys: generateKeysPattern,
   pad: generatePadPattern,
   guitar: generateGuitarPattern,
@@ -65,6 +69,8 @@ export function generatePatterns(
    *  so only that lane's draws change. */
   laneVariants: ReadonlyMap<string, number> = new Map(),
 ): PatternResult {
+  // Every chord root the song uses: the bass decides its octave on them.
+  const songChordRoots = new Set(structure.flatMap((seg) => seg.bars.flatMap((bar) => bar.chords.map((c) => parseChord(c).root))));
   const laneFork = (laneName: string): string => {
     const v = laneVariants.get(laneName);
     return v ? `lane/${laneName}#v${v}` : `lane/${laneName}`;
@@ -119,7 +125,7 @@ export function generatePatterns(
     for (const laneName of activity.activeLanes) {
       if (familyByLane.get(laneName) !== 'bass') continue;
       const laneCtx: GeneratorContext = { ...ctx, rng: ctx.rng.fork(laneFork(laneName)) };
-      const pattern = generateBassPattern(laneCtx, segment, ['bass'], drumPattern);
+      const pattern = generateBassPattern(laneCtx, segment, ['bass'], drumPattern, songChordRoots);
       if (pattern) lanes[laneName] = pattern;
     }
     return { segmentName: segment.name, lanes };

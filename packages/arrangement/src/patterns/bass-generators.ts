@@ -159,6 +159,9 @@ const PositionalBankSchema = z.array(z.array(PositionalTripleSchema).min(1)).min
 // octave -1 / 0 (below a bass's lowest string), 1/16 long, always sounding
 // with a real note. The legacy played them as notes (sub-audible rumble, and
 // they pulled the centring average down); they were removed from the data.
+// A second pass removed ~6,300 more keyswitches in octave 1: 1/16 notes below
+// C2 sitting more than 7 semitones under the rest of their pattern, on a few
+// fixed pitches (C1 and G#1 above all).
 const CenteredNoteSchema = z
   .object({ note: z.string().min(1), midi: z.number().int(), duration: z.number().positive() })
   .passthrough();

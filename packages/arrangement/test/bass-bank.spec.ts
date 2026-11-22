@@ -133,6 +133,8 @@ describe('generateBassPattern × per-genre coverage', () => {
         ctx,
         SYNTHETIC_SEGMENT as never,
         ['bass'] as never,
+        undefined,
+        new Set([0, 5, 7, 9]), // C, F, G, A
       );
       expect(result).toBeDefined();
       let events = 0;
