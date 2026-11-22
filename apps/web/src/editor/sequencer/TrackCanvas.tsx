@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 
 import { BEATS_PER_BAR, type SeqTrack, type SequencerModel } from '../sequencerModel';
 import type { SampledAutomation } from '../../audio/livePlayer';
-import { gridStep, resolveColor } from './layout';
+import { colorHex, gridStep, resolveColor } from './layout';
 
 const CLIP_HEADER_H = 13;
 
@@ -164,11 +164,14 @@ export function TrackCanvas({
 
     // Automation lanes over the clips: low-pass cutoff (amber, top = fully open)
     // and volume (cyan, top = 0 dB), as the engine applies them.
-    // Drawn only where the automation does something (`active`), labelled where each stretch starts.
-    const curve = (a: SampledAutomation, y: (v: number) => number, active: (v: number) => boolean, color: string, label: string) => {
-      g.strokeStyle = color;
-      g.fillStyle = color;
-      g.lineWidth = 1.6;
+    // Drawn only where the automation does something (`active`), labelled where each stretch
+    // starts, in a light shade of the track's colour (dashed for volume).
+    const light = lighten(colorHex(track.color), 0.55);
+    const curve = (a: SampledAutomation, y: (v: number) => number, active: (v: number) => boolean, dashed: boolean, label: string) => {
+      g.strokeStyle = light;
+      g.fillStyle = light;
+      g.lineWidth = 1.8;
+      g.setLineDash(dashed ? [5, 3] : []);
       g.font = '600 9px Archivo, system-ui, sans-serif';
       let drawing = false;
       a.values.forEach((v, i) => {
@@ -186,18 +189,19 @@ export function TrackCanvas({
         }
       });
       if (drawing) g.stroke();
+      g.setLineDash([]);
     };
     if (automation?.lowPass) {
       curve(
         automation.lowPass,
         (hz) => innerTop + (1 - Math.log(Math.max(20, Math.min(20000, hz)) / 20) / Math.log(1000)) * innerH,
         (hz) => hz < 19000,
-        '#ffb347',
+        false,
         'LP',
       );
     }
     if (automation?.volume) {
-      curve(automation.volume, (d) => innerTop + (Math.min(48, Math.max(0, -d)) / 48) * innerH, (d) => Math.abs(d) > 0.1, '#5ad1ff', 'VOL');
+      curve(automation.volume, (d) => innerTop + (Math.min(48, Math.max(0, -d)) / 48) * innerH, (d) => Math.abs(d) > 0.1, true, 'VOL');
     }
   }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation]);
 
@@ -213,4 +217,12 @@ function roundRectTop(g: CanvasRenderingContext2D, x: number, y: number, w: numb
   g.beginPath();
   const rr = Math.min(r, w / 2);
   g.roundRect(x, y, w, h, [rr, rr, 0, 0]);
+}
+
+/** A hex colour mixed toward white by `t` (0..1). */
+function lighten(hex: string, t: number): string {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/iu.exec(hex);
+  if (!m) throw new Error(`lighten: not a #rrggbb colour: ${hex}`);
+  const c = [m[1]!, m[2]!, m[3]!].map((x) => Math.round(Number.parseInt(x, 16) + (255 - Number.parseInt(x, 16)) * t));
+  return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }

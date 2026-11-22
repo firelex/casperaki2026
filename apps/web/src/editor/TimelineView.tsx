@@ -544,6 +544,7 @@ export function TimelineView() {
                 onSeekBar={(bar) => seek(bar * secondsPerBar)}
                 onSelectSection={setActiveSegment}
                 onRangeChange={setRange}
+                onMoveSection={(name, targetIndex) => applyEdit({ kind: 'moveSegment', segmentName: name, targetIndex })}
               />
             </div>
             </SelectionMenu>

@@ -29,6 +29,7 @@ export function Ruler({
   onSeekBar,
   onSelectSection,
   onRangeChange,
+  onMoveSection,
 }: {
   model: SequencerModel;
   px: number;
@@ -39,11 +40,52 @@ export function Ruler({
   onSeekBar(bar: number): void;
   onSelectSection(name: string): void;
   onRangeChange(range: BarRange | undefined): void;
+  /** Move a section to `targetIndex` in the song's order (index after taking it out). */
+  onMoveSection(name: string, targetIndex: number): void;
 }) {
   const width = model.totalBars * px;
   const loopRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<Drag | undefined>(undefined);
+  /** A section being dragged to a new place: its index and the gap (0..n) it would drop into. */
+  const [secDrag, setSecDrag] = useState<{ name: string; from: number; gap: number; dx: number } | undefined>(undefined);
+  const dragged = useRef(false);
+
+  /** The gap (0..n) between sections nearest to bar position `bar`. */
+  const gapAt = (bar: number) => {
+    let g = 0;
+    for (const s of model.sections) if (bar > s.startBar + s.bars / 2) g++;
+    return g;
+  };
+  const startSectionDrag = (e: ReactPointerEvent<HTMLButtonElement>, index: number) => {
+    if (e.button !== 0) return;
+    const name = model.sections[index]!.name;
+    const x0 = e.clientX;
+    const strip = e.currentTarget.parentElement!;
+    dragged.current = false;
+    const move = (ev: PointerEvent) => {
+      if (!dragged.current && Math.abs(ev.clientX - x0) < 5) return;
+      dragged.current = true;
+      document.body.style.cursor = 'grabbing';
+      const bar = (ev.clientX - strip.getBoundingClientRect().left) / px;
+      setSecDrag({ name, from: index, gap: gapAt(bar), dx: ev.clientX - x0 });
+    };
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.style.cursor = '';
+      if (dragged.current) {
+        const bar = (ev.clientX - strip.getBoundingClientRect().left) / px;
+        const gap = gapAt(bar);
+        // Index after taking the section out: gaps after it count one less.
+        const target = gap > index ? gap - 1 : gap;
+        if (target !== index) onMoveSection(name, target);
+      }
+      setSecDrag(undefined);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
   const { beats, bars: barEvery } = gridStep(px);
   const labelEvery = px >= 34 ? 1 : px >= 16 ? 2 : px >= 9 ? 4 : 8;
 
@@ -131,27 +173,39 @@ export function Ruler({
       ) : null}
       {/* Section markers. */}
       <div className="relative border-b border-black/50" style={{ height: MARKERS_H }}>
-        {model.sections.map((s) => (
+        {model.sections.map((s, i) => (
           <button
             key={s.name}
             type="button"
+            onPointerDown={(e) => startSectionDrag(e, i)}
             onClick={() => {
+              if (dragged.current) return; // the end of a drag, not a click
               onSelectSection(s.name);
               onSeekBar(s.startBar);
             }}
-            className="absolute top-0 flex items-center overflow-hidden border-l-2 px-1.5 text-left"
+            className={`absolute top-0 flex cursor-grab items-center overflow-hidden border-l-2 px-1.5 text-left ${secDrag?.name === s.name ? 'z-10 opacity-80 shadow-[0_0_0_1px_white]' : ''}`}
             style={{
-              left: s.startBar * px,
+              left: s.startBar * px + (secDrag?.name === s.name ? secDrag.dx : 0),
               width: s.bars * px,
               height: MARKERS_H,
               borderColor: s.color,
-              background: `color-mix(in srgb, ${s.color} ${s.name === activeSegment ? 50 : 24}%, transparent)`,
+              background: `color-mix(in srgb, ${s.color} ${s.name === activeSegment || secDrag?.name === s.name ? 50 : 24}%, transparent)`,
             }}
-            title={`${s.name}: bars ${s.startBar + 1}–${s.startBar + s.bars} (click to play from here)`}
+            title={`${s.name}: bars ${s.startBar + 1}–${s.startBar + s.bars} (click to play from here, drag to move the section)`}
           >
             {s.bars * px > 40 ? <span className="truncate text-[11px] font-semibold text-white">{s.name}</span> : null}
           </button>
         ))}
+        {/* Where the dragged section would land. */}
+        {secDrag && secDrag.gap !== secDrag.from && secDrag.gap !== secDrag.from + 1 ? (
+          <span
+            className="pointer-events-none absolute top-0 z-20 h-full w-[3px] -translate-x-1/2 rounded-full bg-white shadow-[0_0_6px_white]"
+            style={{
+              left:
+                (secDrag.gap < model.sections.length ? model.sections[secDrag.gap]!.startBar : model.totalBars) * px,
+            }}
+          />
+        ) : null}
       </div>
 
       {/* Bars|beats. */}
