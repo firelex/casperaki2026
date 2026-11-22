@@ -27,6 +27,12 @@ import type {
   Song,
 } from '@casperaki/song-schema';
 
+import {
+  OUT_OF_SEGMENT_STRUM_CHORD,
+  parseEngineChord,
+  virtualGuitaristChordName,
+} from './virtual-guitarist-chord.js';
+
 // 15 chromatic notes in the legacy `guitarNotes.json` long/short
 // scale render (e2..a#5 with whole-tone gaps). Verified via
 // `packages/engine-adapter/data/vst-slice-timings/guitarNotes.json`.
@@ -248,17 +254,26 @@ export function buildGuitarInst(input: BuildGuitarInstInput): BuiltGuitarInst {
 }
 
 /** docs/54v + 54y — Walk every Guitar override across the song's
- *  segments, find every brain `virtualGuitarist` event, and build the
- *  inst's `virtualGuitaristSamples[]` pool. Two entry kinds:
+ *  segments exactly as the render engine does, and build the inst's
+ *  `virtualGuitaristSamples[]` pool. Two entry kinds:
  *
- *  - **Chord-strum entries** (54v): event starts with `chord`. Engine
- *    matches by `(chord, chordPosition, type)`. Disk file lives at
- *    `<preset>/chords/<chord>_Pos_<N>_<Long|Short>Strum<Down|Up>.mp3`.
+ *  - **Chord-strum entries** (54v): event starts with `chord`. The engine
+ *    IGNORES the event's own `chord` field: it takes the structure chord at
+ *    the strum's beat (Tonal.h getChordAtTime, with the pattern bars
+ *    repeating modulo their count over the segment's bars) and looks the
+ *    strum up as `<sharp root><collapsed suffix>_<position>_<type>`
+ *    (Guitar.h strumSampleKey). So each entry's `chord` is that collapsed
+ *    name ("Fmaj7" → "F7"); a key missing from the pool aborts the rest of
+ *    the segment's strums in the engine. Disk file lives at
+ *    `<preset>/chords/<chord>_Pos_<N>_<Long|Short>Strum<Down|Up>.mp3`
+ *    (root re-spelled with the library's accidentals by the stager).
  *  - **fx entries** (54y): event matches `/^fx\d+$/` (the legacy
  *    keeps fx1..fx7; allowed-set + substitution is enforced upstream
  *    in `virtual-guitarist-bank.ts::postProcessVirtualGuitaristPattern`).
  *    Engine matches by `fx` field only (Guitar.h:343). Disk file
  *    lives at `<preset>/fx/<fx>.mp3`.
+ *
+ *  Throws on a structure chord the engine cannot parse.
  *
  *  Deterministic given a stable brain Song:
  *  - Dedup by `<chord>|<chordPosition>|<type>` for chord entries,
@@ -279,28 +294,33 @@ export function collectStrumPoolEntries(
   for (const seg of song.songStructure ?? []) {
     const ar = (song.arrangement ?? {})[seg.name];
     if (!ar) continue;
+    // Lowering marks the lane inactive on an explicit `false`; the engine
+    // then skips the segment (isInstrumentInSegment).
+    if ((ar.instruments as Record<string, unknown> | undefined)?.[laneName] === false) continue;
     const guitarOv = (ar.overrides as Record<string, { bars?: Array<{ notes?: Record<string, unknown[]> }> }> | undefined)?.[laneName];
-    if (!guitarOv?.bars) continue;
-    for (const bar of guitarOv.bars) {
-      for (const events of Object.values(bar.notes ?? {})) {
+    const patternBars = guitarOv?.bars ?? [];
+    if (patternBars.length === 0) continue;
+    const segBars = (seg.bars ?? []) as Array<{ chords?: unknown }>;
+    for (let barIndex = 0; barIndex < segBars.length; barIndex++) {
+      const bar = patternBars[barIndex % patternBars.length];
+      for (const [timeKey, events] of Object.entries(bar?.notes ?? {})) {
         for (const ev of events as Array<{
           type?: string;
           event?: string;
-          chord?: string;
           chordPosition?: string;
         }>) {
           if (ev?.type !== 'virtualGuitarist' || typeof ev.event !== 'string') continue;
           if (ev.event.startsWith('chord')) {
-            if (typeof ev.chord !== 'string') continue;
+            const chord = strumChordAtTime(segBars, barIndex, Number.parseFloat(timeKey), seg.name);
             const chordPosition =
               typeof ev.chordPosition === 'string' && ev.chordPosition.length > 0
                 ? ev.chordPosition
                 : '1';
-            const key = `${ev.chord}|${chordPosition}|${ev.event}`;
+            const key = `${chord}|${chordPosition}|${ev.event}`;
             if (!seenChord.has(key)) {
               seenChord.set(key, {
                 kind: 'chord',
-                chord: ev.chord,
+                chord,
                 chordPosition,
                 type: ev.event,
               });
@@ -350,6 +370,32 @@ export function collectStrumPoolEntries(
     });
   }
   return out;
+}
+
+/** Tonal.h getChordAtTime, reduced to the strum key's chord name: the
+ *  structure chord at `time` beats into bar `barIndex` (time rolls over into
+ *  following bars), collapsed per Guitar.h virtualGuitaristSuffix. A beat
+ *  past the segment's last bar is the engine's invalid chord, keyed "C". */
+function strumChordAtTime(
+  segBars: ReadonlyArray<{ chords?: unknown }>,
+  barIndex: number,
+  time: number,
+  segName: string,
+): string {
+  if (!Number.isFinite(time)) {
+    throw new Error(`engine-adapter: Guitar strum in segment "${segName}" has a non-numeric beat key`);
+  }
+  while (time >= 4) { time -= 4; barIndex++; }
+  if (barIndex >= segBars.length) return OUT_OF_SEGMENT_STRUM_CHORD;
+  const chords = segBars[barIndex]!.chords;
+  const beat = Math.trunc(time);
+  const symbol = Array.isArray(chords) ? chords[beat] : undefined;
+  if (typeof symbol !== 'string') {
+    throw new Error(
+      `engine-adapter: segment "${segName}" bar ${barIndex} has no chord at beat ${beat} for a Guitar strum`,
+    );
+  }
+  return virtualGuitaristChordName(parseEngineChord(symbol));
 }
 
 /** True iff the song carries a `Guitar` `InstrumentDefinition` whose

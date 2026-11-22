@@ -194,6 +194,9 @@ describe('guitarDefinition', () => {
 
 // docs/54v — strum pool collector.
 describe('collectStrumPoolEntries', () => {
+  // One structure bar per event, its four beats all carrying the event's
+  // chord, and one pattern bar per event with the strum on beat 0 — the
+  // engine reads the strum's chord from the structure bar, not the event.
   function songWithEvents(
     perSegmentEvents: Record<string, Array<{ chord: string; event: string; chordPosition?: string }>>,
   ): Song {
@@ -201,7 +204,10 @@ describe('collectStrumPoolEntries', () => {
       schemaVersion: '1',
       key: 'C',
       bpm: 120,
-      songStructure: Object.keys(perSegmentEvents).map((name) => ({ name, bars: [] })),
+      songStructure: Object.entries(perSegmentEvents).map(([name, evs]) => ({
+        name,
+        bars: evs.map((e) => ({ chords: [e.chord, e.chord, e.chord, e.chord] })),
+      })),
       arrangement: Object.fromEntries(
         Object.entries(perSegmentEvents).map(([name, evs]) => [
           name,
@@ -209,18 +215,16 @@ describe('collectStrumPoolEntries', () => {
             instruments: { Guitar: true },
             overrides: {
               Guitar: {
-                bars: [
-                  {
-                    notes: {
-                      '2.0': evs.map((e) => ({
-                        type: 'virtualGuitarist',
-                        chord: e.chord,
-                        event: e.event,
-                        ...(e.chordPosition !== undefined ? { chordPosition: e.chordPosition } : {}),
-                      })),
-                    },
+                bars: evs.map((e) => ({
+                  notes: {
+                    '0.0': [{
+                      type: 'virtualGuitarist',
+                      chord: e.chord,
+                      event: e.event,
+                      ...(e.chordPosition !== undefined ? { chordPosition: e.chordPosition } : {}),
+                    }],
                   },
-                ],
+                })),
               },
             },
             fills: {}, mutes: {}, signalProcessors: {}, transitions: {},
@@ -293,7 +297,7 @@ describe('collectStrumPoolEntries', () => {
     const fake = {
       schemaVersion: '1',
       key: 'C', bpm: 120,
-      songStructure: [{ name: 'chorus1', bars: [] }],
+      songStructure: [{ name: 'chorus1', bars: [{ chords: ['C', 'C', 'C', 'C'] }] }],
       arrangement: {
         chorus1: {
           instruments: { Guitar: true },
@@ -326,7 +330,7 @@ describe('collectStrumPoolEntries', () => {
     const fake = {
       schemaVersion: '1',
       key: 'C', bpm: 120,
-      songStructure: [{ name: 'chorus1', bars: [] }],
+      songStructure: [{ name: 'chorus1', bars: [{ chords: ['C', 'C', 'C', 'C'] }] }],
       arrangement: {
         chorus1: {
           instruments: { Guitar: true },
@@ -666,5 +670,70 @@ describe('toEngineFixture — Lane A per-string strum passthrough (docs/54x)', (
         }
       }
     }
+  });
+});
+
+describe('collectStrumPoolEntries — keys match the engine strum lookup', () => {
+  function song(
+    segBars: string[][],
+    patternBars: Array<Record<string, Array<Record<string, unknown>>>>,
+  ): Song {
+    return {
+      schemaVersion: '1',
+      key: 'C',
+      bpm: 120,
+      songStructure: [{ name: 'chorus1', bars: segBars.map((chords) => ({ chords })) }],
+      arrangement: {
+        chorus1: {
+          instruments: { Guitar: true },
+          overrides: { Guitar: { bars: patternBars.map((notes) => ({ notes })) } },
+        },
+      },
+      instrumentDefinitions: [],
+      aiArtifacts: [],
+    } as unknown as Song;
+  }
+  const strum = (chord: string, event = 'chordShortStrumDown') => ({ type: 'virtualGuitarist', chord, event });
+  const chordsOf = (s: Song) => collectStrumPoolEntries(s).map((e) => e.chord);
+
+  it('collapses the chord type onto the shipped sample flavour and spells roots with sharps', () => {
+    const s = song(
+      [['Fmaj7', 'Fmaj7', 'Bbm9', 'Bbm9'], ['Ebsus', 'Ebsus', 'Gdim', 'D11'], ['E5', 'E5', 'C#m7b5', 'Abmaj13']],
+      [
+        { '0.0': [strum('Fmaj7')], '2.0': [strum('Bbm9')] },
+        { '0.0': [strum('Ebsus')], '2.0': [strum('Gdim')], '3.0': [strum('D11')] },
+        { '0.0': [strum('E5')], '2.5': [strum('C#m7b5')], '3.0': [strum('Abmaj13')] },
+      ],
+    );
+    expect(chordsOf(s).sort()).toEqual(['A#m', 'C#m7', 'D#sus4', 'D9', 'E', 'F7', 'G', 'G#6'].sort());
+  });
+
+  it('takes the chord from the structure bar, not the event', () => {
+    const s = song([['Fmaj7', 'Fmaj7', 'G', 'G']], [{ '0.0': [strum('C')], '2.0': [strum('Am')] }]);
+    expect(chordsOf(s).sort()).toEqual(['F7', 'G']);
+  });
+
+  it('repeats the pattern bars over every structure bar of the segment', () => {
+    const s = song([['C', 'C', 'C', 'C'], ['Dm7', 'Dm7', 'Dm7', 'Dm7'], ['Esus2', 'Esus2', 'Esus2', 'Esus2']], [
+      { '1.0': [strum('C')] },
+    ]);
+    expect(chordsOf(s).sort()).toEqual(['C', 'Dm7', 'Esus2']);
+  });
+
+  it('rolls a beat key of 4 or more into the following bar, and past the end keys it as "C"', () => {
+    const s = song([['G', 'G', 'G', 'G'], ['A7', 'A7', 'A7', 'A7']], [{ '4.5': [strum('G')] }]);
+    // bar 0 + 4.5 beats → bar 1 beat 0 (A7); bar 1 + 4.5 → past the end.
+    expect(chordsOf(s).sort()).toEqual(['A7', 'C']);
+  });
+
+  it('throws on a structure chord the engine cannot parse', () => {
+    const s = song([['Fxyz', 'Fxyz', 'Fxyz', 'Fxyz']], [{ '0.0': [strum('F')] }]);
+    expect(() => collectStrumPoolEntries(s)).toThrow(/type "xyz"/);
+  });
+
+  it('skips a segment where the lane is explicitly inactive', () => {
+    const s = song([['C', 'C', 'C', 'C']], [{ '0.0': [strum('C')] }]);
+    (s.arrangement as Record<string, { instruments: Record<string, boolean> }>).chorus1!.instruments.Guitar = false;
+    expect(collectStrumPoolEntries(s)).toEqual([]);
   });
 });
