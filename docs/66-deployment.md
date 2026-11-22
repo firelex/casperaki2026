@@ -73,14 +73,15 @@ The live path plays the full mix and effects like the server render (the brain h
 
 ## Pattern lab (admins)
 
-`/patterns`: Casperaki-written pattern proposals (`packages/arrangement/data/patterns/proposals/*.json`,
-fixed drum blueprints or a generator in `src/patterns/drums-authored.ts`). Each can be heard in a full
+`/patterns`: Casperaki-written pattern proposals (`packages/arrangement/data/patterns/proposals/*.json`)
+for every instrument: drums, bass, keys, guitar, pads, strings, brass, synths (formats and how to write
+them: docs/68). Each can be heard in a full
 song with the proposal or with the current library on the same seed, then approved or rejected
 (stored in `songs.sqlite`, table `pattern_reviews`). Approved ones reach new songs after:
 
 ```sh
 cd apps/brain && set -a && . ~/.config/casperaki/brain.env && set +a
-node_modules/.bin/tsx scripts/export-approved-patterns.ts   # writes data/patterns/drums (authored-<id> styles)
+node_modules/.bin/tsx scripts/export-approved-patterns.ts   # writes data/patterns/{drums,bass,authored}
 ```
 
 then commit, push and `deploy.sh`. The reviewer account is `reviewer@casperaki.com` (password in

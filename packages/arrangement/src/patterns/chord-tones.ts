@@ -1,0 +1,180 @@
+// Casperaki-written patterns for the pitched families (pattern lab).
+//
+// Two pattern formats, both written once and played over any chord:
+//
+// 1. Chord-tone patterns (keys, pad, strings, brass, synths, plucked synths).
+//    Each note is a fixed pitch, in semitones from middle C. The engine moves
+//    it to the nearest tone of the chord sounding at that beat
+//    (`noteRelative` with `distanceFromMiddleC`: Tonal.h getRelativeNote →
+//    Chord::findNotes(center), which searches 0, -1, +1, -2, +2 … semitones,
+//    so a tie goes down). A voicing written once therefore follows every
+//    chord change with the smallest movement (voice leading), and the chord's
+//    own quality (minor, seventh, sus …) decides the notes.
+//
+// 2. Guitar picks (guitar). Each hit names strings of the chord's guitar shape,
+//    counted from its lowest note (0 = the bass note), and plays them as one
+//    `strum` event: several strings are a strum (in the order listed, so
+//    [0,1,2,3,4,5] is a down strum and [5,4,3,2,1,0] an up strum), one string
+//    a picked note. Engine: Guitar.h getStrumNotes over GuitarChord shapes.
+//
+// Patterns loop over the section, bar by bar. A pattern may say which
+// sections it is for (`energy`): 'low' for intros, verses, breaks and outros,
+// 'high' for choruses, none for any section.
+
+import { z } from 'zod';
+
+import { parseChord, type Rng } from '@casperaki/music-theory';
+import { ChordSymbolSchema, type Segment } from '@casperaki/song-schema';
+
+import { segmentType } from '../arrangement-polish/segment-type.js';
+import { addNoteEvent, emptyBarPattern } from './shared.js';
+import type { BarPattern, FamilyPattern, InstrumentFamily } from './types.js';
+
+const BEATS_PER_BAR = 4;
+
+/** Families that play chord-tone patterns. */
+export const CHORD_TONE_FAMILIES = ['keys', 'pad', 'popStrings', 'popBrass', 'synths', 'pluckedSynths'] as const;
+export type ChordToneFamily = (typeof CHORD_TONE_FAMILIES)[number];
+
+export const EnergySchema = z.enum(['low', 'high']);
+export type Energy = z.infer<typeof EnergySchema>;
+
+/** [beat in the pattern, semitones from middle C, length in beats] */
+export const ChordToneNoteSchema = z.tuple([z.number().min(0), z.number().int().min(-36).max(36), z.number().positive()]);
+
+export const ChordTonePatternSchema = z
+  .object({
+    bars: z.number().int().min(1).max(8),
+    energy: EnergySchema.optional(),
+    notes: z.array(ChordToneNoteSchema).min(1),
+  })
+  .strict()
+  .superRefine((p, ctx) => {
+    p.notes.forEach(([beat], i) => {
+      if (beat >= p.bars * BEATS_PER_BAR) ctx.addIssue({ code: 'custom', path: ['notes', i], message: `beat ${beat} is past the pattern's ${p.bars} bar(s)` });
+    });
+  });
+export type ChordTonePattern = z.infer<typeof ChordTonePatternSchema>;
+
+/** [beat in the pattern, strings of the chord shape (0 = lowest), length in beats, velocity 1-127] */
+export const GuitarPickSchema = z.tuple([
+  z.number().min(0),
+  z.array(z.number().int().min(0).max(5)).min(1).max(6),
+  z.number().positive(),
+  z.number().int().min(1).max(127),
+]);
+
+export const GuitarPickPatternSchema = z
+  .object({
+    bars: z.number().int().min(1).max(8),
+    energy: EnergySchema.optional(),
+    hits: z.array(GuitarPickSchema).min(1),
+  })
+  .strict()
+  .superRefine((p, ctx) => {
+    p.hits.forEach(([beat], i) => {
+      if (beat >= p.bars * BEATS_PER_BAR) ctx.addIssue({ code: 'custom', path: ['hits', i], message: `beat ${beat} is past the pattern's ${p.bars} bar(s)` });
+    });
+  });
+export type GuitarPickPattern = z.infer<typeof GuitarPickPatternSchema>;
+
+/** A set of patterns one style plays. */
+export type AuthoredPatterns =
+  | { readonly kind: 'chordTones'; readonly patterns: readonly ChordTonePattern[] }
+  | { readonly kind: 'guitarPicks'; readonly patterns: readonly GuitarPickPattern[] };
+
+export function familyTakesKind(family: InstrumentFamily, kind: AuthoredPatterns['kind']): boolean {
+  return kind === 'guitarPicks' ? family === 'guitar' : (CHORD_TONE_FAMILIES as readonly string[]).includes(family);
+}
+
+/** The energy a section asks for: verses quiet, choruses full, the rest either. */
+export function sectionEnergy(segmentName: string): Energy | undefined {
+  switch (segmentType(segmentName)) {
+    case 'intro':
+    case 'verse':
+    case 'break':
+    case 'outro':
+      return 'low';
+    case 'chorus':
+      return 'high';
+    default:
+      return undefined;
+  }
+}
+
+/** Patterns a section may play: those with no energy or the section's energy. */
+export function patternsForSection<P extends { readonly energy?: Energy }>(patterns: readonly P[], segmentName: string): P[] {
+  const want = sectionEnergy(segmentName);
+  return patterns.filter((p) => p.energy === undefined || want === undefined || p.energy === want);
+}
+
+/** A style must have something to play in every section: a pattern for quiet and one for full sections. */
+export function energyCoverageProblem(patterns: readonly { readonly energy?: Energy }[]): string | undefined {
+  if (!patterns.some((p) => p.energy !== 'high')) return 'every pattern is marked "high": add one for verses (no energy, or "low")';
+  if (!patterns.some((p) => p.energy !== 'low')) return 'every pattern is marked "low": add one for choruses (no energy, or "high")';
+  return undefined;
+}
+
+/** Guitar strum spread: the time between two strings of one strum, in beats. */
+export const STRUM_SPREAD_BEATS = 0.02;
+
+/**
+ * Play a style's patterns over one section of one lane. One pattern per
+ * section type (`rng` is the lane's stream, so verses share a pattern and the
+ * chorus may take another), looped bar by bar; every event takes the chord
+ * sounding at its beat.
+ */
+export function emitAuthoredPatterns(rng: Rng, segment: Segment, style: AuthoredPatterns): FamilyPattern {
+  const candidates = patternsForSection<ChordTonePattern | GuitarPickPattern>(style.patterns, segment.name);
+  if (candidates.length === 0) throw new Error(`authored patterns: no pattern fits section "${segment.name}"`);
+  const pattern = rng.fork(`authored/${segmentType(segment.name)}`).pick(candidates);
+  const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
+
+  const chordAt = (segBar: number, beat: number) => {
+    const chords = segment.bars[segBar]!.chords;
+    const symbol = chords[Math.min(chords.length - 1, Math.floor(beat))];
+    if (!symbol) throw new Error(`authored patterns: section "${segment.name}" bar ${segBar} has no chords`);
+    return ChordSymbolSchema.parse(symbol);
+  };
+
+  for (let segBar = 0; segBar < bars.length; segBar++) {
+    const patternBar = segBar % pattern.bars;
+    if (style.kind === 'chordTones') {
+      for (const [at, pitch, duration] of (pattern as ChordTonePattern).notes) {
+        if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
+        const beat = at - patternBar * BEATS_PER_BAR;
+        addNoteEvent(bars[segBar]!, beat, { type: 'noteRelative', chord: chordAt(segBar, beat), distanceFromMiddleC: pitch, duration });
+      }
+    } else {
+      for (const [at, strings, duration, velocity] of (pattern as GuitarPickPattern).hits) {
+        if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
+        const beat = at - patternBar * BEATS_PER_BAR;
+        addNoteEvent(bars[segBar]!, beat, {
+          type: 'strum',
+          chord: chordAt(segBar, beat),
+          strings: [...strings],
+          offset: strings.map((_, i) => i * STRUM_SPREAD_BEATS),
+          durations: [duration],
+          velocities: [velocity],
+        });
+      }
+    }
+  }
+  return { bars };
+}
+
+/**
+ * The pitch the engine plays for a chord-tone note (for checks and the lab):
+ * the nearest tone of `chord` to middle C + `semitones`, a tie going down
+ * (Chord::findNotes center order 0, -1, +1, -2, +2 …).
+ */
+export function resolveChordTone(semitones: number, chord: string): number {
+  const parsed = parseChord(chord);
+  const classes = new Set(parsed.intervals.map((i) => (parsed.root + i) % 12));
+  const base = 60 + semitones;
+  for (let d = 0; d <= 12; d++) {
+    if (classes.has((((base - d) % 12) + 12) % 12)) return base - d;
+    if (classes.has((((base + d) % 12) + 12) % 12)) return base + d;
+  }
+  throw new Error(`resolveChordTone: chord "${chord}" has no tones`);
+}

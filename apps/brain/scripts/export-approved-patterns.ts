@@ -5,7 +5,9 @@
 //
 // Reads the review decisions from the brain's songs database and the
 // proposals from packages/arrangement/data/patterns/proposals/, then makes
-// data/patterns/drums/ and data/patterns/bass/ match. Drums: every approved proposal becomes a style
+// data/patterns/drums/, data/patterns/bass/ and data/patterns/authored/ match.
+// Keys, pad, strings, brass, synths, plucked synths and guitar: an entry in
+// authored/index.json (offered alongside the family's own generator). Drums: every approved proposal becomes a style
 // "authored-<id>" (a bank file under authored/ for fixed blueprints, or an
 // { authoredAlgo } entry for a generator) listed in its genres'
 // genreStyles. Bass: an entry in bank-index.json `authored` (offered alongside the
@@ -16,7 +18,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { authoredStyleName, BASS_BANK_DIR, DRUM_BANK_DIR, loadPatternProposals } from '@casperaki/arrangement';
+import { AUTHORED_BANK_DIR, authoredStyleName, BASS_BANK_DIR, DRUM_BANK_DIR, loadPatternProposals } from '@casperaki/arrangement';
 
 import { openSongsStore } from '../src/store.js';
 
@@ -33,7 +35,39 @@ if (missing.length) throw new Error(`approved proposals no longer on disk: ${mis
 
 const drumProposals = proposals.filter((p) => p.family === 'drums');
 const bassProposals = proposals.filter((p) => p.family === 'bass');
+const laneProposals = proposals.flatMap((p) => (p.kind === 'chordTones' || p.kind === 'guitarPicks' ? [p] : []));
 const changes: string[] = [];
+
+// ---- keys, pad, strings, brass, synths, plucked synths, guitar: authored/index.json ----
+{
+  const indexPath = join(AUTHORED_BANK_DIR, 'index.json');
+  const index = JSON.parse(readFileSync(indexPath, 'utf8')) as {
+    styles: Record<string, { family: string; kind: string; genres: string[]; file: string }>;
+  };
+  const stylesDir = join(AUTHORED_BANK_DIR, 'styles');
+  const wanted = new Map(laneProposals.map((p) => [authoredStyleName(p.id), p]));
+  const styles: typeof index.styles = {};
+  for (const [style, p] of wanted) {
+    const file = `styles/${p.id}.json`;
+    styles[style] = { family: p.family, kind: p.kind, genres: [...p.genres], file };
+    if (!index.styles[style]) changes.push(`${p.family}: + ${style} (${p.genres.join(', ')})`);
+    if (!dryRun) {
+      mkdirSync(stylesDir, { recursive: true });
+      writeFileSync(join(AUTHORED_BANK_DIR, file), JSON.stringify(p.patterns, null, 2) + '\n');
+    }
+  }
+  for (const style of Object.keys(index.styles)) if (!wanted.has(style)) changes.push(`${index.styles[style]!.family}: removed ${style}`);
+  if (existsSync(stylesDir)) {
+    for (const f of readdirSync(stylesDir)) {
+      if (!wanted.has(authoredStyleName(f.replace(/\.json$/u, '')))) {
+        if (!dryRun) rmSync(join(stylesDir, f));
+        changes.push(`deleted authored/styles/${f}`);
+      }
+    }
+  }
+  index.styles = styles;
+  if (!dryRun) writeFileSync(indexPath, JSON.stringify(index, null, 2) + '\n');
+}
 
 // ---- bass: bank-index.json `authored` (offered alongside the legacy styles) ----
 {

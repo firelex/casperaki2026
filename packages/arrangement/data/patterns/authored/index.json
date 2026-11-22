@@ -1,0 +1,5 @@
+{
+  "$schemaVersion": 1,
+  "$description": "Approved Casperaki-written styles for keys, pad, strings, brass, synths, plucked synths and guitar (pattern lab). Written by apps/brain/scripts/export-approved-patterns.ts; see src/patterns/authored-bank.ts.",
+  "styles": {}
+}

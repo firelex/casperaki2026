@@ -7,10 +7,37 @@ import { livePlayer } from '../audio/livePlayer';
 import { useLiveState } from '../audio/useLivePlayer';
 import { AppHeader } from '../layout/AppHeader';
 import { BassGrid } from '../patterns/BassGrid';
+import { ChordToneGrid } from '../patterns/ChordToneGrid';
 import { DrumGrid } from '../patterns/DrumGrid';
+import { GuitarGrid } from '../patterns/GuitarGrid';
 import { GENRE_LABELS } from '../types/genres';
 
 type Filter = 'pending' | 'approved' | 'rejected' | 'all';
+type Family = PatternProposal['family'];
+
+const FAMILY_LABELS: Record<Family, string> = {
+  drums: 'Drums',
+  bass: 'Bass',
+  keys: 'Keys',
+  pad: 'Pads',
+  guitar: 'Guitar',
+  synths: 'Synths',
+  pluckedSynths: 'Plucked synths',
+  popStrings: 'Strings',
+  popBrass: 'Brass',
+};
+const DIFFERS: Record<Family, string> = {
+  drums: 'the drums differ (and parts that follow them)',
+  bass: 'the bass differs',
+  keys: 'the keys differ',
+  pad: 'the pads differ',
+  guitar: 'the guitar differs',
+  synths: 'the synths differ',
+  pluckedSynths: 'the plucked synths differ',
+  popStrings: 'the strings differ',
+  popBrass: 'the brass differs',
+};
+const FAMILY_ORDER: readonly Family[] = ['drums', 'bass', 'keys', 'guitar', 'pad', 'popStrings', 'popBrass', 'synths', 'pluckedSynths'];
 
 /**
  * Pattern lab (admins): review the patterns Casperaki suggests to fill thin
@@ -21,8 +48,10 @@ type Filter = 'pending' | 'approved' | 'rejected' | 'all';
  */
 export function PatternLabPage() {
   const [filter, setFilter] = useState<Filter>('pending');
+  const [family, setFamily] = useState<Family | 'all'>('all');
   const query = useQuery({ queryKey: patternsQueryKey, queryFn: ({ signal }) => patternsApi.list(signal) });
-  const proposals = query.data?.proposals ?? [];
+  const proposals = (query.data?.proposals ?? []).filter((p) => family === 'all' || p.family === family);
+  const families = FAMILY_ORDER.filter((f) => (query.data?.proposals ?? []).some((p) => p.family === f));
   const count = (f: Filter) => proposals.filter((p) => matches(p, f)).length;
   const shown = proposals.filter((p) => matches(p, filter));
 
@@ -53,6 +82,23 @@ export function PatternLabPage() {
             </button>
           ))}
         </div>
+
+        {families.length > 1 ? (
+          <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Filter by instrument">
+            {(['all', ...families] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                role="tab"
+                aria-selected={family === f}
+                onClick={() => setFamily(f)}
+                className={`h-8 rounded-full px-3 text-[13px] ${family === f ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'}`}
+              >
+                {f === 'all' ? 'All instruments' : FAMILY_LABELS[f]}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-8 flex flex-col gap-6">
           {query.isLoading ? (
@@ -105,8 +151,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         <div>
           <h2 className="text-[20px] font-semibold text-white">{p.name}</h2>
           <p className="mt-1 text-[14px] text-white/55">
-            {p.family === 'bass' ? 'Bass' : 'Drums'} ·{' '}
-            {p.kind === 'algo' ? 'generator (new variations every song)' : `${p.kind === 'bassPatterns' ? p.patterns.length : p.blueprints.length} fixed patterns`} ·{' '}
+            {FAMILY_LABELS[p.family]} ·{' '}
+            {p.kind === 'algo' ? 'generator (new variations every song)' : `${takes(p)} fixed patterns`} ·{' '}
             {p.genres.map((g) => GENRE_LABELS[g]).join(', ')}
           </p>
         </div>
@@ -127,16 +173,28 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
                   className={`h-8 rounded-full px-3 text-[13px] ${take === i ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'}`}
                 >
                   Pattern {i + 1}
+                  {energyOf(p, i) ? <span className="ml-1 text-white/40">({energyOf(p, i) === 'low' ? 'verses' : 'choruses'})</span> : null}
                 </button>
               ))}
             </div>
           ) : null}
-          {p.kind === 'bassPatterns' ? <BassGrid pattern={p.patterns[take]!} /> : <DrumGrid blueprint={p.blueprints[take]!} />}
+          {p.kind === 'bassPatterns' ? (
+            <BassGrid pattern={p.patterns[take]!} />
+          ) : p.kind === 'chordTones' ? (
+            <ChordToneGrid pattern={p.patterns[take]!} />
+          ) : p.kind === 'guitarPicks' ? (
+            <GuitarGrid pattern={p.patterns[take]!} />
+          ) : (
+            <DrumGrid blueprint={p.blueprints[take]!} />
+          )}
           <p className="mt-2 text-[12px] text-white/40">
             {p.kind === 'bassPatterns'
-              ? 'Two bars; each note is an interval from the current chord root, so the line follows the chords.'
-              : 'Two bars, 32nd-note steps.'}{' '}
-            A song picks among these patterns section by section.
+              ? 'Two bars; each note is an interval from the current chord root, so the line follows the chords. A song picks among these patterns section by section.'
+              : p.kind === 'chordTones'
+                ? 'Shown as it sounds over a C major chord. Over every other chord each note moves to the nearest chord tone, so the voicing keeps its shape and moves as little as possible. Verses and choruses can each take their own pattern.'
+                : p.kind === 'guitarPicks'
+                  ? 'Strings of the chord shape, counted from its bass note: one string is a picked note, several are a strum in the order shown. Verses and choruses can each take their own pattern.'
+                  : 'Two bars, 32nd-note steps. A song picks among these patterns section by section.'}
           </p>
         </div>
       ) : (
@@ -168,7 +226,10 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
           ) : null,
         )}
       </div>
-      <p className="mt-2 text-[12px] text-white/40">Both play the same {GENRE_LABELS[genre]} song; only {p.family === 'bass' ? 'the bass differs' : 'the drums differ (and parts that follow them)'}.</p>
+      <p className="mt-2 text-[12px] text-white/40">
+        Both play the same {GENRE_LABELS[genre]} song; only{' '}
+        {DIFFERS[p.family]}.
+      </p>
 
       <div className="mt-6 flex flex-col gap-3 border-t border-line/60 pt-5 sm:flex-row sm:items-end">
         <label className="flex flex-1 flex-col gap-2">
@@ -218,7 +279,11 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
 }
 
 function takes(p: PatternProposal): number {
-  return p.kind === 'bassPatterns' ? p.patterns.length : p.kind === 'blueprints' ? p.blueprints.length : 0;
+  return p.kind === 'algo' ? 0 : p.kind === 'blueprints' ? p.blueprints.length : p.patterns.length;
+}
+
+function energyOf(p: PatternProposal, i: number): 'low' | 'high' | undefined {
+  return p.kind === 'chordTones' || p.kind === 'guitarPicks' ? p.patterns[i]?.energy : undefined;
 }
 
 function ListenButton({ state, onClick, label, primary }: { state: string; onClick(): void; label: string; primary?: boolean }) {

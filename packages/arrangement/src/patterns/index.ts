@@ -15,12 +15,15 @@ import { parseChord } from '@casperaki/music-theory';
 import type { GeneratorContext } from '../context.js';
 import type { Segment, SongStructure } from '@casperaki/song-schema';
 import { type InstrumentFamily, type SelectionResult } from '../selection/types.js';
+import { authoredStylesFor } from './authored-bank.js';
+import { emitAuthoredPatterns, familyTakesKind } from './chord-tones.js';
 import { generateBassPattern } from './bass.js';
 import { generateDrumPattern } from './drums.js';
 import { generateGuitarPattern } from './guitar.js';
 import { generateKeysPattern } from './keys.js';
 import { generateBrassPattern, generateStringsPattern } from './orchestral.js';
 import { generatePadPattern } from './pad.js';
+import { lanePreviewFromParams, type LanePreview } from './proposals.js';
 import { generatePluckedSynthsPattern, generateSynthsPattern } from './synths.js';
 import type { FamilyPattern, PatternResult, SegmentPatterns } from './types.js';
 
@@ -81,6 +84,7 @@ export function generatePatterns(
     );
   }
 
+  const lanePreview = lanePreviewFromParams(ctx.params.params);
   // Lane name → its roster family classifier.
   const familyByLane = new Map<string, InstrumentFamily>(
     selection.instruments.map((s) => [s.lane, s.family]),
@@ -109,10 +113,13 @@ export function generatePatterns(
       const family = familyByLane.get(laneName);
       if (!family || family === 'bass') continue;
       const laneCtx: GeneratorContext = { ...ctx, rng: ctx.rng.fork(laneFork(laneName)) };
+      // Pattern lab: a previewed or approved Casperaki-written style.
+      const authored = authoredPattern(laneCtx, segment, family, lanePreview);
       // The synths generator needs the lane's lowLevel to force leadSynthsAnalog
       // (docs/62 A6); every other family uses the uniform 3-arg signature.
-      const pattern =
-        family === 'synths'
+      const pattern = authored
+        ? authored
+        : family === 'synths'
           ? generateSynthsPattern(laneCtx, segment, [family], lowLevelByLane.get(laneName))
           : GENERATOR_BY_FAMILY[family](laneCtx, segment, [family]);
       if (pattern) {
@@ -132,4 +139,26 @@ export function generatePatterns(
   });
 
   return { segments };
+}
+
+/**
+ * Pattern lab styles for a lane, or undefined to use the family's own
+ * generator. A preview of this family always plays the proposal. Otherwise,
+ * with n approved styles for the family and genre (authored-bank.ts), the lane
+ * takes one of them n times in n + 1, drawn once per song lane; with none,
+ * nothing is drawn, so songs without approved styles are unchanged.
+ */
+function authoredPattern(
+  laneCtx: GeneratorContext,
+  segment: Segment,
+  family: InstrumentFamily,
+  preview: LanePreview | undefined,
+): FamilyPattern | undefined {
+  if (family === 'drums') return undefined;
+  const rng = laneCtx.rng.fork('patterns/authored');
+  if (preview && preview.family === family) return emitAuthoredPatterns(rng, segment, preview.patterns);
+  const styles = authoredStylesFor(family, laneCtx.params.genre).filter((s) => familyTakesKind(family, s.patterns.kind));
+  if (styles.length === 0) return undefined;
+  if (rng.next() >= styles.length / (styles.length + 1)) return undefined;
+  return emitAuthoredPatterns(rng, segment, rng.pick(styles).patterns);
 }

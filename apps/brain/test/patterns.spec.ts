@@ -59,4 +59,16 @@ describe('pattern lab', () => {
     expect(withP.songId).not.toBe(current.songId);
     expect(withP.samples.length).toBeGreaterThan(0);
   });
+
+  it('previews a keys / pad / strings / brass / synths / guitar proposal with a lane of its family', async () => {
+    for (const family of ['keys', 'pad', 'popStrings', 'popBrass', 'synths', 'pluckedSynths', 'guitar']) {
+      const p = loadPatternProposals().find((x) => x.family === family);
+      if (!p) throw new Error(`no ${family} proposal on disk`);
+      const res = await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal' });
+      const body = (await res.json()) as { songId?: string; message?: string };
+      expect(res.status, `${p.id}: ${body.message ?? ''}`).toBe(200);
+      expect(body.songId).toBeTruthy();
+    }
+  });
 });
+
