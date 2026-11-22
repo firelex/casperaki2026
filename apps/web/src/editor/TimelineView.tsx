@@ -32,6 +32,7 @@ import { ADD_ROW_H, BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR
 import { beginRangeDrag } from './sequencer/rangeDrag';
 import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
+import { ChordLane } from './sequencer/ChordLane';
 import { Mixer, type OpenDevice } from './sequencer/Mixer';
 import { DeviceWindow } from './devices/DeviceWindow';
 import { Logical4Panel } from './devices/Logical4Panel';
@@ -570,7 +571,8 @@ export function TimelineView() {
       <div ref={scrollerRef} className="relative min-h-0 flex-1 overflow-auto bg-[#18191c]">
         <div ref={contentRef} className="relative" style={{ width: HEADER_W + width, minHeight: '100%' }}>
           {/* Ruler. */}
-          <div className="sticky top-0 z-30 flex bg-[#1b1c1f]" style={{ height: RULER_H }}>
+          <div className="sticky top-0 z-30 bg-[#1b1c1f]" style={{ height: RULER_H + CHORD_H }}>
+          <div className="flex" style={{ height: RULER_H }}>
             <div
               className="sticky left-0 z-40 flex shrink-0 flex-col border-b border-r border-line/60 bg-[#1b1c1f] px-3 text-[10px] text-white/40"
               style={{ width: HEADER_W }}
@@ -616,6 +618,23 @@ export function TimelineView() {
               />
             ) : null}
           </div>
+          {/* Chords, under the ruler and sticky with it. */}
+          <div className="flex border-b border-line/60" style={{ height: CHORD_H }}>
+            <div
+              className="sticky left-0 z-40 flex shrink-0 items-center border-r border-line/60 bg-[#1b1c1f] px-3 text-[10px] text-white/40"
+              style={{ width: HEADER_W }}
+            >
+              Chords
+            </div>
+            <ChordLane
+              model={model}
+              px={px}
+              playheadBar={isThisSong ? playheadBar : undefined}
+              onSeekBar={(bar) => seek(bar * secondsPerBar)}
+              onRangeChange={setRange}
+            />
+          </div>
+          </div>
 
           {/* The selection across the tracks (drag its edges to adjust). */}
           {range ? (
@@ -624,7 +643,7 @@ export function TimelineView() {
               pxPerUnit={px}
               total={model.totalBars}
               offsetPx={HEADER_W}
-              top={RULER_H}
+              top={RULER_H + CHORD_H}
               looping={live.looping}
               originX={() => contentRef.current!.getBoundingClientRect().left + HEADER_W}
               onChange={setRange}
@@ -740,32 +759,6 @@ export function TimelineView() {
               </button>
             </div>
             <div className="shrink-0 border-b border-line/25" style={{ width }} />
-          </div>
-
-          {/* Chords per bar, when there is room to read them. */}
-          <div className="relative flex" style={{ height: CHORD_H }}>
-            <div
-              className="sticky left-0 z-10 flex shrink-0 items-center border-r border-line/40 bg-[#2a2b30] px-4 text-[12px] text-white/55"
-              style={{ width: HEADER_W }}
-            >
-              Chords
-            </div>
-            <div className="relative shrink-0" style={{ width }}>
-              {px >= 30
-                ? model.sections.flatMap((s) =>
-                    s.chordsByBar.slice(0, s.bars).map((chords, i) => (
-                      <span
-                        key={`${s.name}-${i}`}
-                        className="absolute top-1.5 truncate font-mono text-[11px] text-white/60"
-                        style={{ left: (s.startBar + i) * px + 3, width: px - 4 }}
-                        title={chords.join(' ')}
-                      >
-                        {dedupe(chords).join(' ')}
-                      </span>
-                    )),
-                  )
-                : null}
-            </div>
           </div>
 
           {/* Playhead: a line through the tracks with a marker on the ruler. */}
@@ -1198,10 +1191,6 @@ function ToolButton({ onClick, label, children }: { onClick(): void; label: stri
       {children}
     </button>
   );
-}
-
-function dedupe(chords: readonly string[]): string[] {
-  return chords.filter((c, i) => i === 0 || c !== chords[i - 1]);
 }
 
 /** A remembered view preference (localStorage may be unavailable: then the default). */

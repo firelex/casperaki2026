@@ -14,7 +14,8 @@ export const BARS_H = 22;
 export const TIME_H = 16;
 export const LOOP_H = 16;
 export const RULER_H = MARKERS_H + BARS_H + TIME_H + LOOP_H;
-export const CHORD_H = 28;
+/** The chord lane under the ruler. */
+export const CHORD_H = 22;
 export const MIN_PX_PER_BAR = 6;
 export const MAX_PX_PER_BAR = 160;
 
