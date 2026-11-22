@@ -93,6 +93,11 @@ export function ClipDetail({
   /** Pitched tracks: piano roll or score. */
   const [view, setView] = useState<'roll' | 'score'>('roll');
   const showScore = !track.isDrums && view === 'score';
+  // Stable notes for the score (re-engraving only when the notes change).
+  const scoreNotes = useMemo(
+    () => (engineNotes && 'notes' in engineNotes ? engineNotes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length })) : []),
+    [engineNotes],
+  );
 
   const beats = clip.bars * BEATS_PER_BAR;
   const color = resolveColor(track.color);
@@ -246,7 +251,13 @@ export function ClipDetail({
           ) : 'error' in engineNotes ? (
             <p className="px-5 py-10 text-[14px] text-err">{engineNotes.error}</p>
           ) : engineNotes.notes.length > 0 && showScore ? (
-            <Score notes={engineNotes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length }))} beats={beats} songKey={songKey} bpm={bpm} />
+            <Score
+              notes={scoreNotes}
+              beats={beats}
+              songKey={songKey}
+              bpm={bpm}
+              beat={previewPlaying && previewBeat !== undefined ? previewBeat : undefined}
+            />
           ) : engineNotes.notes.length > 0 ? (
             <PianoRoll
               notes={engineNotes.notes}

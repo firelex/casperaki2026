@@ -343,3 +343,10 @@ body {
   font-weight: 700;
   letter-spacing: -0.015em;
 }
+
+/* Score view: notes sounding at the playhead (abcjs sets fills inline). */
+.score-sheet .cs-note-on,
+.score-sheet .cs-note-on * {
+  fill: #e0322b !important;
+  stroke: #e0322b;
+}
