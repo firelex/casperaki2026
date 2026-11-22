@@ -28,7 +28,7 @@ import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
-import { ADD_ROW_H, BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MAX_ROW_H, MIN_PX_PER_BAR, MIN_ROW_H, RULER_H, TIME_H } from './sequencer/layout';
+import { ADD_ROW_H, BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MAX_ROW_H, MIN_PX_PER_BAR, MIN_ROW_H, RULER_H, TIME_H, TRACK_DIVIDER_H } from './sequencer/layout';
 import { beginRangeDrag } from './sequencer/rangeDrag';
 import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
@@ -143,7 +143,7 @@ export function TimelineView() {
   // Vertical zoom scales the fitted height (1 = every track fits).
   const [vZoom, setVZoom] = useState(1);
   const fittedRowH = trackCount
-    ? Math.max(MIN_ROW_H, Math.min(MAX_ROW_H, Math.floor((areaH - RULER_H - ADD_ROW_H - CHORD_H - 14) / trackCount)))
+    ? Math.max(MIN_ROW_H, Math.min(MAX_ROW_H, Math.floor((areaH - RULER_H - ADD_ROW_H - CHORD_H - 14) / trackCount) - TRACK_DIVIDER_H))
     : MAX_ROW_H;
   const rowH = Math.max(18, Math.min(220, Math.round(fittedRowH * vZoom)));
   const [follow, setFollow] = useState(true);
@@ -592,8 +592,8 @@ export function TimelineView() {
               }
             >
               <div
-                className={`relative flex ${i % 2 ? 'bg-white/[0.015]' : ''}`}
-                style={{ height: rowH }}
+                className={`relative flex flex-col ${i % 2 ? 'bg-white/[0.015]' : ''}`}
+                style={{ height: rowH + TRACK_DIVIDER_H }}
                 onContextMenu={(e) => {
                   const lane = (e.target as HTMLElement).closest('[data-lane]');
                   const bar = lane ? (e.clientX - lane.getBoundingClientRect().left) / px : undefined;
@@ -606,6 +606,7 @@ export function TimelineView() {
                   setSelectedTrack(t.name);
                 }}
               >
+                <div className="flex" style={{ height: rowH }}>
                 <div
                   className={`sticky left-0 z-10 flex shrink-0 cursor-default items-center gap-2.5 border-b border-r border-line/40 pr-3 ${
                     selectedTrack === t.name ? 'bg-[#3a3c43]' : 'bg-[#2a2b30]'
@@ -659,6 +660,9 @@ export function TimelineView() {
                     automation={automationByTrack.get(t.name)}
                   />
                 </div>
+                </div>
+                {/* Divider between tracks: a dark channel with a hairline highlight. */}
+                <div className="shrink-0 border-t border-black/80 bg-[#0e0f12] shadow-[inset_0_-1px_0_rgba(255,255,255,0.05)]" style={{ height: TRACK_DIVIDER_H }} aria-hidden="true" />
               </div>
             </TrackMenu>
           ))}
