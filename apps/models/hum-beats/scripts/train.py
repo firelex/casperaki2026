@@ -1,0 +1,94 @@
+"""Fine-tune Beat This! (final0) on the hum-beats data: ONE run, one epoch, whole model.
+
+  python scripts/train.py --data-dir /mnt/d/casperaki-data/hum-beats/bt-data \
+      --run-dir /mnt/d/casperaki-data/hum-beats/runs/beatthis-hum-<YYYYMMDD-HHMM>
+
+Uses Beat This!'s own data module, Lightning module, loss and cosine warm-up schedule. Changes from their
+from-scratch recipe, and why:
+  * starts from the final0 weights; learning rate 1e-4 (theirs 8e-4), 100 warm-up steps, cosine decay to 0;
+  * max_epochs=1 and no length-based oversampling, so each training clip is seen exactly once;
+  * batch 16 without gradient accumulation (theirs 8 x 8): about 1,100 optimiser steps instead of ~270;
+  * keeps their online mask augmentation; their pitch / tempo augmentations need 21 pre-shifted copies of
+    every spectrogram and add nothing here: the generator already draws tempo uniformly over 60-200 BPM and
+    transposes every melody;
+  * evaluation does not skip the first 5 s (theirs does, for full songs): our clips are 2-36 s long;
+  * validates on dev every 150 steps and logs the training loss every 10 steps to <run>/metrics.csv.
+"""
+import argparse
+import json
+import time
+from pathlib import Path
+
+from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+from pytorch_lightning.loggers import CSVLogger
+
+from beat_this.dataset import BeatDataModule
+from beat_this.inference import load_checkpoint
+from beat_this.model.pl_module import PLBeatThis
+from beat_this.utils import replace_state_dict_key
+
+
+class HumPL(PLBeatThis):
+    def training_step(self, batch, batch_idx):
+        pred = self.model(batch["spect"])
+        losses = self._compute_loss(batch, pred)
+        self.log("train_loss_step", losses["total"].item(), on_step=True, on_epoch=False, batch_size=len(batch["spect"]))
+        self.log("train_loss_beat_step", losses["beat"].item(), on_step=True, on_epoch=False, batch_size=len(batch["spect"]))
+        self.log("train_loss_downbeat_step", losses["downbeat"].item(), on_step=True, on_epoch=False, batch_size=len(batch["spect"]))
+        return losses["total"]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data-dir", type=Path, required=True)
+    ap.add_argument("--run-dir", type=Path, required=True)
+    ap.add_argument("--init", default="final0")
+    ap.add_argument("--lr", type=float, default=1e-4)
+    ap.add_argument("--warmup-steps", type=int, default=100)
+    ap.add_argument("--batch-size", type=int, default=16)
+    ap.add_argument("--num-workers", type=int, default=8)
+    ap.add_argument("--val-every", type=int, default=150)
+    ap.add_argument("--seed", type=int, default=0)
+    args = ap.parse_args()
+    if args.run_dir.exists() and any(args.run_dir.iterdir()):
+        raise SystemExit(f"{args.run_dir} is not empty: one run per directory")
+    args.run_dir.mkdir(parents=True, exist_ok=True)
+    seed_everything(args.seed, workers=True)
+
+    dm = BeatDataModule(
+        args.data_dir, batch_size=args.batch_size, train_length=1500, num_workers=args.num_workers,
+        augmentations={"mask": {"kind": "permute", "min_count": 1, "max_count": 6, "min_len": 0.1, "max_len": 2, "min_parts": 5, "max_parts": 9}},
+        test_dataset="humbeats-no-test", no_val=False, spect_fps=50, length_based_oversampling_factor=0,
+    )
+    dm.setup("fit")
+    pos_weights = dm.get_train_positive_weights(widen_target_mask=3)
+    ckpt = load_checkpoint(args.init, "cpu")
+    hp = dict(ckpt["hyper_parameters"])
+    hp.update(lr=args.lr, warmup_steps=args.warmup_steps, max_epochs=1, pos_weights=pos_weights, eval_trim_beats=0, use_dbn=False)
+    model = HumPL(**hp)
+    model.model.load_state_dict(replace_state_dict_key(ckpt["state_dict"], "model.", ""), strict=True)
+    info = {"init": args.init, "init_pos_weights": ckpt["hyper_parameters"]["pos_weights"], "pos_weights": pos_weights,
+            "train_items": len(dm.train_dataset), "val_items": len(dm.val_dataset), "args": {k: str(v) for k, v in vars(args).items()},
+            "steps": len(dm.train_dataset) // args.batch_size, "started": time.strftime("%Y-%m-%d %H:%M:%S")}
+    (args.run_dir / "run.json").write_text(json.dumps(info, indent=1))
+    print(json.dumps(info, indent=1), flush=True)
+
+    trainer = Trainer(
+        max_epochs=1, accelerator="gpu", devices=[0], precision="16-mixed", logger=CSVLogger(str(args.run_dir), name="", version=""),
+        callbacks=[LearningRateMonitor(logging_interval="step"),
+                   ModelCheckpoint(dirpath=str(args.run_dir), filename="step{step}", every_n_train_steps=300, save_top_k=-1, save_last=False)],
+        log_every_n_steps=10, val_check_interval=args.val_every, num_sanity_val_steps=0, enable_progress_bar=False,
+    )
+    print("dev score of the starting model:", flush=True)
+    trainer.validate(model, dm)
+    trainer.fit(model, dm)
+    trainer.save_checkpoint(str(args.run_dir / "final.ckpt"))
+    info["finished"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    info["global_step"] = trainer.global_step
+    (args.run_dir / "run.json").write_text(json.dumps(info, indent=1))
+    print("done", info, flush=True)
+
+
+if __name__ == "__main__":
+    main()
