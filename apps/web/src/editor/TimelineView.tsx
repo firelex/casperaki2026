@@ -18,7 +18,8 @@ import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
 import { BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MIN_PX_PER_BAR, ROW_H, RULER_H, TIME_H } from './sequencer/layout';
-import { beginEdgeDrag, beginRangeDrag } from './sequencer/rangeDrag';
+import { beginRangeDrag } from './sequencer/rangeDrag';
+import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
@@ -130,6 +131,36 @@ export function TimelineView() {
     },
     onClear: () => setRange(undefined),
   };
+
+  /** Before the detail window's solo play: the solo and loop to restore. */
+  const savedForSolo = useRef<{ solo: readonly string[]; loopRange: typeof live.loopRange; looping: boolean } | undefined>(undefined);
+
+  /** Loop `fromBar`–`toBar` with only `track` audible (the detail window's Play). */
+  const playSolo = useCallback(
+    (track: string, fromBar: number, toBar: number) => {
+      const st = livePlayer.getState();
+      savedForSolo.current ??= { solo: st.solo, loopRange: st.loopRange, looping: st.looping };
+      livePlayer.setSoloSet([track]);
+      livePlayer.setLoopRange({ start: fromBar * secondsPerBar, end: toBar * secondsPerBar });
+      livePlayer.setLooping(true);
+      if (liveKey && livePlayer.isLoaded(liveKey)) {
+        livePlayer.seek(fromBar * secondsPerBar);
+        if (!playing) playPause();
+      } else seek(fromBar * secondsPerBar);
+    },
+    [secondsPerBar, liveKey, playing, playPause, seek],
+  );
+
+  /** Leaving the detail window: stop its solo play and put solo and loop back. */
+  const endSolo = useCallback(() => {
+    const saved = savedForSolo.current;
+    if (!saved) return;
+    savedForSolo.current = undefined;
+    void livePlayer.pause();
+    livePlayer.setSoloSet(saved.solo);
+    livePlayer.setLoopRange(saved.loopRange);
+    if (saved.looping && saved.loopRange) livePlayer.setLooping(true);
+  }, []);
 
   const loopSection = useCallback(
     (sec: SeqSection) => {
@@ -259,34 +290,19 @@ export function TimelineView() {
             ) : null}
           </div>
 
-          {/* Loop range across the tracks. */}
+          {/* The selection across the tracks (drag its edges to adjust). */}
           {range ? (
-            <div
-              className={`pointer-events-none absolute z-[5] border-x ${live.looping ? 'border-sky-300 bg-sky-400/[0.16]' : 'border-white/70 bg-white/[0.12]'}`}
-              style={{ left: HEADER_W + range.start * px, width: (range.end - range.start) * px, top: RULER_H, bottom: 0 }}
+            <SelectionOverlay
+              range={range}
+              pxPerUnit={px}
+              total={model.totalBars}
+              offsetPx={HEADER_W}
+              top={RULER_H}
+              looping={live.looping}
+              originX={() => contentRef.current!.getBoundingClientRect().left + HEADER_W}
+              onChange={setRange}
             />
           ) : null}
-
-          {/* Selection edges over the tracks: drag to adjust. */}
-          {range
-            ? ([0, 1] as const).map((i) => (
-                <div
-                  key={i}
-                  className="absolute z-[6] w-[11px] cursor-ew-resize"
-                  style={{ left: HEADER_W + (i === 0 ? range.start : range.end) * px - 5, top: RULER_H, bottom: 0 }}
-                  title="Drag to move this edge of the selection"
-                  onPointerDown={(e) =>
-                    beginEdgeDrag(e, {
-                      originX: () => contentRef.current!.getBoundingClientRect().left + HEADER_W,
-                      pxPerBar: px,
-                      totalBars: model.totalBars,
-                      fixed: i === 0 ? range.end : range.start,
-                      onRange: setRange,
-                    })
-                  }
-                />
-              ))
-            : null}
 
           {model.tracks.map((t, i) => (
             <TrackMenu
@@ -438,7 +454,13 @@ export function TimelineView() {
           onSetDrumHit={(segments, pitch, step, on) => applyEdit({ kind: 'setDrumHit', segments, pitch, step, on })}
           editError={editor?.lastError}
           playheadBeat={isThisSong ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
-          onClose={() => setDialog(undefined)}
+          onClose={() => {
+            endSolo();
+            setDialog(undefined);
+          }}
+          soloPlaying={playing && live.solo.length === 1 && live.solo[0] === detailTrack.name && live.looping}
+          onPlaySolo={(fromBar, toBar) => playSolo(detailTrack.name, fromBar, toBar)}
+          onPauseSolo={() => void livePlayer.pause()}
           onLoopSection={() => loopSection(model.sections[detail.section]!)}
           onNewPattern={() => newPattern(detailTrack.name)}
           onChangeSound={() => setDialog({ kind: 'sound', track: detailTrack.name })}

@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
 import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
 import { resolveColor } from './layout';
+import { beginRangeDrag, type BarRange } from './rangeDrag';
+import { SelectionOverlay } from './Selection';
 
 const DRUM_ROW_H = 26;
 const KEY_ROW_H = 12;
@@ -35,6 +37,9 @@ export function ClipDetail({
   onNewPattern,
   onChangeSound,
   onSetDrumHit,
+  soloPlaying,
+  onPlaySolo,
+  onPauseSolo,
   editable,
   soundChangeable,
   busy,
@@ -53,6 +58,11 @@ export function ClipDetail({
   onChangeSound(): void;
   /** Add or remove a drum hit (step in 32nds of the bar) in the sections named. */
   onSetDrumHit(segments: string[], pitch: number, step: number, on: boolean): void;
+  /** Whether this track is playing soloed from this window. */
+  soloPlaying: boolean;
+  /** Loop song bars `fromBar`–`toBar` with only this track audible. */
+  onPlaySolo(fromBar: number, toBar: number): void;
+  onPauseSolo(): void;
   editable: boolean;
   soundChangeable: boolean;
   busy: boolean;
@@ -67,12 +77,20 @@ export function ClipDetail({
   // Which sections a drum edit changes; asked on the first edit when there is a choice.
   const [scope, setScope] = useState<DrumScope | undefined>(sameKind.length > 1 ? undefined : 'this');
   const [pending, setPending] = useState<{ pitch: number; step: number; on: boolean } | undefined>(undefined);
+  /** Selection in beats from the start of what's shown (the bar for drums, the section otherwise). */
+  const [sel, setSel] = useState<BarRange | undefined>(undefined);
 
   const beats = clip.bars * BEATS_PER_BAR;
   const inSection = playheadBeat !== undefined && playheadBeat >= startBeat && playheadBeat < startBeat + beats;
   const color = resolveColor(track.color);
   const pitched = notes.filter((n) => n.pitch !== null);
   const kindLabel = plural(section.kind);
+  const playSolo = () => {
+    const from = sel ? sel.start : 0;
+    const to = sel ? sel.end : beats;
+    onPlaySolo(clip.startBar + from / BEATS_PER_BAR, clip.startBar + to / BEATS_PER_BAR);
+  };
+  const selectionProps = { sel, onSel: setSel, looping: soloPlaying };
 
   const apply = (edit: { pitch: number; step: number; on: boolean }, s: DrumScope) =>
     onSetDrumHit(s === 'all' ? [...sameKind] : [section.name], edit.pitch, edit.step, edit.on);
@@ -108,6 +126,15 @@ export function ClipDetail({
 
         {/* Grid, zoom and (drums) which sections edits apply to. */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
+          <button
+            type="button"
+            onClick={soloPlaying ? onPauseSolo : playSolo}
+            className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${soloPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'}`}
+            title={`Loop ${sel ? 'the selection' : 'this section'} with only ${track.name} playing`}
+          >
+            <span aria-hidden="true">{soloPlaying ? '❚❚' : '▶'}</span>
+            {soloPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'section'} solo`}
+          </button>
           <Segmented<Grid>
             label="Grid"
             value={grid}
@@ -142,6 +169,7 @@ export function ClipDetail({
               color={color}
               head={inSection ? (playheadBeat! - startBeat) % BEATS_PER_BAR : undefined}
               onCell={onCell}
+              {...selectionProps}
             />
           ) : pitched.length > 0 ? (
             <PianoRoll
@@ -151,6 +179,7 @@ export function ClipDetail({
               pxPerBeat={pxPerBeat}
               color={color}
               head={inSection ? playheadBeat! - startBeat : undefined}
+              {...selectionProps}
             />
           ) : (
             <p className="px-5 py-10 text-[14px] text-white/55">
@@ -304,11 +333,78 @@ function GridColumns({ beats, grid, pxPerBeat, height }: { beats: number; grid: 
   );
 }
 
-function BeatHeader({ beats, pxPerBeat }: { beats: number; pxPerBeat: number }) {
+interface SelectionProps {
+  sel: BarRange | undefined;
+  onSel(range: BarRange | undefined): void;
+  looping: boolean;
+}
+
+/** Snap to the grid's cells (in beats), unless `exact`. */
+function gridSnap(grid: Grid, total: number) {
+  const unit = BEATS_PER_BAR / grid;
+  return (v: number, exact: boolean) => {
+    const c = Math.max(0, Math.min(total, v));
+    return exact ? c : Math.max(0, Math.min(total, Math.round(c / unit) * unit));
+  };
+}
+
+/** The selectable area: beat ruler on top (drag it to select), body below, selection over both. */
+function Selectable({
+  beats,
+  pxPerBeat,
+  grid,
+  sel,
+  onSel,
+  looping,
+  children,
+}: SelectionProps & { beats: number; pxPerBeat: number; grid: Grid; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const snap = gridSnap(grid, beats);
   return (
-    <div className="sticky top-0 z-10 flex bg-[#151623]" style={{ height: 20 }}>
-      <div className="sticky left-0 z-10 shrink-0 bg-[#151623]" style={{ width: LABEL_W }} />
-      <div className="relative" style={{ width: beats * pxPerBeat }}>
+    <div ref={ref} className="relative min-w-max select-none">
+      <div className="sticky top-0 z-10 flex bg-[#151623]" style={{ height: 20 }}>
+        <div className="sticky left-0 z-10 shrink-0 bg-[#151623] pl-3 text-[10px] leading-[20px] text-white/35" style={{ width: LABEL_W }}>
+          Drag to select
+        </div>
+        <div
+          className="relative cursor-crosshair"
+          style={{ width: beats * pxPerBeat }}
+          onPointerDown={(e) =>
+            beginRangeDrag(e, {
+              el: e.currentTarget,
+              pxPerBar: pxPerBeat,
+              totalBars: beats,
+              snap,
+              onRange: onSel,
+              onClick: () => onSel(undefined),
+            })
+          }
+          title="Drag to select (click to clear)"
+        >
+          <BeatMarks beats={beats} pxPerBeat={pxPerBeat} />
+        </div>
+      </div>
+      {children}
+      {sel ? (
+        <SelectionOverlay
+          range={sel}
+          pxPerUnit={pxPerBeat}
+          total={beats}
+          offsetPx={LABEL_W}
+          looping={looping}
+          originX={() => ref.current!.getBoundingClientRect().left + LABEL_W}
+          snap={snap}
+          onChange={onSel}
+          zIndex={6}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function BeatMarks({ beats, pxPerBeat }: { beats: number; pxPerBeat: number }) {
+  return (
+      <>
         {Array.from({ length: beats }, (_, b) => (
           <span
             key={b}
@@ -318,8 +414,7 @@ function BeatHeader({ beats, pxPerBeat }: { beats: number; pxPerBeat: number }) 
             {b % BEATS_PER_BAR === 0 ? Math.floor(b / BEATS_PER_BAR) + 1 : `.${(b % BEATS_PER_BAR) + 1}`}
           </span>
         ))}
-      </div>
-    </div>
+      </>
   );
 }
 
@@ -360,7 +455,8 @@ function DrumBar({
   color,
   head,
   onCell,
-}: {
+  ...selection
+}: SelectionProps & {
   notes: SeqNote[];
   barCount: number;
   grid: Grid;
@@ -379,8 +475,7 @@ function DrumBar({
   const gridW = pxPerBeat * BEATS_PER_BAR;
 
   return (
-    <div className="relative min-w-max">
-      <BeatHeader beats={BEATS_PER_BAR} pxPerBeat={pxPerBeat} />
+    <Selectable beats={BEATS_PER_BAR} pxPerBeat={pxPerBeat} grid={grid} {...selection}>
       <div className="flex">
         <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
           {pitches.map((p) => (
@@ -438,7 +533,7 @@ function DrumBar({
           <Playhead head={head} pxPerBeat={pxPerBeat} />
         </div>
       </div>
-    </div>
+    </Selectable>
   );
 }
 
@@ -456,7 +551,8 @@ function PianoRoll({
   pxPerBeat,
   color,
   head,
-}: {
+  ...selection
+}: SelectionProps & {
   notes: SeqNote[];
   beats: number;
   grid: Grid;
@@ -475,8 +571,7 @@ function PianoRoll({
   const gridW = beats * pxPerBeat;
   const isBlack = (p: number) => [1, 3, 6, 8, 10].includes(((p % 12) + 12) % 12);
   return (
-    <div className="relative min-w-max">
-      <BeatHeader beats={beats} pxPerBeat={pxPerBeat} />
+    <Selectable beats={beats} pxPerBeat={pxPerBeat} grid={grid} {...selection}>
       <div className="flex">
         <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
           {Array.from({ length: rows }, (_, i) => high - i).map((p) => (
@@ -514,6 +609,6 @@ function PianoRoll({
           <Playhead head={head} pxPerBeat={pxPerBeat} />
         </div>
       </div>
-    </div>
+    </Selectable>
   );
 }

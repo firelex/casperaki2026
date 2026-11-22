@@ -315,6 +315,12 @@ class LivePlayer {
     this.postLaneGains();
   }
 
+  /** Solo exactly these tracks (empty: no solo). */
+  setSoloSet(lanes: readonly string[]): void {
+    this.set({ solo: [...lanes] });
+    this.postLaneGains();
+  }
+
   private postLaneGains(): void {
     if (!this.node) return;
     const { laneNames, muted, solo } = this.state;

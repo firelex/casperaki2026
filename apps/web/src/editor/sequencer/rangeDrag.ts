@@ -33,10 +33,13 @@ export function beginRangeDrag(
     totalBars: number;
     onRange(range: BarRange): void;
     onClick(bar: number, ev: PointerEvent): void;
+    /** Snapping in this surface's units (default: the sequencer's beat/bar snap). */
+    snap?(value: number, exact: boolean): number;
   },
 ): void {
   if (e.button !== 0) return;
   const { el, pxPerBar, totalBars } = opts;
+  const snap = opts.snap ?? ((v: number, exact: boolean) => snapBar(v, pxPerBar, totalBars, exact));
   const x0 = e.clientX;
   const barAt = (clientX: number) => (clientX - el.getBoundingClientRect().left) / pxPerBar;
   const anchorRaw = barAt(x0);
@@ -50,8 +53,8 @@ export function beginRangeDrag(
       document.body.style.cursor = 'col-resize';
     }
     ev.preventDefault();
-    const a = snapBar(anchorRaw, pxPerBar, totalBars, ev.altKey);
-    const b = snapBar(barAt(ev.clientX), pxPerBar, totalBars, ev.altKey);
+    const a = snap(anchorRaw, ev.altKey);
+    const b = snap(barAt(ev.clientX), ev.altKey);
     if (a !== b) opts.onRange({ start: Math.min(a, b), end: Math.max(a, b) });
   };
   const up = (ev: PointerEvent) => {
@@ -71,7 +74,14 @@ export function beginRangeDrag(
  */
 export function beginEdgeDrag(
   e: ReactPointerEvent<HTMLElement>,
-  opts: { originX(): number; pxPerBar: number; totalBars: number; fixed: number; onRange(range: BarRange): void },
+  opts: {
+    originX(): number;
+    pxPerBar: number;
+    totalBars: number;
+    fixed: number;
+    onRange(range: BarRange): void;
+    snap?(value: number, exact: boolean): number;
+  },
 ): void {
   if (e.button !== 0) return;
   e.preventDefault();
@@ -81,7 +91,8 @@ export function beginEdgeDrag(
   document.body.style.cursor = 'ew-resize';
   const move = (ev: PointerEvent) => {
     ev.preventDefault();
-    const b = snapBar((ev.clientX - opts.originX()) / pxPerBar, pxPerBar, totalBars, ev.altKey);
+    const raw = (ev.clientX - opts.originX()) / pxPerBar;
+    const b = opts.snap ? opts.snap(raw, ev.altKey) : snapBar(raw, pxPerBar, totalBars, ev.altKey);
     if (b !== fixed) opts.onRange({ start: Math.min(b, fixed), end: Math.max(b, fixed) });
   };
   const up = () => {
