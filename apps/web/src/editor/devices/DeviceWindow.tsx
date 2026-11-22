@@ -10,12 +10,13 @@ export function DeviceWindow({ title, subtitle, onClose, children }: { title: st
   // Escape closes the window (as Escape closes a plugin window in a DAW).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (e.key !== 'Escape') return;
       e.preventDefault();
       onClose();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // Capture phase, so nothing focused inside the page can swallow it first.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, [onClose]);
   return (
     <div

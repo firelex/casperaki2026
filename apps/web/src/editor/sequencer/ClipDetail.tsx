@@ -156,7 +156,7 @@ export function ClipDetail({
 
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
-      <DialogContent className="max-h-[88vh] w-[min(1180px,calc(100vw-2rem))] max-w-none gap-0 overflow-hidden rounded-[12px] border border-line bg-panel p-0 text-white sm:max-w-none">
+      <DialogContent data-owns-space className="max-h-[88vh] w-[min(1180px,calc(100vw-2rem))] max-w-none gap-0 overflow-hidden rounded-[12px] border border-line bg-panel p-0 text-white sm:max-w-none">
         <div className="flex flex-wrap items-center gap-3 border-b border-line/60 px-5 py-4 pr-12">
           <span className="h-3 w-3 rounded-full" style={{ background: track.color }} aria-hidden="true" />
           <div className="min-w-0">

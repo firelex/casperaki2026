@@ -38,14 +38,17 @@ export function Transport() {
       // Enter on a focused button still presses the button.
       if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
       if (e.code === 'Enter' && t?.tagName === 'BUTTON') return;
+      // A window with its own player (the pattern editor) takes Space while open.
+      if (e.code === 'Space' && document.querySelector('[data-owns-space]')) return;
       e.preventDefault();
       if (e.code === 'Space') playPause();
       else if (e.code === 'KeyL') {
         if (live.loopRange) toggleLoop();
       } else stop(true);
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    // Capture phase: runs before any element's own key handling can stop it.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, [playPause, toggleLoop, stop, live.loopRange]);
 
   const btn =
