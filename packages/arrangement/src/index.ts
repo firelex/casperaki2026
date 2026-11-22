@@ -318,6 +318,7 @@ export {
   type TrackOptions,
 } from './edits/track-edits.js';
 export { addSection, nextSectionName } from './edits/add-section.js';
+export { setTransition, TRANSITION_TYPES, type SetTransitionRequest, type TransitionPlacement as UserTransitionPlacement } from './edits/transitions.js';
 export {
   DRUM_ROLE_FAMILIES,
   DRUM_ROLE_LABELS,

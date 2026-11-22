@@ -44,6 +44,9 @@ export const tracksApi = {
   /** The brain rewrites one track with the generator and returns the whole song. */
   edit: (song: Song, op: TrackEdit, signal?: AbortSignal) =>
     defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op }, { signal }),
+  /** Switch a transition on or off in sections (the brain writes snare-roll grids). */
+  setTransition: (song: Song, segments: readonly string[], type: string, placement: string, on: boolean, signal?: AbortSignal) =>
+    defaultBrainClient.post<{ song: Song }>('/api/transitions/set', { song, segments, type, placement, on }, { signal }),
   /** The drums of the song's kit and the sound each plays. */
   drumKit: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<{ kit: DrumKitRow[] }>('/api/tracks/drum-kit', { song }, { signal }),
   /** A new section written by the generator, inserted at `index` (0 = first). */

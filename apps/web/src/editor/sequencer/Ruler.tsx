@@ -14,7 +14,7 @@ import {
   ContextMenuTrigger,
 } from '@teamsuzie/ui';
 
-export type SectionAction = 'play' | 'loop' | 'rename' | 'duplicate' | 'addBar' | 'removeBar' | 'addBefore' | 'addAfter' | 'delete';
+export type SectionAction = 'play' | 'loop' | 'transitions' | 'rename' | 'duplicate' | 'addBar' | 'removeBar' | 'addBefore' | 'addAfter' | 'delete';
 const MENU = 'z-50 min-w-[230px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl';
 const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40';
 
@@ -220,6 +220,7 @@ export function Ruler({
             <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('play', s.name, i)}>Play from here</ContextMenuItem>
             <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('loop', s.name, i)}>Loop this section</ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('transitions', s.name, i)}>Transitions…</ContextMenuItem>
             <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('rename', s.name, i)}>Rename…</ContextMenuItem>
             <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('duplicate', s.name, i)}>Duplicate</ContextMenuItem>
             <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('addBar', s.name, i)}>Add a bar</ContextMenuItem>

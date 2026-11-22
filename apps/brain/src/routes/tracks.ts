@@ -23,6 +23,7 @@ import { z } from 'zod';
 
 import {
   addSection,
+  setTransition,
   DRUM_ROLE_LABELS,
   drumKit,
   editTrack,
@@ -36,6 +37,16 @@ import { parseSong, type Song } from '@casperaki/song-schema';
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
 const EditBody = z.object({ song: z.unknown(), op: TrackEditRequestSchema }).strict();
+
+const SetTransitionBody = z
+  .object({
+    song: z.unknown(),
+    segments: z.array(z.string().min(1)).min(1),
+    type: z.string().min(1),
+    placement: z.enum(['beginningOfSegment', 'midSegment', 'endOfSegment']),
+    on: z.boolean(),
+  })
+  .strict();
 
 const AddSectionBody = z
   .object({ song: z.unknown(), type: z.string().min(1), index: z.number().int().min(0), bars: z.number().int().min(1).max(64).optional() })
@@ -93,6 +104,19 @@ export function createTracksRouter(): Router {
     const song = songOf(body.data.song, res);
     if (!song) return;
     return run(res, () => addSection(song, body.data.type, body.data.index, body.data.bars));
+  });
+
+  // Switch a transition on or off in sections: { song, segments, type, placement, on } -> { song }.
+  router.post('/api/transitions/set', (req, res) => {
+    const body = SetTransitionBody.safeParse(req.body);
+    if (!body.success) {
+      const issue = body.error.issues[0];
+      return res.status(400).json({ error: 'invalid_body', message: issue ? `${issue.path.join('.')}: ${issue.message}` : 'invalid body' });
+    }
+    const song = songOf(body.data.song, res);
+    if (!song) return;
+    const { song: _s, ...request } = body.data;
+    return run(res, () => ({ song: setTransition(song, request) }));
   });
 
   return router;

@@ -35,10 +35,10 @@ import { isTransitionAnchorSegment, segmentType } from './segment-type.js';
 // docs/54n — `edmSnareDrumRoll` is a `TransitionPattern`: its snare-roll step
 // grid is generated here (a per-song random decision) and carried on the
 // transition entry for the engine-adapter to pair with two snare samples.
-const EDM_SNARE_DRUM_ROLL = 'edmSnareDrumRoll';
+export const EDM_SNARE_DRUM_ROLL = 'edmSnareDrumRoll';
 // Legacy caps the roll grid at the segment length OR 4 bars, whichever is
 // smaller (TransitionsClass.js:316).
-const EDM_SNARE_ROLL_MAX_BARS = 4;
+export const EDM_SNARE_ROLL_MAX_BARS = 4;
 
 type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 

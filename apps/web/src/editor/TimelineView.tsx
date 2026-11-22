@@ -40,7 +40,7 @@ import { ReverbPanel } from './devices/ReverbPanel';
 import { DEVICES } from './devices/deviceDefs';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog, DrumSoundDialog } from './sequencer/TrackDialogs';
-import { AddSectionDialog, RenameSectionDialog } from './sequencer/SectionDialogs';
+import { AddSectionDialog, RenameSectionDialog, TransitionsDialog, type SectionTransitions } from './sequencer/SectionDialogs';
 import { tracksApi, type DrumKitRow } from '../api/tracks';
 import { useTrackEdits } from './sequencer/useTrackEdits';
 
@@ -92,7 +92,9 @@ export function TimelineView() {
   }, [liveKey, fetchPayload, editorDirty]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   /** The section dialogs (from the ruler's right-click menu). */
-  const [sectionDialog, setSectionDialog] = useState<{ kind: 'rename'; name: string } | { kind: 'add'; index: number; where: string } | undefined>(undefined);
+  const [sectionDialog, setSectionDialog] = useState<
+    { kind: 'rename'; name: string } | { kind: 'add'; index: number; where: string } | { kind: 'transitions'; name: string } | undefined
+  >(undefined);
   /** The open device view (a plugin on a bus), if any. */
   const [device, setDevice] = useState<OpenDevice | undefined>(undefined);
   // The engine's automation per track (filter sweeps, volume fades), from the resolved mix.
@@ -578,6 +580,7 @@ export function TimelineView() {
                   if (action === 'play') seek(sec.startBar * secondsPerBar);
                   else if (action === 'loop') loopSection(sec);
                   else if (action === 'rename') setSectionDialog({ kind: 'rename', name });
+                  else if (action === 'transitions') setSectionDialog({ kind: 'transitions', name });
                   else if (action === 'duplicate') applyEdit({ kind: 'duplicateSegment', segmentName: name });
                   else if (action === 'addBar') applyEdit({ kind: 'changeBarCount', segmentName: name, delta: 1 });
                   else if (action === 'removeBar') applyEdit({ kind: 'changeBarCount', segmentName: name, delta: -1 });
@@ -784,6 +787,36 @@ export function TimelineView() {
             setSectionDialog(undefined);
           }}
         />
+      ) : sectionDialog?.kind === 'transitions' ? (
+        (() => {
+          const sec = model.sections.find((x) => x.name === sectionDialog.name);
+          if (!sec) throw new Error(`No section ${sectionDialog.name}.`);
+          const same = model.sections.filter((x) => x.kind === sec.kind).map((x) => x.name);
+          const current: SectionTransitions = Object.fromEntries(
+            model.sections.map((x) => [
+              x.name,
+              Object.fromEntries(
+                Object.entries(viewSong.arrangement[x.name]?.transitions ?? {}).map(([type, e]) => [type, (e as { placement: 'beginningOfSegment' | 'midSegment' | 'endOfSegment' }).placement]),
+              ),
+            ]),
+          );
+          return (
+            <TransitionsDialog
+              section={sec.name}
+              sameKind={same}
+              kindLabel={pluralKind(sec.kind)}
+              current={current}
+              busy={edits.busy}
+              error={edits.error}
+              onClose={() => setSectionDialog(undefined)}
+              onToggle={(segments, type, placement, on) =>
+                void edits.runSongEdit(on ? 'Adding the transition' : 'Removing the transition', async (song) =>
+                  (await tracksApi.setTransition(song, segments, type, placement, on)).song,
+                )
+              }
+            />
+          );
+        })()
       ) : sectionDialog?.kind === 'add' ? (
         <AddSectionDialog
           where={sectionDialog.where}
@@ -1182,4 +1215,10 @@ function writeNumberPref(key: string, value: number): void {
   } catch {
     // Not stored (private window, blocked storage): the height lasts this visit.
   }
+}
+
+/** "chorus" → "choruses", "preChorus" → "pre-choruses". */
+function pluralKind(kind: string): string {
+  const k = kind.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase();
+  return /(s|x|ch|sh)$/u.test(k) ? `${k}es` : `${k}s`;
 }

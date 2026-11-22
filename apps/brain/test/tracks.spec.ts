@@ -111,3 +111,27 @@ describe('track editing routes', () => {
   });
 
 });
+
+describe('POST /api/transitions/set', () => {
+  it('switches a transition on in sections and refuses unknown types', async () => {
+    const { createTracksRouter } = await import('../src/routes/tracks.js');
+    const express = (await import('express')).default;
+    const app = express().use(express.json({ limit: '20mb' })).use(createTracksRouter());
+    const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+      const s = app.listen(0, '127.0.0.1', () => resolve(s));
+    });
+    try {
+      const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/transitions/set`;
+      const send = (body: unknown) => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+      const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'tr-route' });
+      const ok = await send({ song, segments: ['verse1', 'verse2'], type: 'fxUplifter', placement: 'endOfSegment', on: true });
+      expect(ok.status).toBe(200);
+      const body = (await ok.json()) as { song: Song };
+      expect(body.song.arrangement['verse2']!.transitions!['fxUplifter']).toEqual({ type: 'fxUplifter', placement: 'endOfSegment' });
+      const bad = await send({ song, segments: ['verse1'], type: 'fxBoom', placement: 'endOfSegment', on: true });
+      expect(bad.status).toBe(400);
+    } finally {
+      server.close();
+    }
+  });
+});
