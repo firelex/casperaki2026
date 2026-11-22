@@ -55,6 +55,8 @@ const ConfigSchema = z.object({
   // --- Music videos (src/video/) ---
   /** DeepSeek API key for the video scene planner; videos fail loudly without it. */
   /** The music-video scene planner: an OpenAI-compatible endpoint (the B200 DeepSeek via its tunnel) and model. */
+  /** Python of the Beat This! environment (hum lab beat tracking). */
+  beatThisPython: z.string().min(1).optional(),
   videoPlannerUrl: z.string().url().optional(),
   videoPlannerModel: z.string().min(1).optional(),
   videoPlannerKey: z.string().min(1).optional(),
@@ -114,6 +116,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     sampleCacheDir: env.BRAIN_SAMPLE_CACHE_DIR,
     mixConfigPath: env.CASPERAKI_MIX_CONFIG,
     webDistDir: env.BRAIN_WEB_DIST_DIR,
+    beatThisPython: env.BEAT_THIS_PYTHON || undefined,
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
     videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
     videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,

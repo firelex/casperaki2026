@@ -13,6 +13,7 @@ const PatternLabPage = lazy(() => import('./pages/PatternLabPage').then((m) => (
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
+const HumLabPage = lazy(() => import('./pages/HumLabPage').then((m) => ({ default: m.HumLabPage })));
 
 /**
  * Routes mirror rory-fe's three screens (LoginView, ProjectsView, Editor):
@@ -24,6 +25,7 @@ const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => (
  *   /editor/:songId/timeline   → Editor · Song tab (the tracks)
  *   /editor/:songId/video      → Editor · Music Video tab
  *   /editor/:songId/structure  → redirects to the track view (Structure was folded in)
+ *   /lab/hum                   → Hum lab (beat tracking test bench for "hum a song")
  *
  * Signed-out users see only the landing (LandingPage). Signed-in users get
  * the full route tree wrapped in <SessionProvider>.
@@ -42,6 +44,7 @@ export function App() {
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
         {user.isAdmin ? <Route path="/patterns" element={<PatternLabPage />} /> : null}
         {/* dev-only WASM spikes stay reachable when signed in */}
+        <Route path="/lab/hum" element={<HumLabPage />} />
         <Route path="/wasm-tone" element={<WasmTonePage />} />
         <Route path="/wasm-render" element={<WasmRenderPage />} />
         <Route path="/editor" element={<Navigate to="/" replace />} />
