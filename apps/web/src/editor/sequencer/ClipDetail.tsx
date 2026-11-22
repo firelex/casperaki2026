@@ -9,7 +9,7 @@ import { SelectionOverlay } from './Selection';
 const DRUM_ROW_H = 26;
 const KEY_ROW_H = 12;
 const LABEL_W = 104;
-const MIN_PX_PER_BEAT = 24;
+const MIN_PX_PER_BEAT = 6;
 const MAX_PX_PER_BEAT = 480;
 /** Grid choices: notes per bar, as on a DAW's grid menu. */
 const GRIDS = [4, 8, 16, 32] as const;
@@ -72,6 +72,7 @@ export function ClipDetail({
   const offSixteenth = notes.some((n) => Math.abs(n.start * 4 - Math.round(n.start * 4)) > 1e-6);
   const [grid, setGrid] = useState<Grid>(offSixteenth ? 32 : 16);
   const [pxPerBeat, setPxPerBeat] = useState(track.isDrums ? 255 : 88);
+  const scrollRef = useRef<HTMLDivElement>(null);
   // Which sections a drum edit changes; asked on the first edit when there is a choice.
   const [scope, setScope] = useState<DrumScope | undefined>(sameKind.length > 1 ? undefined : 'this');
   const [pending, setPending] = useState<{ pitch: number; step: number; on: boolean } | undefined>(undefined);
@@ -84,6 +85,25 @@ export function ClipDetail({
   const kindLabel = plural(section.kind);
   // What Play loops: the selection, else the whole pattern shown (drums: the bar).
   const patternBeats = track.isDrums ? BEATS_PER_BAR : beats;
+  /** Zoom so the whole pattern fits the window's width. */
+  const fitTo = (el: HTMLElement) => {
+    const room = el.clientWidth - LABEL_W - 12;
+    setPxPerBeat(Math.min(MAX_PX_PER_BEAT, Math.max(MIN_PX_PER_BEAT, room / patternBeats)));
+  };
+  const fit = () => {
+    if (!scrollRef.current) throw new Error('The pattern view is not mounted.');
+    fitTo(scrollRef.current);
+  };
+  // Open with the whole pattern in view: fit once, when the view mounts
+  // (the dialog mounts its content after this component renders).
+  const fitted = useRef(false);
+  const attachScroll = (el: HTMLDivElement | null) => {
+    scrollRef.current = el;
+    if (el && !fitted.current) {
+      fitted.current = true;
+      fitTo(el);
+    }
+  };
   const playPattern = () => onPlay(sel ? sel.start : 0, sel ? sel.end : patternBeats);
 
   // Space plays and pauses the preview while this window is open.
@@ -152,6 +172,9 @@ export function ClipDetail({
             <span className="mr-1 text-white/55">Zoom</span>
             <SmallButton label="Zoom out" onClick={() => setPxPerBeat((z) => Math.max(MIN_PX_PER_BEAT, Math.round(z / 1.4)))}>−</SmallButton>
             <SmallButton label="Zoom in" onClick={() => setPxPerBeat((z) => Math.min(MAX_PX_PER_BEAT, Math.round(z * 1.4)))}>+</SmallButton>
+            <button type="button" onClick={fit} title="Fit the whole pattern" className="ml-1 h-7 rounded-[6px] border border-line px-2 text-[12px] text-white/85 hover:border-white/50">
+              Fit
+            </button>
           </span>
           {track.isDrums && sameKind.length > 1 ? (
             <Segmented<DrumScope>
@@ -166,7 +189,7 @@ export function ClipDetail({
           ) : null}
         </div>
 
-        <div className="max-h-[calc(88vh-190px)] overflow-auto bg-[#0d0e18]">
+        <div ref={attachScroll} className="max-h-[calc(88vh-190px)] overflow-auto bg-[#0d0e18]">
           {track.isDrums ? (
             <DrumBar
               notes={notes}
