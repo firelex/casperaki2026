@@ -77,20 +77,30 @@ export function generateBassPattern(
 
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
-  // Casperaki rules (owner, 2026-11-22; not in the legacy):
-  // - A bass line that can fall below E1 (MIDI 28, a bass's lowest string) on
-  //   some chord plays higher as a whole, by as many octaves as it takes, so
-  //   it never gets a lone high note and keeps one octave in every section
-  //   (decided on the C-template line moved to the song's chord roots: the
-  //   largest move down this song really makes).
+  // Casperaki rules (owner, 2026-11-22; not in the legacy), decided once per
+  // song on the C-template line moved to the song's own chord roots (so the
+  // line keeps one octave in every section):
+  // - When many of its notes (over 15%) would fall below E1 (MIDI 28, a
+  //   bass's lowest string), the whole line plays an octave higher (again if
+  //   needed): a low line, not a line with stray high notes.
+  // - The few notes still below E1 then go up an octave on their own: they
+  //   land inside the line's register.
   // - Sub basses (edmSimple, written in octave 1 on purpose) keep their
-  //   register, floored at C1 (MIDI 24): a note below goes up an octave.
+  //   register, floored at C1 (MIDI 24).
   const sub = selection.styleName === 'edmSimple';
   if (songChordRoots.size === 0) throw new Error('generateBassPattern: the song has no chords');
-  const templateLow = lowestTemplateNote(selection); // undefined: the line has no notes here (e.g. no kicks to follow)
-  const lowest = templateLow === undefined ? undefined : templateLow + Math.min(...[...songChordRoots].map(nearestRootDelta));
-  const lift = sub || lowest === undefined || lowest >= LOWEST_BASS_STRING ? 0 : Math.ceil((LOWEST_BASS_STRING - lowest) / 12) * 12;
-  const floorSub = (pitch: number) => (sub && pitch < SUB_BASS_FLOOR ? pitch + 12 : pitch);
+  const deltas = [...songChordRoots].map(nearestRootDelta);
+  const template = templateNotes(selection);
+  const shareBelow = (lift: number) =>
+    template.length === 0 ? 0 : template.reduce((n, t) => n + deltas.filter((d) => t + d + lift < LOWEST_BASS_STRING).length, 0) / (template.length * deltas.length);
+  let lift = 0;
+  while (!sub && shareBelow(lift) > LOW_SHARE_TO_LIFT_LINE) lift += 12;
+  const floor = sub ? SUB_BASS_FLOOR : LOWEST_BASS_STRING;
+  const floorSub = (pitch: number) => {
+    let p = pitch;
+    while (p < floor) p += 12;
+    return p;
+  };
 
   // Absolute (edmComplex / Library) — chord-independent MIDI events repeated
   // modulo the pattern's bar count across the segment.
@@ -164,12 +174,12 @@ export function generateBassPattern(
 const LOWEST_BASS_STRING = 28;
 /** C1: the lowest note a sub bass plays. */
 const SUB_BASS_FLOOR = 24;
+/** Share of a line's notes below E1 above which the whole line goes up an octave. */
+const LOW_SHARE_TO_LIFT_LINE = 0.15;
 
-/** The lowest note of the bass line on its C template (before the move to each chord root); undefined when it has no notes. */
-function lowestTemplateNote(selection: RealBassSelection): number | undefined {
-  if (selection.mode === 'absolute') {
-    return selection.events.length ? Math.min(...selection.events.map((e) => e.midi)) : undefined;
-  }
-  const hits = selection.pattern.filter(([position]) => position >= 0);
-  return hits.length ? (selection.rootMidiOctave + 1) * 12 + Math.min(...hits.map(([, , offset]) => offset)) : undefined;
+/** The bass line's notes on its C template (before the move to each chord root). */
+function templateNotes(selection: RealBassSelection): number[] {
+  if (selection.mode === 'absolute') return selection.events.map((e) => e.midi);
+  const base = (selection.rootMidiOctave + 1) * 12;
+  return selection.pattern.filter(([position]) => position >= 0).map(([, , offset]) => base + offset);
 }

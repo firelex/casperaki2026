@@ -74,3 +74,11 @@ picked pattern in-place:
    Picks are without replacement within the same beat.
 4. **Empty-beat cleanup:** if a beat's note array is empty after the
    above, the key is deleted.
+
+## Data fix (2026-11-22)
+
+`virtualGuitaristStyleMap.json` named two patterns that are not in the main
+bank: "Ample Guitar - 110-16-44-Folk-Chord CMaj-009-bak" and "…-010-bak"
+(organicVibes, 95-130 bpm). They are stray backup duplicates of "…-009" and
+"…-010", which are mapped with the same genre and tempo range. Picking one
+crashed song generation (the legacy would crash too). Removed.
