@@ -201,7 +201,11 @@ class LivePlayer {
    * and its sample list from the brain. Call from a click handler: browsers
    * only allow audio to start from a user gesture.
    */
-  async play(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<void> {
+  async play(
+    key: string,
+    fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+    opts: { seamless?: boolean } = {},
+  ): Promise<void> {
     const ctx = this.context();
     // Resume inside the gesture, before any await, so the browser allows audio.
     const resumed = ctx.resume();
@@ -214,19 +218,24 @@ class LivePlayer {
       return;
     }
     const token = ++this.loadToken;
-    this.teardown();
-    this.set({ status: 'loading', key, durationSec: 0, step: 'Preparing the song…', error: undefined });
+    // Seamless: keep the current version playing while the new one loads,
+    // then switch at the same position (an edit while listening).
+    const seamless = Boolean(opts.seamless) && this.node !== undefined && this.state.status === 'playing';
+    if (!seamless) {
+      this.teardown();
+      this.set({ status: 'loading', key, durationSec: 0, step: 'Preparing the song…', error: undefined });
+    }
     try {
       const [{ payload, realSamples }, wasmBytes, stubs] = await Promise.all([
         this.ensurePrepared(key, fetchPayload, (done, total) => {
-          if (token === this.loadToken) this.set({ step: `Loading sounds ${done}/${total}` });
+          if (token === this.loadToken && !seamless) this.set({ step: `Loading sounds ${done}/${total}` });
         }),
         this.wasm(),
         this.stubs(ctx),
         this.worklet(ctx),
       ]);
       if (token !== this.loadToken) return;
-      this.set({ step: 'Starting the engine…' });
+      if (!seamless) this.set({ step: 'Starting the engine…' });
 
       const node = new AudioWorkletNode(ctx, 'casperaki-render-processor', {
         numberOfInputs: 0,
@@ -246,37 +255,51 @@ class LivePlayer {
           realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
         },
       });
+      let laneNames: string[] = [];
       const ready = new Promise<number>((resolve, reject) => {
         node.port.onmessage = (ev: MessageEvent) => {
           const d = ev.data as { type: string; totalFrames?: number; sampleRate?: number; message?: string; laneNames?: string[] };
           if (d.type === 'ready') {
-            this.set({ laneNames: d.laneNames ?? [] });
+            laneNames = d.laneNames ?? [];
             resolve((d.totalFrames ?? 0) / (d.sampleRate ?? ctx.sampleRate));
-          } else if (d.type === 'error' && node === this.node && this.state.status !== 'loading')
-            this.set({ status: 'error', error: `The audio engine failed: ${d.message}` });
+          } else if (d.type === 'error' && node === this.node) this.set({ status: 'error', error: `The audio engine failed: ${d.message}` });
           else if (d.type === 'error') reject(new Error(`The audio engine failed: ${d.message}`));
           else if (d.type === 'ended' && node === this.node) this.set({ status: 'ended' });
         };
       });
-      this.node = node;
       const durationSec = await ready;
-      this.postLaneGains();
       if (token !== this.loadToken) {
+        node.port.onmessage = null;
         node.disconnect();
         return;
       }
+      await resumed;
+      // Where the new version starts: the current position when swapping in
+      // an edit, else the start (or the loop's start).
+      const swapAt = seamless ? Math.min(this.position(), durationSec) : undefined;
+      this.teardown();
+      this.node = node;
+      this.set({ key, laneNames, durationSec });
       // A loop past the end of this (shorter) version can't play: drop it, visibly.
       const range = this.state.loopRange;
       if (range && range.end > durationSec) this.set({ loopRange: undefined, looping: false });
-      this.set({ durationSec });
-      await resumed;
-      node.connect(this.output(ctx));
-      this.anchorTime = ctx.currentTime;
-      this.anchorPos = 0;
+      this.postLaneGains();
       this.postLoop();
       const loop = this.activeLoop();
-      if (loop) this.seek(loop.start);
-      this.playStartPos = loop ? loop.start : 0;
+      // Position the new engine before it is heard (messages run before its first pull).
+      let startAt = 0;
+      if (swapAt !== undefined) {
+        // Instant jump: no pre-roll render on the audio thread mid-playback.
+        node.port.postMessage({ type: 'seek', frame: Math.round(swapAt * ctx.sampleRate), preroll: 0 });
+        startAt = swapAt;
+      } else if (loop) {
+        node.port.postMessage({ type: 'seek', frame: Math.round(loop.start * ctx.sampleRate) });
+        startAt = loop.start;
+        this.playStartPos = loop.start;
+      } else this.playStartPos = 0;
+      node.connect(this.output(ctx));
+      this.anchorTime = ctx.currentTime;
+      this.anchorPos = startAt;
       this.set({ status: 'playing', step: '' });
     } catch (err) {
       if (token !== this.loadToken) return;

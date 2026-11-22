@@ -76,7 +76,7 @@ export function useLiveTransport() {
 }
 
 /** 32-bit FNV-1a of a string, as hex: a cheap key for the working copy. */
-function fnv1a(text: string): string {
+export function fnv1a(text: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);

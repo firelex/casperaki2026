@@ -12,7 +12,10 @@ import {
 
 import { catalogApi, catalogQueryKeys } from '../api/catalog';
 import { livePlayer, type LaneMeters } from '../audio/livePlayer';
-import { useLiveTransport } from '../audio/useLiveTransport';
+import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
+import { useLivePosition } from '../audio/useLivePlayer';
+import { playbackApi } from '../api/playback';
+import { sectionSong } from './sequencer/preview';
 import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
@@ -135,25 +138,50 @@ export function TimelineView() {
   /** Before the detail window's solo play: the solo and loop to restore. */
   const savedForSolo = useRef<{ solo: readonly string[]; loopRange: typeof live.loopRange; looping: boolean } | undefined>(undefined);
 
-  /** Whether the detail window's Play started what is playing. */
+  /** Whether the detail window's preview is in use (solo and loop saved). */
   const [previewActive, setPreviewActive] = useState(false);
+  const detailSectionName = dialog?.kind === 'detail' && model ? model.sections[dialog.section]?.name : undefined;
+  // The open section as a song of its own: what the detail window plays.
+  const preview = useMemo(() => {
+    if (!viewSong || !detailSectionName) return undefined;
+    const song = sectionSong(viewSong, detailSectionName);
+    return { song, key: `preview:${fnv1a(JSON.stringify(song))}` };
+  }, [viewSong, detailSectionName]);
+  const fetchPreview = useCallback(
+    (signal: AbortSignal) => {
+      if (!preview) throw new Error('No section is open.');
+      return playbackApi.forSong(preview.song, signal);
+    },
+    [preview],
+  );
+  const previewLoaded = live.key?.startsWith('preview:') === true;
+  const previewPlaying = previewActive && previewLoaded && live.status === 'playing';
+  const previewSeconds = useLivePosition(previewPlaying);
 
-  /** The detail window's Play: loop `fromBar`–`toBar`, with only `track` audible when `solo`. */
+  /** The detail window's Play: loop `from`–`to` (seconds into the section), only `track` audible when `solo`. */
   const playPreview = useCallback(
-    (track: string, fromBar: number, toBar: number, solo: boolean) => {
+    (track: string, from: number, to: number, solo: boolean) => {
+      if (!preview) throw new Error('No section is open.');
       const st = livePlayer.getState();
       savedForSolo.current ??= { solo: st.solo, loopRange: st.loopRange, looping: st.looping };
       livePlayer.setSoloSet(solo ? [track] : savedForSolo.current.solo);
-      livePlayer.setLoopRange({ start: fromBar * secondsPerBar, end: toBar * secondsPerBar });
+      livePlayer.setLoopRange({ start: from, end: to });
       livePlayer.setLooping(true);
       setPreviewActive(true);
-      if (liveKey && livePlayer.isLoaded(liveKey)) {
-        livePlayer.seek(fromBar * secondsPerBar);
-        if (!playing) playPause();
-      } else seek(fromBar * secondsPerBar);
+      if (livePlayer.isLoaded(preview.key)) livePlayer.seek(from);
+      void livePlayer.play(preview.key, fetchPreview);
     },
-    [secondsPerBar, liveKey, playing, playPause, seek],
+    [preview, fetchPreview],
   );
+
+  // An edit while the preview plays: render the new version and switch to it
+  // at the same position, without stopping.
+  useEffect(() => {
+    if (!preview || !previewActive) return;
+    const st = livePlayer.getState();
+    if (st.status !== 'playing' || st.key === preview.key || !st.key?.startsWith('preview:')) return;
+    void livePlayer.play(preview.key, fetchPreview, { seamless: true });
+  }, [preview, previewActive, fetchPreview]);
 
   /** Leaving the detail window: stop its solo play and put solo and loop back. */
   const endSolo = useCallback(() => {
@@ -161,7 +189,7 @@ export function TimelineView() {
     if (!saved) return;
     savedForSolo.current = undefined;
     setPreviewActive(false);
-    void livePlayer.pause();
+    if (livePlayer.getState().key?.startsWith('preview:')) livePlayer.stop();
     livePlayer.setSoloSet(saved.solo);
     livePlayer.setLoopRange(saved.loopRange);
     if (saved.looping && saved.loopRange) livePlayer.setLooping(true);
@@ -458,13 +486,15 @@ export function TimelineView() {
           sameKind={model.sections.filter((x) => x.kind === model.sections[detail.section]!.kind).map((x) => x.name)}
           onSetDrumHit={(segments, pitch, step, on) => applyEdit({ kind: 'setDrumHit', segments, pitch, step, on })}
           editError={editor?.lastError}
-          playheadBeat={isThisSong ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
           onClose={() => {
             endSolo();
             setDialog(undefined);
           }}
-          previewPlaying={previewActive && playing && live.looping}
-          onPlay={(fromBar, toBar, solo) => playPreview(detailTrack.name, fromBar, toBar, solo)}
+          previewPlaying={previewPlaying}
+          previewBeat={previewLoaded ? (previewSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
+          onPlay={(fromBeat, toBeat, solo) =>
+            playPreview(detailTrack.name, (fromBeat / BEATS_PER_BAR) * secondsPerBar, (toBeat / BEATS_PER_BAR) * secondsPerBar, solo)
+          }
           onPause={() => void livePlayer.pause()}
           onSoloChange={(solo) => {
             const saved = savedForSolo.current;

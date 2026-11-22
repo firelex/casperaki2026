@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
 import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
@@ -31,7 +31,7 @@ export function ClipDetail({
   clip,
   section,
   sameKind,
-  playheadBeat,
+  previewBeat,
   onClose,
   onNewPattern,
   onChangeSound,
@@ -50,8 +50,8 @@ export function ClipDetail({
   section: SeqSection;
   /** Names of every section of the same kind (this one included), in song order. */
   sameKind: readonly string[];
-  /** Playhead in beats from the song start, when this song is loaded. */
-  playheadBeat: number | undefined;
+  /** The preview's playhead in beats from the section start, while it is loaded. */
+  previewBeat: number | undefined;
   onClose(): void;
   onNewPattern(): void;
   onChangeSound(): void;
@@ -59,8 +59,8 @@ export function ClipDetail({
   onSetDrumHit(segments: string[], pitch: number, step: number, on: boolean): void;
   /** Whether this window's Play is looping. */
   previewPlaying: boolean;
-  /** Loop song bars `fromBar`–`toBar`; with `solo`, only this track is heard. */
-  onPlay(fromBar: number, toBar: number, solo: boolean): void;
+  /** Loop beats `fromBeat`–`toBeat` of this section (played on its own); with `solo`, only this track. */
+  onPlay(fromBeat: number, toBeat: number, solo: boolean): void;
   onPause(): void;
   /** Solo switched while playing. */
   onSoloChange(solo: boolean): void;
@@ -84,15 +84,27 @@ export function ClipDetail({
   const [solo, setSolo] = useState(true);
 
   const beats = clip.bars * BEATS_PER_BAR;
-  const inSection = playheadBeat !== undefined && playheadBeat >= startBeat && playheadBeat < startBeat + beats;
   const color = resolveColor(track.color);
   const pitched = notes.filter((n) => n.pitch !== null);
   const kindLabel = plural(section.kind);
   const playSolo = () => {
     const from = sel ? sel.start : 0;
     const to = sel ? sel.end : beats;
-    onPlay(clip.startBar + from / BEATS_PER_BAR, clip.startBar + to / BEATS_PER_BAR, solo);
+    onPlay(from, to, solo);
   };
+
+  // Space plays and pauses the preview while this window is open.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || e.repeat) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (previewPlaying) onPause();
+      else playSolo();
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  });
   const selectionProps = { sel, onSel: setSel, looping: previewPlaying };
 
   const apply = (edit: { pitch: number; step: number; on: boolean }, s: DrumScope) =>
@@ -183,7 +195,7 @@ export function ClipDetail({
               grid={grid}
               pxPerBeat={pxPerBeat}
               color={color}
-              head={inSection ? (playheadBeat! - startBeat) % BEATS_PER_BAR : undefined}
+              head={previewBeat !== undefined ? previewBeat % BEATS_PER_BAR : undefined}
               onCell={onCell}
               {...selectionProps}
             />
@@ -194,7 +206,7 @@ export function ClipDetail({
               grid={grid}
               pxPerBeat={pxPerBeat}
               color={color}
-              head={inSection ? playheadBeat! - startBeat : undefined}
+              head={previewBeat}
               {...selectionProps}
             />
           ) : (

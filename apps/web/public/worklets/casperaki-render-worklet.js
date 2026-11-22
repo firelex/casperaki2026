@@ -17,7 +17,7 @@
 //                                    effect tails refill (mix on)
 //   laneGains          {[lane: string]: number}  initial mute/solo gains
 //
-// Messages in:  { type: 'seek', frame }  { type: 'laneGains', gains: {[lane]: gain} }
+// Messages in:  { type: 'seek', frame, preroll? } (preroll frames; default seekPrerollFrames)  { type: 'laneGains', gains: {[lane]: gain} }
 //               { type: 'loop', start, end } (frames; start null = no loop). Playback
 //               that crosses `end` from inside the loop jumps to `start` on the exact
 //               frame (instant seek: effect tails carry over, as in a DAW).
@@ -56,7 +56,7 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
         const d = ev.data;
         if (!d) return;
         if (d.type === 'seek') {
-          const pos = e.mixer_seek(Math.max(0, Math.floor(d.frame)), this.seekPreroll);
+          const pos = e.mixer_seek(Math.max(0, Math.floor(d.frame)), d.preroll ?? this.seekPreroll);
           if (pos < 0) {
             this.port.postMessage({ type: 'error', message: `mixer_seek failed: ${lastError(e)}` });
             return;
