@@ -225,3 +225,21 @@ Adapter plumbing + matrix validation:
   artefact — 58c input)
 - `apps/engine-spike/out/all-genre-render-smoke/<genre>/octave-adjustment-map.json`
   (new artefacts, 8 of them — one per genre)
+
+## Correction (2026-11-22): c3 rows re-run with the legacy tool itself
+
+The ±0.25-octave rule above is not what the legacy did. Two premises were
+wrong: the legacy called `vamp:pyin:yin:f0` (plain YIN, not pYIN), and its
+frequency ranges are narrow only from C3 up. Below C3 they are wide
+(≤23 Hz → +3, 23–46 → +2, 46–66 → +1), so low, oddly tuned samples still got
+a value there, where this classifier returned 0. Owner heard it: serum
+"BA Brooks 1" (C3 slot sounds F♯1) played about two octaves too low.
+
+All 236 c3-slot rows were re-classified with sonic-annotator 1.7 and the
+pYIN plugin's YIN output, run exactly as the legacy script did (sox
+`silence 1 0.1 1% trim 0 1`, per-frame votes into the legacy ranges, most
+votes wins with the legacy tie order, none → 0). 20 rows changed; each row
+now carries `legacyYinVotes`. The 48 c#3-slot rows (guitars, which the legacy
+skipped) keep their pYIN value. BA Brooks 1 is now +2, as in the legacy, but
+its recording sits about a tritone off its labels, so no octave setting puts
+it in tune.
