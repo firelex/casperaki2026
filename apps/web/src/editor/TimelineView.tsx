@@ -39,9 +39,9 @@ import { DevicePanel } from './devices/DevicePanel';
 import { ReverbPanel } from './devices/ReverbPanel';
 import { DEVICES } from './devices/deviceDefs';
 import { TrackCanvas } from './sequencer/TrackCanvas';
-import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
+import { AddTrackDialog, ChangeSoundDialog, DrumSoundDialog } from './sequencer/TrackDialogs';
 import { AddSectionDialog, RenameSectionDialog } from './sequencer/SectionDialogs';
-import { tracksApi } from '../api/tracks';
+import { tracksApi, type DrumKitRow } from '../api/tracks';
 import { useTrackEdits } from './sequencer/useTrackEdits';
 
 type Dialog =
@@ -107,6 +107,19 @@ export function TimelineView() {
   }, [mix]);
   const soundNames = useSoundNames((model?.tracks ?? []).map((t) => ({ name: t.name, catalogId: catalogIdOf(defs.get(t.name)?.id) })));
   const detailSound = useSoundName(dialog?.kind === 'detail' ? catalogIdOf(defs.get(dialog.track)?.id) : undefined);
+  // The drum kit (each drum's sound), while a drum pattern is open.
+  const drumsOpen = dialog?.kind === 'detail' && dialog.track.toLowerCase().startsWith('drum');
+  const drumsDef = drumsOpen ? defs.get(dialog.track) : undefined;
+  const drumKit = useQuery({
+    queryKey: ['drum-kit', viewSong?.genre, JSON.stringify(drumsDef ?? null)],
+    queryFn: ({ signal }) => {
+      if (!viewSong) throw new Error('No song is open.');
+      return tracksApi.drumKit(viewSong, signal);
+    },
+    enabled: Boolean(drumsOpen && viewSong),
+    staleTime: Infinity,
+  });
+  const [drumDialog, setDrumDialog] = useState<DrumKitRow | undefined>(undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
   /** Where the last right-click landed: which track, which section. */
   const [menuAt, setMenuAt] = useState<{ track: string; section: number | undefined; inSelection: boolean } | undefined>(undefined);
@@ -811,6 +824,12 @@ export function TimelineView() {
           editError={editor?.lastError}
           engineNotes={engineNotes && engineNotes.key === preview?.key ? engineNotes : undefined}
           soundName={detailSound}
+          drumKit={drumKit.data ?? (drumKit.isError ? { error: drumKit.error.message } : undefined)}
+          onDrumSound={(row, action) =>
+            action === 'replace'
+              ? setDrumDialog(row)
+              : void edits.run({ kind: 'setDrumSound', role: row.role, soundId: null }, `Putting the style's own ${row.label.toLowerCase()} back`)
+          }
           songKey={viewSong.key}
           bpm={bpm}
           exportItems={
@@ -859,6 +878,17 @@ export function TimelineView() {
               fileName: `${songTitle} ${dialog.track}`,
             });
           })()}
+        />
+      ) : null}
+      {drumDialog ? (
+        <DrumSoundDialog
+          row={drumDialog}
+          onClose={() => setDrumDialog(undefined)}
+          onPick={(soundId, name) => {
+            const row = drumDialog;
+            setDrumDialog(undefined);
+            void edits.run({ kind: 'setDrumSound', role: row.role, soundId }, `Putting ${name} in as ${row.label.toLowerCase()}`);
+          }}
         />
       ) : null}
       {dialog?.kind === 'sound' && edits.options.data ? (

@@ -46,7 +46,8 @@ import { generatePatterns } from '../patterns/index.js';
 import { selectInstruments } from '../selection/index.js';
 import { generateSongStructure } from '../structure/index.js';
 import { generateVocalMelody } from '../vocals/index.js';
-import { applyTrackEditsToSelection, recordedTrackEdits } from '../edits/recorded.js';
+import { applyTrackEditsToSelection, recordedDrumSounds, recordedTrackEdits } from '../edits/recorded.js';
+import { drumKit, DRUM_SOUNDS_DETAIL } from '../drums/kit.js';
 
 import type { ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
 import { LOOP_DISPLAY_NAME } from '../selection/index.js';
@@ -263,7 +264,11 @@ export function lowerToSong(inputs: LowerInputs): Song {
     );
   }
 
-  const instrumentDefinitions = buildInstrumentDefinitions(selection, vocals);
+  const instrumentDefinitions = withDrumSounds(
+    buildInstrumentDefinitions(selection, vocals),
+    recordedDrumSounds(recordedTrackEdits(params.params)),
+    params.genre,
+  );
 
   const raw = {
     schemaVersion: '1' as const,
@@ -372,6 +377,14 @@ function buildSegmentPayload(
     signalProcessors: (signalProcessorsForSegment ?? {}) as Record<string, SignalProcessorBlock>,
     transitions: (transitionsForSegment ?? {}) as Record<string, TransitionEntry>,
   } as SegmentPayload;
+}
+
+/** The user's drum sounds (recorded setDrumSound edits) on the Drums definition. */
+function withDrumSounds(defs: InstrumentDefinition[], sounds: Record<string, string>, genre: string): InstrumentDefinition[] {
+  if (Object.keys(sounds).length === 0) return defs;
+  drumKit(genre, sounds); // validates every role and sound
+  if (!defs.some((d) => d.name === 'Drums')) throw new Error('orchestrate: drum sounds are recorded but the song has no Drums track');
+  return defs.map((d) => (d.name === 'Drums' ? { ...d, details: { ...(d.details ?? {}), [DRUM_SOUNDS_DETAIL]: { ...sounds } } } : d));
 }
 
 function buildInstrumentDefinitions(

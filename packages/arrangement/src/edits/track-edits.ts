@@ -25,6 +25,7 @@ import { orchestrate } from '../orchestrate/index.js';
 import { familySoundPool, LANE_BASE_NAMES, laneFamilyOf, userSoundFor } from '../selection/index.js';
 import { InstrumentFamilySchema, type InstrumentFamily } from '../selection/types.js';
 import { recordedTrackEdits, TRACK_EDITS_PARAM, type RecordedTrackEdit } from './recorded.js';
+import { DRUM_ROLES, DRUM_SOUNDS_DETAIL, drumSoundEntry, isDrumRole, songDrumSounds } from '../drums/kit.js';
 
 /** Thrown for a request the song cannot take; `status` is the HTTP status to answer with. */
 export class TrackEditError extends Error {
@@ -51,6 +52,8 @@ export const TrackEditRequestSchema = z.discriminatedUnion('kind', [
       soundId: z.string().min(1).optional(),
     })
     .strict(),
+  /** Replace one drum of the kit (role e.g. "snareDrum1"); soundId null = the genre's default again. */
+  z.object({ kind: z.literal('setDrumSound'), role: z.string().min(1), soundId: z.string().min(1).nullable() }).strict(),
 ]);
 export type TrackEditRequest = z.infer<typeof TrackEditRequestSchema>;
 
@@ -144,6 +147,7 @@ export function generatorParams(song: Song): GenerateParams {
  * working song. Returns the new working song and the edited track's name.
  */
 export function editTrack(working: Song, op: TrackEditRequest): { song: Song; track: string } {
+  if (op.kind === 'setDrumSound') return setDrumSound(working, op.role, op.soundId);
   const params = generatorParams(working);
   const existing = recordedTrackEdits(params.params);
   const names = new Set(trackNames(working));
@@ -220,6 +224,48 @@ export function editTrack(working: Song, op: TrackEditRequest): { song: Song; tr
       params: {
         ...(working.generator!.params as Record<string, unknown>),
         params: { ...(params.params ?? {}), [TRACK_EDITS_PARAM]: edits },
+      },
+    },
+  });
+  return { song, track };
+}
+
+/**
+ * Replace one drum of the kit. Only the Drums definition changes (its
+ * details.drumSounds), so no part is regenerated; the edit is also recorded
+ * so a later regeneration of the Drums track keeps the sound.
+ */
+function setDrumSound(working: Song, role: string, soundId: string | null): { song: Song; track: string } {
+  const params = generatorParams(working);
+  const track = LANE_BASE_NAMES.drums;
+  const def = working.instrumentDefinitions.find((d) => d.name === track);
+  if (!def) throw new TrackEditError(400, 'no_drums', 'The song has no drum track.');
+  if (!isDrumRole(role)) throw new TrackEditError(400, 'unknown_drum_role', `Unknown drum "${role}" (one of ${DRUM_ROLES.join(', ')}).`);
+  if (soundId !== null) {
+    try {
+      drumSoundEntry(role, soundId);
+    } catch (err) {
+      throw new TrackEditError(400, 'sound_not_in_family', err instanceof Error ? err.message : String(err));
+    }
+  }
+  const existing = recordedTrackEdits(params.params).filter((e) => !(e.kind === 'setDrumSound' && e.role === role));
+  const edits: RecordedTrackEdit[] = soundId === null ? existing : [...existing, { kind: 'setDrumSound', role, soundId }];
+  const sounds = { ...songDrumSounds(working) };
+  if (soundId === null) delete sounds[role];
+  else sounds[role] = soundId;
+  const details = { ...(def.details ?? {}) };
+  if (Object.keys(sounds).length > 0) details[DRUM_SOUNDS_DETAIL] = sounds;
+  else delete details[DRUM_SOUNDS_DETAIL];
+  const { details: _old, ...rest } = def;
+  const nextDef = Object.keys(details).length > 0 ? { ...rest, details } : rest;
+  const song = parseSong({
+    ...working,
+    instrumentDefinitions: working.instrumentDefinitions.map((d) => (d.name === track ? nextDef : d)),
+    generator: {
+      ...working.generator,
+      params: {
+        ...(working.generator!.params as Record<string, unknown>),
+        params: withEdits(params, edits).params ?? {},
       },
     },
   });

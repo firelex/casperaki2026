@@ -21,6 +21,7 @@ import {
   type InstrumentFamily,
   type ValidatedCatalogEntry,
   userSoundFamily,
+  drumRolesForFamily,
 } from '@casperaki/arrangement';
 import { GenreSchema } from '@casperaki/song-schema';
 import { readFileSync } from 'node:fs';
@@ -42,6 +43,8 @@ export interface SoundItem {
   readonly preview: SoundPreview;
   /** The track kind it can be used on in a song (Use / Change sound), or null. */
   readonly useAs: InstrumentFamily | null;
+  /** Drum hits: the kit's drums it can replace (engine roles, e.g. snareDrum1); [] otherwise. */
+  readonly drumRoles: readonly string[];
 }
 
 export interface SoundFamily {
@@ -240,6 +243,7 @@ export function soundCatalog(): Built {
       key: e.key ?? null,
       preview,
       useAs: validated.byId.has(e.id) ? (userSoundFamily(e) ?? null) : null,
+      drumRoles: validated.byId.has(e.id) ? drumRolesForFamily(e.family) : [],
     });
   }
   items.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
@@ -255,17 +259,21 @@ export function soundFamilies(): SoundFamily[] {
   return FAMILIES.map((f) => ({ ...f, count: counts.get(f.id) ?? 0 }));
 }
 
-export function searchSounds(q: { family?: string; q?: string; style?: string; cursor: number; limit: number }): {
+export function searchSounds(q: { family?: string; useAs?: string; q?: string; style?: string; cursor: number; limit: number }): {
   total: number;
   items: SoundItem[];
   nextCursor: number | null;
 } {
   if (q.family !== undefined && !FAMILY_BY_ID.has(q.family)) throw new SoundError(400, 'unknown_family', `Unknown sound family "${q.family}".`);
+  if (q.useAs !== undefined && !(InstrumentFamilySchema.options as readonly string[]).includes(q.useAs)) {
+    throw new SoundError(400, 'unknown_track_kind', `Unknown track kind "${q.useAs}".`);
+  }
   const text = q.q?.trim().toLowerCase();
   const style = q.style?.trim();
   const matches = soundCatalog().items.filter(
     (i) =>
       (q.family === undefined || i.family === q.family) &&
+      (q.useAs === undefined || i.useAs === q.useAs) &&
       (!style || i.styles.includes(style)) &&
       (!text || i.name.toLowerCase().includes(text) || i.type.toLowerCase().includes(text) || i.styles.some((s) => s.toLowerCase().includes(text))),
   );

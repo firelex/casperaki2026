@@ -23,6 +23,8 @@ import { playbackPayload } from './playback.js';
 const ListQuery = z
   .object({
     family: z.string().min(1).optional(),
+    /** Sounds that can go on a track of this kind (e.g. guitar: acoustic and electric). */
+    useAs: z.string().min(1).optional(),
     q: z.string().max(200).optional(),
     style: z.string().max(40).optional(),
     cursor: z.coerce.number().int().min(0).optional(),
@@ -34,7 +36,19 @@ const ListQuery = z
 const AUDIO_PREVIEW_SEC = 16;
 
 /** Pattern preview options: a style (genre) and which generated pattern (0, 1, 2, …). */
-const PreviewBody = z.object({ genre: z.string().min(1).optional(), variant: z.number().int().min(0).max(999).optional() }).strict();
+// `prefer`: a style to start in when it can write this sound's part (e.g. the
+// page's style filter); otherwise the sound's own style is used.
+const PreviewBody = z
+  .object({
+    genre: z.string().min(1).optional(),
+    prefer: z.string().min(1).optional(),
+    variant: z.number().int().min(0).max(999).optional(),
+    // Keep the pattern another sound is playing (to compare sounds on the same
+    // notes): that sound writes the part, this one plays it. Kept only when
+    // both are the same kind and the style suits both (`kept` in the reply).
+    keep: z.object({ soundId: z.string().min(1), genre: z.string().min(1), variant: z.number().int().min(0).max(999) }).strict().optional(),
+  })
+  .strict();
 
 export function createSoundsRouter(deps: { playback: PlaybackService | undefined }): Router {
   const { playback } = deps;
@@ -54,6 +68,7 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
     return run(res, () =>
       searchSounds({
         ...(q.data.family !== undefined ? { family: q.data.family } : {}),
+        ...(q.data.useAs !== undefined ? { useAs: q.data.useAs } : {}),
         ...(q.data.q !== undefined ? { q: q.data.q } : {}),
         ...(q.data.style !== undefined ? { style: q.data.style } : {}),
         cursor: q.data.cursor ?? 0,
@@ -79,10 +94,19 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
         throw new SoundError(400, 'unsupported_style', `No ${want} part can be written for ${item.name} (styles: ${target.genres.join(', ')}).`);
       }
       const variant = body.data.variant ?? 0;
-      const { song, bpm, genre } = previewSong(target.donorId, target.family, want ? [want] : target.genres, target.entry, variant);
+      const prefer = body.data.prefer;
+      const order = prefer && target.genres.includes(prefer) ? [prefer, ...target.genres.filter((g) => g !== prefer)] : target.genres;
+      const keep = body.data.keep;
+      const writer = keep ? soundCatalog().patternOf.get(keep.soundId) : undefined;
+      if (keep && !writer) throw new SoundError(400, 'unknown_pattern', `Sound ${keep.soundId} has no pattern to keep.`);
+      const kept = Boolean(keep && writer && writer.family === target.family && target.genres.includes(keep.genre));
+      const { song, bpm, genre } =
+        kept && keep && writer
+          ? previewSong(writer.donorId, target.family, [keep.genre], target.entry, keep.variant)
+          : previewSong(target.donorId, target.family, want ? [want] : order, target.entry, variant);
       const canonical = canonicalStringifySong(song, 2);
       const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
-      return res.json({ ...(await playbackPayload(playback, id, canonical)), bpm, bars: PREVIEW_BARS, genre, genres: target.genres, variant });
+      return res.json({ ...(await playbackPayload(playback, id, canonical)), bpm, bars: PREVIEW_BARS, genre, genres: target.genres, variant: kept && keep ? keep.variant : variant, kept, writer: kept && keep ? keep.soundId : item.id });
     } catch (err) {
       return fail(res, err);
     }

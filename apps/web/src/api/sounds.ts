@@ -17,6 +17,8 @@ export interface SoundItem {
   readonly preview: 'pattern' | 'audio' | 'none';
   /** The track kind it can go on in a song, or null (drum hits, loops, fx, orchestral). */
   readonly useAs: 'keys' | 'bass' | 'pad' | 'pluckedSynths' | 'synths' | 'guitar' | 'popStrings' | 'popBrass' | null;
+  /** Drum hits: the kit's drums it can replace (engine roles, e.g. snareDrum1). */
+  readonly drumRoles: readonly string[];
 }
 
 export interface SoundFamily {
@@ -34,24 +36,30 @@ export interface SoundList {
 
 export const soundsQueryKeys = {
   families: ['sounds', 'families'] as const,
-  list: (family: string, q: string, style: string) => ['sounds', 'list', family, q, style] as const,
+  list: (source: string, q: string, style: string) => ['sounds', 'list', source, q, style] as const,
   item: (id: string) => ['sounds', 'item', id] as const,
 };
 
 export const soundsApi = {
   families: (signal?: AbortSignal) => defaultBrainClient.get<{ families: SoundFamily[] }>('/api/sounds/families', { signal }),
-  list: (p: { family: string; q: string; style: string; cursor: number; limit?: number }, signal?: AbortSignal) => {
-    const qs = new URLSearchParams({ family: p.family, cursor: String(p.cursor), limit: String(p.limit ?? 60) });
+  list: (p: ({ family: string } | { useAs: string }) & { q: string; style: string; cursor: number; limit?: number }, signal?: AbortSignal) => {
+    const qs = new URLSearchParams({ cursor: String(p.cursor), limit: String(p.limit ?? 60) });
+    if ('family' in p) qs.set('family', p.family);
+    else qs.set('useAs', p.useAs);
     if (p.q) qs.set('q', p.q);
     if (p.style) qs.set('style', p.style);
     return defaultBrainClient.get<SoundList>(`/api/sounds?${qs}`, { signal });
   },
   get: (id: string, signal?: AbortSignal) => defaultBrainClient.get<SoundItem>(`/api/sounds/${encodeURIComponent(id)}`, { signal }),
   /** A short pattern played by this sound alone (tonal sounds). */
-  preview: (id: string, opts: { genre?: string; variant?: number }, signal?: AbortSignal) =>
-    defaultBrainClient.post<PlaybackPayload & { bpm: number; bars: number; genre: string; genres: string[]; variant: number }>(
+  preview: (
+    id: string,
+    opts: { genre?: string | undefined; variant?: number; prefer?: string | undefined; keep?: { soundId: string; genre: string; variant: number } | undefined },
+    signal?: AbortSignal,
+  ) =>
+    defaultBrainClient.post<PlaybackPayload & { bpm: number; bars: number; genre: string; genres: string[]; variant: number; kept: boolean; writer: string }>(
       `/api/sounds/${encodeURIComponent(id)}/preview`,
-      { ...(opts.genre ? { genre: opts.genre } : {}), ...(opts.variant ? { variant: opts.variant } : {}) },
+      { ...(opts.genre ? { genre: opts.genre } : {}), ...(opts.prefer ? { prefer: opts.prefer } : {}), ...(opts.variant ? { variant: opts.variant } : {}), ...(opts.keep ? { keep: opts.keep } : {}) },
       { signal },
     ),
   audioUrl: (id: string) => `/api/sounds/${encodeURIComponent(id)}/audio`,

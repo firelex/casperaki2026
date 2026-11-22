@@ -7,16 +7,31 @@
 //     op: { kind: 'changeSound', track, soundId }
 //       | { kind: 'newPattern', track }
 //       | { kind: 'addTrack', family, segments, soundId? }
+//       | { kind: 'setDrumSound', role, soundId | null }   (null: genre default)
 //     The edit is recorded in the song's generator block and only the edited
 //     track changes in the posted (working) song. Removing a track is a
 //     client-side edit.
 //
-// See packages/arrangement/src/edits/track-edits.ts.
+//   POST /api/tracks/drum-kit { song }     -> { kit: [{ role, label, family,
+//     soundId, name, overridden }] }: the drums the engine plays for the song,
+//     in engine order (role = the engine's drum channel name, e.g. snareDrum1).
+//
+// See packages/arrangement/src/edits/track-edits.ts and drums/kit.ts.
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
-import { addSection, editTrack, TrackEditError, TrackEditRequestSchema, trackOptions } from '@casperaki/arrangement';
+import {
+  addSection,
+  DRUM_ROLE_LABELS,
+  drumKit,
+  editTrack,
+  publicNameOf,
+  songDrumSounds,
+  TrackEditError,
+  TrackEditRequestSchema,
+  trackOptions,
+} from '@casperaki/arrangement';
 import { parseSong, type Song } from '@casperaki/song-schema';
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
@@ -46,6 +61,26 @@ export function createTracksRouter(): Router {
     const song = songOf(body.data.song, res);
     if (!song) return;
     return run(res, () => editTrack(song, body.data.op));
+  });
+
+  router.post('/api/tracks/drum-kit', (req, res) => {
+    const body = OptionsBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.issues[0]?.message });
+    const song = songOf(body.data.song, res);
+    if (!song) return;
+    return run(res, () => {
+      if (!song.instrumentDefinitions.some((d) => d.name === 'Drums')) throw new TrackEditError(400, 'no_drums', 'The song has no drum track.');
+      if (!song.genre) throw new TrackEditError(400, 'no_genre', 'The song has no genre, so its drum kit is unknown.');
+      const kit = drumKit(song.genre, songDrumSounds(song)).map((slot) => ({
+        role: slot.role,
+        label: DRUM_ROLE_LABELS[slot.role],
+        family: slot.family,
+        soundId: slot.entry?.id ?? null,
+        name: slot.entry ? publicNameOf(slot.entry) : null,
+        overridden: slot.overridden,
+      }));
+      return { kit };
+    });
   });
 
   // Add a section written by the generator: { song, type, index, bars? } -> { song, name }.

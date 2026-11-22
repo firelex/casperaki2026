@@ -318,3 +318,17 @@ export {
   type TrackOptions,
 } from './edits/track-edits.js';
 export { addSection, nextSectionName } from './edits/add-section.js';
+export {
+  DRUM_ROLE_FAMILIES,
+  DRUM_ROLE_LABELS,
+  DRUM_ROLES,
+  DRUM_SOUNDS_DETAIL,
+  defaultDrumEntry,
+  drumKit,
+  drumRolesForFamily,
+  drumSoundEntry,
+  isDrumRole,
+  songDrumSounds,
+  type DrumKitSlot,
+  type DrumRole,
+} from './drums/kit.js';

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
-import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@teamsuzie/ui';
+import type { DrumKitRow } from '../../api/tracks';
+import { BEATS_PER_BAR, DRUM_KIT, DRUM_ROLE_BY_PITCH, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
 import { resolveColor } from './layout';
 import { beginRangeDrag, type BarRange } from './rangeDrag';
 import { ExportMenu, type ExportItem } from '../../export/ExportMenu';
@@ -11,7 +13,7 @@ import { SelectionOverlay } from './Selection';
 /** Default row heights; vertical zoom scales them. */
 export const DRUM_ROW_BASE = 26;
 export const KEY_ROW_BASE = 12;
-const LABEL_W = 104;
+const LABEL_W = 184;
 const MIN_PX_PER_BEAT = 6;
 const MAX_PX_PER_BEAT = 480;
 /** Grid choices: notes per bar, as on a DAW's grid menu. */
@@ -51,6 +53,8 @@ export function ClipDetail({
   songKey,
   bpm,
   exportItems,
+  drumKit,
+  onDrumSound,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -78,6 +82,10 @@ export function ClipDetail({
   engineNotes: { notes: SeqNote[] } | { error: string } | undefined;
   /** Public name of the track's sound. */
   soundName: string | undefined;
+  /** Drums: the kit (each drum's sound), or why it could not be read. */
+  drumKit?: { kit: readonly DrumKitRow[] } | { error: string } | undefined;
+  /** Drums: replace one drum's sound (`reset`: back to the style's own). */
+  onDrumSound?(row: DrumKitRow, action: 'replace' | 'reset'): void;
   /** The song's key and tempo, for the score. */
   songKey: string;
   bpm: number;
@@ -137,6 +145,8 @@ export function ClipDetail({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      // A sound browser opened from here (replace a drum) takes Space for its previews.
+      if (document.querySelector('[data-sound-browser]')) return;
       e.preventDefault();
       e.stopImmediatePropagation();
       if (previewPlaying) onPause();
@@ -256,6 +266,9 @@ export function ClipDetail({
               head={previewBeat !== undefined ? previewBeat % BEATS_PER_BAR : undefined}
               onCell={onCell}
               rowH={Math.round(DRUM_ROW_BASE * vZoom)}
+              kit={drumKit}
+              onDrumSound={onDrumSound}
+              busy={busy}
               {...selectionProps}
             />
           ) : engineNotes === undefined ? (
@@ -569,8 +582,14 @@ function DrumBar({
   head,
   onCell,
   rowH: DRUM_ROW_H,
+  kit,
+  onDrumSound,
+  busy,
   ...selection
 }: SelectionProps & {
+  kit: { kit: readonly DrumKitRow[] } | { error: string } | undefined;
+  onDrumSound: ((row: DrumKitRow, action: 'replace' | 'reset') => void) | undefined;
+  busy: boolean;
   /** Row height (vertical zoom). */
   rowH: number;
   notes: SeqNote[];
@@ -594,15 +613,51 @@ function DrumBar({
     <Selectable beats={BEATS_PER_BAR} pxPerBeat={pxPerBeat} grid={grid} {...selection}>
       <div className="flex">
         <div className="sticky left-0 z-10 shrink-0 bg-[#2a2b30]" style={{ width: LABEL_W }}>
-          {pitches.map((p) => (
-            <div
-              key={p}
-              className={`truncate border-b border-white/5 px-3 text-[12px] ${pattern.has(p) ? 'text-white/85' : 'text-white/30'}`}
-              style={{ height: DRUM_ROW_H, lineHeight: `${DRUM_ROW_H}px` }}
-            >
-              {drumName(p)}
-            </div>
-          ))}
+          {pitches.map((p) => {
+            const role = DRUM_ROLE_BY_PITCH.get(p);
+            const row = kit && 'kit' in kit && role ? kit.kit.find((k) => k.role === role) : undefined;
+            const sound = kit === undefined ? '…' : 'error' in kit ? '' : (row?.name ?? '');
+            const two = DRUM_ROW_H >= 30;
+            const label = (
+              <span className="flex min-w-0 flex-1 flex-col justify-center leading-tight">
+                <span className={`truncate text-[12px] ${pattern.has(p) ? 'text-white/85' : 'text-white/35'}`}>
+                  {drumName(p)}
+                  {!two && sound ? <span className="text-white/40"> · {sound}</span> : null}
+                </span>
+                {two && sound ? <span className={`truncate text-[10px] ${row?.overridden ? 'text-sky-300/80' : 'text-white/40'}`}>{sound}</span> : null}
+              </span>
+            );
+            return (
+              <div key={p} className="flex border-b border-white/5 pl-3 pr-1" style={{ height: DRUM_ROW_H }} title={row?.name ? `${drumName(p)}: ${row.name}${row.overridden ? ' (replaced)' : ''}` : undefined}>
+                {row && onDrumSound ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild disabled={busy}>
+                      <button type="button" className="flex min-w-0 flex-1 items-center gap-1 text-left hover:text-white" aria-label={`${drumName(p)}: ${row.name ?? 'no sound'}. Replace the sound`}>
+                        {label}
+                        <span className="shrink-0 text-[10px] text-white/30" aria-hidden="true">▾</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="z-[70] min-w-[230px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl">
+                      <DropdownMenuLabel className="px-3 py-2 text-[12px] font-normal text-white/50">
+                        {row.label}: {row.name ?? 'no sound'}
+                        {row.overridden ? ' (replaced)' : ''}
+                      </DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => onDrumSound(row, 'replace')} className="cursor-pointer rounded-[6px] px-3 py-2 text-[13px] outline-none data-[highlighted]:bg-white/10">
+                        Replace the sound…
+                      </DropdownMenuItem>
+                      {row.overridden ? (
+                        <DropdownMenuItem onSelect={() => onDrumSound(row, 'reset')} className="cursor-pointer rounded-[6px] px-3 py-2 text-[13px] outline-none data-[highlighted]:bg-white/10">
+                          Back to the style&rsquo;s own sound
+                        </DropdownMenuItem>
+                      ) : null}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  label
+                )}
+              </div>
+            );
+          })}
         </div>
         <div className="relative" style={{ width: gridW, height }}>
           <GridColumns beats={BEATS_PER_BAR} grid={grid} pxPerBeat={pxPerBeat} height={height} />

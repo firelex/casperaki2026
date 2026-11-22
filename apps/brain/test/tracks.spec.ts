@@ -83,4 +83,31 @@ describe('track editing routes', () => {
     const { generator: _g, ...bare } = s0;
     expect((await post(`${h.url}/api/tracks/edit`, { song: bare, op: { kind: 'newPattern', track: 'Drums' } })).status).toBe(409);
   });
+
+  it('lists the drum kit and replaces one drum', async () => {
+    const s = song();
+    const kitRes = await post(`${h.url}/api/tracks/drum-kit`, { song: s });
+    expect(kitRes.status).toBe(200);
+    const { kit } = (await kitRes.json()) as { kit: { role: string; label: string; family: string; soundId: string; name: string; overridden: boolean }[] };
+    expect(kit).toHaveLength(17);
+    const snare = kit.find((k) => k.role === 'snareDrum1')!;
+    expect(snare).toMatchObject({ label: 'Snare 1', family: 'snareDrums', overridden: false });
+    expect(JSON.stringify(kit)).not.toMatch(/library|preset|matchedPath|\.mp3/);
+    // Another snare from the Sounds catalog.
+    const list = (await (await fetch(`${h.url}/api/sounds?family=snareDrums&limit=5`)).json()) as { items: { id: string; drumRoles: string[] }[] };
+    const other = list.items.find((i) => i.id !== snare.soundId)!;
+    expect(other.drumRoles).toEqual(['snareDrum1', 'snareDrum2']);
+    const edit = await post(`${h.url}/api/tracks/edit`, { song: s, op: { kind: 'setDrumSound', role: 'snareDrum1', soundId: other.id } });
+    expect(edit.status).toBe(200);
+    const { song: edited, track } = (await edit.json()) as { song: Song; track: string };
+    expect(track).toBe('Drums');
+    const kit2 = ((await (await post(`${h.url}/api/tracks/drum-kit`, { song: edited })).json()) as { kit: typeof kit }).kit;
+    expect(kit2.find((k) => k.role === 'snareDrum1')).toMatchObject({ soundId: other.id, overridden: true });
+    // A kick is not a snare.
+    const kick = kit.find((k) => k.role === 'bassDrum1')!.soundId;
+    const bad = await post(`${h.url}/api/tracks/edit`, { song: s, op: { kind: 'setDrumSound', role: 'snareDrum1', soundId: kick } });
+    expect(bad.status).toBe(400);
+    expect(((await bad.json()) as { error: string }).error).toBe('sound_not_in_family');
+  });
+
 });

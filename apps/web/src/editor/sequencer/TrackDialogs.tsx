@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
-import type { InstrumentFamily, TrackOptions } from '../../api/tracks';
+import { SoundBrowser, stopSoundPreview } from '../sounds/SoundBrowser';
+
+import type { DrumKitRow, InstrumentFamily, TrackOptions } from '../../api/tracks';
 import type { SeqSection } from '../sequencerModel';
 
 const CONTENT =
@@ -19,49 +21,84 @@ export function ChangeSoundDialog({
   onPick(soundId: string): void;
   onClose(): void;
 }) {
-  const [filter, setFilter] = useState('');
   const info = options.tracks[track];
   if (!info) throw new Error(`No options for track "${track}".`);
+  if (!info.family || info.family === 'drums') throw new Error(`The sound of ${track} cannot be changed here.`);
   const family = options.families.find((f) => f.family === info.family);
-  if (!family) throw new Error(`This genre offers no ${info.family} sounds.`);
-  const shown = family.sounds.filter((s) => s.name.toLowerCase().includes(filter.trim().toLowerCase()));
-
+  if (!family) throw new Error(`No ${info.family} sounds are offered for ${track}.`);
+  const useAs = info.family;
+  // Stop a preview still playing when the dialog closes.
+  useEffect(() => stopSoundPreview, []);
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
-      <DialogContent className={CONTENT}>
+      <DialogContent className="flex h-[min(86vh,900px)] w-[min(1200px,calc(100vw-2rem))] max-w-none flex-col gap-0 overflow-hidden rounded-[12px] border border-line bg-[#1b1c1f] p-0 text-white sm:max-w-none">
         <div className="border-b border-line/60 px-5 py-4 pr-12">
           <DialogTitle className="text-[17px] font-semibold text-white">Change the sound of {track}</DialogTitle>
           <DialogDescription className="mt-1 text-[13px] text-white/55">
-            {family.label} sounds for this genre. The part keeps its notes where the new sound can play them.
+            Every {family.label.toLowerCase()} sound in the library. Press play to hear a pattern with it; pick a style or a new pattern above the list. The part keeps
+            its notes where the new sound can play them.
           </DialogDescription>
         </div>
-        <div className="px-5 pt-4">
-          <input
-            autoFocus
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            placeholder={`Search ${family.sounds.length} sounds`}
-            aria-label="Search sounds"
-            className="h-10 w-full rounded-[8px] border border-line bg-bg px-3 text-[14px] text-white outline-none focus:border-white/50"
-          />
-        </div>
-        <ul className="max-h-[50vh] overflow-auto px-3 py-3">
-          {shown.map((s) => (
-            <li key={s.id}>
+        <SoundBrowser
+          source={{ useAs }}
+          title={`${family.label} sounds`}
+          actionLabel=""
+          highlight={info.soundId ?? undefined}
+          autoFocus
+          action={(s) =>
+            s.id === info.soundId ? (
+              <span className="text-[12px] text-white/50">Current</span>
+            ) : (
               <button
                 type="button"
                 onClick={() => onPick(s.id)}
-                className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-left text-[14px] hover:bg-white/10 ${
-                  s.id === info.soundId ? 'text-white' : 'text-white/80'
-                }`}
+                className="h-7 rounded-full border border-white/25 px-4 text-[12px] text-white hover:border-white hover:bg-white hover:text-black"
+                title={`Put ${s.name} on ${track}`}
               >
-                <span className="truncate">{s.name}</span>
-                {s.id === info.soundId ? <span className="text-[12px] text-white/50">Current</span> : null}
+                Use
               </button>
-            </li>
-          ))}
-          {shown.length === 0 ? <li className="px-3 py-4 text-[14px] text-white/50">No sound matches.</li> : null}
-        </ul>
+            )
+          }
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Replace one drum of the kit with a library hit of its kind (with previews). */
+export function DrumSoundDialog({ row, onPick, onClose }: { row: DrumKitRow; onPick(soundId: string, name: string): void; onClose(): void }) {
+  useEffect(() => stopSoundPreview, []);
+  return (
+    <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
+      <DialogContent className="z-[80] flex h-[min(86vh,900px)] w-[min(1200px,calc(100vw-2rem))] max-w-none flex-col gap-0 overflow-hidden rounded-[12px] border border-line bg-[#1b1c1f] p-0 text-white sm:max-w-none">
+        <div className="border-b border-line/60 px-5 py-4 pr-12">
+          <DialogTitle className="text-[17px] font-semibold text-white">Replace the {row.label.toLowerCase()}</DialogTitle>
+          <DialogDescription className="mt-1 text-[13px] text-white/55">
+            Now: {row.name ?? 'no sound'}
+            {row.overridden ? ' (replaced)' : ' (the style’s own)'}. Press play to hear a sound in a groove; the drum pattern stays as it is.
+          </DialogDescription>
+        </div>
+        <SoundBrowser
+          source={{ family: row.family }}
+          title={`${row.label} sounds`}
+          actionLabel=""
+          highlight={row.soundId ?? undefined}
+          autoFocus
+          action={(s) =>
+            s.id === row.soundId ? (
+              <span className="text-[12px] text-white/50">Current</span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onPick(s.id, s.name)}
+                className="h-7 rounded-full border border-white/25 px-4 text-[12px] text-white hover:border-white hover:bg-white hover:text-black"
+                title={`Use ${s.name} as the ${row.label.toLowerCase()}`}
+              >
+                Use
+              </button>
+            )
+          }
+        />
       </DialogContent>
     </Dialog>
   );

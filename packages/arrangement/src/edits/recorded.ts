@@ -22,6 +22,8 @@ export const RecordedTrackEditSchema = z.discriminatedUnion('kind', [
       segments: z.array(z.string().min(1)).min(1),
     })
     .strict(),
+  /** A drum role's sound in the kit (null: back to the genre's default). */
+  z.object({ kind: z.literal('setDrumSound'), role: z.string().min(1), soundId: z.string().min(1).nullable() }).strict(),
 ]);
 export type RecordedTrackEdit = z.infer<typeof RecordedTrackEditSchema>;
 export const RecordedTrackEditsSchema = z.array(RecordedTrackEditSchema);
@@ -58,6 +60,7 @@ export function applyTrackEditsToSelection(
     return entry;
   };
   for (const edit of edits) {
+    if (edit.kind === 'setDrumSound') continue; // the kit, not the selection (see recordedDrumSounds)
     if (edit.kind === 'changeSound') {
       const lane = laneOf(edit.track);
       const entry = entryOf(lane.family, edit.soundId);
@@ -88,3 +91,13 @@ export function applyTrackEditsToSelection(
   return { selection: { ...selection, instruments, segments }, laneVariants };
 }
 
+/** The drum overrides (role → catalog id) the recorded setDrumSound edits leave (last edit per role wins). */
+export function recordedDrumSounds(edits: readonly RecordedTrackEdit[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const e of edits) {
+    if (e.kind !== 'setDrumSound') continue;
+    if (e.soundId === null) delete out[e.role];
+    else out[e.role] = e.soundId;
+  }
+  return out;
+}

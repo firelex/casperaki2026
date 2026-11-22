@@ -130,6 +130,13 @@ export const DRUM_KIT: readonly { readonly pitch: number; readonly name: string 
   { pitch: 35, name: 'Kick 2' },
 ];
 
+/** Drum note → kit part (engine drum role), as the engine adapter maps them (the pedal hi-hat is not played). */
+export const DRUM_ROLE_BY_PITCH: ReadonlyMap<number, string> = new Map([
+  [36, 'bassDrum1'], [35, 'bassDrum2'], [38, 'snareDrum1'], [40, 'snareDrum2'], [42, 'hiHatClosed1'], [44, 'hiHatClosed2'],
+  [46, 'hiHatOpen'], [51, 'ride'], [49, 'crash1'], [57, 'crash2'], [39, 'clap'], [31, 'snap'], [70, 'shaker'],
+  [50, 'tom1'], [47, 'tom2'], [43, 'tom3'],
+]);
+
 export function drumName(pitch: number): string {
   const kit = DRUM_KIT.find((d) => d.pitch === pitch);
   if (kit) return kit.name;

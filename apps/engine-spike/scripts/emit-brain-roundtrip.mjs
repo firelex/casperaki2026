@@ -29,9 +29,12 @@ import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  DRUM_ROLE_FAMILIES,
+  drumKit,
   loadValidatedCatalog,
   orchestrate,
   resolveAssetPath,
+  songDrumSounds,
 } from '@casperaki/arrangement';
 import { toEngineFixture } from '@casperaki/engine-adapter';
 import { canonicalStringifySong, contentHash, parseSong } from '@casperaki/song-schema';
@@ -230,84 +233,47 @@ const pluckedSynthsAssetResolution = resolveFamily('PluckedSynths');
 // deterministically (style-filtered to song.genre, sorted by id, first
 // match wins) and resolve its asset path. Lanes without a family hit
 // fall back to bundled fixtures at prestage time.
-const DRUM_LANE_FAMILIES = {
-  bassDrum1: 'kickDrums',
-  bassDrum2: 'kickDrums',
-  snareDrum1: 'snareDrums',
-  snareDrum2: 'snareDrums',
-  clap: 'clapsSnaps',
-  snap: 'clapsSnaps',
-  hiHatClosed1: 'hiHatsClosed',
-  hiHatClosed2: 'hiHatsClosed',
-  hiHatPedal: 'hiHatsClosed',
-  hiHatOpen: 'hiHatsOpen',
-  crash1: 'cymbals',
-  crash2: 'cymbals',
-  ride: 'cymbals',
-  shaker: 'shakers',
-  tom1: 'toms',
-  tom2: 'toms',
-  tom3: 'toms',
-};
+// The kit pick (role → family, genre default, the song's overrides in
+// Drums details.drumSounds) lives in @casperaki/arrangement (drumKit), so
+// the editor's drum kit view and this lowering agree.
+const DRUM_LANE_FAMILIES = DRUM_ROLE_FAMILIES;
 
-function pickDrumComponentEntry(family, genre) {
-  if (!catalog) return undefined;
-  const candidates = [...catalog.entries].filter((e) => e.family === family);
-  if (candidates.length === 0) return undefined;
-  // Genre-style filter: prefer mainStyle matches, then addStyles, then any.
-  const primary = candidates.filter((e) => e.mainStyle === genre);
-  const secondary = candidates.filter((e) => e.addStyles?.includes?.(genre));
-  const pool = primary.length > 0 ? primary : secondary.length > 0 ? secondary : candidates;
-  // Deterministic: sort by id (ASCII ascending), first wins.
-  return [...pool].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
-}
-
-function resolveDrumLane(family, genre) {
-  if (!catalog) {
-    return { status: 'unresolved', reason: 'validated catalog not loaded', family };
-  }
-  const entry = pickDrumComponentEntry(family, genre);
+function resolveDrumLane(slot) {
+  const { family, entry, overridden } = slot;
   if (!entry) {
     return {
       status: 'unresolved',
-      reason: `no validated catalog row for family "${family}" (genre="${genre}")`,
+      reason: `no validated catalog row for family "${family}" (genre="${song.genre ?? PARAMS.genre}")`,
       family,
     };
   }
+  let res;
   try {
-    const res = resolveAssetPath({
-      entry,
-      target: { key: song.key, bpm: song.bpm },
-    });
-    if (res.status === 'resolved') {
-      return {
-        status: 'resolved',
-        family,
-        relativePath: res.relativePath,
-        matchKind: res.matchKind,
-        entryId: entry.id,
-        lowLevel: entry.lowLevel,
-        mainStyle: entry.mainStyle,
-      };
-    }
-    return {
-      status: 'unresolved',
-      family,
-      reason: res.diagnostics?.reason ?? 'unknown',
-      entryId: entry.id,
-    };
+    res = resolveAssetPath({ entry, target: { key: song.key, bpm: song.bpm } });
   } catch (err) {
+    // A sound the user chose must play: fail the lowering, never swap it.
+    if (overridden) throw new Error(`drum ${slot.role}: the chosen sound ${entry.id} could not be resolved: ${err?.message ?? String(err)}`);
+    return { status: 'unresolved', family, reason: `resolver lookup threw: ${err?.message ?? String(err)}` };
+  }
+  if (res.status === 'resolved') {
     return {
-      status: 'unresolved',
+      status: 'resolved',
       family,
-      reason: `resolver lookup threw: ${err?.message ?? String(err)}`,
+      relativePath: res.relativePath,
+      matchKind: res.matchKind,
+      entryId: entry.id,
+      lowLevel: entry.lowLevel,
+      mainStyle: entry.mainStyle,
+      ...(overridden ? { overridden: true } : {}),
     };
   }
+  if (overridden) throw new Error(`drum ${slot.role}: the chosen sound ${entry.id} has no file: ${res.diagnostics?.reason ?? 'unknown'}`);
+  return { status: 'unresolved', family, reason: res.diagnostics?.reason ?? 'unknown', entryId: entry.id };
 }
 
 const drumLanes = {};
-for (const [role, family] of Object.entries(DRUM_LANE_FAMILIES)) {
-  drumLanes[role] = resolveDrumLane(family, song.genre ?? PARAMS.genre);
+for (const slot of drumKit(song.genre ?? PARAMS.genre, songDrumSounds(song))) {
+  drumLanes[slot.role] = resolveDrumLane(slot);
 }
 
 // docs/54p — transition wiring. Load .env for the sample library root,
