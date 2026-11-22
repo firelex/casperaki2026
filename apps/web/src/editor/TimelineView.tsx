@@ -15,7 +15,8 @@ import { livePlayer, type LaneMeters } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
-import { sectionSong } from './sequencer/preview';
+import { drumBarNotes, patternSong } from './sequencer/preview';
+import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
@@ -136,17 +137,29 @@ export function TimelineView() {
   };
 
   /** Before the detail window's solo play: the solo and loop to restore. */
-  const savedForSolo = useRef<{ solo: readonly string[]; loopRange: typeof live.loopRange; looping: boolean } | undefined>(undefined);
+  const savedForSolo = useRef<
+    { solo: readonly string[]; muted: readonly string[]; loopRange: typeof live.loopRange; looping: boolean } | undefined
+  >(undefined);
 
   /** Whether the detail window's preview is in use (solo and loop saved). */
   const [previewActive, setPreviewActive] = useState(false);
-  const detailSectionName = dialog?.kind === 'detail' && model ? model.sections[dialog.section]?.name : undefined;
-  // The open section as a song of its own: what the detail window plays.
+  const detailOpen = dialog?.kind === 'detail' ? dialog : undefined;
+  // The open track's pattern in the open section, as a song of its own: what
+  // the detail window plays. Drums: exactly the bar shown (the bar the engine repeats).
   const preview = useMemo(() => {
-    if (!viewSong || !detailSectionName) return undefined;
-    const song = sectionSong(viewSong, detailSectionName);
+    if (!viewSong || !model || !detailOpen) return undefined;
+    const sec = model.sections[detailOpen.section];
+    const t = model.tracks.find((x) => x.name === detailOpen.track);
+    const clip = t?.clips.find((c) => c.section === detailOpen.section);
+    if (!sec || !t || !clip) return undefined;
+    const song = t.isDrums
+      ? patternSong(viewSong, sec.name, t.name, {
+          bars: 1,
+          overrideBars: [drumBarNotes(drumBarPattern(clip.notes.map((n) => ({ ...n, start: n.start - clip.startBar * BEATS_PER_BAR })), clip.bars))],
+        })
+      : patternSong(viewSong, sec.name, t.name);
     return { song, key: `preview:${fnv1a(JSON.stringify(song))}` };
-  }, [viewSong, detailSectionName]);
+  }, [viewSong, model, detailOpen]);
   const fetchPreview = useCallback(
     (signal: AbortSignal) => {
       if (!preview) throw new Error('No section is open.');
@@ -158,13 +171,14 @@ export function TimelineView() {
   const previewPlaying = previewActive && previewLoaded && live.status === 'playing';
   const previewSeconds = useLivePosition(previewPlaying);
 
-  /** The detail window's Play: loop `from`–`to` (seconds into the section), only `track` audible when `solo`. */
+  /** The detail window's Play: loop `from`–`to` (seconds into the pattern). */
   const playPreview = useCallback(
-    (track: string, from: number, to: number, solo: boolean) => {
-      if (!preview) throw new Error('No section is open.');
+    (from: number, to: number) => {
+      if (!preview) throw new Error('No pattern is open.');
       const st = livePlayer.getState();
-      savedForSolo.current ??= { solo: st.solo, loopRange: st.loopRange, looping: st.looping };
-      livePlayer.setSoloSet(solo ? [track] : savedForSolo.current.solo);
+      savedForSolo.current ??= { solo: st.solo, muted: st.muted, loopRange: st.loopRange, looping: st.looping };
+      // The pattern plays alone: set the tracks' mute/solo aside meanwhile.
+      livePlayer.setMuteSolo([], []);
       livePlayer.setLoopRange({ start: from, end: to });
       livePlayer.setLooping(true);
       setPreviewActive(true);
@@ -190,7 +204,7 @@ export function TimelineView() {
     savedForSolo.current = undefined;
     setPreviewActive(false);
     if (livePlayer.getState().key?.startsWith('preview:')) livePlayer.stop();
-    livePlayer.setSoloSet(saved.solo);
+    livePlayer.setMuteSolo(saved.muted, saved.solo);
     livePlayer.setLoopRange(saved.loopRange);
     if (saved.looping && saved.loopRange) livePlayer.setLooping(true);
   }, []);
@@ -492,15 +506,10 @@ export function TimelineView() {
           }}
           previewPlaying={previewPlaying}
           previewBeat={previewLoaded ? (previewSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
-          onPlay={(fromBeat, toBeat, solo) =>
-            playPreview(detailTrack.name, (fromBeat / BEATS_PER_BAR) * secondsPerBar, (toBeat / BEATS_PER_BAR) * secondsPerBar, solo)
+          onPlay={(fromBeat, toBeat) =>
+            playPreview((fromBeat / BEATS_PER_BAR) * secondsPerBar, (toBeat / BEATS_PER_BAR) * secondsPerBar)
           }
           onPause={() => void livePlayer.pause()}
-          onSoloChange={(solo) => {
-            const saved = savedForSolo.current;
-            if (!saved) throw new Error('Solo changed while the detail window was not playing.');
-            livePlayer.setSoloSet(solo ? [detailTrack.name] : saved.solo);
-          }}
           onNewPattern={() => newPattern(detailTrack.name)}
           onChangeSound={() => setDialog({ kind: 'sound', track: detailTrack.name })}
           editable={editable(detailTrack.name)}

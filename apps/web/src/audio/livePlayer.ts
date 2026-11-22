@@ -121,10 +121,24 @@ class LivePlayer {
     return () => this.listeners.delete(fn);
   }
 
-  /** Seconds into the song. Advances only while the audio is running. */
+  /** Seconds into the song as heard now. Advances only while the audio is running. */
   position(): number {
+    // The context clock runs ahead of the speakers by the output latency
+    // (often 0.1–0.2 s with 'playback' buffering, more than a 16th note), so
+    // what is heard lags what the engine renders.
+    if (!this.ctx) return 0;
+    const latency = (this.ctx.baseLatency || 0) + (this.ctx.outputLatency || 0);
+    return this.songTime(latency);
+  }
+
+  /** Where the engine is rendering (no latency): for re-anchoring the clock. */
+  private enginePosition(): number {
+    return this.songTime(0);
+  }
+
+  private songTime(latency: number): number {
     if (!this.ctx || this.state.status === 'idle' || this.state.status === 'loading') return 0;
-    let pos = this.anchorPos + (this.ctx.currentTime - this.anchorTime);
+    let pos = this.anchorPos + Math.max(0, this.ctx.currentTime - this.anchorTime - latency);
     // Same rule as the worklet: crossing the loop end from inside jumps back.
     const loop = this.activeLoop();
     if (loop && this.anchorPos < loop.end && pos >= loop.end) {
@@ -152,7 +166,7 @@ class LivePlayer {
     // Turning the loop on outside the range starts it from the range.
     const loop = this.activeLoop();
     if (loop && this.node) {
-      const pos = this.position();
+      const pos = this.enginePosition();
       if (pos < loop.start || pos >= loop.end) this.seek(loop.start);
     }
   }
@@ -175,7 +189,7 @@ class LivePlayer {
 
   private reanchor(): void {
     if (!this.ctx) return;
-    this.anchorPos = this.position();
+    this.anchorPos = this.enginePosition();
     this.anchorTime = this.ctx.currentTime;
   }
 
@@ -192,7 +206,7 @@ class LivePlayer {
   private enterLoopIfOutside(): void {
     const loop = this.activeLoop();
     if (!loop) return;
-    const pos = this.position();
+    const pos = this.enginePosition();
     if (pos < loop.start || pos >= loop.end) this.seek(loop.start);
   }
 
@@ -212,7 +226,7 @@ class LivePlayer {
     if (this.state.key === key && this.node && ['paused', 'playing', 'ended'].includes(this.state.status)) {
       if (this.state.status === 'ended') this.seek(0);
       this.enterLoopIfOutside();
-      if (this.state.status !== 'playing') this.playStartPos = this.position();
+      if (this.state.status !== 'playing') this.playStartPos = this.enginePosition();
       await resumed;
       this.set({ status: 'playing' });
       return;
@@ -276,7 +290,7 @@ class LivePlayer {
       await resumed;
       // Where the new version starts: the current position when swapping in
       // an edit, else the start (or the loop's start).
-      const swapAt = seamless ? Math.min(this.position(), durationSec) : undefined;
+      const swapAt = seamless ? Math.min(this.enginePosition(), durationSec) : undefined;
       this.teardown();
       this.node = node;
       this.set({ key, laneNames, durationSec });
@@ -338,9 +352,9 @@ class LivePlayer {
     this.postLaneGains();
   }
 
-  /** Solo exactly these tracks (empty: no solo). */
-  setSoloSet(lanes: readonly string[]): void {
-    this.set({ solo: [...lanes] });
+  /** Set the muted and soloed tracks at once (e.g. to restore them). */
+  setMuteSolo(muted: readonly string[], solo: readonly string[]): void {
+    this.set({ muted: [...muted], solo: [...solo] });
     this.postLaneGains();
   }
 

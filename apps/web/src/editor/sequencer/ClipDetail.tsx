@@ -39,7 +39,6 @@ export function ClipDetail({
   previewPlaying,
   onPlay,
   onPause,
-  onSoloChange,
   editable,
   soundChangeable,
   busy,
@@ -59,11 +58,9 @@ export function ClipDetail({
   onSetDrumHit(segments: string[], pitch: number, step: number, on: boolean): void;
   /** Whether this window's Play is looping. */
   previewPlaying: boolean;
-  /** Loop beats `fromBeat`–`toBeat` of this section (played on its own); with `solo`, only this track. */
-  onPlay(fromBeat: number, toBeat: number, solo: boolean): void;
+  /** Loop beats `fromBeat`–`toBeat` of the pattern shown (played on its own). */
+  onPlay(fromBeat: number, toBeat: number): void;
   onPause(): void;
-  /** Solo switched while playing. */
-  onSoloChange(solo: boolean): void;
   editable: boolean;
   soundChangeable: boolean;
   busy: boolean;
@@ -80,18 +77,14 @@ export function ClipDetail({
   const [pending, setPending] = useState<{ pitch: number; step: number; on: boolean } | undefined>(undefined);
   /** Selection in beats from the start of what's shown (the bar for drums, the section otherwise). */
   const [sel, setSel] = useState<BarRange | undefined>(undefined);
-  /** Play only this track (on by default). */
-  const [solo, setSolo] = useState(true);
 
   const beats = clip.bars * BEATS_PER_BAR;
   const color = resolveColor(track.color);
   const pitched = notes.filter((n) => n.pitch !== null);
   const kindLabel = plural(section.kind);
-  const playSolo = () => {
-    const from = sel ? sel.start : 0;
-    const to = sel ? sel.end : beats;
-    onPlay(from, to, solo);
-  };
+  // What Play loops: the selection, else the whole pattern shown (drums: the bar).
+  const patternBeats = track.isDrums ? BEATS_PER_BAR : beats;
+  const playPattern = () => onPlay(sel ? sel.start : 0, sel ? sel.end : patternBeats);
 
   // Space plays and pauses the preview while this window is open.
   useEffect(() => {
@@ -100,7 +93,7 @@ export function ClipDetail({
       e.preventDefault();
       e.stopImmediatePropagation();
       if (previewPlaying) onPause();
-      else playSolo();
+      else playPattern();
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -140,29 +133,15 @@ export function ClipDetail({
 
         {/* Grid, zoom and (drums) which sections edits apply to. */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
-          <span className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={previewPlaying ? onPause : playSolo}
-              className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${previewPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'}`}
-              title={`Loop ${sel ? 'the selection' : 'this section'}${solo ? ` with only ${track.name} playing` : ' with every track'}`}
-            >
-              <span aria-hidden="true">{previewPlaying ? '❚❚' : '▶'}</span>
-              {previewPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'section'}`}
-            </button>
-            <button
-              type="button"
-              aria-pressed={solo}
-              onClick={() => {
-                setSolo(!solo);
-                if (previewPlaying) onSoloChange(!solo);
-              }}
-              title={solo ? `Only ${track.name} plays (click to hear every track)` : `Every track plays (click to hear only ${track.name})`}
-              className={`h-8 rounded-[6px] border px-2.5 text-[12px] font-bold ${solo ? 'border-emerald-400 bg-emerald-400 text-black' : 'border-line text-white/60 hover:text-white'}`}
-            >
-              Solo
-            </button>
-          </span>
+          <button
+            type="button"
+            onClick={previewPlaying ? onPause : playPattern}
+            className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${previewPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'}`}
+            title={`Loop ${sel ? 'the selection' : 'this pattern'}, on its own (Space)`}
+          >
+            <span aria-hidden="true">{previewPlaying ? '❚❚' : '▶'}</span>
+            {previewPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'pattern'}`}
+          </button>
           <Segmented<Grid>
             label="Grid"
             value={grid}
