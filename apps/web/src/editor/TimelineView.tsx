@@ -854,7 +854,14 @@ export function TimelineView() {
           sameKind={model.sections.filter((x) => x.kind === model.sections[detail.section]!.kind).map((x) => x.name)}
           onSetDrumHit={(segments, pitch, step, on) => applyEdit({ kind: 'setDrumHit', segments, pitch, step, on })}
           editError={editor?.lastError}
-          engineNotes={engineNotes && engineNotes.key === preview?.key ? engineNotes : undefined}
+          engineNotes={
+            detailTrack.isVocal
+              ? { notes: detailClip.notes.filter((n) => n.pitch !== null).map((n) => ({ ...n, start: n.start - detailClip.startBar * BEATS_PER_BAR })) }
+              : engineNotes && engineNotes.key === preview?.key
+                ? engineNotes
+                : undefined
+          }
+          notesFromSong={detailTrack.isVocal}
           soundName={detailSound}
           drumKit={drumKit.data ?? (drumKit.isError ? { error: drumKit.error.message } : undefined)}
           onDrumSound={(row, action) =>
@@ -899,7 +906,12 @@ export function TimelineView() {
           soundName={soundNames[dialog.track]}
           songKey={viewSong.key}
           bpm={bpm}
-          notes={overviewNotes && overviewNotes.track === dialog.track ? overviewNotes : undefined}
+          notes={(() => {
+            const t = model.tracks.find((x) => x.name === dialog.track)!;
+            // Sung parts: the song's own notes (the engine does not sing yet), placed in song time.
+            if (t.isVocal) return { notes: t.clips.flatMap((c) => c.notes.filter((n) => n.pitch !== null)) };
+            return overviewNotes && overviewNotes.track === dialog.track ? overviewNotes : undefined;
+          })()}
           playheadBeat={isThisSong && playing ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
           onClose={() => setDialog(undefined)}
           exportItems={(() => {

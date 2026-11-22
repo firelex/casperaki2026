@@ -55,6 +55,7 @@ export function ClipDetail({
   exportItems,
   drumKit,
   onDrumSound,
+  notesFromSong,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -82,6 +83,8 @@ export function ClipDetail({
   engineNotes: { notes: SeqNote[] } | { error: string } | undefined;
   /** Public name of the track's sound. */
   soundName: string | undefined;
+  /** The notes come from the song, not the engine (sung parts: the engine does not sing yet). */
+  notesFromSong?: boolean;
   /** Drums: the kit (each drum's sound), or why it could not be read. */
   drumKit?: { kit: readonly DrumKitRow[] } | { error: string } | undefined;
   /** Drums: replace one drum's sound (`reset`: back to the style's own). */
@@ -178,7 +181,9 @@ export function ClipDetail({
               {track.isDrums
                 ? ' · the bar below repeats through the section'
                 : engineNotes && 'notes' in engineNotes
-                  ? ` · ${engineNotes.notes.length} notes as played`
+                  ? notesFromSong
+                    ? ` · ${engineNotes.notes.length} sung notes with their words (as written: the playback engine does not sing yet)`
+                    : ` · ${engineNotes.notes.length} notes as played`
                   : ''}
             </DialogDescription>
           </div>
@@ -203,9 +208,10 @@ export function ClipDetail({
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
           <button
             type="button"
+            disabled={notesFromSong}
             onClick={previewPlaying ? onPause : playPattern}
-            className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${previewPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'}`}
-            title={`Loop ${sel ? 'the selection' : 'this pattern'}, on its own (Space)`}
+            className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${previewPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'} disabled:opacity-40`}
+            title={notesFromSong ? 'The playback engine does not sing yet' : `Loop ${sel ? 'the selection' : 'this pattern'}, on its own (Space)`}
           >
             <span aria-hidden="true">{previewPlaying ? '❚❚' : '▶'}</span>
             {previewPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'pattern'}`}
@@ -304,7 +310,9 @@ export function ClipDetail({
         <p className="border-t border-line/60 px-5 py-3 text-[12px] text-white/45">
           {track.isDrums
             ? 'Click a cell to add or remove a hit. Undo with Ctrl+Z. Fills at the ends of sections come on top of this bar. Space plays and pauses.'
-            : 'The notes the playback engine plays (chords as it voices them). Parts with pitches are written by the generator: ask for a new pattern or another sound to change them. Space plays and pauses.'}
+            : notesFromSong
+              ? 'The sung melody as written, with its words. The playback engine does not sing yet, so this part is silent when the song plays.'
+              : 'The notes the playback engine plays (chords as it voices them). Parts with pitches are written by the generator: ask for a new pattern or another sound to change them. Space plays and pauses.'}
         </p>
 
         {pending ? (

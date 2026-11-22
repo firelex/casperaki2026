@@ -58,3 +58,15 @@ describe('drum bar pattern', () => {
     expect([...p.get(42)!]).toEqual([11]);
   });
 });
+
+describe('track order', () => {
+  it('puts the lead vocal first and the backing vocals next', () => {
+    const m = buildSequencerModel(makeFixtureSong().song);
+    const names = m.tracks.map((t) => t.name);
+    const vocal = names.filter((n) => /vocal/i.test(n));
+    expect(vocal.length).toBeGreaterThan(0);
+    expect(names.slice(0, vocal.length)).toEqual(vocal);
+    expect(/backing/i.test(names[0]!)).toBe(false);
+    expect(m.tracks.filter((t) => t.isVocal).map((t) => t.name)).toEqual(vocal);
+  });
+});

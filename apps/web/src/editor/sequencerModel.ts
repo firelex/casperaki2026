@@ -47,6 +47,8 @@ export interface SeqTrack {
   readonly name: string;
   readonly color: string;
   readonly isDrums: boolean;
+  /** Sung parts: the engine does not sing yet, so their notes are read from the song (with the words). */
+  readonly isVocal: boolean;
   readonly clips: readonly SeqClip[];
   /** Pitch range over all notes (for vertical placement); null when no pitched notes. */
   readonly pitchRange: { readonly low: number; readonly high: number } | null;
@@ -174,9 +176,11 @@ function eventNotes(ev: RawEvent, start: number): SeqNote[] {
   return [{ start, length, pitch: null, kind: 'other' }];
 }
 
-/** Track order: rhythm section first, then harmony, melody, vocals last. */
+/** Track order: lead vocal, backing vocals, then the rhythm section, harmony and melody. */
 function trackRank(name: string): number {
   const k = name.toLowerCase();
+  if (k.includes('backing')) return -1;
+  if (k.includes('vocal')) return -2;
   if (k.startsWith('drum')) return 0;
   if (k.includes('perc') || k.includes('loop')) return 1;
   if (k.startsWith('bass')) return 2;
@@ -185,7 +189,6 @@ function trackRank(name: string): number {
   if (k.startsWith('pad') || k.includes('string') || k.includes('orchestr') || k.includes('brass')) return 5;
   if (k.includes('synth') || k.includes('lead') || k.includes('pluck')) return 6;
   if (k.includes('fx') || k.includes('transition')) return 8;
-  if (k.includes('vocal')) return 9;
   return 7;
 }
 
@@ -248,6 +251,7 @@ export function buildSequencerModel(song: Song): SequencerModel {
         name,
         color: trackColor(name),
         isDrums: name.toLowerCase().startsWith('drum'),
+        isVocal: name.toLowerCase().includes('vocal'),
         clips,
         pitchRange: pitches.length ? { low: Math.min(...pitches), high: Math.max(...pitches) } : null,
       };
