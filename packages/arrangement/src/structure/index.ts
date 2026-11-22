@@ -32,7 +32,33 @@ import type { Rng } from '@casperaki/music-theory';
 import type { GeneratorContext } from '../context.js';
 import { loadStructurePools, type StructurePrecedent } from './data.js';
 
+/** Section types the structure generator writes. */
+export const SECTION_TYPES = ['intro', 'verse', 'preChorus', 'chorus', 'bridge', 'break', 'outro'] as const;
+
+/**
+ * `params.structure`: an explicit section list ({ name, bars }) instead of a
+ * picked precedent (e.g. a song's current sections plus one to add). Every
+ * name must start with a known section type.
+ */
+function explicitStructure(ctx: GeneratorContext): SongStructure | undefined {
+  const raw = ctx.params.params?.structure;
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw) || raw.length === 0) throw new Error('params.structure must be a non-empty array of { name, bars }');
+  const seen = new Set<string>();
+  return raw.map((entry, i) => {
+    const e = entry as { name?: unknown; bars?: unknown };
+    if (typeof e.name !== 'string' || !e.name) throw new Error(`params.structure[${i}]: name must be a string`);
+    if (!Number.isInteger(e.bars) || (e.bars as number) < 1 || (e.bars as number) > 64) throw new Error(`params.structure[${i}]: bars must be 1..64`);
+    if (!(SECTION_TYPES as readonly string[]).includes(baseType(e.name))) throw new Error(`params.structure[${i}]: unknown section type in "${e.name}"`);
+    if (seen.has(e.name)) throw new Error(`params.structure: duplicate section "${e.name}"`);
+    seen.add(e.name);
+    return buildSegment(e.name, e.bars as number);
+  });
+}
+
 export function generateSongStructure(ctx: GeneratorContext): SongStructure {
+  const explicit = explicitStructure(ctx);
+  if (explicit) return explicit;
   const genre = parseGenre(ctx.params.genre);
   const rng = ctx.rng.fork('structure');
   const pools = loadStructurePools();

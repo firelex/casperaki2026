@@ -41,7 +41,24 @@ export function useTrackEdits(songKey: string | undefined) {
     [viewSong, applyEdit],
   );
 
+  /** Any brain-written change of the song (e.g. a generated section), as one undoable edit. */
+  const runSongEdit = useCallback(
+    async (label: string, make: (song: NonNullable<typeof viewSong>) => Promise<NonNullable<typeof viewSong>>) => {
+      if (!viewSong) throw new Error('No song is open.');
+      setBusy(label);
+      setError(undefined);
+      try {
+        applyEdit({ kind: 'replaceSong', song: await make(viewSong) });
+      } catch (err) {
+        setError(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setBusy(undefined);
+      }
+    },
+    [viewSong, applyEdit],
+  );
+
   const removeTrack = useCallback((track: string) => applyEdit({ kind: 'removeTrack', track }), [applyEdit]);
 
-  return { options, run, removeTrack, busy, error, clearError: () => setError(undefined) };
+  return { options, run, runSongEdit, removeTrack, busy, error, clearError: () => setError(undefined) };
 }

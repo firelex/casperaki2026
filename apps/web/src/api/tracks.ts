@@ -31,4 +31,7 @@ export const tracksApi = {
   /** The brain rewrites one track with the generator and returns the whole song. */
   edit: (song: Song, op: TrackEdit, signal?: AbortSignal) =>
     defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op }, { signal }),
+  /** A new section written by the generator, inserted at `index` (0 = first). */
+  addSection: (song: Song, type: string, index: number, bars?: number, signal?: AbortSignal) =>
+    defaultBrainClient.post<{ song: Song; name: string }>('/api/sections/add', { song, type, index, ...(bars ? { bars } : {}) }, { signal }),
 };

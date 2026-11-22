@@ -16,11 +16,15 @@
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
-import { editTrack, TrackEditError, TrackEditRequestSchema, trackOptions } from '@casperaki/arrangement';
+import { addSection, editTrack, TrackEditError, TrackEditRequestSchema, trackOptions } from '@casperaki/arrangement';
 import { parseSong, type Song } from '@casperaki/song-schema';
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
 const EditBody = z.object({ song: z.unknown(), op: TrackEditRequestSchema }).strict();
+
+const AddSectionBody = z
+  .object({ song: z.unknown(), type: z.string().min(1), index: z.number().int().min(0), bars: z.number().int().min(1).max(64).optional() })
+  .strict();
 
 export function createTracksRouter(): Router {
   const router = Router();
@@ -42,6 +46,18 @@ export function createTracksRouter(): Router {
     const song = songOf(body.data.song, res);
     if (!song) return;
     return run(res, () => editTrack(song, body.data.op));
+  });
+
+  // Add a section written by the generator: { song, type, index, bars? } -> { song, name }.
+  router.post('/api/sections/add', (req, res) => {
+    const body = AddSectionBody.safeParse(req.body);
+    if (!body.success) {
+      const issue = body.error.issues[0];
+      return res.status(400).json({ error: 'invalid_body', message: issue ? `${issue.path.join('.')}: ${issue.message}` : 'invalid body' });
+    }
+    const song = songOf(body.data.song, res);
+    if (!song) return;
+    return run(res, () => addSection(song, body.data.type, body.data.index, body.data.bars));
   });
 
   return router;

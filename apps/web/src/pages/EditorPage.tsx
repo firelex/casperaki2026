@@ -6,19 +6,18 @@ import { EditorHeader } from '../layout/EditorHeader';
 import { StatusBar } from '../layout/StatusBar';
 import { SoundDesignView } from '../editor/SoundDesignView';
 import { TimelineView } from '../editor/TimelineView';
-import { StructureView } from '../editor/StructureView';
 import { songsApi, songsQueryKeys } from '../api/songs';
 import { useSession } from '../state/session';
 
-export type EditorTab = 'sound' | 'timeline' | 'structure';
+export type EditorTab = 'sound' | 'timeline';
 
 /**
  * Editor screen, laid out like a DAW window:
  *   - top:    <EditorHeader>  control bar (logo · song · transport · views · export)
- *   - main:   the view (sounds / tracks with the mixer / structure)
+ *   - main:   the view (sounds / tracks with the mixer)
  *   - bottom: <StatusBar>     playback status and downloads
  *
- * The view is route-driven so the URL is the source of truth (1/2/3
+ * The view is route-driven so the URL is the source of truth (1/2
  * keyboard shortcuts also work).
  */
 export function EditorPage({ tab }: { tab: EditorTab }) {
@@ -62,7 +61,6 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
       }
       if (e.code === 'Digit1') navigate(`/editor/${songId}/sound`);
       if (e.code === 'Digit2') navigate(`/editor/${songId}/timeline`);
-      if (e.code === 'Digit3') navigate(`/editor/${songId}/structure`);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -89,8 +87,7 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
 
 function TabBody({ tab }: { tab: EditorTab }) {
   if (tab === 'sound') return <SoundDesignView />;
-  if (tab === 'timeline') return <TimelineView />;
-  return <StructureView />;
+  return <TimelineView />;
 }
 
 function LoadingState({

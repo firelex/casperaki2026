@@ -5,6 +5,18 @@ import { BEATS_PER_BAR, type SequencerModel } from '../sequencerModel';
 import { BARS_H, clockLabel, gridStep, LOOP_H, MARKERS_H, snapUnit, TIME_H } from './layout';
 
 import { beginEdgeDrag, beginRangeDrag, type BarRange } from './rangeDrag';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@teamsuzie/ui';
+
+export type SectionAction = 'play' | 'loop' | 'rename' | 'duplicate' | 'addBar' | 'removeBar' | 'addBefore' | 'addAfter' | 'delete';
+const MENU = 'z-50 min-w-[230px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl';
+const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40';
 
 export type { BarRange };
 
@@ -30,6 +42,7 @@ export function Ruler({
   onSelectSection,
   onRangeChange,
   onMoveSection,
+  onSectionAction,
 }: {
   model: SequencerModel;
   px: number;
@@ -42,6 +55,8 @@ export function Ruler({
   onRangeChange(range: BarRange | undefined): void;
   /** Move a section to `targetIndex` in the song's order (index after taking it out). */
   onMoveSection(name: string, targetIndex: number): void;
+  /** The section's right-click menu. */
+  onSectionAction(action: SectionAction, name: string, index: number): void;
 }) {
   const width = model.totalBars * px;
   const loopRef = useRef<HTMLDivElement>(null);
@@ -174,10 +189,12 @@ export function Ruler({
       {/* Section markers. */}
       <div className="relative border-b border-black/50" style={{ height: MARKERS_H }}>
         {model.sections.map((s, i) => (
+          <ContextMenu key={s.name}>
+          <ContextMenuTrigger asChild>
           <button
-            key={s.name}
             type="button"
             onPointerDown={(e) => startSectionDrag(e, i)}
+            onContextMenu={(e) => e.stopPropagation()}
             onClick={() => {
               if (dragged.current) return; // the end of a drag, not a click
               onSelectSection(s.name);
@@ -195,6 +212,27 @@ export function Ruler({
           >
             {s.bars * px > 40 ? <span className="truncate text-[11px] font-semibold text-white">{s.name}</span> : null}
           </button>
+          </ContextMenuTrigger>
+          <ContextMenuContent className={MENU} onContextMenu={(e) => e.preventDefault()}>
+            <ContextMenuLabel className="px-3 py-2 text-[12px] font-normal text-white/50">
+              {s.name} · {s.bars} bar{s.bars === 1 ? '' : 's'}
+            </ContextMenuLabel>
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('play', s.name, i)}>Play from here</ContextMenuItem>
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('loop', s.name, i)}>Loop this section</ContextMenuItem>
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('rename', s.name, i)}>Rename…</ContextMenuItem>
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('duplicate', s.name, i)}>Duplicate</ContextMenuItem>
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('addBar', s.name, i)}>Add a bar</ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={s.bars <= 1} onSelect={() => onSectionAction('removeBar', s.name, i)}>Remove a bar</ContextMenuItem>
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('addBefore', s.name, i)}>Add section before…</ContextMenuItem>
+            <ContextMenuItem className={ITEM} onSelect={() => onSectionAction('addAfter', s.name, i)}>Add section after…</ContextMenuItem>
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+            <ContextMenuItem className={`${ITEM} text-err`} disabled={model.sections.length <= 1} onSelect={() => onSectionAction('delete', s.name, i)}>
+              Delete section <span className="ml-auto pl-6 text-[12px] text-white/40">Undo: Ctrl+Z</span>
+            </ContextMenuItem>
+          </ContextMenuContent>
+          </ContextMenu>
         ))}
         {/* Where the dragged section would land. */}
         {secDrag && secDrag.gap !== secDrag.from && secDrag.gap !== secDrag.from + 1 ? (

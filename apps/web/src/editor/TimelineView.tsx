@@ -40,6 +40,8 @@ import { ReverbPanel } from './devices/ReverbPanel';
 import { DEVICES } from './devices/deviceDefs';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
+import { AddSectionDialog, RenameSectionDialog } from './sequencer/SectionDialogs';
+import { tracksApi } from '../api/tracks';
 import { useTrackEdits } from './sequencer/useTrackEdits';
 
 type Dialog =
@@ -89,6 +91,8 @@ export function TimelineView() {
     };
   }, [liveKey, fetchPayload, editorDirty]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
+  /** The section dialogs (from the ruler's right-click menu). */
+  const [sectionDialog, setSectionDialog] = useState<{ kind: 'rename'; name: string } | { kind: 'add'; index: number; where: string } | undefined>(undefined);
   /** The open device view (a plugin on a bus), if any. */
   const [device, setDevice] = useState<OpenDevice | undefined>(undefined);
   // The engine's automation per track (filter sweeps, volume fades), from the resolved mix.
@@ -476,6 +480,8 @@ export function TimelineView() {
             <span className="h-2 w-2 animate-pulse rounded-full bg-white/60" aria-hidden="true" />
             {edits.busy}…
           </span>
+        ) : editor?.lastError ? (
+          <span className="text-err" role="alert">{editor.lastError}</span>
         ) : edits.error ? (
           <span className="flex items-center gap-2 text-err" role="alert">
             {edits.error}
@@ -554,6 +560,17 @@ export function TimelineView() {
                 onSelectSection={setActiveSegment}
                 onRangeChange={setRange}
                 onMoveSection={(name, targetIndex) => applyEdit({ kind: 'moveSegment', segmentName: name, targetIndex })}
+                onSectionAction={(action, name, index) => {
+                  const sec = model.sections[index]!;
+                  if (action === 'play') seek(sec.startBar * secondsPerBar);
+                  else if (action === 'loop') loopSection(sec);
+                  else if (action === 'rename') setSectionDialog({ kind: 'rename', name });
+                  else if (action === 'duplicate') applyEdit({ kind: 'duplicateSegment', segmentName: name });
+                  else if (action === 'addBar') applyEdit({ kind: 'changeBarCount', segmentName: name, delta: 1 });
+                  else if (action === 'removeBar') applyEdit({ kind: 'changeBarCount', segmentName: name, delta: -1 });
+                  else if (action === 'delete') applyEdit({ kind: 'deleteSegment', segmentName: name });
+                  else setSectionDialog({ kind: 'add', index: action === 'addBefore' ? index : index + 1, where: `${action === 'addBefore' ? 'Before' : 'After'} ${name}` });
+                }}
               />
             </div>
             </SelectionMenu>
@@ -742,6 +759,28 @@ export function TimelineView() {
           />
           <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} />
         </div>
+      ) : null}
+
+      {sectionDialog?.kind === 'rename' ? (
+        <RenameSectionDialog
+          name={sectionDialog.name}
+          taken={model.sections.map((x) => x.name)}
+          onClose={() => setSectionDialog(undefined)}
+          onRename={(newName) => {
+            applyEdit({ kind: 'renameSegment', segmentName: sectionDialog.name, newName });
+            setSectionDialog(undefined);
+          }}
+        />
+      ) : sectionDialog?.kind === 'add' ? (
+        <AddSectionDialog
+          where={sectionDialog.where}
+          onClose={() => setSectionDialog(undefined)}
+          onAdd={(type, bars) => {
+            const index = sectionDialog.index;
+            setSectionDialog(undefined);
+            void edits.runSongEdit('Writing a new section', async (song) => (await tracksApi.addSection(song, type, index, bars)).song);
+          }}
+        />
       ) : null}
 
       {device ? (

@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 
 import { SessionProvider } from './state/session';
 import { useAuth } from './auth/AuthContext';
@@ -22,7 +22,7 @@ const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => (
  *   /editor/:songId            → redirect to Timeline tab
  *   /editor/:songId/sound      → Editor · Sound Design tab
  *   /editor/:songId/timeline   → Editor · Timeline tab
- *   /editor/:songId/structure  → Editor · Structure tab
+ *   /editor/:songId/structure  → redirects to the track view (Structure was folded in)
  *
  * Signed-out users see only the landing (LandingPage). Signed-in users get
  * the full route tree wrapped in <SessionProvider>.
@@ -47,7 +47,8 @@ export function App() {
         <Route path="/editor/:songId" element={<Navigate to="timeline" replace />} />
         <Route path="/editor/:songId/sound" element={<EditorPage tab="sound" />} />
         <Route path="/editor/:songId/timeline" element={<EditorPage tab="timeline" />} />
-        <Route path="/editor/:songId/structure" element={<EditorPage tab="structure" />} />
+        {/* The Structure view was folded into the track view (sections are edited from the ruler). */}
+        <Route path="/editor/:songId/structure" element={<StructureRedirect />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>
@@ -69,4 +70,10 @@ function PageSplash() {
       Loading…
     </div>
   );
+}
+
+/** Old Structure links open the track view, where sections are now edited. */
+function StructureRedirect() {
+  const { songId } = useParams<{ songId: string }>();
+  return <Navigate to={`/editor/${songId}/timeline`} replace />;
 }

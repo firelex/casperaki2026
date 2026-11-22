@@ -6,7 +6,7 @@
 export type { GenerateParams, GeneratorContext, Seeded } from './context.js';
 export { DataAssetError } from './data/loader.js';
 export type { DataAssetMeta } from './data/loader.js';
-export { generateSongStructure } from './structure/index.js';
+export { generateSongStructure, SECTION_TYPES } from './structure/index.js';
 export { generateChords } from './chords/index.js';
 export {
   loadChordBank,
@@ -316,3 +316,4 @@ export {
   type TrackEditRequest,
   type TrackOptions,
 } from './edits/track-edits.js';
+export { addSection, nextSectionName } from './edits/add-section.js';

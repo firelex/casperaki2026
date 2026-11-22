@@ -84,7 +84,6 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
         <nav className="flex rounded-[6px] border border-black/60 bg-[#1f2023] p-0.5" aria-label="Editor views">
           <TabLink active={tab === 'sound'} onClick={() => setTab('sound')}>Sounds</TabLink>
           <TabLink active={tab === 'timeline'} onClick={() => setTab('timeline')}>Tracks</TabLink>
-          <TabLink active={tab === 'structure'} onClick={() => setTab('structure')}>Structure</TabLink>
         </nav>
         <IconBtn label={replay.isPending ? 'Verifying…' : 'Verify determinism (replay)'} onClick={() => replay.mutate()} disabled={!activeSong || replay.isPending}>
           ⟳
@@ -216,5 +215,5 @@ function IconBtn({
 }
 
 function tab2Path(t: EditorTab): string {
-  return t === 'sound' ? 'sound' : t === 'timeline' ? 'timeline' : 'structure';
+  return t === 'sound' ? 'sound' : 'timeline';
 }
