@@ -141,7 +141,6 @@ export function ClipDetail({
           <div className="min-w-0">
             <DialogTitle className="text-[17px] font-semibold text-white">
               {track.name} · {section.name}
-              {soundName ? <span className="ml-2 text-[14px] font-normal text-white/60">{soundName}</span> : null}
             </DialogTitle>
             <DialogDescription className="text-[12px] text-white/50">
               Bars {section.startBar + 1}–{section.startBar + section.bars}
@@ -156,6 +155,12 @@ export function ClipDetail({
             {editable ? (
               <>
                 <ActionButton onClick={onNewPattern} disabled={busy}>New pattern</ActionButton>
+                {soundName ? (
+                  <span className="flex h-8 items-center rounded-[6px] border border-line bg-black/30 px-3 text-[13px] text-white/85" title="This track's sound">
+                    <span className="mr-1.5 text-white/45">Sound</span>
+                    {soundName}
+                  </span>
+                ) : null}
                 {soundChangeable ? <ActionButton onClick={onChangeSound} disabled={busy}>Change sound…</ActionButton> : null}
               </>
             ) : null}
