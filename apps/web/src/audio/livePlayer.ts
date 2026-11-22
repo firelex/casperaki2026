@@ -414,7 +414,7 @@ export class LivePlayer {
     }
     this.meterWorker?.terminate();
     let cancelled = false;
-    const worker = new Worker('/workers/casperaki-meter-worker.js', { type: 'module' });
+    const worker = new Worker(`/workers/casperaki-meter-worker.js?v=${__ENGINE_VERSION__}`, { type: 'module' });
     this.meterWorker = worker;
     worker.onerror = (ev) => {
       if (!cancelled) onError(`The engine worker failed: ${ev.message || 'it could not start'}`);
@@ -533,7 +533,7 @@ export class LivePlayer {
     job = Promise.all([this.payloadOf(key, fetchPayload), this.wasm(), this.stubs(ctx)]).then(
       ([payload, wasmBytes, stubs]) =>
         new Promise<ResolvedMix>((resolve, reject) => {
-          const worker = new Worker('/workers/casperaki-meter-worker.js', { type: 'module' });
+          const worker = new Worker(`/workers/casperaki-meter-worker.js?v=${__ENGINE_VERSION__}`, { type: 'module' });
           worker.onerror = (ev) => {
             worker.terminate();
             reject(new Error(`The engine worker failed: ${ev.message || 'it could not start'}`));
@@ -615,12 +615,12 @@ export class LivePlayer {
   }
 
   private wasm(): Promise<ArrayBuffer> {
-    sharedWasm ??= fetchOk('/wasm/engine-render.wasm').then((r) => r.arrayBuffer());
+    sharedWasm ??= fetchOk(`/wasm/engine-render.wasm?v=${__ENGINE_VERSION__}`).then((r) => r.arrayBuffer());
     return sharedWasm;
   }
 
   private worklet(ctx: AudioContext): Promise<void> {
-    this.workletAdded ??= ctx.audioWorklet.addModule('/worklets/casperaki-render-worklet.js');
+    this.workletAdded ??= ctx.audioWorklet.addModule(`/worklets/casperaki-render-worklet.js?v=${__ENGINE_VERSION__}`);
     return this.workletAdded;
   }
 

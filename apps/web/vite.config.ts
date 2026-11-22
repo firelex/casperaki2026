@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -298,8 +299,48 @@ const crossOriginIsolation = {
   'Cross-Origin-Embedder-Policy': 'require-corp',
 };
 
+// The browser engine's files keep their names across builds (public/), so a
+// browser may hold an old copy. Every URL to them carries this fingerprint of
+// their contents (?v=), and the built worker/worklet import the driver with it
+// too: a new engine always has a new address.
+const ENGINE_FILES = [
+  'public/wasm/engine-render.wasm',
+  'public/engine/casperaki-engine.js',
+  'public/worklets/casperaki-render-worklet.js',
+  'public/workers/casperaki-meter-worker.js',
+];
+const engineVersion = (() => {
+  const h = createHash('sha256');
+  for (const f of ENGINE_FILES) {
+    const abs = resolve(fileURLToPath(new URL('.', import.meta.url)), f);
+    if (!existsSync(abs)) throw new Error(`engine file missing: ${f} (run wasm/engine/build-wasm.sh)`);
+    h.update(f).update(readFileSync(abs));
+  }
+  return h.digest('hex').slice(0, 12);
+})();
+
+/** Stamp the fingerprint into the built worker's and worklet's driver import. */
+function versionEngineImports(): Plugin {
+  return {
+    name: 'casperaki-engine-version',
+    apply: 'build',
+    writeBundle(options) {
+      const out = options.dir;
+      if (!out) throw new Error('casperaki-engine-version: no output dir');
+      for (const f of ['workers/casperaki-meter-worker.js', 'worklets/casperaki-render-worklet.js']) {
+        const p = join(out, f);
+        const src = readFileSync(p, 'utf8');
+        const stamped = src.replace("'../engine/casperaki-engine.js'", `'../engine/casperaki-engine.js?v=${engineVersion}'`);
+        if (stamped === src) throw new Error(`casperaki-engine-version: no driver import found in ${f}`);
+        writeFileSync(p, stamped);
+      }
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), renderDemoFixtures()],
+  define: { __ENGINE_VERSION__: JSON.stringify(engineVersion) },
+  plugins: [react(), tailwindcss(), renderDemoFixtures(), versionEngineImports()],
   server: {
     port: 5173,
     headers: crossOriginIsolation,
