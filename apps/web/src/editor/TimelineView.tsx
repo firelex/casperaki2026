@@ -48,7 +48,8 @@ type Dialog =
   | { kind: 'sound'; track: string }
   | { kind: 'add'; sections: string[] };
 
-const DEFAULT_MIXER_H = 360;
+/** Tracks 60 % / mixer 40 % of the view by default. */
+const DEFAULT_MIXER_SHARE = 0.4;
 const MENU = 'z-50 min-w-[220px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl';
 const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40';
 
@@ -148,46 +149,54 @@ export function TimelineView() {
   const rowH = Math.max(18, Math.min(220, Math.round(fittedRowH * vZoom)));
   const [follow, setFollow] = useState(true);
   const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
-  // Mixer height: drag the divider above it; remembered.
-  const [mixerH, setMixerH] = useState(() => readNumberPref('casperaki.mixerHeight', DEFAULT_MIXER_H));
+  // Mixer height as a share of the view (default 40 %: tracks 60 / mixer 40); drag the
+  // divider to change it, remembered as a share so it fits any window.
+  const [mixerShare, setMixerShare] = useState(() => readNumberPref('casperaki.mixerShare', DEFAULT_MIXER_SHARE));
   const rootRef = useRef<HTMLDivElement>(null);
-  /** Mixer height that leaves the toolbar and a little of the tracks: "mixer fills the view". */
-  const largeMixerH = () => {
+  const [rootH, setRootH] = useState(0);
+  useLayoutEffect(() => {
     const el = rootRef.current;
-    if (!el) throw new Error('The track view is not mounted.');
-    return Math.max(DEFAULT_MIXER_H, el.clientHeight - 160);
-  };
-  const showMixer = useCallback((open: boolean, height?: number) => {
+    if (!el) return;
+    const ro = new ResizeObserver(() => setRootH(el.clientHeight));
+    ro.observe(el);
+    setRootH(el.clientHeight);
+    return () => ro.disconnect();
+    // Re-measure once the song is there (before it, a placeholder renders without the ref).
+  }, [viewSong !== undefined]);
+  /** The share at which the mixer fills the view but for the toolbar and a little of the tracks. */
+  const largeShare = rootH > 0 ? Math.max(DEFAULT_MIXER_SHARE, (rootH - 160) / rootH) : 0.8;
+  const mixerH = Math.round(Math.max(150, Math.min(Math.max(150, rootH - 160), (rootH || 900) * mixerShare)));
+  const showMixer = useCallback((open: boolean, share?: number) => {
     setMixerOpen(open);
     writePref('casperaki.mixerOpen', open);
-    if (height !== undefined) {
-      setMixerH(height);
-      writeNumberPref('casperaki.mixerHeight', height);
+    if (share !== undefined) {
+      setMixerShare(share);
+      writeNumberPref('casperaki.mixerShare', share);
     }
   }, []);
-  /** Double-click on the divider: default → large → hidden (X or the Mixer button bring it back). */
+  /** Double-click on the divider: default (60/40) → large → hidden (X or the Mixer button bring it back). */
   const cycleMixer = () => {
-    const large = largeMixerH();
-    if (Math.abs(mixerH - DEFAULT_MIXER_H) < 8) showMixer(true, large);
-    else if (mixerH >= large - 8) showMixer(false, DEFAULT_MIXER_H);
-    else showMixer(true, DEFAULT_MIXER_H);
+    if (Math.abs(mixerShare - DEFAULT_MIXER_SHARE) < 0.02) showMixer(true, largeShare);
+    else if (mixerShare >= largeShare - 0.02) showMixer(false, DEFAULT_MIXER_SHARE);
+    else showMixer(true, DEFAULT_MIXER_SHARE);
   };
   const startMixerDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return;
+    if (rootH <= 0) throw new Error('The track view has no height yet.');
     e.preventDefault();
     const y0 = e.clientY;
     const h0 = mixerH;
-    const room = largeMixerH();
-    let h = h0;
+    let share = mixerShare;
     const move = (ev: PointerEvent) => {
-      h = Math.max(150, Math.min(room, h0 + (y0 - ev.clientY)));
-      setMixerH(h);
+      const h = Math.max(150, Math.min(rootH - 160, h0 + (y0 - ev.clientY)));
+      share = h / rootH;
+      setMixerShare(share);
     };
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       document.body.style.cursor = '';
-      writeNumberPref('casperaki.mixerHeight', h);
+      writeNumberPref('casperaki.mixerShare', share);
     };
     document.body.style.cursor = 'row-resize';
     window.addEventListener('pointermove', move);
@@ -201,7 +210,7 @@ export function TimelineView() {
   }, []);
   // X shows or hides the mixer (as in Logic); Shift+X switches between the
   // tracks filling the view and the mixer filling it.
-  const mixerFull = mixerOpen && rootRef.current !== null && mixerH >= largeMixerH() - 8;
+  const mixerFull = mixerOpen && mixerShare >= largeShare - 0.02;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'KeyX' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -210,7 +219,7 @@ export function TimelineView() {
       e.preventDefault();
       if (!e.shiftKey) toggleMixer();
       else if (mixerFull) showMixer(false);
-      else showMixer(true, largeMixerH());
+      else showMixer(true, largeShare);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
