@@ -1,15 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { videoApi, videoQueryKeys, type VideoOrientation, type VideoStatus } from '../api/video';
 import { useSession } from '../state/session';
-
-const STEP_LABEL: Readonly<Record<string, string>> = {
-  audio: 'Exporting the song’s mix',
-  planning: 'Planning the scenes',
-  rendering: 'Rendering the video',
-};
 
 const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string }[] = [
   { id: 'landscape', label: 'Wide', hint: '1920 × 1080, for YouTube' },
@@ -139,18 +133,7 @@ function VideoPanel({ job, orientation, title }: { job: VideoStatus | undefined;
       </div>
     );
   }
-  if (job.state !== 'done' || !job.url) {
-    const pct = typeof job.progress === 'number' ? Math.round(job.progress * 100) : undefined;
-    return (
-      <div className={`${frame} flex flex-col items-center justify-center gap-3 rounded-[12px] border border-line bg-black/30`} role="status">
-        <p className="text-[15px] text-white">{STEP_LABEL[job.step ?? ''] ?? 'Waiting to start'}…</p>
-        <div className="h-2 w-[60%] overflow-hidden rounded-full bg-white/10">
-          <div className="h-full bg-emerald-400 transition-all" style={{ width: `${pct ?? 8}%` }} />
-        </div>
-        {pct !== undefined ? <p className="font-mono text-[12px] text-white/55">{pct}%</p> : null}
-      </div>
-    );
-  }
+  if (job.state !== 'done' || !job.url) return <VideoProgress job={job} frame={frame} />;
   return (
     <div className="flex flex-col gap-3">
       <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: music video`} />
@@ -162,4 +145,75 @@ function VideoPanel({ job, orientation, title }: { job: VideoStatus | undefined;
       </div>
     </div>
   );
+}
+
+const STEPS: readonly { id: 'audio' | 'planning' | 'rendering'; label: string }[] = [
+  { id: 'audio', label: 'Export the song’s mix' },
+  { id: 'planning', label: 'Plan the scenes' },
+  { id: 'rendering', label: 'Render the video' },
+];
+
+/** The three steps with the current one's detail, progress and a running timer, so the page never looks stuck. */
+function VideoProgress({ job, frame }: { job: VideoStatus; frame: string }) {
+  const now = useNow(1000);
+  const current = STEPS.findIndex((s) => s.id === job.step);
+  const pct = typeof job.progress === 'number' ? Math.round(job.progress * 100) : undefined;
+  const elapsed = (iso: string | undefined) => {
+    if (!iso) return '';
+    const sec = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  };
+  return (
+    <div className={`${frame} flex flex-col justify-center gap-5 rounded-[12px] border border-line bg-black/30 p-6`} role="status" aria-live="polite">
+      <ol className="flex flex-col gap-3">
+        {STEPS.map((s, i) => {
+          const state = job.state === 'queued' ? 'todo' : i < current ? 'done' : i === current ? 'now' : 'todo';
+          return (
+            <li key={s.id} className="flex items-start gap-3">
+              <span
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] ${
+                  state === 'done' ? 'bg-emerald-400 text-black' : state === 'now' ? 'border-2 border-emerald-400 text-emerald-300' : 'border border-white/25 text-white/40'
+                }`}
+                aria-hidden="true"
+              >
+                {state === 'done' ? '✓' : state === 'now' ? <span className="h-2 w-2 animate-ping rounded-full bg-emerald-400" /> : i + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className={`flex items-baseline gap-2 text-[15px] ${state === 'todo' ? 'text-white/45' : 'text-white'}`}>
+                  {s.label}
+                  {state === 'now' ? <span className="font-mono text-[12px] text-white/50">{elapsed(job.stepStartedAt)}</span> : null}
+                </div>
+                {state === 'now' ? (
+                  <>
+                    <p className="mt-0.5 text-[13px] text-white/60">{job.detail ?? 'working'}…</p>
+                    {pct !== undefined ? (
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                          <div className="h-full bg-emerald-400 transition-all duration-700" style={{ width: `${Math.max(2, pct)}%` }} />
+                        </div>
+                        <span className="w-10 text-right font-mono text-[12px] text-white/55">{pct}%</span>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="text-[12px] text-white/40">
+        {job.state === 'queued' ? 'Waiting to start.' : `Started ${elapsed(job.startedAt)} ago. Rendering draws every frame of the song, so it takes longest.`}
+      </p>
+    </div>
+  );
+}
+
+/** The current time, updated every `ms` (for running timers). */
+function useNow(ms: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), ms);
+    return () => clearInterval(t);
+  }, [ms]);
+  return now;
 }

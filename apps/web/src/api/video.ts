@@ -7,8 +7,13 @@ export interface VideoStatus {
   readonly state: 'queued' | 'running' | 'done' | 'failed';
   /** What it is doing: 'audio' (exporting the mix), 'planning', 'rendering'. */
   readonly step?: string;
-  /** 0..1 while rendering, when known. */
+  /** Progress of the current step, 0..1 (planning: shots written; rendering: frames). */
   readonly progress?: number;
+  /** What exactly is happening, in plain words. */
+  readonly detail?: string;
+  /** When the current step began. */
+  readonly stepStartedAt?: string;
+  readonly startedAt?: string;
   readonly error?: string;
   /** When done: the MP4. */
   readonly url?: string;

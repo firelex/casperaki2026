@@ -26,8 +26,12 @@ export interface VideoStatus {
   readonly orientation: Orientation;
   readonly state: 'queued' | 'running' | 'done' | 'failed';
   readonly step?: 'audio' | 'planning' | 'rendering';
-  /** Rendering progress, 0..1. */
+  /** Progress of the current step, 0..1 (planning: shots written; rendering: frames). */
   readonly progress?: number;
+  /** What exactly is happening, in plain words ("shot 5 of about 12 written"). */
+  readonly detail?: string;
+  /** When the current step began (the page shows a running timer). */
+  readonly stepStartedAt?: string;
   readonly error?: string;
   readonly queuedAt: string;
   readonly startedAt?: string;
@@ -52,6 +56,13 @@ export interface VideoServiceDeps {
 }
 
 const AUDIO_POLL_MS = 1000;
+/** The song export's stages (RenderService steps) in plain words. */
+const EXPORT_STEP: Readonly<Record<string, string>> = {
+  lower: 'preparing the arrangement',
+  render: 'rendering the mix',
+  master: 'mastering',
+  encode: 'encoding WAV and MP3',
+};
 const AUDIO_TIMEOUT_MS = 30 * 60_000;
 
 export class VideoBusyError extends Error {
@@ -110,19 +121,33 @@ export class VideoService {
   private async run(args: { songId: string; orientation: Orientation; title: string; artist: string }, base: VideoStatus): Promise<void> {
     const startedAt = new Date().toISOString();
     try {
-      this.set({ ...base, state: 'running', step: 'audio', startedAt });
+      const step = (s: 'audio' | 'planning' | 'rendering', extra: Partial<VideoStatus> = {}) =>
+        this.set({ ...base, state: 'running', step: s, startedAt, stepStartedAt: stepStart, ...extra });
+      let stepStart = new Date().toISOString();
+      step('audio', { detail: 'checking for the song’s exported mix' });
       const stored = this.deps.store.get(args.songId);
       if (!stored) throw new Error(`song ${args.songId} is not in the store`);
       const song = parseSong(JSON.parse(stored.canonical));
-      const audioPath = await this.exportedMix(args.songId, stored.canonical);
+      const audioPath = await this.exportedMix(args.songId, stored.canonical, (detail) => step('audio', { detail }));
       const durationSeconds = await (this.deps.probeSeconds ?? ((p: string) => this.probeSeconds(p)))(audioPath);
       const input = songToVideoInput({ title: args.title, artist: args.artist, song, audio: { path: audioPath, durationSeconds } });
 
-      this.set({ ...base, state: 'running', step: 'planning', startedAt });
-      const plan = await this.deps.planner.plan(input);
+      stepStart = new Date().toISOString();
+      const expectedShots = Math.max(1, input.sections.length);
+      step('planning', { progress: 0, detail: `asking the scene planner (about ${expectedShots} shots, one per section)` });
+      let lastShots = -1;
+      const plan = await this.deps.planner.plan(input, ({ shots, attempt }) => {
+        if (shots === lastShots) return;
+        lastShots = shots;
+        step('planning', {
+          progress: Math.min(0.95, shots / expectedShots),
+          detail: `${attempt > 1 ? 'fixing the plan: ' : ''}shot ${shots} of about ${expectedShots} written`,
+        });
+      });
       writeFileSync(join(this.dirFor(args.songId), `plan-${args.orientation}.json`), JSON.stringify({ input, plan }, null, 2));
 
-      this.set({ ...base, state: 'running', step: 'rendering', progress: 0, startedAt });
+      stepStart = new Date().toISOString();
+      step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scenes)' });
       const out = this.mp4Path(args.songId, args.orientation);
       const tmp = join(dirname(out), `.${basename(out)}.tmp-${process.pid}.mp4`);
       let lastWritten = 0;
@@ -135,7 +160,7 @@ export class VideoService {
           // Status file writes at most every 2%.
           if (progress - lastWritten >= 0.02 || progress >= 1) {
             lastWritten = progress;
-            this.set({ ...base, state: 'running', step: 'rendering', progress, startedAt });
+            step('rendering', { progress, detail: `${Math.round(progress * 100)}% of ${Math.round(durationSeconds)} s of video rendered` });
           }
         },
       });
@@ -150,13 +175,16 @@ export class VideoService {
   }
 
   /** The song's mastered export (MP3), starting the export and waiting for it when there is none. */
-  private async exportedMix(songId: string, canonical: string): Promise<string> {
+  private async exportedMix(songId: string, canonical: string, report: (detail: string) => void): Promise<string> {
     const renders = this.deps.renders;
     let s = renders.status(songId);
     if (!s || s.state === 'failed') s = renders.enqueue(songId, canonical);
     const deadline = Date.now() + AUDIO_TIMEOUT_MS;
+    let lastDetail = '';
     while (s.state === 'queued' || s.state === 'running') {
       if (Date.now() > deadline) throw new Error('the song export took longer than 30 minutes');
+      const detail = s.state === 'queued' ? 'the song’s export is waiting its turn' : `exporting the song: ${EXPORT_STEP[(s as { step?: string }).step ?? ''] ?? 'working'}`;
+      if (detail !== lastDetail) report((lastDetail = detail));
       await new Promise((r) => setTimeout(r, AUDIO_POLL_MS));
       s = renders.status(songId)!;
     }
