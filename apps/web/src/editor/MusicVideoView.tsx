@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { videoApi, videoQueryKeys, type VideoOrientation, type VideoStatus } from '../api/video';
+import { videoApi, videoQueryKeys, type VideoFormat, type VideoOrientation, type VideoQuality, type VideoStatus } from '../api/video';
 import { useSession } from '../state/session';
 
 const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string }[] = [
@@ -23,6 +23,8 @@ export function MusicVideoView() {
   const queryClient = useQueryClient();
   const [orientation, setOrientation] = useState<VideoOrientation>('landscape');
   const [artist, setArtist] = useState('Casperaki');
+  const [quality, setQuality] = useState<VideoQuality>('full');
+  const format: VideoFormat = quality === 'preview' ? `${orientation}-preview` : orientation;
 
   const jobs = useQuery({
     queryKey: videoQueryKeys.jobs(songId),
@@ -30,10 +32,10 @@ export function MusicVideoView() {
     refetchInterval: (q) => (Object.values(q.state.data?.jobs ?? {}).some((j) => j && (j.state === 'queued' || j.state === 'running')) ? 2000 : false),
   });
   const start = useMutation({
-    mutationFn: () => videoApi.start(songId, orientation, artist.trim()),
+    mutationFn: () => videoApi.start(songId, orientation, quality, artist.trim()),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: videoQueryKeys.jobs(songId) }),
   });
-  const job = jobs.data?.jobs[orientation];
+  const job = jobs.data?.jobs[format];
   const plannerMissing = jobs.data?.plannerConfigured === false;
   const busy = job?.state === 'queued' || job?.state === 'running';
 
@@ -60,6 +62,29 @@ export function MusicVideoView() {
                 >
                   <span className="block text-[14px] font-semibold">{o.label}</span>
                   <span className="block text-[12px] text-white/55">{o.hint}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-5">
+            <legend className="mb-2 text-[13px] text-white/60">Quality</legend>
+            <div className="flex gap-2">
+              {(
+                [
+                  ['full', 'Full', 'Full size; takes about 2½× the song’s length'],
+                  ['preview', 'Quick preview', 'Half size; about 3× faster, to check the scenes'],
+                ] as const
+              ).map(([id, label, hint]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={quality === id}
+                  onClick={() => setQuality(id)}
+                  className={`flex-1 rounded-[10px] border px-3 py-2 text-left ${quality === id ? 'border-white bg-white/10' : 'border-line hover:border-white/40'}`}
+                >
+                  <span className="block text-[14px] font-semibold">{label}</span>
+                  <span className="block text-[12px] text-white/55">{hint}</span>
                 </button>
               ))}
             </div>
@@ -92,7 +117,7 @@ export function MusicVideoView() {
             onClick={() => start.mutate()}
             className="mt-5 h-11 w-full rounded-full bg-accent text-[15px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-50"
           >
-            {busy ? 'Making the video…' : job?.state === 'done' ? 'Make it again' : 'Make video'}
+            {busy ? 'Making the video…' : job?.state === 'done' ? 'Make it again' : quality === 'preview' ? 'Make a quick preview' : 'Make video'}
           </button>
           {start.error ? (
             <p className="mt-3 text-[13px] text-err" role="alert">
@@ -100,7 +125,8 @@ export function MusicVideoView() {
             </p>
           ) : null}
           <p className="mt-3 text-[12px] text-white/45">
-            It takes a few minutes. If the song has not been exported yet, its mix is made first.
+            A full video takes about 2½× the song&rsquo;s length, a quick preview less than the song itself. If the song has not been exported yet, its mix is
+            made first.
           </p>
         </section>
 
@@ -108,7 +134,7 @@ export function MusicVideoView() {
           {jobs.isError ? (
             <p className="text-[14px] text-err">{jobs.error.message}</p>
           ) : (
-            <VideoPanel job={job} orientation={orientation} title={viewSong?.title ?? 'Music video'} />
+            <VideoPanel job={job} orientation={orientation} preview={quality === 'preview'} title={viewSong?.title ?? 'Music video'} />
           )}
         </section>
       </div>
@@ -116,12 +142,12 @@ export function MusicVideoView() {
   );
 }
 
-function VideoPanel({ job, orientation, title }: { job: VideoStatus | undefined; orientation: VideoOrientation; title: string }) {
+function VideoPanel({ job, orientation, preview, title }: { job: VideoStatus | undefined; orientation: VideoOrientation; preview: boolean; title: string }) {
   const frame = orientation === 'portrait' ? 'aspect-[9/16] max-h-[70vh] mx-auto' : 'aspect-video w-full';
   if (!job) {
     return (
       <div className={`${frame} flex items-center justify-center rounded-[12px] border border-dashed border-line text-[14px] text-white/45`}>
-        No {orientation === 'portrait' ? 'tall' : 'wide'} video yet. Make one on the left.
+        No {orientation === 'portrait' ? 'tall' : 'wide'} {preview ? 'preview' : 'video'} yet. Make one on the left.
       </div>
     );
   }
@@ -139,7 +165,7 @@ function VideoPanel({ job, orientation, title }: { job: VideoStatus | undefined;
       <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: music video`} />
       <div className="flex items-center gap-3">
         <a href={`${job.url}?download=1`} className="h-10 rounded-full border border-white/30 px-4 text-[14px] leading-10 text-white hover:border-white/60">
-          Download MP4
+          Download MP4{preview ? ' (preview)' : ''}
         </a>
         {job.finishedAt ? <span className="text-[12px] text-white/45">Made {new Date(job.finishedAt).toLocaleString('en-GB')}</span> : null}
       </div>

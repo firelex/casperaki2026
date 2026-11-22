@@ -28,7 +28,7 @@ importers:
         version: link:../../packages/song-schema
       '@casperaki/video':
         specifier: github:firelex/casperaki-video
-        version: git+https://git@github.com:firelex/casperaki-video.git#2e2105ac99c76cdfe1b046bf9bddfff07d649fc1(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)
+        version: git+https://git@github.com:firelex/casperaki-video.git#f64dcff5d622872aab27e0fd1e3fb6553f8c54ae(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)
       better-sqlite3:
         specifier: ^11.3.0
         version: 11.10.0
@@ -402,8 +402,8 @@ packages:
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
 
-  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#2e2105ac99c76cdfe1b046bf9bddfff07d649fc1':
-    resolution: {commit: 2e2105ac99c76cdfe1b046bf9bddfff07d649fc1, repo: git@github.com:firelex/casperaki-video.git, type: git}
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#f64dcff5d622872aab27e0fd1e3fb6553f8c54ae':
+    resolution: {commit: f64dcff5d622872aab27e0fd1e3fb6553f8c54ae, repo: git@github.com:firelex/casperaki-video.git, type: git}
     version: 0.1.0
 
   '@emnapi/core@1.11.3':
@@ -3728,7 +3728,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#2e2105ac99c76cdfe1b046bf9bddfff07d649fc1(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)':
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#f64dcff5d622872aab27e0fd1e3fb6553f8c54ae(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)':
     dependencies:
       '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/cli': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)
@@ -4150,13 +4150,13 @@ snapshots:
       '@remotion/timeline-utils': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@rspack/core': 2.3.0
       '@rspack/plugin-react-refresh': 2.0.2(@rspack/core@2.3.0)(react-refresh@0.18.0)
-      css-loader: 7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      css-loader: 7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
       esbuild: 0.28.1
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       react-refresh: 0.18.0
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      style-loader: 4.0.0(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
       webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -5333,7 +5333,7 @@ snapshots:
       utrie: 1.0.2
     optional: true
 
-  css-loader@7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+  css-loader@7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.15)
       postcss: 8.5.15
@@ -6334,7 +6334,7 @@ snapshots:
 
   scheduler@0.28.0: {}
 
-  schema-utils@4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+  schema-utils@4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.20.0
@@ -6487,7 +6487,7 @@ snapshots:
 
   strip-json-comments@2.0.1: {}
 
-  style-loader@4.0.0(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
     dependencies:
       webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
 
@@ -6533,11 +6533,11 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
-  terser-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+  terser-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
-      schema-utils: 4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      schema-utils: 4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
       terser: 5.51.4
       webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
     optionalDependencies:
@@ -6747,9 +6747,9 @@ snapshots:
       loader-runner: 4.3.2
       mime-types: 2.1.35
       neo-async: 2.6.2
-      schema-utils: 4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      schema-utils: 4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
       watchpack: 2.6.4
       webpack-sources: 3.7.1
     transitivePeerDependencies:

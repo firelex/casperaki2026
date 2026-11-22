@@ -166,7 +166,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     deps.videos ??
     (renders
       ? new VideoService({
-          config: { videosDir: join(dirname(resolve(config.rendersDir)), 'videos'), ffmpegBin: config.ffmpegBin },
+          config: { videosDir: join(dirname(resolve(config.rendersDir)), 'videos'), ffmpegBin: config.ffmpegBin, renderConcurrency: config.videoRenderConcurrency },
           store,
           renders,
           planner: new DeepSeekPlanner(plannerEndpoint(config)),

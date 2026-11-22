@@ -1,6 +1,9 @@
 import { defaultBrainClient } from './client';
 
 export type VideoOrientation = 'landscape' | 'portrait';
+/** A video of a song: wide or tall, full size or a half-size quick preview. */
+export type VideoFormat = VideoOrientation | `${VideoOrientation}-preview`;
+export type VideoQuality = 'full' | 'preview';
 
 /** One music-video job of a song (per orientation). */
 export interface VideoStatus {
@@ -21,7 +24,7 @@ export interface VideoStatus {
 }
 
 export interface VideoJobs {
-  readonly jobs: Partial<Record<VideoOrientation, VideoStatus>>;
+  readonly jobs: Partial<Record<VideoFormat, VideoStatus>>;
   /** Whether the scene planner (a language model) is set up on the brain. */
   readonly plannerConfigured: boolean;
 }
@@ -31,6 +34,6 @@ export const videoQueryKeys = { jobs: (songId: string) => ['video', songId] as c
 export const videoApi = {
   jobs: (songId: string, signal?: AbortSignal) => defaultBrainClient.get<VideoJobs>(`/api/songs/${encodeURIComponent(songId)}/video`, { signal }),
   /** Make a music video of the saved song (its exported mix is made first if needed). */
-  start: (songId: string, orientation: VideoOrientation, artist: string) =>
-    defaultBrainClient.post<VideoStatus>(`/api/songs/${encodeURIComponent(songId)}/video`, { orientation, artist }),
+  start: (songId: string, orientation: VideoOrientation, quality: VideoQuality, artist: string) =>
+    defaultBrainClient.post<VideoStatus>(`/api/songs/${encodeURIComponent(songId)}/video`, { orientation, quality, artist }),
 };

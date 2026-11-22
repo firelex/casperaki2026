@@ -106,6 +106,20 @@ describe('music video routes', () => {
     expect(file.status).toBe(200);
     expect(file.headers.get('content-type')).toContain('video/mp4');
     expect(file.headers.get('content-disposition')).toContain('(music video).mp4');
+
+    // A quick preview is its own job and file (half size), beside the full video.
+    const prev = await post(`${h.url}/api/songs/${id}/video`, { orientation: 'portrait', quality: 'preview', artist: 'Me' });
+    expect(prev.status).toBe(202);
+    let jobs: Record<string, { state: string; url?: string }> = {};
+    for (let i = 0; i < 50; i++) {
+      jobs = ((await (await fetch(`${h.url}/api/songs/${id}/video`)).json()) as { jobs: typeof jobs }).jobs;
+      if (jobs['portrait-preview']?.state === 'done') break;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    expect(jobs['portrait-preview']).toMatchObject({ state: 'done', url: `/api/songs/${id}/video/portrait-preview.mp4` });
+    expect(jobs['portrait']?.state).toBe('done');
+    expect(h.renders[1]!.quality).toBe('preview');
+    expect(h.renders[1]!.orientation).toBe('portrait');
     expect((await fetch(`${h.url}/api/songs/${id}/video/landscape.mp4`)).status).toBe(404);
     expect((await post(`${h.url}/api/songs/0000000000000000/video`, { orientation: 'portrait', artist: 'Me' })).status).toBe(404);
   });

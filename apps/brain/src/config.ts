@@ -58,6 +58,8 @@ const ConfigSchema = z.object({
   videoPlannerUrl: z.string().url().optional(),
   videoPlannerModel: z.string().min(1).optional(),
   videoPlannerKey: z.string().min(1).optional(),
+  /** Frames the video renderer draws in parallel (default: the engine's, 8). */
+  videoRenderConcurrency: z.coerce.number().int().positive().optional(),
   // --- Production web serving ---
   // When set, the brain serves the built web app (apps/web/dist) at / with
   // an SPA fallback, so one origin carries both the UI and /api.
@@ -111,6 +113,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
     videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
     videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,
+    videoRenderConcurrency: env.VIDEO_RENDER_CONCURRENCY || undefined,
     adminEmails: env.BRAIN_ADMIN_EMAILS,
   });
 }
