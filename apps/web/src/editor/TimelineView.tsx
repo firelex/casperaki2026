@@ -15,7 +15,12 @@ import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix } from '..
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
-import { resolveEngineNotes } from '../audio/resolveNotes';
+import { resolveEngineEvents, resolveEngineNotes } from '../audio/resolveNotes';
+import type { PlaybackPayload } from '../api/playback';
+import { downloadBytes, fileStem } from '../export/exportMidi';
+import type { ExportItem } from '../export/ExportMenu';
+import { buildSongMidi } from '../export/midi';
+import { encodeWav24 } from '../export/wav';
 import { drumBarNotes, patternSong, trackSong } from './sequencer/preview';
 import { TrackOverview } from './sequencer/TrackOverview';
 import { drumBarPattern } from './sequencer/ClipDetail';
@@ -327,6 +332,34 @@ export function TimelineView() {
       cancelled = true;
     };
   }, [viewSong, overviewTrack]);
+
+  const songTitle = activeSong?.project.title ?? 'Untitled';
+  /** Export a lowered song (a pattern, a track) as MIDI or WAV, from the given player's cache. */
+  const exportItemsFor = (
+    player: typeof livePlayer,
+    key: string,
+    fetch: (signal: AbortSignal) => Promise<PlaybackPayload>,
+    what: { track: string; sections: { name: string; startBar: number }[]; fileName: string },
+  ): ExportItem[] => [
+    {
+      label: 'MIDI',
+      hint: 'as played',
+      run: async () => {
+        if (!viewSong) throw new Error('No song is open.');
+        const events = await resolveEngineEvents(await player.payloadOf(key, fetch));
+        const bytes = buildSongMidi(events, { title: what.fileName, key: viewSong.key, instruments: [what.track], sections: what.sections });
+        downloadBytes(bytes, `${fileStem(what.fileName)}.mid`, 'audio/midi');
+      },
+    },
+    {
+      label: 'Audio (WAV)',
+      hint: '24-bit, with effects',
+      run: async (progress) => {
+        const pcm = await player.renderAudio(key, fetch, progress);
+        downloadBytes(encodeWav24(pcm.left, pcm.right, pcm.sampleRate), `${fileStem(what.fileName)}.wav`, 'audio/wav');
+      },
+    },
+  ];
 
   /** The detail window's Play: loop `from`–`to` (seconds into the pattern). */
   const playPreview = useCallback(
@@ -691,6 +724,15 @@ export function TimelineView() {
           soundName={detailSound}
           songKey={viewSong.key}
           bpm={bpm}
+          exportItems={
+            preview
+              ? exportItemsFor(patternPlayer, preview.key, fetchPreview, {
+                  track: detailTrack.name,
+                  sections: [{ name: model.sections[detail.section]!.name, startBar: 0 }],
+                  fileName: `${songTitle} ${detailTrack.name} ${model.sections[detail.section]!.name}`,
+                })
+              : []
+          }
           onClose={() => {
             endPreview();
             setDialog(undefined);
@@ -713,13 +755,21 @@ export function TimelineView() {
           track={model.tracks.find((t) => t.name === dialog.track)!}
           sections={model.sections}
           totalBars={model.totalBars}
-          songTitle={activeSong?.project.title ?? 'Untitled'}
+          songTitle={songTitle}
           soundName={soundNames[dialog.track]}
           songKey={viewSong.key}
           bpm={bpm}
           notes={overviewNotes && overviewNotes.track === dialog.track ? overviewNotes : undefined}
           playheadBeat={isThisSong && playing ? (currentSeconds / secondsPerBar) * BEATS_PER_BAR : undefined}
           onClose={() => setDialog(undefined)}
+          exportItems={(() => {
+            const song = trackSong(viewSong, dialog.track);
+            return exportItemsFor(livePlayer, `track:${fnv1a(JSON.stringify(song))}`, (signal) => playbackApi.forSong(song, signal), {
+              track: dialog.track,
+              sections: model.sections.map((x) => ({ name: x.name, startBar: x.startBar })),
+              fileName: `${songTitle} ${dialog.track}`,
+            });
+          })()}
         />
       ) : null}
       {dialog?.kind === 'sound' && edits.options.data ? (

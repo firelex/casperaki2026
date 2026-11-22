@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzi
 import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
 import { resolveColor } from './layout';
 import { beginRangeDrag, type BarRange } from './rangeDrag';
+import { ExportMenu, type ExportItem } from '../../export/ExportMenu';
 import { Score } from './Score';
 import { SelectionOverlay } from './Selection';
 
@@ -49,6 +50,7 @@ export function ClipDetail({
   soundName,
   songKey,
   bpm,
+  exportItems,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -79,6 +81,8 @@ export function ClipDetail({
   /** The song's key and tempo, for the score. */
   songKey: string;
   bpm: number;
+  /** Export this pattern (MIDI, audio). */
+  exportItems: readonly ExportItem[];
 }) {
   const startBeat = clip.startBar * BEATS_PER_BAR;
   const notes = useMemo(() => clip.notes.map((n) => ({ ...n, start: n.start - startBeat })), [clip, startBeat]);
@@ -169,6 +173,7 @@ export function ClipDetail({
             </DialogDescription>
           </div>
           <div className="ml-auto flex flex-wrap gap-2">
+            <ExportMenu items={exportItems} />
             {editable ? (
               <>
                 <ActionButton onClick={onNewPattern} disabled={busy}>New pattern</ActionButton>

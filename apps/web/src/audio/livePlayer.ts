@@ -566,6 +566,51 @@ export class LivePlayer {
     return job;
   }
 
+  /**
+   * Render a song offline in a worker (the full mix, with effects), for a
+   * WAV download. `onProgress` gets the share done (0..1).
+   */
+  async renderAudio(
+    key: string,
+    fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+    onProgress: (share: number) => void,
+  ): Promise<{ left: Float32Array; right: Float32Array; sampleRate: number }> {
+    const ctx = this.context();
+    const [{ payload, realSamples }, wasmBytes, stubs] = await Promise.all([
+      this.ensurePrepared(key, fetchPayload, () => undefined),
+      this.wasm(),
+      this.stubs(ctx),
+    ]);
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(`/workers/casperaki-meter-worker.js?v=${__ENGINE_VERSION__}`, { type: 'module' });
+      worker.onerror = (ev) => {
+        worker.terminate();
+        reject(new Error(`The engine worker failed: ${ev.message || 'it could not start'}`));
+      };
+      worker.onmessage = (ev: MessageEvent) => {
+        const d = ev.data as { type: string; done?: number; total?: number; left?: Float32Array; right?: Float32Array; sampleRate?: number; message?: string };
+        if (d.type === 'progress') onProgress(d.total ? d.done! / d.total : 0);
+        else if (d.type === 'rendered') {
+          worker.terminate();
+          resolve({ left: d.left!, right: d.right!, sampleRate: d.sampleRate! });
+        } else if (d.type === 'error') {
+          worker.terminate();
+          reject(new Error(`The engine could not render: ${d.message}`));
+        }
+      };
+      worker.postMessage({
+        type: 'render',
+        wasmBytes: wasmBytes.slice(0),
+        sampleRate: ctx.sampleRate,
+        song: utf8.encode(payload.song),
+        insts: payload.insts.map((t) => utf8.encode(t)),
+        samples: stubs,
+        realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
+        mixConfig: utf8.encode(payload.mixConfig),
+      });
+    });
+  }
+
   private ensurePrepared(
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,

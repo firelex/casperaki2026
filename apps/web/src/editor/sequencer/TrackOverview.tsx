@@ -8,6 +8,7 @@ import type { BarRange } from './rangeDrag';
 import { notesToAbc } from './notation';
 import { Score } from './Score';
 import { downloadScorePdf } from './scorePdf';
+import { ExportMenu, type ExportItem } from '../../export/ExportMenu';
 
 const GRIDS = [4, 8, 16, 32] as const;
 type Grid = (typeof GRIDS)[number];
@@ -29,6 +30,7 @@ export function TrackOverview({
   notes,
   playheadBeat,
   onClose,
+  exportItems,
 }: {
   track: SeqTrack;
   sections: readonly SeqSection[];
@@ -42,6 +44,8 @@ export function TrackOverview({
   /** The song's playhead, in beats, while it plays. */
   playheadBeat: number | undefined;
   onClose(): void;
+  /** Export this track (MIDI, audio); the score PDF is added here. */
+  exportItems: readonly ExportItem[];
 }) {
   const [view, setView] = useState<'roll' | 'score'>('score');
   const [grid, setGrid] = useState<Grid>(16);
@@ -91,6 +95,21 @@ export function TrackOverview({
               {totalBars} bars{notes && 'notes' in notes ? ` · ${notes.notes.length} notes as played` : ''} · read-only
             </DialogDescription>
           </div>
+          <div className="ml-auto">
+            <ExportMenu
+              items={[
+                {
+                  label: 'Score as PDF',
+                  hint: 'A4, with bar numbers',
+                  run: async () => {
+                    if (scoreNotes.length === 0) throw new Error('No notes to print yet.');
+                    await exportPdf();
+                  },
+                },
+                ...exportItems,
+              ]}
+            />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
@@ -115,17 +134,7 @@ export function TrackOverview({
                 <SmallButton label="Rows taller" onClick={() => setVZoom((z) => Math.min(3, z * 1.25))}>+</SmallButton>
               </span>
             </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void exportPdf()}
-              disabled={pdf === 'making' || scoreNotes.length === 0}
-              className="h-8 rounded-full bg-white px-3.5 text-[13px] font-semibold text-black hover:bg-white/85 disabled:opacity-50"
-              title="Download the score as a PDF (A4)"
-            >
-              {pdf === 'making' ? 'Making the PDF…' : 'Export PDF'}
-            </button>
-          )}
+          ) : null}
           {typeof pdf === 'object' ? <span className="text-[12px] text-err">The PDF could not be made: {pdf.error}</span> : null}
         </div>
 
