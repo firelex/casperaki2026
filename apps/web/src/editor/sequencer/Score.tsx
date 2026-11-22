@@ -20,6 +20,7 @@ export function Score({
   bpm,
   beat,
   marks,
+  barNumbers,
 }: {
   notes: readonly ScoreNote[];
   beats: number;
@@ -29,6 +30,8 @@ export function Score({
   beat: number | undefined;
   /** Labels above bars (section names), for whole-track scores. */
   marks?: ReadonlyMap<number, string>;
+  /** Number every bar (whole-song scores). */
+  barNumbers?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const timings = useRef<NoteTimingEvent[]>([]);
@@ -38,11 +41,11 @@ export function Score({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const abc = notesToAbc(notes, { beats, key: songKey, bpm, ...(marks ? { marks } : {}) });
+    const abc = notesToAbc(notes, { beats, key: songKey, bpm, ...(marks ? { marks } : {}), ...(barNumbers ? { barNumbers } : {}) });
     const [tune] = abcjs.renderAbc(el, abc, {
       responsive: 'resize',
       staffwidth: Math.max(480, el.clientWidth - 48),
-      wrap: { minSpacing: 1.6, maxSpacing: 2.6, preferredMeasuresPerLine: 4 },
+      // Lines are broken in the ABC (four measures each), not by abcjs.
       // A short last line spans the width like the others.
       format: { stretchlast: 1 },
       paddingtop: 12,
@@ -64,7 +67,7 @@ export function Score({
     svg.appendChild(line);
     cursor.current = line;
     lit.current = [];
-  }, [notes, beats, songKey, bpm, marks]);
+  }, [notes, beats, songKey, bpm, marks, barNumbers]);
 
   // Follow the player: cursor at the last note event at or before the position.
   useEffect(() => {

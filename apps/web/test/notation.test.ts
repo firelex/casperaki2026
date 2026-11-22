@@ -74,3 +74,20 @@ describe('notesToAbc labels after a rest', () => {
     expect(body(abc, 1).startsWith('"^a"z16 | "^b"z2 ')).toBe(true);
   });
 });
+
+describe('notesToAbc bar numbers', () => {
+  it('numbers every bar when asked', () => {
+    expect(notesToAbc([n(60, 0, 4)], { beats: 4, key: 'C', barNumbers: true })).toContain('%%barnumbers 1');
+    expect(notesToAbc([n(60, 0, 4)], { beats: 4, key: 'C' })).not.toContain('%%barnumbers');
+  });
+});
+
+describe('notesToAbc lines', () => {
+  it('breaks lines every four measures (both staves of a grand staff together)', () => {
+    const abc = notesToAbc([n(48, 0, 4), n(72, 0, 4)], { beats: 24, key: 'C' });
+    const lines = abc.split('\n').filter((l) => l.startsWith('[V:'));
+    expect(lines.map((l) => l.slice(0, 5))).toEqual(['[V:1]', '[V:2]', '[V:1]', '[V:2]']);
+    expect(lines[0]!.endsWith(' |')).toBe(true);
+    expect(lines[3]!.endsWith(' |]')).toBe(true);
+  });
+});

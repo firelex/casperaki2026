@@ -134,8 +134,14 @@ function staffEvents(notes: readonly ScoreNote[], total: number): Event[] {
   return events;
 }
 
-/** One staff's ABC body. Accidentals are tracked per bar (letter + octave). */
-function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<number, string> = new Map()): string {
+/** One staff's measures (ABC, without barlines). Accidentals are tracked per bar (letter + octave).
+ *  With `mergeRests`, runs of empty bars become one multi-bar rest measure (Z<n>). */
+function staffMeasures(
+  events: readonly Event[],
+  fifths: number,
+  marks: ReadonlyMap<number, string>,
+  mergeRests: boolean,
+): string[] {
   const keyAcc = keyAccidentals(fifths);
   let barAcc = new Map<string, number>();
   let out = '';
@@ -150,7 +156,7 @@ function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<n
   };
   for (const ev of events) {
     // Whole empty bars become multi-bar rests (Z<n>), broken at labelled bars.
-    if (ev.pitches.length === 0) {
+    if (ev.pitches.length === 0 && mergeRests) {
       let start = ev.start;
       let len = ev.length;
       const lead = (STEPS_PER_BAR - (start % STEPS_PER_BAR)) % STEPS_PER_BAR;
@@ -169,7 +175,7 @@ function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<n
           let run = 1;
           while (run < bars && !marks.has(bar + run)) run++;
           if (pos > 0) {
-            out += '| ';
+            out += BAR;
             barAcc = new Map();
           }
           const mark = marks.get(bar);
@@ -187,7 +193,7 @@ function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<n
       if (start !== ev.start || len !== ev.length) {
         for (const w of pieces(start, len)) {
           if (pos > 0 && pos % STEPS_PER_BAR === 0) {
-            out += '| ';
+            out += BAR;
             barAcc = new Map();
           }
           const tailMark = pos % STEPS_PER_BAR === 0 ? marks.get(pos / STEPS_PER_BAR) : undefined;
@@ -201,7 +207,7 @@ function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<n
     const parts = pieces(ev.start, ev.length);
     parts.forEach((len, i) => {
       if (pos > 0 && pos % STEPS_PER_BAR === 0) {
-        out += '| ';
+        out += BAR;
         barAcc = new Map();
       }
       const dur = len === 1 ? '' : String(len);
@@ -217,7 +223,21 @@ function staffAbc(events: readonly Event[], fifths: number, marks: ReadonlyMap<n
       pos += len;
     });
   }
-  return `${out.trimEnd()} |]`;
+  return out.split(BAR).map((m) => m.trim());
+}
+
+/** Internal barline marker while building a staff (split into measures afterwards). */
+const BAR = '\u0001';
+const MEASURES_PER_LINE = 4;
+
+/** Measures as ABC lines, four a line; the last ends the piece. */
+function abcLines(measures: readonly string[]): string[] {
+  const lines: string[] = [];
+  for (let i = 0; i < measures.length; i += MEASURES_PER_LINE) {
+    const last = i + MEASURES_PER_LINE >= measures.length;
+    lines.push(`${measures.slice(i, i + MEASURES_PER_LINE).join(' | ')} ${last ? '|]' : '|'}`);
+  }
+  return lines;
 }
 
 /** The passage as an ABC tune on a grand staff. `beats` is its length (whole bars). */
@@ -231,6 +251,8 @@ export function notesToAbc(
     marks?: ReadonlyMap<number, string>;
     /** Tune title (T:), e.g. for a printed score. */
     title?: string;
+    /** Number every bar (whole-song scores). */
+    barNumbers?: boolean;
   },
 ): string {
   const total = Math.round(opts.beats * STEPS_PER_BEAT);
@@ -244,20 +266,26 @@ export function notesToAbc(
     ...(opts.title ? [`T:${opts.title.replace(/\n/gu, ' ')}`] : []),
     'M:4/4',
     'L:1/16',
+    ...(opts.barNumbers ? ['%%barnumbers 1'] : []),
     ...(opts.bpm ? [`Q:1/4=${Math.round(opts.bpm)}`] : []),
   ];
-  // A part that sits on one staff gets just that staff, in its clef.
+  // A part that sits on one staff gets just that staff, in its clef. Lines are
+  // broken here (four measures each), not by abcjs: its line wrapping renumbers
+  // bars without counting multi-bar rests.
   if (bass.length === 0 || treble.length === 0) {
     const clef = treble.length === 0 && bass.length > 0 ? 'bass' : 'treble';
-    return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, '[V:1] ' + staffAbc(staffEvents(notes, total), key.fifths, marks)].join('\n');
+    const lines = abcLines(staffMeasures(staffEvents(notes, total), key.fifths, marks, true));
+    return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, ...lines.map((l) => `[V:1] ${l}`)].join('\n');
   }
+  // Grand staff: bar by bar on both staves (no multi-bar rests), so their lines align.
+  const up = abcLines(staffMeasures(staffEvents(treble, total), key.fifths, marks, false));
+  const down = abcLines(staffMeasures(staffEvents(bass, total), key.fifths, new Map(), false));
   return [
     ...head,
     '%%score {1 2}',
     'V:1 clef=treble',
     'V:2 clef=bass',
     `K:${key.abc}`,
-    '[V:1] ' + staffAbc(staffEvents(treble, total), key.fifths, marks),
-    '[V:2] ' + staffAbc(staffEvents(bass, total), key.fifths),
+    ...up.flatMap((l, i) => [`[V:1] ${l}`, `[V:2] ${down[i]}`]),
   ].join('\n');
 }

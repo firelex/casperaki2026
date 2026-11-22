@@ -56,16 +56,16 @@ export function TrackOverview({
     () => (notes && 'notes' in notes ? notes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length })) : []),
     [notes],
   );
-  const heading = `${songTitle} · ${track.name}`;
 
   const exportPdf = async () => {
     setPdf('making');
     try {
-      const abc = notesToAbc(scoreNotes, { beats, key: songKey, bpm, marks });
+      const abc = notesToAbc(scoreNotes, { beats, key: songKey, bpm, marks, barNumbers: true });
       await downloadScorePdf(abc, {
         fileName: `${safeName(songTitle)}-${safeName(track.name)}.pdf`,
-        heading,
-        subheading: `${soundName ? `${soundName} · ` : ''}${bpm} BPM · key ${songKey} · ${totalBars} bars`,
+        songTitle,
+        part: soundName ? `${track.name} (${soundName})` : track.name,
+        details: `${bpm} BPM · key ${songKey} · ${totalBars} bars`,
       });
       setPdf('idle');
     } catch (err) {
@@ -131,7 +131,7 @@ export function TrackOverview({
           ) : notes.notes.length === 0 ? (
             <p className="px-5 py-10 text-[14px] text-white/55">The engine plays no notes for this track.</p>
           ) : view === 'score' ? (
-            <Score notes={scoreNotes} beats={beats} songKey={songKey} bpm={bpm} beat={playheadBeat} marks={marks} />
+            <Score notes={scoreNotes} beats={beats} songKey={songKey} bpm={bpm} beat={playheadBeat} marks={marks} barNumbers />
           ) : (
             <div className="relative">
               <SectionStrip sections={sections} pxPerBeat={pxPerBeat} />

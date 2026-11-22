@@ -12,7 +12,18 @@ const PAGE_H = 841.89;
 const MARGIN = 42;
 const SYSTEM_GAP = 6;
 
-export async function downloadScorePdf(abc: string, opts: { fileName: string; heading: string; subheading: string }): Promise<void> {
+export async function downloadScorePdf(
+  abc: string,
+  opts: {
+    fileName: string;
+    /** The song's title (large, centred, as on a printed score). */
+    songTitle: string;
+    /** Which part this is, e.g. "Keys (Silken Salon)". */
+    part: string;
+    /** Tempo, key, length. */
+    details: string;
+  },
+): Promise<void> {
   const [{ jsPDF }] = await Promise.all([import('jspdf'), import('svg2pdf.js')]);
   const host = document.createElement('div');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;width:820px;background:#fff';
@@ -21,7 +32,7 @@ export async function downloadScorePdf(abc: string, opts: { fileName: string; he
     abcjs.renderAbc(host, abc, {
       oneSvgPerLine: true,
       staffwidth: 760,
-      wrap: { minSpacing: 1.6, maxSpacing: 2.6, preferredMeasuresPerLine: 4 },
+      // Lines are broken in the ABC (four measures each), not by abcjs.
       format: { stretchlast: 1 },
       paddingtop: 6,
       paddingbottom: 6,
@@ -34,15 +45,18 @@ export async function downloadScorePdf(abc: string, opts: { fileName: string; he
 
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const contentW = PAGE_W - MARGIN * 2;
+    // Title block: song title centred, the part below it, details at the right.
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(15);
-    doc.text(opts.heading, MARGIN, MARGIN + 4);
+    doc.setFontSize(20);
+    doc.text(opts.songTitle, PAGE_W / 2, MARGIN + 8, { align: 'center' });
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(12);
+    doc.text(`Part: ${opts.part}`, PAGE_W / 2, MARGIN + 28, { align: 'center' });
+    doc.setFontSize(9);
     doc.setTextColor(90);
-    doc.text(opts.subheading, MARGIN, MARGIN + 20);
+    doc.text(opts.details, PAGE_W - MARGIN, MARGIN + 44, { align: 'right' });
     doc.setTextColor(0);
-    let y = MARGIN + 34;
+    let y = MARGIN + 54;
     for (const svg of systems) {
       const box = svg.getBoundingClientRect();
       if (box.width === 0 || box.height === 0) continue;
@@ -59,7 +73,7 @@ export async function downloadScorePdf(abc: string, opts: { fileName: string; he
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(120);
-      doc.text(`${opts.heading} · page ${i} of ${pages} · casperaki`, PAGE_W / 2, PAGE_H - MARGIN / 2, { align: 'center' });
+      doc.text(`${opts.songTitle} · ${opts.part} · page ${i} of ${pages} · casperaki`, PAGE_W / 2, PAGE_H - MARGIN / 2, { align: 'center' });
     }
     doc.save(opts.fileName);
   } finally {
