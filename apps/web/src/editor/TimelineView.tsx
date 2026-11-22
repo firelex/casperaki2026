@@ -10,7 +10,7 @@ import {
   ContextMenuTrigger,
 } from '@teamsuzie/ui';
 
-import { catalogApi, catalogQueryKeys } from '../api/catalog';
+import { soundsApi, soundsQueryKeys } from '../api/sounds';
 import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
@@ -1029,14 +1029,14 @@ function useSoundNames(tracks: readonly { name: string; catalogId: string | unde
   const withIds = tracks.filter((t): t is { name: string; catalogId: string } => Boolean(t.catalogId));
   const results = useQueries({
     queries: withIds.map((t) => ({
-      queryKey: catalogQueryKeys.entry(t.catalogId),
-      queryFn: ({ signal }: { signal: AbortSignal }) => catalogApi.get(t.catalogId, signal),
-      staleTime: 5 * 60_000,
+      queryKey: soundsQueryKeys.item(t.catalogId),
+      queryFn: ({ signal }: { signal: AbortSignal }) => soundsApi.get(t.catalogId, signal),
+      staleTime: Infinity,
     })),
   });
   const out: Record<string, string> = {};
   withIds.forEach((t, i) => {
-    const name = results[i]?.data?.entry.publicName;
+    const name = results[i]?.data?.name;
     if (name) out[t.name] = name;
   });
   return out;
@@ -1045,12 +1045,12 @@ function useSoundNames(tracks: readonly { name: string; catalogId: string | unde
 /** Public name of a catalog sound (undefined while loading or for non-catalog sounds). */
 function useSoundName(catalogId: string | undefined): string | undefined {
   const entry = useQuery({
-    queryKey: catalogQueryKeys.entry(catalogId ?? ''),
-    queryFn: ({ signal }) => catalogApi.get(catalogId as string, signal),
+    queryKey: soundsQueryKeys.item(catalogId ?? ''),
+    queryFn: ({ signal }) => soundsApi.get(catalogId as string, signal),
     enabled: Boolean(catalogId),
-    staleTime: 5 * 60_000,
+    staleTime: Infinity,
   });
-  return entry.data?.entry.publicName;
+  return entry.data?.name;
 }
 
 function TrackName({ name, catalogId, notPlayed }: { name: string; catalogId: string | undefined; notPlayed: boolean }) {

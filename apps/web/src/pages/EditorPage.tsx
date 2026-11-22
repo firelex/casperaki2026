@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { EditorHeader } from '../layout/EditorHeader';
 import { StatusBar } from '../layout/StatusBar';
-import { SoundDesignView } from '../editor/SoundDesignView';
+import { SoundsView } from '../editor/SoundsView';
 import { TimelineView } from '../editor/TimelineView';
 import { songsApi, songsQueryKeys } from '../api/songs';
 import { useSession } from '../state/session';
@@ -86,7 +86,7 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
 }
 
 function TabBody({ tab }: { tab: EditorTab }) {
-  if (tab === 'sound') return <SoundDesignView />;
+  if (tab === 'sound') return <SoundsView />;
   return <TimelineView />;
 }
 

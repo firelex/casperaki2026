@@ -354,7 +354,7 @@ describe('GET /api/catalog/audit-summary', () => {
 });
 
 describe('catalog admin gate', () => {
-  it('refuses browsing when canBrowse is false but still serves single entries', async () => {
+  it('refuses browsing and single entries when canBrowse is false', async () => {
     const app = express();
     app.use(createCatalogRouter({ canBrowse: () => false }));
     const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
@@ -375,8 +375,9 @@ describe('catalog admin gate', () => {
       const url2 = `http://127.0.0.1:${(s2.address() as AddressInfo).port}`;
       const first = (await (await fetch(`${url2}/api/catalog/instruments?limit=1`)).json()) as { entries: Array<{ id: string }> };
       s2.close();
+      // Single entries carry library / preset / file path: admins only too.
       const one = await fetch(`${url}/api/catalog/instruments/${first.entries[0]!.id}`);
-      expect(one.status).toBe(200);
+      expect(one.status).toBe(403);
     } finally {
       server.close();
     }

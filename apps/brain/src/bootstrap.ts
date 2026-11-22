@@ -22,6 +22,7 @@ import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
 import { createPatternsRouter } from './routes/patterns.js';
 import { createTracksRouter } from './routes/tracks.js';
+import { createSoundsRouter } from './routes/sounds.js';
 import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
@@ -176,6 +177,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
+  app.use(createSoundsRouter({ playback }));
   app.use(
     createPatternsRouter({
       store,

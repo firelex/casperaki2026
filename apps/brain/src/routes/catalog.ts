@@ -10,7 +10,7 @@
 //   GET /api/catalog/instruments?family=&lowLevel=&mainStyle=&addStyle=&library=&q=&limit=&cursor=
 //     paginated validated entries (page = `limit` rows starting at `cursor`).
 //   GET /api/catalog/instruments/:id
-//     one validated entry, with matchedPath/matchedRule + provenance hashes.
+//     one validated entry, with matchedPath/matchedRule + provenance hashes (admins).
 //   GET /api/catalog/audit-summary
 //     audit summary counts + per-family + variant-pool count.
 //
@@ -50,8 +50,8 @@ export interface CatalogRouterDeps {
   /** Optional injection points for tests. Default to the package loaders. */
   readonly loadCatalog?: () => ValidatedCatalog;
   readonly loadSnapshot?: () => InstrumentCatalogSnapshot;
-  /** Whether this request may browse the catalog (summary, lists). Single
-   *  entries by id are always served. Defaults to everyone. */
+  /** Whether this request may browse the catalog (summary, lists, single
+   *  entries). Defaults to everyone. */
   readonly canBrowse?: (req: Request) => boolean;
   /** Public name of an entry; defaults to the instrument-aliases registry. */
   readonly publicName?: (entry: ValidatedCatalogEntry) => string;
@@ -75,6 +75,9 @@ export function createCatalogRouter(deps: CatalogRouterDeps = {}): Router {
   };
   router.use(['/api/catalog/summary', '/api/catalog/low-levels', '/api/catalog/audit-summary'], browseGate);
   router.get('/api/catalog/instruments', browseGate);
+  // Single entries carry library, preset and file path: admins only too (the
+  // Sounds page uses the public /api/sounds/:id instead).
+  router.get('/api/catalog/instruments/:id', browseGate);
   const nameOf = deps.publicName ?? ((e: ValidatedCatalogEntry) => publicNameOf(e));
   const withName = (e: ValidatedCatalogEntry): PublicCatalogEntry => ({ ...e, publicName: nameOf(e) });
 

@@ -238,6 +238,18 @@ export class PlaybackService {
     return job;
   }
 
+  /**
+   * Register a library file (relative to the library root) as a sample, cut to
+   * [0, maxSec) when given, and return its id (for the Sounds page's audio
+   * previews). Throws when the file is outside the library or missing.
+   */
+  fileSample(relativePath: string, maxSec?: number): string {
+    const src = resolve(this.libraryRoot, relativePath);
+    if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sound file points outside the library: ${relativePath}`);
+    if (!existsSync(src)) throw new Error(`sound file missing in the library: ${relativePath}`);
+    return this.register(maxSec !== undefined ? { relativePath, sliceStart: 0, sliceEnd: maxSec } : { relativePath });
+  }
+
   /** Whether a sample id has been registered by some song's plan. */
   knowsSample(sampleId: string): boolean {
     return SAMPLE_ID.test(sampleId) && existsSync(join(this.config.sampleCacheDir, `${sampleId}.json`));
