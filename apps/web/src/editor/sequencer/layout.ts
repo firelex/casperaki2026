@@ -1,7 +1,11 @@
 /** Sizes and helpers shared by the sequencer's parts. */
 
 export const HEADER_W = 236;
-export const ROW_H = 58;
+/** Track rows share the window's height between these (every track visible). */
+export const MIN_ROW_H = 30;
+export const MAX_ROW_H = 72;
+/** The "+ Add track" row under the tracks. */
+export const ADD_ROW_H = 40;
 /** Ruler rows, top to bottom: section markers, bars|beats, minutes:seconds, loop range. */
 export const MARKERS_H = 22;
 export const BARS_H = 22;

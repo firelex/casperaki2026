@@ -54,8 +54,8 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
     <header className="relative z-40 flex h-[56px] w-full shrink-0 items-center gap-4 border-b border-black/80 bg-gradient-to-b from-[#36383e] to-[#2a2b30] px-4 text-[#e2e3e7]">
       {/* Left: logo, song, undo/redo. */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <Link to="/" className="app-wordmark shrink-0 text-[20px] text-white" title="Back to your songs">
-          casper<span className="text-accent">aki</span>
+        <Link to="/" className="shrink-0" title="Back to your songs">
+          <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={124} height={15} className="block h-[15px] w-auto" />
         </Link>
         <span className="h-6 w-px shrink-0 bg-black/50" aria-hidden="true" />
         <div className="flex min-w-0 flex-col leading-tight">

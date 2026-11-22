@@ -10,7 +10,7 @@ import 'dotenv/config';
 
 import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 import express, { type Express } from 'express';
 
 import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
@@ -195,7 +195,18 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
       next();
     });
-    app.use(express.static(dist, { index: false, maxAge: '1h' }));
+    // Vite's /assets/ files carry a content hash in their names: cache them for
+    // good. Everything else (the engine .wasm, worklet, workers, engine driver,
+    // images) keeps its name across builds: revalidate every time (ETag), or a
+    // browser runs a stale engine against new code.
+    app.use(
+      express.static(dist, {
+        index: false,
+        setHeaders: (res, path) => {
+          res.setHeader('cache-control', path.includes(`${sep}assets${sep}`) ? 'public, max-age=31536000, immutable' : 'no-cache');
+        },
+      }),
+    );
     app.get('*', (_req, res) => {
       res.setHeader('cache-control', 'no-cache');
       res.sendFile(indexHtml);

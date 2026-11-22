@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMixLane } from '../../audio/livePlayer';
+import { livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
 import type { SeqTrack } from '../sequencerModel';
 
 const STRIP_W = 104;
@@ -29,21 +29,30 @@ const RETURNS = [
  */
 export function Mixer({
   tracks,
+  mix,
   meters,
+  error,
   seconds,
   playing,
   muted,
   solo,
 }: {
   tracks: readonly SeqTrack[];
+  /** The mix as the engine resolved it for this version. */
+  mix: ResolvedMix | undefined;
+  /** Per-track levels (for the meters), once measured. */
   meters: LaneMeters | undefined;
+  /** Why the engine could not report the mix, if it failed. */
+  error: string | undefined;
   seconds: number;
   playing: boolean;
   muted: readonly string[];
   solo: readonly string[];
 }) {
-  const mix = meters?.mix;
-  if (!meters || !mix) {
+  if (error) {
+    return <div className="flex h-full items-center justify-center px-6 text-center text-[12px] text-err">{error}</div>;
+  }
+  if (!mix) {
     return <div className="flex h-full items-center justify-center text-[12px] text-[#9a9ba3]">Reading the mix from the engine…</div>;
   }
   if (!mix.mixEnabled) {
@@ -53,7 +62,7 @@ export function Mixer({
   const byLane = new Map<string, ResolvedMixLane[]>();
   for (const l of mix.lanes) byLane.set(l.lane, [...(byLane.get(l.lane) ?? []), l]);
   const levelOf = (lane: string): number | undefined => {
-    if (!playing) return undefined;
+    if (!playing || !meters) return undefined;
     const i = meters.names.indexOf(lane);
     const peaks = i >= 0 ? meters.peaks[i] : undefined;
     if (!peaks || meters.binSec <= 0) return undefined;

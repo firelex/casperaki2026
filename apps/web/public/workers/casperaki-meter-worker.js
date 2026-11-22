@@ -4,6 +4,7 @@
 // with the playback worklet.
 //
 // In:  { type: 'meter', wasmBytes, sampleRate, meterBinFrames, ...build options }
+//      { type: 'mix', wasmBytes, sampleRate, ...build options }  -> { type: 'mix', mix } (no rendering)
 // Out: { type: 'lanes', names, binCount, binSec, mix }   (mix: laneInfo, the resolved mix)
 //      { type: 'progress', doneBins, peaks: Float32Array[] }   (repeated, then)
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
@@ -15,7 +16,18 @@ const POST_EVERY_MS = 400;
 
 self.onmessage = (ev) => {
   const o = ev.data;
-  if (!o || o.type !== 'meter') return;
+  if (!o || (o.type !== 'meter' && o.type !== 'mix')) return;
+  if (o.type === 'mix') {
+    // The resolved mix only: build (samples not needed) and report.
+    try {
+      const e = instantiateEngine(o.wasmBytes);
+      buildMixer(e, { ...o, blockFrames: BLOCK });
+      self.postMessage({ type: 'mix', mix: laneInfo(e) });
+    } catch (err) {
+      self.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
+    }
+    return;
+  }
   try {
     const e = instantiateEngine(o.wasmBytes);
     const totalFrames = buildMixer(e, { ...o, blockFrames: BLOCK });

@@ -121,6 +121,8 @@ export class LivePlayer {
   private stubPcm: Promise<Float32Array[]> | undefined;
   private loadToken = 0;
   private readonly prepared = new Map<string, Promise<Prepared>>();
+  private readonly payloads = new Map<string, Promise<PlaybackPayload>>();
+  private readonly mixes = new Map<string, Promise<ResolvedMix>>();
   /** The clock: the song was at `anchorPos` seconds when the context time was
    *  `anchorTime`. Re-anchored on every seek and loop change. */
   private anchorTime = 0;
@@ -399,7 +401,12 @@ export class LivePlayer {
    * levels as they fill in. Returns a function that cancels the run. Results
    * are cached per key.
    */
-  meters(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>, onUpdate: (m: LaneMeters) => void): () => void {
+  meters(
+    key: string,
+    fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+    onUpdate: (m: LaneMeters) => void,
+    onError: (message: string) => void,
+  ): () => void {
     const cached = this.meterCache.get(key);
     if (cached) {
       onUpdate(cached);
@@ -409,6 +416,9 @@ export class LivePlayer {
     let cancelled = false;
     const worker = new Worker('/workers/casperaki-meter-worker.js', { type: 'module' });
     this.meterWorker = worker;
+    worker.onerror = (ev) => {
+      if (!cancelled) onError(`The engine worker failed: ${ev.message || 'it could not start'}`);
+    };
     const ctx = this.context();
     void Promise.all([this.ensurePrepared(key, fetchPayload, () => undefined), this.wasm(), this.stubs(ctx)])
       .then(([{ payload, realSamples }, wasmBytes, stubs]) => {
@@ -440,6 +450,7 @@ export class LivePlayer {
           } else if (d.type === 'error') {
             worker.terminate();
             console.error(`[live] measuring track levels failed: ${d.message}`);
+            if (!cancelled) onError(`The engine could not measure this version: ${d.message}`);
           }
         };
         worker.postMessage({
@@ -454,7 +465,10 @@ export class LivePlayer {
           mixConfig: utf8.encode(payload.mixConfig),
         });
       })
-      .catch((err: unknown) => console.error('[live] preparing track levels failed:', err));
+      .catch((err: unknown) => {
+        console.error('[live] preparing track levels failed:', err);
+        if (!cancelled) onError(`Preparing this version for the engine failed: ${err instanceof Error ? err.message : String(err)}`);
+      });
     return () => {
       cancelled = true;
       if (this.meterWorker === worker) {
@@ -495,6 +509,59 @@ export class LivePlayer {
     this.set({ status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined });
   }
 
+  /** The lowered song for `key` (fetched once; kept while it is prepared or recent). */
+  private payloadOf(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<PlaybackPayload> {
+    let p = this.payloads.get(key);
+    if (!p) {
+      p = fetchPayload(new AbortController().signal);
+      p.catch(() => this.payloads.delete(key));
+      this.payloads.set(key, p);
+      while (this.payloads.size > PREPARED_LIMIT * 2) this.payloads.delete(this.payloads.keys().next().value!);
+    }
+    return p;
+  }
+
+  /**
+   * The mix the engine resolves for `key` (buses, sends, volumes), quickly:
+   * built from the lowered song alone in a short-lived worker, without
+   * fetching or decoding any sample. Cached per key.
+   */
+  mixOf(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<ResolvedMix> {
+    let job = this.mixes.get(key);
+    if (job) return job;
+    const ctx = this.context();
+    job = Promise.all([this.payloadOf(key, fetchPayload), this.wasm(), this.stubs(ctx)]).then(
+      ([payload, wasmBytes, stubs]) =>
+        new Promise<ResolvedMix>((resolve, reject) => {
+          const worker = new Worker('/workers/casperaki-meter-worker.js', { type: 'module' });
+          worker.onerror = (ev) => {
+            worker.terminate();
+            reject(new Error(`The engine worker failed: ${ev.message || 'it could not start'}`));
+          };
+          worker.onmessage = (ev: MessageEvent) => {
+            const d = ev.data as { type: string; mix?: Omit<ResolvedMix, 'config'>; message?: string };
+            worker.terminate();
+            if (d.type === 'mix' && d.mix) resolve({ ...d.mix, config: JSON.parse(payload.mixConfig) as MixConfigJson });
+            else reject(new Error(`The engine could not resolve the mix: ${d.message ?? d.type}`));
+          };
+          worker.postMessage({
+            type: 'mix',
+            wasmBytes: wasmBytes.slice(0),
+            sampleRate: ctx.sampleRate,
+            song: utf8.encode(payload.song),
+            insts: payload.insts.map((t) => utf8.encode(t)),
+            samples: stubs,
+            realSamples: [],
+            mixConfig: utf8.encode(payload.mixConfig),
+          });
+        }),
+    );
+    job.catch(() => this.mixes.delete(key));
+    this.mixes.set(key, job);
+    while (this.mixes.size > METERS_CACHED) this.mixes.delete(this.mixes.keys().next().value!);
+    return job;
+  }
+
   private ensurePrepared(
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
@@ -508,7 +575,7 @@ export class LivePlayer {
       return existing;
     }
     const ctx = this.context();
-    const job = fetchPayload(new AbortController().signal).then(async (payload) => ({
+    const job = this.payloadOf(key, fetchPayload).then(async (payload) => ({
       payload,
       realSamples: await this.loadSamples(ctx, payload.samples, progress),
     }));

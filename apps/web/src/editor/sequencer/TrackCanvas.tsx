@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { BEATS_PER_BAR, type SeqTrack, type SequencerModel } from '../sequencerModel';
-import { gridStep, resolveColor, ROW_H } from './layout';
+import { gridStep, resolveColor } from './layout';
 
 const CLIP_HEADER_H = 13;
 
@@ -20,6 +20,7 @@ export function TrackCanvas({
   meterMax,
   dimmed,
   selectedSection,
+  rowH,
 }: {
   track: SeqTrack;
   model: SequencerModel;
@@ -34,7 +35,10 @@ export function TrackCanvas({
   dimmed: boolean;
   /** Section index whose clip is selected (outlined). */
   selectedSection: number | undefined;
+  /** Row height (px): the sequencer fits every track into the window. */
+  rowH: number;
 }) {
+  const ROW_H = rowH;
   const ref = useRef<HTMLCanvasElement>(null);
   const width = Math.max(1, Math.round(model.totalBars * px));
 
@@ -66,8 +70,10 @@ export function TrackCanvas({
     const alpha = dimmed ? 0.35 : 1;
     const top = 3;
     const clipH = ROW_H - top * 2;
-    const bodyTop = top + CLIP_HEADER_H;
-    const bodyH = clipH - CLIP_HEADER_H;
+    // Low rows drop the name strip so the notes keep their room.
+    const headerH = ROW_H >= 40 ? CLIP_HEADER_H : 0;
+    const bodyTop = top + headerH;
+    const bodyH = clipH - headerH;
     const pad = 3;
     const innerTop = bodyTop + pad;
     const innerH = bodyH - pad * 2;
@@ -80,15 +86,17 @@ export function TrackCanvas({
       g.fillStyle = color;
       roundRect(g, x, top, w, clipH, 3);
       g.fill();
-      g.globalAlpha = 0.55 * alpha;
-      roundRectTop(g, x, top, w, CLIP_HEADER_H, 3);
-      g.fill();
+      if (headerH) {
+        g.globalAlpha = 0.55 * alpha;
+        roundRectTop(g, x, top, w, headerH, 3);
+        g.fill();
+      }
       g.globalAlpha = (clip.section === selectedSection ? 1 : 0.5) * alpha;
       g.strokeStyle = clip.section === selectedSection ? '#ffffff' : color;
       g.lineWidth = clip.section === selectedSection ? 1.5 : 1;
       roundRect(g, x + 0.5, top + 0.5, w - 1, clipH - 1, 3);
       g.stroke();
-      if (w > 36) {
+      if (headerH && w > 36) {
         g.globalAlpha = alpha;
         g.fillStyle = 'rgba(255,255,255,0.92)';
         g.font = '600 10px Archivo, system-ui, sans-serif';
@@ -149,7 +157,7 @@ export function TrackCanvas({
       }
     }
     g.globalAlpha = 1;
-  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection]);
+  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H]);
 
   return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }

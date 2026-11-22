@@ -11,7 +11,7 @@ import {
 } from '@teamsuzie/ui';
 
 import { catalogApi, catalogQueryKeys } from '../api/catalog';
-import { livePlayer, patternPlayer, type LaneMeters } from '../audio/livePlayer';
+import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
@@ -21,7 +21,7 @@ import { indexInstrumentDefinitions } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
-import { BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MIN_PX_PER_BAR, ROW_H, RULER_H, TIME_H } from './sequencer/layout';
+import { ADD_ROW_H, BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MAX_ROW_H, MIN_PX_PER_BAR, MIN_ROW_H, RULER_H, TIME_H } from './sequencer/layout';
 import { beginRangeDrag } from './sequencer/rangeDrag';
 import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
@@ -53,6 +53,26 @@ export function TimelineView() {
   const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live, playPause } = useLiveTransport();
   const edits = useTrackEdits(liveKey);
   const [meters, setMeters] = useState<LaneMeters | undefined>(undefined);
+  const [metersError, setMetersError] = useState<string | undefined>(undefined);
+  // The mix as the engine resolves it, read straight from the lowered song (fast).
+  const [mix, setMix] = useState<ResolvedMix | undefined>(undefined);
+  const [mixError, setMixError] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    setMix(undefined);
+    setMixError(undefined);
+    if (!liveKey) return;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      livePlayer.mixOf(liveKey, fetchPayload).then(
+        (m) => !cancelled && setMix(m),
+        (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
+      );
+    }, editorDirty ? 1200 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [liveKey, fetchPayload, editorDirty]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
   /** Where the last right-click landed: which track, which section. */
@@ -62,11 +82,12 @@ export function TimelineView() {
   // screen (a moment after editing stops), filling in as it runs.
   useEffect(() => {
     setMeters(undefined);
+    setMetersError(undefined);
     if (!liveKey) return;
     let cancel: (() => void) | undefined;
     const t = setTimeout(() => {
-      cancel = livePlayer.meters(liveKey, fetchPayload, setMeters);
-    }, editorDirty ? 1500 : 300);
+      cancel = livePlayer.meters(liveKey, fetchPayload, setMeters, setMetersError);
+    }, editorDirty ? 1500 : 0);
     return () => {
       clearTimeout(t);
       cancel?.();
@@ -80,6 +101,20 @@ export function TimelineView() {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [pxPerBar, setPxPerBar] = useState<number | undefined>(undefined);
+  // Row height: every track fits the space between the ruler and the mixer.
+  const [areaH, setAreaH] = useState(0);
+  useLayoutEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setAreaH(el.clientHeight));
+    ro.observe(el);
+    setAreaH(el.clientHeight);
+    return () => ro.disconnect();
+  }, [viewSong]);
+  const trackCount = model?.tracks.length ?? 0;
+  const rowH = trackCount
+    ? Math.max(MIN_ROW_H, Math.min(MAX_ROW_H, Math.floor((areaH - RULER_H - ADD_ROW_H - CHORD_H - 14) / trackCount)))
+    : MAX_ROW_H;
   const [follow, setFollow] = useState(true);
   const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
   const toggleMixer = useCallback(() => {
@@ -389,7 +424,7 @@ export function TimelineView() {
             >
               <div
                 className={`relative flex ${i % 2 ? 'bg-white/[0.015]' : ''}`}
-                style={{ height: ROW_H }}
+                style={{ height: rowH }}
                 onContextMenu={(e) => {
                   const lane = (e.target as HTMLElement).closest('[data-lane]');
                   const bar = lane ? (e.clientX - lane.getBoundingClientRect().left) / px : undefined;
@@ -451,6 +486,7 @@ export function TimelineView() {
                     meterMax={meterMax}
                     dimmed={live.solo.length > 0 ? !live.solo.includes(t.name) : live.muted.includes(t.name)}
                     selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
+                    rowH={rowH}
                   />
                 </div>
               </div>
@@ -458,7 +494,7 @@ export function TimelineView() {
           ))}
 
           {/* Add a track. */}
-          <div className="relative flex" style={{ height: 40 }}>
+          <div className="relative flex" style={{ height: ADD_ROW_H }}>
             <div className="sticky left-0 z-10 flex shrink-0 items-center border-b border-r border-line/40 bg-[#2a2b30] px-4" style={{ width: HEADER_W }}>
               <button
                 type="button"
@@ -511,7 +547,7 @@ export function TimelineView() {
 
       {mixerOpen ? (
         <div className="h-[360px] shrink-0 border-t-2 border-black/80" aria-label="Mixer">
-          <Mixer tracks={model.tracks} meters={meters} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} />
+          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} />
         </div>
       ) : null}
 

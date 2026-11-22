@@ -14,8 +14,8 @@ export function AppHeader() {
   return (
     <header className="h-16 shrink-0 border-b border-line/60">
       <div className="mx-auto flex h-full max-w-[1240px] items-center gap-6 px-4 sm:gap-10 sm:px-8">
-        <Link to="/" className="app-wordmark text-[21px] text-white">
-          casper<span className="text-accent">aki</span>
+        <Link to="/" className="shrink-0" aria-label="Casperaki: your songs">
+          <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={140} height={16} className="block h-[16px] w-auto" />
         </Link>
         <nav className="hidden h-full items-center gap-6 text-[15px] sm:flex" aria-label="Main">
           <HeaderLink to="/">Songs</HeaderLink>
