@@ -16,6 +16,8 @@ export class VideoInputError extends Error {
 
 const BEATS_PER_BAR = 4;
 /** The lead vocal track (backing vocals sing the same words). */
+/** Bars per lyric line: the lyric bank writes one rhyme line per 4 bars (vocals/scaffolding.ts). */
+const LINE_BARS = 4;
 const LEAD_VOCAL = 'Vocal';
 
 /** "verse1" → "Verse 1", "preChorus2" → "Pre-chorus 2", "intro" → "Intro". */
@@ -36,30 +38,34 @@ interface SungNote {
 
 /**
  * The song's lyric lines with their times: the lead vocal's notes in order,
- * syllables joined into words ("Wal-" + "king" → "Walking"), a line ending at
- * a note that ends a phrase (the last note of its bar when none is marked).
+ * syllables joined into words ("Wal-" + "King" → "Walking"; the lyric bank
+ * capitalises every syllable), one line per 4-bar block from each section's
+ * start (the lyric bank's rhyme lines), so a banner carries a sentence.
  */
 export function lyricLines(song: Song): VideoInput['lyrics'] {
   const secPerBeat = 60 / song.bpm;
-  const notes: SungNote[] = [];
+  // Sung syllables in order, each tagged with its line: 4-bar blocks from each
+  // section's start, the lyric bank's rhyme lines.
+  const notes: (SungNote & { line: string })[] = [];
   let barStart = 0;
   for (const seg of song.songStructure) {
     const bars = seg.lengthInBars ?? seg.bars.length;
     const part = song.arrangement[seg.name]?.overrides?.[LEAD_VOCAL];
     (part?.bars ?? []).slice(0, bars).forEach((bar, barIdx) => {
       const events = Object.entries(bar.notes ?? {})
-        .flatMap(([beat, evs]) => (evs ?? []).map((e) => ({ beat: Number.parseFloat(beat), e: e as { type?: string; duration?: number; fullWord?: string; endOfPhrase?: boolean } })))
+        .flatMap(([beat, evs]) => (evs ?? []).map((e) => ({ beat: Number.parseFloat(beat), e: e as { type?: string; duration?: number; fullWord?: string } })))
         .filter(({ e }) => e.type === 'vocalNote' && typeof e.fullWord === 'string' && e.fullWord.length > 0)
-        .sort((a, b) => a.beat - b.beat);
-      events.forEach(({ beat, e }, i) => {
+        .sort((x, y) => x.beat - y.beat);
+      for (const { beat, e } of events) {
         const startBeat = (barStart + barIdx) * BEATS_PER_BAR + beat;
         notes.push({
           start: startBeat * secPerBeat,
           end: (startBeat + (e.duration ?? 0)) * secPerBeat,
           word: e.fullWord!,
-          endOfPhrase: e.endOfPhrase ?? i === events.length - 1,
+          endOfPhrase: false,
+          line: `${seg.name}#${Math.floor(barIdx / LINE_BARS)}`,
         });
-      });
+      }
     });
     barStart += bars;
   }
@@ -69,15 +75,22 @@ export function lyricLines(song: Song): VideoInput['lyrics'] {
   let pending = ''; // a syllable ending in "-" waiting for the rest of its word
   let lineStart: number | undefined;
   let lineEnd = 0;
-  for (const n of notes) {
+  for (let i = 0; i < notes.length; i++) {
+    const n = notes[i]!;
+    const next = notes[i + 1];
     lineStart ??= n.start;
     lineEnd = Math.max(lineEnd, n.end);
-    if (n.word.endsWith('-')) pending += n.word.slice(0, -1);
+    // A syllable continuing a word keeps the word's capitalisation (the lyric
+    // bank capitalises every syllable: "Wal-" + "King" → "Walking").
+    const syllable = pending ? n.word.charAt(0).toLowerCase() + n.word.slice(1) : n.word;
+    if (syllable.endsWith('-')) pending += syllable.slice(0, -1);
     else {
-      words.push(pending + n.word);
+      words.push(pending + syllable);
       pending = '';
     }
-    if (n.endOfPhrase) {
+    // A line ends with its block. A word whose last syllable is never sung
+    // (the melody ran out of notes) shows as sung, without its hyphen.
+    if (next === undefined || next.line !== n.line) {
       if (pending) {
         words.push(pending);
         pending = '';
@@ -88,8 +101,6 @@ export function lyricLines(song: Song): VideoInput['lyrics'] {
       lineEnd = 0;
     }
   }
-  if (pending) words.push(pending);
-  if (words.length && lineStart !== undefined && lineEnd > lineStart) lines.push({ text: words.join(' '), startSeconds: round(lineStart), endSeconds: round(lineEnd) });
   return lines;
 }
 

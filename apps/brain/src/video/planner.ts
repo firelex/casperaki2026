@@ -7,22 +7,31 @@ export interface Planner {
   plan(input: VideoInput): Promise<ScenePlan>;
 }
 
-const DEEPSEEK_URL = 'https://api.deepseek.com/chat/completions';
-const MODEL = 'deepseek-chat';
-const TIMEOUT_MS = 180_000;
+const TIMEOUT_MS = 300_000;
 
-export class MissingPlannerKeyError extends Error {
+/** Where the scene planner runs: an OpenAI-compatible chat endpoint (the
+ *  self-hosted DeepSeek on the B200 needs no key; a key is sent only if set). */
+export interface PlannerEndpoint {
+  /** Base URL up to /v1, e.g. http://127.0.0.1:18022/v1. */
+  readonly baseUrl: string;
+  readonly model: string;
+  readonly apiKey?: string | undefined;
+}
+
+export class MissingPlannerConfigError extends Error {
   constructor() {
-    super('DEEPSEEK_API_KEY is not set on the brain (~/.config/casperaki/brain.env): music videos need it for the scene plan.');
+    super(
+      'The scene planner is not set up on the brain: set VIDEO_PLANNER_URL (e.g. http://127.0.0.1:18022/v1, the B200 DeepSeek tunnel) and VIDEO_PLANNER_MODEL in ~/.config/casperaki/brain.env.',
+    );
   }
 }
 
 /** Plans with DeepSeek: one retry that sends the validation errors back, then a loud failure. */
 export class DeepSeekPlanner implements Planner {
-  constructor(private readonly apiKey: string | undefined) {}
+  constructor(private readonly endpoint: PlannerEndpoint | undefined) {}
 
   async plan(input: VideoInput): Promise<ScenePlan> {
-    if (!this.apiKey) throw new MissingPlannerKeyError();
+    if (!this.endpoint) throw new MissingPlannerConfigError();
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
       { role: 'system', content: 'You plan music videos. Answer with one JSON object only: the scene plan, nothing else.' },
       { role: 'user', content: plannerPrompt(input) },
@@ -43,15 +52,22 @@ export class DeepSeekPlanner implements Planner {
   }
 
   private async complete(messages: { role: string; content: string }[]): Promise<string> {
-    const res = await fetch(DEEPSEEK_URL, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${this.apiKey}` },
-      body: JSON.stringify({ model: MODEL, messages, response_format: { type: 'json_object' }, temperature: 0.7 }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    const ep = this.endpoint!;
+    const url = `${ep.baseUrl.replace(/\/+$/u, '')}/chat/completions`;
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...(ep.apiKey ? { authorization: `Bearer ${ep.apiKey}` } : {}) },
+        body: JSON.stringify({ model: ep.model, messages, response_format: { type: 'json_object' }, temperature: 0.7 }),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err) {
+      throw new Error(`The scene planner at ${url} could not be reached (is the B200 tunnel up?): ${err instanceof Error ? err.message : String(err)}`);
+    }
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`DeepSeek answered ${res.status}: ${text.slice(0, 500)}`);
+      throw new Error(`The scene planner (${ep.model}) answered ${res.status}: ${text.slice(0, 500)}`);
     }
     const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
     const content = body.choices?.[0]?.message?.content;

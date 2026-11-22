@@ -169,7 +169,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           config: { videosDir: join(dirname(resolve(config.rendersDir)), 'videos'), ffmpegBin: config.ffmpegBin },
           store,
           renders,
-          planner: new DeepSeekPlanner(config.deepseekApiKey),
+          planner: new DeepSeekPlanner(plannerEndpoint(config)),
           renderVideo,
         })
       : undefined);
@@ -197,7 +197,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
   app.use(createSoundsRouter({ playback }));
-  app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || config.deepseekApiKey) }));
+  app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));
   app.use(
     createPatternsRouter({
       store,
@@ -279,4 +279,12 @@ export function startServer(): { stop: () => Promise<void> } {
 function requireMixConfig(path: string | undefined): string {
   if (!path) throw new Error('CASPERAKI_MIX_CONFIG is required for in-browser playback (path to casperaki_engine/config/mix-config.json)');
   return resolve(path);
+}
+
+/** The scene planner's endpoint when both its URL and model are set; one without the other is a configuration error. */
+function plannerEndpoint(config: BrainConfig): { baseUrl: string; model: string; apiKey?: string } | undefined {
+  const { videoPlannerUrl: baseUrl, videoPlannerModel: model, videoPlannerKey: apiKey } = config;
+  if (!baseUrl && !model) return undefined;
+  if (!baseUrl || !model) throw new Error('VIDEO_PLANNER_URL and VIDEO_PLANNER_MODEL must be set together (brain.env).');
+  return { baseUrl, model, ...(apiKey ? { apiKey } : {}) };
 }

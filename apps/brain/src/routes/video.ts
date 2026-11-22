@@ -7,7 +7,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import type { SongsStore } from '../store.js';
-import { MissingPlannerKeyError } from '../video/planner.js';
+import { MissingPlannerConfigError } from '../video/planner.js';
 import { VideoInputError } from '../video/videoInput.js';
 import { ORIENTATIONS, VideoBusyError, type Orientation, type VideoService, type VideoStatus } from '../video/videoService.js';
 
@@ -50,7 +50,7 @@ export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }:
       const issue = body.error.issues[0];
       return res.status(400).json({ error: 'invalid_body', message: issue ? `${issue.path.join('.')}: ${issue.message}` : 'invalid body' });
     }
-    if (!plannerConfigured) return res.status(503).json({ error: 'planner_not_configured', message: new MissingPlannerKeyError().message });
+    if (!plannerConfigured) return res.status(503).json({ error: 'planner_not_configured', message: new MissingPlannerConfigError().message });
     try {
       const s = videos.start({ songId: req.params.id, orientation: body.data.orientation, title: project.title, artist: body.data.artist });
       return res.status(202).json(statusJson(s));
