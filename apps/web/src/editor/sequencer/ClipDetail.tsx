@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzi
 import { BEATS_PER_BAR, DRUM_KIT, drumName, midiName, type SeqClip, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
 import { resolveColor } from './layout';
 import { beginRangeDrag, type BarRange } from './rangeDrag';
+import { Score } from './Score';
 import { SelectionOverlay } from './Selection';
 
 const DRUM_ROW_H = 26;
@@ -45,6 +46,8 @@ export function ClipDetail({
   editError,
   engineNotes,
   soundName,
+  songKey,
+  bpm,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -72,6 +75,9 @@ export function ClipDetail({
   engineNotes: { notes: SeqNote[] } | { error: string } | undefined;
   /** Public name of the track's sound. */
   soundName: string | undefined;
+  /** The song's key and tempo, for the score. */
+  songKey: string;
+  bpm: number;
 }) {
   const startBeat = clip.startBar * BEATS_PER_BAR;
   const notes = useMemo(() => clip.notes.map((n) => ({ ...n, start: n.start - startBeat })), [clip, startBeat]);
@@ -84,6 +90,9 @@ export function ClipDetail({
   const [pending, setPending] = useState<{ pitch: number; step: number; on: boolean } | undefined>(undefined);
   /** Selection in beats from the start of what's shown (the bar for drums, the section otherwise). */
   const [sel, setSel] = useState<BarRange | undefined>(undefined);
+  /** Pitched tracks: piano roll or score. */
+  const [view, setView] = useState<'roll' | 'score'>('roll');
+  const showScore = !track.isDrums && view === 'score';
 
   const beats = clip.bars * BEATS_PER_BAR;
   const color = resolveColor(track.color);
@@ -178,6 +187,19 @@ export function ClipDetail({
             <span aria-hidden="true">{previewPlaying ? '❚❚' : '▶'}</span>
             {previewPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'pattern'}`}
           </button>
+          {!track.isDrums ? (
+            <Segmented<'roll' | 'score'>
+              label="View"
+              value={view}
+              options={[
+                { value: 'roll', label: 'Piano roll' },
+                { value: 'score', label: 'Score' },
+              ]}
+              onChange={setView}
+            />
+          ) : null}
+          {showScore ? null : (
+          <>
           <Segmented<Grid>
             label="Grid"
             value={grid}
@@ -192,6 +214,8 @@ export function ClipDetail({
               Fit
             </button>
           </span>
+          </>
+          )}
           {track.isDrums && sameKind.length > 1 ? (
             <Segmented<DrumScope>
               label="Edits change"
@@ -221,6 +245,8 @@ export function ClipDetail({
             <p className="px-5 py-10 text-[14px] text-white/55">Reading the notes the engine plays…</p>
           ) : 'error' in engineNotes ? (
             <p className="px-5 py-10 text-[14px] text-err">{engineNotes.error}</p>
+          ) : engineNotes.notes.length > 0 && showScore ? (
+            <Score notes={engineNotes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length }))} beats={beats} songKey={songKey} bpm={bpm} />
           ) : engineNotes.notes.length > 0 ? (
             <PianoRoll
               notes={engineNotes.notes}

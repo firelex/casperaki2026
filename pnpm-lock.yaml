@@ -158,6 +158,9 @@ importers:
       '@teamsuzie/ui':
         specifier: link:../../../open_teamsuzie/packages/ui
         version: link:../../../open_teamsuzie/packages/ui
+      abcjs:
+        specifier: ^6.7.3
+        version: 6.7.3
       react:
         specifier: ^19.2.0
         version: 19.2.7
@@ -1162,6 +1165,9 @@ packages:
 
   '@vitest/utils@2.1.9':
     resolution: {integrity: sha512-v0psaMSkNJ3A2NMrUEHFRzJtDPFn+/VWZ5WxImB21T9fjucJRmS7xCS3ppEnARb9y11OAzaD+P2Ps+b+BGX5iQ==}
+
+  abcjs@6.7.3:
+    resolution: {integrity: sha512-yAf6kPrhwJuH4Amy1ZynX01rH74wWXJRULPpn4KpBur5aUr+NzZP9OZCNsN6thfH83NXJS00WB2mrg9hXNesbQ==}
 
   accepts@1.3.8:
     resolution: {integrity: sha512-PYAthTa2m2VKxuvSD3DPC/Gy+U+sOA1LAuT8mkmRuvw+NACSaeXEQ+NHcVF7rONl6qcaxV3Uuemwawk+7+SJLw==}
@@ -3069,6 +3075,8 @@ snapshots:
       '@vitest/pretty-format': 2.1.9
       loupe: 3.2.1
       tinyrainbow: 1.2.0
+
+  abcjs@6.7.3: {}
 
   accepts@1.3.8:
     dependencies:

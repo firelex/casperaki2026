@@ -586,6 +586,8 @@ export function TimelineView() {
           editError={editor?.lastError}
           engineNotes={engineNotes && engineNotes.key === preview?.key ? engineNotes : undefined}
           soundName={detailSound}
+          songKey={viewSong.key}
+          bpm={bpm}
           onClose={() => {
             endPreview();
             setDialog(undefined);
