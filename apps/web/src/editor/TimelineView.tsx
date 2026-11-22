@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
-import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -125,6 +125,29 @@ export function TimelineView() {
   const rowH = Math.max(18, Math.min(220, Math.round(fittedRowH * vZoom)));
   const [follow, setFollow] = useState(true);
   const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
+  // Mixer height: drag the divider above it; remembered.
+  const [mixerH, setMixerH] = useState(() => readNumberPref('casperaki.mixerHeight', 360));
+  const startMixerDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const y0 = e.clientY;
+    const h0 = mixerH;
+    const room = (e.currentTarget.parentElement?.parentElement?.clientHeight ?? 900) - 160;
+    let h = h0;
+    const move = (ev: PointerEvent) => {
+      h = Math.max(150, Math.min(room, h0 + (y0 - ev.clientY)));
+      setMixerH(h);
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.style.cursor = '';
+      writeNumberPref('casperaki.mixerHeight', h);
+    };
+    document.body.style.cursor = 'row-resize';
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
   const toggleMixer = useCallback(() => {
     setMixerOpen((o) => {
       writePref('casperaki.mixerOpen', !o);
@@ -614,7 +637,20 @@ export function TimelineView() {
       </div>
 
       {mixerOpen ? (
-        <div className="h-[360px] shrink-0 border-t-2 border-black/80" aria-label="Mixer">
+        <div className="relative shrink-0 border-t-2 border-black/80" style={{ height: mixerH }} aria-label="Mixer">
+          {/* Divider: drag to share the height between tracks and mixer. */}
+          <div
+            className="absolute inset-x-0 -top-[5px] z-20 h-[8px] cursor-row-resize hover:bg-white/15"
+            onPointerDown={startMixerDrag}
+            onDoubleClick={() => {
+              setMixerH(360);
+              writeNumberPref('casperaki.mixerHeight', 360);
+            }}
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Drag to resize the mixer (double-click: default height)"
+            title="Drag to resize the mixer (double-click: default height)"
+          />
           <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} />
         </div>
       ) : null}
@@ -937,5 +973,20 @@ function writePref(key: string, value: boolean): void {
     window.localStorage.setItem(key, value ? '1' : '0');
   } catch {
     // Not stored (private window, blocked storage): the choice lasts this visit.
+  }
+}
+function readNumberPref(key: string, fallback: number): number {
+  try {
+    const v = Number(window.localStorage.getItem(key));
+    return Number.isFinite(v) && v > 0 ? v : fallback;
+  } catch {
+    return fallback;
+  }
+}
+function writeNumberPref(key: string, value: number): void {
+  try {
+    window.localStorage.setItem(key, String(Math.round(value)));
+  } catch {
+    // Not stored (private window, blocked storage): the height lasts this visit.
   }
 }
