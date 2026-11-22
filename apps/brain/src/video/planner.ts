@@ -59,7 +59,15 @@ export class DeepSeekPlanner implements Planner {
       res = await fetch(url, {
         method: 'POST',
         headers: { 'content-type': 'application/json', ...(ep.apiKey ? { authorization: `Bearer ${ep.apiKey}` } : {}) },
-        body: JSON.stringify({ model: ep.model, messages, response_format: { type: 'json_object' }, temperature: 0.7 }),
+        // Reasoning off: the plan is a structured fill-in, and the self-hosted
+        // DeepSeek reasons by default (vLLM chat-template switch).
+        body: JSON.stringify({
+          model: ep.model,
+          messages,
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+          chat_template_kwargs: { thinking: false },
+        }),
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (err) {
