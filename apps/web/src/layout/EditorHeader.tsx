@@ -7,6 +7,9 @@ import { useSession } from '../state/session';
 import { useRenderStatus, useSaveSong, useStartRender } from '../state/useSongActions';
 import type { EditorTab } from '../pages/EditorPage';
 import { Transport } from './Transport';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@teamsuzie/ui';
+import { useLiveTransport } from '../audio/useLiveTransport';
+import { downloadBytes, fileStem, songMidi } from '../export/exportMidi';
 
 /**
  * The editor's control bar, laid out like a DAW's: logo (back to the songs),
@@ -108,23 +111,22 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
             </button>
           </>
         ) : null}
-        <button
-          type="button"
-          onClick={() => void onRender()}
-          disabled={!activeSong || rendering || save.isPending || (rendered && !editorDirty)}
-          className="h-8 rounded-[5px] border border-black/60 bg-gradient-to-b from-[#e0322b] to-[#b5221d] px-3.5 text-[12px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:from-[#ec3d35] disabled:opacity-50"
-          title={rendered && !editorDirty ? 'WAV and MP3 are ready: download them from the status bar' : 'Make WAV and MP3 files of this song (playing needs no export)'}
-        >
-          {rendering
-            ? `Exporting: ${renderLabel(renderStatus.data)}`
-            : editorDirty
-              ? 'Save & export'
-              : rendered
-                ? 'Export ready'
+        <ExportMenu
+          audioLabel={
+            rendering
+              ? `Exporting: ${renderLabel(renderStatus.data)}`
+              : rendered && !editorDirty
+                ? 'Audio ready (status bar)'
                 : renderStatus.data?.state === 'failed'
-                  ? 'Retry export'
-                  : 'Export'}
-        </button>
+                  ? 'Audio: retry WAV + MP3'
+                  : editorDirty
+                    ? 'Audio: save, then WAV + MP3'
+                    : 'Audio: WAV + MP3'
+          }
+          audioDisabled={!activeSong || rendering || save.isPending || (rendered && !editorDirty)}
+          busy={rendering}
+          onAudio={() => void onRender()}
+        />
       </div>
     </header>
   );
@@ -183,6 +185,47 @@ function EditableTitle({ songId, title }: { songId: string; title: string }) {
     >
       {title}
     </button>
+  );
+}
+
+/** Export: audio (server render) and MIDI (the version on screen, as the engine plays it). */
+function ExportMenu({ audioLabel, audioDisabled, busy, onAudio }: { audioLabel: string; audioDisabled: boolean; busy: boolean; onAudio(): void }) {
+  const { activeSong, viewSong } = useSession();
+  const { liveKey, fetchPayload } = useLiveTransport();
+  const [midi, setMidi] = useState<'idle' | 'making' | { error: string }>('idle');
+  const exportMidi = async () => {
+    if (!viewSong || !liveKey || !activeSong) return;
+    setMidi('making');
+    try {
+      const bytes = await songMidi(viewSong, activeSong.project.title, liveKey, fetchPayload);
+      downloadBytes(bytes, `${fileStem(activeSong.project.title)}.mid`, 'audio/midi');
+      setMidi('idle');
+    } catch (err) {
+      setMidi({ error: err instanceof Error ? err.message : String(err) });
+    }
+  };
+  const item = 'cursor-pointer rounded-[6px] px-3 py-2 text-[13px] outline-none data-[highlighted]:bg-white/10 data-[disabled]:opacity-40';
+  return (
+    <span className="flex items-center gap-2">
+      {typeof midi === 'object' ? (
+        <span className="max-w-[220px] truncate text-[11px] text-err" title={midi.error}>
+          MIDI export failed: {midi.error}
+        </span>
+      ) : null}
+      <DropdownMenu>
+        <DropdownMenuTrigger className="h-8 rounded-[5px] border border-black/60 bg-gradient-to-b from-[#e0322b] to-[#b5221d] px-3.5 text-[12px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] outline-none hover:from-[#ec3d35]">
+          {busy ? 'Exporting…' : midi === 'making' ? 'Making MIDI…' : 'Export ▾'}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" sideOffset={6} className="z-50 min-w-[260px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl">
+          <DropdownMenuItem className={item} disabled={audioDisabled} onSelect={onAudio}>
+            {audioLabel}
+          </DropdownMenuItem>
+          <DropdownMenuItem className={item} disabled={!viewSong || !liveKey || midi === 'making'} onSelect={() => void exportMidi()}>
+            MIDI file (.mid) <span className="ml-auto pl-4 text-[11px] text-white/45">as played, unsaved edits included</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </span>
   );
 }
 

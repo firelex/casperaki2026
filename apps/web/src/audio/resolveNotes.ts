@@ -31,8 +31,36 @@ export interface EngineNote {
 }
 
 interface ResolvedV1 {
-  tracks: { name: string; clips: { type: string; startSec: number; notes?: { n: number; startBeat: number; lenBeats: number; vel: number }[] }[] }[];
+  tracks: {
+    name: string;
+    clips: {
+      type: string;
+      startSec: number;
+      notes?: { n: number; startBeat: number; lenBeats: number; vel: number }[];
+      channels?: { note: number; name: string }[];
+      patterns?: { numSteps: number; hits: { ch: number; step: number; vel: number }[] }[];
+    }[];
+  }[];
 }
+
+/** One drum hit as the engine plays it. */
+export interface EngineHit {
+  /** The kit piece (engine drum lane, e.g. "bassDrum1", "hiHatOpen"). */
+  readonly drum: string;
+  /** Beats from the song start. */
+  readonly start: number;
+  /** 0..127 */
+  readonly velocity: number;
+}
+
+/** Everything the engine plays, per engine track. */
+export interface EngineEvents {
+  readonly tempo: number;
+  readonly tracks: readonly { readonly name: string; readonly notes: readonly EngineNote[]; readonly hits: readonly EngineHit[] }[];
+}
+
+/** Steps per beat in the engine's drum step clips (32nd notes). */
+const DRUM_STEPS_PER_BEAT = 8;
 
 let engine: Promise<ResolveModule> | undefined;
 
@@ -53,31 +81,47 @@ function loadEngine(): Promise<ResolveModule> {
   return engine;
 }
 
-/** Every MIDI note the engine resolves for this lowered song (step-sequenced drums excluded). */
-export async function resolveEngineNotes(payload: PlaybackPayload): Promise<EngineNote[]> {
+/**
+ * Everything the engine plays for this lowered song, per engine track:
+ * pitched notes and drum hits (step clips), in beats from the song start.
+ */
+export async function resolveEngineEvents(payload: PlaybackPayload): Promise<EngineEvents> {
   const m = await loadEngine();
   const insts = new m.StringList();
   try {
     for (const t of payload.insts) insts.push_back(t);
     const out = JSON.parse(m.resolveSong(payload.song, insts)) as ResolvedV1;
-    // Note beats are relative to their clip (one per section): add the clip's start.
     const tempo = (JSON.parse(payload.song) as { tempo?: number }).tempo;
     if (typeof tempo !== 'number' || !(tempo > 0)) throw new Error('The lowered song has no tempo.');
     const beatsPerSec = tempo / 60;
-    return out.tracks.flatMap((t) =>
-      t.clips.flatMap((c) =>
-        c.type === 'midi' && c.notes
-          ? c.notes.map((n) => ({
-              pitch: n.n,
-              start: c.startSec * beatsPerSec + n.startBeat,
-              length: n.lenBeats,
-              velocity: n.vel,
-              track: t.name,
-            }))
-          : [],
-      ),
-    );
+    return {
+      tempo,
+      tracks: out.tracks.map((t) => {
+        const notes: EngineNote[] = [];
+        const hits: EngineHit[] = [];
+        for (const c of t.clips) {
+          // Note beats and steps are relative to their clip (one per section): add the clip's start.
+          const offset = c.startSec * beatsPerSec;
+          if (c.type === 'midi' && c.notes) {
+            for (const n of c.notes) notes.push({ pitch: n.n, start: offset + n.startBeat, length: n.lenBeats, velocity: n.vel, track: t.name });
+          } else if (c.type === 'step' && c.channels && c.patterns) {
+            for (const pat of c.patterns)
+              for (const h of pat.hits) {
+                const ch = c.channels[h.ch];
+                if (!ch) throw new Error(`${t.name}: drum hit on unknown channel ${h.ch}`);
+                hits.push({ drum: ch.name, start: offset + h.step / DRUM_STEPS_PER_BEAT, velocity: h.vel });
+              }
+          }
+        }
+        return { name: t.name, notes, hits };
+      }),
+    };
   } finally {
     insts.delete();
   }
+}
+
+/** Every MIDI note the engine resolves for this lowered song (step-sequenced drums excluded). */
+export async function resolveEngineNotes(payload: PlaybackPayload): Promise<EngineNote[]> {
+  return (await resolveEngineEvents(payload)).tracks.flatMap((t) => t.notes);
 }
