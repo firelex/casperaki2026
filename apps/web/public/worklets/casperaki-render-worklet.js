@@ -17,11 +17,13 @@
 //                                    effect tails refill (mix on)
 //   laneGains          {[lane: string]: number}  initial mute/solo gains
 //
-// Messages in:  { type: 'seek', frame, preroll? } (preroll frames; default seekPrerollFrames)  { type: 'laneGains', gains: {[lane]: gain} }
+// Messages in:  { type: 'probe', bus: Uint8Array, slot } (device views: level probe around a rack plugin)
+//               { type: 'seek', frame, preroll? } (preroll frames; default seekPrerollFrames)  { type: 'laneGains', gains: {[lane]: gain} }
 //               { type: 'loop', start, end } (frames; start null = no loop). Playback
 //               that crosses `end` from inside the loop jumps to `start` on the exact
 //               frame (instant seek: effect tails carry over, as in a DAW).
 // Messages out: { type: 'ready', totalFrames, sampleRate, laneNames, realCount }
+//               { type: 'probe', inPeak, inRms, outPeak, outRms, frames } (~30/s while a probe is set)
 //               { type: 'seeked', frame }  { type: 'ended' }  { type: 'error', message }
 
 import { buildMixer, instantiateEngine, laneNames, lastError } from '../engine/casperaki-engine.js';
@@ -46,6 +48,13 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       e.mixer_set_master_gain(this.masterGain);
       this.lanes = laneNames(e);
       this.applyLaneGains(o.laneGains || {});
+
+      // A buffer for probe bus names, allocated now so no message ever grows the
+      // heap (which would detach the views below).
+      this.probeName = e.malloc(256);
+      this.probeOn = false;
+      this.probeEvery = Math.max(1, Math.round((o.sampleRate / BLOCK) / 30)); // ~30 readings a second
+      this.probeCount = 0;
 
       // All allocation is done: these views stay valid for the node's life.
       this.left = new Float32Array(e.memory.buffer, e.mixer_left(), BLOCK);
@@ -75,6 +84,21 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
             this.loopStart = a;
             this.loopEnd = b;
           }
+        } else if (d.type === 'probe') {
+          // { bus: Uint8Array (UTF-8), slot } — slot < 0 turns the probe off.
+          const bytes = d.bus;
+          if (bytes.length > 256) {
+            this.port.postMessage({ type: 'error', message: 'probe bus name too long' });
+            return;
+          }
+          new Uint8Array(e.memory.buffer, this.probeName, bytes.length).set(bytes);
+          if (e.mixer_set_probe(this.probeName, bytes.length, d.slot) !== 1) {
+            this.port.postMessage({ type: 'probeError', message: lastError(e) });
+            this.probeOn = false;
+            return;
+          }
+          this.probeOn = d.slot >= 0;
+          this.probeCount = 0;
         } else if (d.type === 'laneGains') {
           try {
             this.applyLaneGains(d.gains);
@@ -151,6 +175,13 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     } else {
       more = this.e.mixer_pull(BLOCK);
       this.copyOut(outL, outR, 0, BLOCK);
+    }
+    if (this.probeOn && ++this.probeCount >= this.probeEvery) {
+      this.probeCount = 0;
+      if (this.e.mixer_probe_read() === 1) {
+        const v = new Float32Array(this.e.memory.buffer, this.e.mixer_probe_buffer(), 5);
+        this.port.postMessage({ type: 'probe', inPeak: v[0], inRms: v[1], outPeak: v[2], outRms: v[3], frames: v[4] });
+      }
     }
     if (!more) {
       this.done = true;

@@ -19,6 +19,9 @@
 #include "airwindows/AwPlugins.h"
 #include "airwindows/AwRand.h"
 
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include <map>
 #include <memory>
 #include <set>
@@ -59,11 +62,40 @@ inline std::unique_ptr<aw::Plugin> makeAwByFactory(const std::string& f, double 
 }
 
 // An ordered AirWindows plugin chain processed in place on a stereo buffer.
+// Level probe around one plugin of a rack (for the device views): peak and
+// sum of squares of the signal going in and coming out, accumulated until read.
+struct Probe {
+    int slot = -1;              // config index of the probed plugin; -1 = off
+    float inPeak = 0.0f, outPeak = 0.0f;
+    double inSq = 0.0, outSq = 0.0;
+    long frames = 0;
+    void reset() { inPeak = outPeak = 0.0f; inSq = outSq = 0.0; frames = 0; }
+};
+
+inline void measure(float* const ch[2], int n, float& peak, double& sq) {
+    for (int c = 0; c < 2; ++c)
+        for (int i = 0; i < n; ++i) {
+            const float v = ch[c][i];
+            peak = std::max(peak, std::fabs(v));
+            sq += (double)v * v;
+        }
+}
+
 struct Rack {
     std::vector<std::unique_ptr<aw::Plugin>> plugins;
+    std::vector<int> configIndex;   // each plugin's position in the mix config's chain
+    Probe probe;
     void process(AudioBuffer& buf, int n) {
         float* ch[2] = { buf.getWritePointer(0), buf.getWritePointer(1) };
-        for (auto& p : plugins) p->process(ch, ch, n);
+        for (size_t i = 0; i < plugins.size(); ++i) {
+            const bool probed = probe.slot >= 0 && configIndex[i] == probe.slot;
+            if (probed) measure(ch, n, probe.inPeak, probe.inSq);
+            plugins[i]->process(ch, ch, n);
+            if (probed) {
+                measure(ch, n, probe.outPeak, probe.outSq);
+                probe.frames += n;
+            }
+        }
     }
     void setTransport(double spb, double t) { for (auto& p : plugins) p->setTransport(spb, t); }
     void seek(long long songSample) { for (auto& p : plugins) p->seek(songSample); }
@@ -78,9 +110,13 @@ inline Rack buildRack(const mix::MixConfig* cfg, const std::string& bus, double 
     const auto& chains = cfg ? cfg->rackChains() : mix::rackChains();
     for (const auto& rd : chains) {
         if (rd.bus != bus) continue;
-        for (const auto& pd : rd.plugins) {
+        for (size_t i = 0; i < rd.plugins.size(); ++i) {
+            const auto& pd = rd.plugins[i];
             if (noEq && pd.factory == "makeEQ") continue;
-            if (auto p = makeAwByFactory(pd.factory, sr, pd.params)) r.plugins.push_back(std::move(p));
+            if (auto p = makeAwByFactory(pd.factory, sr, pd.params)) {
+                r.plugins.push_back(std::move(p));
+                r.configIndex.push_back((int)i);
+            }
         }
         break;
     }
@@ -169,6 +205,41 @@ public:
         }
     }
 
+    // Probe the plugin at config index `slot` of `bus` ("master", a return bus
+    // "fxPlateReverb"/"fxStereoDelay"/"fxChorus", or an fxGroup submix); every
+    // other probe is turned off. slot < 0 turns probing off. Allocation-free.
+    void setProbe(const std::string& bus, int slot) {
+        Rack* target = nullptr;
+        auto visit = [&](const std::string& name, Rack& r) {
+            r.probe.slot = -1;
+            r.probe.reset();
+            if (name == bus) target = &r;
+        };
+        visit("master", master_.rack);
+        visit("fxPlateReverb", returns_[0].rack);
+        visit("fxStereoDelay", returns_[1].rack);
+        visit("fxChorus", returns_[2].rack);
+        for (auto& kv : submixes_) visit(kv.first, kv.second.rack);
+        if (slot < 0) return;
+        if (!target) throw std::out_of_range("MixGraph::setProbe: no bus '" + bus + "' in this mix");
+        if (std::find(target->configIndex.begin(), target->configIndex.end(), slot) == target->configIndex.end())
+            throw std::out_of_range("MixGraph::setProbe: bus '" + bus + "' has no plugin at slot " + std::to_string(slot));
+        target->probe.slot = slot;
+        probed_ = target;
+    }
+    // Read and reset the probe: in peak, in RMS, out peak, out RMS, frames measured.
+    void readProbe(float out[5]) {
+        if (!probed_ || probed_->probe.slot < 0) throw std::logic_error("MixGraph::readProbe: no probe set");
+        Probe& p = probed_->probe;
+        const double n = p.frames > 0 ? 2.0 * (double)p.frames : 1.0;
+        out[0] = p.inPeak;
+        out[1] = (float)std::sqrt(p.inSq / n);
+        out[2] = p.outPeak;
+        out[3] = (float)std::sqrt(p.outSq / n);
+        out[4] = (float)p.frames;
+        p.reset();
+    }
+
     // A return bus's signal after its rack, valid after render() for this block
     // (0 = reverb, 1 = delay, 2 = chorus): for the mixer's bus meters.
     const AudioBuffer& returnBuffer(int k) const { return returns_[k].buf; }
@@ -194,6 +265,7 @@ private:
     int block_;
     const mix::MixConfig* cfg_ = nullptr;   // rack chains + master volume (set in build)
     std::map<std::string, Bus> submixes_;
+    Rack* probed_ = nullptr;
     Bus returns_[3];
     Bus master_;
 };

@@ -32,7 +32,9 @@ import { ADD_ROW_H, BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR
 import { beginRangeDrag } from './sequencer/rangeDrag';
 import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
-import { Mixer } from './sequencer/Mixer';
+import { Mixer, type OpenDevice } from './sequencer/Mixer';
+import { DeviceWindow } from './devices/DeviceWindow';
+import { Logical4Panel } from './devices/Logical4Panel';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
 import { useTrackEdits } from './sequencer/useTrackEdits';
@@ -83,6 +85,8 @@ export function TimelineView() {
     };
   }, [liveKey, fetchPayload, editorDirty]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
+  /** The open device view (a plugin on a bus), if any. */
+  const [device, setDevice] = useState<OpenDevice | undefined>(undefined);
   const soundNames = useSoundNames((model?.tracks ?? []).map((t) => ({ name: t.name, catalogId: catalogIdOf(defs.get(t.name)?.id) })));
   const detailSound = useSoundName(dialog?.kind === 'detail' ? catalogIdOf(defs.get(dialog.track)?.id) : undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
@@ -708,8 +712,14 @@ export function TimelineView() {
             aria-label="Drag to resize the mixer (double-click: default, large, hidden)"
             title="Drag to resize the mixer. Double-click: default → large → hidden. X shows/hides it; Shift+X: tracks or mixer full view"
           />
-          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} />
+          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} />
         </div>
+      ) : null}
+
+      {device ? (
+        <DeviceWindow title="Logical4" subtitle={`${device.bus === 'master' ? 'Master' : `${device.bus} bus`} · slot ${device.slot + 1}`} onClose={() => setDevice(undefined)}>
+          <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={device.params} />
+        </DeviceWindow>
       ) : null}
 
       {detail && detailTrack && detailClip ? (

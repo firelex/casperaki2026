@@ -344,6 +344,25 @@ int mixer_meter_bin_count() {
 
 // Lane i's per-bin peak / RMS (float[mixer_meter_bin_count()] in the heap), or
 // null on error. Filled in as the song is pulled.
+// Device views: probe the plugin at `slot` of bus `bus` (UTF-8, `len` bytes);
+// slot < 0 turns the probe off. Returns 1, or 0 on error (mixer_last_error).
+int mixer_set_probe(const char* bus, int len, int slot) {
+    return laneCall("mixer_set_probe", 0, [bus, len, slot](Mixer& m) {
+        m.setProbe(std::string(bus, (size_t)len), slot);
+        return 1;
+    });
+}
+// Read and reset the probe into mixer_probe_buffer(): in peak, in RMS, out peak,
+// out RMS, frames. Returns 1, or 0 on error.
+static float g_probe[5];
+int mixer_probe_read() {
+    return laneCall("mixer_probe_read", 0, [](Mixer& m) {
+        m.readProbe(g_probe);
+        return 1;
+    });
+}
+const float* mixer_probe_buffer() { return g_probe; }
+
 // Peak per meter bin of a bus (0 reverb, 1 delay, 2 chorus return, 3 master), or null.
 const float* mixer_bus_peaks(int bus) {
     return laneCall("mixer_bus_peaks", (const float*)nullptr, [bus](Mixer& m) { return m.busPeaks(bus); });

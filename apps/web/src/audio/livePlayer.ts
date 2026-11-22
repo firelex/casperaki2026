@@ -38,6 +38,15 @@ export interface LoopRange {
   readonly end: number;
 }
 
+/** One reading of a device probe: levels in and out of the probed plugin since the last reading. */
+export interface ProbeReading {
+  readonly inPeak: number;
+  readonly inRms: number;
+  readonly outPeak: number;
+  readonly outRms: number;
+  readonly frames: number;
+}
+
 /** Per-track levels of one song version, filled in as the meter worker runs. */
 export interface LaneMeters {
   readonly names: readonly string[];
@@ -139,6 +148,27 @@ export class LivePlayer {
   private readonly meterCache = new Map<string, LaneMeters>();
   private readonly listeners = new Set<(s: LiveState) => void>();
   private readonly positionListeners = new Set<() => void>();
+  /** Device views: the probed plugin (bus + slot) and who listens to its readings. */
+  private probe: { bus: string; slot: number } | undefined;
+  private readonly probeListeners = new Set<(r: ProbeReading | { error: string }) => void>();
+
+  /** Probe one rack plugin (bus, slot in its chain) while playing; undefined stops. */
+  setProbe(probe: { bus: string; slot: number } | undefined): void {
+    this.probe = probe;
+    this.postProbe();
+  }
+
+  /** Readings of the probe (about 30 a second while playing). */
+  onProbe(fn: (r: ProbeReading | { error: string }) => void): () => void {
+    this.probeListeners.add(fn);
+    return () => this.probeListeners.delete(fn);
+  }
+
+  private postProbe(): void {
+    if (!this.node) return;
+    const p = this.probe;
+    this.node.port.postMessage({ type: 'probe', bus: utf8.encode(p?.bus ?? ''), slot: p ? p.slot : -1 });
+  }
 
   /** Called when the position jumps (seek), so paused displays redraw. */
   onPositionJump(fn: () => void): () => void {
@@ -313,6 +343,12 @@ export class LivePlayer {
           } else if (d.type === 'error' && node === this.node) this.set({ status: 'error', error: `The audio engine failed: ${d.message}` });
           else if (d.type === 'error') reject(new Error(`The audio engine failed: ${d.message}`));
           else if (d.type === 'ended' && node === this.node) this.set({ status: 'ended' });
+          else if (d.type === 'probe' && node === this.node) {
+            const r = d as unknown as ProbeReading;
+            for (const fn of this.probeListeners) fn(r);
+          } else if (d.type === 'probeError' && node === this.node) {
+            for (const fn of this.probeListeners) fn({ error: d.message ?? 'probe failed' });
+          }
         };
       });
       const durationSec = await ready;
@@ -333,6 +369,7 @@ export class LivePlayer {
       if (range && range.end > durationSec) this.set({ loopRange: undefined, looping: false });
       this.postLaneGains();
       this.postLoop();
+      if (this.probe) this.postProbe();
       const loop = this.activeLoop();
       // Position the new engine before it is heard (messages run before its first pull).
       let startAt = 0;

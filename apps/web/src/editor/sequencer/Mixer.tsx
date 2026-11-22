@@ -37,6 +37,7 @@ export function Mixer({
   muted,
   solo,
   soundNames,
+  onOpenDevice,
 }: {
   tracks: readonly SeqTrack[];
   /** The mix as the engine resolved it for this version. */
@@ -51,6 +52,8 @@ export function Mixer({
   solo: readonly string[];
   /** Public sound name per track. */
   soundNames: Readonly<Record<string, string>>;
+  /** Open a plugin's device view. */
+  onOpenDevice: (d: OpenDevice) => void;
 }) {
   if (error) {
     return <div className="flex h-full items-center justify-center px-6 text-center text-[12px] text-err">{error}</div>;
@@ -90,6 +93,7 @@ export function Mixer({
           color={tracks.find((t) => t.name === lane)?.color ?? '#8a8b93'}
           parts={byLane.get(lane)!}
           soundName={soundNames[lane]}
+          onOpenDevice={onOpenDevice}
           chains={chains}
           level={levelOf(lane)}
           muted={muted.includes(lane)}
@@ -99,10 +103,12 @@ export function Mixer({
       ))}
       <div className="w-2 shrink-0 bg-black/40" aria-hidden="true" />
       {RETURNS.map((r, k) => (
-        <BusStrip key={r.bus} name={r.name} subtitle="Return" plugins={chains.get(r.bus)} color="#3d8bd0" level={busLevel(k)} />
+        <BusStrip key={r.bus} name={r.name} bus={r.bus} subtitle="Return" plugins={chains.get(r.bus)} color="#3d8bd0" level={busLevel(k)} onOpenDevice={onOpenDevice} />
       ))}
       <BusStrip
         name="Master"
+        bus="master"
+        onOpenDevice={onOpenDevice}
         subtitle="Stereo out"
         plugins={chains.get('master')}
         color="#e0322b"
@@ -119,6 +125,7 @@ function ChannelStrip({
   color,
   parts,
   soundName,
+  onOpenDevice,
   chains,
   level,
   muted,
@@ -129,6 +136,7 @@ function ChannelStrip({
   color: string;
   parts: readonly ResolvedMixLane[];
   soundName: string | undefined;
+  onOpenDevice: (d: OpenDevice) => void;
   chains: Map<string, MixConfigJson['rackChains'][number]['plugins']>;
   level: number | undefined;
   muted: boolean;
@@ -183,7 +191,7 @@ function ChannelStrip({
         {buses.map((bus) => (
           <div key={bus} className="mb-1">
             <div className="mb-0.5 truncate text-[9px] text-[#8f9098]">→ {bus} bus</div>
-            <Inserts plugins={chains.get(bus)} bus={bus} />
+            <Inserts plugins={chains.get(bus)} bus={bus} onOpen={onOpenDevice} />
           </div>
         ))}
       </Section>
@@ -193,6 +201,8 @@ function ChannelStrip({
 
 function BusStrip({
   name,
+  bus,
+  onOpenDevice,
   subtitle,
   plugins,
   color,
@@ -200,6 +210,9 @@ function BusStrip({
   level,
 }: {
   name: string;
+  /** The bus's name in the mix config ("master", "fxPlateReverb", …). */
+  bus: string;
+  onOpenDevice: (d: OpenDevice) => void;
   subtitle: string;
   plugins: MixConfigJson['rackChains'][number]['plugins'] | undefined;
   color: string;
@@ -221,7 +234,7 @@ function BusStrip({
       }
     >
       <Section label="Inserts">
-        <Inserts plugins={plugins} bus={name} />
+        <Inserts plugins={plugins} bus={bus} onOpen={onOpenDevice} />
       </Section>
     </Strip>
   );
@@ -275,19 +288,48 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Insert slots: the bus's plugin chain, parameters on hover. */
-function Inserts({ plugins, bus }: { plugins: MixConfigJson['rackChains'][number]['plugins'] | undefined; bus: string }) {
+/** Plugins that have a device view so far. */
+const DEVICE_VIEWS = new Set(['makeLogical4']);
+
+export interface OpenDevice {
+  readonly bus: string;
+  readonly slot: number;
+  readonly factory: string;
+  readonly params: readonly number[];
+}
+
+function Inserts({
+  plugins,
+  bus,
+  onOpen,
+}: {
+  plugins: MixConfigJson['rackChains'][number]['plugins'] | undefined;
+  bus: string;
+  onOpen?: (d: OpenDevice) => void;
+}) {
   if (!plugins) return <div className="text-[9px] text-err">No rack for {bus}</div>;
   return (
     <div className="flex flex-col gap-[2px]">
-      {plugins.map((p, i) => (
-        <div
-          key={i}
-          className="truncate rounded-[2px] border border-black/60 bg-gradient-to-b from-[#3f5a78] to-[#30475f] px-1 text-[9.5px] leading-[15px] text-[#dfe9f5]"
-          title={`${pluginName(p.factory)}${p.params.length ? `\nparameters: ${p.params.map((v) => v.toFixed(3)).join(', ')}` : ''}`}
-        >
-          {pluginName(p.factory)}
-        </div>
-      ))}
+      {plugins.map((p, i) => {
+        const openable = onOpen && DEVICE_VIEWS.has(p.factory);
+        const tip = `${pluginName(p.factory)}${p.params.length ? `\nparameters: ${p.params.map((v) => v.toFixed(3)).join(', ')}` : ''}${openable ? '\nClick to open' : ''}`;
+        const cls = 'truncate rounded-[2px] border border-black/60 bg-gradient-to-b px-1 text-left text-[9.5px] leading-[15px] text-[#dfe9f5]';
+        return openable ? (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onOpen({ bus, slot: i, factory: p.factory, params: p.params })}
+            className={`${cls} from-[#4e7aa6] to-[#3a5e83] hover:from-[#5d8bb8] hover:text-white`}
+            title={tip}
+          >
+            {pluginName(p.factory)} ↗
+          </button>
+        ) : (
+          <div key={i} className={`${cls} from-[#3f5a78] to-[#30475f]`} title={tip}>
+            {pluginName(p.factory)}
+          </div>
+        );
+      })}
     </div>
   );
 }

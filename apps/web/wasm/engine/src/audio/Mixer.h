@@ -305,6 +305,16 @@ public:
     int meterBinCount() const { return meterBins_; }
     const float* lanePeaks(int lane) const { requireMeters(); return group(lane).peak.data(); }
     const float* laneRms(int lane) const { requireMeters(); return group(lane).rms.data(); }
+    // Device-view probe around one rack plugin (see MixGraph::setProbe/readProbe).
+    void setProbe(const std::string& bus, int slot) {
+        if (!graph_) throw std::logic_error("Mixer::setProbe: the mix is off (no racks to probe)");
+        graph_->setProbe(bus, slot);
+    }
+    void readProbe(float out[5]) {
+        if (!graph_) throw std::logic_error("Mixer::readProbe: the mix is off");
+        graph_->readProbe(out);
+    }
+
     // Peak per meter bin of a bus: 0 reverb, 1 delay, 2 chorus return (after
     // their racks), 3 master (the final output). Returns stay 0 without the mix.
     static constexpr int kMeteredBuses = 4;
