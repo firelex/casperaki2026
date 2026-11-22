@@ -65,12 +65,19 @@ inline std::unique_ptr<aw::Plugin> makeAwByFactory(const std::string& f, double 
 // Level probe around one plugin of a rack (for the device views): peak and
 // sum of squares of the signal going in and coming out, accumulated until read.
 struct Probe {
+    static constexpr int kRing = 4096;  // samples of mono (L+R)/2 kept for the spectrum view
     int slot = -1;              // config index of the probed plugin; -1 = off
     float inPeak = 0.0f, outPeak = 0.0f;
     double inSq = 0.0, outSq = 0.0;
     long frames = 0;
+    float inRing[kRing] = {}, outRing[kRing] = {};
+    int ringPos = 0;            // next write index (shared by both rings)
     void reset() { inPeak = outPeak = 0.0f; inSq = outSq = 0.0; frames = 0; }
 };
+
+inline void ringWrite(float* ring, int pos, float* const ch[2], int n) {
+    for (int i = 0; i < n; ++i) ring[(pos + i) % Probe::kRing] = 0.5f * (ch[0][i] + ch[1][i]);
+}
 
 inline void measure(float* const ch[2], int n, float& peak, double& sq) {
     for (int c = 0; c < 2; ++c)
@@ -89,10 +96,15 @@ struct Rack {
         float* ch[2] = { buf.getWritePointer(0), buf.getWritePointer(1) };
         for (size_t i = 0; i < plugins.size(); ++i) {
             const bool probed = probe.slot >= 0 && configIndex[i] == probe.slot;
-            if (probed) measure(ch, n, probe.inPeak, probe.inSq);
+            if (probed) {
+                measure(ch, n, probe.inPeak, probe.inSq);
+                ringWrite(probe.inRing, probe.ringPos, ch, n);
+            }
             plugins[i]->process(ch, ch, n);
             if (probed) {
                 measure(ch, n, probe.outPeak, probe.outSq);
+                ringWrite(probe.outRing, probe.ringPos, ch, n);
+                probe.ringPos = (probe.ringPos + n) % Probe::kRing;
                 probe.frames += n;
             }
         }
@@ -238,6 +250,12 @@ public:
         out[3] = (float)std::sqrt(p.outSq / n);
         out[4] = (float)p.frames;
         p.reset();
+    }
+
+    // The probe's sample rings (newest sample just before ringPos), for spectra.
+    const Probe& probe() const {
+        if (!probed_ || probed_->probe.slot < 0) throw std::logic_error("MixGraph::probe: no probe set");
+        return probed_->probe;
     }
 
     // A return bus's signal after its rack, valid after render() for this block

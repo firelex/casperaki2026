@@ -24,6 +24,7 @@
 //               frame (instant seek: effect tails carry over, as in a DAW).
 // Messages out: { type: 'ready', totalFrames, sampleRate, laneNames, realCount }
 //               { type: 'probe', inPeak, inRms, outPeak, outRms, frames } (~30/s while a probe is set)
+//               { type: 'probeRings', input, output } (Float32Array(4096) each, ~15/s)
 //               { type: 'seeked', frame }  { type: 'ended' }  { type: 'error', message }
 
 import { buildMixer, instantiateEngine, laneNames, lastError } from '../engine/casperaki-engine.js';
@@ -181,6 +182,13 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       if (this.e.mixer_probe_read() === 1) {
         const v = new Float32Array(this.e.memory.buffer, this.e.mixer_probe_buffer(), 5);
         this.port.postMessage({ type: 'probe', inPeak: v[0], inRms: v[1], outPeak: v[2], outRms: v[3], frames: v[4] });
+        // Every other reading (~15 a second), the last 4096 samples in and out, for spectra.
+        if ((this.probeRings = !this.probeRings) && this.e.mixer_probe_rings() === 1) {
+          const r = new Float32Array(this.e.memory.buffer, this.e.mixer_probe_spectrum_buffer(), 8192);
+          const input = r.slice(0, 4096);
+          const output = r.slice(4096);
+          this.port.postMessage({ type: 'probeRings', input, output }, [input.buffer, output.buffer]);
+        }
       }
     }
     if (!more) {

@@ -158,6 +158,13 @@ export class LivePlayer {
     this.postProbe();
   }
 
+  private readonly ringListeners = new Set<(r: { input: Float32Array; output: Float32Array }) => void>();
+  /** The probe's last 4096 samples in and out (about 15 a second while playing), for spectra. */
+  onProbeRings(fn: (r: { input: Float32Array; output: Float32Array }) => void): () => void {
+    this.ringListeners.add(fn);
+    return () => this.ringListeners.delete(fn);
+  }
+
   /** Readings of the probe (about 30 a second while playing). */
   onProbe(fn: (r: ProbeReading | { error: string }) => void): () => void {
     this.probeListeners.add(fn);
@@ -346,6 +353,9 @@ export class LivePlayer {
           else if (d.type === 'probe' && node === this.node) {
             const r = d as unknown as ProbeReading;
             for (const fn of this.probeListeners) fn(r);
+          } else if (d.type === 'probeRings' && node === this.node) {
+            const r = d as unknown as { input: Float32Array; output: Float32Array };
+            for (const fn of this.ringListeners) fn(r);
           } else if (d.type === 'probeError' && node === this.node) {
             for (const fn of this.probeListeners) fn({ error: d.message ?? 'probe failed' });
           }

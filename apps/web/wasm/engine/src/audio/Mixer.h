@@ -310,6 +310,10 @@ public:
         if (!graph_) throw std::logic_error("Mixer::setProbe: the mix is off (no racks to probe)");
         graph_->setProbe(bus, slot);
     }
+    const Probe& probe() const {
+        if (!graph_) throw std::logic_error("Mixer::probe: the mix is off");
+        return graph_->probe();
+    }
     void readProbe(float out[5]) {
         if (!graph_) throw std::logic_error("Mixer::readProbe: the mix is off");
         graph_->readProbe(out);

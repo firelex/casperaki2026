@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import { livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
 import type { SeqTrack } from '../sequencerModel';
+import { DEVICES } from '../devices/deviceDefs';
 
 const STRIP_W = 104;
 const FADER_H = 100;
@@ -288,8 +289,8 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
 }
 
 /** Insert slots: the bus's plugin chain, parameters on hover. */
-/** Plugins that have a device view so far. */
-const DEVICE_VIEWS = new Set(['makeLogical4']);
+/** Plugins with a device view (all of them: Logical4 has its own panel, the rest the general one). */
+const DEVICE_VIEWS = new Set(['makeLogical4', ...Object.keys(DEVICES)]);
 
 export interface OpenDevice {
   readonly bus: string;

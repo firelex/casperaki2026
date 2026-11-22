@@ -362,6 +362,22 @@ int mixer_probe_read() {
     });
 }
 const float* mixer_probe_buffer() { return g_probe; }
+// The probe's last Probe::kRing samples in and out (mono), in time order, copied
+// into mixer_probe_spectrum_buffer() (2 x 4096 floats: in, then out). Returns 1, or 0.
+static float g_rings[2 * casperaki::Probe::kRing];
+int mixer_probe_rings() {
+    return laneCall("mixer_probe_rings", 0, [](Mixer& m) {
+        const auto& p = m.probe();
+        const int N = casperaki::Probe::kRing;
+        for (int i = 0; i < N; ++i) {
+            const int k = (p.ringPos + i) % N;
+            g_rings[i] = p.inRing[k];
+            g_rings[N + i] = p.outRing[k];
+        }
+        return 1;
+    });
+}
+const float* mixer_probe_spectrum_buffer() { return g_rings; }
 
 // Peak per meter bin of a bus (0 reverb, 1 delay, 2 chorus return, 3 master), or null.
 const float* mixer_bus_peaks(int bus) {

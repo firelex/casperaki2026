@@ -35,6 +35,8 @@ import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
 import { Mixer, type OpenDevice } from './sequencer/Mixer';
 import { DeviceWindow } from './devices/DeviceWindow';
 import { Logical4Panel } from './devices/Logical4Panel';
+import { DevicePanel } from './devices/DevicePanel';
+import { DEVICES } from './devices/deviceDefs';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
 import { useTrackEdits } from './sequencer/useTrackEdits';
@@ -717,8 +719,18 @@ export function TimelineView() {
       ) : null}
 
       {device ? (
-        <DeviceWindow title="Logical4" subtitle={`${device.bus === 'master' ? 'Master' : `${device.bus} bus`} · slot ${device.slot + 1}`} onClose={() => setDevice(undefined)}>
-          <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={device.params} />
+        <DeviceWindow
+          title={device.factory === 'makeLogical4' ? 'Logical4' : (DEVICES[device.factory]?.title ?? device.factory)}
+          subtitle={`${device.bus === 'master' ? 'Master' : `${device.bus} bus`} · slot ${device.slot + 1}`}
+          onClose={() => setDevice(undefined)}
+        >
+          {device.factory === 'makeLogical4' ? (
+            <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={device.params} />
+          ) : DEVICES[device.factory] ? (
+            <DevicePanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} bus={device.bus} slot={device.slot} params={device.params} bpm={bpm} />
+          ) : (
+            <p className="p-6 text-[13px] text-err">No device view for {device.factory}.</p>
+          )}
         </DeviceWindow>
       ) : null}
 
