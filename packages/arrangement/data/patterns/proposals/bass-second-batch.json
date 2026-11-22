@@ -1,0 +1,94 @@
+[
+  {
+    "id": "latin-tumbao-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Tumbao bass",
+    "genres": ["latin"],
+    "rationale": "The salsa and Latin pop tumbao: the bass skips beat 1 and lands on the 'and' of 2 and on beat 4. That leaves the downbeat to the percussion and gives Latin songs their forward lean. In a real tumbao the beat-4 note anticipates the next chord. Here every note takes the chord sounding at its own beat, so beat 4 plays the current root and the fifth falls on the 'and' of 2. Four takes: classic (fifth then root), with a held root on 1 for entering a section, a root-octave version, and a sparser verse take.",
+    "patterns": [
+      [[1.5, 1.5, 7], [3, 1, 0], [5.5, 1.5, 7], [7, 1, 0]],
+      [[0, 1.5, 0], [1.5, 1.5, 7], [3, 1, 0], [5.5, 1.5, 7], [7, 1, 0]],
+      [[1.5, 1.5, 12], [3, 1, 0], [5.5, 1.5, -5], [7, 1, 0]],
+      [[0, 1.5, 0], [3, 1, 0], [4, 1.5, 0], [7, 1, 7]]
+    ]
+  },
+  {
+    "id": "latin-reggaeton-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Reggaeton bass",
+    "genres": ["latin"],
+    "rationale": "A reggaeton bass that locks to the dembow: short notes on beat 1, the 'a' of 1 (three 16ths later) and the 'and' of 2, repeated in each half-bar. The bass then pushes with the snare instead of fighting it. Three takes: all roots; a fifth below on the off-hits; and one that holds a long root through the second half of bar 2 to breathe.",
+    "patterns": [
+      [[0, 0.5, 0], [0.75, 0.5, 0], [1.5, 0.5, 0], [2, 0.5, 0], [2.75, 0.5, 0], [3.5, 0.5, 0],
+       [4, 0.5, 0], [4.75, 0.5, 0], [5.5, 0.5, 0], [6, 0.5, 0], [6.75, 0.5, 0], [7.5, 0.5, 0]],
+      [[0, 0.5, 0], [0.75, 0.5, -5], [1.5, 0.5, 0], [2, 0.5, 0], [2.75, 0.5, -5], [3.5, 0.5, 0],
+       [4, 0.5, 0], [4.75, 0.5, -5], [5.5, 0.5, 0], [6, 0.5, 0], [6.75, 0.5, -5], [7.5, 0.5, 0]],
+      [[0, 0.5, 0], [0.75, 0.5, 0], [1.5, 0.5, 0], [2, 0.5, 0], [2.75, 0.5, 0], [3.5, 0.5, 0],
+       [4, 0.5, 0], [4.75, 0.5, 0], [5.5, 0.5, 0], [6, 2, 0]]
+    ]
+  },
+  {
+    "id": "organic-motown-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Soul / Motown bass",
+    "genres": ["organicVibes", "brightPop"],
+    "rationale": "The bouncing soul bass of Motown and of today's soul-pop. It uses root, octave and fifth with a dotted figure: a long root on 1, a pickup 16th before beat 2, the octave popping on the 'and' of 2, and the fifth walking back to the root. It moves more than a pumping pop bass without leaving the chord, because only root, fifth and octave are used and those fit every chord. Four takes, from busy to laid back.",
+    "patterns": [
+      [[0, 0.75, 0], [0.75, 0.25, 0], [1, 0.5, 12], [1.5, 0.5, 0], [2, 0.75, 7], [2.75, 0.25, 7], [3, 0.5, 12], [3.5, 0.5, 7],
+       [4, 0.75, 0], [4.75, 0.25, 0], [5, 0.5, 12], [5.5, 0.5, 0], [6, 1, 7], [7, 0.5, -5], [7.5, 0.5, 0]],
+      [[0, 1.5, 0], [1.5, 0.5, 12], [2, 1, 7], [3, 0.5, 0], [3.5, 0.5, 12],
+       [4, 1.5, 0], [5.5, 0.5, 12], [6, 1, 7], [7, 0.5, 12], [7.5, 0.5, 7]],
+      [[0, 0.75, 0], [0.75, 0.75, 0], [1.5, 0.5, -5], [2, 1.5, 0], [3.5, 0.5, 7],
+       [4, 0.75, 0], [4.75, 0.75, 0], [5.5, 0.5, -5], [6, 1, 0], [7, 0.5, 7], [7.5, 0.5, 12]],
+      [[0, 2.5, 0], [2.5, 0.5, 7], [3, 1, 12], [4, 2.5, 0], [6.5, 0.5, 7], [7, 0.5, -5], [7.5, 0.5, 0]]
+    ]
+  },
+  {
+    "id": "ballad-sustain-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Ballad held bass with pickups",
+    "genres": ["ballad"],
+    "rationale": "How a bassist plays a slow ballad: long roots that let the chord ring, re-struck on beat 3 so they follow chords that change mid-bar, plus a short fifth or octave pickup into the next bar for a gentle push. It is quieter than a pop bass but still moves the song forward. Four takes: half notes; whole notes with a pickup; root then fifth-below; and dotted half plus an octave pickup.",
+    "patterns": [
+      [[0, 1.9, 0], [2, 1.9, 0], [4, 1.9, 0], [6, 1.4, 0], [7.5, 0.5, 7]],
+      [[0, 1.9, 0], [2, 1.4, 0], [3.5, 0.5, -5], [4, 1.9, 0], [6, 1.4, 0], [7.5, 0.5, 7]],
+      [[0, 1.9, 0], [2, 1.9, -5], [4, 1.9, 0], [6, 1.9, -5]],
+      [[0, 1.9, 0], [2, 1, 0], [3, 1, 12], [4, 1.9, 0], [6, 1.4, 0], [7.5, 0.5, 12]]
+    ]
+  },
+  {
+    "id": "rock-drive-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Rock driving bass with fills",
+    "genres": ["rock", "brightPop"],
+    "rationale": "Straight-eighth rock bass, the engine of most guitar rock, with a short root-fifth-octave turn at the end of bar 2 to lead into the next phrase, as a bassist would. Four takes: plain eighths with an octave turnaround; eighths with an octave jump on the 'and' of 4; a galloping eighth-and-two-sixteenths take for the chorus; and half-time quarters for verses.",
+    "patterns": [
+      [[0, 0.45, 0], [0.5, 0.45, 0], [1, 0.45, 0], [1.5, 0.45, 0], [2, 0.45, 0], [2.5, 0.45, 0], [3, 0.45, 0], [3.5, 0.45, 0],
+       [4, 0.45, 0], [4.5, 0.45, 0], [5, 0.45, 0], [5.5, 0.45, 0], [6, 0.45, 0], [6.5, 0.45, 7], [7, 0.45, 12], [7.5, 0.45, 7]],
+      [[0, 0.45, 0], [0.5, 0.45, 0], [1, 0.45, 0], [1.5, 0.45, 0], [2, 0.45, 0], [2.5, 0.45, 0], [3, 0.45, 0], [3.5, 0.45, 12],
+       [4, 0.45, 0], [4.5, 0.45, 0], [5, 0.45, 0], [5.5, 0.45, 0], [6, 0.45, 0], [6.5, 0.45, 0], [7, 0.45, -5], [7.5, 0.45, 12]],
+      [[0, 0.45, 0], [0.5, 0.2, 0], [0.75, 0.2, 0], [1, 0.45, 0], [1.5, 0.2, 0], [1.75, 0.2, 0], [2, 0.45, 0], [2.5, 0.2, 0], [2.75, 0.2, 0], [3, 0.45, 0], [3.5, 0.2, 0], [3.75, 0.2, 0],
+       [4, 0.45, 0], [4.5, 0.2, 0], [4.75, 0.2, 0], [5, 0.45, 0], [5.5, 0.2, 0], [5.75, 0.2, 0], [6, 0.45, 0], [6.5, 0.2, 0], [6.75, 0.2, 0], [7, 0.45, 7], [7.5, 0.45, 12]],
+      [[0, 0.9, 0], [1, 0.9, 0], [2, 0.9, 0], [3, 0.9, 0], [4, 0.9, 0], [5, 0.9, 0], [6, 0.9, 7], [7, 0.9, 12]]
+    ]
+  },
+  {
+    "id": "urban-rnb-bass",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "R&B / neo-soul bass",
+    "genres": ["urban", "organicVibes"],
+    "rationale": "A laid-back R&B and neo-soul bass. It plays behind the beat: a root on 1, a late 16th push before beat 3, and the octave answering on the 'a' of 3. It leaves space for the vocal, unlike the urban generator's long 808 notes. Three takes: sparse; with a fifth-below approach; and a fuller version with a short octave-and-back turn.",
+    "patterns": [
+      [[0, 1.25, 0], [1.75, 0.25, 0], [2.25, 1, 0], [3.75, 0.25, 12], [4, 1.25, 0], [5.75, 0.25, 0], [6.25, 1.25, 0]],
+      [[0, 1.25, 0], [1.75, 0.25, -5], [2, 1.25, 0], [3.5, 0.5, 7], [4, 1.25, 0], [5.75, 0.25, -5], [6, 1, 0], [7.25, 0.5, -5]],
+      [[0, 0.75, 0], [0.75, 0.25, 12], [1, 0.5, 0], [1.75, 0.25, 0], [2.25, 0.75, 0], [3, 0.25, 12], [3.5, 0.5, 7],
+       [4, 0.75, 0], [4.75, 0.25, 12], [5, 0.5, 0], [5.75, 0.25, 0], [6.25, 1, 0], [7.5, 0.5, -5]]
+    ]
+  }
+]

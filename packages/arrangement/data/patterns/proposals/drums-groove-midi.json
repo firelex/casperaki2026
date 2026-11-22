@@ -1,0 +1,2164 @@
+[
+  {
+    "id": "gmd-latin-baiao-bomba",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Bai\u00e3o, ijex\u00e1 and bomba grooves",
+    "genres": [
+      "latin"
+    ],
+    "rationale": "Kit versions of Brazilian and Caribbean folk rhythms: the bai\u00e3o (kick on 1 and the 'a' of 1, played with a tight hi-hat or ride figure), the ijex\u00e1 ride pattern and the Puerto Rican bomba. They sit lightly under a pop song and give latin a non-reggaeton colour. Played by two session drummers in the Groove MIDI styles latin/brazilian-baiao (95 and 110 BPM), latin/brazilian-ijexa (108 BPM), latin/bomba (96 BPM) and afrocuban (105 BPM, a cascara-style ride). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.0,
+          2.75,
+          4.0,
+          4.75,
+          6.0,
+          6.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          1.0,
+          1.25,
+          1.5,
+          2.0,
+          2.25,
+          2.5,
+          3.0,
+          3.25,
+          3.5,
+          4.0,
+          4.25,
+          4.5,
+          5.0,
+          5.25,
+          5.5,
+          6.0,
+          6.25,
+          6.5,
+          7.0,
+          7.25,
+          7.5
+        ],
+        "rim": [
+          1.5,
+          3.5,
+          5.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.0,
+          2.75,
+          4.0,
+          4.75,
+          6.0,
+          6.75
+        ],
+        "ride": [
+          0.0,
+          0.25,
+          0.5,
+          1.0,
+          1.25,
+          1.5,
+          2.0,
+          2.25,
+          2.5,
+          3.0,
+          3.25,
+          3.5,
+          4.0,
+          4.25,
+          4.5,
+          5.0,
+          5.25,
+          5.5,
+          6.0,
+          6.25,
+          6.5,
+          7.0,
+          7.25,
+          7.5
+        ],
+        "hiHatPedal": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "rim": [
+          1.5,
+          3.5,
+          5.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.0,
+          2.75,
+          4.0,
+          4.75,
+          6.0,
+          6.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          0.75,
+          1.25,
+          1.5,
+          2.0,
+          2.5,
+          2.75,
+          3.25,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.25,
+          5.5,
+          6.0,
+          6.5,
+          6.75,
+          7.25,
+          7.5
+        ],
+        "snareDrum1": [
+          1.5,
+          3.5,
+          5.5,
+          6.25,
+          7.5
+        ]
+      },
+      {
+        "ride": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.25,
+          2.75,
+          3.25,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.25,
+          6.75,
+          7.0,
+          7.5
+        ],
+        "hiHatPedal": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "bassDrum1": [
+          1.0,
+          1.5,
+          3.0,
+          3.5,
+          5.0,
+          5.5,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          2.25,
+          6.25
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.5,
+          2.75,
+          3.5,
+          4.75,
+          5.5,
+          6.75,
+          7.0,
+          7.5
+        ],
+        "hiHatPedal": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "ride": [
+          0.0,
+          1.0,
+          1.5,
+          1.75,
+          2.0,
+          2.5,
+          2.75,
+          3.0,
+          3.5,
+          3.75,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          5.75,
+          6.0,
+          6.5,
+          6.75,
+          7.0,
+          7.5,
+          7.75
+        ],
+        "rim": [
+          0.5,
+          4.5
+        ],
+        "snareDrum1": [
+          1.75,
+          5.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-latin-samba-kit",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Samba and samba-reggae on the kit",
+    "genres": [
+      "latin"
+    ],
+    "rationale": "The samba kick (a pulse on every beat with a pickup on the 'a'), with the snare or toms playing the surdo and tamborim parts, plus the samba-reggae and maracatu tom grooves from north-east Brazil. These are busier and more percussive than the other latin grooves, for upbeat Brazilian-flavoured songs. From the Groove MIDI styles latin/brazilian-samba (89 and 93 BPM), latin/brazilian-sambareggae (96 BPM) and latin/brazilian-maracatu (96 BPM), all one drummer. From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "ride": [
+          0.0,
+          0.5,
+          0.75,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          2.75,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          6.75,
+          7.0,
+          7.5
+        ],
+        "tom2": [
+          0.0,
+          1.75,
+          4.0,
+          5.75
+        ],
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.0,
+          1.75,
+          2.0,
+          2.75,
+          3.0,
+          3.75,
+          4.0,
+          4.75,
+          5.0,
+          5.75,
+          6.0,
+          6.75,
+          7.0,
+          7.75
+        ],
+        "snareDrum1": [
+          0.5,
+          2.25,
+          4.5,
+          6.25
+        ],
+        "hiHatPedal": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "tom3": [
+          1.25,
+          3.0,
+          3.5,
+          5.25,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.0,
+          1.75,
+          2.0,
+          2.75,
+          3.0,
+          3.75,
+          4.0,
+          4.75,
+          5.0,
+          5.75,
+          6.0,
+          6.75,
+          7.0,
+          7.75
+        ],
+        "snareDrum1": [
+          0.5,
+          2.25,
+          2.75,
+          3.75,
+          4.5,
+          4.75,
+          6.25,
+          6.75
+        ],
+        "hiHatPedal": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "tom3": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "rim": [
+          5.75,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "tom1": [
+          0.0,
+          2.0,
+          4.0,
+          4.5,
+          6.0
+        ],
+        "hiHatPedal": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "snareDrum1": [
+          0.75,
+          2.75,
+          4.25,
+          4.75,
+          6.75
+        ],
+        "tom2": [
+          1.0,
+          1.5,
+          5.0,
+          5.5
+        ],
+        "tom3": [
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          1.5,
+          2.25,
+          3.25,
+          3.75,
+          4.0,
+          5.0,
+          5.5,
+          6.25,
+          7.25,
+          7.75
+        ],
+        "snareDrum1": [
+          0.0,
+          0.75,
+          1.0,
+          2.25,
+          3.25,
+          4.0,
+          6.25,
+          7.25
+        ],
+        "hiHatPedal": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "rim": [
+          1.5,
+          4.0,
+          5.0,
+          5.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-latin-pop-street",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Reggaeton and latin-pop backbeats",
+    "genres": [
+      "latin"
+    ],
+    "rationale": "Grooves that put a latin kick or snare figure inside a pop frame: a live-played reggaeton dembow on side stick over four-on-the-floor, a cumbia-like pattern with the snare on the 'ands' of 2 and 4, and a funk/latin groove with a syncopated kick under a straight backbeat. All at 90-100 BPM, inside the latin range. From the Groove MIDI styles latin/reggaeton (90 BPM), latin (95 BPM) and funk/latin (100 BPM). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0
+        ],
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "rim": [
+          0.75,
+          1.5,
+          2.75,
+          3.5,
+          4.75,
+          5.5,
+          6.75,
+          7.5
+        ],
+        "hiHatOpen": [
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.25,
+          2.75,
+          3.0,
+          4.0,
+          4.75,
+          6.25,
+          6.75,
+          7.0
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          6.0,
+          6.25,
+          6.5,
+          6.75
+        ],
+        "snareDrum1": [
+          1.5,
+          3.5,
+          5.5,
+          7.25,
+          7.5
+        ],
+        "hiHatOpen": [
+          3.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.25,
+          1.75,
+          4.0,
+          4.5,
+          5.25,
+          5.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-urban-boom-bap",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Boom-bap hip hop from live drummers",
+    "genres": [
+      "urban"
+    ],
+    "rationale": "Live-played hip hop beats: snare on 2 and 4, a kick that dances around the 16ths, and 8th or 16th hi-hats, including one with only off-beat hats and one with a closed-closed-open hat figure. They give urban the human, slightly loose boom-bap feel that programmed patterns lack. From the Groove MIDI style hiphop at 67-90 BPM, two different drummers. From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ],
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.5,
+          2.25,
+          2.5,
+          3.25,
+          3.75,
+          4.0,
+          4.75,
+          5.5,
+          6.25,
+          6.5,
+          7.25,
+          7.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.5,
+          1.75,
+          2.0,
+          3.75,
+          4.0,
+          4.5,
+          5.75,
+          6.0,
+          7.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.5,
+          0.75,
+          1.25,
+          1.5,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.25,
+          5.5,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          1.0,
+          1.25,
+          2.0,
+          2.25,
+          3.0,
+          3.25,
+          4.0,
+          4.25,
+          5.0,
+          5.25,
+          6.0,
+          6.25,
+          7.0,
+          7.25
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.75,
+          2.0,
+          2.5,
+          3.25,
+          4.0,
+          5.75,
+          6.0
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          4.5,
+          5.5,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-urban-soul-funk-pocket",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Slow soul and funk pocket",
+    "genres": [
+      "urban",
+      "organicVibes"
+    ],
+    "rationale": "Sixteenth-note hi-hat grooves with a syncopated kick and a firm backbeat, the pocket under slow R&B and neo-soul. At 80-87 BPM they suit urban and also the slower end of organic vibes. From the Groove MIDI styles hiphop/groove6 (87 BPM), funk (80-81 BPM) and afrobeat (85 BPM), played by two studio drummers. From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0.0,
+          1.75,
+          2.25,
+          2.5,
+          3.25,
+          3.75,
+          4.0,
+          5.75,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.25,
+          2.25,
+          4.0,
+          4.75,
+          5.25,
+          5.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          7.5
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25
+        ],
+        "bassDrum1": [
+          0.0,
+          0.5,
+          2.25,
+          2.5,
+          3.25,
+          4.0,
+          4.5,
+          6.25,
+          6.5,
+          7.25
+        ],
+        "snareDrum1": [
+          1.0,
+          1.75,
+          2.75,
+          3.5,
+          5.0,
+          5.75,
+          6.75,
+          7.5
+        ],
+        "hiHatOpen": [
+          3.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.5,
+          1.5,
+          1.75,
+          2.5,
+          3.25,
+          4.0,
+          4.5,
+          5.5,
+          5.75,
+          6.5,
+          7.25
+        ],
+        "hiHatClosed1": [
+          0.0,
+          1.0,
+          1.5,
+          1.75,
+          2.5,
+          3.25,
+          4.0,
+          5.0,
+          5.5,
+          5.75,
+          6.5,
+          7.25
+        ],
+        "hiHatOpen": [
+          0.5,
+          4.5
+        ],
+        "snareDrum1": [
+          1.0,
+          2.25,
+          3.0,
+          5.0,
+          6.25,
+          7.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-organic-soul-backbeat",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Light soul and pop backbeats",
+    "genres": [
+      "organicVibes"
+    ],
+    "rationale": "Uncluttered 8th-note soul grooves: snare on 2 and 4, a kick that lands on 1 and one or two off-beat pushes, one take with only the pedal hi-hat keeping time, and an afrobeat-flavoured pop groove with an open-hat accent. They have the warm, played-by-a-person feel of acoustic soul-pop and singer-songwriter records. From the Groove MIDI styles soul/groove10, soul/groove9 (102-105 BPM), pop/soft (83 BPM) and afrobeat (103 BPM). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          2.5,
+          3.75,
+          4.0,
+          6.5,
+          7.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "hiHatPedal": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          2.25,
+          2.5,
+          4.0,
+          6.25,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          0.25,
+          1.5,
+          2.5,
+          4.0,
+          4.25,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          5.0,
+          6.0,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          1.5,
+          4.0,
+          5.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.75,
+          2.5,
+          3.25,
+          4.0,
+          5.75,
+          6.5,
+          7.25
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "hiHatOpen": [
+          0.75,
+          4.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-organic-funk-pop",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Mid-tempo funk-pop grooves",
+    "genres": [
+      "organicVibes",
+      "brightPop"
+    ],
+    "rationale": "Funk grooves light enough for a pop song: an open hi-hat on the 'and' of 3, a kick with one or two 16th-note pickups, and in one take four-on-the-floor under a doubled snare. They suit the 95-105 BPM end of organic vibes and the lower end of bright pop. From the Groove MIDI styles funk/groove2 (105 BPM), funk (95 BPM) and soul (105 BPM). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.75,
+          2.25,
+          2.5,
+          4.0,
+          4.75,
+          5.75,
+          6.25,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          2.5,
+          6.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          2.0,
+          4.0,
+          4.75,
+          5.25,
+          5.75,
+          6.0
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          2.5,
+          6.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          1.25,
+          1.75,
+          2.75,
+          4.0,
+          4.75,
+          5.25,
+          5.75,
+          6.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          1.0,
+          2.0,
+          4.0,
+          5.0,
+          6.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          3.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          0.5,
+          2.5,
+          4.5,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          1.5,
+          3.0,
+          3.5,
+          5.0,
+          5.5,
+          7.0,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0,
+          1.5,
+          1.75,
+          2.0,
+          3.5,
+          3.75,
+          4.0,
+          5.5,
+          5.75,
+          6.0,
+          7.5,
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-ballad-played",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Played ballad grooves",
+    "genres": [
+      "ballad"
+    ],
+    "rationale": "Slow backbeat grooves the way a session drummer plays a ballad: 8th or 16th hi-hats, snare on 2 and 4, a sparse kick, plus one country-style take with off-beat hats and one 12/8 take (triplet hi-hats, written in 4/4 with triplet positions). From the Groove MIDI styles rock/groove8 (65 BPM), rock (75 BPM), soul/groove4 (80 BPM), country (78 BPM) and rock (50 BPM, the 12/8 one, which also sits well at 65-70). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0.0,
+          1.75,
+          2.0,
+          4.0,
+          5.75,
+          6.0,
+          7.25
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          6.75,
+          7.0
+        ],
+        "hiHatOpen": [
+          7.25
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25
+        ],
+        "bassDrum1": [
+          0.0,
+          1.75,
+          2.0,
+          3.75,
+          4.0,
+          5.75,
+          6.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          7.5
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          1.75,
+          2.25,
+          2.5,
+          3.0,
+          3.5,
+          3.75,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          5.75,
+          6.25,
+          6.5,
+          7.0,
+          7.5,
+          7.75
+        ],
+        "bassDrum1": [
+          0.0,
+          2.0,
+          4.0,
+          6.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          4.0
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          2.0,
+          4.0,
+          6.0
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.333,
+          0.667,
+          1.0,
+          1.333,
+          1.667,
+          2.0,
+          2.333,
+          2.667,
+          3.0,
+          3.333,
+          4.0,
+          4.333,
+          4.667,
+          5.0,
+          5.333,
+          5.667,
+          6.0,
+          6.333,
+          6.667,
+          7.0,
+          7.333
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          3.667,
+          7.667
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-schlager-disco",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Live disco four-on-the-floor",
+    "genres": [
+      "schlager",
+      "brightPop"
+    ],
+    "rationale": "Four-on-the-floor kick with the snare on 2 and 4: closed hat on the beat and open hat on the off-beat (the classic Discofox), 16th hats, a ride version with the pedal hat on 2 and 4, and a rock take with open hats on every beat. Played by a human drummer, so it breathes more than a programmed Discofox. From the Groove MIDI styles dance/disco (120 BPM) and rock (120 BPM). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatClosed1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          7.5,
+          7.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          6.75
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.0,
+          5.5,
+          6.0,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          0.5,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          5.75,
+          7.0
+        ]
+      },
+      {
+        "ride": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatPedal": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          0.0,
+          1.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatClosed1": [
+          2.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-brightpop-funk-pop",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Live pop-funk backbeats",
+    "genres": [
+      "brightPop"
+    ],
+    "rationale": "Bright, driving 8th-note grooves, mostly with the kick on 1 and the 'ands' of 1 and 3, open-hat lifts, one with a side-stick backbeat and one with a busier 16th-note hat figure. This is the sound of upbeat live pop. From the Groove MIDI styles funk (112 BPM), funk/fast (125 BPM) and pop/groove7 (138 BPM, a touch above the bright pop range). From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          0.5,
+          2.5,
+          4.0,
+          4.5,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          2.5,
+          6.5
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          0.5,
+          2.5,
+          4.0,
+          4.5,
+          6.5
+        ],
+        "rim": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          0.75,
+          1.0,
+          2.0,
+          2.5,
+          2.75,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.0,
+          6.0,
+          6.5,
+          6.75,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.5,
+          2.75,
+          4.0,
+          4.75,
+          6.5,
+          6.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          1.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          2.0,
+          4.0,
+          6.5
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "gmd-rock-straight",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Straight rock from session drummers",
+    "genres": [
+      "rock"
+    ],
+    "rationale": "Plain, strong rock beats: 8th or 16th hi-hats or ride, snare on 2 and 4, and kick patterns with one or two syncopations, including one that switches from open to closed hats between the bars. Real performances, so each has the small variations a drummer plays in bar 2. From the Groove MIDI style rock at 100-120 BPM, three different drummers. From the Groove MIDI Dataset (Google Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.0,
+          2.5,
+          4.0,
+          4.25,
+          6.0
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.0,
+          5.5,
+          6.0,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.5,
+          2.0,
+          2.5,
+          3.5,
+          4.0,
+          4.5,
+          5.5,
+          6.0,
+          6.5,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          0.5,
+          2.0,
+          2.5,
+          4.0,
+          6.0,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          2.0,
+          2.5,
+          4.0,
+          4.5,
+          6.0,
+          6.5
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatOpen": [
+          1.25,
+          3.25,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          2.0,
+          3.0,
+          3.5,
+          4.0,
+          5.0,
+          6.0,
+          6.5,
+          7.5
+        ],
+        "ride": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "ride": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          2.5,
+          4.0,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          1.75,
+          2.25,
+          3.0,
+          5.0,
+          5.75,
+          6.25,
+          7.0
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          0.5,
+          1.5,
+          2.0,
+          2.5,
+          3.5,
+          4.0,
+          6.5,
+          7.5
+        ],
+        "hiHatOpen": [
+          0.0,
+          1.0,
+          2.0,
+          3.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "hiHatClosed1": [
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      }
+    ]
+  }
+]
