@@ -1,23 +1,17 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { renderInFlight, renderLabel, songsApi, type ReplayResult } from '../api/songs';
 import { useSession } from '../state/session';
 import { useRenderStatus, useSaveSong, useStartRender } from '../state/useSongActions';
 import type { EditorTab } from '../pages/EditorPage';
+import { Transport } from './Transport';
 
 /**
- * Editor header — mirrors rory-fe `Editor.vue` header:
- *
- *   ┌──────────────────────────────────────────────────────────────┐
- *   │ ← ↶ ↷   Sound Design   Timeline   Structure        ⚙ Publish │
- *   └──────────────────────────────────────────────────────────────┘
- *
- * Active tab carries a 4px red top-underline (rory's `nav a.active::before`).
- * Right side: Save (when there are unsaved edits) and Render, the
- * primary action. Render works on the saved song, so with unsaved edits
- * it saves first ("Save & render"). The ⟳ button replays the generator
- * to verify determinism.
+ * The editor's control bar, laid out like a DAW's: logo (back to the songs),
+ * song name and save state, undo/redo on the left; the transport in the
+ * centre; the views, Save and Export on the right. The ⟳ button replays the
+ * generator to verify determinism.
  */
 export function EditorHeader({ tab }: { tab: EditorTab }) {
   const navigate = useNavigate();
@@ -53,113 +47,74 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
     if (songId) navigate(`/editor/${songId}/${tab2Path(t)}`);
   };
 
+  const pill =
+    'h-8 rounded-[5px] border border-black/60 bg-gradient-to-b from-[#3b3d43] to-[#2b2c31] px-3 text-[12px] font-semibold text-[#e2e3e7] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:from-[#45474e] disabled:opacity-45';
+
   return (
-    <header className="flex items-stretch justify-between w-full h-[72px] border-b border-line/80 bg-[#0d0d17]">
-      <div className="flex items-center pl-8 pr-4">
-        <IconBtn label="Back" onClick={() => navigate('/')}>
-          ←
-        </IconBtn>
-        <IconBtn
-          label={canUndo ? 'Undo' : 'Nothing to undo'}
-          onClick={() => applyEdit({ kind: 'undo' })}
-          disabled={!canUndo}
-        >
-          ↶
-        </IconBtn>
-        <IconBtn
-          label={canRedo ? 'Redo' : 'Nothing to redo'}
-          onClick={() => applyEdit({ kind: 'redo' })}
-          disabled={!canRedo}
-        >
-          ↷
-        </IconBtn>
-        <span className="ml-6 text-[11px] uppercase tracking-[0.18em] text-dim font-semibold">
-          editor
-        </span>
-        {activeSong ? (
-          <span
-            className="ml-3 text-[14px] text-white/90 font-semibold truncate max-w-[22vw]"
-            title={`#${activeSong.id}`}
-          >
-            {activeSong.project.title}
+    <header className="relative z-40 flex h-[56px] w-full shrink-0 items-center gap-4 border-b border-black/80 bg-gradient-to-b from-[#36383e] to-[#2a2b30] px-4 text-[#e2e3e7]">
+      {/* Left: logo, song, undo/redo. */}
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <Link to="/" className="app-wordmark shrink-0 text-[20px] text-white" title="Back to your songs">
+          casper<span className="text-accent">aki</span>
+        </Link>
+        <span className="h-6 w-px shrink-0 bg-black/50" aria-hidden="true" />
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate text-[13px] font-semibold text-white" title={activeSong ? `#${activeSong.id}` : undefined}>
+            {activeSong?.project.title ?? 'Untitled'}
           </span>
-        ) : null}
-        {editorDirty ? (
-          <span
-            className="ml-3 text-[10px] uppercase tracking-[0.18em] text-accent font-semibold"
-            title="Unsaved edits — press Save to keep them"
-          >
-            ● unsaved
+          <span className="text-[10px] text-[#9a9ba3]">
+            {editorDirty ? <span className="text-accent">● Unsaved edits</span> : 'Saved'}
+            {lastReplay ? (
+              <span className={lastReplay.ok ? 'text-ok' : 'text-err'} title={lastReplay.hash}>
+                {' '}· replay {lastReplay.ok ? 'ok' : 'mismatch'}
+              </span>
+            ) : null}
           </span>
-        ) : null}
+        </div>
+        <div className="ml-2 flex shrink-0 items-center">
+          <IconBtn label={canUndo ? 'Undo (Ctrl+Z)' : 'Nothing to undo'} onClick={() => applyEdit({ kind: 'undo' })} disabled={!canUndo}>
+            ↶
+          </IconBtn>
+          <IconBtn label={canRedo ? 'Redo (Ctrl+Shift+Z)' : 'Nothing to redo'} onClick={() => applyEdit({ kind: 'redo' })} disabled={!canRedo}>
+            ↷
+          </IconBtn>
+        </div>
       </div>
 
-      <nav className="flex items-center">
-        <TabLink active={tab === 'sound'} onClick={() => setTab('sound')}>
-          Sound Design
-        </TabLink>
-        <TabLink active={tab === 'timeline'} onClick={() => setTab('timeline')}>
-          Timeline
-        </TabLink>
-        <TabLink active={tab === 'structure'} onClick={() => setTab('structure')}>
-          Structure
-        </TabLink>
-      </nav>
+      {/* Centre: the transport. */}
+      <Transport />
 
-      <div className="flex items-center pl-4 pr-10 gap-3">
-        {editorDirty ? (
-          <button
-            type="button"
-            onClick={() => applyEdit({ kind: 'revertToOriginal' })}
-            className="h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-semibold text-white/80 border border-line hover:border-accent hover:text-white"
-            title="Discard edits and restore the brain-generated song"
-          >
-            Revert
-          </button>
-        ) : null}
-        {lastReplay ? (
-          <span
-            className={`text-[11px] uppercase tracking-wide font-semibold ${
-              lastReplay.ok ? 'text-ok' : 'text-err'
-            }`}
-            title={lastReplay.hash}
-          >
-            replay {lastReplay.ok ? 'ok' : 'mismatch'}
-          </span>
-        ) : null}
-        <IconBtn
-          label={replay.isPending ? 'Verifying…' : 'Verify determinism (replay)'}
-          onClick={() => replay.mutate()}
-          disabled={!activeSong || replay.isPending}
-        >
+      {/* Right: views, save, export. */}
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+        <nav className="flex rounded-[6px] border border-black/60 bg-[#1f2023] p-0.5" aria-label="Editor views">
+          <TabLink active={tab === 'sound'} onClick={() => setTab('sound')}>Sounds</TabLink>
+          <TabLink active={tab === 'timeline'} onClick={() => setTab('timeline')}>Tracks</TabLink>
+          <TabLink active={tab === 'structure'} onClick={() => setTab('structure')}>Structure</TabLink>
+        </nav>
+        <IconBtn label={replay.isPending ? 'Verifying…' : 'Verify determinism (replay)'} onClick={() => replay.mutate()} disabled={!activeSong || replay.isPending}>
           ⟳
         </IconBtn>
         {actionError ? (
-          <span className="text-err text-[11px] max-w-[220px] truncate" title={actionError.message}>
+          <span className="max-w-[180px] truncate text-[11px] text-err" title={actionError.message}>
             {actionError.message}
           </span>
         ) : null}
         {editorDirty ? (
-          <button
-            type="button"
-            onClick={() => save.mutate()}
-            disabled={save.isPending}
-            className="h-11 px-5 rounded-full border border-line text-white text-[14px] font-semibold uppercase tracking-wide hover:border-accent disabled:opacity-50"
-            title="Save the edited song to your projects"
-          >
-            {save.isPending ? 'Saving…' : 'Save'}
-          </button>
+          <>
+            <button type="button" onClick={() => applyEdit({ kind: 'revertToOriginal' })} className={pill} title="Discard edits and restore the generated song">
+              Revert
+            </button>
+            <button type="button" onClick={() => save.mutate()} disabled={save.isPending} className={pill} title="Save the edited song to your projects">
+              {save.isPending ? 'Saving…' : 'Save'}
+            </button>
+          </>
         ) : null}
         <button
           type="button"
           onClick={() => void onRender()}
           disabled={!activeSong || rendering || save.isPending || (rendered && !editorDirty)}
-          className="h-11 px-6 rounded-full border border-line text-white text-[14px] font-semibold uppercase tracking-wide hover:border-white/60 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          title={
-            rendered && !editorDirty
-              ? 'WAV and MP3 are ready: download them from the bar below'
-              : 'Make WAV and MP3 files of this song (playing needs no export)'
-          }
+          className="h-8 rounded-[5px] border border-black/60 bg-gradient-to-b from-[#e0322b] to-[#b5221d] px-3.5 text-[12px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] hover:from-[#ec3d35] disabled:opacity-50"
+          title={rendered && !editorDirty ? 'WAV and MP3 are ready: download them from the status bar' : 'Make WAV and MP3 files of this song (playing needs no export)'}
         >
           {rendering
             ? `Exporting: ${renderLabel(renderStatus.data)}`
@@ -176,29 +131,14 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
   );
 }
 
-function TabLink({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: React.ReactNode;
-  onClick(): void;
-}) {
+function TabLink({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick(): void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative h-full px-7 text-[17px] font-medium transition-colors ${
-        active ? 'text-white' : 'text-white/50 hover:text-white/80'
-      }`}
+      aria-current={active ? 'page' : undefined}
+      className={`h-7 rounded-[4px] px-3 text-[12px] font-semibold ${active ? 'bg-[#4a4c53] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]' : 'text-[#a9aab1] hover:text-white'}`}
     >
-      <span
-        className={`absolute top-0 left-0 right-0 h-[3px] bg-accent transition-transform ${
-          active ? 'translate-y-0' : '-translate-y-[4px] opacity-0'
-        }`}
-        aria-hidden="true"
-      />
       {children}
     </button>
   );
@@ -222,10 +162,8 @@ function IconBtn({
       disabled={disabled}
       title={label}
       aria-label={label}
-      className={`h-10 w-10 mx-0.5 rounded-md flex items-center justify-center text-[18px] transition-colors ${
-        disabled
-          ? 'text-white/30 cursor-not-allowed'
-          : 'text-white/75 hover:text-white hover:bg-white/10'
+      className={`mx-0.5 flex h-8 w-8 items-center justify-center rounded-[5px] text-[16px] ${
+        disabled ? 'cursor-not-allowed text-white/25' : 'text-[#d9dade] hover:bg-white/10 hover:text-white'
       }`}
     >
       {children}

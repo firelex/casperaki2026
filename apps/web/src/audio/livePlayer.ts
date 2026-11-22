@@ -49,6 +49,34 @@ export interface LaneMeters {
   /** Peak level per bin, one array per lane (length doneBins). */
   readonly peaks: readonly Float32Array[];
   readonly done: boolean;
+  /** The mix as the engine resolved it for this version. */
+  readonly mix: ResolvedMix;
+}
+
+/** One IR track's mix as resolved by the engine (Mixer::laneInfoJson). */
+export interface ResolvedMixLane {
+  /** The instrument lane (sequencer row / mixer strip) it belongs to. */
+  readonly lane: string;
+  readonly track: string;
+  readonly lowLevelType: string;
+  /** The FX submix bus it is routed to (a rack chain in mix-config.json). */
+  readonly fxGroup: string;
+  /** Target volume, dB (null when the engine resolved none). */
+  readonly volumeDb: number | null;
+  readonly sendsDb: { readonly reverb: number | null; readonly delay: number | null; readonly chorus: number | null };
+}
+
+export interface ResolvedMix {
+  readonly mixEnabled: boolean;
+  readonly genre: string;
+  readonly lanes: readonly ResolvedMixLane[];
+  /** mix-config.json as the engine got it (rack chains, constants). */
+  readonly config: MixConfigJson;
+}
+
+export interface MixConfigJson {
+  readonly constants: { readonly masterVolumeDb: number };
+  readonly rackChains: readonly { readonly bus: string; readonly plugins: readonly { readonly factory: string; readonly params: readonly number[] }[] }[];
 }
 
 /** Meter resolution: 1024 frames ≈ 23 ms at 44.1 kHz. */
@@ -388,14 +416,21 @@ export class LivePlayer {
         let names: string[] = [];
         let binSec = 0;
         let binCount = 0;
+        let mix: ResolvedMix | undefined;
         worker.onmessage = (ev: MessageEvent) => {
-          const d = ev.data as { type: string; names?: string[]; binSec?: number; binCount?: number; doneBins?: number; peaks?: Float32Array[]; message?: string };
+          const d = ev.data as {
+            type: string; names?: string[]; binSec?: number; binCount?: number; doneBins?: number; peaks?: Float32Array[]; message?: string;
+            mix?: Omit<ResolvedMix, 'config'>;
+          };
           if (d.type === 'lanes') {
             names = d.names!;
             binSec = d.binSec!;
             binCount = d.binCount!;
+            if (!d.mix) throw new Error('The meter worker sent no mix.');
+            mix = { ...d.mix, config: JSON.parse(payload.mixConfig) as MixConfigJson };
           } else if (d.type === 'progress' || d.type === 'done') {
-            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, done: d.type === 'done' };
+            if (!mix) throw new Error('Track levels arrived before the lanes.');
+            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, done: d.type === 'done', mix };
             if (m.done) {
               this.meterCache.set(key, m);
               while (this.meterCache.size > METERS_CACHED) this.meterCache.delete(this.meterCache.keys().next().value!);

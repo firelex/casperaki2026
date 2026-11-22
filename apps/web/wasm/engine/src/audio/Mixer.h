@@ -49,6 +49,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -239,6 +240,32 @@ public:
     // One lane per instrument name, in track order (valid after build()). The
     // shared transition track + noise risers form the "Sample Transitions FX" lane.
     int laneCount() const { return (int)groups_.size(); }
+
+    // The mix as resolved, for the mixer view and debugging: one entry per IR
+    // track (several per instrument lane for drums), JSON:
+    //   {"lanes":[{"lane":<instrument lane>,"track":<IR track>,"lowLevelType":..,
+    //     "fxGroup":..,"volumeDb":<n|null>,"sendsDb":{"reverb":..,"delay":..,"chorus":..}}],
+    //    "mixEnabled":bool,"genre":..}
+    // The returned reference stays valid until the next call.
+    const std::string& laneInfoJson() {
+        nlohmann::json out;
+        out["mixEnabled"] = mixEnabled_;
+        out["genre"] = genre_;
+        out["lanes"] = nlohmann::json::array();
+        auto num = [](double v) { return std::isfinite(v) ? nlohmann::json(v) : nlohmann::json(nullptr); };
+        for (const auto& lane : lanes_) {
+            nlohmann::json l;
+            l["lane"] = lane.group >= 0 ? groups_[(size_t)lane.group].name : std::string();
+            l["track"] = lane.name;
+            l["lowLevelType"] = lane.lowLevelType;
+            l["fxGroup"] = lane.fxGroup;
+            l["volumeDb"] = num(lane.volumeDb);
+            l["sendsDb"] = {{"reverb", num(lane.sendDb[0])}, {"delay", num(lane.sendDb[1])}, {"chorus", num(lane.sendDb[2])}};
+            out["lanes"].push_back(std::move(l));
+        }
+        laneInfo_ = out.dump();
+        return laneInfo_;
+    }
     const std::string& laneName(int lane) const { return group(lane).name; }
 
     // Live lane gain (mute = 0, solo = 0 on the others). Takes effect on the next
@@ -648,11 +675,19 @@ private:
     // A mix lane = one IR track's sources + its routing (fxGroup submix + the 3
     // aux send gains). The disabled path sums every lane's sources flat (byte-
     // identical); the enabled path renders each lane and routes it through the graph.
+    std::string laneInfo_;   // laneInfoJson() result (kept for the C string's lifetime)
+
     struct Lane {
         std::vector<std::unique_ptr<Source>> sources;
         std::string name;       // IR track name (for matching automation by baseName)
         std::string fxGroup;
         float sendGain[3] = {0.0f, 0.0f, 0.0f};  // linear; 0 = no send (Scope B step 2)
+        // As resolved, for reporting (laneInfoJson): the lane's lowLevelType, its
+        // target volume and its send levels in dB (empty / NaN when not resolved).
+        std::string lowLevelType;
+        double volumeDb = std::numeric_limits<double>::quiet_NaN();
+        double sendDb[3] = {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(),
+                            std::numeric_limits<double>::quiet_NaN()};
         // Scope D — per-lane signalProcessors automation (cutoff-Hz / dB curves) +
         // the lowpass instance (allocated only when lpAuto is non-empty).
         std::vector<AutoPoint> lpAuto, volAuto;
@@ -747,10 +782,15 @@ private:
             lane.fxGroup = laneFxGroup(track);
             // Scope B: the 3 aux send gains (reverb/delay/chorus). bus 0=reverb,
             // 1=delay, 2=chorus — matching FX::Send + MixGraph::returns_.
-            const mix::FxSends sd = cfgLaneSends(lane.fxGroup, laneLowLevelType(track.name));
+            lane.lowLevelType = laneLowLevelType(track.name);
+            const mix::FxSends sd = cfgLaneSends(lane.fxGroup, lane.lowLevelType);
             lane.sendGain[0] = mix::dbToGain(sd.reverb);
             lane.sendGain[1] = mix::dbToGain(sd.delay);
             lane.sendGain[2] = mix::dbToGain(sd.chorus);
+            lane.sendDb[0] = sd.reverb;
+            lane.sendDb[1] = sd.delay;
+            lane.sendDb[2] = sd.chorus;
+            if (!lane.lowLevelType.empty()) lane.volumeDb = cfgTargetVol(lane.lowLevelType);
         }
         buildTrackSources(track, lane);
         if (!lane.sources.empty()) lanes_.push_back(std::move(lane));
@@ -783,6 +823,8 @@ private:
             Lane lane;
             lane.name = "Sample Transitions FX";  // matches no inst automation
             lane.fxGroup = "fx";
+            lane.lowLevelType = "fxNoiseRise";
+            lane.volumeDb = cfgTargetVol("fxNoiseRise");
             lane.sources.push_back(std::move(src));
             lanes_.push_back(std::move(lane));
         }

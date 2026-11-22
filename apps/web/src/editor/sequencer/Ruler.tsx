@@ -156,7 +156,7 @@ export function Ruler({
 
       {/* Bars|beats. */}
       <div
-        className="relative cursor-pointer border-b border-black/50 bg-[#151623]"
+        className="relative cursor-pointer border-b border-black/50 bg-[#2c2d32]"
         style={{ height: BARS_H }}
         onPointerDown={(e) =>
           beginRangeDrag(e, {
@@ -196,7 +196,7 @@ export function Ruler({
 
       {/* Minutes:seconds. */}
       <div
-        className="relative cursor-pointer border-b border-black/50 bg-[#121320]"
+        className="relative cursor-pointer border-b border-black/50 bg-[#25262a]"
         style={{ height: TIME_H }}
         onPointerDown={(e) =>
           beginRangeDrag(e, {
@@ -223,7 +223,7 @@ export function Ruler({
       {/* Loop / selection bar. */}
       <div
         ref={loopRef}
-        className="relative cursor-crosshair bg-[#0f1019]"
+        className="relative cursor-crosshair bg-[#1f2023]"
         style={{ height: LOOP_H }}
         onPointerDown={onLoopDown}
         onPointerMove={onLoopMove}

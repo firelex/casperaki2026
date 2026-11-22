@@ -297,6 +297,15 @@ const char* mixer_lane_name(int lane) {
     return laneCall("mixer_lane_name", (const char*)nullptr,
                     [lane](Mixer& m) { return m.laneName(lane).c_str(); });
 }
+// The resolved mix (Mixer::laneInfoJson): NUL-terminated UTF-8 JSON, or null on
+// error; mixer_lane_info_length gives its byte length. Valid until the next call.
+const char* mixer_lane_info() {
+    return laneCall("mixer_lane_info", (const char*)nullptr, [](Mixer& m) { return m.laneInfoJson().c_str(); });
+}
+int mixer_lane_info_length() {
+    return laneCall("mixer_lane_info_length", -1, [](Mixer& m) { return (int)m.laneInfoJson().size(); });
+}
+
 int mixer_lane_name_length(int lane) {
     return laneCall("mixer_lane_name_length", -1,
                     [lane](Mixer& m) { return (int)m.laneName(lane).size(); });

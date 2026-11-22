@@ -25,6 +25,7 @@ import { BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MIN_PX_PE
 import { beginRangeDrag } from './sequencer/rangeDrag';
 import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
+import { Mixer } from './sequencer/Mixer';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
 import { useTrackEdits } from './sequencer/useTrackEdits';
@@ -80,6 +81,25 @@ export function TimelineView() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [pxPerBar, setPxPerBar] = useState<number | undefined>(undefined);
   const [follow, setFollow] = useState(true);
+  const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
+  const toggleMixer = useCallback(() => {
+    setMixerOpen((o) => {
+      writePref('casperaki.mixerOpen', !o);
+      return !o;
+    });
+  }, []);
+  // X shows or hides the mixer (as in Logic).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'KeyX' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return;
+      e.preventDefault();
+      toggleMixer();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [toggleMixer]);
 
   const bpm = viewSong?.bpm ?? 120;
   const secondsPerBar = (BEATS_PER_BAR * 60) / bpm;
@@ -285,15 +305,24 @@ export function TimelineView() {
             <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="accent-[#ff0000]" />
             Follow playhead
           </label>
+          <button
+            type="button"
+            onClick={toggleMixer}
+            aria-pressed={mixerOpen}
+            title="Show or hide the mixer (X)"
+            className={`ml-3 h-8 rounded-[5px] border border-black/60 px-3 text-[12px] font-semibold ${mixerOpen ? 'bg-[#4a4c53] text-white' : 'bg-[#2b2c31] text-[#c4c5cb] hover:text-white'}`}
+          >
+            Mixer
+          </button>
         </div>
       </div>
 
-      <div ref={scrollerRef} className="relative min-h-0 flex-1 overflow-auto bg-[#0b0c15]">
+      <div ref={scrollerRef} className="relative min-h-0 flex-1 overflow-auto bg-[#18191c]">
         <div ref={contentRef} className="relative" style={{ width: HEADER_W + width, minHeight: '100%' }}>
           {/* Ruler. */}
-          <div className="sticky top-0 z-30 flex bg-[#0d0d17]" style={{ height: RULER_H }}>
+          <div className="sticky top-0 z-30 flex bg-[#1b1c1f]" style={{ height: RULER_H }}>
             <div
-              className="sticky left-0 z-40 flex shrink-0 flex-col border-b border-r border-line/60 bg-[#0d0d17] px-3 text-[10px] text-white/40"
+              className="sticky left-0 z-40 flex shrink-0 flex-col border-b border-r border-line/60 bg-[#1b1c1f] px-3 text-[10px] text-white/40"
               style={{ width: HEADER_W }}
             >
               <span style={{ height: MARKERS_H, lineHeight: `${MARKERS_H}px` }}>Sections</span>
@@ -375,7 +404,7 @@ export function TimelineView() {
               >
                 <div
                   className={`sticky left-0 z-10 flex shrink-0 cursor-default items-center gap-2.5 border-b border-r border-line/40 pr-3 ${
-                    selectedTrack === t.name ? 'bg-[#1a1c2b]' : 'bg-[#10111b]'
+                    selectedTrack === t.name ? 'bg-[#3a3c43]' : 'bg-[#2a2b30]'
                   }`}
                   style={{ width: HEADER_W }}
                   onClick={() => setSelectedTrack(t.name)}
@@ -430,7 +459,7 @@ export function TimelineView() {
 
           {/* Add a track. */}
           <div className="relative flex" style={{ height: 40 }}>
-            <div className="sticky left-0 z-10 flex shrink-0 items-center border-b border-r border-line/40 bg-[#10111b] px-4" style={{ width: HEADER_W }}>
+            <div className="sticky left-0 z-10 flex shrink-0 items-center border-b border-r border-line/40 bg-[#2a2b30] px-4" style={{ width: HEADER_W }}>
               <button
                 type="button"
                 onClick={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
@@ -446,7 +475,7 @@ export function TimelineView() {
           {/* Chords per bar, when there is room to read them. */}
           <div className="relative flex" style={{ height: CHORD_H }}>
             <div
-              className="sticky left-0 z-10 flex shrink-0 items-center border-r border-line/40 bg-[#10111b] px-4 text-[12px] text-white/55"
+              className="sticky left-0 z-10 flex shrink-0 items-center border-r border-line/40 bg-[#2a2b30] px-4 text-[12px] text-white/55"
               style={{ width: HEADER_W }}
             >
               Chords
@@ -479,6 +508,12 @@ export function TimelineView() {
           ) : null}
         </div>
       </div>
+
+      {mixerOpen ? (
+        <div className="h-[360px] shrink-0 border-t-2 border-black/80" aria-label="Mixer">
+          <Mixer tracks={model.tracks} meters={meters} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} />
+        </div>
+      ) : null}
 
       {detail && detailTrack && detailClip ? (
         <ClipDetail
@@ -734,4 +769,21 @@ function ToolButton({ onClick, label, children }: { onClick(): void; label: stri
 
 function dedupe(chords: readonly string[]): string[] {
   return chords.filter((c, i) => i === 0 || c !== chords[i - 1]);
+}
+
+/** A remembered view preference (localStorage may be unavailable: then the default). */
+function readPref(key: string, fallback: boolean): boolean {
+  try {
+    const v = window.localStorage.getItem(key);
+    return v === null ? fallback : v === '1';
+  } catch {
+    return fallback;
+  }
+}
+function writePref(key: string, value: boolean): void {
+  try {
+    window.localStorage.setItem(key, value ? '1' : '0');
+  } catch {
+    // Not stored (private window, blocked storage): the choice lasts this visit.
+  }
 }

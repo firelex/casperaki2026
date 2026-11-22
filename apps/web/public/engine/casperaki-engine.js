@@ -133,3 +133,17 @@ export function laneNames(e) {
   for (let i = 0; i < n; i++) names.push(readUtf8(e, e.mixer_lane_name(i), e.mixer_lane_name_length(i)));
   return names;
 }
+
+/**
+ * The mix as the engine resolved it (after buildMixer): per IR track its
+ * instrument lane, lowLevelType, FX bus, target volume and send levels (dB).
+ * See Mixer::laneInfoJson.
+ */
+export function laneInfo(e) {
+  // Length first: each call re-serialises, and the pointer is valid until the next call.
+  const len = e.mixer_lane_info_length();
+  if (len < 0) throw new Error(`mixer_lane_info_length failed: ${lastError(e)}`);
+  const ptr = e.mixer_lane_info();
+  if (!ptr) throw new Error(`mixer_lane_info failed: ${lastError(e)}`);
+  return JSON.parse(readUtf8(e, ptr, len));
+}

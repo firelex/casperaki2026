@@ -4,11 +4,11 @@
 // with the playback worklet.
 //
 // In:  { type: 'meter', wasmBytes, sampleRate, meterBinFrames, ...build options }
-// Out: { type: 'lanes', names, binCount, binSec }
+// Out: { type: 'lanes', names, binCount, binSec, mix }   (mix: laneInfo, the resolved mix)
 //      { type: 'progress', doneBins, peaks: Float32Array[] }   (repeated, then)
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
 
-import { buildMixer, instantiateEngine, laneNames } from '../engine/casperaki-engine.js';
+import { buildMixer, instantiateEngine, laneInfo, laneNames } from '../engine/casperaki-engine.js';
 
 const BLOCK = 1024;
 const POST_EVERY_MS = 400;
@@ -21,7 +21,7 @@ self.onmessage = (ev) => {
     const totalFrames = buildMixer(e, { ...o, blockFrames: BLOCK });
     const names = laneNames(e);
     const binCount = e.mixer_meter_bin_count();
-    self.postMessage({ type: 'lanes', names, binCount, binSec: o.meterBinFrames / o.sampleRate });
+    self.postMessage({ type: 'lanes', names, binCount, binSec: o.meterBinFrames / o.sampleRate, mix: laneInfo(e) });
 
     const snapshot = (upTo) =>
       names.map((_, i) => new Float32Array(e.memory.buffer, e.mixer_lane_peaks(i), binCount).slice(0, upTo));

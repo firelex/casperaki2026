@@ -189,7 +189,7 @@ export function ClipDetail({
           ) : null}
         </div>
 
-        <div ref={attachScroll} className="max-h-[calc(88vh-190px)] overflow-auto bg-[#0d0e18]">
+        <div ref={attachScroll} className="max-h-[calc(88vh-190px)] overflow-auto bg-[#1a1b1e]">
           {track.isDrums ? (
             <DrumBar
               notes={notes}
@@ -392,8 +392,8 @@ function Selectable({
   const snap = gridSnap(grid, beats);
   return (
     <div ref={ref} className="relative min-w-max select-none">
-      <div className="sticky top-0 z-10 flex bg-[#151623]" style={{ height: 20 }}>
-        <div className="sticky left-0 z-10 shrink-0 bg-[#151623] pl-3 text-[10px] leading-[20px] text-white/35" style={{ width: LABEL_W }}>
+      <div className="sticky top-0 z-10 flex bg-[#2c2d32]" style={{ height: 20 }}>
+        <div className="sticky left-0 z-10 shrink-0 bg-[#2c2d32] pl-3 text-[10px] leading-[20px] text-white/35" style={{ width: LABEL_W }}>
           Drag to select
         </div>
         <div
@@ -507,7 +507,7 @@ function DrumBar({
   return (
     <Selectable beats={BEATS_PER_BAR} pxPerBeat={pxPerBeat} grid={grid} {...selection}>
       <div className="flex">
-        <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
+        <div className="sticky left-0 z-10 shrink-0 bg-[#2a2b30]" style={{ width: LABEL_W }}>
           {pitches.map((p) => (
             <div
               key={p}
@@ -603,7 +603,7 @@ function PianoRoll({
   return (
     <Selectable beats={beats} pxPerBeat={pxPerBeat} grid={grid} {...selection}>
       <div className="flex">
-        <div className="sticky left-0 z-10 shrink-0 bg-[#10111b]" style={{ width: LABEL_W }}>
+        <div className="sticky left-0 z-10 shrink-0 bg-[#2a2b30]" style={{ width: LABEL_W }}>
           {Array.from({ length: rows }, (_, i) => high - i).map((p) => (
             <div
               key={p}

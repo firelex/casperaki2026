@@ -3,25 +3,22 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 import { EditorHeader } from '../layout/EditorHeader';
-import { Playbar } from '../layout/Playbar';
+import { StatusBar } from '../layout/StatusBar';
 import { SoundDesignView } from '../editor/SoundDesignView';
 import { TimelineView } from '../editor/TimelineView';
 import { StructureView } from '../editor/StructureView';
-import { SegmentInspector } from '../editor/SegmentInspector';
 import { songsApi, songsQueryKeys } from '../api/songs';
 import { useSession } from '../state/session';
 
 export type EditorTab = 'sound' | 'timeline' | 'structure';
 
 /**
- * Editor screen — mirrors rory-fe `Editor.vue`.
+ * Editor screen, laid out like a DAW window:
+ *   - top:    <EditorHeader>  control bar (logo · song · transport · views · export)
+ *   - main:   the view (sounds / tracks with the mixer / structure)
+ *   - bottom: <StatusBar>     playback status and downloads
  *
- * Three rows:
- *   - top:   <EditorHeader>     (back / undo / redo · tabs · publish)
- *   - main:  <TabView>          (sound design / timeline / structure)
- *   - bot:   <Playbar>          (mixer · transport · BPM)
- *
- * Tab is route-driven so the URL is the source of truth (1/2/3
+ * The view is route-driven so the URL is the source of truth (1/2/3
  * keyboard shortcuts also work).
  */
 export function EditorPage({ tab }: { tab: EditorTab }) {
@@ -72,23 +69,20 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
   }, [navigate, songId, applyEdit, canUndo, canRedo]);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0d0d17] glow-bg relative overflow-hidden">
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#1b1c1f]">
       <EditorHeader tab={tab} />
 
       <div className="flex-1 min-h-0 relative flex">
         {!activeSong ? (
           <LoadingState error={deepLink.error} loading={deepLink.isLoading} />
         ) : (
-          <>
-            <div className="flex-1 min-w-0 relative">
-              <TabBody tab={tab} />
-            </div>
-            <SegmentInspector />
-          </>
+          <div className="relative min-w-0 flex-1">
+            <TabBody tab={tab} />
+          </div>
         )}
       </div>
 
-      <Playbar />
+      <StatusBar />
     </div>
   );
 }
