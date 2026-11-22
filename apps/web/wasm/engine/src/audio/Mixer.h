@@ -275,6 +275,14 @@ public:
     // Live lane gain (mute = 0, solo = 0 on the others). Takes effect on the next
     // pull as a linear ramp over kGainRampSec (no click). Allocation-free; call
     // between pulls. Applied to the lane's signal before its submix and aux sends.
+    // Set a lane's gain at once, without the ramp (offline renders, e.g. a stem
+    // render that must not let other lanes leak in at the start).
+    void setLaneGainNow(int lane, float gain) {
+        if (!(gain >= 0.0f) || !std::isfinite(gain))
+            throw std::out_of_range("Mixer::setLaneGainNow: gain must be finite and >= 0");
+        group(lane).ramp.setNow(gain);
+    }
+
     void setLaneGain(int lane, float gain) {
         if (!(gain >= 0.0f) || !std::isfinite(gain))
             throw std::out_of_range("Mixer::setLaneGain: gain must be finite and >= 0");
@@ -358,6 +366,7 @@ private:
         int left = 0;
         bool unity() const { return left == 0 && gain == 1.0f; }
         float at(int i) const { return i < left ? gain + step * (float)(i + 1) : target; }
+        void setNow(float g) { gain = target = g; step = 0.0f; left = 0; }
         void setTarget(float g, int rampFrames) {
             target = g;
             left = rampFrames;

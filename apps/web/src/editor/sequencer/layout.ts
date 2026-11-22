@@ -41,3 +41,14 @@ export function clockLabel(seconds: number): string {
   const s = Math.floor(seconds % 60);
   return `${m}:${String(s).padStart(2, '0')}`;
 }
+
+/** Any CSS colour (a token, "red", rgb(), #rgb) as "#rrggbb", via the canvas colour parser. */
+export function colorHex(css: string): string {
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) throw new Error('2D canvas is not available');
+  ctx.fillStyle = '#000000';
+  ctx.fillStyle = resolveColor(css);
+  const v = ctx.fillStyle;
+  if (!/^#[0-9a-f]{6}$/iu.test(v)) throw new Error(`Colour ${css} is not an opaque colour (${v})`);
+  return v;
+}

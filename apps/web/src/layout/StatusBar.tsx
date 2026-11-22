@@ -61,24 +61,8 @@ function LiveStatusStrip({ status, step, error, dirty, render }: LiveStatusStrip
         <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} aria-hidden />
         <span className="truncate" title={error}>{label}</span>
       </div>
-      <div className="flex items-center gap-5 text-[12px] text-dim shrink-0">
-        {render?.state === 'done' ? (
-          <>
-            <span className="text-dim/80">{dirty ? 'Downloads (saved version):' : 'Downloads:'}</span>
-            <a className="text-white/85 hover:text-white underline-offset-2 hover:underline" href={`${render.mp3Url}?download=1`}>
-              MP3
-            </a>
-            <a className="text-white/85 hover:text-white underline-offset-2 hover:underline" href={`${render.wavUrl}?download=1`}>
-              WAV
-            </a>
-          </>
-        ) : renderInFlight(render) ? (
-          <span>Preparing downloads: {renderLabel(render)}</span>
-        ) : render?.state === 'failed' ? (
-          <span className="text-err" title={render.error}>Export failed</span>
-        ) : (
-          <span className="text-dim/70">For WAV / MP3, use Export</span>
-        )}
+      <div className="flex shrink-0 items-center gap-2 text-[11px]">
+        {renderInFlight(render) ? <span>Rendering the mix: {renderLabel(render)}</span> : <span className="text-dim/70">Mix, stems, MIDI, REAPER, Logic: Export… (top right)</span>}
       </div>
     </div>
   );

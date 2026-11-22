@@ -17,6 +17,8 @@ import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, ownerOf } from './routes/songs.js';
+import { createDawExportRouter } from './routes/dawExport.js';
+import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
 import { createPatternsRouter } from './routes/patterns.js';
 import { createTracksRouter } from './routes/tracks.js';
@@ -140,6 +142,17 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           nodeBin: process.execPath,
         })
       : undefined);
+  // DAW exports (stems / REAPER / Logic) next to the renders: <rendersDir>/../daw-exports.
+  const dawExports = config.sampleLibraryRoot
+    ? new DawExportService({
+        exportsDir: join(dirname(resolve(config.rendersDir)), 'daw-exports'),
+        emitScript: resolve(config.renderEmitScript),
+        renderBin: resolve(config.renderBin),
+        stubSamplesDir: resolve(config.renderStubSamplesDir),
+        sampleLibraryRoot: config.sampleLibraryRoot,
+        nodeBin: process.execPath,
+      })
+    : undefined;
   if (!renders) {
     console.warn('[brain] CASPERAKI_SAMPLE_LIBRARY_ROOT not set — per-song rendering is DISABLED (render routes answer 503).');
   }
@@ -160,6 +173,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       : undefined);
 
   app.use(createSongsRouter({ store, renders }));
+  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
   app.use(

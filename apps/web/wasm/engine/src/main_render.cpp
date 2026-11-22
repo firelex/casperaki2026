@@ -120,6 +120,13 @@ int main(int argc, char** argv) {
                 "/home/roli79/apps/casperaki_engine/config/mix-config.json";
             if (std::filesystem::exists(def)) cfg.mixConfigPath = def;
         }
+        // Stems: CASPERAKI_STEM_LANE=<lane> renders that instrument alone;
+        // CASPERAKI_GAIN=<g> applies a fixed gain instead of peak-normalising.
+        if (const char* sl = std::getenv("CASPERAKI_STEM_LANE")) cfg.stemLane = sl;
+        if (const char* g = std::getenv("CASPERAKI_GAIN")) {
+            cfg.fixedGain = std::stof(g);
+            if (!(cfg.fixedGain > 0.0f)) throw std::runtime_error("CASPERAKI_GAIN must be > 0");
+        }
         casperaki::Renderer renderer(cfg);
         const auto master = renderer.render(ev, instJsons);
 
@@ -132,6 +139,18 @@ int main(int argc, char** argv) {
         if (!wrote) {
             std::cerr << "error: cannot write " << outPath << "\n";
             return 1;
+        }
+
+        // CASPERAKI_REPORT=<path>: the lanes and the gain applied, as JSON (for stems).
+        if (const char* rp = std::getenv("CASPERAKI_REPORT")) {
+            nlohmann::json report;
+            report["normalizeGain"] = renderer.lastNormalizeGain();
+            report["lanes"] = renderer.lastLaneNames();
+            report["frames"] = master.getNumSamples();
+            report["sampleRate"] = cfg.sampleRate;
+            std::ofstream f(rp);
+            if (!f) throw std::runtime_error(std::string("cannot write report ") + rp);
+            f << report.dump(2) << "\n";
         }
 
         const double durSec = master.getNumSamples() / cfg.sampleRate;

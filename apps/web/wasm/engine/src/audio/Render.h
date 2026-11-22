@@ -62,6 +62,12 @@ struct RenderConfig {
     // per-lane volumes/sends/fxGroups + rack chains are read from it at runtime
     // instead of the compiled-in tables. Empty -> compiled-in fallback (identical).
     std::string mixConfigPath;
+    // Stem render: only this instrument lane is heard (exact lane name, e.g.
+    // "Keys 2"); every other lane is silenced. Empty -> the full mix.
+    std::string stemLane;
+    // Multiply the result by this instead of peak-normalising it (> 0). Stems use
+    // the full mix's normalise gain so they sum back to the mix's level.
+    float fixedGain = 0.0f;
 };
 
 class Renderer {
@@ -92,6 +98,14 @@ public:
         }
 
         mixer.build(ev, instJsons);
+        laneNames_.clear();
+        for (int i = 0; i < mixer.laneCount(); ++i) laneNames_.push_back(mixer.laneName(i));
+        if (!cfg_.stemLane.empty()) {
+            const auto it = std::find(laneNames_.begin(), laneNames_.end(), cfg_.stemLane);
+            if (it == laneNames_.end()) throw std::runtime_error("stem lane '" + cfg_.stemLane + "' is not a lane of this song");
+            for (int i = 0; i < (int)laneNames_.size(); ++i)
+                mixer.setLaneGainNow(i, laneNames_[(size_t)i] == cfg_.stemLane ? 1.0f : 0.0f);
+        }
 
         const long totalFrames = mixer.totalFrames();
         AudioBuffer master(2, (int)totalFrames);
@@ -104,7 +118,15 @@ public:
                 master.copyFrom(ch, (int)b, block, ch, 0, n);
         }
 
-        lastNormalizeGain_ = cfg_.noNormalize ? 1.0f : peakNormalize(master, 0.9f);
+        if (cfg_.fixedGain > 0.0f) {
+            for (int ch = 0; ch < 2; ++ch) {
+                float* d = master.getWritePointer(ch);
+                for (int i = 0; i < master.getNumSamples(); ++i) d[i] *= cfg_.fixedGain;
+            }
+            lastNormalizeGain_ = cfg_.fixedGain;
+        } else {
+            lastNormalizeGain_ = cfg_.noNormalize ? 1.0f : peakNormalize(master, 0.9f);
+        }
         return master;
     }
 
@@ -112,6 +134,8 @@ public:
     // when skipped or silent). A real-time player that wants the same level as
     // this WAV applies it as its fixed master gain (mixer_set_master_gain).
     float lastNormalizeGain() const { return lastNormalizeGain_; }
+    // The last render's instrument lanes (stem names), in lane order.
+    const std::vector<std::string>& lastLaneNames() const { return laneNames_; }
 
 private:
     // ---- fixtures (native OGG decode) -------------------------------------
@@ -173,6 +197,7 @@ private:
     RenderConfig cfg_;
     StubSamples stubs_;
     SampleLibraryStats libStats_;
+    std::vector<std::string> laneNames_;
     float lastNormalizeGain_ = 1.0f;
 };
 

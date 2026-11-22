@@ -6,22 +6,47 @@ import { resolveEngineEvents } from '../audio/resolveNotes';
 import { buildSequencerModel } from '../editor/sequencerModel';
 import { buildSongMidi } from './midi';
 
-/** Build the MIDI file of the version on screen (lowered via the brain, resolved by the engine). */
+/**
+ * MIDI of the version on screen (lowered via the brain, resolved by the
+ * engine): the whole song with the chosen instruments, and one file per
+ * instrument. `only` limits the instruments (default: all).
+ */
+export async function songMidiParts(
+  song: Song,
+  title: string,
+  liveKey: string,
+  fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+  only?: readonly string[],
+): Promise<{ song: Uint8Array; tracks: Record<string, Uint8Array> }> {
+  const payload = await livePlayer.payloadOf(liveKey, fetchPayload);
+  const events = await resolveEngineEvents(payload);
+  const model = buildSequencerModel(song);
+  const all = model.tracks.map((t) => t.name);
+  const instruments = only ? all.filter((n) => only.includes(n)) : all;
+  const info = { title, key: song.key, sections: model.sections.map((s) => ({ name: s.name, startBar: s.startBar })) };
+  const tracks: Record<string, Uint8Array> = {};
+  for (const name of instruments) {
+    const hasEvents = events.tracks.some((t) => (t.notes.length || t.hits.length) && (t.name === name || t.name.startsWith(`${name}-`) || t.name.startsWith(`${name}(`)));
+    if (hasEvents) tracks[name] = buildSongMidi(events, { ...info, instruments: [name] });
+  }
+  return { song: buildSongMidi(events, { ...info, instruments }), tracks };
+}
+
+/** The whole song's MIDI (all instruments). */
 export async function songMidi(
   song: Song,
   title: string,
   liveKey: string,
   fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
 ): Promise<Uint8Array> {
-  const payload = await livePlayer.payloadOf(liveKey, fetchPayload);
-  const events = await resolveEngineEvents(payload);
-  const model = buildSequencerModel(song);
-  return buildSongMidi(events, {
-    title,
-    key: song.key,
-    instruments: model.tracks.map((t) => t.name),
-    sections: model.sections.map((s) => ({ name: s.name, startBar: s.startBar })),
-  });
+  return (await songMidiParts(song, title, liveKey, fetchPayload)).song;
+}
+
+/** Bytes as base64 (for JSON request bodies). */
+export function toBase64(bytes: Uint8Array): string {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
 }
 
 /** Save bytes as a file download. */
