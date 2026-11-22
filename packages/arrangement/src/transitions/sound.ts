@@ -45,11 +45,34 @@ export const TRANSITION_SOUND_LANES: Readonly<Record<string, TransitionSoundLane
   fxUplifter: { family: 'fx', lowLevel: 'fxUplifter' },
   percussionBreaksBuildups: { family: 'percussionBreaks', lowLevel: 'percussionBreaksBuildups', bpmMatched: true },
   percussionBreaksFills: { family: 'percussionBreaks', lowLevel: 'percussionBreaksFills', bpmMatched: true },
+  // Preview-only one-shot lanes (the Sounds page plays every library sound
+  // through the engine): the generator never emits these tags and users
+  // cannot add them (setTransition only takes TRANSITION_TYPES). The
+  // synthesized noise rise keeps the `fxNoiseRise` tag; its library samples
+  // play under `fxNoiseRiseSample`.
+  fxAtmosphere: { family: 'fx', lowLevel: 'fxAtmosphere' },
+  fxFretNoise: { family: 'fx', lowLevel: 'fxFretNoise' },
+  fxNoiseRiseSample: { family: 'fx', lowLevel: 'fxNoiseRise' },
+  percussionMiscAcousticHigh: { family: 'percussionMisc', lowLevel: 'percussionMiscAcousticHigh' },
+  percussionMiscAcousticLow: { family: 'percussionMisc', lowLevel: 'percussionMiscAcousticLow' },
+  percussionMiscElectronicHigh: { family: 'percussionMisc', lowLevel: 'percussionMiscElectronicHigh' },
+  percussionMiscElectronicLow: { family: 'percussionMisc', lowLevel: 'percussionMiscElectronicLow' },
 };
+
+/** Transition tags that only exist to preview a sound (never generated, never user-added). */
+export const PREVIEW_ONLY_TRANSITION_TAGS: ReadonlySet<string> = new Set([
+  'fxAtmosphere',
+  'fxFretNoise',
+  'fxNoiseRiseSample',
+  'percussionMiscAcousticHigh',
+  'percussionMiscAcousticLow',
+  'percussionMiscElectronicHigh',
+  'percussionMiscElectronicLow',
+]);
 
 /** Whether a transition tag plays a library sound the user can choose. */
 export function isSwappableTransition(tag: string): boolean {
-  return tag in TRANSITION_SOUND_LANES;
+  return tag in TRANSITION_SOUND_LANES && !PREVIEW_ONLY_TRANSITION_TAGS.has(tag);
 }
 
 // Enharmonic-aware pitch class (0..11), so a chord rooted on Bb matches a row keyed A#.

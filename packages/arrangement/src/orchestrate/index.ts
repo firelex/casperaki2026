@@ -45,7 +45,7 @@ import { generateChords } from '../chords/index.js';
 import { generatePatterns } from '../patterns/index.js';
 import { selectInstruments } from '../selection/index.js';
 import { generateSongStructure } from '../structure/index.js';
-import { generateVocalMelody } from '../vocals/index.js';
+import { writeVocals } from '../vocals/index.js';
 import { applyTrackEditsToSelection, recordedDrumSounds, recordedTrackEdits } from '../edits/recorded.js';
 import { drumKit, DRUM_SOUNDS_DETAIL } from '../drums/kit.js';
 
@@ -151,7 +151,9 @@ export const ORCHESTRATOR_VERSION = '0.1.0';
 export function orchestrate(params: GenerateParams): Song {
   const ctx = { params, rng: createRng(params.seed) };
   const structure = generateSongStructure(ctx);
-  const structureWithChords = generateChords(ctx, structure);
+  // The vocals come first: sung sections take the chords of the melody they
+  // borrow (in the song's key), and every other part is written over those.
+  const { vocals, structure: structureWithChords } = writeVocals(ctx, generateChords(ctx, structure));
   // Sequencer track edits (generator params `trackEdits`): applied to the
   // selection, so each edit only touches its own lane's streams.
   const edited = applyTrackEditsToSelection(
@@ -180,7 +182,6 @@ export function orchestrate(params: GenerateParams): Song {
     generatePatterns(ctx, structureWithChords, selection, edited.laneVariants),
     drumDecisions,
   );
-  const vocals = generateVocalMelody(ctx, structureWithChords);
   const fills = generateFills(ctx, structureWithChords, selection);
   const mutes = generateMutes(ctx, structureWithChords, selection);
   const transitions = generateTransitions(ctx, structureWithChords, drumDecisions);

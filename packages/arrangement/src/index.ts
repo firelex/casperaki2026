@@ -221,7 +221,7 @@ export {
   type SignalProcessorChoice,
   type SegmentType,
 } from './arrangement-polish/index.js';
-export { generateVocalMelody } from './vocals/index.js';
+export { generateVocalMelody, writeVocals } from './vocals/index.js';
 export {
   buildVocalScaffolding,
   type NoteScaffolding,
@@ -327,6 +327,7 @@ export {
   transitionPackKey,
   transitionSoundChoices,
   TRANSITION_SOUND_LANES,
+  PREVIEW_ONLY_TRANSITION_TAGS,
   type PickedTransitionSound,
   type TransitionSoundContext,
   type TransitionSoundLane,

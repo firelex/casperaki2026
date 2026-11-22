@@ -23,6 +23,7 @@ import {
   generateSongStructure,
   generateTransitions,
   generateVocalMelody,
+  writeVocals,
   lowerToSong,
   orchestrate,
   selectInstruments,
@@ -267,10 +268,10 @@ describe('lowerToSong (intermediate-projection)', () => {
   function pipeline(seed: string | number) {
     const params = paramsFor(seed);
     const ctx = { params, rng: createRng(params.seed) };
-    const structure = generateChords(ctx, generateSongStructure(ctx));
+    // Vocals first: sung sections take their melody's chords; the rest is written over them.
+    const { vocals, structure } = writeVocals(ctx, generateChords(ctx, generateSongStructure(ctx)));
     const selection = selectInstruments(ctx, structure);
     const patterns = generatePatterns(ctx, structure, selection);
-    const vocals = generateVocalMelody(ctx, structure);
     const fills = generateFills(ctx, structure, selection);
     const mutes = generateMutes(ctx, structure, selection);
     const transitions = generateTransitions(ctx, structure);

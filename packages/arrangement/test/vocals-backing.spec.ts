@@ -22,6 +22,7 @@ import {
   generateChords,
   generateSongStructure,
   generateVocalMelody,
+  writeVocals,
   orchestrate,
   VocalResultSchema,
   type GenerateParams,
@@ -49,8 +50,9 @@ function generate(seed: string | number, key = 'C'): {
   structure: ReturnType<typeof generateSongStructure>;
 } {
   const ctx = makeCtx(seed, key);
-  const structure = generateChords(ctx, generateSongStructure(ctx));
-  return { result: generateVocalMelody(ctx, structure), structure };
+  // The vocals return the structure with the sung sections' chords (those of the borrowed melody).
+  const { vocals, structure } = writeVocals(ctx, generateChords(ctx, generateSongStructure(ctx)));
+  return { result: vocals, structure };
 }
 
 function isChordTone(chordSymbol: string, midi: number): boolean {

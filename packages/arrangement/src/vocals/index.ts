@@ -37,6 +37,9 @@ import {
 import { selectSeedPhrasePlan } from './lyrics-source/seed.js';
 import { expandMergedToSegment, selectMergedPrecedent, type MergedPrecedent } from './precedents.js';
 import { buildVocalScaffolding } from './scaffolding.js';
+import { buildContour } from './contour.js';
+import { MAX_NOTE, MIN_NOTE } from './range.js';
+import { keyOffsetFromC, mergedChordBars, refitNonChorus, sectionTransposition, transposeChordSymbol } from './fit.js';
 import { applyLyricsToSegments } from './syllabify.js';
 import type { VocalBar, VocalResult, VocalSegment } from './types.js';
 import { formatBarBeat } from '@casperaki/music-theory';
@@ -63,11 +66,22 @@ function baseType(name: string): string {
   return m ? m[0]! : name;
 }
 
-export function generateVocalMelody(
+/** The vocals only (see `writeVocals`, which also returns the sung sections' new chords). */
+export function generateVocalMelody(ctx: GeneratorContext, structure: SongStructure): VocalResult {
+  return writeVocals(ctx, structure).vocals;
+}
+
+/**
+ * The vocal melody, lyrics and backings, and the song structure with every
+ * sung section's chords replaced by the chords of the melody it borrows, all
+ * in the song's key (see fit.ts). The rest of the song is written over these.
+ */
+export function writeVocals(
   ctx: GeneratorContext,
   structure: SongStructure,
-): VocalResult {
+): { vocals: VocalResult; structure: SongStructure } {
   const rng = ctx.rng.fork('vocals');
+  const keyOffset = keyOffsetFromC(ctx.params.key);
 
   if (!SUPPORTED_GENRES.has(ctx.params.genre)) {
     throw new Error(
@@ -78,6 +92,7 @@ export function generateVocalMelody(
   // Phase 1 — vocal melody from precedents (Step 17b, unchanged).
   const cachedBySegmentType = new Map<string, MergedPrecedent | undefined>();
   const skeleton: VocalSegment[] = [];
+  const sung = new Map<string, { merged: MergedPrecedent; type: string }>();
   for (const segment of structure) {
     if (!isSungSegment(segment.name)) continue;
     const segmentType = baseType(segment.name);
@@ -93,7 +108,22 @@ export function generateVocalMelody(
       cachedBySegmentType.set(segmentType, merged);
     }
     if (!merged) continue;
-    skeleton.push(buildSegmentSkeleton(segment, merged));
+    sung.set(segment.name, { merged, type: segmentType });
+  }
+
+  // Sung sections take the borrowed melody's chords, moved into the key.
+  const sungStructure: SongStructure = structure.map((segment) => {
+    const s = sung.get(segment.name);
+    if (!s) return segment;
+    const chordBars = mergedChordBars(s.merged, segment.bars.length);
+    return {
+      ...segment,
+      bars: segment.bars.map((bar, i) => ({ ...bar, chords: chordBars[i]!.map((c) => transposeChordSymbol(c, keyOffset)) })),
+    };
+  });
+  for (const segment of sungStructure) {
+    const s = sung.get(segment.name);
+    if (s) skeleton.push(buildSegmentSkeleton(segment, s.merged, s.type, keyOffset));
   }
 
   // Phase 2 — lyric scaffolding + seed-phrase pick + per-note attach.
@@ -111,20 +141,23 @@ export function generateVocalMelody(
   // generator is pure over the lead + chord stream and consumes no rng
   // draws (legacy: MelodyClass._getBackingVocals is fully deterministic
   // given the lead).
-  const backings = generateBackings(leadResult, structure, { pitchOffset: BACKING_OFFSET_1 });
-  const backings2 = generateBackings(leadResult, structure, { pitchOffset: BACKING_OFFSET_2 });
+  const backings = generateBackings(leadResult, sungStructure, { pitchOffset: BACKING_OFFSET_1 });
+  const backings2 = generateBackings(leadResult, sungStructure, { pitchOffset: BACKING_OFFSET_2 });
 
   return {
-    ...leadResult,
-    ...(backings.length > 0 && { backings }),
-    ...(backings2.length > 0 && { backings2 }),
+    vocals: {
+      ...leadResult,
+      ...(backings.length > 0 && { backings }),
+      ...(backings2.length > 0 && { backings2 }),
+    },
+    structure: sungStructure,
   };
 }
 
 /** Builds a segment with note pitches+durations from a merged precedent but
  *  no lyric metadata yet. The lyric attach pass fills `fullWord` +
  *  `vocaloidPhonemes` + `endOfPhrase` from the syllable bank. */
-function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent): VocalSegment {
+function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent, kind: string, keyOffset: number): VocalSegment {
   // Sanity check chord stream (kept from 17b; surfaces missing brain chords
   // as a typed error rather than a vocal-side crash).
   for (let i = 0; i < segment.bars.length; i++) {
@@ -140,9 +173,29 @@ function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent): VocalS
   }
 
   const bars: VocalBar[] = segment.bars.map(() => ({ notes: {} }));
-  const events = expandMergedToSegment(merged, segment.bars.length).sort(
+  const laid = expandMergedToSegment(merged, segment.bars.length).sort(
     (a, b) => a.barIndex - b.barIndex || a.beat - b.beat,
   );
+  // Into the key, at the octave where the kind's peak fits the range; other
+  // kinds than the chorus are re-fitted and smoothed (fit.ts).
+  const shift = sectionTransposition(merged.properties.melodyMaxNote, keyOffset);
+  let midis = laid.map((ev) => ev.midi + shift);
+  if (kind !== 'chorus') {
+    const chordAt = (i: number) => {
+      const ev = laid[i]!;
+      const chords = segment.bars[ev.barIndex]?.chords;
+      const chord = chords?.[Math.min(chords.length - 1, Math.floor(ev.beat))];
+      if (!chord) throw new Error(`generateVocalMelody: no chord under the note at bar ${ev.barIndex} beat ${ev.beat} of ${segment.name}`);
+      return chord;
+    };
+    midis = refitNonChorus(midis, kind, merged.properties.maxNote, chordAt, keyOffset);
+  } else if (Math.min(...midis) < MIN_NOTE) {
+    // The key is fixed (legacy moved the whole song so the chorus peak sat on
+    // the top note): when that leaves chorus notes under the range, re-fit
+    // its octaves within the range, preferring high notes.
+    midis = buildContour(midis, { maxNote: MAX_NOTE, priority: 'highNotes' });
+  }
+  const events = laid.map((ev, i) => ({ ...ev, midi: midis[i]! }));
 
   for (const ev of events) {
     if (ev.barIndex < 0 || ev.barIndex >= bars.length) continue;
