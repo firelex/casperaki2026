@@ -1,7 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-import { renderInFlight, renderLabel, songsApi, type ReplayResult } from '../api/songs';
+import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type ReplayResult } from '../api/songs';
 import { useSession } from '../state/session';
 import { useRenderStatus, useSaveSong, useStartRender } from '../state/useSongActions';
 import type { EditorTab } from '../pages/EditorPage';
@@ -59,9 +60,7 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
         </Link>
         <span className="h-6 w-px shrink-0 bg-black/50" aria-hidden="true" />
         <div className="flex min-w-0 flex-col leading-tight">
-          <span className="truncate text-[13px] font-semibold text-white" title={activeSong ? `#${activeSong.id}` : undefined}>
-            {activeSong?.project.title ?? 'Untitled'}
-          </span>
+          {activeSong ? <EditableTitle songId={activeSong.id} title={activeSong.project.title} /> : <span className="text-[13px] font-semibold text-white">Untitled</span>}
           <span className="text-[10px] text-[#9a9ba3]">
             {editorDirty ? <span className="text-accent">● Unsaved edits</span> : 'Saved'}
             {lastReplay ? (
@@ -128,6 +127,62 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
         </button>
       </div>
     </header>
+  );
+}
+
+/** The song's title: click to rename (Enter saves, Escape cancels). */
+function EditableTitle({ songId, title }: { songId: string; title: string }) {
+  const { setActiveTitle } = useSession();
+  const queryClient = useQueryClient();
+  const [draft, setDraft] = useState<string | undefined>(undefined);
+  const rename = useMutation({
+    mutationFn: (t: string) => songsApi.rename(songId, t),
+    onSuccess: ({ project }) => {
+      setActiveTitle(project.title);
+      void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
+      setDraft(undefined);
+    },
+  });
+  const commit = () => {
+    if (draft === undefined) return;
+    const t = draft.trim();
+    if (!t || t === title) {
+      setDraft(undefined);
+      return;
+    }
+    rename.mutate(t);
+  };
+  if (draft !== undefined) {
+    return (
+      <span className="flex items-center gap-2">
+        <input
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            else if (e.key === 'Escape') setDraft(undefined);
+          }}
+          maxLength={120}
+          disabled={rename.isPending}
+          aria-label="Song title"
+          className="h-6 w-[240px] rounded-[4px] border border-white/40 bg-black/40 px-1.5 text-[13px] font-semibold text-white outline-none focus:border-white"
+        />
+        {rename.isError ? <span className="text-[11px] text-err" title={rename.error.message}>Not renamed</span> : null}
+      </span>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setDraft(title)}
+      className="max-w-[260px] truncate rounded-[4px] px-1 -mx-1 text-left text-[13px] font-semibold text-white hover:bg-white/10"
+      title="Rename the song"
+    >
+      {title}
+    </button>
   );
 }
 

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
 import { BEATS_PER_BAR, type SeqNote, type SeqSection, type SeqTrack } from '../sequencerModel';
-import { PianoRoll, Segmented, SmallButton } from './ClipDetail';
+import { KEY_ROW_BASE, PianoRoll, Segmented, SmallButton } from './ClipDetail';
 import { resolveColor } from './layout';
 import type { BarRange } from './rangeDrag';
 import { notesToAbc } from './notation';
@@ -48,6 +48,7 @@ export function TrackOverview({
   // Open with the whole song across the window.
   const [pxPerBeat, setPxPerBeat] = useState(() => Math.max(2, Math.min(240, (Math.min(1240, window.innerWidth - 32) - LABEL_W - 40) / (totalBars * BEATS_PER_BAR))));
   const [sel, setSel] = useState<BarRange | undefined>(undefined);
+  const [vZoom, setVZoom] = useState(1);
   const [pdf, setPdf] = useState<'idle' | 'making' | { error: string }>('idle');
   const beats = totalBars * BEATS_PER_BAR;
   const marks = useMemo(() => new Map(sections.map((s) => [s.startBar, s.name])), [sections]);
@@ -103,6 +104,9 @@ export function TrackOverview({
                 <span className="mr-1 text-white/55">Zoom</span>
                 <SmallButton label="Zoom out" onClick={() => setPxPerBeat((z) => Math.max(2, z / 1.4))}>−</SmallButton>
                 <SmallButton label="Zoom in" onClick={() => setPxPerBeat((z) => Math.min(240, z * 1.4))}>+</SmallButton>
+                <span className="ml-2 mr-1 text-white/55">Height</span>
+                <SmallButton label="Rows smaller" onClick={() => setVZoom((z) => Math.max(0.5, z / 1.25))}>−</SmallButton>
+                <SmallButton label="Rows taller" onClick={() => setVZoom((z) => Math.min(3, z * 1.25))}>+</SmallButton>
               </span>
             </>
           ) : (
@@ -138,6 +142,7 @@ export function TrackOverview({
                 pxPerBeat={pxPerBeat}
                 color={resolveColor(track.color)}
                 head={playheadBeat}
+                keyH={Math.round(KEY_ROW_BASE * vZoom)}
                 sel={sel}
                 onSel={setSel}
                 looping={false}

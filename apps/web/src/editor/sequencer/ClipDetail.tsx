@@ -7,8 +7,9 @@ import { beginRangeDrag, type BarRange } from './rangeDrag';
 import { Score } from './Score';
 import { SelectionOverlay } from './Selection';
 
-const DRUM_ROW_H = 26;
-const KEY_ROW_H = 12;
+/** Default row heights; vertical zoom scales them. */
+export const DRUM_ROW_BASE = 26;
+export const KEY_ROW_BASE = 12;
 const LABEL_W = 104;
 const MIN_PX_PER_BEAT = 6;
 const MAX_PX_PER_BEAT = 480;
@@ -84,6 +85,8 @@ export function ClipDetail({
   const offSixteenth = notes.some((n) => Math.abs(n.start * 4 - Math.round(n.start * 4)) > 1e-6);
   const [grid, setGrid] = useState<Grid>(offSixteenth ? 32 : 16);
   const [pxPerBeat, setPxPerBeat] = useState(track.isDrums ? 255 : 88);
+  /** Vertical zoom: row height scale. */
+  const [vZoom, setVZoom] = useState(1);
   const scrollRef = useRef<HTMLDivElement>(null);
   // Which sections a drum edit changes; asked on the first edit when there is a choice.
   const [scope, setScope] = useState<DrumScope | undefined>(sameKind.length > 1 ? undefined : 'this');
@@ -215,7 +218,10 @@ export function ClipDetail({
             <span className="mr-1 text-white/55">Zoom</span>
             <SmallButton label="Zoom out" onClick={() => setPxPerBeat((z) => Math.max(MIN_PX_PER_BEAT, Math.round(z / 1.4)))}>−</SmallButton>
             <SmallButton label="Zoom in" onClick={() => setPxPerBeat((z) => Math.min(MAX_PX_PER_BEAT, Math.round(z * 1.4)))}>+</SmallButton>
-            <button type="button" onClick={fit} title="Fit the whole pattern" className="ml-1 h-7 rounded-[6px] border border-line px-2 text-[12px] text-white/85 hover:border-white/50">
+            <span className="ml-2 mr-1 text-white/55">Height</span>
+            <SmallButton label="Rows smaller" onClick={() => setVZoom((z) => Math.max(0.5, z / 1.25))}>−</SmallButton>
+            <SmallButton label="Rows taller" onClick={() => setVZoom((z) => Math.min(3, z * 1.25))}>+</SmallButton>
+            <button type="button" onClick={() => { fit(); setVZoom(1); }} title="Fit the whole pattern" className="ml-1 h-7 rounded-[6px] border border-line px-2 text-[12px] text-white/85 hover:border-white/50">
               Fit
             </button>
           </span>
@@ -244,6 +250,7 @@ export function ClipDetail({
               color={color}
               head={previewBeat !== undefined ? previewBeat % BEATS_PER_BAR : undefined}
               onCell={onCell}
+              rowH={Math.round(DRUM_ROW_BASE * vZoom)}
               {...selectionProps}
             />
           ) : engineNotes === undefined ? (
@@ -266,6 +273,7 @@ export function ClipDetail({
               pxPerBeat={pxPerBeat}
               color={color}
               head={previewBeat}
+              keyH={Math.round(KEY_ROW_BASE * vZoom)}
               {...selectionProps}
             />
           ) : (
@@ -555,8 +563,11 @@ function DrumBar({
   color,
   head,
   onCell,
+  rowH: DRUM_ROW_H,
   ...selection
 }: SelectionProps & {
+  /** Row height (vertical zoom). */
+  rowH: number;
   notes: SeqNote[];
   barCount: number;
   grid: Grid;
@@ -651,8 +662,11 @@ export function PianoRoll({
   pxPerBeat,
   color,
   head,
+  keyH: KEY_ROW_H,
   ...selection
 }: SelectionProps & {
+  /** Height of one key row (vertical zoom). */
+  keyH: number;
   notes: SeqNote[];
   beats: number;
   grid: Grid;

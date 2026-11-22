@@ -44,6 +44,8 @@ export interface SessionState {
   readonly editorDirty: boolean;
   readonly renderStale: boolean;
   setActiveSong(song: GeneratedSong | undefined): void;
+  /** The saved project's title changed (rename): keeps the edit session. */
+  setActiveTitle(title: string): void;
   setActiveSegment(segmentName: string | undefined): void;
   setActiveBarIndex(barIndex: number | undefined): void;
   setLastReplay(result: ReplayResult | undefined): void;
@@ -95,6 +97,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setActiveTitle = useCallback((title: string) => {
+    setActiveSongState((song) => (song ? { ...song, project: { ...song.project, title } } : song));
+  }, []);
+
   const setActiveSegment = useCallback((segmentName: string | undefined) => {
     setActiveSegmentState((prev) => {
       if (prev !== segmentName) setActiveBarIndexState(undefined);
@@ -129,6 +135,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       editorDirty,
       renderStale,
       setActiveSong,
+      setActiveTitle,
       setActiveSegment,
       setActiveBarIndex,
       setLastReplay,
@@ -146,6 +153,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       editorDirty,
       renderStale,
       setActiveSong,
+      setActiveTitle,
       setActiveSegment,
       setActiveBarIndex,
       setLastReplay,

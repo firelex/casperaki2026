@@ -117,9 +117,12 @@ export function TimelineView() {
     return () => ro.disconnect();
   }, [viewSong]);
   const trackCount = model?.tracks.length ?? 0;
-  const rowH = trackCount
+  // Vertical zoom scales the fitted height (1 = every track fits).
+  const [vZoom, setVZoom] = useState(1);
+  const fittedRowH = trackCount
     ? Math.max(MIN_ROW_H, Math.min(MAX_ROW_H, Math.floor((areaH - RULER_H - ADD_ROW_H - CHORD_H - 14) / trackCount)))
     : MAX_ROW_H;
+  const rowH = Math.max(18, Math.min(220, Math.round(fittedRowH * vZoom)));
   const [follow, setFollow] = useState(true);
   const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
   const toggleMixer = useCallback(() => {
@@ -385,9 +388,21 @@ export function TimelineView() {
           >
             + Add track
           </button>
+          <span className="mr-1 text-[12px] text-white/55">Width</span>
           <ToolButton onClick={() => zoom(1 / 1.5)} label="Zoom out">−</ToolButton>
           <ToolButton onClick={() => zoom(1.5)} label="Zoom in">+</ToolButton>
-          <ToolButton onClick={fit} label="Fit the song to the window">Fit</ToolButton>
+          <span className="ml-2 mr-1 text-[12px] text-white/55">Height</span>
+          <ToolButton onClick={() => setVZoom((z) => Math.max(0.5, z / 1.25))} label="Tracks lower">−</ToolButton>
+          <ToolButton onClick={() => setVZoom((z) => Math.min(4, z * 1.25))} label="Tracks taller">+</ToolButton>
+          <ToolButton
+            onClick={() => {
+              fit();
+              setVZoom(1);
+            }}
+            label="Fit the whole song and every track to the window"
+          >
+            Fit
+          </ToolButton>
           <label className="ml-3 flex cursor-pointer items-center gap-2 text-white/70">
             <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="accent-[#ff0000]" />
             Follow playhead
