@@ -26,8 +26,11 @@ interface Attempt {
   result: BeatResult;
 }
 
-async function trackBeats(blob: Blob): Promise<BeatResult> {
-  const res = await fetch('/api/lab/beats', { method: 'POST', body: blob, headers: { 'content-type': blob.type || 'application/octet-stream' }, credentials: 'include' });
+/** `meant` set → the brain keeps the recording as test data for the hum beat tracker. */
+async function trackBeats(blob: Blob, meant: number | null): Promise<BeatResult> {
+  const headers: Record<string, string> = { 'content-type': blob.type || 'application/octet-stream' };
+  if (meant !== null) headers['x-meant-bpm'] = String(meant);
+  const res = await fetch('/api/lab/beats', { method: 'POST', body: blob, headers, credentials: 'include' });
   const body = (await res.json()) as BeatResult & { message?: string; error?: string };
   if (!res.ok) throw new Error(body.message ?? body.error ?? `HTTP ${res.status}`);
   return body;
@@ -80,9 +83,10 @@ export function HumLabPage() {
     setBusy(true);
     setError(undefined);
     try {
-      const result = await trackBeats(audio.blob);
       const m = Number(meant);
-      const attempt: Attempt = { id: Date.now(), name: audio.name, meant: meant.trim() && Number.isFinite(m) && m > 0 ? m : null, result };
+      const meantBpm = meant.trim() && Number.isFinite(m) && m > 0 ? m : null;
+      const result = await trackBeats(audio.blob, meantBpm);
+      const attempt: Attempt = { id: Date.now(), name: audio.name, meant: meantBpm, result };
       setAttempts((a) => [attempt, ...a]);
       setShown(attempt);
     } catch (err) {
@@ -155,6 +159,7 @@ export function HumLabPage() {
           ) : (
             <p className="mt-4 text-[13px] text-white/45">Hum at least 8 bars, about 15 to 30 seconds. A phone recording works too.</p>
           )}
+          <p className="mt-3 text-[12px] text-white/40">Recordings sent with a tempo you meant are kept on the server to test the beat tracker.</p>
           {error ? (
             <p className="mt-3 text-[13px] text-red-300" role="alert">
               {error}

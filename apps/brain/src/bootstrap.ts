@@ -209,7 +209,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
-  app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython }));
+  app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(createSoundsRouter({ playback }));
   const assistantEp = assistantEndpoint(config);
   app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
