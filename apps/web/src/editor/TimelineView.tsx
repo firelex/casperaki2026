@@ -581,13 +581,18 @@ function SelectionItems({ selection }: { selection: SelectionActions }) {
 
 /** Right-click menu for the ruler while a range is selected. */
 function SelectionMenu({ selection, children }: { selection: SelectionActions | undefined; children: ReactNode }) {
-  if (!selection) return <>{children}</>;
+  // Always the same tree, switched off without a selection: swapping the
+  // wrapper in would remount the ruler mid-drag and break the drag.
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent className={MENU}>
-        <SelectionItems selection={selection} />
-      </ContextMenuContent>
+      <ContextMenuTrigger asChild disabled={!selection}>
+        {children}
+      </ContextMenuTrigger>
+      {selection ? (
+        <ContextMenuContent className={MENU}>
+          <SelectionItems selection={selection} />
+        </ContextMenuContent>
+      ) : null}
     </ContextMenu>
   );
 }
