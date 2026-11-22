@@ -327,12 +327,17 @@ export function TimelineView() {
           overrideBars: [drumBarNotes(drumBarPattern(clip.notes.map((n) => ({ ...n, start: n.start - clip.startBar * BEATS_PER_BAR })), clip.bars))],
         })
       : patternSong(viewSong, sec.name, t.name);
-    return { song, key: `preview:${fnv1a(JSON.stringify(song))}` };
+    return { song, track: t.name, isVocal: t.isVocal, key: `preview:${fnv1a(JSON.stringify(song))}` };
   }, [viewSong, model, detailOpen]);
+  // Sung parts play on a piano (the engine does not sing yet).
+  const [previewPiano, setPreviewPiano] = useState<string | undefined>(undefined);
   const fetchPreview = useCallback(
-    (signal: AbortSignal) => {
+    async (signal: AbortSignal) => {
       if (!preview) throw new Error('No section is open.');
-      return playbackApi.forSong(preview.song, signal);
+      if (!preview.isVocal) return playbackApi.forSong(preview.song, signal);
+      const piano = await tracksApi.vocalAsPiano(preview.song, preview.track, signal);
+      setPreviewPiano(piano.pianoName);
+      return playbackApi.forSong(piano.song, signal);
     },
     [preview],
   );
@@ -862,6 +867,7 @@ export function TimelineView() {
                 : undefined
           }
           notesFromSong={detailTrack.isVocal}
+          pianoName={detailTrack.isVocal ? previewPiano : undefined}
           soundName={detailSound}
           drumKit={drumKit.data ?? (drumKit.isError ? { error: drumKit.error.message } : undefined)}
           onDrumSound={(row, action) =>

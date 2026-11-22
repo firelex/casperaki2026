@@ -24,6 +24,7 @@ import { z } from 'zod';
 import {
   addSection,
   setTransition,
+  vocalAsPiano,
   finalChordRootForSegment,
   isSwappableTransition,
   loadValidatedCatalog,
@@ -43,6 +44,8 @@ import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
 const EditBody = z.object({ song: z.unknown(), op: TrackEditRequestSchema }).strict();
+
+const VocalPianoBody = z.object({ song: z.unknown(), track: z.string().min(1) }).strict();
 
 const SetTransitionBody = z
   .object({
@@ -121,6 +124,22 @@ export function createTracksRouter(): Router {
     const song = songOf(body.data.song, res);
     if (!song) return;
     return run(res, () => transitionState(song));
+  });
+
+  // A sung part played on a piano (the engine does not sing yet), for the
+  // preview window: { song (a preview song holding only that track), track } -> { song, pianoName }.
+  router.post('/api/tracks/vocal-as-piano', (req, res) => {
+    const body = VocalPianoBody.safeParse(req.body);
+    if (!body.success) {
+      const issue = body.error.issues[0];
+      return res.status(400).json({ error: 'invalid_body', message: issue ? `${issue.path.join('.')}: ${issue.message}` : 'invalid body' });
+    }
+    const song = songOf(body.data.song, res);
+    if (!song) return;
+    return run(res, () => {
+      const out = vocalAsPiano(song, body.data.track);
+      return { song: out.song, pianoName: publicNameOf(out.piano) };
+    });
   });
 
   // Switch a transition on or off in sections: { song, segments, type, placement, on } -> { song }.

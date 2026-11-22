@@ -56,6 +56,7 @@ export function ClipDetail({
   drumKit,
   onDrumSound,
   notesFromSong,
+  pianoName,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -85,6 +86,8 @@ export function ClipDetail({
   soundName: string | undefined;
   /** The notes come from the song, not the engine (sung parts: the engine does not sing yet). */
   notesFromSong?: boolean;
+  /** Sung parts: the piano the preview plays them on, once known. */
+  pianoName?: string | undefined;
   /** Drums: the kit (each drum's sound), or why it could not be read. */
   drumKit?: { kit: readonly DrumKitRow[] } | { error: string } | undefined;
   /** Drums: replace one drum's sound (`reset`: back to the style's own). */
@@ -182,7 +185,7 @@ export function ClipDetail({
                 ? ' · the bar below repeats through the section'
                 : engineNotes && 'notes' in engineNotes
                   ? notesFromSong
-                    ? ` · ${engineNotes.notes.length} sung notes with their words (as written: the playback engine does not sing yet)`
+                    ? ` · ${engineNotes.notes.length} sung notes with their words · Play uses a piano`
                     : ` · ${engineNotes.notes.length} notes as played`
                   : ''}
             </DialogDescription>
@@ -208,10 +211,9 @@ export function ClipDetail({
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-line/60 px-5 py-2.5 text-[13px]">
           <button
             type="button"
-            disabled={notesFromSong}
             onClick={previewPlaying ? onPause : playPattern}
             className={`inline-flex h-8 items-center gap-2 rounded-full px-3.5 text-[13px] font-semibold ${previewPlaying ? 'bg-sky-400/25 text-sky-200' : 'bg-white text-black hover:bg-white/85'} disabled:opacity-40`}
-            title={notesFromSong ? 'The playback engine does not sing yet' : `Loop ${sel ? 'the selection' : 'this pattern'}, on its own (Space)`}
+            title={`Loop ${sel ? 'the selection' : 'this pattern'}, on its own (Space)${notesFromSong ? ', played on a piano: the engine does not sing yet' : ''}`}
           >
             <span aria-hidden="true">{previewPlaying ? '❚❚' : '▶'}</span>
             {previewPlaying ? 'Pause' : `Play ${sel ? 'selection' : 'pattern'}`}
@@ -311,7 +313,7 @@ export function ClipDetail({
           {track.isDrums
             ? 'Click a cell to add or remove a hit. Undo with Ctrl+Z. Fills at the ends of sections come on top of this bar. Space plays and pauses.'
             : notesFromSong
-              ? 'The sung melody as written, with its words. The playback engine does not sing yet, so this part is silent when the song plays.'
+              ? `The sung melody as written, with its words. Play uses a piano${pianoName ? ` (${pianoName})` : ''}: the playback engine does not sing yet, so this part is silent when the song plays.`
               : 'The notes the playback engine plays (chords as it voices them). Parts with pitches are written by the generator: ask for a new pattern or another sound to change them. Space plays and pauses.'}
         </p>
 

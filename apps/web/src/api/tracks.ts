@@ -61,6 +61,9 @@ export const tracksApi = {
   ) => defaultBrainClient.post<{ song: Song }>('/api/transitions/set', { song, ...op }, { signal }),
   /** Every section's transitions with the sound each plays, and the transition types. */
   transitionState: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<TransitionState>('/api/transitions/state', { song }, { signal }),
+  /** A preview song's sung track played on a piano (the engine does not sing yet). */
+  vocalAsPiano: (song: Song, track: string, signal?: AbortSignal) =>
+    defaultBrainClient.post<{ song: Song; pianoName: string }>('/api/tracks/vocal-as-piano', { song, track }, { signal }),
   /** The drums of the song's kit and the sound each plays. */
   drumKit: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<{ kit: DrumKitRow[] }>('/api/tracks/drum-kit', { song }, { signal }),
   /** A new section written by the generator, inserted at `index` (0 = first). */
