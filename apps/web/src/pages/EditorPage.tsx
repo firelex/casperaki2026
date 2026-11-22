@@ -6,6 +6,7 @@ import { EditorHeader } from '../layout/EditorHeader';
 import { StatusBar } from '../layout/StatusBar';
 import { SoundsView } from '../editor/SoundsView';
 import { MusicVideoView } from '../editor/MusicVideoView';
+import { AssistantPanel } from '../editor/AssistantPanel';
 import { TimelineView } from '../editor/TimelineView';
 import { songsApi, songsQueryKeys } from '../api/songs';
 import { useSession } from '../state/session';
@@ -90,7 +91,15 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
 function TabBody({ tab }: { tab: EditorTab }) {
   if (tab === 'sound') return <SoundsView />;
   if (tab === 'video') return <MusicVideoView />;
-  return <TimelineView />;
+  // The Song tab: the tracks, with the song assistant alongside (collapsible).
+  return (
+    <div className="flex h-full min-h-0">
+      <div className="min-w-0 flex-1">
+        <TimelineView />
+      </div>
+      <AssistantPanel />
+    </div>
+  );
 }
 
 function LoadingState({

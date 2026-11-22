@@ -33,6 +33,8 @@ import { RenderService } from './render/renderService.js';
 import { renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { DeepSeekPlanner } from './video/planner.js';
+import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
+import { createAssistantRouter } from './assistant/route.js';
 import { VideoService } from './video/videoService.js';
 import { authRouter } from './routes/auth.js';
 
@@ -47,6 +49,8 @@ export interface CreateAppDeps {
   /** Music videos (tests inject one with a fake planner / renderer). */
   readonly videos?: VideoService;
   readonly playback?: PlaybackService;
+  /** The song assistant's model (tests inject a scripted fake). */
+  readonly assistantLlm?: AssistantLlm;
 }
 
 /** A stable dev session secret persisted next to the auth DB. Regenerating
@@ -197,6 +201,8 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
   app.use(createSoundsRouter({ playback }));
+  const assistantEp = assistantEndpoint(config);
+  app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
   app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));
   app.use(
     createPatternsRouter({
@@ -282,6 +288,13 @@ function requireMixConfig(path: string | undefined): string {
 }
 
 /** The scene planner's endpoint when both its URL and model are set; one without the other is a configuration error. */
+function assistantEndpoint(config: BrainConfig): { baseUrl: string; model: string; apiKey?: string } | undefined {
+  const { assistantLlmUrl: baseUrl, assistantLlmModel: model, assistantLlmKey: apiKey } = config;
+  if (!baseUrl && !model) return undefined;
+  if (!baseUrl || !model) throw new Error('ASSISTANT_LLM_URL and ASSISTANT_LLM_MODEL must be set together (brain.env).');
+  return { baseUrl, model, ...(apiKey ? { apiKey } : {}) };
+}
+
 function plannerEndpoint(config: BrainConfig): { baseUrl: string; model: string; apiKey?: string } | undefined {
   const { videoPlannerUrl: baseUrl, videoPlannerModel: model, videoPlannerKey: apiKey } = config;
   if (!baseUrl && !model) return undefined;

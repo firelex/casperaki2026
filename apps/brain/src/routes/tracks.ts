@@ -90,19 +90,7 @@ export function createTracksRouter(): Router {
     if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.issues[0]?.message });
     const song = songOf(body.data.song, res);
     if (!song) return;
-    return run(res, () => {
-      if (!song.instrumentDefinitions.some((d) => d.name === 'Drums')) throw new TrackEditError(400, 'no_drums', 'The song has no drum track.');
-      if (!song.genre) throw new TrackEditError(400, 'no_genre', 'The song has no genre, so its drum kit is unknown.');
-      const kit = drumKit(song.genre, songDrumSounds(song)).map((slot) => ({
-        role: slot.role,
-        label: DRUM_ROLE_LABELS[slot.role],
-        family: slot.family,
-        soundId: slot.entry?.id ?? null,
-        name: slot.entry ? publicNameOf(slot.entry) : null,
-        overridden: slot.overridden,
-      }));
-      return { kit };
-    });
+    return run(res, () => ({ kit: drumKitView(song) }));
   });
 
   // Add a section written by the generator: { song, type, index, bars? } -> { song, name }.
@@ -182,7 +170,22 @@ function run(res: Response, fn: () => unknown) {
  * transition saved without one shows what lowering picks for it (the same
  * seeded pick, seed = the song's content hash).
  */
-function transitionState(song: Song) {
+/** The song's drum kit: each drum part (role) with the public name of the sound it plays. */
+export function drumKitView(song: Song) {
+  if (!song.instrumentDefinitions.some((d) => d.name === 'Drums')) throw new TrackEditError(400, 'no_drums', 'The song has no drum track.');
+  if (!song.genre) throw new TrackEditError(400, 'no_genre', 'The song has no genre, so its drum kit is unknown.');
+  return drumKit(song.genre, songDrumSounds(song)).map((slot) => ({
+    role: slot.role,
+    label: DRUM_ROLE_LABELS[slot.role],
+    family: slot.family,
+    soundId: slot.entry?.id ?? null,
+    name: slot.entry ? publicNameOf(slot.entry) : null,
+    overridden: slot.overridden,
+  }));
+}
+
+/** Every section's transitions with the sounds they play (public names only), and the types there are. */
+export function transitionState(song: Song) {
   const catalog = loadValidatedCatalog();
   const hash = contentHash(song);
   const sections: Record<string, { type: string; placement: string; soundId: string | null; soundName: string | null }[]> = {};

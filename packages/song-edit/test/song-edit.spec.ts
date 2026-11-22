@@ -6,8 +6,8 @@ import {
   canUndo,
   initEditState,
   nextUniqueSegmentName,
-} from '../src/state/song-edit';
-import { makeValidSong } from './song-fixture-valid';
+} from '../src/index.js';
+import { makeValidSong } from './song-fixture-valid.js';
 
 describe('initEditState', () => {
   it('starts with working === original and clean flags', () => {

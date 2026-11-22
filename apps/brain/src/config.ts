@@ -58,6 +58,10 @@ const ConfigSchema = z.object({
   videoPlannerUrl: z.string().url().optional(),
   videoPlannerModel: z.string().min(1).optional(),
   videoPlannerKey: z.string().min(1).optional(),
+  /** The song assistant's model: an OpenAI-compatible endpoint with tool calling (both or neither). */
+  assistantLlmUrl: z.string().url().optional(),
+  assistantLlmModel: z.string().min(1).optional(),
+  assistantLlmKey: z.string().min(1).optional(),
   /** Frames the video renderer draws in parallel (default: the engine's, 8). */
   videoRenderConcurrency: z.coerce.number().int().positive().optional(),
   // --- Production web serving ---
@@ -113,6 +117,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
     videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
     videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,
+    assistantLlmUrl: env.ASSISTANT_LLM_URL || undefined,
+    assistantLlmModel: env.ASSISTANT_LLM_MODEL || undefined,
+    assistantLlmKey: env.ASSISTANT_LLM_KEY || undefined,
     videoRenderConcurrency: env.VIDEO_RENDER_CONCURRENCY || undefined,
     adminEmails: env.BRAIN_ADMIN_EMAILS,
   });
