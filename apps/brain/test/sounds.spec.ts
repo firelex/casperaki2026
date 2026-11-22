@@ -1,7 +1,9 @@
 // Public sound catalog: families, search, items (public fields only), previews.
 // Uses the committed catalog, an in-memory store and the stand-in playback service.
 
+import { readFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createApp } from '../src/bootstrap.js';
@@ -13,7 +15,9 @@ interface Harness { url: string; store: SongsStore; stop: () => Promise<void> }
 
 async function boot(): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback() });
+  // The real mix table (the details endpoint reads it as the engine does).
+  const mixConfig = readFileSync(fileURLToPath(new URL('../../../../casperaki_engine/config/mix-config.json', import.meta.url)), 'utf8');
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback({ mixConfig }) });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -69,11 +73,15 @@ describe('sounds', () => {
     expect((await get('/api/sounds/deadbeefdeadbeef')).status).toBe(404);
   });
 
-  it('marks tonal sounds the generator uses as pattern previews, hits and loops as audio', async () => {
+  it('previews tonal sounds and drum hits as patterns, the rest as samples (all through the engine)', async () => {
     const keys = (await get('/api/sounds?family=keys&limit=100')).body.items as Array<{ preview: string }>;
     expect(keys.some((i) => i.preview === 'pattern')).toBe(true);
     const kicks = (await get('/api/sounds?family=kickDrums&limit=100')).body.items as Array<{ preview: string }>;
-    expect(kicks.every((i) => i.preview === 'audio')).toBe(true);
+    expect(kicks.every((i) => i.preview === 'pattern')).toBe(true);
+    const loops = (await get('/api/sounds?family=percussionLoops&limit=50')).body.items as Array<{ preview: string }>;
+    expect(loops.every((i) => i.preview === 'sample' || i.preview === 'none')).toBe(true);
+    const fx = (await get('/api/sounds?family=fx&limit=100')).body.items as Array<{ preview: string }>;
+    expect(fx.filter((i) => i.preview === 'sample').length).toBeGreaterThan(80);
   });
 
   it('previews a tonal sound as a pattern played by it alone, and refuses the wrong kind', async () => {
@@ -84,19 +92,49 @@ describe('sounds', () => {
     const p = (await r.json()) as { song: string; bars: number; bpm: number; samples: unknown[] };
     expect(p.bars).toBe(4);
     expect(p.bpm).toBeGreaterThan(40);
-    const kick = (await get('/api/sounds?family=kickDrums&limit=1')).body.items[0];
-    expect((await fetch(`${h.url}/api/sounds/${kick.id}/preview`, { method: 'POST' })).status).toBe(409);
-    expect((await fetch(`${h.url}/api/sounds/${k.id}/audio`)).status).toBe(409);
+  });
+
+  it('previews a drum hit in a groove: same groove for every drum sound of a style and pattern number', async () => {
+    const [a, b] = (await get('/api/sounds?family=snareDrums&limit=2')).body.items as Array<{ id: string }>;
+    const post = (id: string, body: unknown) =>
+      fetch(`${h.url}/api/sounds/${id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, body: (await r.json()) as any }));
+    const pa = await post(a!.id, { genre: 'rock', variant: 2 });
+    expect(pa.status).toBe(200);
+    expect(pa.body).toMatchObject({ bars: 4, genre: 'rock', variant: 2, loop: true, kept: false });
+    expect(pa.body.genres).toContain('edm');
+    const pb = await post(b!.id, { keep: { soundId: a!.id, genre: 'rock', variant: 2 } });
+    expect(pb.body).toMatchObject({ kept: true, genre: 'rock', variant: 2, writer: a!.id });
   });
 
   it('answers a missing audio file without naming it', async () => {
-    const kick = (await get('/api/sounds?family=kickDrums&limit=1')).body.items[0];
-    const r = await fetch(`${h.url}/api/sounds/${kick.id}/audio`);
-    // The stand-in library has no drum files.
+    const loop = (await get('/api/sounds?family=percussionLoops&limit=1')).body.items[0];
+    const r = await fetch(`${h.url}/api/sounds/${loop.id}/preview`, { method: 'POST' });
+    // The stand-in library has no loop files.
     expect(r.status).toBe(404);
     const body = (await r.json()) as { message: string };
     expect(body.message).toMatch(/missing from the library/);
     expect(body.message).not.toMatch(/\.mp3|\.wav|\//);
+  });
+
+  it('tells what the engine does with a sound in a song', async () => {
+    const keys = (await get('/api/sounds?family=keys&q=acoustic%20piano&limit=1')).body.items[0];
+    const d = await get(`/api/sounds/${keys.id}/details?genre=brightPop`);
+    expect(d.status).toBe(200);
+    expect(d.body).toMatchObject({ genre: 'brightPop', bus: 'keys bus' });
+    expect(typeof d.body.volumeDb).toBe('number');
+    expect(typeof d.body.octaveShift).toBe('number');
+    expect(d.body.inserts).toContain('Console8 Sub In');
+    expect(d.body.sends.reverb).toBe(-14); // keysAcousticPiano: the by-type send override
+    for (const k of PRIVATE) expect(d.body).not.toHaveProperty(k);
+    const kick = (await get('/api/sounds?family=kickDrums&limit=1')).body.items[0];
+    const dk = await get(`/api/sounds/${kick.id}/details`);
+    expect(dk.body.bus).toBe('kicks bus');
+    expect(dk.body.octaveShift).toBeNull();
+    expect(dk.body.notes.join(' ')).toMatch(/kit position/);
+    const fx = (await get('/api/sounds?transition=fxDownlifter&limit=1')).body.items[0];
+    const df = await get(`/api/sounds/${fx.id}/details`);
+    expect(df.body).toMatchObject({ volumeDb: -10, bus: 'fx bus' });
+    expect((await get(`/api/sounds/${kick.id}/details?genre=polka`)).status).toBe(400);
   });
 });
 
@@ -149,7 +187,7 @@ describe('transition sounds', () => {
     const { searchSounds } = await import('../src/sounds/soundCatalog.js');
     const down = searchSounds({ transition: 'fxDownlifter', cursor: 0, limit: 100 });
     expect(down.total).toBeGreaterThan(5);
-    expect(down.items.every((i) => i.family === 'fx' && i.preview === 'audio')).toBe(true);
+    expect(down.items.every((i) => i.family === 'fx' && i.preview === 'sample')).toBe(true);
     const tonal = searchSounds({ transition: 'fxTonalReverse', cursor: 0, limit: 100 });
     // 120 rows = 10 packs in 12 keys.
     expect(tonal.total).toBe(10);
@@ -170,5 +208,25 @@ describe('sounds that suit a song style', () => {
     const none = searchSounds({ family: 'keys', suits: 'noSuchStyle', cursor: 0, limit: 1 });
     expect(none.noneTagged).toBe(true);
     expect(none.total).toBe(all);
+  });
+});
+
+describe('engine previews of drum hits and samples', () => {
+  it('adds a figure when the groove lacks the drum, and plans loops / one-shots', async () => {
+    const { soundCatalog } = await import('../src/sounds/soundCatalog.js');
+    const { drumPreviewSong, samplePlanFor } = await import('../src/sounds/enginePreview.js');
+    const cat = soundCatalog();
+    const tom = [...cat.drumOf.values()].find((d) => d.entry.family === 'toms')!;
+    const { song } = drumPreviewSong(tom.entry, tom.roles, 'ballad', 0);
+    const pitches = new Set(song.arrangement['chorus1']!.overrides['Drums']!.bars!.flatMap((b) => Object.values(b.notes ?? {}).flat().map((n) => (n as { note: number }).note)));
+    expect([50, 47, 43].every((p) => pitches.has(p))).toBe(true);
+    const def = song.instrumentDefinitions.find((d) => d.name === 'Drums')!;
+    expect((def.details as { drumSounds: Record<string, string> }).drumSounds['tom1']).toBe(tom.entry.id);
+    const kinds = new Map<string, string>();
+    for (const [id, s] of cat.sampleOf) kinds.set(cat.validated.get(id)!.family, s.plan.kind);
+    expect(kinds.get('percussionLoops')).toBe('loop');
+    expect(kinds.get('fx')).toBe('oneShot');
+    const tonal = [...cat.sampleOf.values()].find((s) => s.entry.lowLevel === 'fxTonalReverse')!;
+    expect(samplePlanFor(tonal.entry)).toMatchObject({ kind: 'oneShot', tag: 'fxTonalReverse', key: tonal.entry.key });
   });
 });

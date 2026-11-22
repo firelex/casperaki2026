@@ -17,6 +17,9 @@ importers:
       '@casperaki/arrangement':
         specifier: workspace:*
         version: link:../../packages/arrangement
+      '@casperaki/engine-adapter':
+        specifier: workspace:*
+        version: link:../../packages/engine-adapter
       '@casperaki/music-theory':
         specifier: workspace:*
         version: link:../../packages/music-theory

@@ -313,7 +313,9 @@ function probeDurationByPath(abs, label) {
 
 function getTransitionSampleDurationSeconds(entry) {
   if (!SAMPLE_LIBRARY_ROOT) return null;
-  return probeDurationByPath(join(SAMPLE_LIBRARY_ROOT, entry.matchedPath), 'transition');
+  // Disk folder names can differ from the catalog's (e.g. the 8-bit arcade
+  // rows live under fx/fxOther): translate like loops do.
+  return probeDurationByPath(join(SAMPLE_LIBRARY_ROOT, resolveDiskPath(entry.matchedPath)), 'transition');
 }
 
 // docs/54r — Catalog-vs-disk lowLevel alias resolver.
@@ -420,6 +422,13 @@ for (const f of readdirSync(OUT)) {
   if (/^inst-\d+\.json$/.test(f)) rmSync(resolve(OUT, f));
 }
 writeFileSync(resolve(OUT, 'song.json'), JSON.stringify(fixture.songJson, null, 2));
+// Transition samples carry the catalog path; point them at the file on disk
+// (same catalog → disk folder translation as the duration probe above).
+for (const inst of fixture.instruments) {
+  if (inst.json?.type === 'transitionSample' && typeof inst.json.sourcePath === 'string') {
+    inst.json.sourcePath = resolveDiskPath(inst.json.sourcePath);
+  }
+}
 for (const inst of fixture.instruments) {
   writeFileSync(resolve(OUT, inst.filename), JSON.stringify(inst.json, null, 2));
 }

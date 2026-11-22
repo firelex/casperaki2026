@@ -196,8 +196,14 @@ export function SoundsView() {
 
       <SoundBrowser
         source={transitionType ? { transition: transitionType } : { family }}
-        playOnce={Boolean(transitionType)}
         title={transitionInfo?.label ?? famInfo?.label ?? 'Sounds'}
+        usage={(s) => [
+          ...songTracks.filter((t) => t.soundId === s.id).map((t) => `${t.name} track`),
+          ...(drumKit.data?.kit ?? []).filter((r) => r.soundId === s.id).map((r) => `${r.label} in the kit`),
+          ...Object.entries(transitionState.data?.sections ?? {})
+            .filter(([, ts]) => ts.some((t) => t.soundId === s.id))
+            .map(([seg]) => `transition in ${seg}`),
+        ]}
         actionLabel="Use"
         highlight={highlight}
         action={(s) => <UseMenu s={s} useOptions={useOptions(s)} onUse={(o) => useSound(s, o)} />}

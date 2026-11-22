@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@teamsuzie/ui';
 
-import { soundsApi } from '../../api/sounds';
 import type { TransitionPlacement, TransitionState } from '../../api/tracks';
-import { audition } from '../../audio/audition';
-import { SoundBrowser, stopSoundPreview } from '../sounds/SoundBrowser';
+import { SoundBrowser, stopSoundPreview, toggleSoundById, usePreviewState } from '../sounds/SoundBrowser';
 
 const PLACES: readonly { placement: TransitionPlacement; label: string }[] = [
   { placement: 'beginningOfSegment', label: 'Start' },
@@ -52,7 +50,7 @@ export function TransitionsWindow({
 }) {
   const [scope, setScope] = useState<'this' | 'all'>('this');
   const [picking, setPicking] = useState<{ type: string; label: string; placement: TransitionPlacement; current: string | null } | undefined>(undefined);
-  useEffect(() => () => audition.stop(), []);
+  useEffect(() => stopSoundPreview, []);
   const kind = sections.find((s) => s.name === section)?.kind;
   if (!kind) throw new Error(`No section ${section}.`);
   const sameKind = sections.filter((s) => s.kind === kind).map((s) => s.name);
@@ -239,19 +237,25 @@ export function TransitionsWindow({
   );
 }
 
-/** ▶ / ■ for one transition sound (played once). */
+/** ▶ / ■ for one transition sound, played by the engine. */
 function PreviewButton({ soundId, label }: { soundId: string | undefined; label: string }) {
-  const [playing, setPlaying] = useState(false);
-  useEffect(() => audition.onChange((id, st) => setPlaying(id === soundId && st !== 'idle')), [soundId]);
+  const state = usePreviewState(soundId);
+  const [error, setError] = useState<string | undefined>(undefined);
+  const playing = state === 'playing';
   return (
     <button
       type="button"
       disabled={!soundId}
-      onClick={() => (playing ? audition.stop() : soundId ? void audition.play(soundId, soundsApi.audioUrl(soundId), 'fx') : undefined)}
+      onClick={() => {
+        if (!soundId) return;
+        setError(undefined);
+        toggleSoundById(soundId).catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
+      }}
+      title={error ?? (soundId ? undefined : 'Pick a sound with Sound… to hear it')}
       aria-label={playing ? `Stop the ${label.toLowerCase()}` : `Play the ${label.toLowerCase()}`}
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-black/60 text-[11px] ${playing ? 'bg-emerald-400 text-black' : 'bg-gradient-to-b from-[#3b3d43] to-[#2b2c31] text-white hover:from-[#4a4c53]'} disabled:opacity-30`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[11px] ${error ? 'border-err' : 'border-black/60'} ${playing ? 'bg-emerald-400 text-black' : 'bg-gradient-to-b from-[#3b3d43] to-[#2b2c31] text-white hover:from-[#4a4c53]'} disabled:opacity-30`}
     >
-      {playing ? '■' : '▶'}
+      {state === 'loading' ? '…' : playing ? '■' : '▶'}
     </button>
   );
 }
@@ -290,7 +294,6 @@ function TransitionSoundDialog({
           title={`${label} sounds`}
           actionLabel=""
           highlight={current ?? undefined}
-          playOnce
           autoFocus
           action={(s) =>
             s.id === current ? (

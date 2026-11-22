@@ -7,7 +7,7 @@ import { PlaybackService } from '../src/render/playbackService.js';
 /** Stand-in playback: the "emit" writes a one-lane envelope (a bass
  *  multisample with two slots, one drum lane), the "ffmpeg" writes its
  *  arguments into the output file so slicing can be checked. */
-export function fakePlayback(): PlaybackService {
+export function fakePlayback(opts: { mixConfig?: string } = {}): PlaybackService {
   const dir = mkdtempSync(join(tmpdir(), 'casperaki-playback-test-'));
   const lib = join(dir, 'library');
   mkdirSync(join(lib, 'basses'), { recursive: true });
@@ -49,7 +49,7 @@ writeFileSync(o + '/asset-manifest.json', JSON.stringify({
     sampleLibraryRoot: lib,
     ffmpegBin: ffmpeg,
     stubSamplesDir: stubs,
-    mixConfigPath: (() => { const f = join(dir, 'mix-config.json'); writeFileSync(f, '{}'); return f; })(),
+    mixConfigPath: (() => { const f = join(dir, 'mix-config.json'); writeFileSync(f, opts.mixConfig ?? '{}'); return f; })(),
   });
 }
 

@@ -273,7 +273,8 @@ const OCTAVE_ADJUSTMENT_BY_CATALOG_ID: ReadonlyMap<string, number> = (() => {
   return m;
 })();
 
-function octaveAdjustmentFor(catalogId: string | null | undefined): number {
+/** The octave shift the engine applies to a tonal sound (per catalog row; 0 when none). */
+export function octaveAdjustmentFor(catalogId: string | null | undefined): number {
   if (!catalogId) return 0;
   return OCTAVE_ADJUSTMENT_BY_CATALOG_ID.get(catalogId) ?? 0;
 }
@@ -2301,3 +2302,17 @@ function bassBarsFromBrainBars(brainBars: BrainBar[]): EngineBassBar[] {
     return { notes };
   });
 }
+
+/**
+ * The lowLevelType the engine uses for a kit position's volume (the drum kit
+ * inst-1.json is the base fixture: each position keeps its fixture type,
+ * whichever sound plays in it). Throws for an unknown position.
+ */
+export function drumRoleLowLevelType(role: string): string {
+  const kit = JSON.parse(BASE_DRUMS_INST) as { subInstruments?: Record<string, { lowLevelType?: unknown }> };
+  const t = kit.subInstruments?.[role]?.lowLevelType;
+  if (typeof t !== 'string' || t.length === 0) throw new Error(`drumRoleLowLevelType: the drum kit has no position "${role}"`);
+  return t;
+}
+
+export { normalizeLoopLowLevelType } from './loops.js';

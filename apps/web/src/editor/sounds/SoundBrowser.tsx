@@ -1,8 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { soundsApi, soundsQueryKeys, type SoundItem } from '../../api/sounds';
-import { audition } from '../../audio/audition';
 import { livePlayer, patternPlayer } from '../../audio/livePlayer';
 import { useLiveState } from '../../audio/useLivePlayer';
 import { GENRE_LABELS } from '../../types/genres';
@@ -33,8 +32,8 @@ export function SoundBrowser({
   highlight,
   status,
   autoFocus,
-  playOnce,
   songStyle,
+  usage,
 }: {
   source: SoundSource;
   title: string;
@@ -44,10 +43,10 @@ export function SoundBrowser({
   /** Shown at the right of the toolbar (busy / error of the caller's edits). */
   status?: ReactNode;
   autoFocus?: boolean;
-  /** Play audio sounds once (transitions), not as a groove or loop. */
-  playOnce?: boolean;
   /** In a song: its style (genre). "Suits this song" is then on to start with. */
   songStyle?: string | undefined;
+  /** Where the open song uses a sound ("Keys track", "Snare 1 in the kit"). */
+  usage?: (s: SoundItem) => string[];
 }) {
   const [query, setQuery] = useState('');
   const [q, setQ] = useState('');
@@ -83,11 +82,11 @@ export function SoundBrowser({
       e.preventDefault();
       e.stopPropagation();
       const s = lastSound ?? items.find((i) => i.preview !== 'none');
-      if (s) void togglePreview(s, style, Boolean(playOnce));
+      if (s) void togglePreview(s, style);
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [items, style, playOnce]);
+  }, [items, style]);
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col" data-owns-space="" data-sound-browser="">
@@ -130,6 +129,7 @@ export function SoundBrowser({
       </header>
 
         <NowPlaying />
+      <div className="flex min-h-0 flex-1">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {list.isError ? (
           <p className="p-6 text-[13px] text-err">The sounds could not be loaded: {list.error.message}</p>
@@ -149,7 +149,7 @@ export function SoundBrowser({
             </div>
           <div role="list">
             {items.map((s) => (
-              <SoundRow key={s.id} s={s} highlighted={s.id === highlight} prefer={style} once={Boolean(playOnce)} action={action(s)} />
+              <SoundRow key={s.id} s={s} highlighted={s.id === highlight} prefer={style} action={action(s)} />
             ))}
             {list.hasNextPage ? (
               <div className="flex justify-center p-4">
@@ -167,7 +167,103 @@ export function SoundBrowser({
           </div>
         )}
       </div>
+      <SoundDetailsPanel usage={usage} songStyle={songStyle} />
+      </div>
     </section>
+  );
+}
+
+/**
+ * What the engine applies when the selected sound plays (the last one played
+ * or clicked): its volume, octave, loudness, bus, inserts and sends, plus
+ * facts like tempo and key, and where this song uses it. Read-only.
+ */
+function SoundDetailsPanel({ usage, songStyle }: { usage: ((s: SoundItem) => string[]) | undefined; songStyle: string | undefined }) {
+  const s = useLastSound();
+  const details = useQuery({
+    queryKey: ['sound-details', s?.id, songStyle ?? ''],
+    queryFn: ({ signal }) => soundsApi.details(s!.id, songStyle, signal),
+    enabled: Boolean(s),
+    staleTime: Infinity,
+  });
+  const d = details.data;
+  const db = (v: number | null) => (v === null ? '—' : `${v > 0 ? '+' : ''}${+v.toFixed(1)} dB`);
+  const used = s && usage ? usage(s) : [];
+  return (
+    <aside className="w-[280px] shrink-0 overflow-y-auto border-l border-black/60 bg-[#202124] px-4 py-4" aria-label="Sound details">
+      {!s ? (
+        <p className="text-[12px] text-white/45">Click or play a sound to see what the song does with it: volume, octave, effects.</p>
+      ) : (
+        <>
+          <div className="text-[15px] font-semibold text-white">{s.name}</div>
+          <div className="mb-3 text-[12px] text-white/50">
+            {s.familyLabel} · {s.type}
+          </div>
+          {used.length ? (
+            <div className="mb-3 rounded-[8px] bg-emerald-400/10 px-3 py-2 text-[12px] text-emerald-200">In this song: {used.join(', ')}</div>
+          ) : null}
+          {details.isError ? (
+            <p className="text-[12px] text-err">{details.error.message}</p>
+          ) : !d ? (
+            <p className="text-[12px] text-white/45">Reading…</p>
+          ) : (
+            <dl className="grid grid-cols-[96px_1fr] gap-x-3 gap-y-2 text-[12px]">
+              {d.genre ? (
+                <>
+                  <dt className="text-white/50">For style</dt>
+                  <dd className="text-white/90">{GENRE_LABELS[d.genre as keyof typeof GENRE_LABELS] ?? d.genre}</dd>
+                </>
+              ) : null}
+              <dt className="text-white/50">Volume</dt>
+              <dd className="font-mono text-white/90">{db(d.volumeDb)}</dd>
+              <dt className="text-white/50">Octave</dt>
+              <dd className="font-mono text-white/90">{d.octaveShift === null ? '—' : d.octaveShift === 0 ? 'as recorded' : `${d.octaveShift > 0 ? '+' : ''}${d.octaveShift}`}</dd>
+              <dt className="text-white/50">Loudness</dt>
+              <dd className="text-white/90">{d.loudness}</dd>
+              {d.bpm !== null || d.key !== null ? (
+                <>
+                  <dt className="text-white/50">Tempo · key</dt>
+                  <dd className="font-mono text-white/90">
+                    {d.bpm !== null ? `${d.bpm} BPM` : '—'}
+                    {d.key !== null ? ` · ${d.key}` : ''}
+                  </dd>
+                </>
+              ) : null}
+              <dt className="text-white/50">Bus</dt>
+              <dd className="text-white/90">{d.bus ?? '—'}</dd>
+              <dt className="text-white/50">Inserts</dt>
+              <dd className="flex flex-col gap-1">
+                {d.inserts.length === 0 ? (
+                  <span className="text-white/45">none</span>
+                ) : (
+                  d.inserts.map((n, i) => (
+                    <span key={`${n}-${i}`} className="rounded-[4px] bg-[#2d4a6b] px-2 py-0.5 text-[11px] text-white/90">
+                      {n}
+                    </span>
+                  ))
+                )}
+              </dd>
+              <dt className="text-white/50">Sends</dt>
+              <dd className="font-mono text-white/90">
+                Reverb {db(d.sends.reverb)}
+                <br />
+                Delay {db(d.sends.delay)}
+                <br />
+                Chorus {db(d.sends.chorus)}
+              </dd>
+            </dl>
+          )}
+          {d?.notes.length ? (
+            <ul className="mt-4 flex list-disc flex-col gap-1 pl-4 text-[12px] text-white/60">
+              {d.notes.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+          ) : null}
+          <p className="mt-4 text-[11px] text-white/35">The preview plays the sound with these settings, as the song does.</p>
+        </>
+      )}
+    </aside>
   );
 }
 
@@ -185,19 +281,24 @@ function StyleChip({ label, active, onClick }: { label: string; active: boolean;
 }
 
 /** One sound: play, name, type, styles, tempo/key, and the caller's action. */
-function SoundRow({ s, highlighted, prefer, once, action }: { s: SoundItem; highlighted: boolean; prefer: string; once: boolean; action: ReactNode }) {
+function SoundRow({ s, highlighted, prefer, action }: { s: SoundItem; highlighted: boolean; prefer: string; action: ReactNode }) {
+  const selected = useLastSound()?.id === s.id;
   const state = usePreviewState(s.id);
   const playing = state === 'playing';
   return (
     <div
       role="listitem"
-      className={`${ROW} border-b border-black/40 px-4 py-2 ${
+      onClick={(e) => {
+        if (!(e.target as HTMLElement).closest('button')) setLastSound(s);
+      }}
+      className={`${ROW} cursor-default border-b border-black/40 px-4 py-2 ${
         highlighted ? 'bg-[#2f3a48]' : playing ? 'bg-white/[0.06]' : 'hover:bg-white/[0.03]'
-      }`}
+      } ${selected ? 'shadow-[inset_3px_0_0_#7dffb0]' : ''}`}
+      aria-current={selected ? 'true' : undefined}
     >
       <button
         type="button"
-        onClick={() => void togglePreview(s, prefer, once)}
+        onClick={() => void togglePreview(s, prefer)}
         disabled={s.preview === 'none'}
         aria-label={playing ? `Stop ${s.name}` : `Play ${s.name}`}
         title={s.preview === 'none' ? 'No preview for this sound yet' : s.preview === 'pattern' ? 'Hear a pattern played with it' : 'Hear it'}
@@ -238,9 +339,12 @@ function Bars() {
   );
 }
 
-/** The pattern preview playing (or last played): its sound, style and pattern number. */
-interface PatternNow {
+/** The preview playing (or last played): its sound, and for patterns the style and pattern number. */
+interface PreviewNow {
   readonly sound: SoundItem;
+  /** 'pattern': styles and New pattern apply; 'sample': a loop or a one-shot. */
+  readonly kind: 'pattern' | 'sample';
+  readonly loop: boolean;
   readonly genre: string;
   readonly genres: readonly string[];
   readonly variant: number;
@@ -249,107 +353,123 @@ interface PatternNow {
   /** Whether the click kept the pattern playing before (false: a different kind of sound, so it got its own; undefined: nothing to keep). */
   readonly kept: boolean | undefined;
 }
-let patternNow: PatternNow | undefined;
+let previewNow: PreviewNow | undefined;
 const nowListeners = new Set<() => void>();
-function setPatternNow(n: PatternNow | undefined) {
-  patternNow = n;
+function setPreviewNow(n: PreviewNow | undefined) {
+  previewNow = n;
   for (const fn of nowListeners) fn();
 }
-function usePatternNow(): PatternNow | undefined {
+function usePreviewNow(): PreviewNow | undefined {
   const [, force] = useState(0);
   useEffect(() => {
     const fn = () => force((x) => x + 1);
     nowListeners.add(fn);
     return () => void nowListeners.delete(fn);
   }, []);
-  return patternNow;
+  return previewNow;
 }
 
 const keyOf = (id: string) => `sound:${id}:`;
 
-/** The sound last started (Space plays / stops it). */
+/** The sound last started (Space plays / stops it; the details panel shows it). */
 let lastSound: SoundItem | undefined;
-
-
-/** Start or stop a sound's preview (one at a time; the song pauses). */
-async function togglePreview(s: SoundItem, prefer: string, once = false): Promise<void> {
+function setLastSound(s: SoundItem) {
   lastSound = s;
   for (const fn of nowListeners) fn();
-  const pat = patternPlayer.getState();
-  if (audition.playingId === s.id) return audition.stop();
-  if (pat.key?.startsWith(keyOf(s.id)) && pat.status === 'playing') return void patternPlayer.pause();
-  void livePlayer.pause();
-  audition.stop();
-  if (pat.status === 'playing') await patternPlayer.pause();
-  if (s.preview === 'audio') {
-    setPatternNow(undefined);
-    return audition.play(s.id, soundsApi.audioUrl(s.id), once ? 'fx' : s.family);
-  }
-  if (s.preview === 'pattern') {
-    // Keep the pattern playing (or last played) while comparing sounds.
-    const keep = patternNow ? { soundId: patternNow.writer, genre: patternNow.genre, variant: patternNow.variant } : undefined;
-    return playPattern(s, undefined, 0, prefer || undefined, keep);
-  }
 }
 
-/** Play a generated pattern for `s`: in `genre` (default: its own style) and pattern number `variant`. */
-async function playPattern(
+/**
+ * Start or stop a sound's preview (one at a time; the song pauses). Every
+ * preview is played by the engine, as the song would play the sound: its mix
+ * volume, octave and effects included.
+ */
+async function togglePreview(s: SoundItem, prefer: string): Promise<void> {
+  setLastSound(s);
+  const pat = patternPlayer.getState();
+  if (pat.key?.startsWith(keyOf(s.id)) && pat.status === 'playing') return void patternPlayer.pause();
+  void livePlayer.pause();
+  if (pat.status === 'playing') await patternPlayer.pause();
+  if (s.preview === 'none') return;
+  // Keep the pattern playing (or last played) while comparing sounds.
+  const keep =
+    s.preview === 'pattern' && previewNow?.kind === 'pattern'
+      ? { soundId: previewNow.writer, genre: previewNow.genre, variant: previewNow.variant }
+      : undefined;
+  return playPreview(s, undefined, 0, prefer || undefined, keep);
+}
+
+/** Play `s` through the engine: a pattern in `genre` (default: its own style) and number `variant`, or its sample. */
+async function playPreview(
   s: SoundItem,
   genre: string | undefined,
   variant: number,
   prefer?: string,
   keep?: { soundId: string; genre: string; variant: number },
 ): Promise<void> {
-  audition.stop();
-  let loop: { start: number; end: number } | undefined;
+  let info: { loop: boolean; end: number } | undefined;
   const k = keep ? `keep-${keep.soundId}-${keep.genre}-${keep.variant}` : `${genre ?? ''}:${variant}`;
   await patternPlayer.play(`${keyOf(s.id)}${k}`, async (signal) => {
-    const p = await soundsApi.preview(s.id, { genre, variant, prefer, keep }, signal);
-    loop = { start: 0, end: (p.bars * 4 * 60) / p.bpm };
-    setPatternNow({ sound: s, genre: p.genre, genres: p.genres, variant: p.variant, writer: p.writer, kept: keep ? p.kept : undefined });
+    const p = await soundsApi.preview(s.id, s.preview === 'pattern' ? { genre, variant, prefer, keep } : {}, signal);
+    info = { loop: p.loop, end: (p.bars * 4 * 60) / p.bpm };
+    setPreviewNow({
+      sound: s,
+      kind: s.preview === 'pattern' ? 'pattern' : 'sample',
+      loop: p.loop,
+      genre: p.genre,
+      genres: p.genres,
+      variant: p.variant,
+      writer: p.writer,
+      kept: keep ? p.kept : undefined,
+    });
     return p;
   });
-  if (!loop) throw new Error('The pattern preview gave no length.');
-  patternPlayer.setLoopRange(loop);
-  patternPlayer.setLooping(true);
+  if (!info) throw new Error('The preview gave no length.');
+  if (info.loop) {
+    patternPlayer.setLoopRange({ start: 0, end: info.end });
+    patternPlayer.setLooping(true);
+  } else {
+    patternPlayer.setLooping(false);
+  }
 }
 
-/** Above the list while a pattern plays: its style (pick another) and New pattern. */
+/** Play or stop one sound by id (e.g. a transition's sound), through the engine. */
+export async function toggleSoundById(id: string): Promise<void> {
+  const s = await soundsApi.get(id);
+  return togglePreview(s, '');
+}
+
+/** Above the list: what plays; for patterns its style (pick another) and New pattern. */
 export function NowPlaying() {
-  const now = usePatternNow();
+  const now = usePreviewNow();
   const pat = useLiveState(patternPlayer);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [aud, setAud] = useState<{ id: string | undefined; state: string }>({ id: audition.playingId, state: audition.playingId ? 'playing' : 'idle' });
-  useEffect(() => audition.onChange((id, state) => setAud({ id, state })), []);
   const LINE = 'flex min-h-[46px] flex-wrap items-center gap-3 border-b border-black/60 px-5 py-2';
   if (!now || !pat.key?.startsWith(keyOf(now.sound.id))) {
-    // Nothing (or a drum hit, loop or effect) playing: keep the line, so the list does not jump.
-    const s = lastSound;
     return (
       <div className={`${LINE} bg-[#202a32]`} role="region" aria-label="Now playing">
-        <span className="text-[12px] text-white/55">
-          {s && s.preview === 'audio' ? (
-            <>
-              {aud.id === s.id && aud.state === 'playing' ? 'Playing' : aud.id === s.id && aud.state === 'loading' ? 'Loading' : 'Stopped'}{' '}
-              <span className="font-semibold text-white">{s.name}</span> · Space to {aud.id === s.id && aud.state !== 'idle' ? 'stop' : 'play'}
-            </>
-          ) : (
-            'Press play on a sound to hear it. Space plays and stops the last one.'
-          )}
-        </span>
+        <span className="text-[12px] text-white/55">Press play on a sound to hear it. Space plays and stops the last one.</span>
       </div>
     );
   }
   const busy = pat.status === 'loading';
+  const state = pat.status === 'playing' ? 'Playing' : busy ? (now.kind === 'pattern' ? 'Writing a pattern for' : 'Loading') : pat.status === 'ended' ? 'Played' : 'Paused';
+  if (now.kind === 'sample') {
+    return (
+      <div className={`${LINE} bg-[#24303a]`} role="region" aria-label="Now playing">
+        <span className="text-[12px] text-white/60">
+          {state} <span className="font-semibold text-white">{now.sound.name}</span> · {now.loop ? 'looping' : 'once'} · Space to {pat.status === 'playing' ? 'stop' : 'play'}
+        </span>
+      </div>
+    );
+  }
   const run = (genre: string, variant: number) => {
     setError(undefined);
-    playPattern(now.sound, genre, variant).catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
+    playPreview(now.sound, genre, variant).catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
   };
   return (
     <div className={`${LINE} bg-[#24303a]`} role="region" aria-label="Now playing">
       <span className="text-[12px] text-white/60">
-        {pat.status === 'playing' ? 'Playing' : busy ? 'Writing a pattern for' : 'Paused'}{' '}
-        <span className="font-semibold text-white">{now.sound.name}</span> · pattern {now.variant + 1}
+        {state} <span className="font-semibold text-white">{now.sound.name}</span> · pattern {now.variant + 1}
         {now.writer !== now.sound.id ? <span className="text-white/45"> (kept while you compare sounds)</span> : null}
         {now.kept === false ? <span className="text-white/45"> (a new part: this is a different kind of sound)</span> : null}
       </span>
@@ -381,19 +501,21 @@ export function NowPlaying() {
   );
 }
 
-/** Whether this sound's preview is loading, playing or idle (from both players). */
-function usePreviewState(id: string): 'loading' | 'playing' | 'idle' {
+/** Whether this sound's preview is loading, playing or idle. */
+export function usePreviewState(id: string | undefined): 'loading' | 'playing' | 'idle' {
   const pat = useLiveState(patternPlayer);
-  const [aud, setAud] = useState<'loading' | 'playing' | 'idle'>(audition.playingId === id ? 'playing' : 'idle');
-  useEffect(() => audition.onChange((which, st) => setAud(which === id ? st : 'idle')), [id]);
-  if (pat.key?.startsWith(keyOf(id))) return pat.status === 'playing' ? 'playing' : pat.status === 'loading' ? 'loading' : 'idle';
-  return aud;
+  if (id && pat.key?.startsWith(keyOf(id))) return pat.status === 'playing' ? 'playing' : pat.status === 'loading' ? 'loading' : 'idle';
+  return 'idle';
 }
 
-
+/** The sound the details panel describes: the last one played or clicked. */
+export function useLastSound(): SoundItem | undefined {
+  usePreviewNow();
+  return lastSound;
+}
+export { setLastSound };
 
 /** Stop whatever sound preview is playing (e.g. when a dialog closes). */
 export function stopSoundPreview(): void {
-  audition.stop();
   if (patternPlayer.getState().key?.startsWith('sound:')) void patternPlayer.pause();
 }

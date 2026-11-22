@@ -7,9 +7,14 @@
 //               a similar sound a genre uses (its "donor": same kind where
 //               possible, e.g. a nylon mono guitar plays a nylon stereo
 //               guitar's part, a legato orchestral string section a pad part)
-//   'audio'   — a drum hit, loop / break or fx whose file the audit matched:
-//               previewed as its own audio
-//   'none'    — neither (its file is missing from the library)
+//               Drum hits are 'pattern' too: the genre's groove with the hit
+//               in its kit positions (see enginePreview.ts).
+//   'sample'  — a loop, break, effect, transition sound or single percussion
+//               hit: played through the engine on its own (Loop track or a
+//               transition), once or looped (see enginePreview.ts)
+//   'none'    — none of these (its file is missing from the library, or it
+//               lacks what the engine needs, e.g. a tempo)
+// Every preview goes through the playback engine; no raw file is played.
 // Wobble basses are tempo loops, so they are previewed as audio (looped).
 
 import {
@@ -20,6 +25,7 @@ import {
   publicNameOf,
   type InstrumentFamily,
   type ValidatedCatalogEntry,
+  type DrumRole,
   userSoundFamily,
   isSwappableTransition,
   transitionSoundChoices,
@@ -27,11 +33,13 @@ import {
   drumRolesForFamily,
 } from '@casperaki/arrangement';
 import { GenreSchema } from '@casperaki/song-schema';
+
+import { drumPreviewGenres, drumPreviewRoles, samplePlanFor, type SamplePlan } from './enginePreview.js';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export type SoundPreview = 'pattern' | 'audio' | 'none';
+export type SoundPreview = 'pattern' | 'sample' | 'none';
 export type SoundGroup = 'Instruments' | 'Drum hits' | 'Loops & breaks' | 'FX';
 
 export interface SoundItem {
@@ -105,8 +113,14 @@ interface Built {
   readonly byId: ReadonlyMap<string, SoundItem>;
   /** Pattern sounds: the generator family, genre and donor sound (itself when a genre uses it) to preview them with. */
   readonly patternOf: ReadonlyMap<string, PatternPreview>;
-  /** Audio sounds: the validated entry (its matched file). */
+  /** Every validated entry by id. */
   readonly validated: ReadonlyMap<string, ValidatedCatalogEntry>;
+  /** Drum hits: the kit positions they fill and the styles that write grooves. */
+  readonly drumOf: ReadonlyMap<string, { readonly roles: readonly DrumRole[]; readonly genres: readonly string[]; readonly entry: ValidatedCatalogEntry }>;
+  /** Loops, breaks, effects, transition sounds, percussion hits: how the engine plays them. */
+  readonly sampleOf: ReadonlyMap<string, { readonly plan: SamplePlan; readonly entry: ValidatedCatalogEntry }>;
+  /** Sounds that cannot be previewed, and why (for the details panel). */
+  readonly noPreview: ReadonlyMap<string, string>;
 }
 
 export interface PatternPreview {
@@ -197,17 +211,29 @@ export function soundCatalog(): Built {
     const set = new Set(list.flatMap((d) => d.genres));
     familyGenres.set(family, GenreSchema.options.filter((g) => set.has(g)));
   }
+  const drumOf = new Map<string, { roles: readonly DrumRole[]; genres: readonly string[]; entry: ValidatedCatalogEntry }>();
+  const sampleOf = new Map<string, { plan: SamplePlan; entry: ValidatedCatalogEntry }>();
+  const noPreview = new Map<string, string>();
   const items: SoundItem[] = [];
   for (const e of snapshot.entries) {
     const fam = FAMILY_BY_ID.get(e.family);
     if (!fam) continue;
     let preview: SoundPreview = 'none';
+    const sampled = (entry: ValidatedCatalogEntry) => {
+      const plan = samplePlanFor(entry);
+      if (typeof plan === 'string') noPreview.set(e.id, plan);
+      else {
+        sampleOf.set(e.id, { plan, entry });
+        preview = 'sample';
+      }
+    };
+    if (!validated.byId.has(e.id)) noPreview.set(e.id, 'its file is missing from the library');
     if (fam.group === 'Instruments') {
       const entry = validated.byId.get(e.id);
       if (entry && e.lowLevel === 'bassesSynthWobble') {
         // Wobble basses are tempo loops ("… - 120"), not playable notes:
-        // heard as their own loop at one of their tempos.
-        preview = 'audio';
+        // the engine plays them as a loop at their tempo.
+        sampled(entry);
       } else if (entry) {
         // A sound a track kind can use gets its own part generated (in any
         // genre that writes that kind). Brass (whose generated parts are
@@ -232,8 +258,15 @@ export function soundCatalog(): Built {
         preview = 'pattern';
         patternOf.set(e.id, { family, genres, donorId, entry });
       }
-    } else if (validated.byId.has(e.id)) {
-      preview = 'audio';
+    } else {
+      const entry = validated.byId.get(e.id);
+      const roles = entry ? drumPreviewRoles(e.family) : [];
+      if (entry && roles.length > 0) {
+        drumOf.set(e.id, { roles, genres: drumPreviewGenres(e.mainStyle ?? null), entry });
+        preview = 'pattern';
+      } else if (entry) {
+        sampled(entry);
+      }
     }
     items.push({
       id: e.id,
@@ -252,7 +285,7 @@ export function soundCatalog(): Built {
   items.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
   const validatedById = new Map<string, ValidatedCatalogEntry>();
   for (const v of validated.entries) validatedById.set(v.id, v);
-  built = { items, byId: new Map(items.map((i) => [i.id, i])), patternOf, validated: validatedById };
+  built = { items, byId: new Map(items.map((i) => [i.id, i])), patternOf, validated: validatedById, drumOf, sampleOf, noPreview };
   return built;
 }
 

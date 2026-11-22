@@ -4,19 +4,23 @@
 //   GET  /api/sounds/families            families with counts, in display order
 //   GET  /api/sounds?family&q&style&cursor&limit   a page of sounds
 //   GET  /api/sounds/:id                 one sound
-//   POST /api/sounds/:id/preview         tonal sounds: a 4-bar pattern played by
-//                                        the sound alone (a playback payload + bpm, bars)
-//   GET  /api/sounds/:id/audio           drum hits, loops, breaks, fx: the sound's
-//                                        audio as OGG (loops cut to the first 16 s)
+//   POST /api/sounds/:id/preview         any sound, through the playback engine: a
+//                                        playback payload + { bpm, bars, genre, genres,
+//                                        variant, kept, writer, loop } (see enginePreview.ts)
+//   GET  /api/sounds/:id/details         what the engine does with it in a song:
+//                                        volume, octave, loudness, bus + inserts, sends
 
 import { createHash } from 'node:crypto';
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
-import { canonicalStringifySong } from '@casperaki/song-schema';
+import type { InstrumentFamily } from '@casperaki/arrangement';
+import { canonicalStringifySong, GenreSchema, type Song } from '@casperaki/song-schema';
 
 import type { PlaybackService } from '../render/playbackService.js';
 import { diskPathOf, searchSounds, soundCatalog, soundFamilies, soundTransitions, SoundError, type SoundItem } from '../sounds/soundCatalog.js';
+import { barsFor, DRUM_PREVIEW_BARS, drumPreviewSong, SAMPLE_PREVIEW_GENRE, samplePreviewSong } from '../sounds/enginePreview.js';
+import { MixLookup, soundDetails, type DetailsKind } from '../sounds/soundDetails.js';
 import { PREVIEW_BARS, previewSong } from '../sounds/previewSong.js';
 import { playbackPayload } from './playback.js';
 
@@ -36,8 +40,15 @@ const ListQuery = z
   })
   .strict();
 
-/** Loops and breaks are cut to this many seconds for previews. */
-const AUDIO_PREVIEW_SEC = 16;
+const DetailsQuery = z.object({ genre: GenreSchema.optional() }).strict();
+
+/** The kind of part a borrowed preview plays, in words. */
+const FAMILY_PART: Readonly<Record<InstrumentFamily, string>> = {
+  drums: 'drum', bass: 'bass', keys: 'keys', pad: 'pad', guitar: 'guitar', synths: 'lead synth', pluckedSynths: 'plucked synth', popStrings: 'staccato string', popBrass: 'brass',
+};
+
+/** One mix lookup for the brain's mix config (loaded on first use). */
+let mix: MixLookup | undefined;
 
 /** Pattern preview options: a style (genre) and which generated pattern (0, 1, 2, …). */
 // `prefer`: a style to start in when it can write this sound's part (e.g. the
@@ -89,59 +100,97 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
     if (!playback) return res.status(503).json(notConfigured);
     try {
       const item = soundOf(req.params.id);
-      const target = soundCatalog().patternOf.get(item.id);
-      if (item.preview !== 'pattern' || !target) {
-        throw new SoundError(409, 'no_pattern_preview', `${item.name} is previewed as ${item.preview === 'audio' ? 'audio' : 'nothing'}, not as a pattern.`);
-      }
+      const cat = soundCatalog();
       const body = PreviewBody.safeParse(req.body ?? {});
       if (!body.success) throw new SoundError(400, 'invalid_body', body.error.issues[0]?.message ?? 'invalid body');
-      const want = body.data.genre;
-      if (want !== undefined && !target.genres.includes(want)) {
-        throw new SoundError(400, 'unsupported_style', `No ${want} part can be written for ${item.name} (styles: ${target.genres.join(', ')}).`);
-      }
+      const { genre: want, prefer, keep } = body.data;
       const variant = body.data.variant ?? 0;
-      const prefer = body.data.prefer;
-      const order = prefer && target.genres.includes(prefer) ? [prefer, ...target.genres.filter((g) => g !== prefer)] : target.genres;
-      const keep = body.data.keep;
-      const writer = keep ? soundCatalog().patternOf.get(keep.soundId) : undefined;
-      if (keep && !writer) throw new SoundError(400, 'unknown_pattern', `Sound ${keep.soundId} has no pattern to keep.`);
-      const kept = Boolean(keep && writer && writer.family === target.family && target.genres.includes(keep.genre));
-      const { song, bpm, genre } =
-        kept && keep && writer
-          ? previewSong(writer.donorId, target.family, [keep.genre], target.entry, keep.variant)
-          : previewSong(target.donorId, target.family, want ? [want] : order, target.entry, variant);
-      const canonical = canonicalStringifySong(song, 2);
-      const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
-      return res.json({ ...(await playbackPayload(playback, id, canonical)), bpm, bars: PREVIEW_BARS, genre, genres: target.genres, variant: kept && keep ? keep.variant : variant, kept, writer: kept && keep ? keep.soundId : item.id });
+      const send = async (song: Song, extra: Record<string, unknown>) => {
+        const canonical = canonicalStringifySong(song, 2);
+        const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
+        return res.json({ ...(await playbackPayload(playback, id, canonical)), ...extra });
+      };
+      const styleOrder = (genres: readonly string[]) => {
+        if (want !== undefined && !genres.includes(want)) {
+          throw new SoundError(400, 'unsupported_style', `No ${want} part can be written for ${item.name} (styles: ${genres.join(', ')}).`);
+        }
+        if (want !== undefined) return [want];
+        return prefer && genres.includes(prefer) ? [prefer, ...genres.filter((g) => g !== prefer)] : [...genres];
+      };
+
+      // Tonal sounds: a part generated for them (or borrowed).
+      const target = cat.patternOf.get(item.id);
+      if (target) {
+        const writer = keep ? cat.patternOf.get(keep.soundId) : undefined;
+        const kept = Boolean(keep && writer && writer.family === target.family && target.genres.includes(keep.genre));
+        const { song, bpm, genre } =
+          kept && keep && writer
+            ? previewSong(writer.donorId, target.family, [keep.genre], target.entry, keep.variant)
+            : previewSong(target.donorId, target.family, styleOrder(target.genres), target.entry, variant);
+        return await send(song, { bpm, bars: PREVIEW_BARS, genre, genres: target.genres, variant: kept && keep ? keep.variant : variant, kept, writer: kept && keep ? keep.soundId : item.id, loop: true });
+      }
+
+      // Drum hits: the style's groove with this hit in its kit positions. The groove
+      // depends on style + pattern number only, so keeping it keeps the same groove.
+      const drum = cat.drumOf.get(item.id);
+      if (drum) {
+        const kept = Boolean(keep && cat.drumOf.has(keep.soundId) && drum.genres.includes(keep.genre));
+        const genre = kept && keep ? keep.genre : styleOrder(drum.genres)[0]!;
+        const v = kept && keep ? keep.variant : variant;
+        const { song, bpm } = drumPreviewSong(drum.entry, drum.roles, genre, v);
+        return await send(song, { bpm, bars: DRUM_PREVIEW_BARS, genre, genres: drum.genres, variant: v, kept, writer: kept && keep ? keep.soundId : item.id, loop: true });
+      }
+
+      // Loops, breaks, effects, transition sounds, percussion hits: played on their own
+      // through the engine. Styles, pattern numbers and keep do not apply (ignored).
+      const sample = cat.sampleOf.get(item.id);
+      if (sample) {
+        const { plan, entry } = sample;
+        let seconds: number;
+        try {
+          seconds = await playback.probeSeconds(diskPathOf(entry.matchedPath));
+        } catch (err) {
+          // The detail names the library file: log it, never send it.
+          console.error(`[sounds] preview of ${item.id}: ${err instanceof Error ? err.message : String(err)}`);
+          throw new SoundError(404, 'audio_missing', `The audio file for ${item.name} is missing from the library.`);
+        }
+        const bars = barsFor(seconds, plan.bpm, 1);
+        const song = samplePreviewSong(entry, plan, bars, item.name);
+        const loop = plan.kind === 'loop' ? true : plan.loop;
+        return await send(song, { bpm: plan.bpm, bars, genre: SAMPLE_PREVIEW_GENRE, genres: [], variant: 0, kept: false, writer: item.id, loop });
+      }
+
+      throw new SoundError(409, 'no_preview', `${item.name} cannot be played: ${cat.noPreview.get(item.id) ?? 'no engine lane plays it'}.`);
     } catch (err) {
       return fail(res, err);
     }
   });
 
-  router.get('/api/sounds/:id/audio', async (req, res) => {
+  // What the engine does with the sound in a song: GET /api/sounds/:id/details?genre=<style>.
+  router.get('/api/sounds/:id/details', (req, res) => {
     if (!playback) return res.status(503).json(notConfigured);
-    try {
+    return run(res, () => {
       const item = soundOf(req.params.id);
-      const entry = soundCatalog().validated.get(item.id);
-      if (item.preview !== 'audio' || !entry) {
-        throw new SoundError(409, 'no_audio_preview', `${item.name} is previewed as ${item.preview === 'pattern' ? 'a pattern' : 'nothing'}, not as audio.`);
-      }
-      let sampleId: string;
-      try {
-        sampleId = playback.fileSample(diskPathOf(entry.matchedPath), item.family === 'percussionLoops' || item.family === 'percussionBreaks' ? AUDIO_PREVIEW_SEC : undefined);
-      } catch (err) {
-        // The detail names the library file: log it, never send it.
-        console.error(`[sounds] audio for ${item.id}: ${err instanceof Error ? err.message : String(err)}`);
-        throw new SoundError(404, 'audio_missing', `The audio file for ${item.name} is missing from the library.`);
-      }
-      const file = await playback.sampleFile(sampleId);
-      res.setHeader('Content-Type', 'audio/ogg');
-      res.setHeader('Cache-Control', 'private, max-age=86400');
-      if (item.bpm !== null) res.setHeader('X-Sound-Bpm', String(item.bpm));
-      return res.sendFile(file);
-    } catch (err) {
-      return fail(res, err);
-    }
+      const q = DetailsQuery.safeParse(req.query);
+      if (!q.success) throw new SoundError(400, 'invalid_query', q.error.issues[0]?.message ?? 'invalid query');
+      const cat = soundCatalog();
+      const entry = cat.validated.get(item.id);
+      // The style the values are for: the one asked for (the song's), else the sound's own.
+      const own = item.styles[0];
+      const genre = q.data.genre ?? (own && (GenreSchema.options as readonly string[]).includes(own) ? own : null);
+      mix ??= new MixLookup(playback.mixConfig);
+      const pattern = cat.patternOf.get(item.id);
+      const drum = cat.drumOf.get(item.id);
+      const sample = cat.sampleOf.get(item.id);
+      const kind: DetailsKind = pattern
+        ? { kind: 'tonal', lane: pattern.donorId === item.id ? 'own' : FAMILY_PART[pattern.family] }
+        : drum
+          ? { kind: 'drum', roles: drum.roles }
+          : sample
+            ? { kind: 'sample', plan: sample.plan }
+            : { kind: 'none', reason: cat.noPreview.get(item.id) ?? 'no engine lane plays it' };
+      return soundDetails(mix, entry, kind, genre, { bpm: item.bpm, key: item.key });
+    });
   });
 
   return router;

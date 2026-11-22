@@ -29,6 +29,9 @@ export const TRANSITION_TAG_TO_LOW_LEVEL: Readonly<Record<string, {
   timingBranch: 'attack' | 'tail';
   /** human-friendly shortName for the emitted inst-N.json. */
   shortName: string;
+  /** The clip's lowLevelType for the mixer (fx group / sends) when it is not
+   *  the tag itself (preview-only `fxNoiseRiseSample` → `fxNoiseRise`). */
+  clipLowLevel?: string;
   /** Tonal transition: the sample carries a pitch and must be selected by
    *  key, not pitch-shifted. Legacy `TransitionsClass` (casperaki1
    *  TransitionsClass.js:334-352) picked the `fxTonalReverse` row whose
@@ -55,6 +58,15 @@ export const TRANSITION_TAG_TO_LOW_LEVEL: Readonly<Record<string, {
   fxUplifter:                { family: 'fx',      lowLevel: 'fxUplifter',       timingBranch: 'tail', shortName: 'uplifter' },
   percussionBreaksBuildups:  { family: 'percussionBreaks', lowLevel: 'percussionBreaksBuildups', timingBranch: 'tail', shortName: 'breaksBuildup' },
   percussionBreaksFills:     { family: 'percussionBreaks', lowLevel: 'percussionBreaksFills',    timingBranch: 'tail', shortName: 'breaksFill' },
+  // Preview-only one-shots (brain Sounds page; see @casperaki/arrangement
+  // transitions/sound.ts PREVIEW_ONLY_TRANSITION_TAGS). Fire at the section start.
+  fxAtmosphere:              { family: 'fx', lowLevel: 'fxAtmosphere', timingBranch: 'attack', shortName: 'atmosphere' },
+  fxFretNoise:               { family: 'fx', lowLevel: 'fxFretNoise',  timingBranch: 'attack', shortName: 'fretNoise' },
+  fxNoiseRiseSample:         { family: 'fx', lowLevel: 'fxNoiseRise',  timingBranch: 'tail',   shortName: 'noiseRise', clipLowLevel: 'fxNoiseRise' },
+  percussionMiscAcousticHigh:   { family: 'percussionMisc', lowLevel: 'percussionMiscAcousticHigh',   timingBranch: 'attack', shortName: 'perc' },
+  percussionMiscAcousticLow:    { family: 'percussionMisc', lowLevel: 'percussionMiscAcousticLow',    timingBranch: 'attack', shortName: 'perc' },
+  percussionMiscElectronicHigh: { family: 'percussionMisc', lowLevel: 'percussionMiscElectronicHigh', timingBranch: 'attack', shortName: 'perc' },
+  percussionMiscElectronicLow:  { family: 'percussionMisc', lowLevel: 'percussionMiscElectronicLow',  timingBranch: 'attack', shortName: 'perc' },
 };
 
 // ---- Catalog row resolution ---------------------------------------------
@@ -264,7 +276,7 @@ export function buildTransitionAssets(input: BuildTransitionInput): BuiltTransit
         name,
         shortName: map?.shortName ?? input.tag,
         type: 'transitionSample',
-        lowLevelType: input.tag,
+        lowLevelType: map?.clipLowLevel ?? input.tag,
         isSample: true,
         isVst: false,
         details: {

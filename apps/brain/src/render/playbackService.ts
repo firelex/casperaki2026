@@ -14,11 +14,15 @@
 // Mirrors native audio/SampleLibrary.h (and the old dev-only plan in
 // apps/web/vite.config.ts) so the browser hears what the server render plays.
 
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import { runLogged } from './renderService.js';
+
+const execFileAsync = promisify(execFile);
 
 export interface PlaybackServiceConfig {
   /** Per-song lowered envelopes: <playbackDir>/<songId>/. */
@@ -90,6 +94,7 @@ export class PlaybackService {
   private readonly lowering = new Map<string, Promise<void>>();
   private readonly transcoding = new Map<string, Promise<string>>();
   private readonly libraryRoot: string;
+  private readonly durations = new Map<string, number>();
 
   constructor(private readonly config: PlaybackServiceConfig) {
     for (const [name, p] of [
@@ -248,6 +253,22 @@ export class PlaybackService {
     if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sound file points outside the library: ${relativePath}`);
     if (!existsSync(src)) throw new Error(`sound file missing in the library: ${relativePath}`);
     return this.register(maxSec !== undefined ? { relativePath, sliceStart: 0, sliceEnd: maxSec } : { relativePath });
+  }
+
+  /** Length in seconds of a library file (ffprobe, next to the configured ffmpeg); cached. */
+  async probeSeconds(relativePath: string): Promise<number> {
+    const cached = this.durations.get(relativePath);
+    if (cached !== undefined) return cached;
+    const src = resolve(this.libraryRoot, relativePath);
+    if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sound file points outside the library: ${relativePath}`);
+    if (!existsSync(src)) throw new Error(`sound file missing in the library: ${relativePath}`);
+    if (!/ffmpeg$/u.test(this.config.ffmpegBin)) throw new Error(`cannot find ffprobe: FFMPEG_BIN (${this.config.ffmpegBin}) does not end in "ffmpeg"`);
+    const ffprobe = this.config.ffmpegBin.replace(/ffmpeg$/u, 'ffprobe');
+    const { stdout } = await execFileAsync(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', src], { timeout: 30_000 });
+    const sec = Number(stdout.trim());
+    if (!(sec > 0)) throw new Error(`ffprobe gave no duration for ${relativePath}: "${stdout.trim()}"`);
+    this.durations.set(relativePath, sec);
+    return sec;
   }
 
   /** Whether a sample id has been registered by some song's plan. */
