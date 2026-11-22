@@ -226,8 +226,12 @@ public:
             }
             applyMasterGain(out, (int)n);
         }
-        if (metering)
+        if (metering) {
             for (auto& g : groups_) meterGroup(g, (int)n);
+            if (graph_)
+                for (int k = 0; k < 3; ++k) meterBusPeak(busPeak_[(size_t)k], graph_->returnBuffer(k), (int)n);
+            meterBusPeak(busPeak_[3], out, (int)n);
+        }
         for (auto& g : groups_) g.ramp.advance((int)n);
         pos_ += numFrames;
         return pos_ < totalFrames_;
@@ -293,6 +297,15 @@ public:
     int meterBinCount() const { return meterBins_; }
     const float* lanePeaks(int lane) const { requireMeters(); return group(lane).peak.data(); }
     const float* laneRms(int lane) const { requireMeters(); return group(lane).rms.data(); }
+    // Peak per meter bin of a bus: 0 reverb, 1 delay, 2 chorus return (after
+    // their racks), 3 master (the final output). Returns stay 0 without the mix.
+    static constexpr int kMeteredBuses = 4;
+    const float* busPeaks(int bus) const {
+        requireMeters();
+        if (bus < 0 || bus >= kMeteredBuses)
+            throw std::out_of_range("Mixer::busPeaks: bus " + std::to_string(bus) + " outside [0, 4)");
+        return busPeak_[(size_t)bus].data();
+    }
 
     // Move the play position so the next pullBlock continues from `frame`.
     // Allocation-free (safe between real-time pulls). State is rebuilt as a full
@@ -676,6 +689,7 @@ private:
     // aux send gains). The disabled path sums every lane's sources flat (byte-
     // identical); the enabled path renders each lane and routes it through the graph.
     std::string laneInfo_;   // laneInfoJson() result (kept for the C string's lifetime)
+    std::array<std::vector<float>, 4> busPeak_;   // reverb, delay, chorus returns; master
 
     struct Lane {
         std::vector<std::unique_ptr<Source>> sources;
@@ -724,6 +738,22 @@ private:
             g.peak.assign((size_t)meterBins_, 0.0f);
             g.rms.assign((size_t)meterBins_, 0.0f);
             g.sumSq.assign((size_t)meterBins_, 0.0);
+        }
+        for (auto& b : busPeak_) b.assign((size_t)meterBins_, 0.0f);
+    }
+
+    // Fold this block of a bus signal into its peak bins.
+    void meterBusPeak(std::vector<float>& peaks, const AudioBuffer& buf, int n) {
+        const float* L = buf.getReadPointer(0);
+        const float* R = buf.getReadPointer(1);
+        for (int i = 0; i < n;) {
+            const long b = (pos_ + i) / meterBinFrames_;
+            if (b >= meterBins_) break;
+            const int end = (int)std::min((long)n, (b + 1) * meterBinFrames_ - pos_);
+            float pk = peaks[(size_t)b];
+            for (int j = i; j < end; ++j) pk = std::max(pk, std::max(std::fabs(L[j]), std::fabs(R[j])));
+            peaks[(size_t)b] = pk;
+            i = end;
         }
     }
 

@@ -6,7 +6,7 @@
 // In:  { type: 'meter', wasmBytes, sampleRate, meterBinFrames, ...build options }
 //      { type: 'mix', wasmBytes, sampleRate, ...build options }  -> { type: 'mix', mix } (no rendering)
 // Out: { type: 'lanes', names, binCount, binSec, mix }   (mix: laneInfo, the resolved mix)
-//      { type: 'progress', doneBins, peaks: Float32Array[] }   (repeated, then)
+//      { type: 'progress', doneBins, peaks: Float32Array[], busPeaks: Float32Array[4] }   (repeated, then)
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
 
 import { buildMixer, instantiateEngine, laneInfo, laneNames } from '../engine/casperaki-engine.js';
@@ -37,6 +37,13 @@ self.onmessage = (ev) => {
 
     const snapshot = (upTo) =>
       names.map((_, i) => new Float32Array(e.memory.buffer, e.mixer_lane_peaks(i), binCount).slice(0, upTo));
+    // Bus meters: reverb, delay, chorus returns and the master.
+    const busSnapshot = (upTo) =>
+      [0, 1, 2, 3].map((k) => {
+        const ptr = e.mixer_bus_peaks(k);
+        if (!ptr) throw new Error(`mixer_bus_peaks(${k}) failed`);
+        return new Float32Array(e.memory.buffer, ptr, binCount).slice(0, upTo);
+      });
     let frames = 0;
     let last = performance.now();
     while (e.mixer_pull(BLOCK)) {
@@ -46,11 +53,13 @@ self.onmessage = (ev) => {
         last = now;
         const doneBins = Math.min(binCount, Math.floor(frames / o.meterBinFrames));
         const peaks = snapshot(doneBins);
-        self.postMessage({ type: 'progress', doneBins, peaks }, peaks.map((p) => p.buffer));
+        const busPeaks = busSnapshot(doneBins);
+        self.postMessage({ type: 'progress', doneBins, peaks, busPeaks }, [...peaks, ...busPeaks].map((p) => p.buffer));
       }
     }
     const peaks = snapshot(binCount);
-    self.postMessage({ type: 'done', doneBins: binCount, peaks, totalFrames }, peaks.map((p) => p.buffer));
+    const busPeaks = busSnapshot(binCount);
+    self.postMessage({ type: 'done', doneBins: binCount, peaks, busPeaks, totalFrames }, [...peaks, ...busPeaks].map((p) => p.buffer));
   } catch (err) {
     self.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
   }

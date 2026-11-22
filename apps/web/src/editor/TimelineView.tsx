@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import {
   ContextMenu,
@@ -75,6 +75,7 @@ export function TimelineView() {
     };
   }, [liveKey, fetchPayload, editorDirty]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
+  const soundNames = useSoundNames((model?.tracks ?? []).map((t) => ({ name: t.name, catalogId: catalogIdOf(defs.get(t.name)?.id) })));
   const detailSound = useSoundName(dialog?.kind === 'detail' ? catalogIdOf(defs.get(dialog.track)?.id) : undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
   /** Where the last right-click landed: which track, which section. */
@@ -572,7 +573,7 @@ export function TimelineView() {
 
       {mixerOpen ? (
         <div className="h-[360px] shrink-0 border-t-2 border-black/80" aria-label="Mixer">
-          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} />
+          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} />
         </div>
       ) : null}
 
@@ -761,6 +762,24 @@ function catalogIdOf(id: unknown): string | undefined {
 }
 
 /** Track name, with the public name of its sound underneath when it is a catalog sound. */
+/** Public sound name per track (tracks without a catalog sound, or still loading, are left out). */
+function useSoundNames(tracks: readonly { name: string; catalogId: string | undefined }[]): Record<string, string> {
+  const withIds = tracks.filter((t): t is { name: string; catalogId: string } => Boolean(t.catalogId));
+  const results = useQueries({
+    queries: withIds.map((t) => ({
+      queryKey: catalogQueryKeys.entry(t.catalogId),
+      queryFn: ({ signal }: { signal: AbortSignal }) => catalogApi.get(t.catalogId, signal),
+      staleTime: 5 * 60_000,
+    })),
+  });
+  const out: Record<string, string> = {};
+  withIds.forEach((t, i) => {
+    const name = results[i]?.data?.entry.publicName;
+    if (name) out[t.name] = name;
+  });
+  return out;
+}
+
 /** Public name of a catalog sound (undefined while loading or for non-catalog sounds). */
 function useSoundName(catalogId: string | undefined): string | undefined {
   const entry = useQuery({

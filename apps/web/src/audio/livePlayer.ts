@@ -48,6 +48,8 @@ export interface LaneMeters {
   readonly doneBins: number;
   /** Peak level per bin, one array per lane (length doneBins). */
   readonly peaks: readonly Float32Array[];
+  /** Peak level per bin of the reverb, delay and chorus returns and the master (in that order). */
+  readonly busPeaks: readonly Float32Array[];
   readonly done: boolean;
   /** The mix as the engine resolved it for this version. */
   readonly mix: ResolvedMix;
@@ -431,6 +433,7 @@ export class LivePlayer {
           const d = ev.data as {
             type: string; names?: string[]; binSec?: number; binCount?: number; doneBins?: number; peaks?: Float32Array[]; message?: string;
             mix?: Omit<ResolvedMix, 'config'>;
+            busPeaks?: Float32Array[];
           };
           if (d.type === 'lanes') {
             names = d.names!;
@@ -440,7 +443,8 @@ export class LivePlayer {
             mix = { ...d.mix, config: JSON.parse(payload.mixConfig) as MixConfigJson };
           } else if (d.type === 'progress' || d.type === 'done') {
             if (!mix) throw new Error('Track levels arrived before the lanes.');
-            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, done: d.type === 'done', mix };
+            if (!d.busPeaks) throw new Error('The meter worker sent no bus levels.');
+            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, busPeaks: d.busPeaks, done: d.type === 'done', mix };
             if (m.done) {
               this.meterCache.set(key, m);
               while (this.meterCache.size > METERS_CACHED) this.meterCache.delete(this.meterCache.keys().next().value!);

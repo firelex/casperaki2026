@@ -169,6 +169,10 @@ public:
         }
     }
 
+    // A return bus's signal after its rack, valid after render() for this block
+    // (0 = reverb, 1 = delay, 2 = chorus): for the mixer's bus meters.
+    const AudioBuffer& returnBuffer(int k) const { return returns_[k].buf; }
+
 private:
     struct Bus { Rack rack; AudioBuffer buf; };
 

@@ -36,6 +36,7 @@ export function Mixer({
   playing,
   muted,
   solo,
+  soundNames,
 }: {
   tracks: readonly SeqTrack[];
   /** The mix as the engine resolved it for this version. */
@@ -48,6 +49,8 @@ export function Mixer({
   playing: boolean;
   muted: readonly string[];
   solo: readonly string[];
+  /** Public sound name per track. */
+  soundNames: Readonly<Record<string, string>>;
 }) {
   if (error) {
     return <div className="flex h-full items-center justify-center px-6 text-center text-[12px] text-err">{error}</div>;
@@ -61,16 +64,16 @@ export function Mixer({
   const chains = new Map(mix.config.rackChains.map((c) => [c.bus, c.plugins]));
   const byLane = new Map<string, ResolvedMixLane[]>();
   for (const l of mix.lanes) byLane.set(l.lane, [...(byLane.get(l.lane) ?? []), l]);
-  const levelOf = (lane: string): number | undefined => {
-    if (!playing || !meters) return undefined;
-    const i = meters.names.indexOf(lane);
-    const peaks = i >= 0 ? meters.peaks[i] : undefined;
-    if (!peaks || meters.binSec <= 0) return undefined;
+  const peakAt = (peaks: Float32Array | undefined): number | undefined => {
+    if (!playing || !meters || !peaks || meters.binSec <= 0) return undefined;
     const bin = Math.floor(seconds / meters.binSec);
     let m = 0;
     for (let b = Math.max(0, bin - 3); b <= Math.min(peaks.length - 1, bin); b++) m = Math.max(m, peaks[b]!);
     return m;
   };
+  const levelOf = (lane: string) => peakAt(meters?.peaks[meters.names.indexOf(lane)]);
+  /** Bus meters: 0..2 the returns in RETURNS order, 3 the master. */
+  const busLevel = (bus: number) => peakAt(meters?.busPeaks[bus]);
   // Strips in track order, then any engine lane without a track row (e.g. transitions).
   const laneOrder = [...tracks.map((t) => t.name).filter((n) => byLane.has(n)), ...[...byLane.keys()].filter((n) => !tracks.some((t) => t.name === n))];
 
@@ -82,6 +85,7 @@ export function Mixer({
           name={lane}
           color={tracks.find((t) => t.name === lane)?.color ?? '#8a8b93'}
           parts={byLane.get(lane)!}
+          soundName={soundNames[lane]}
           chains={chains}
           level={levelOf(lane)}
           muted={muted.includes(lane)}
@@ -90,10 +94,17 @@ export function Mixer({
         />
       ))}
       <div className="w-2 shrink-0 bg-black/40" aria-hidden="true" />
-      {RETURNS.map((r) => (
-        <BusStrip key={r.bus} name={r.name} subtitle="Return" plugins={chains.get(r.bus)} color="#3d8bd0" />
+      {RETURNS.map((r, k) => (
+        <BusStrip key={r.bus} name={r.name} subtitle="Return" plugins={chains.get(r.bus)} color="#3d8bd0" level={busLevel(k)} />
       ))}
-      <BusStrip name="Master" subtitle="Stereo out" plugins={chains.get('master')} color="#e0322b" volumeDb={mix.config.constants.masterVolumeDb} />
+      <BusStrip
+        name="Master"
+        subtitle="Stereo out"
+        plugins={chains.get('master')}
+        color="#e0322b"
+        volumeDb={mix.config.constants.masterVolumeDb}
+        level={busLevel(3)}
+      />
     </div>
   );
 }
@@ -102,6 +113,7 @@ function ChannelStrip({
   name,
   color,
   parts,
+  soundName,
   chains,
   level,
   muted,
@@ -111,6 +123,7 @@ function ChannelStrip({
   name: string;
   color: string;
   parts: readonly ResolvedMixLane[];
+  soundName: string | undefined;
   chains: Map<string, MixConfigJson['rackChains'][number]['plugins']>;
   level: number | undefined;
   muted: boolean;
@@ -128,8 +141,8 @@ function ChannelStrip({
     <Strip
       color={color}
       name={name}
-      subtitle={types.length === 1 ? types[0]! : types.length ? `${types.length} sound types` : '—'}
-      title={tip}
+      subtitle={soundName ?? (types.length === 1 ? types[0]! : types.length ? `${types.length} sound types` : '—')}
+      title={`${soundName ? `Sound: ${soundName}\n` : ''}${tip}`}
       bottom={
         <>
           <Section label="Sends">
@@ -179,12 +192,15 @@ function BusStrip({
   plugins,
   color,
   volumeDb,
+  level,
 }: {
   name: string;
   subtitle: string;
   plugins: MixConfigJson['rackChains'][number]['plugins'] | undefined;
   color: string;
   volumeDb?: number;
+  /** Peak at the playhead (after the bus's rack), while playing. */
+  level: number | undefined;
 }) {
   return (
     <Strip
@@ -194,7 +210,7 @@ function BusStrip({
       bottom={
         <>
           <div className="mb-1.5 h-[52px]" aria-hidden="true" />
-          <FaderBlock volumeDb={volumeDb ?? 0} volumeNote={volumeDb === undefined ? 'unity' : undefined} level={undefined} />
+          <FaderBlock volumeDb={volumeDb ?? 0} volumeNote={volumeDb === undefined ? 'unity' : undefined} level={level} />
           <div className="mt-1 h-5" />
         </>
       }

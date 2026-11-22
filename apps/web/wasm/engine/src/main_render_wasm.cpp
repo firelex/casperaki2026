@@ -344,6 +344,11 @@ int mixer_meter_bin_count() {
 
 // Lane i's per-bin peak / RMS (float[mixer_meter_bin_count()] in the heap), or
 // null on error. Filled in as the song is pulled.
+// Peak per meter bin of a bus (0 reverb, 1 delay, 2 chorus return, 3 master), or null.
+const float* mixer_bus_peaks(int bus) {
+    return laneCall("mixer_bus_peaks", (const float*)nullptr, [bus](Mixer& m) { return m.busPeaks(bus); });
+}
+
 const float* mixer_lane_peaks(int lane) {
     return laneCall("mixer_lane_peaks", (const float*)nullptr,
                     [lane](Mixer& m) { return m.lanePeaks(lane); });
