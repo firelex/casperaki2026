@@ -11,7 +11,7 @@ import {
 } from '@teamsuzie/ui';
 
 import { catalogApi, catalogQueryKeys } from '../api/catalog';
-import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix } from '../audio/livePlayer';
+import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
@@ -90,6 +90,16 @@ export function TimelineView() {
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   /** The open device view (a plugin on a bus), if any. */
   const [device, setDevice] = useState<OpenDevice | undefined>(undefined);
+  // The engine's automation per track (filter sweeps, volume fades), from the resolved mix.
+  const automationByTrack = useMemo(() => {
+    const m = new Map<string, { lowPass?: SampledAutomation; volume?: SampledAutomation }>();
+    for (const l of mix?.lanes ?? []) {
+      if (!l.lowPass && !l.volume) continue;
+      const cur = m.get(l.lane) ?? {};
+      m.set(l.lane, { lowPass: cur.lowPass ?? l.lowPass, volume: cur.volume ?? l.volume });
+    }
+    return m;
+  }, [mix]);
   const soundNames = useSoundNames((model?.tracks ?? []).map((t) => ({ name: t.name, catalogId: catalogIdOf(defs.get(t.name)?.id) })));
   const detailSound = useSoundName(dialog?.kind === 'detail' ? catalogIdOf(defs.get(dialog.track)?.id) : undefined);
   const [selectedTrack, setSelectedTrack] = useState<string | undefined>(undefined);
@@ -645,6 +655,7 @@ export function TimelineView() {
                     dimmed={live.solo.length > 0 ? !live.solo.includes(t.name) : live.muted.includes(t.name)}
                     selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
                     rowH={rowH}
+                    automation={automationByTrack.get(t.name)}
                   />
                 </div>
               </div>

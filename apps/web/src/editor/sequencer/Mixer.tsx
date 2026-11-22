@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
+import { automationAt, livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
 import type { SeqTrack } from '../sequencerModel';
 import { DEVICES } from '../devices/deviceDefs';
 
@@ -95,6 +95,7 @@ export function Mixer({
           parts={byLane.get(lane)!}
           soundName={soundNames[lane]}
           onOpenDevice={onOpenDevice}
+          seconds={seconds}
           chains={chains}
           level={levelOf(lane)}
           muted={muted.includes(lane)}
@@ -127,6 +128,7 @@ function ChannelStrip({
   parts,
   soundName,
   onOpenDevice,
+  seconds,
   chains,
   level,
   muted,
@@ -138,6 +140,8 @@ function ChannelStrip({
   parts: readonly ResolvedMixLane[];
   soundName: string | undefined;
   onOpenDevice: (d: OpenDevice) => void;
+  /** The song position, for automation. */
+  seconds: number;
   chains: Map<string, MixConfigJson['rackChains'][number]['plugins']>;
   level: number | undefined;
   muted: boolean;
@@ -147,7 +151,11 @@ function ChannelStrip({
   const buses = [...new Set(parts.map((p) => p.fxGroup))];
   const types = [...new Set(parts.map((p) => p.lowLevelType).filter(Boolean))];
   const volumes = parts.map((p) => p.volumeDb).filter((v): v is number => v !== null);
-  const volume = volumes.length && volumes.every((v) => v === volumes[0]) ? volumes[0] : undefined;
+  const baseVolume = volumes.length && volumes.every((v) => v === volumes[0]) ? volumes[0] : undefined;
+  // Automation at the playhead: volume moves the fader, low-pass shows its cutoff.
+  const autoDb = automationAt(parts.find((p) => p.volume)?.volume, seconds);
+  const cutoff = automationAt(parts.find((p) => p.lowPass)?.lowPass, seconds);
+  const volume = baseVolume !== undefined && autoDb !== undefined ? baseVolume + autoDb : baseVolume;
   const tip = parts
     .map((p) => `${p.track}: ${p.lowLevelType || 'no type'} → ${p.fxGroup} bus, volume ${fmtDb(p.volumeDb)}, sends R ${fmtDb(p.sendsDb.reverb)} D ${fmtDb(p.sendsDb.delay)} C ${fmtDb(p.sendsDb.chorus)}`)
     .join('\n');
@@ -164,7 +172,12 @@ function ChannelStrip({
               <SendRow key={r.key} name={r.name} values={parts.map((p) => p.sendsDb[r.key])} />
             ))}
           </Section>
-          <FaderBlock volumeDb={volume} volumeNote={volumes.length > 1 && volume === undefined ? 'per part' : volumes.length === 0 ? 'none' : undefined} level={level} />
+          {cutoff !== undefined && cutoff < 19000 ? (
+            <div className="mb-1 rounded-[3px] bg-[#ffb347]/20 px-1 text-center font-mono text-[9px] text-[#ffb347]" title="Low-pass filter sweep (automation)">
+              LP {cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)} kHz` : `${Math.round(cutoff)} Hz`}
+            </div>
+          ) : null}
+          <FaderBlock automated={autoDb !== undefined} volumeDb={volume} volumeNote={volumes.length > 1 && volume === undefined ? 'per part' : volumes.length === 0 ? 'none' : undefined} level={level} />
           <div className="mt-1 flex justify-center gap-1">
             <button
               type="button"
@@ -356,7 +369,18 @@ function SendRow({ name, values }: { name: string; values: readonly (number | nu
 }
 
 /** Fader (at the resolved volume) beside a level meter, with the dB scale. */
-function FaderBlock({ volumeDb, volumeNote, level }: { volumeDb: number | undefined; volumeNote?: string; level: number | undefined }) {
+function FaderBlock({
+  volumeDb,
+  volumeNote,
+  level,
+  automated,
+}: {
+  volumeDb: number | undefined;
+  volumeNote?: string;
+  level: number | undefined;
+  /** The fader is moving with volume automation. */
+  automated?: boolean;
+}) {
   const y = (db: number) => (1 - (Math.max(BOTTOM_DB, Math.min(TOP_DB, db)) - BOTTOM_DB) / (TOP_DB - BOTTOM_DB)) * FADER_H;
   const levelDb = level !== undefined && level > 0 ? 20 * Math.log10(level) : undefined;
   return (
@@ -375,7 +399,10 @@ function FaderBlock({ volumeDb, volumeNote, level }: { volumeDb: number | undefi
           <span className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-black/70" />
           {volumeDb !== undefined ? (
             <span
-              className="absolute left-1/2 h-[18px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-[3px] border border-black/70 bg-gradient-to-b from-[#d4d5da] via-[#9fa1a8] to-[#c9cad0] shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
+              className={`absolute left-1/2 h-[18px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-[3px] border border-black/70 bg-gradient-to-b shadow-[0_2px_3px_rgba(0,0,0,0.5)] ${
+                automated ? 'from-[#ffd28a] via-[#e09a3c] to-[#f0b860]' : 'from-[#d4d5da] via-[#9fa1a8] to-[#c9cad0]'
+              }`}
+              title={automated ? 'Moving with volume automation' : undefined}
               style={{ top: y(volumeDb) }}
             >
               <span className="absolute inset-x-[3px] top-1/2 h-px bg-black/60" />

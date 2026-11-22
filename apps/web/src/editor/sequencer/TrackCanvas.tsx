@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { BEATS_PER_BAR, type SeqTrack, type SequencerModel } from '../sequencerModel';
+import type { SampledAutomation } from '../../audio/livePlayer';
 import { gridStep, resolveColor } from './layout';
 
 const CLIP_HEADER_H = 13;
@@ -21,6 +22,7 @@ export function TrackCanvas({
   dimmed,
   selectedSection,
   rowH,
+  automation,
 }: {
   track: SeqTrack;
   model: SequencerModel;
@@ -37,6 +39,8 @@ export function TrackCanvas({
   selectedSection: number | undefined;
   /** Row height (px): the sequencer fits every track into the window. */
   rowH: number;
+  /** The engine's automation for this track: filter sweeps and volume fades. */
+  automation: { readonly lowPass?: SampledAutomation; readonly volume?: SampledAutomation } | undefined;
 }) {
   const ROW_H = rowH;
   const ref = useRef<HTMLCanvasElement>(null);
@@ -157,7 +161,45 @@ export function TrackCanvas({
       }
     }
     g.globalAlpha = 1;
-  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H]);
+
+    // Automation lanes over the clips: low-pass cutoff (amber, top = fully open)
+    // and volume (cyan, top = 0 dB), as the engine applies them.
+    // Drawn only where the automation does something (`active`), labelled where each stretch starts.
+    const curve = (a: SampledAutomation, y: (v: number) => number, active: (v: number) => boolean, color: string, label: string) => {
+      g.strokeStyle = color;
+      g.fillStyle = color;
+      g.lineWidth = 1.6;
+      g.font = '600 9px Archivo, system-ui, sans-serif';
+      let drawing = false;
+      a.values.forEach((v, i) => {
+        const x = ((a.t0 + i * a.step) / secondsPerBar) * px;
+        const on = active(v) || (i > 0 && active(a.values[i - 1]!));
+        if (on && !drawing) {
+          g.beginPath();
+          g.moveTo(x, y(v));
+          drawing = true;
+          g.fillText(label, x + 3, Math.max(9, y(v) - 2));
+        } else if (on) g.lineTo(x, y(v));
+        else if (drawing) {
+          g.stroke();
+          drawing = false;
+        }
+      });
+      if (drawing) g.stroke();
+    };
+    if (automation?.lowPass) {
+      curve(
+        automation.lowPass,
+        (hz) => innerTop + (1 - Math.log(Math.max(20, Math.min(20000, hz)) / 20) / Math.log(1000)) * innerH,
+        (hz) => hz < 19000,
+        '#ffb347',
+        'LP',
+      );
+    }
+    if (automation?.volume) {
+      curve(automation.volume, (d) => innerTop + (Math.min(48, Math.max(0, -d)) / 48) * innerH, (d) => Math.abs(d) > 0.1, '#5ad1ff', 'VOL');
+    }
+  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation]);
 
   return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }

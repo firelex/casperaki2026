@@ -248,7 +248,8 @@ public:
     // The mix as resolved, for the mixer view and debugging: one entry per IR
     // track (several per instrument lane for drums), JSON:
     //   {"lanes":[{"lane":<instrument lane>,"track":<IR track>,"lowLevelType":..,
-    //     "fxGroup":..,"volumeDb":<n|null>,"sendsDb":{"reverb":..,"delay":..,"chorus":..}}],
+    //     "fxGroup":..,"volumeDb":<n|null>,"sendsDb":{"reverb":..,"delay":..,"chorus":..},
+    //     "lowPass"?:{"t0":s,"step":s,"values":[Hz..]}, "volume"?:{"t0":s,"step":s,"values":[dB..]}}],
     //    "mixEnabled":bool,"genre":..}
     // The returned reference stays valid until the next call.
     const std::string& laneInfoJson() {
@@ -265,6 +266,28 @@ public:
             l["fxGroup"] = lane.fxGroup;
             l["volumeDb"] = num(lane.volumeDb);
             l["sendsDb"] = {{"reverb", num(lane.sendDb[0])}, {"delay", num(lane.sendDb[1])}, {"chorus", num(lane.sendDb[2])}};
+            // Automation as the engine applies it, sampled every 50 ms over its range:
+            // low-pass cutoff (Hz) and volume (dB). Absent when the lane has none.
+            const double step = 0.05;
+            auto sampled = [&](const std::vector<AutoPoint>& pts, bool isVolume) {
+                nlohmann::json j;
+                const double t0 = pts.front().tSec, t1 = pts.back().tSec;
+                j["t0"] = t0;
+                j["step"] = step;
+                nlohmann::json vals = nlohmann::json::array();
+                for (double t = t0; t <= t1 + 1e-9; t += step) {
+                    if (isVolume) {
+                        const float g = evalVolumeGain(pts, t);
+                        vals.push_back(g > 1e-9f ? 20.0 * std::log10((double)g) : -120.0);
+                    } else {
+                        vals.push_back(evalCurve(pts, t, 30000.0));
+                    }
+                }
+                j["values"] = std::move(vals);
+                return j;
+            };
+            if (!lane.lpAuto.empty()) l["lowPass"] = sampled(lane.lpAuto, false);
+            if (!lane.volAuto.empty()) l["volume"] = sampled(lane.volAuto, true);
             out["lanes"].push_back(std::move(l));
         }
         laneInfo_ = out.dump();

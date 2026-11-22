@@ -75,6 +75,29 @@ export interface ResolvedMixLane {
   /** Target volume, dB (null when the engine resolved none). */
   readonly volumeDb: number | null;
   readonly sendsDb: { readonly reverb: number | null; readonly delay: number | null; readonly chorus: number | null };
+  /** Low-pass cutoff automation (Hz), sampled by the engine. */
+  readonly lowPass?: SampledAutomation;
+  /** Volume automation (dB, on top of the target volume), sampled by the engine. */
+  readonly volume?: SampledAutomation;
+}
+
+/** An automation curve sampled every `step` seconds from `t0`. */
+export interface SampledAutomation {
+  readonly t0: number;
+  readonly step: number;
+  readonly values: readonly number[];
+}
+
+/** The automation's value at `t` (seconds), or undefined outside its range. */
+export function automationAt(a: SampledAutomation | undefined, t: number): number | undefined {
+  if (!a || a.values.length === 0) return undefined;
+  const i = (t - a.t0) / a.step;
+  if (i < 0 || i > a.values.length - 1) return undefined;
+  const k = Math.floor(i);
+  const f = i - k;
+  const v0 = a.values[k]!;
+  const v1 = a.values[Math.min(a.values.length - 1, k + 1)]!;
+  return v0 + (v1 - v0) * f;
 }
 
 export interface ResolvedMix {
