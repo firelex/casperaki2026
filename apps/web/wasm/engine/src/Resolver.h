@@ -800,27 +800,26 @@ private:
         return "playsample-" + std::to_string(id) + ".ogg";
     }
 
-    // Synths.h:56-80 — every note gets +SUSTAIN_TAIL_BEATS, VelocityMode::beat.
+    // Synths.h, VelocityMode::beat. Notes keep their written length, as the final
+    // 2023 engine played them (casperaki_engine 1c80774: te::SamplerPlugin, note-off
+    // = 8-sample stop + 100-sample fade, no tail). The +2-beat SUSTAIN_TAIL_BEATS
+    // added in 2026 (docs/58a) made sustaining sounds ring at full level under the
+    // next notes; removed (owner's decision, 2026-11-22).
     void emitSynthsClip(Track& track, const std::string& segName,
                         double startSec, double endSec, const std::vector<TimeNote>& notes) {
-        static constexpr double SUSTAIN_TAIL_BEATS = 2.0;
         Clip clip; clip.name = segName; clip.type = "midi";
         clip.startSec = startSec; clip.endSec = endSec;
-        for (const auto& tn : notes) {
-            TimeNote sustained = tn;
-            sustained.duration += SUSTAIN_TAIL_BEATS;
-            addNoteToClip(clip, sustained, vmBeat);
-        }
+        for (const auto& tn : notes) addNoteToClip(clip, tn, vmBeat);
         sortClipNotes(clip);
         track.clips.push_back(std::move(clip));
     }
 
-    // Bass.h:32-72 — long notes (dur>0.5) get the sustain tail and land on the
-    // long track; short notes land staccato on the short track. Both clips are
+    // Bass.h — long notes (dur>0.5) land on the long track, short notes staccato
+    // on the short track; both at their written length, as in the final 2023
+    // engine (the 2026 +2-beat sustain tail is removed, see emitSynthsClip). Both clips are
     // created per segment (even when empty), matching the oracle clip counts.
     void emitBassClips(Track& longTrack, Track& shortTrack, const std::string& segName,
                        double startSec, double endSec, const std::vector<TimeNote>& notes) {
-        static constexpr double SUSTAIN_TAIL_BEATS = 2.0;
         Clip longClip;  longClip.name  = segName; longClip.type  = "midi";
         longClip.startSec = startSec;  longClip.endSec = endSec;
         Clip shortClip; shortClip.name = segName; shortClip.type = "midi";
@@ -828,9 +827,7 @@ private:
 
         for (const auto& tn : notes) {
             if (tn.duration > 0.5) {
-                TimeNote sustained = tn;
-                sustained.duration += SUSTAIN_TAIL_BEATS;
-                addNoteToClip(longClip, sustained, vmBeat);
+                addNoteToClip(longClip, tn, vmBeat);
             } else {
                 addNoteToClip(shortClip, tn, vmBeat);
             }
