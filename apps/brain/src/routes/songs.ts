@@ -18,6 +18,7 @@ import {
   isBpmInGenreTempoRange,
   parseSong,
 } from '@casperaki/song-schema';
+import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
 import type { ProjectRow, SongsStore } from '../store.js';
@@ -66,6 +67,9 @@ export interface SongsRouterDeps {
   readonly renders?: RenderService;
   /** Hook for tests to inject a deterministic timestamp. */
   readonly now?: () => string;
+  /** Told about every newly generated song that got the placeholder title
+   *  (no title given); the brain names it afterwards, outside this router. */
+  readonly onPlaceholderTitle?: (song: { ownerId: string; songId: string; song: Song; placeholderTitle: string }) => void;
 }
 
 /** The id that owns projects. Every /api route sits behind the session gate
@@ -76,7 +80,7 @@ export function ownerOf(req: Request): string {
   return req.user?.id ?? DEV_OWNER_ID;
 }
 
-export function createSongsRouter({ store, renders, now }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, now, onPlaceholderTitle }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -113,13 +117,15 @@ export function createSongsRouter({ store, renders, now }: SongsRouterDeps): Rou
     store.put({ id, song, canonical, hash, createdAt: at });
     const owner = ownerOf(req);
     const existing = store.getProject(owner, id);
+    const placeholder = title.data === undefined && !existing ? defaultTitle(params.genre, params.key) : undefined;
     store.upsertProject({
       ownerId: owner,
       songId: id,
-      title: title.data ?? existing?.title ?? defaultTitle(params.genre, params.key),
+      title: title.data ?? existing?.title ?? placeholder!,
       createdAt: existing?.createdAt ?? at,
       updatedAt: at,
     });
+    if (placeholder !== undefined) onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder });
     return res.status(201).json({ id, song, hash, project: projectJson(store.getProject(owner, id)!, renders) });
   });
 

@@ -17,6 +17,7 @@ import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, ownerOf } from './routes/songs.js';
+import { SongTitler } from './titles/songTitler.js';
 import { createDawExportRouter } from './routes/dawExport.js';
 import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
@@ -51,6 +52,8 @@ export interface CreateAppDeps {
   readonly playback?: PlaybackService;
   /** The song assistant's model (tests inject a scripted fake). */
   readonly assistantLlm?: AssistantLlm;
+  /** Names new songs (tests inject a fake; production uses the assistant model). */
+  readonly songTitler?: SongTitler;
 }
 
 /** A stable dev session secret persisted next to the auth DB. Regenerating
@@ -196,7 +199,12 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         })
       : undefined);
 
-  app.use(createSongsRouter({ store, renders }));
+  // New songs are created under a placeholder title and named by the language
+  // model afterwards (src/titles), so generation itself stays deterministic.
+  const titleEp = assistantEndpoint(config);
+  const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
+  if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
+  app.use(createSongsRouter({ store, renders, ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());

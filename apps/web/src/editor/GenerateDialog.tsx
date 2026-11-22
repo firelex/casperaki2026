@@ -64,6 +64,16 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
       void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
       queryClient.setQueryData(songsQueryKeys.song(data.id), data);
       onCreated(data.id);
+      // Untitled songs are named by the server's language model a moment
+      // after they are created: re-read the project so the title shows up.
+      if (!title.trim()) {
+        for (const ms of [1500, 5000]) {
+          window.setTimeout(() => {
+            void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
+            void queryClient.invalidateQueries({ queryKey: songsQueryKeys.song(data.id) });
+          }, ms);
+        }
+      }
     },
   });
 
@@ -148,7 +158,7 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={`${GENRE_LABELS[genre]} in ${key}`}
+              placeholder="Leave empty and Casperaki names it"
               maxLength={120}
               className="h-11 rounded-[8px] border border-line bg-bg px-3 text-[15px] text-white outline-none placeholder:text-white/35 focus:border-white/50"
             />
