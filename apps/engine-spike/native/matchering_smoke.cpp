@@ -26,17 +26,18 @@ public:
     void initialise (const juce::String& /*cmdLine*/) override
     {
         const auto args = JUCEApplicationBase::getCommandLineParameterArray();
-        if (args.size() < 1) {
-            std::cerr << "usage: casperaki_matchering_smoke <input.wav> [output.wav]\n";
+        // style: "sergree" = reference matching to Atemlos (levels + mid/side EQ
+        // curve, then NC-17); "boost" = legacy production's +5 dB into NC-17.
+        const juce::String style = args.size() >= 3 ? args[2] : juce::String();
+        if (args.size() != 3 || (style != "sergree" && style != "boost")) {
+            std::cerr << "usage: casperaki_matchering_smoke <input.wav> <output.wav> <sergree|boost>\n";
             setApplicationReturnValue(1);
             quit();
             return;
         }
 
         const fs::path inPath = fs::absolute(args[0].toStdString());
-        const fs::path outPath = fs::absolute(args.size() >= 2
-            ? fs::path(args[1].toStdString())
-            : inPath.parent_path() / (inPath.stem().string() + "_mastered.wav"));
+        const fs::path outPath = fs::absolute(args[1].toStdString());
 
         const juce::File src (inPath.string());
         const juce::File dst (outPath.string());
@@ -49,7 +50,9 @@ public:
                   << " size=" << src.getSize() << ")" << std::endl;
         std::cout << "[smoke] dst=" << dst.getFullPathName() << std::endl;
 
-        casperaki::matchering::masterAgainstAtemlos (src, dst, /*shouldLimit*/ true);
+        // masterSongAtemlos' shouldLimit selects the style: true = JUST_BOOST_AND_LIMIT,
+        // false = SERGREE (Matchering.h:1793-1796).
+        casperaki::matchering::masterAgainstAtemlos (src, dst, /*shouldLimit*/ style == "boost");
 
         const bool ok = dst.existsAsFile() && dst.getSize() > 0;
         std::cout << "[smoke] result exists=" << (ok ? "yes" : "no")

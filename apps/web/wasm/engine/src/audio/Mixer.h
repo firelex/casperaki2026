@@ -85,6 +85,14 @@ public:
     void setMixEnabled(bool e) { mixEnabled_ = e; }
     bool mixEnabled() const { return mixEnabled_; }
 
+    // docs/67 #1 — the legacy production mastering stage (+5 dB into NC-17) on the
+    // final output. Needs the mix (graph) on. May be called before or after build().
+    void setMastering(bool on) {
+        mastering_ = on;
+        if (graph_) graph_->setMastering(on);
+    }
+    bool mastering() const { return mastering_; }
+
     // docs/64 — the runtime mix/FX config (volumes/sends/fxGroups/racks loaded from
     // mix-config.json). Call before build(). When unset, the per-lane lookups fall
     // back to the compiled-in MixTables.h/RackData.h (identical values — the parity
@@ -167,7 +175,10 @@ public:
             for (const auto& l : lanes_) if (!l.fxGroup.empty()) groups.insert(l.fxGroup);
             graph_ = std::make_unique<MixGraph>(sampleRate_, blockSize_);
             graph_->build(mixCfg_, groups);
+            graph_->setMastering(mastering_);
         }
+        if (mastering_ && !graph_)
+            throw std::logic_error("Mixer: mastering needs the mix on (setMixEnabled(true) before build)");
     }
 
     // Render the next `numFrames` (<= blockSize) into `out`, advancing the play
@@ -471,9 +482,10 @@ private:
 
         void seek(long frame, int /*blockSize*/) override {
             sampler.allVoicesOff();
-            // Index of the last note-off per pitch before `frame` (a note-off cuts
-            // EVERY sounding voice of its pitch, so a note is released if any
-            // note-off of that pitch follows its note-on).
+            // Index of the last event per pitch before `frame`. A note-off AND a
+            // later note-on of the same pitch both stop every non-open-ended voice
+            // of that pitch, so a note is released if any event of its pitch
+            // follows its note-on.
             long lastOff[128];
             for (long& v : lastOff) v = -1;
             size_t i = 0;
@@ -481,7 +493,7 @@ private:
                 const Event& e = events[i];
                 if (e.note < 0 || e.note > 127)
                     throw std::out_of_range("Mixer::seek: MIDI note " + std::to_string(e.note) + " outside 0..127");
-                if (!e.on) lastOff[e.note] = (long)i;
+                lastOff[e.note] = (long)i;
             }
             cursor = i;
             for (size_t k = 0; k < i; ++k) {
@@ -508,6 +520,7 @@ private:
         bool loop;
         float gain = 1.0f;
         std::array<float, 3> sendGain{{0.0f, 0.0f, 0.0f}};
+        long loopFrames = 0;   // loop period (frames of `data`); set for every looped clip
     };
     struct WaveSource : Source {
         std::vector<WaveClipRT> clips;
@@ -547,7 +560,7 @@ private:
             for (long i = lo; i < hi; ++i) {
                 if (i < 0) continue;
                 const long rel = i - c.start;
-                const int srcIdx = c.loop ? (int)(rel % data->frames) : (int)rel;
+                const int srcIdx = c.loop ? (int)(rel % c.loopFrames) : (int)rel;
                 const int local = (int)(i - pos);
                 for (int ch = 0; ch < 2; ++ch) {
                     const float s = data->audio.getReadPointer(std::min(ch, srcCh - 1))[srcIdx];
@@ -867,6 +880,7 @@ private:
             lane.sendDb[1] = sd.delay;
             lane.sendDb[2] = sd.chorus;
             if (!lane.lowLevelType.empty()) lane.volumeDb = cfgTargetVol(lane.lowLevelType);
+            if (isTransitionPatternTrack(track.name)) lane.volumeDb += kTransitionPatternTrackDb;
         }
         buildTrackSources(track, lane);
         if (!lane.sources.empty()) lanes_.push_back(std::move(lane));
@@ -964,9 +978,29 @@ private:
             }
             // Real loop/transition sample keyed by the resolved source filename,
             // else the tone stub (old renderWaveTrack — every wave -> tone).
-            src->clips.push_back({start, end, realOr(c.source, stubs_.tone), c.loop, clipGain, clipSendGain});
+            auto data = realOr(c.source, stubs_.tone);
+            long loopFrames = 0;
+            if (c.loop) loopFrames = loopPeriodFrames(*data, data == stubs_.tone, c.source);
+            src->clips.push_back({start, end, data, c.loop, clipGain, clipSendGain, loopFrames});
         }
         lane.sources.push_back(std::move(src));
+    }
+
+    // Loop period of a looped wave clip, as legacy Loop.h:58-67 sets it: the
+    // file's length in WHOLE bars at the song tempo (te::BarsAndBeats.bars, rounded
+    // down) x 4 beats. The rest of the file (MP3 padding, ~30-40 ms) is never played,
+    // so every repeat lands on the bar grid. The tone stub (no real sample) keeps
+    // its own length: it is a placeholder, not a bar loop.
+    long loopPeriodFrames(const SampleData& d, bool isStub, const std::string& source) const {
+        if (isStub) return d.frames;
+        const double barSec = 4.0 * secPerBeat_;
+        const double fileSec = (double)d.frames / (double)d.sampleRate;
+        const long bars = (long)std::floor(fileSec / barSec + 1e-9);
+        if (bars < 1)
+            throw std::runtime_error("Mixer: loop '" + source + "' is " + std::to_string(fileSec)
+                                     + " s, shorter than one bar (" + std::to_string(barSec) + " s) at the song tempo");
+        const long frames = (long)std::lround((double)bars * barSec * (double)d.sampleRate);
+        return std::min(frames, (long)d.frames);
     }
 
     void buildMidiSource(const Track& track, Lane& lane) {
@@ -980,14 +1014,37 @@ private:
         if (mixEnabled_)
             src->sampler.setAllSoundGainDb((float)cfgTargetVol(laneLowLevelType(track.name)));
 
+        // MIDI clip -> note events as Tracktion plays them (te::MidiList::
+        // exportToPlaybackMidiSequence, tracktion_MidiList.cpp:1950-1985, and
+        // MidiNote::getPlaybackTime, :823-833):
+        //  - notes starting at/after the clip end, or ending before its start, are skipped;
+        //  - a note-off lands at min(note end, clip end) - 0.0001 s, so nothing rings
+        //    past its segment;
+        //  - a note overlapped by a later note of the same pitch gets NO note-off
+        //    (the later note-on cuts it in the sampler instead).
         for (const auto& c : track.clips) {
             if (c.type != "midi") continue;
-            for (const auto& nt : c.notes) {
+            std::vector<const Note*> notes;
+            for (const auto& nt : c.notes) notes.push_back(&nt);
+            std::stable_sort(notes.begin(), notes.end(),
+                             [](const Note* a, const Note* b) { return a->startBeat < b->startBeat; });
+            const double clipLenBeats = (c.endSec - c.startSec) / secPerBeat_;
+            for (size_t i = 0; i < notes.size(); ++i) {
+                const Note& nt = *notes[i];
+                const double endBeat = nt.startBeat + nt.lenBeats;
+                if (nt.startBeat >= clipLenBeats || endBeat <= 0.0) continue;
+                bool useNoteUp = true;
+                for (size_t j = i + 1; j < notes.size(); ++j) {
+                    const double s2 = notes[j]->startBeat;
+                    if (s2 >= clipLenBeats || s2 >= endBeat) break;
+                    if (notes[j]->n == nt.n) { useNoteUp = false; break; }
+                }
                 const double onSec = c.startSec + nt.startBeat * secPerBeat_;
-                const double offSec = c.startSec + (nt.startBeat + nt.lenBeats) * secPerBeat_;
+                const double offSec = std::min(c.startSec + endBeat * secPerBeat_, c.endSec) - 0.0001;
                 const float vel = mixEnabled_ ? (float)nt.vel / 127.0f : 0.75f;
                 src->events.push_back({(long)std::lround(onSec * sampleRate_), true, nt.n, vel});
-                src->events.push_back({(long)std::lround(offSec * sampleRate_), false, nt.n, vel});
+                if (useNoteUp)
+                    src->events.push_back({(long)std::lround(offSec * sampleRate_), false, nt.n, vel});
             }
         }
         std::stable_sort(src->events.begin(), src->events.end(),
@@ -1001,16 +1058,21 @@ private:
             if (c.type == "step" && !c.channels.empty()) { channels = c.channels; break; }
         if (channels.empty()) return;
 
+        // A transitionPattern lane (the EDM snare roll): channel c plays samples[c],
+        // joined by its playsample id; see buildTransitionPatternSound.
+        const nlohmann::json* rollInst = transitionPatternInst(track.name);
+
         // Phase 2 Scope A: drums set gain PER SOUND (native setSoundGains), keyed by
         // each sub-instrument's own lowLevelType, not a single track level.
         const nlohmann::json* drumInst = nullptr;
-        if (mixEnabled_) {
+        if (mixEnabled_ && !rollInst) {
             auto it = instByName_.find(baseName(track.name));
             if (it != instByName_.end()) drumInst = it->second;
         }
 
         auto src = std::make_unique<SamplerSource>(sampleRate_, blockSize_);
         for (const auto& ch : channels) {
+            if (rollInst) { src->sampler.addSound(buildTransitionPatternSound(*rollInst, ch)); continue; }
             SamplerSound s;
             // Real one-shot keyed by the sub-instrument name, else the role stub.
             s.data = realOr(ch.name, drumFixtureForName(ch.name));
@@ -1030,7 +1092,10 @@ private:
                 for (const auto& h : p.hits) {
                     if (h.ch < 0 || h.ch >= (int)channels.size()) continue;
                     const double onSec = c.startSec + h.step * stepDurSec;
-                    const float vel = mixEnabled_ ? (float)h.vel / 127.0f : 0.75f;
+                    // Tracktion StepClip note-on velocity = step vel/127 x channel vel/127
+                    // (tracktion_StepClip.cpp:389-393); legacy never sets the channel
+                    // velocity, so it stays at the default 96 (StepClip.h:178) -> -4.9 dB.
+                    const float vel = mixEnabled_ ? ((float)h.vel / 127.0f) * kStepChannelVelocity : 0.75f;
                     src->events.push_back({(long)std::lround(onSec * sampleRate_), true,
                                            channels[(size_t)h.ch].n, vel});
                 }
@@ -1039,6 +1104,62 @@ private:
         std::stable_sort(src->events.begin(), src->events.end(),
                          [](const Event& a, const Event& b) { return a.sample < b.sample; });
         lane.sources.push_back(std::move(src));
+    }
+
+    // The inst-N.json of a transitionPattern track (its name is the instrument
+    // name), or nullptr when the track is not one.
+    const nlohmann::json* transitionPatternInst(const std::string& trackName) const {
+        auto it = instByName_.find(trackName);
+        if (it == instByName_.end() || it->second == nullptr) return nullptr;
+        const auto& inst = *it->second;
+        if (!inst.contains("type") || !inst["type"].is_string()
+            || inst["type"].get<std::string>() != "transitionPattern")
+            return nullptr;
+        return &inst;
+    }
+    bool isTransitionPatternTrack(const std::string& trackName) const {
+        return transitionPatternInst(trackName) != nullptr;
+    }
+
+    // One sampler sound of a transitionPattern lane (TransitionPattern.h
+    // createSampler: a te::SamplerPlugin sound per sample, open-ended, keyed to
+    // its own note). The step channel is named by the sample's note; the PCM is
+    // the playsample-<id>.ogg the host staged for that sample (SampleLibrary
+    // loadWaves), else the snare stub, as the drum channels fall back.
+    //
+    // Gain (mix on): FX::getInstrumentTargetVolume(lowLevelType) via
+    // applyPreVolumeToTrack (Sequencer.cpp:509-515) plus the -12 dB track volume
+    // (Sequencer.cpp:170-177, the Sequencer constructor). Both are post-sampler, so they add in dB to the
+    // sound gain. Legacy set that -12 dB only on a track named exactly
+    // "edmSnareDrumRoll"; the engine adapter names each roll
+    // "edmSnareDrumRoll__<segment>", which the legacy check missed. Every
+    // transitionPattern lane is the EDM snare roll, so the trim applies to all.
+    SamplerSound buildTransitionPatternSound(const nlohmann::json& inst, const StepChannel& ch) const {
+        const std::string instName = inst["name"].get<std::string>();
+        const nlohmann::json* sample = nullptr;
+        for (const auto& smp : inst["samples"])
+            if (smp.contains("note") && smp["note"].is_string() && smp["note"].get<std::string>() == ch.name) {
+                sample = &smp;
+                break;
+            }
+        if (!sample)
+            throw std::runtime_error("Mixer: transitionPattern '" + instName + "' has no sample with note '"
+                                     + ch.name + "'");
+        if (!sample->contains("id") || !(*sample)["id"].is_number_integer())
+            throw std::runtime_error("Mixer: transitionPattern '" + instName + "' sample '" + ch.name
+                                     + "' has no integer `id`");
+        SamplerSound s;
+        s.data = realOr("playsample-" + std::to_string((*sample)["id"].get<long long>()) + ".ogg", stubs_.snare);
+        s.keyNote = ch.n;
+        s.minNote = ch.n;
+        s.maxNote = ch.n;
+        s.openEnded = true;  // setSoundOpenEnded(index, true)
+        if (mixEnabled_) {
+            if (!inst.contains("lowLevelType") || !inst["lowLevelType"].is_string())
+                throw std::runtime_error("Mixer: transitionPattern '" + instName + "' has no string `lowLevelType`");
+            s.gainDb = (float)(cfgTargetVol(inst["lowLevelType"].get<std::string>()) + kTransitionPatternTrackDb);
+        }
+        return s;
     }
 
     // ---- instrument index + join (moved verbatim from Render.h) ------------
@@ -1099,7 +1220,9 @@ private:
         }
         if (isStrums) {
             std::map<int, int> noteToId = strumNoteToId(track, inst);
-            buildPerNoteSampler(track, sampler, stubs_.tone, &noteToId);
+            // Strum sounds are open-ended: each rings to its sample's end
+            // (legacy Guitar.h:362 setSoundOpenEnded(index, true)).
+            buildPerNoteSampler(track, sampler, stubs_.tone, &noteToId, /*openEnded*/ true);
             return;
         }
         if (inst == nullptr || !hasSamples(*inst)) {
@@ -1172,7 +1295,8 @@ private:
     // fixture — so the no-library render is byte-identical to the stub-only path).
     void buildPerNoteSampler(const Track& track, Sampler& sampler,
                              std::shared_ptr<SampleData> fixture,
-                             const std::map<int, int>* noteToId = nullptr) {
+                             const std::map<int, int>* noteToId = nullptr,
+                             bool openEnded = false) {
         std::map<int, bool> notes;
         for (const auto& c : track.clips)
             if (c.type == "midi")
@@ -1188,7 +1312,7 @@ private:
             s.keyNote = kv.first;
             s.minNote = kv.first;
             s.maxNote = kv.first;
-            s.openEnded = false;
+            s.openEnded = openEnded;
             sampler.addSound(s);
         }
     }
@@ -1418,7 +1542,13 @@ private:
     int blockSize_;
     double tailSec_;
     StubSamples stubs_;
+    // Tracktion StepClip channel default velocity (defaultNoteValue 96), as a 0..1 scale.
+    static constexpr float kStepChannelVelocity = 96.0f / 127.0f;
+    // Sequencer.cpp:170-177 — the EDM snare roll track volume (see
+    // buildTransitionPatternSound).
+    static constexpr double kTransitionPatternTrackDb = -12.0;
     float masterGain_ = 1.0f;
+    bool mastering_ = false;
     bool mixEnabled_ = false;       // Phase 2 Scope A — default off => byte-identical
     const mix::MixConfig* mixCfg_ = nullptr;  // docs/64 runtime config (else MixTables.h fallback)
     std::string genre_;             // from ResolvedEvents.genre, for the mix-table lookup

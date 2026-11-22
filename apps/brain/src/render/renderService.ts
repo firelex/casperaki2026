@@ -7,8 +7,14 @@
 //               BRAIN_SONG_FILE=<song-in.json>: writes the engine envelope
 //               (song.json + inst-N.json + asset-manifest.json).
 //   2. render — the native build of the WASM engine (casperaki_render):
-//               envelope + real sample library → out.wav.
-//   3. encode — ffmpeg: out.wav → out.mp3 for streaming playback.
+//               envelope + real sample library → out-unmastered.wav (24-bit,
+//               natural level, no mastering — legacy's <title>_unmastered.wav).
+//   3. master — casperaki_master (the engine's JUCE-free port of the legacy
+//               matchering, SERGREE style, bit-identical to the JUCE original):
+//               match levels and the mid/side EQ curve to the Atemlos reference,
+//               then NC-17 → out.wav (docs/67 #1).
+//   4. encode — ffmpeg (LAME VBR -V2, as legacy): out.wav → out.mp3 and
+//               out-unmastered.wav → out-unmastered.mp3.
 //
 // Songs are content-addressed (id = hash prefix of the canonical bytes), so
 // a render directory keyed by song id is valid forever: an edit produces a
@@ -28,7 +34,7 @@ export type RenderState = 'queued' | 'running' | 'done' | 'failed';
 export interface RenderStatus {
   readonly songId: string;
   readonly state: RenderState;
-  readonly step?: 'lower' | 'render' | 'encode';
+  readonly step?: 'lower' | 'render' | 'master' | 'encode';
   readonly queuedAt: string;
   readonly startedAt?: string;
   readonly finishedAt?: string;
@@ -51,11 +57,17 @@ export interface RenderServiceConfig {
   readonly mix: boolean;
   readonly ffmpegBin: string;
   readonly nodeBin: string;
+  /** casperaki_master: <in.wav> <out.wav> <sergree|boost>. */
+  readonly masteringBin: string;
 }
+
+/** Which version of a render: matchering-mastered (the default) or unmastered. */
+export type RenderVersion = 'mastered' | 'unmastered';
 
 const LOWER_TIMEOUT_MS = 3 * 60 * 1000;
 const RENDER_TIMEOUT_MS = 20 * 60 * 1000;
 const ENCODE_TIMEOUT_MS = 5 * 60 * 1000;
+const MASTER_TIMEOUT_MS = 10 * 60 * 1000;
 
 export class RenderService {
   private readonly statuses = new Map<string, RenderStatus>();
@@ -68,6 +80,7 @@ export class RenderService {
       ['render binary', config.renderBin],
       ['stub samples directory', config.stubSamplesDir],
       ['sample library root', config.sampleLibraryRoot],
+      ['mastering binary', config.masteringBin],
     ] as const) {
       if (!existsSync(path)) throw new Error(`render service: ${label} not found at ${path}`);
     }
@@ -79,12 +92,18 @@ export class RenderService {
     return join(resolve(this.config.rendersDir), songId);
   }
 
-  wavPath(songId: string): string {
-    return join(this.dirFor(songId), 'out.wav');
+  wavPath(songId: string, version: RenderVersion = 'mastered'): string {
+    return join(this.dirFor(songId), version === 'mastered' ? 'out.wav' : 'out-unmastered.wav');
   }
 
-  mp3Path(songId: string): string {
-    return join(this.dirFor(songId), 'out.mp3');
+  mp3Path(songId: string, version: RenderVersion = 'mastered'): string {
+    return join(this.dirFor(songId), version === 'mastered' ? 'out.mp3' : 'out-unmastered.mp3');
+  }
+
+  /** Whether a finished render has this version (renders made before the
+   *  unmastered/mastered split have only out.wav/out.mp3). */
+  hasVersion(songId: string, version: RenderVersion): boolean {
+    return existsSync(this.mp3Path(songId, version)) && existsSync(this.wavPath(songId, version));
   }
 
   /** Current status, or undefined if the song was never rendered. */
@@ -155,26 +174,37 @@ export class RenderService {
         LOWER_TIMEOUT_MS,
       );
 
+      const unmastered = this.wavPath(songId, 'unmastered');
+      const mastered = this.wavPath(songId, 'mastered');
       this.set({ ...base, state: 'running', step: 'render', startedAt });
       await runLogged(
         c.renderBin,
-        [dir, join(dir, 'out.wav'), c.stubSamplesDir, c.sampleLibraryRoot],
-        { ...env, ...(c.mix ? { CASPERAKI_MIX: '1' } : {}) },
+        [dir, unmastered, c.stubSamplesDir, c.sampleLibraryRoot],
+        { ...env, CASPERAKI_BITS: '24', ...(c.mix ? { CASPERAKI_MIX: '1' } : {}) },
         join(dir, 'render.log'),
         RENDER_TIMEOUT_MS,
       );
-      if (!existsSync(join(dir, 'out.wav'))) {
-        throw new Error('renderer exited cleanly but wrote no out.wav (see render.log)');
+      if (!existsSync(unmastered)) {
+        throw new Error('renderer exited cleanly but wrote no out-unmastered.wav (see render.log)');
+      }
+
+      this.set({ ...base, state: 'running', step: 'master', startedAt });
+      await runLogged(c.masteringBin, [unmastered, mastered, 'sergree'], env, join(dir, 'master.log'), MASTER_TIMEOUT_MS);
+      if (!existsSync(mastered)) {
+        throw new Error('mastering exited cleanly but wrote no out.wav (see master.log)');
       }
 
       this.set({ ...base, state: 'running', step: 'encode', startedAt });
-      await runLogged(
-        c.ffmpegBin,
-        ['-y', '-hide_banner', '-loglevel', 'error', '-i', join(dir, 'out.wav'), '-codec:a', 'libmp3lame', '-b:a', '192k', join(dir, 'out.mp3')],
-        env,
-        join(dir, 'encode.log'),
-        ENCODE_TIMEOUT_MS,
-      );
+      for (const version of ['mastered', 'unmastered'] as const) {
+        await runLogged(
+          c.ffmpegBin,
+          // LAME VBR quality 2 (= lame -V2, what legacy shipped).
+          ['-y', '-hide_banner', '-loglevel', 'error', '-i', this.wavPath(songId, version), '-codec:a', 'libmp3lame', '-q:a', '2', this.mp3Path(songId, version)],
+          env,
+          join(dir, `encode-${version}.log`),
+          ENCODE_TIMEOUT_MS,
+        );
+      }
 
       const durationSec = (Date.now() - Date.parse(startedAt)) / 1000;
       this.set({ ...base, state: 'done', startedAt, finishedAt: new Date().toISOString(), durationSec });

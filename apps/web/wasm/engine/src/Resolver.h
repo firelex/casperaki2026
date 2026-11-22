@@ -27,8 +27,14 @@
 //     timing exact; strum + fret velocity exact; short/long tonal velocity is
 //     VelocityMode::randomised (validated to a band — see Guitar.h).
 //
-// arpeggio / EDMArpeggiator are intentionally NOT ported: no fixture exercises
-// them, so there is no oracle (PORTING-MAP.md step 4).
+//   - Transition-pattern lanes (TransitionPattern.h): the EDM snare roll — one
+//     step track per transitionPattern instrument, one step clip per segment
+//     whose arrangement[seg].transitions carries the instrument's id.
+//
+// arpeggio / EDMArpeggiator are ported in Tonal.h (buildTonalNotes; Guitar.h
+// too). No fixture exercises them, so they are checked by hand-derived exact
+// expectations in test/arpeggio_test.cpp rather than the oracle (PORTING-MAP.md
+// step 4).
 #pragma once
 
 #include "ResolvedEvents.h"
@@ -41,7 +47,9 @@
 #include <algorithm>
 #include <array>
 #include <map>
+#include <memory>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,6 +66,8 @@ public:
                            const std::vector<std::string>& instJsons) {
         ResolvedEvents out;
         song_ = json::parse(songJson);
+        songText_ = &songJson;
+        songOrdered_.reset();
 
         out.genre = song_.value("genre", std::string());
 
@@ -85,6 +95,7 @@ public:
             if      (inst.type == "drums")            resolveDrumInstrument(inst, out);
             else if (inst.type == "percussionLoops")  resolveLoopInstrument(inst, out);
             else if (inst.type == "transitionSample") { /* shared track, below */ }
+            else if (inst.type == "transitionPattern") resolveTransitionPatternInstrument(inst, out);
             else if (inst.type == "electricGuitars" ||
                      inst.type == "acousticGuitars")  resolveGuitarInstrument(inst, out);
             else                                      resolveTonalInstrument(inst, out);
@@ -101,6 +112,8 @@ public:
         // docs/62 A7 — fxNoiseRise transition risers (transitionNoise).
         resolveNoiseRises(out);
 
+        songText_ = nullptr;
+        songOrdered_.reset();
         return out;
     }
 
@@ -121,6 +134,12 @@ private:
     };
 
     json song_;
+    // The song text and an insertion-ordered parse of it, built on first use.
+    // nlohmann::json sorts object keys; a transition pattern's channels follow the
+    // JSON object's key ORDER (juce::DynamicObject keeps insertion order), so the
+    // pattern object is read from this ordered parse.
+    const std::string* songText_ = nullptr;
+    std::unique_ptr<nlohmann::ordered_json> songOrdered_;
     Random rng_;
     double secPerBeat_ = 0.5;
     std::vector<Segment> segments_;
@@ -260,9 +279,12 @@ private:
     // is keyed by arbitrary names; the active one is the entry whose `id` matches
     // the instrument. Returns the transition object (carries sequenceStartPosition
     // + offset) or nullptr when this instrument has no transition in this segment.
-    // (Only the numeric-id path applies to transitionSample; the fxNoiseRise /
-    // transitionId fallbacks are for transitionNoise/Pattern, absent in fixtures.)
-    const json* getTransitionData(const std::string& segName, int id) const {
+    // The id is the numeric `id` when present, else 100000 + `transitionId`
+    // (Sequencer.cpp:81-86 — the legacy transitionPattern encoding; the engine
+    // adapter writes a numeric `id`). The fxNoiseRise string id is handled by
+    // resolveNoiseRises. `keyOut`, when given, receives the transition's key.
+    const json* getTransitionData(const std::string& segName, int id,
+                                  std::string* keyOut = nullptr) const {
         if (!song_.contains("arrangement")) return nullptr;
         const json& a = song_.at("arrangement");
         auto sit = a.find(segName); if (sit == a.end()) return nullptr;
@@ -270,9 +292,18 @@ private:
         if (tit == sit->end() || !tit->is_object()) return nullptr;
         for (auto it = tit->begin(); it != tit->end(); ++it) {
             const json& obj = it.value();
-            if (obj.is_object() && obj.contains("id") && obj.at("id").is_number() &&
-                (int)obj.at("id").get<double>() == id)
+            if (!obj.is_object()) continue;
+            int objId;
+            if (obj.contains("id") && obj.at("id").is_number())
+                objId = (int)obj.at("id").get<double>();
+            else if (!obj.contains("id") && obj.contains("transitionId") && obj.at("transitionId").is_number())
+                objId = 100000 + (int)obj.at("transitionId").get<double>();
+            else
+                continue;
+            if (objId == id) {
+                if (keyOut) *keyOut = it.key();
                 return &it.value();
+            }
         }
         return nullptr;
     }
@@ -670,6 +701,98 @@ private:
             }
         }
         if (!track.clips.empty()) out.tracks.push_back(std::move(track));
+    }
+
+    // TransitionPattern.h (casperaki_engine 90dc0f4) processSegment +
+    // createSegmentClip — the EDM snare roll. One track named after the
+    // instrument; per segment whose arrangement[seg].transitions carries this
+    // instrument's id, one step clip:
+    //   start = toTime(segStartBeat + sequenceStartPosition/8 beats)
+    //           + sequenceStartPositionOffsetInSeconds,
+    //   length = barsCount*4 beats, barsCount = len(first channel string, keeping
+    //   only '0'/'x') / 32 (integer division; 0 -> no clip),
+    //   32*barsCount steps of 1/8 beat; 'x' at index i of pattern channel c (c =
+    //   position in the JSON object's key order) -> a hit on step-clip channel c,
+    //   step i, velocity 127 (te::StepClip::Pattern::setNote drops i >= numNotes).
+    // Step-clip channels are the sampler's sounds (prepareClip): channel c plays
+    // samples[c] at note getMidiNoteNumber(samples[c].note), named by the note.
+    // Legacy built that sound list from a std::unordered_map (FileMap), so its
+    // channel order was the hash order (on libstdc++ {"C1","G1"} iterates G1, C1);
+    // the port uses samples[] order, the engine adapter's contract
+    // (packages/engine-adapter/src/transitions.ts: channel i plays samples[i]).
+    void resolveTransitionPatternInstrument(const Inst& inst, ResolvedEvents& out) {
+        const std::string where = "transitionPattern instrument '" + inst.name + "'";
+        if (!inst.data.contains("samples") || !inst.data.at("samples").is_array()
+            || inst.data.at("samples").empty())
+            throw std::runtime_error(where + ": missing or empty `samples` array");
+        std::vector<StepChannel> channels;
+        for (const auto& smp : inst.data.at("samples")) {
+            if (!smp.contains("note") || !smp.at("note").is_string())
+                throw std::runtime_error(where + ": a `samples[]` entry has no string `note`");
+            const std::string note = smp.at("note").get<std::string>();
+            channels.push_back(StepChannel{music::getMidiNoteNumber(note), note});
+        }
+
+        Track track;
+        track.name = inst.name;
+        for (const auto& seg : segments_) {
+            if (!isInstrumentInSegment(seg.name, inst.name)) continue;
+            std::string key;
+            const json* td = getTransitionData(seg.name, inst.id, &key);
+            if (!td) continue;
+            const std::string at = where + ", segment '" + seg.name + "', transition '" + key + "'";
+            if (!td->contains("sequenceStartPosition") || !td->at("sequenceStartPosition").is_number())
+                throw std::runtime_error(at + ": missing numeric `sequenceStartPosition`");
+            if (!td->contains("sequenceStartPositionOffsetInSeconds")
+                || !td->at("sequenceStartPositionOffsetInSeconds").is_number())
+                throw std::runtime_error(at + ": missing numeric `sequenceStartPositionOffsetInSeconds`");
+
+            const nlohmann::ordered_json& otd =
+                orderedSong().at("arrangement").at(seg.name).at("transitions").at(key);
+            if (!otd.contains("config") || !otd.at("config").contains("details")
+                || !otd.at("config").at("details").contains("pattern")
+                || !otd.at("config").at("details").at("pattern").is_object())
+                throw std::runtime_error(at + ": missing object `config.details.pattern`");
+            const nlohmann::ordered_json& pattern = otd.at("config").at("details").at("pattern");
+            if (pattern.empty()) continue;  // getPatternBarsCount -> 0: no clip
+            if (pattern.size() > channels.size())
+                throw std::runtime_error(at + ": pattern has " + std::to_string(pattern.size())
+                                         + " channels but the instrument has only "
+                                         + std::to_string(channels.size()) + " samples");
+
+            std::vector<std::string> grids;
+            for (auto it = pattern.begin(); it != pattern.end(); ++it) {
+                if (!it.value().is_string())
+                    throw std::runtime_error(at + ": pattern channel '" + it.key() + "' is not a string");
+                grids.push_back(retainPatternStepChars(it.value().get<std::string>()));
+            }
+            const int barsCount = (int)grids.front().size() / 32;
+            if (barsCount == 0) continue;
+            const int numSteps = 32 * barsCount;
+
+            // (int) cast of sequenceStartPosition mirrors `(int) transitionData[...] / 8.0`.
+            const double ssp = (double)(int)td->at("sequenceStartPosition").get<double>();
+            const double off = td->at("sequenceStartPositionOffsetInSeconds").get<double>();
+            Clip c; c.name = seg.name; c.type = "step";
+            c.startSec = (seg.startBeat + ssp / 8.0) * secPerBeat_ + off;
+            c.endSec = c.startSec + barsCount * BEATS_PER_BAR * secPerBeat_;
+            c.channels = channels;
+            StepPattern p; p.numSteps = numSteps;
+            for (int ci = 0; ci < (int)grids.size(); ++ci)
+                for (int i = 0; i < (int)grids[(size_t)ci].size() && i < numSteps; ++i)
+                    if (grids[(size_t)ci][(size_t)i] == 'x') p.hits.push_back(StepHit{ci, i, 127});
+            c.patterns.push_back(std::move(p));
+            track.clips.push_back(std::move(c));
+        }
+        if (!track.clips.empty()) out.tracks.push_back(std::move(track));
+    }
+
+    const nlohmann::ordered_json& orderedSong() {
+        if (!songOrdered_) {
+            if (!songText_) throw std::logic_error("Resolver: song text not set (orderedSong outside resolve)");
+            songOrdered_ = std::make_unique<nlohmann::ordered_json>(nlohmann::ordered_json::parse(*songText_));
+        }
+        return *songOrdered_;
     }
 
     // SamplesDownloadTask.h downloadSamples — assets are named playsample-{id}.ogg.

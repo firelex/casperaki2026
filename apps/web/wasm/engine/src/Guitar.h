@@ -245,8 +245,9 @@ inline GuitarSegmentNotes buildGuitarSegment(const json& noteBars, const json& s
                 const std::string ntype = asStr(noteData.value("type", json("")));
 
                 if (ntype == "EDMArpeggiator") {
-                    // Unexercised by the 8-genre fixtures (getEDMArpeggiatorNotes
-                    // not ported) — skip rather than resolve blind.
+                    // TonalInstrument.h:97-101 — absolute starts, no chord breaking.
+                    auto realNotes = getEDMArpeggiatorNotes(noteData, barIndex, segmentBars, octaveAdjustment);
+                    out.timeNotes.insert(out.timeNotes.end(), realNotes.begin(), realNotes.end());
                     continue;
                 }
                 if (ntype == "virtualGuitarist") {

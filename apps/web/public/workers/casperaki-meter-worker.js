@@ -7,18 +7,87 @@
 //      { type: 'mix', wasmBytes, sampleRate, ...build options }  -> { type: 'mix', mix } (no rendering)
 //      { type: 'render', wasmBytes, sampleRate, ...build options } -> progress..., { type: 'rendered', left, right, sampleRate }
 //      { type: 'impulse', wasmBytes, sampleRate, factory, params, seconds } -> { type: 'impulse', left, right, sampleRate }
+//      { type: 'profile', wasmBytes, sampleRate, ...build options }
+//          -> { type: 'profile', bytes }  (the matched-mastering profile of the unmastered mix,
+//             for the playback worklet's live_set_profile)
+//      { type: 'mixExport', wasmBytes, lameBytes, sampleRate, ...build options }
+//          -> { type: 'exportProgress', phase, share }..., { type: 'mixExport', files: {name: Uint8Array} }
+//             the four mix downloads: mastered.mp3/.wav, unmastered.mp3/.wav (as the server's render)
 // Out: { type: 'lanes', names, binCount, binSec, mix }   (mix: laneInfo, the resolved mix)
 //      { type: 'progress', doneBins, peaks: Float32Array[], busPeaks: Float32Array[4] }   (repeated, then)
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
 
-import { buildMixer, instantiateEngine, laneInfo, laneNames, lastError } from '../engine/casperaki-engine.js';
+import { buildMixer, instantiateEngine, laneInfo, laneNames, lastError, masterSong, masteringProfile } from '../engine/casperaki-engine.js';
+import { encodeMp3, encodeWav24, instantiateLame } from '../engine/casperaki-audio-files.js';
 
 const BLOCK = 1024;
+/** The mix's effects work per block, so the mastering renders pull 128-frame blocks
+ *  like the playback worklet and the server's casperaki_render: the same mix. */
+const MIX_BLOCK = 128;
 const POST_EVERY_MS = 400;
+/** LAME VBR quality: -V2, as the server's ffmpeg -q:a 2. */
+const MP3_VBR_QUALITY = 2;
+
+/** The whole song, unmastered (mix on, no mastering stage), at MIX_BLOCK. */
+function renderUnmastered(o, onShare) {
+  if (o.mastered || o.liveMastering) throw new Error('the unmastered render must not ask for mastering');
+  const e = instantiateEngine(o.wasmBytes);
+  const totalFrames = buildMixer(e, { ...o, blockFrames: MIX_BLOCK });
+  const left = new Float32Array(totalFrames);
+  const right = new Float32Array(totalFrames);
+  const l = new Float32Array(e.memory.buffer, e.mixer_left(), MIX_BLOCK);
+  const r = new Float32Array(e.memory.buffer, e.mixer_right(), MIX_BLOCK);
+  let last = performance.now();
+  for (let pos = 0; pos < totalFrames; pos += MIX_BLOCK) {
+    e.mixer_pull(MIX_BLOCK);
+    const n = Math.min(MIX_BLOCK, totalFrames - pos);
+    left.set(n === MIX_BLOCK ? l : l.subarray(0, n), pos);
+    right.set(n === MIX_BLOCK ? r : r.subarray(0, n), pos);
+    if (performance.now() - last > POST_EVERY_MS) {
+      last = performance.now();
+      onShare(pos / totalFrames);
+    }
+  }
+  return { e, left, right };
+}
 
 self.onmessage = (ev) => {
   const o = ev.data;
-  if (!o || (o.type !== 'meter' && o.type !== 'mix' && o.type !== 'render' && o.type !== 'impulse')) return;
+  if (!o || !['meter', 'mix', 'render', 'impulse', 'profile', 'mixExport'].includes(o.type)) return;
+  if (o.type === 'profile') {
+    try {
+      const { e, left, right } = renderUnmastered(o, () => undefined);
+      const bytes = masteringProfile(e, left, right, 'sergree');
+      self.postMessage({ type: 'profile', bytes }, [bytes.buffer]);
+    } catch (err) {
+      self.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
+    }
+    return;
+  }
+  if (o.type === 'mixExport') {
+    try {
+      const progress = (phase, share) => self.postMessage({ type: 'exportProgress', phase, share });
+      const { e, left, right } = renderUnmastered(o, (share) => progress('render', share));
+      progress('master', 0);
+      const mastered = masterSong(e, left, right, 'sergree');
+      const files = {
+        'unmastered.wav': encodeWav24(left, right, o.sampleRate, 'render'),
+        'mastered.wav': encodeWav24(mastered.left, mastered.right, o.sampleRate, 'master'),
+      };
+      // The server encodes its 24-bit WAVs, so LAME gets the 24-bit values here too.
+      const lame = instantiateLame(o.lameBytes);
+      files['unmastered.mp3'] = encodeMp3(lame, left, right, {
+        sampleRate: o.sampleRate, vbrQuality: MP3_VBR_QUALITY, rounding: 'render', onProgress: (share) => progress('mp3 unmastered', share),
+      });
+      files['mastered.mp3'] = encodeMp3(lame, mastered.left, mastered.right, {
+        sampleRate: o.sampleRate, vbrQuality: MP3_VBR_QUALITY, rounding: 'master', onProgress: (share) => progress('mp3 mastered', share),
+      });
+      self.postMessage({ type: 'mixExport', files }, Object.values(files).map((f) => f.buffer));
+    } catch (err) {
+      self.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
+    }
+    return;
+  }
   if (o.type === 'impulse') {
     // One plugin's impulse response (a fresh instance with these settings), no song needed.
     try {

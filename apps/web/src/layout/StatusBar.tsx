@@ -1,4 +1,6 @@
 import { renderInFlight, renderLabel, type RenderInfo } from '../api/songs';
+import { masteringLabel } from '../audio/masteringStatus';
+import type { MasteringMode } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
 import { useSession } from '../state/session';
 import { useRenderStatus } from '../state/useSongActions';
@@ -17,6 +19,8 @@ export function StatusBar() {
       status={isThisSong ? live.status : 'idle'}
       step={live.step}
       error={isThisSong ? live.error : undefined}
+      mastering={isThisSong ? live.mastering : undefined}
+      masteringError={live.masteringError}
       dirty={editorDirty}
       render={render}
     />
@@ -27,13 +31,16 @@ interface LiveStatusStripProps {
   readonly status: string;
   readonly step: string;
   readonly error: string | undefined;
+  readonly mastering: MasteringMode | undefined;
+  readonly masteringError: string | undefined;
   readonly dirty: boolean;
   readonly render: RenderInfo | undefined;
 }
 
 /** Left: what the live player is doing. Right: the server render, which
  *  exists only for downloads. */
-function LiveStatusStrip({ status, step, error, dirty, render }: LiveStatusStripProps) {
+function LiveStatusStrip({ status, step, error, mastering, masteringError, dirty, render }: LiveStatusStripProps) {
+  const master = mastering && (status === 'playing' || status === 'paused') ? masteringLabel(mastering, masteringError) : undefined;
   const label =
     status === 'loading'
       ? step
@@ -60,6 +67,11 @@ function LiveStatusStrip({ status, step, error, dirty, render }: LiveStatusStrip
       <div className="flex items-center gap-3 min-w-0">
         <span className={`h-2 w-2 rounded-full shrink-0 ${dotColor}`} aria-hidden />
         <span className="truncate" title={error}>{label}</span>
+        {master ? (
+          <span className={`truncate ${master.failed ? 'text-err' : 'text-dim/80'}`} title={master.text} data-testid="mastering-status">
+            · {master.text}
+          </span>
+        ) : null}
       </div>
       <div className="flex shrink-0 items-center gap-2 text-[11px]">
         {renderInFlight(render) ? <span>Rendering the mix: {renderLabel(render)}</span> : <span className="text-dim/70">Mix, stems, MIDI, REAPER, Logic: Export… (top right)</span>}

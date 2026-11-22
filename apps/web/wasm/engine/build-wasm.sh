@@ -42,14 +42,18 @@ ls -l "$OUT_DIR"/engine-resolve.* 2>/dev/null || true
 # e.memory.buffer fresh after each malloc while staging, so a mid-staging growth
 # is fine too.
 # The AirWindows FX TUs (Phase 2 Scope C) + BespokeFx are compiled into the render
-# module so the MixGraph's rack chains link in the browser too.
-emcc src/main_render_wasm.cpp src/audio/airwindows/*.aw.cpp src/audio/airwindows/BespokeFx.cpp src/audio/airwindows/SimpleSide.cpp src/audio/airwindows/FreqShiftEcho.cpp \
+# module so the MixGraph's rack chains link in the browser too. KISS FFT (BSD-3)
+# is for the matched mastering (audio/Matchering.h: master_* and live_* exports);
+# it is C, so it is compiled on its own (emcc rejects -std=c++17 for a .c file).
+KISS_OBJ="$(mktemp -d)/kiss_fft.o"
+emcc -O3 -c vendor/kissfft/kiss_fft.c -o "$KISS_OBJ"
+emcc src/main_render_wasm.cpp src/audio/airwindows/*.aw.cpp src/audio/airwindows/BespokeFx.cpp src/audio/airwindows/SimpleSide.cpp src/audio/airwindows/FreqShiftEcho.cpp "$KISS_OBJ" \
   -O3 -std=c++17 \
   -fwasm-exceptions \
   -o "$OUT_DIR/engine-render.wasm" \
   -sSTANDALONE_WASM=1 \
   --no-entry \
-  -sEXPORTED_FUNCTIONS=_mixer_config,_mixer_set_sample,_mixer_set_sample_id,_mixer_build,_mixer_last_error,_mixer_set_master_gain,_mixer_set_mix_enabled,_mixer_set_mix_config,_mixer_seek,_mixer_position,_mixer_last_error_message,_mixer_lane_count,_mixer_lane_name,_mixer_lane_name_length,_mixer_lane_info,_mixer_lane_info_length,_mixer_set_lane_gain,_mixer_enable_meters,_mixer_meter_bin_count,_mixer_lane_peaks,_mixer_bus_peaks,_mixer_set_probe,_mixer_probe_read,_mixer_probe_buffer,_mixer_probe_rings,_mixer_impulse,_mixer_probe_spectrum_buffer,_mixer_lane_rms,_mixer_pull,_mixer_left,_mixer_right,_mixer_total_frames,_mixer_sample_rate,_malloc,_free \
+  -sEXPORTED_FUNCTIONS=_mixer_config,_mixer_set_sample,_mixer_set_sample_id,_mixer_build,_mixer_last_error,_mixer_set_master_gain,_mixer_set_mix_enabled,_mixer_set_mastering,_mixer_set_mix_config,_mixer_seek,_mixer_position,_mixer_last_error_message,_mixer_lane_count,_mixer_lane_name,_mixer_lane_name_length,_mixer_lane_info,_mixer_lane_info_length,_mixer_set_lane_gain,_mixer_enable_meters,_mixer_meter_bin_count,_mixer_lane_peaks,_mixer_bus_peaks,_mixer_set_probe,_mixer_probe_read,_mixer_probe_buffer,_mixer_probe_rings,_mixer_impulse,_mixer_probe_spectrum_buffer,_mixer_lane_rms,_mixer_pull,_mixer_left,_mixer_right,_mixer_total_frames,_mixer_sample_rate,_master_analyze,_master_profile_bytes,_master_profile_bytes_length,_master_apply,_master_output_frames,_master_output_left,_master_output_right,_master_release,_mixer_set_live_mastering,_live_latency_frames,_live_matched,_live_position,_live_pull,_live_seek,_live_set_loop,_live_set_profile,_malloc,_free \
   -sALLOW_MEMORY_GROWTH=1 \
   -sINITIAL_MEMORY=134217728 \
   -sMAXIMUM_MEMORY=1073741824 \

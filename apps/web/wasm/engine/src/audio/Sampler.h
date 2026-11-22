@@ -256,6 +256,9 @@ public:
     // 350-375. Velocity 0..1 (= native getFloatVelocity = midiVel/127); defaults to
     // the legacy 0.75 for the no-mix path. Voices come from the pool.
     void noteOn(int note, int sampleDelayFromBufferStart, float velocity = 0.75f) {
+        // A new note-on first stops any non-open-ended voice already playing this
+        // pitch, exactly as a note-off would (te::SamplerPlugin.cpp:311-320).
+        noteOff(note, sampleDelayFromBufferStart);
         for (auto& ss : soundList_) {
             if (ss.minNote <= note && ss.maxNote >= note && ss.data && ss.data->frames > 0
                 && (int)playing_.size() < kMaxVoices) {

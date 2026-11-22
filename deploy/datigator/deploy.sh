@@ -10,8 +10,10 @@ pnpm install --frozen-lockfile
 (cd "$TS" && pnpm --filter "@teamsuzie/ui..." --filter "@teamsuzie/theme..." --filter "@teamsuzie/auth..." build)
 pnpm -r --filter "./packages/*" build
 # The browser engine (public/wasm/engine-render.wasm, gitignored) and the native renderer the
-# server's Export uses are built from apps/web/wasm/engine; emsdk lives in ~/emsdk.
+# server's Export uses are built from apps/web/wasm/engine; emsdk lives in ~/emsdk. LAME
+# (public/wasm/lame.wasm, the browser's MP3 encoder, gitignored) is built from its pinned tarball.
 apps/web/wasm/engine/build-wasm.sh
+apps/web/wasm/lame/build-lame-wasm.sh
 cmake --build apps/web/wasm/engine/build
 pnpm -C apps/web exec vite build
 tmux kill-session -t =casperaki-brain 2>/dev/null || true

@@ -20,6 +20,7 @@ add_executable(casperaki_resolve src/main_native.cpp)
 add_executable(random_test test/random_test.cpp)
 add_executable(audio_test test/audio_test.cpp)
 add_executable(sampler_test test/sampler_test.cpp)
+add_executable(arpeggio_test test/arpeggio_test.cpp)
 
 # AirWindows DSP (docs/63 §6 / Phase 2 Scope C). One namespaced TU per vendored
 # AirWindows plugin (vendor/airwindows/, MIT) compiled via aw_shim.h — no JUCE/VST
@@ -94,6 +95,15 @@ target_compile_definitions(lanes_test PRIVATE
     LANES_GENRE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../engine-spike/out/all-genre-render-smoke/latin"
     LANES_MIX_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
 
+# transitionPattern (EDM snare roll) resolution + its -12 dB lane trim.
+add_executable(transition_pattern_test test/transition_pattern_test.cpp)
+target_link_libraries(transition_pattern_test PRIVATE aw_fx)
+
+# Matchering mastering port (legacy JUCE matchering -> portable C++; audio/Matchering.h).
+# KISS FFT (vendor/kissfft, BSD-3-Clause) is compiled into each target that masters.
+add_executable(casperaki_master src/main_master.cpp vendor/kissfft/kiss_fft.c)
+add_executable(matchering_test test/matchering_test.cpp vendor/kissfft/kiss_fft.c)
+
 enable_testing()
 add_test(NAME random_test COMMAND random_test)
 add_test(NAME audio_test COMMAND audio_test)
@@ -103,3 +113,8 @@ add_test(NAME airwindows_test COMMAND airwindows_test)
 add_test(NAME noise_source_test COMMAND noise_source_test)
 add_test(NAME mixconfig_test COMMAND mixconfig_test)
 add_test(NAME lanes_test COMMAND lanes_test)
+add_test(NAME arpeggio_test COMMAND arpeggio_test)
+add_test(NAME transition_pattern_test COMMAND transition_pattern_test)
+add_test(NAME matchering_test COMMAND matchering_test
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/dependencies/matchering/Source/atemlos.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/assets/referenceAtemlos.wav)

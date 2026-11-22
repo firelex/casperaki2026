@@ -55,8 +55,14 @@ struct RenderConfig {
     bool mixEnabled = false;
 
     // Skip the final peak-normalise (render at natural level). Useful for A/B against
-    // the native engine, which does not peak-normalise a sparse render.
+    // the native engine, which does not peak-normalise a sparse render. With the mix
+    // on there is never a normalise (legacy rendered at natural level), so this only
+    // matters for the mix-off path.
     bool noNormalize = false;
+
+    // docs/67 #1 — apply the legacy production mastering stage (+5 dB into NC-17).
+    // Needs mixEnabled.
+    bool mastered = false;
 
     // docs/64 — path to the shared mix-config.json. When set (and mixEnabled), the
     // per-lane volumes/sends/fxGroups + rack chains are read from it at runtime
@@ -81,6 +87,7 @@ public:
     AudioBuffer render(const ResolvedEvents& ev, const std::vector<nlohmann::json>& instJsons) {
         Mixer mixer(cfg_.sampleRate, cfg_.blockSize, cfg_.tailSec, stubs_);
         mixer.setMixEnabled(cfg_.mixEnabled);
+        mixer.setMastering(cfg_.mastered);
 
         // docs/64 — load the shared mix config (kept alive for the whole render).
         std::unique_ptr<mix::MixConfig> mixCfg;
@@ -125,7 +132,8 @@ public:
             }
             lastNormalizeGain_ = cfg_.fixedGain;
         } else {
-            lastNormalizeGain_ = cfg_.noNormalize ? 1.0f : peakNormalize(master, 0.9f);
+            // Legacy renders (unmastered and mastered) were never normalised.
+            lastNormalizeGain_ = (cfg_.noNormalize || cfg_.mixEnabled) ? 1.0f : peakNormalize(master, 0.9f);
         }
         return master;
     }

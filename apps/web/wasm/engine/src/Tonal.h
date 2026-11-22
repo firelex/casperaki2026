@@ -72,6 +72,179 @@ inline Chord getChordAtTime(const json& segmentBars, int barIndex, double time) 
     return Chord(chords[(int)std::trunc(time)].get<std::string>());
 }
 
+// Required-field lookup for the arpeggio builders: a missing key is a malformed
+// song.json, so throw naming the note type and field (no silent default).
+inline const json& requireNoteField(const json& noteData, const char* key, const char* noteType) {
+    if (!noteData.contains(key))
+        throw std::runtime_error(std::string(noteType) + " note is missing required field \"" + key +
+                                 "\": " + noteData.dump());
+    return noteData.at(key);
+}
+
+// SequencerUtils.h:343-599 — the EDM arpeggiator. One seed event expands into a
+// full 8-beat (2-bar) run on a fixed rhythm grid, re-deriving the chord at every
+// step via getChordAtTime (so the run follows the segment's chord track and
+// spills into the next bar). Each step walks to the next chord tone
+// (findNextNote, `increment` chord tones at a time) from the last note in the
+// current direction; the walk resets to the range edge (or middle) at beat 0
+// and/or at the rhythm's cycle mid-points. Unlike every other note type the
+// returned starts are ABSOLUTE in the segment (barIndex*4 + step time) — the
+// caller must not add the bar/beat offset again — and the event's own time key
+// is ignored (TonalInstrument.h:97-101). No RNG. `noteDuration` is required: the
+// original reads a missing one as 0 (zero-length notes); we throw instead.
+inline std::vector<TimeNote> getEDMArpeggiatorNotes(const json& noteData, int barIndex,
+                                                    const json& segmentBars, int octaveAdjustment) {
+    static const char* kType = "EDMArpeggiator";
+    const std::string rhythm = asStr(requireNoteField(noteData, "arpeggioRhythm", kType));
+    const std::string arpeggioType = asStr(requireNoteField(noteData, "arpeggioType", kType));
+    const int numberOfOctaves = asInt(requireNoteField(noteData, "numberOfOctaves", kType));
+    const double maxNoteDuration = asDouble(requireNoteField(noteData, "noteDuration", kType));
+
+    // getMetadata (SequencerUtils.h:356-516)
+    std::vector<double> timePattern;
+    int increment = 0;
+    std::vector<double> cycleMidPointBeat;
+    MNote lowestNote, highestNote, middleNote;
+
+    auto badOctaves = [&]() {
+        return std::invalid_argument("EDMArpeggiator: invalid numberOfOctaves " +
+                                     std::to_string(numberOfOctaves) + " (rhythm \"" + rhythm + "\")");
+    };
+
+    switch (numberOfOctaves) {
+        case 2: lowestNote = MNote{"C4"}.getTransposed(-1); highestNote = MNote{"C6"}; middleNote = MNote{"F#5"}; break;
+        case 3: lowestNote = MNote{"C3"}.getTransposed(-1); highestNote = MNote{"C6"}; middleNote = MNote{"F#4"}; break;
+        case 4: lowestNote = MNote{"C3"}.getTransposed(-1); highestNote = MNote{"C7"}; middleNote = MNote{"F#5"}; break;
+        default: throw badOctaves();
+    }
+
+    if (rhythm == "quarterNotes") {
+        timePattern = {0, 1, 2, 3, 4, 5, 6, 7};
+        switch (numberOfOctaves) {
+            case 2: increment = 1; cycleMidPointBeat = {4}; break;
+            case 3: increment = 2; cycleMidPointBeat = {4}; break;
+            case 4: increment = 3; cycleMidPointBeat = {4}; break;
+            default: throw badOctaves();
+        }
+    } else if (rhythm == "eighthNotes") {
+        timePattern = {0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5};
+        switch (numberOfOctaves) {
+            case 2: increment = 1; cycleMidPointBeat = {4}; break;
+            case 3:
+            case 4: increment = 2; cycleMidPointBeat = {2, 4, 6}; break;
+            default: throw badOctaves();
+        }
+    } else if (rhythm == "sixteenthNotes") {
+        timePattern = {0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75,
+                       4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 5.75, 6, 6.25, 6.5, 6.75, 7, 7.25, 7.5, 7.75};
+        switch (numberOfOctaves) {
+            case 2:
+            case 3: increment = 1; cycleMidPointBeat = {2, 4, 6}; break;
+            case 4: increment = 1; cycleMidPointBeat = {4}; break;
+            default: throw badOctaves();
+        }
+    } else if (rhythm == "quarterNotes332") {
+        timePattern = {0, 1.5, 3, 4, 5.5, 7};
+        switch (numberOfOctaves) {
+            case 2:
+            case 3: increment = 2; cycleMidPointBeat = {4}; break;
+            case 4: increment = 3; cycleMidPointBeat = {4}; break;
+            default: throw badOctaves();
+        }
+    } else if (rhythm == "eighthNotes332") {
+        timePattern = {0, 0.75, 1.5, 2, 2.75, 3.5, 4, 4.75, 5.5, 6, 6.75, 7.5};
+        switch (numberOfOctaves) {
+            case 2: increment = 1; cycleMidPointBeat = {4}; break;
+            case 3:
+            case 4: increment = 2; cycleMidPointBeat = {4}; break;
+            default: throw badOctaves();
+        }
+    } else {
+        throw std::invalid_argument("EDMArpeggiator: invalid arpeggioRhythm \"" + rhythm + "\"");
+    }
+
+    highestNote = highestNote.getTransposed(octaveAdjustment * 12);
+    lowestNote = lowestNote.getTransposed(octaveAdjustment * 12);
+    middleNote = middleNote.getTransposed(octaveAdjustment * 12);
+
+    auto isMidPoint = [&](double t) {
+        return std::find(cycleMidPointBeat.begin(), cycleMidPointBeat.end(), t) != cycleMidPointBeat.end();
+    };
+
+    std::vector<TimeNote> ret;
+    MNote lastLowestNote = lowestNote;
+    MNote lastHighestNote = highestNote;
+    Chord::FindDirection currentDirection = arpeggioType == "downAndUp" ? Chord::down : Chord::up;
+
+    for (int i = 0; i < (int)timePattern.size(); i++) {
+        double time = timePattern[i];
+        Chord currentChord = getChordAtTime(segmentBars, barIndex, time);
+        MNote nextNote;
+
+        // An invalid chord means the segment is over.
+        if (currentChord.getType() == Chord::invalidChord) break;
+
+        double noteDuration = std::min(
+            ((i < (int)timePattern.size() - 1) ? timePattern[i + 1] : 8.0) - time,
+            maxNoteDuration);
+
+        if (arpeggioType == "up") {
+            if (time == 0 || isMidPoint(time)) lastLowestNote = lowestNote;
+            nextNote = currentChord.findNextNote(lastLowestNote, Chord::up, increment);
+            lastLowestNote = nextNote;
+        } else if (arpeggioType == "down") {
+            if (time == 0 || isMidPoint(time)) lastHighestNote = highestNote;
+            nextNote = currentChord.findNextNote(lastHighestNote, Chord::down, increment);
+            lastHighestNote = nextNote;
+        } else if (arpeggioType == "downAndUp" || arpeggioType == "upAndDown") {
+            if (isMidPoint(time)) {
+                currentDirection = currentDirection == Chord::up ? Chord::down : Chord::up;
+                lastHighestNote = highestNote;
+                lastLowestNote = lowestNote;
+            }
+            if (currentDirection == Chord::up) {
+                nextNote = currentChord.findNextNote(lastLowestNote, Chord::up, increment);
+                lastLowestNote = nextNote;
+            } else {
+                nextNote = currentChord.findNextNote(lastHighestNote, Chord::down, increment);
+                lastHighestNote = nextNote;
+            }
+        } else if (arpeggioType == "insideOut") {
+            if (time == 0 || isMidPoint(time)) {
+                lastLowestNote = middleNote;
+                lastHighestNote = middleNote;
+            }
+            if (currentDirection == Chord::up) {
+                nextNote = currentChord.findNextNote(lastHighestNote, Chord::down, increment);
+                lastHighestNote = nextNote;
+                currentDirection = Chord::down;
+            } else {
+                nextNote = currentChord.findNextNote(lastLowestNote, Chord::up, increment);
+                lastLowestNote = nextNote;
+                currentDirection = Chord::up;
+            }
+        } else if (arpeggioType == "outsideIn") {
+            if (isMidPoint(time)) {
+                lastLowestNote = lowestNote;
+                lastHighestNote = highestNote;
+            }
+            if (currentDirection == Chord::up) {
+                nextNote = currentChord.findNextNote(lastLowestNote, Chord::up, increment);
+                lastLowestNote = nextNote;
+                currentDirection = Chord::down;
+            } else {
+                nextNote = currentChord.findNextNote(lastHighestNote, Chord::down, increment);
+                lastHighestNote = nextNote;
+                currentDirection = Chord::up;
+            }
+        } else {
+            throw std::invalid_argument("EDMArpeggiator: invalid arpeggioType \"" + arpeggioType + "\"");
+        }
+        ret.push_back(TimeNote{nextNote, (barIndex * 4) + time, noteDuration});
+    }
+    return ret;
+}
+
 // SequencerUtils.h:105-112 — transpose the written note onto the chord root.
 inline std::vector<TimeNote> getSimpleNote(const json& noteData, Chord& currentChord, int octaveAdjustment) {
     int delta = MNote{"C"}.deltaTo(currentChord.getRootNote(), true);
@@ -145,19 +318,30 @@ inline std::vector<TimeNote> getRelativeNote(const json& noteData, Chord& curren
     return {TimeNote{relativeNote, 0, duration}};
 }
 
-// SequencerUtils.h:160-178 — simple chord arpeggio (not present in the 8-genre
-// fixtures, but cheap and self-contained, so ported for completeness).
+// SequencerUtils.h:160-178 — simple chord arpeggio (keys `arpeggio` style).
+// The base note is "C" + the `octave` field as juce's var::toString renders it.
+// The brain emits an integer (so octave 4 -> "C4" = MIDI 60); the original port
+// read it with asStr(), which yields "" for a number, giving MIDI 0 — fixed.
+// Shifted by the instrument octave correction, then the chord is walked in
+// `direction` for note+1 chord tones and the note-th is taken.
 inline std::vector<TimeNote> getArpeggioNotes(const json& noteData, Chord& currentChord, int octaveAdjustment) {
-    MNote baseNote = MNote{std::string("C") + asStr(noteData.value("octave", json("")))};
+    const json& octave = requireNoteField(noteData, "octave", "arpeggio");
+    std::string octaveStr;
+    if (octave.is_number_integer()) octaveStr = std::to_string(octave.get<long long>());
+    else if (octave.is_string()) octaveStr = octave.get<std::string>();
+    else throw std::runtime_error("arpeggio note field \"octave\" must be an integer: " + noteData.dump());
+    MNote baseNote = MNote{std::string("C") + octaveStr};
     baseNote = baseNote.getTransposed(octaveAdjustment * 12);
-    int noteIndex = asInt(noteData.at("note"));
+    int noteIndex = asInt(requireNoteField(noteData, "note", "arpeggio"));
     std::vector<MNote> chordNotes = currentChord.findNotes(
-        baseNote, Chord::getFindDirectionFromString(asStr(noteData.at("direction"))), noteIndex + 1);
+        baseNote,
+        Chord::getFindDirectionFromString(asStr(requireNoteField(noteData, "direction", "arpeggio"))),
+        noteIndex + 1);
     return {TimeNote{chordNotes[noteIndex], 0, asDouble(noteData.value("duration", json(0)))}};
 }
 
 // SequencerUtils.h:298-328 — note-type dispatch. Guitar paths (strum/fretNoise/
-// virtualGuitarist) and EDMArpeggiator are handled elsewhere; here we cover the
+// virtualGuitarist) are handled in Guitar.h and EDMArpeggiator in buildTonalNotes; here we cover the
 // tonal set and drop anything unknown (returns empty), matching the original's
 // "note type not implemented" fall-through.
 inline std::vector<TimeNote> getRealNotes(const json& noteData, Chord& currentChord, Chord& songKey,
@@ -209,8 +393,15 @@ inline std::vector<TimeNote> buildTonalNotes(const json& noteBars, const json& s
                 const json& noteData = notesArray.at(noteIndex);
                 const std::string ntype = asStr(noteData.value("type", json("")));
 
-                // Guitar/EDM paths are resolved by their own lanes — skip here.
-                if (ntype == "EDMArpeggiator" || ntype == "virtualGuitarist") continue;
+                // TonalInstrument.h:97-101 — EDMArpeggiator expands into a
+                // self-timed run (absolute starts; no chord breaking).
+                if (ntype == "EDMArpeggiator") {
+                    auto realNotes = getEDMArpeggiatorNotes(noteData, barIndex, segmentBars, octaveAdjustment);
+                    timeNotes.insert(timeNotes.end(), realNotes.begin(), realNotes.end());
+                    continue;
+                }
+                // virtualGuitarist strums are resolved by the Guitar lane — skip here.
+                if (ntype == "virtualGuitarist") continue;
 
                 if (!noteData.contains("duration") || ntype == "noteAbsolute") {
                     // add notes as they are — no chord breaking

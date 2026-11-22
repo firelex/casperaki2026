@@ -49,7 +49,12 @@ for(let i=0;i<400;i++)b.writeInt16LE(Math.round(8000*Math.sin(i/5)),44+i*2);requ
   // args: -y -hide_banner -loglevel error -i <in> ... <out>
   writeFileSync(ffmpeg, '#!/bin/sh\nfor last; do :; done\ncp "$6" "$last"\n');
   chmodSync(ffmpeg, 0o755);
+  // stand-in matchering: <in> <out> <style> -> copies in to out
+  const matchering = join(dir, 'matchering.sh');
+  writeFileSync(matchering, '#!/bin/sh\n[ "$3" = sergree ] || exit 9\ncp "$1" "$2"\n');
+  chmodSync(matchering, 0o755);
   return new RenderService({
+    masteringBin: matchering,
     rendersDir: join(dir, 'renders'),
     emitScript: emit,
     renderBin: bin,
@@ -87,7 +92,7 @@ async function generate(h: Harness, extra: Record<string, unknown> = {}) {
   return (await res.json()) as { id: string; song: Record<string, unknown>; project: { title: string } };
 }
 
-async function waitForRender(h: Harness, id: string): Promise<{ state: string; error?: string; mp3Url?: string; wavUrl?: string }> {
+async function waitForRender(h: Harness, id: string): Promise<{ state: string; error?: string; mp3Url?: string; wavUrl?: string; unmasteredMp3Url?: string; unmasteredWavUrl?: string }> {
   for (let i = 0; i < 200; i++) {
     const r = (await (await fetch(`${h.url}/api/songs/${id}/render`)).json()) as { state: string };
     if (r.state === 'done' || r.state === 'failed') return r;
@@ -200,6 +205,14 @@ describe('per-song render', () => {
       expect(wav.headers.get('content-disposition')).toContain('Edm-in-A.wav');
       expect((await wav.arrayBuffer()).byteLength).toBe(844);
       expect((await fetch(`${h.url}${done.mp3Url}`)).status).toBe(200);
+      expect(done).toMatchObject({
+        unmasteredMp3Url: `/api/songs/${id}/render-unmastered.mp3`,
+        unmasteredWavUrl: `/api/songs/${id}/render-unmastered.wav`,
+      });
+      const raw = await fetch(`${h.url}${done.unmasteredWavUrl}?download=1`);
+      expect(raw.status).toBe(200);
+      expect(raw.headers.get('content-disposition')).toContain('Edm-in-A (unmastered).wav');
+      expect((await fetch(`${h.url}${done.unmasteredMp3Url}`)).status).toBe(200);
       const peaks = (await (await fetch(`${h.url}/api/songs/${id}/render/peaks?bins=16`)).json()) as { peaks: number[] };
       expect(peaks.peaks).toHaveLength(16);
       const list = (await (await fetch(`${h.url}/api/songs`)).json()) as { projects: Array<{ render: { state: string } }> };

@@ -44,6 +44,9 @@ const ConfigSchema = z.object({
   sampleLibraryRoot: z.string().optional(),
   renderMix: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
   ffmpegBin: z.string().default('ffmpeg'),
+  /** The engine's mastering CLI (casperaki_master, the JUCE-free port of the legacy
+   *  mastering; docs/67 #1) that masters exports. */
+  masteringBin: z.string().default('../web/wasm/engine/build/casperaki_master'),
   // --- In-browser playback (docs/60) ---
   playbackDir: z.string().default('./data/playback'),
   sampleCacheDir: z.string().default('./data/sample-cache'),
@@ -94,6 +97,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     sampleLibraryRoot: env.CASPERAKI_SAMPLE_LIBRARY_ROOT,
     renderMix: env.BRAIN_RENDER_MIX,
     ffmpegBin: env.FFMPEG_BIN,
+    masteringBin: env.BRAIN_MASTERING_BIN,
     playbackDir: env.BRAIN_PLAYBACK_DIR,
     sampleCacheDir: env.BRAIN_SAMPLE_CACHE_DIR,
     mixConfigPath: env.CASPERAKI_MIX_CONFIG,

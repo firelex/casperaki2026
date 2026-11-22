@@ -1,7 +1,11 @@
 // Phase 2 Scope B — the mix/FX routing graph (docs/63 §1). Reimplements the
 // Sequencer.cpp Tracktion routing as data: per-lane dry -> per-fxGroup submix
-// (each running its AirWindows rack) -> master; plus 3 aux sends -> 3 aux returns
-// (reverb/delay/chorus racks) -> master; master runs its rack + the -1 dB volume.
+// (each running its AirWindows rack) -> the MASTER track's rack; plus 3 aux sends
+// -> 3 aux returns (reverb/delay/chorus racks). The returns bypass the master rack:
+// legacy inserts the return tracks without routing them (Sequencer.cpp:220-226), so
+// Tracktion sends them to the edit master, which only has the -1 dB volume.
+// Optional final stage (docs/67 #1): the legacy production mastering, +5 dB into
+// NC-17 (Louder 0, Output 0.89) — Matchering.h JUST_BOOST_AND_LIMIT.
 //
 // Driven per block by the Mixer (gated behind mixEnabled): for each lane it adds
 // the lane's rendered audio to its fxGroup submix (dry) and, scaled, to the 3 aux
@@ -159,6 +163,11 @@ public:
             b.buf.setSize(2, block_);
             submixes_.emplace(g, std::move(b));
         }
+        // Built last so the racks above draw the same rand() dither seeds as before.
+        mastering_ = aw::makeNC17();
+        mastering_->setSampleRate(sr_);
+        mastering_->setParam(0, 0.0f);    // Louder: 0 dB (Casperaki_NC17::setParams(0.0, 0.89))
+        mastering_->setParam(1, 0.89f);   // Output
     }
 
     void clear() {
@@ -196,18 +205,23 @@ public:
         addInto(returns_[k].buf, lane, gain, n);
     }
 
-    // Run every rack and sum to `out` (cleared first): submixes -> master,
-    // returns -> master, master rack, then the -1 dB master volume.
+    // The legacy production mastering stage on the final output (default off).
+    void setMastering(bool on) { masteringOn_ = on; }
+    bool mastering() const { return masteringOn_; }
+
+    // Run every rack and sum to `out` (cleared first): submixes -> master rack;
+    // returns (after their racks) join AFTER the master rack; then the -1 dB master
+    // volume; then, when on, the mastering stage.
     void render(AudioBuffer& out, int n) {
         for (auto& kv : submixes_) {
             kv.second.rack.process(kv.second.buf, n);
             addInto(master_.buf, kv.second.buf, 1.0f, n);
         }
+        master_.rack.process(master_.buf, n);
         for (auto& r : returns_) {
             r.rack.process(r.buf, n);
             addInto(master_.buf, r.buf, 1.0f, n);
         }
-        master_.rack.process(master_.buf, n);
         const float mv = mix::dbToGain(cfg_ ? cfg_->masterVolumeDb() : mix::kMasterVolumeDb);
         out.clear();
         for (int ch = 0; ch < 2; ++ch) {
@@ -215,7 +229,16 @@ public:
             float* d = out.getWritePointer(ch);
             for (int i = 0; i < n; ++i) d[i] = s[i] * mv;
         }
+        if (masteringOn_) {
+            const float boost = mix::dbToGain(kMasteringBoostDb);
+            float* ch[2] = { out.getWritePointer(0), out.getWritePointer(1) };
+            for (int c = 0; c < 2; ++c)
+                for (int i = 0; i < n; ++i) ch[c][i] *= boost;
+            mastering_->process(ch, ch, n);
+        }
     }
+
+    static constexpr float kMasteringBoostDb = 5.0f;   // Matchering.h:1713
 
     // Probe the plugin at config index `slot` of `bus` ("master", a return bus
     // "fxPlateReverb"/"fxStereoDelay"/"fxChorus", or an fxGroup submix); every
@@ -286,6 +309,8 @@ private:
     Rack* probed_ = nullptr;
     Bus returns_[3];
     Bus master_;
+    std::unique_ptr<aw::Plugin> mastering_;   // NC-17, built with the racks
+    bool masteringOn_ = false;
 };
 
 } // namespace casperaki

@@ -60,6 +60,13 @@ so `deploy.sh` builds it) mixes them in real time in an AudioWorklet. The editor
 screen, unsaved edits included (`POST /api/playback`). The server render is now only **Export**
 (WAV / MP3 downloads).
 
+Live playback is mastered like the export: while the stand-in (+5 dB into NC-17) plays, a worker
+renders the song unmastered and analyses it (the matched master of `casperaki_master sergree`), then
+the worklet crossfades to the matched master (the status bar says which plays). The Export window's
+Mix tab makes its four files (mastered / unmastered, WAV / MP3) in the browser the same way, with
+LAME 3.100 compiled to `apps/web/public/wasm/lame.wasm` (`apps/web/wasm/lame/build-lame-wasm.sh`,
+gitignored, built by `deploy.sh`). The server render stays for the projects page and the DAW exports.
+
 The live path plays the full mix and effects like the server render (the brain hands the browser
 `CASPERAKI_MIX_CONFIG`, i.e. casperaki_engine/config/mix-config.json; required). The WASM mix runs
 7.6-11.4x real time. Seeking renders 1.5 s silently first so reverb and delay tails are back.

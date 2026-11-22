@@ -109,6 +109,10 @@ int main(int argc, char** argv) {
         // via CASPERAKI_MIX=1. Default off -> byte-identical to the Phase-1 render.
         if (const char* m = std::getenv("CASPERAKI_MIX"))
             cfg.mixEnabled = (std::string(m) == "1" || std::string(m) == "true");
+        // docs/67 #1 — CASPERAKI_MASTER=1: the legacy production mastering stage
+        // (+5 dB into NC-17). Needs CASPERAKI_MIX=1.
+        if (const char* ms = std::getenv("CASPERAKI_MASTER"))
+            cfg.mastered = (std::string(ms) == "1" || std::string(ms) == "true");
         if (const char* nn = std::getenv("CASPERAKI_NO_NORM"))
             cfg.noNormalize = (std::string(nn) == "1" || std::string(nn) == "true");
         // docs/64 — shared mix config. CASPERAKI_MIX_CONFIG overrides; default is the

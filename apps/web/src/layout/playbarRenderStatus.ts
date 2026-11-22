@@ -58,9 +58,11 @@ function describeBase(
         label:
           render.step === 'lower'
             ? 'Rendering — preparing instruments…'
-            : render.step === 'encode'
-              ? 'Rendering — encoding…'
-              : 'Rendering — mixing audio…',
+            : render.step === 'master'
+              ? 'Rendering — mastering…'
+              : render.step === 'encode'
+                ? 'Rendering — encoding…'
+                : 'Rendering — mixing audio…',
       };
     case 'failed':
       return { tone: 'error', label: `Render failed — ${(render.error ?? 'unknown error').split('\n')[0]}` };

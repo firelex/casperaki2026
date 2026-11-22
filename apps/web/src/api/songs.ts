@@ -10,7 +10,8 @@
  *   POST   /api/songs/:id/replay         determinism check
  *   POST   /api/songs/:id/render         queue a server-side render
  *   GET    /api/songs/:id/render         render status
- *   GET    /api/songs/:id/render.{mp3,wav}[?download=1]
+ *   GET    /api/songs/:id/render.{mp3,wav}[?download=1]             mastered
+ *   GET    /api/songs/:id/render-unmastered.{mp3,wav}[?download=1]  unmastered
  *   GET    /api/songs/:id/render/peaks?bins=
  */
 
@@ -31,13 +32,17 @@ export type RenderState = 'none' | 'queued' | 'running' | 'done' | 'failed';
 
 export interface RenderInfo {
   readonly state: RenderState;
-  readonly step?: 'lower' | 'render' | 'encode';
+  readonly step?: 'lower' | 'render' | 'master' | 'encode';
   readonly queuePosition?: number;
   readonly error?: string;
   readonly startedAt?: string;
   readonly finishedAt?: string;
+  /** Matchering-mastered (the default download and playback file). */
   readonly mp3Url?: string;
   readonly wavUrl?: string;
+  /** The raw mix before mastering; absent on renders made before the split. */
+  readonly unmasteredMp3Url?: string;
+  readonly unmasteredWavUrl?: string;
 }
 
 export interface Project {
@@ -143,7 +148,7 @@ export function renderLabel(r: RenderInfo | undefined): string {
     case 'queued':
       return r.queuePosition ? `queued (${r.queuePosition} ahead)` : 'queued';
     case 'running':
-      return r.step === 'lower' ? 'preparing…' : r.step === 'encode' ? 'encoding…' : 'rendering…';
+      return r.step === 'lower' ? 'preparing…' : r.step === 'master' ? 'mastering…' : r.step === 'encode' ? 'encoding…' : 'rendering…';
     case 'done':
       return 'rendered';
     case 'failed':

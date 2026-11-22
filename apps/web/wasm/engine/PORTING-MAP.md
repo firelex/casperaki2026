@@ -27,6 +27,8 @@ originals are `te::`-coupled. Validate each increment with
 | **Sample-ID → asset** | `instruments/SamplesDownloadTask.h` | `downloadSamples` | URL `{base}/playsample/{prefix}-{id}` |
 | Loop clip placement | `instruments/Loop.h` | `createSegmentClip` | 52–68 (loops = ceil(segLen/srcLen)) |
 | Transition sample placement | `instruments/TransitionSample.h` | `processSegment` | 42–76 |
+| Transition pattern (EDM snare roll) | `instruments/TransitionPattern.h` (90dc0f4) | `createSegmentClip` / `getPatternBarsCount` / `prepareClip` | whole file |
+| Snare-roll −12 dB track volume | `sequencer/Sequencer.cpp` | `Sequencer::Sequencer` (constructor) | 170–177 |
 | **Sustain tail (Synths)** | `instruments/Synths.h` | `createSegmentClip` | 54–80 (`SUSTAIN_TAIL_BEATS=2.0`; `VelocityMode::beat`) |
 | Sustain tail (Bass) | `instruments/Bass.h` | `createSegmentClip` | 32–72 (long notes only, dur>0.5) |
 | Octave math | `music/Note.h` | `getTransposed` | 59–65 |
@@ -73,18 +75,34 @@ originals are `te::`-coupled. Validate each increment with
    `CasperakiEngine::addInstrument` — the fixtures ship two id-50000 `Loop`
    instruments. Validator multiset-compares wave clips per track (te `getClips()`
    order is a serialisation artifact). Match across all 8 genres: clip name,
-   start/end sec, source. transitionNoise/transitionPattern are unexercised in
-   the fixtures (only the numeric-id transitionSample path is ported).
+   start/end sec, source. transitionNoise is handled by `resolveNoiseRises`.
+   **transitionPattern (EDM snare roll): DONE, unit-tested** —
+   `Resolver::resolveTransitionPatternInstrument` + `Mixer::buildTransitionPatternSound`,
+   `test/transition_pattern_test.cpp`. One step track per instrument (named
+   after it, e.g. `edmSnareDrumRoll__bridge1`), one step clip per segment whose
+   transitions block matches the id (numeric `id`, or 100000 + `transitionId`):
+   start `segStart + ssp/8 beats + offsetSec`, `barsCount*4` beats, barsCount =
+   first channel's `0`/`x` count / 32, 32 steps/bar of 1/8 beat, hit velocity 127.
+   Pattern channel c (JSON key ORDER, read from an insertion-ordered parse) plays
+   `samples[c]` at `getMidiNoteNumber(note)`, PCM `playsample-<id>.ogg`. Legacy's
+   channel order was the sampler's `std::unordered_map` order instead (libstdc++:
+   G1 before C1), so legacy swapped the two samples; the port follows the engine
+   adapter's samples[] contract. Mix: target volume of the lowLevelType
+   (snareDrumsElectronic) + the −12 dB roll track volume, fxGroup `drums`. Legacy
+   applied the −12 dB only to a track named exactly `edmSnareDrumRoll`, which the
+   adapter's `__<segment>` suffix missed; the port applies it to every roll.
 4. ~~Arp / noteRelative / EDMArpeggiator.~~ **noteRelative DONE** (step 1 —
-   exercised by every genre, exact). **arpeggio / EDMArpeggiator: NOT PORTED, by
-   design** — a step-type census of all 8 fixtures' `song.json` finds only
+   exercised by every genre, exact). **arpeggio / EDMArpeggiator: DONE, unit-
+   tested** — no fixture `song.json` emits either type (census: only
    `note`/`noteAbsolute`/`noteRelative`/`chord`/`strum`/`fretNoise`/
-   `virtualGuitarist` (+ `brainRoundtrip` drum overrides + signal-effect names).
-   No fixture emits `arpeggio` or `EDMArpeggiator`, so there is no oracle to
-   validate against — `getArpeggioNotes` stays ported-but-unexercised (Tonal.h)
-   and `getEDMArpeggiatorNotes` (SequencerUtils.h:343-599) is deliberately not
-   ported (`buildGuitarSegment` skips the type). Revisit only if a future fixture
-   exercises them (would need a targeted brain-emitted song + fresh golden).
+   `virtualGuitarist`), so there is no oracle; `test/arpeggio_test.cpp` asserts
+   exact notes derived by hand from the legacy algorithm. `getEDMArpeggiatorNotes`
+   (Tonal.h, from SequencerUtils.h:343-599) is called from `buildTonalNotes` and
+   `buildGuitarSegment` exactly as TonalInstrument.h:97-101 does: absolute
+   starts (barIndex*4 + step), no chord breaking, event time key ignored, then
+   the lane's usual sustain tail / velocity mode. `getArpeggioNotes` was fixed:
+   it read the integer `octave` field as a string ("" -> base note "C" = MIDI 0).
+   A targeted brain-emitted song + fresh golden would still be the stronger check.
 5. ~~Guitar (`VelocityMode::randomised`).~~ **DONE** — `src/Guitar.h`
    (GuitarChord + ChordData.h + getStrumNotes/getFretNoises/getGuitarStrums +
    buildGuitarSegment) and `Resolver::resolveGuitarInstrument`. Four tracks per

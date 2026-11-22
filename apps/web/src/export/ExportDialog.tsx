@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@teamsuzie/ui';
 
 import { dawExportApi, dawExportLabel, type DawExportStatus, type DawFormat } from '../api/dawExport';
-import { renderInFlight, renderLabel } from '../api/songs';
-import { livePlayer, type ResolvedMix } from '../audio/livePlayer';
+import { livePlayer, type MixExportFiles, type ResolvedMix } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
 import { colorHex } from '../editor/sequencer/layout';
 import { buildSequencerModel, trackColor } from '../editor/sequencerModel';
 import { useSession } from '../state/session';
-import { useRenderStatus, useSaveSong, useStartRender } from '../state/useSongActions';
+import { useSaveSong } from '../state/useSongActions';
 import { downloadBytes, fileStem, songMidiParts, toBase64 } from './exportMidi';
+import { mixExportStatus } from './mixExportProgress';
 
 type Format = 'mix' | 'midi' | DawFormat;
 
@@ -25,18 +25,22 @@ const FORMATS: readonly { id: Format; name: string; detail: string }[] = [
  * The song's exports in one place: the mix (WAV / MP3), stems, MIDI, a
  * REAPER project and a Logic bundle, with the tracks to include. Stems and
  * the DAW bundles are rendered on the server from the saved song (unsaved
- * edits are saved first); MIDI is made here from the version on screen.
+ * edits are saved first). The mix and MIDI are made here, in the browser, from
+ * the version on screen (unsaved edits included, as the player plays it): the
+ * mix is rendered, mastered (the server's matched master) and MP3-encoded in a
+ * worker, so it needs no save and no server render.
  */
 export function ExportDialog({ onClose }: { onClose(): void }) {
   const { activeSong, viewSong, editorDirty } = useSession();
   const { liveKey, fetchPayload } = useLiveTransport();
   const save = useSaveSong();
-  const renderStatus = useRenderStatus(activeSong?.id);
-  const startRender = useStartRender();
   const [format, setFormat] = useState<Format>('stems');
   const [mix, setMix] = useState<ResolvedMix | { error: string } | undefined>(undefined);
   const [chosen, setChosen] = useState<Set<string> | undefined>(undefined);
   const [job, setJob] = useState<DawExportStatus | { error: string } | 'saving' | 'midi' | undefined>(undefined);
+  const [mixJob, setMixJob] = useState<
+    { running: { share: number; label: string } } | { files: MixExportFiles; key: string } | { error: string } | undefined
+  >(undefined);
 
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
   // The tracks the engine plays (stems are per engine lane), in the song's order.
@@ -126,7 +130,21 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
     }
   };
 
-  const render = renderStatus.data;
+  const makeMix = async () => {
+    if (!liveKey) throw new Error('Nothing to export yet.');
+    const key = liveKey;
+    setMixJob({ running: { share: 0, label: 'Preparing the song' } });
+    try {
+      const files = await livePlayer.mixExport(key, fetchPayload, (p) => setMixJob({ running: mixExportStatus(p) }));
+      setMixJob({ files, key });
+    } catch (err) {
+      setMixJob({ error: err instanceof Error ? err.message : String(err) });
+    }
+  };
+  const stem = fileStem(title);
+  // Files made from another version (the song was edited since) are not offered.
+  const mixFiles = mixJob && 'files' in mixJob && mixJob.key === liveKey ? mixJob.files : undefined;
+  const mixRunning = mixJob && 'running' in mixJob ? mixJob.running : undefined;
   const busy = job === 'saving' || job === 'midi' || Boolean(running);
   const statusText =
     job === 'saving'
@@ -146,7 +164,7 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
           <DialogTitle className="text-[18px] font-semibold text-white">Export</DialogTitle>
           <DialogDescription className="mt-0.5 text-[13px] text-white/55">
             {title}
-            {editorDirty ? ' · unsaved edits are saved first for audio exports' : ''}
+            {editorDirty ? ' · unsaved edits are saved first for stems and DAW exports' : ''}
           </DialogDescription>
         </div>
         <div className="grid min-h-[360px] grid-cols-[260px_1fr]">
@@ -169,34 +187,51 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
           <div className="flex flex-col p-5">
             {format === 'mix' ? (
               <div className="flex flex-col gap-3 text-[14px]">
-                {render?.state === 'done' && !editorDirty ? (
+                {mixFiles ? (
                   <>
-                    <p className="text-white/75">The mix of the saved song is ready.</p>
+                    <p className="text-white/75">The mix of the version on screen is ready.</p>
+                    <p className="text-[12px] uppercase tracking-wide text-white/50">Mastered</p>
                     <div className="flex gap-2">
-                      <a className="h-10 rounded-full bg-white px-5 text-[14px] font-semibold leading-10 text-black hover:bg-white/85" href={`${render.mp3Url}?download=1`}>
+                      <button type="button" className="h-10 rounded-full bg-white px-5 text-[14px] font-semibold text-black hover:bg-white/85" onClick={() => downloadBytes(mixFiles.masteredMp3, `${stem}.mp3`, 'audio/mpeg')}>
                         Download MP3
-                      </a>
-                      <a className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold leading-10 text-white hover:border-white" href={`${render.wavUrl}?download=1`}>
+                      </button>
+                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => downloadBytes(mixFiles.masteredWav, `${stem}.wav`, 'audio/wav')}>
                         Download WAV
-                      </a>
+                      </button>
+                    </div>
+                    <p className="text-[12px] uppercase tracking-wide text-white/50">Unmastered</p>
+                    <div className="flex gap-2">
+                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => downloadBytes(mixFiles.unmasteredMp3, `${stem} (unmastered).mp3`, 'audio/mpeg')}>
+                        Download MP3
+                      </button>
+                      <button type="button" className="h-10 rounded-full border border-white/40 px-5 text-[14px] font-semibold text-white hover:border-white" onClick={() => downloadBytes(mixFiles.unmasteredWav, `${stem} (unmastered).wav`, 'audio/wav')}>
+                        Download WAV
+                      </button>
                     </div>
                   </>
-                ) : renderInFlight(render) || startRender.isPending ? (
-                  <p className="text-white/75">Rendering: {renderLabel(render)}</p>
+                ) : mixRunning ? (
+                  <div className="flex flex-col gap-2" role="status">
+                    <p className="text-white/75">
+                      {mixRunning.label}… {Math.round(mixRunning.share * 100)}%
+                    </p>
+                    <div className="h-1.5 w-full max-w-[360px] overflow-hidden rounded-full bg-white/10">
+                      <div className="h-full bg-accent" style={{ width: `${Math.round(mixRunning.share * 100)}%` }} />
+                    </div>
+                  </div>
                 ) : (
                   <>
-                    <p className="text-white/75">
-                      {render?.state === 'failed' ? `The last render failed: ${render.error}` : 'Render the mix on the server (about half a minute).'}
+                    <p className={mixJob && 'error' in mixJob ? 'text-err' : 'text-white/75'}>
+                      {mixJob && 'error' in mixJob
+                        ? `Making the mix failed: ${mixJob.error}`
+                        : `Render the ${editorDirty ? 'version on screen (your unsaved edits)' : 'song'} in your browser, mastered and unmastered, as WAV (24-bit) and MP3 (VBR -V2).`}
                     </p>
                     <button
                       type="button"
-                      onClick={async () => {
-                        const id = editorDirty ? (await save.mutateAsync()).id : activeSong.id;
-                        startRender.mutate(id);
-                      }}
-                      className="h-10 w-fit rounded-full bg-accent px-5 text-[14px] font-semibold text-white hover:bg-[#e00000]"
+                      disabled={!liveKey}
+                      onClick={() => void makeMix()}
+                      className="h-10 w-fit rounded-full bg-accent px-5 text-[14px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-40"
                     >
-                      {editorDirty ? 'Save and render WAV + MP3' : 'Render WAV + MP3'}
+                      Make WAV + MP3
                     </button>
                   </>
                 )}

@@ -447,6 +447,16 @@ function SongMenu({
             <DropdownMenuItem className={item} asChild>
               <a href={`${r.mp3Url}?download=1`}>Download MP3</a>
             </DropdownMenuItem>
+            {r.unmasteredWavUrl && r.unmasteredMp3Url ? (
+              <>
+                <DropdownMenuItem className={item} asChild>
+                  <a href={`${r.unmasteredWavUrl}?download=1`}>Download WAV (unmastered)</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem className={item} asChild>
+                  <a href={`${r.unmasteredMp3Url}?download=1`}>Download MP3 (unmastered)</a>
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </>
         ) : renderInFlight(r) ? (
           <DropdownMenuItem className={`${item} text-white/50`} disabled>

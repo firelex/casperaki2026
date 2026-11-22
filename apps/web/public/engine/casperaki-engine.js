@@ -12,6 +12,9 @@
 //   samples           Float32Array[] the 5 fallback samples, mono, role order
 //   realSamples       {key: Uint8Array, ch0, ch1?, sampleRate}[]  library PCM by join key
 //   mixConfig         Uint8Array?   mix-config.json; turns the mix + rack FX on
+//   mastered          boolean?      legacy mastering stage (+5 dB into NC-17); needs mixConfig
+//   liveMastering     boolean?      the live mastering layer instead (playback worklet): the same
+//                                   stand-in until live_set_profile, then the matched master
 //   meterBinFrames    number?       record per-lane peak/RMS per bin of this many frames
 
 const ROLE_COUNT = 5;
@@ -104,6 +107,15 @@ export function buildMixer(e, o) {
     e.free(p);
     if (ok !== 1) throw new Error(`mixer_set_mix_config failed: ${lastError(e)}`);
   }
+  if (o.mastered && o.liveMastering) throw new Error('buildMixer: mastered and liveMastering exclude each other');
+  if (o.mastered) {
+    if (!o.mixConfig) throw new Error('buildMixer: mastered needs mixConfig (the mix on)');
+    e.mixer_set_mastering(1);
+  }
+  if (o.liveMastering) {
+    if (!o.mixConfig) throw new Error('buildMixer: liveMastering needs mixConfig (the mix on)');
+    e.mixer_set_live_mastering(1);
+  }
   if (o.meterBinFrames) {
     if (e.mixer_enable_meters(o.meterBinFrames) !== 1) throw new Error(`mixer_enable_meters failed: ${lastError(e)}`);
   }
@@ -146,4 +158,56 @@ export function laneInfo(e) {
   const ptr = e.mixer_lane_info();
   if (!ptr) throw new Error(`mixer_lane_info failed: ${lastError(e)}`);
   return JSON.parse(readUtf8(e, ptr, len));
+}
+
+// ---- matched mastering (audio/Matchering.h, = the server's casperaki_master) ----
+
+const STYLES = { sergree: 0, boost: 1 };
+
+/** Copy a stereo song into the heap and analyse it (master_analyze). Returns the
+ *  padded frame count (songs under 15 s are looped to 15 s first). */
+function analyse(e, left, right, style) {
+  if (left.length !== right.length) throw new Error('mastering: channel lengths differ');
+  const code = STYLES[style];
+  if (code === undefined) throw new Error(`mastering: unknown style ${style}`);
+  const frames = left.length;
+  const pL = e.malloc(frames * 4);
+  const pR = e.malloc(frames * 4);
+  if (!pL || !pR) throw new Error(`mastering: out of memory for ${frames} frames`);
+  new Float32Array(e.memory.buffer, pL, frames).set(left);
+  new Float32Array(e.memory.buffer, pR, frames).set(right);
+  const padded = e.master_analyze(pL, pR, frames, code);
+  e.free(pL); e.free(pR);
+  if (padded <= 0) throw new Error(`master_analyze failed: ${lastError(e)}`);
+  return padded;
+}
+
+function profileBytes(e) {
+  const len = e.master_profile_bytes_length();
+  const ptr = e.master_profile_bytes();
+  if (len <= 0 || !ptr) throw new Error(`mastering: no profile (${lastError(e)})`);
+  return new Uint8Array(e.memory.buffer, ptr, len).slice();
+}
+
+/** Analyse an unmastered song: the serialised mastering profile (Uint8Array),
+ *  to hand to the playback worklet (live_set_profile). */
+export function masteringProfile(e, left, right, style = 'sergree') {
+  analyse(e, left, right, style);
+  const bytes = profileBytes(e);
+  e.master_release();
+  return bytes;
+}
+
+/** Master a whole unmastered song offline, from frame 0, exactly as
+ *  `casperaki_master in.wav out.wav <style>` does. Returns the mastered PCM
+ *  (as long as the song, or 15 s for a shorter one) and the profile. */
+export function masterSong(e, left, right, style = 'sergree') {
+  analyse(e, left, right, style);
+  const profile = profileBytes(e);
+  const n = e.master_apply();
+  if (n <= 0) throw new Error(`master_apply failed: ${lastError(e)}`);
+  const outL = new Float32Array(e.memory.buffer, e.master_output_left(), n).slice();
+  const outR = new Float32Array(e.memory.buffer, e.master_output_right(), n).slice();
+  e.master_release();
+  return { left: outL, right: outR, profile };
 }

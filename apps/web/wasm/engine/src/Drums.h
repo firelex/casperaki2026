@@ -102,6 +102,17 @@ inline std::string retainStepChars(const std::string& s) {
     return out;
 }
 
+// TransitionPattern.h createSegmentClip / getPatternBarsCount — lowercase then
+// keep only '0' and 'x' (no '-', unlike the drum grid).
+inline std::string retainPatternStepChars(const std::string& s) {
+    std::string out;
+    for (char c : s) {
+        char l = (char)std::tolower((unsigned char)c);
+        if (l == '0' || l == 'x') out.push_back(l);
+    }
+    return out;
+}
+
 // Drums.h:363-372 — bars in a pattern = ceil(firstChannelString.len / 32).
 // `patternObj` is the {pattern:{<sub>:<grid>}} wrapper.
 inline int drumPatternBarsCount(const json& patternObj) {

@@ -224,17 +224,24 @@ export function createSongsRouter({ store, renders, now }: SongsRouterDeps): Rou
     return res.json(renderJson(req.params.id, renders));
   });
 
+  // render.{wav,mp3} = mastered; render-unmastered.{wav,mp3} = the raw mix.
+  for (const version of ['mastered', 'unmastered'] as const)
   for (const format of ['wav', 'mp3'] as const) {
-    router.get(`/api/songs/:id/render.${format}`, (req, res) => {
+    const route = version === 'mastered' ? `render.${format}` : `render-unmastered.${format}`;
+    router.get(`/api/songs/:id/${route}`, (req, res) => {
       if (!renders) return renderNotConfigured(res);
       const project = store.getProject(ownerOf(req), req.params.id);
       if (!project) return res.status(404).json({ error: 'not_found', id: req.params.id });
       if (renders.status(req.params.id)?.state !== 'done') {
         return res.status(404).json({ error: 'not_rendered', id: req.params.id });
       }
-      const file = format === 'wav' ? renders.wavPath(req.params.id) : renders.mp3Path(req.params.id);
+      if (version === 'unmastered' && !renders.hasVersion(req.params.id, 'unmastered')) {
+        return res.status(404).json({ error: 'no_unmastered_render', id: req.params.id });
+      }
+      const file = format === 'wav' ? renders.wavPath(req.params.id, version) : renders.mp3Path(req.params.id, version);
       if (req.query.download === '1') {
-        res.attachment(`${safeFileName(project.title)}.${format}`);
+        const suffix = version === 'unmastered' ? ' (unmastered)' : '';
+        res.attachment(`${safeFileName(project.title)}${suffix}.${format}`);
       }
       res.setHeader('cache-control', 'private, max-age=31536000, immutable');
       return res.sendFile(file);
@@ -279,6 +286,8 @@ export interface RenderJson {
   readonly finishedAt?: string;
   readonly mp3Url?: string;
   readonly wavUrl?: string;
+  readonly unmasteredMp3Url?: string;
+  readonly unmasteredWavUrl?: string;
 }
 
 function renderJson(songId: string, renders: RenderService | undefined): RenderJson {
@@ -294,6 +303,9 @@ function renderJson(songId: string, renders: RenderService | undefined): RenderJ
     ...(st.startedAt ? { startedAt: st.startedAt } : {}),
     ...(st.finishedAt ? { finishedAt: st.finishedAt } : {}),
     ...(st.state === 'done' ? { mp3Url: `${base}.mp3`, wavUrl: `${base}.wav` } : {}),
+    ...(st.state === 'done' && renders.hasVersion(songId, 'unmastered')
+      ? { unmasteredMp3Url: `${base}-unmastered.mp3`, unmasteredWavUrl: `${base}-unmastered.wav` }
+      : {}),
   };
 }
 

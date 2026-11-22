@@ -1,0 +1,2 @@
+Vendored from https://github.com/mborgerding/kissfft (master, commit de93ec32a1bed6360d6c37a71bea4d984394bb42), unmodified.
+Licence: BSD-3-Clause (see COPYING and LICENSES/BSD-3-Clause). Used by src/audio/Fft.h.

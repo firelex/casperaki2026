@@ -16,9 +16,17 @@
 //   seekPrerollFrames  number        frames rendered silently after a seek so
 //                                    effect tails refill (mix on)
 //   laneGains          {[lane: string]: number}  initial mute/solo gains
+//   liveMastering      boolean       the live mastering layer (engine live_*): the
+//                                    +5 dB NC-17 stand-in until a 'profile' message,
+//                                    then the matched master (casperaki_master sergree).
+//                                    The engine renders live_latency_frames() ahead of
+//                                    what is heard; live_seek/live_position account for
+//                                    it, so the song clock needs no correction.
 //
 // Messages in:  { type: 'probe', bus: Uint8Array, slot } (device views: level probe around a rack plugin)
 //               { type: 'seek', frame, preroll? } (preroll frames; default seekPrerollFrames)  { type: 'laneGains', gains: {[lane]: gain} }
+//               { type: 'profile', bytes: Uint8Array } (liveMastering: switch to the matched
+//               master; allocates, between quanta, then re-reads the heap views)
 //               { type: 'loop', start, end } (frames; start null = no loop). Playback
 //               that crosses `end` from inside the loop jumps to `start` on the exact
 //               frame (instant seek: effect tails carry over, as in a DAW).
@@ -26,6 +34,7 @@
 //               { type: 'probe', inPeak, inRms, outPeak, outRms, frames } (~30/s while a probe is set)
 //               { type: 'probeRings', input, output } (Float32Array(4096) each, ~15/s)
 //               { type: 'seeked', frame }  { type: 'ended' }  { type: 'error', message }
+//               { type: 'mastered' } (the matched master now plays)  { type: 'masterError', message }
 
 import { buildMixer, instantiateEngine, laneNames, lastError } from '../engine/casperaki-engine.js';
 
@@ -41,6 +50,7 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     this.seekPreroll = o.seekPrerollFrames ?? 0;
     this.loopStart = -1;
     this.loopEnd = -1;
+    this.live = Boolean(o.liveMastering);
 
     try {
       const e = instantiateEngine(o.wasmBytes);
@@ -57,22 +67,39 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       this.probeEvery = Math.max(1, Math.round((o.sampleRate / BLOCK) / 30)); // ~30 readings a second
       this.probeCount = 0;
 
-      // All allocation is done: these views stay valid for the node's life.
-      this.left = new Float32Array(e.memory.buffer, e.mixer_left(), BLOCK);
-      this.right = new Float32Array(e.memory.buffer, e.mixer_right(), BLOCK);
+      // All allocation is done: these views stay valid until a 'profile' message
+      // (the only later allocation), which takes them again.
+      this.takeViews();
 
       // Handled on the audio thread between process() calls, so a pull never races them.
       this.port.onmessage = (ev) => {
         const d = ev.data;
         if (!d) return;
         if (d.type === 'seek') {
-          const pos = e.mixer_seek(Math.max(0, Math.floor(d.frame)), d.preroll ?? this.seekPreroll);
+          const seek = this.live ? e.live_seek : e.mixer_seek;
+          const pos = seek(Math.max(0, Math.floor(d.frame)), d.preroll ?? this.seekPreroll);
           if (pos < 0) {
             this.port.postMessage({ type: 'error', message: `mixer_seek failed: ${lastError(e)}` });
             return;
           }
           this.done = false;
           this.port.postMessage({ type: 'seeked', frame: pos });
+        } else if (d.type === 'profile') {
+          if (!this.live) {
+            this.port.postMessage({ type: 'masterError', message: 'this player was built without live mastering' });
+            return;
+          }
+          const bytes = d.bytes;
+          const p = e.malloc(bytes.length);
+          new Uint8Array(e.memory.buffer, p, bytes.length).set(bytes);
+          const ok = e.live_set_profile(p, bytes.length);
+          e.free(p);
+          this.takeViews();
+          if (ok !== 1) {
+            this.port.postMessage({ type: 'masterError', message: `live_set_profile failed: ${lastError(e)}` });
+            return;
+          }
+          this.port.postMessage({ type: 'mastered' });
         } else if (d.type === 'loop') {
           if (d.start === null) {
             this.loopStart = this.loopEnd = -1;
@@ -84,6 +111,10 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
             }
             this.loopStart = a;
             this.loopEnd = b;
+          }
+          // Live mastering loops inside the engine, on its input side (it renders ahead).
+          if (this.live && e.live_set_loop(this.loopStart, this.loopEnd) !== 1) {
+            this.port.postMessage({ type: 'error', message: `live_set_loop failed: ${lastError(e)}` });
           }
         } else if (d.type === 'probe') {
           // { bus: Uint8Array (UTF-8), slot } — slot < 0 turns the probe off.
@@ -120,6 +151,12 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     } catch (err) {
       this.port.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
     }
+  }
+
+  /** (Re)take the views over the engine's output block (after any heap growth). */
+  takeViews() {
+    this.left = new Float32Array(this.e.memory.buffer, this.e.mixer_left(), BLOCK);
+    this.right = new Float32Array(this.e.memory.buffer, this.e.mixer_right(), BLOCK);
   }
 
   /** gains: lane name → gain. Lanes not listed play at unity. */
@@ -159,7 +196,16 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
     const outR = output.length > 1 ? output[1] : null;
     let more;
     const pos = this.e.mixer_position();
-    if (this.loopEnd > 0 && pos < this.loopEnd && pos + BLOCK >= this.loopEnd) {
+    if (this.live) {
+      more = this.e.live_pull(BLOCK);
+      if (more < 0) {
+        this.done = true;
+        this.port.postMessage({ type: 'error', message: `live_pull failed: ${lastError(this.e)}` });
+        for (let c = 0; c < output.length; c++) output[c].fill(0);
+        return true;
+      }
+      this.copyOut(outL, outR, 0, BLOCK);
+    } else if (this.loopEnd > 0 && pos < this.loopEnd && pos + BLOCK >= this.loopEnd) {
       // The loop end falls inside (or at the end of) this quantum: play up to it,
       // jump back, fill the rest from the loop start.
       const head = this.loopEnd - pos;

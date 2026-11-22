@@ -141,6 +141,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           mix: config.renderMix,
           ffmpegBin: config.ffmpegBin,
           nodeBin: process.execPath,
+          masteringBin: resolve(config.masteringBin),
         })
       : undefined);
   // DAW exports (stems / REAPER / Logic) next to the renders: <rendersDir>/../daw-exports.

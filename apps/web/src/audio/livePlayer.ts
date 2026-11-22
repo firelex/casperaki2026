@@ -31,7 +31,21 @@ export interface LiveState {
   readonly loopRange: LoopRange | undefined;
   /** Whether playback repeats the loop range. */
   readonly looping: boolean;
+  /** How the loaded song is mastered while it plays (see MasteringMode). */
+  readonly mastering: MasteringMode;
+  /** Why matching the master failed (mastering === 'failed'). */
+  readonly masteringError: string | undefined;
 }
+
+/**
+ * Live mastering: 'stand-in' = +5 dB into NC-17 (the engine's quick stage; the
+ * pattern player always, the song player until its profile is ready);
+ * 'analysing' = the stand-in plays while a worker renders the song unmastered and
+ * matches it to the reference (the server's `casperaki_master sergree`);
+ * 'matched' = that matched master plays; 'failed' = matching failed (the
+ * stand-in keeps playing and the error is shown).
+ */
+export type MasteringMode = 'stand-in' | 'analysing' | 'matched' | 'failed';
 
 export interface LoopRange {
   readonly start: number;
@@ -117,6 +131,24 @@ export interface MixConfigJson {
 const METER_BIN_FRAMES = 1024;
 const METERS_CACHED = 4;
 
+/** What the mix export is doing (worker phases, in order). */
+export type MixExportPhase = 'render' | 'master' | 'mp3 unmastered' | 'mp3 mastered';
+export interface MixExportProgress {
+  readonly phase: MixExportPhase;
+  /** 0..1 of this phase. */
+  readonly share: number;
+}
+export interface MixExportFiles {
+  readonly masteredMp3: Uint8Array;
+  readonly masteredWav: Uint8Array;
+  readonly unmasteredMp3: Uint8Array;
+  readonly unmasteredWav: Uint8Array;
+}
+const MIX_EXPORT_FILES = ['mastered.mp3', 'mastered.wav', 'unmastered.mp3', 'unmastered.wav'] as const;
+
+/** Mastering profiles cached (one per song version, like the meters). */
+const PROFILES_CACHED = 4;
+
 interface Prepared {
   payload: PlaybackPayload;
   realSamples: RealSample[];
@@ -132,9 +164,8 @@ interface RealSample {
   sampleRate: number;
 }
 
-/** Real-time master gain. The server peak-normalises the whole song, which a
- *  stream can't; with the mix on its normalise gain is ~1.0 (the mix already
- *  peaks near 0.9), so unity plus the limiter below matches it. */
+/** Real-time master gain. Neither the server render nor legacy normalise a
+ *  mix-on song, so unity matches the server. */
 const MASTER_GAIN = 1.0;
 /** After a seek the engine renders this much silently so reverb and delay
  *  tails are back (the mix's effects carry state). */
@@ -148,15 +179,25 @@ let sharedWasm: Promise<ArrayBuffer> | undefined;
 const sharedDecoded = new Map<string, Promise<AudioBuffer>>();
 
 export class LivePlayer {
+  /**
+   * `matchedMastering`: master like the server's export once the song's profile is
+   * ready (the song player). Off, the player keeps the stand-in (the pattern
+   * player: a lone pattern is not a song to match).
+   */
+  constructor(private readonly opts: { readonly matchedMastering: boolean }) {}
+
   private ctx: AudioContext | undefined;
   private node: AudioWorkletNode | undefined;
-  private limiter: DynamicsCompressorNode | undefined;
   private workletAdded: Promise<void> | undefined;
   private stubPcm: Promise<Float32Array[]> | undefined;
   private loadToken = 0;
   private readonly prepared = new Map<string, Promise<Prepared>>();
   private readonly payloads = new Map<string, Promise<PlaybackPayload>>();
   private readonly mixes = new Map<string, Promise<ResolvedMix>>();
+  /** Matched-mastering profiles by key (serialised MasteringProfile bytes). */
+  private readonly profiles = new Map<string, Promise<Uint8Array>>();
+  /** The worker computing a profile, and how to cancel it. */
+  private profileJob: { key: string; worker: Worker; cancel: () => void } | undefined;
   /** The clock: the song was at `anchorPos` seconds when the context time was
    *  `anchorTime`. Re-anchored on every seek and loop change. */
   private anchorTime = 0;
@@ -165,7 +206,7 @@ export class LivePlayer {
   private playStartPos = 0;
   private state: LiveState = {
     status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined, laneNames: [], muted: [], solo: [],
-    loopRange: undefined, looping: false,
+    loopRange: undefined, looping: false, mastering: 'stand-in', masteringError: undefined,
   };
   private meterWorker: Worker | undefined;
   private readonly meterCache = new Map<string, LaneMeters>();
@@ -354,6 +395,10 @@ export class LivePlayer {
           sampleRate: ctx.sampleRate,
           masterGain: MASTER_GAIN,
           mixConfig: utf8.encode(payload.mixConfig),
+          // Matched mastering: the live layer plays the +5 dB NC-17 stand-in until
+          // the profile arrives, then the matched master. Without it, the stand-in
+          // in the engine's mix (docs/67 #1). Both bound the peaks.
+          ...(this.opts.matchedMastering ? { liveMastering: true } : { mastered: true }),
           seekPrerollFrames: Math.round(SEEK_PREROLL_SEC * ctx.sampleRate),
           laneGains: {},
           // The worklet scope has no TextEncoder: hand it UTF-8 bytes.
@@ -381,6 +426,11 @@ export class LivePlayer {
             for (const fn of this.ringListeners) fn(r);
           } else if (d.type === 'probeError' && node === this.node) {
             for (const fn of this.probeListeners) fn({ error: d.message ?? 'probe failed' });
+          } else if (d.type === 'mastered' && node === this.node) {
+            this.set({ mastering: 'matched', masteringError: undefined });
+          } else if (d.type === 'masterError' && node === this.node) {
+            console.error(`[live] the matched master could not start: ${d.message}`);
+            this.set({ mastering: 'failed', masteringError: d.message ?? 'unknown error' });
           }
         };
       });
@@ -396,7 +446,8 @@ export class LivePlayer {
       const swapAt = seamless ? Math.min(this.enginePosition(), durationSec) : undefined;
       this.teardown();
       this.node = node;
-      this.set({ key, laneNames, durationSec });
+      this.set({ key, laneNames, durationSec, mastering: this.opts.matchedMastering ? 'analysing' : 'stand-in', masteringError: undefined });
+      if (this.opts.matchedMastering) this.startMatchedMaster(key, node, fetchPayload);
       // A loop past the end of this (shorter) version can't play: drop it, visibly.
       const range = this.state.loopRange;
       if (range && range.end > durationSec) this.set({ loopRange: undefined, looping: false });
@@ -552,6 +603,75 @@ export class LivePlayer {
     };
   }
 
+  /**
+   * The matched-mastering profile of one song version: rendered unmastered in a
+   * worker and analysed (the same analysis as the server's casperaki_master).
+   * Cached per key; a profile still being computed for another key is cancelled.
+   */
+  profileOf(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<Uint8Array> {
+    const cached = this.profiles.get(key);
+    if (cached) return cached;
+    if (this.profileJob && this.profileJob.key !== key) this.profileJob.cancel();
+    const ctx = this.context();
+    const job = Promise.all([this.ensurePrepared(key, fetchPayload, () => undefined), this.wasm(), this.stubs(ctx)]).then(
+      ([{ payload, realSamples }, wasmBytes, stubs]) =>
+        new Promise<Uint8Array>((resolve, reject) => {
+          if (this.profiles.get(key) !== job) {
+            reject(new ProfileCancelled(key));
+            return;
+          }
+          const worker = new Worker(`/workers/casperaki-meter-worker.js?v=${__ENGINE_VERSION__}`, { type: 'module' });
+          const done = () => {
+            worker.terminate();
+            if (this.profileJob?.worker === worker) this.profileJob = undefined;
+          };
+          this.profileJob = { key, worker, cancel: () => { done(); this.profiles.delete(key); reject(new ProfileCancelled(key)); } };
+          worker.onerror = (ev) => {
+            done();
+            reject(new Error(`The engine worker failed: ${ev.message || 'it could not start'}`));
+          };
+          worker.onmessage = (ev: MessageEvent) => {
+            const d = ev.data as { type: string; bytes?: Uint8Array; message?: string };
+            done();
+            if (d.type === 'profile' && d.bytes) resolve(d.bytes);
+            else reject(new Error(`Matching the master failed: ${d.message ?? d.type}`));
+          };
+          worker.postMessage({
+            type: 'profile',
+            wasmBytes: wasmBytes.slice(0),
+            sampleRate: ctx.sampleRate,
+            song: utf8.encode(payload.song),
+            insts: payload.insts.map((t) => utf8.encode(t)),
+            samples: stubs,
+            realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
+            mixConfig: utf8.encode(payload.mixConfig),
+          });
+        }),
+    );
+    job.catch(() => {
+      if (this.profiles.get(key) === job) this.profiles.delete(key);
+    });
+    this.profiles.set(key, job);
+    while (this.profiles.size > PROFILES_CACHED) this.profiles.delete(this.profiles.keys().next().value!);
+    return job;
+  }
+
+  /** Compute (or reuse) the profile for the playing node and hand it over. */
+  private startMatchedMaster(key: string, node: AudioWorkletNode, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): void {
+    this.profileOf(key, fetchPayload).then(
+      (bytes) => {
+        if (node !== this.node) return;
+        node.port.postMessage({ type: 'profile', bytes: bytes.slice() });
+      },
+      (err: unknown) => {
+        if (node !== this.node || err instanceof ProfileCancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[live] matching the master for ${key} failed:`, err);
+        this.set({ mastering: 'failed', masteringError: message });
+      },
+    );
+  }
+
   /** Jump to `seconds` into the loaded song (playing or paused). */
   seek(seconds: number): void {
     if (!this.node || !this.ctx) return;
@@ -701,6 +821,62 @@ export class LivePlayer {
     });
   }
 
+  /**
+   * The song's mix downloads, made in the browser like the server's render: the
+   * full song rendered unmastered in a worker (24-bit WAV), mastered from frame 0
+   * with the same code as `casperaki_master sergree` (24-bit WAV), and both
+   * encoded with LAME VBR -V2 (lame.wasm, a separate module). `onProgress` gets
+   * what is being done and the share of it done.
+   */
+  async mixExport(
+    key: string,
+    fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+    onProgress: (p: MixExportProgress) => void,
+  ): Promise<MixExportFiles> {
+    const ctx = this.context();
+    const [{ payload, realSamples }, wasmBytes, stubs, lameBytes] = await Promise.all([
+      this.ensurePrepared(key, fetchPayload, () => undefined),
+      this.wasm(),
+      this.stubs(ctx),
+      fetchOk(`/wasm/lame.wasm?v=${__ENGINE_VERSION__}`).then((r) => r.arrayBuffer()),
+    ]);
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(`/workers/casperaki-meter-worker.js?v=${__ENGINE_VERSION__}`, { type: 'module' });
+      worker.onerror = (ev) => {
+        worker.terminate();
+        reject(new Error(`The engine worker failed: ${ev.message || 'it could not start'}`));
+      };
+      worker.onmessage = (ev: MessageEvent) => {
+        const d = ev.data as { type: string; phase?: MixExportPhase; share?: number; files?: Record<string, Uint8Array>; message?: string };
+        if (d.type === 'exportProgress') onProgress({ phase: d.phase!, share: d.share! });
+        else if (d.type === 'mixExport') {
+          worker.terminate();
+          const f = d.files!;
+          const missing = MIX_EXPORT_FILES.filter((name) => !f[name]);
+          if (missing.length) {
+            reject(new Error(`The engine worker made no ${missing.join(', ')}.`));
+            return;
+          }
+          resolve({ masteredMp3: f['mastered.mp3']!, masteredWav: f['mastered.wav']!, unmasteredMp3: f['unmastered.mp3']!, unmasteredWav: f['unmastered.wav']! });
+        } else if (d.type === 'error') {
+          worker.terminate();
+          reject(new Error(`The engine could not make the mix: ${d.message}`));
+        }
+      };
+      worker.postMessage({
+        type: 'mixExport',
+        wasmBytes: wasmBytes.slice(0),
+        lameBytes,
+        sampleRate: ctx.sampleRate,
+        song: utf8.encode(payload.song),
+        insts: payload.insts.map((t) => utf8.encode(t)),
+        samples: stubs,
+        realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
+        mixConfig: utf8.encode(payload.mixConfig),
+      }, [lameBytes]);
+    });
+  }
+
   private ensurePrepared(
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
@@ -729,20 +905,11 @@ export class LivePlayer {
     return this.ctx;
   }
 
-  /** Safety limiter in front of the speakers (the engine's own clamp is a
-   *  hard clip; this catches peaks gently first). */
+  /** The engine output goes straight to the speakers: the engine's mastering
+   *  stage (NC-17) already limits the peaks, so no browser compressor colours
+   *  the sound (it used to, unlike the server export). */
   private output(ctx: AudioContext): AudioNode {
-    if (!this.limiter) {
-      const l = ctx.createDynamicsCompressor();
-      l.threshold.value = -3;
-      l.knee.value = 3;
-      l.ratio.value = 20;
-      l.attack.value = 0.002;
-      l.release.value = 0.15;
-      l.connect(ctx.destination);
-      this.limiter = l;
-    }
-    return this.limiter;
+    return ctx.destination;
   }
 
   private teardown(): void {
@@ -851,12 +1018,19 @@ function samplerSample(key: string, ab: AudioBuffer, from: number, to: number): 
   return { key, ch0, ch1, sampleRate: ab.sampleRate };
 }
 
+/** A profile computation dropped because another song's started (not an error). */
+class ProfileCancelled extends Error {
+  constructor(key: string) {
+    super(`mastering profile for ${key} cancelled`);
+  }
+}
+
 /** The song's player: the play bar, songs list and sequencer. */
-export const livePlayer = new LivePlayer();
+export const livePlayer = new LivePlayer({ matchedMastering: true });
 /**
  * The detail window's own player: plays the open pattern on its own, with
  * its own loop and playhead, independent of the song's transport.
  */
-export const patternPlayer = new LivePlayer();
+export const patternPlayer = new LivePlayer({ matchedMastering: false });
 // For debugging from the browser console and automated browser tests.
 Object.assign(globalThis, { __casperakiLive: livePlayer, __casperakiPattern: patternPlayer });

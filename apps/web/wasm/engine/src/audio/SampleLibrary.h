@@ -426,7 +426,10 @@ private:
         if (rc == 0 && std::filesystem::exists(prepared, ec)
             && std::filesystem::file_size(prepared, ec) > 0)
             return prepared;
-        return abs;
+        // No silent fall-back to the raw MP3: minimp3 does not trim the encoder
+        // delay, so that path plays every slice ~51 ms late (docs/67 #13).
+        throw std::runtime_error("SampleLibrary: ffmpeg could not convert " + abs + " to " + prepared
+                                 + " (exit " + std::to_string(rc) + ")");
     }
 
     // ---- PCM -> padded SampleData -----------------------------------------

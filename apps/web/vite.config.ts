@@ -307,7 +307,9 @@ const ENGINE_FILES = [
   'public/wasm/engine-render.wasm',
   'public/wasm/engine-resolve.js',
   'public/wasm/engine-resolve.wasm',
+  'public/wasm/lame.wasm',
   'public/engine/casperaki-engine.js',
+  'public/engine/casperaki-audio-files.js',
   'public/worklets/casperaki-render-worklet.js',
   'public/workers/casperaki-meter-worker.js',
 ];
@@ -315,7 +317,7 @@ const engineVersion = (() => {
   const h = createHash('sha256');
   for (const f of ENGINE_FILES) {
     const abs = resolve(fileURLToPath(new URL('.', import.meta.url)), f);
-    if (!existsSync(abs)) throw new Error(`engine file missing: ${f} (run wasm/engine/build-wasm.sh)`);
+    if (!existsSync(abs)) throw new Error(`engine file missing: ${f} (run wasm/engine/build-wasm.sh and wasm/lame/build-lame-wasm.sh)`);
     h.update(f).update(readFileSync(abs));
   }
   return h.digest('hex').slice(0, 12);
@@ -332,8 +334,13 @@ function versionEngineImports(): Plugin {
       for (const f of ['workers/casperaki-meter-worker.js', 'worklets/casperaki-render-worklet.js']) {
         const p = join(out, f);
         const src = readFileSync(p, 'utf8');
-        const stamped = src.replace("'../engine/casperaki-engine.js'", `'../engine/casperaki-engine.js?v=${engineVersion}'`);
+        let stamped = src.replace("'../engine/casperaki-engine.js'", `'../engine/casperaki-engine.js?v=${engineVersion}'`);
         if (stamped === src) throw new Error(`casperaki-engine-version: no driver import found in ${f}`);
+        if (f.startsWith('workers/')) {
+          const before = stamped;
+          stamped = stamped.replace("'../engine/casperaki-audio-files.js'", `'../engine/casperaki-audio-files.js?v=${engineVersion}'`);
+          if (stamped === before) throw new Error(`casperaki-engine-version: no audio-files import found in ${f}`);
+        }
         writeFileSync(p, stamped);
       }
     },
