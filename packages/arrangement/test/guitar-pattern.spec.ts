@@ -1,17 +1,11 @@
-// docs/54s — Guitar pattern generator tests.
-//
-// The 54s slice emits a deterministic two-hit-per-bar chord comp on
-// every guitar-active segment. The pattern is intentionally minimal
-// — chord events at beats 0.0 and 2.0 with duration=2 — to ride the
-// proven chord-events-through-per-note-multisample path (54l + 54m).
-// Tests assert: structural shape, chord-symbol carry-through, bar
-// count alignment, activity gate.
+// Guitar pattern generator tests: the legacy Virtual Guitarist generator
+// (every guitar plays the picked Virtual Guitarist pattern, all its bars).
 
 import { describe, expect, it } from 'vitest';
 import { createRng } from '@casperaki/music-theory';
 
 import { generateGuitarPattern } from '../src/patterns/guitar.js';
-import { selectGuitarPattern } from '../src/patterns/guitar-bank.js';
+import { postProcessVirtualGuitaristPattern, selectVirtualGuitaristPattern } from '../src/patterns/virtual-guitarist-bank.js';
 import type { GeneratorContext } from '../src/context.js';
 import type { Segment } from '@casperaki/song-schema';
 
@@ -52,6 +46,21 @@ function fakeSegment(name: string, barCount: number, chords: string[][] = []): S
 }
 
 describe('generateGuitarPattern', () => {
+  it('plays the legacy Virtual Guitarist pattern: every bar, as processed, repeated across the section', () => {
+    const ctx = ctxFor('vg-legacy');
+    const seg = fakeSegment('verse1', 8, [['C', 'C', 'G', 'G'], ['Am', 'Am', 'F', 'F']]);
+    const out = generateGuitarPattern(ctx, seg, ['guitar'])!;
+    const rng = createRng('vg-legacy').fork('patterns/guitar/virtualGuitarist');
+    const expected = postProcessVirtualGuitaristPattern(rng, selectVirtualGuitaristPattern(rng, 'brightPop', 120).pattern);
+    out.bars.forEach((bar, i) => {
+      const src = expected.bars[i % expected.bars.length]!;
+      const strip = (notes: Record<string, readonly unknown[]>) =>
+        Object.fromEntries(Object.entries(notes).map(([k, evs]) => [Number(k), (evs as Record<string, unknown>[]).map(({ chord: _c, ...rest }) => rest)]));
+      expect(strip(bar.notes as never)).toEqual(strip(src.notes as never));
+      for (const evs of Object.values(bar.notes)) for (const ev of evs as { type: string }[]) expect(['strum', 'virtualGuitarist']).toContain(ev.type);
+    });
+  });
+
   it('returns undefined when guitar is NOT in the activity list', () => {
     const ctx = ctxFor();
     const seg = fakeSegment('verse1', 4);
@@ -64,65 +73,6 @@ describe('generateGuitarPattern', () => {
     const pattern = generateGuitarPattern(ctx, seg, ['drums', 'bass', 'keys', 'pad', 'guitar']);
     expect(pattern).toBeDefined();
     expect(pattern!.bars.length).toBe(8);
-  });
-
-  it('emits chord events at beats 0.0 and 2.0 with duration=2', () => {
-    const ctx = ctxFor();
-    const seg = fakeSegment('chorus1', 4);
-    const pattern = generateGuitarPattern(ctx, seg, ['guitar'])!;
-    for (const bar of pattern.bars) {
-      for (const beatKey of ['0.0', '2.0']) {
-        const events = bar.notes[beatKey]!;
-        // docs/54v adds a co-triggered virtualGuitarist event at
-        // beat 2.0; the chord-comp event still lives in the array.
-        const chordEv = events.find((e) => e.type === 'chord') as
-          | { type: 'chord'; chord: string; duration: number }
-          | undefined;
-        expect(chordEv, `bar missing chord event at ${beatKey}`).toBeDefined();
-        expect(chordEv!.duration).toBe(2);
-        expect(typeof chordEv!.chord).toBe('string');
-      }
-    }
-  });
-
-  // docs/62 A9 — fret-noise events come from the selected bank pattern's own
-  // author-placed `fretNoise` rows (multi-slice `sounds` + per-event arrays),
-  // wrapped across the segment, NOT a synthesized one-per-bar placeholder.
-  it("emits the selected bank pattern's fretNoise events verbatim, wrapped per bar (docs/62 A9)", () => {
-    let exercised = false;
-    for (let i = 0; i < 24 && !exercised; i++) {
-      const ctx = ctxFor(`a9-fretnoise-${i}`);
-      // Mirror the generator's internal pick (fork is name-keyed, so this does
-      // not perturb the generator's own fork('patterns/guitar')).
-      const sel = selectGuitarPattern(ctx.rng.fork('patterns/guitar'), ctx.params.genre);
-      const patternBars = sel.pattern.bars.length;
-      const expectedByBar = sel.pattern.bars.map((b) => bankFretNoiseByBeat(b));
-      if (!expectedByBar.some((m) => Object.keys(m).length > 0)) continue;
-      exercised = true;
-
-      const seg = fakeSegment('chorus1', patternBars * 2 + 1); // exercise the wrap
-      const pattern = generateGuitarPattern(ctx, seg, ['guitar'])!;
-      for (let segBarIdx = 0; segBarIdx < pattern.bars.length; segBarIdx++) {
-        const expected = expectedByBar[segBarIdx % patternBars]!;
-        const emittedBeats = Object.entries(pattern.bars[segBarIdx]!.notes)
-          .filter(([, evs]) => evs.some((e) => e.type === 'fretNoise'))
-          .map(([k]) => k);
-        expect(emittedBeats.sort()).toEqual(Object.keys(expected).sort());
-        for (const [beatKey, exp] of Object.entries(expected)) {
-          const fn = pattern.bars[segBarIdx]!.notes[beatKey]!.find((e) => e.type === 'fretNoise') as {
-            sounds: number[];
-            offset: number[];
-            durations: number[];
-            velocities: number[];
-          };
-          expect(fn.sounds).toEqual(exp.sounds);
-          expect(fn.offset).toEqual(exp.offset);
-          expect(fn.durations).toEqual(exp.durations);
-          expect(fn.velocities).toEqual(exp.velocities);
-        }
-      }
-    }
-    expect(exercised, 'no brightPop seed selected a pattern carrying fretNoise events').toBe(true);
   });
 
   it('carries the per-bar chord symbol from the segment', () => {
@@ -153,19 +103,6 @@ describe('generateGuitarPattern', () => {
   // legacy virtualGuitaristPatterns.json bank (replaces 54v's single
   // chordShortStrumDown at beat 2.0). Each picked pattern carries a
   // mix of chord-strum types + fx1..fx7 events.
-  it('emits at least one virtualGuitarist event per bar (docs/54y)', () => {
-    const ctx = ctxFor();
-    const seg = fakeSegment('chorus1', 8);
-    const pattern = generateGuitarPattern(ctx, seg, ['guitar'])!;
-    for (const bar of pattern.bars) {
-      let vgCount = 0;
-      for (const events of Object.values(bar.notes)) {
-        for (const ev of events) if (ev.type === 'virtualGuitarist') vgCount++;
-      }
-      expect(vgCount, 'bar missing virtualGuitarist events').toBeGreaterThan(0);
-    }
-  });
-
   it('virtualGuitarist chord-strum events carry the bar chord at their beat', () => {
     const ctx = ctxFor();
     const seg = fakeSegment('chorus1', 1, [['C', 'F', 'G', 'Am']]);
@@ -187,19 +124,6 @@ describe('generateGuitarPattern', () => {
     }
   });
 
-  it('co-triggers with the chord-comp event when bank places an event at beat 2.0', () => {
-    const ctx = ctxFor();
-    const seg = fakeSegment('chorus1', 4);
-    const pattern = generateGuitarPattern(ctx, seg, ['guitar'])!;
-    for (const bar of pattern.bars) {
-      const beat2 = bar.notes['2.0'] ?? [];
-      const hasChord = beat2.some((e) => e.type === 'chord');
-      // Chord-comp must still fire at beat 2.0 per 54s.
-      expect(hasChord).toBe(true);
-    }
-  });
-
-  // docs/54x — Lane A per-string strum events from guitarPatterns.json.
   it('emits at least one type:"strum" event per bar (docs/54x)', () => {
     const ctx = ctxFor();
     const seg = fakeSegment('chorus1', 8);
