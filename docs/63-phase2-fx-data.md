@@ -280,6 +280,12 @@ these + the routing graph (§1), judged by the §7 statistical oracle.
   Its state is special-decoded (2 doubles `mix`,`rate` + `(x,y,rawExp)` curve triples — NOT the
   AirWindows float format). Verified: synths pump = **6.37 dB** duck (mix .52, 2-beat cycle), leads
   deeper (mix .71). Transport threaded Mixer→MixGraph→plugin (`setTransport`).
+- **SUPERSEDED 2026-11-22 (docs/67 #12):** the by-ear mappings below (2 beats, feedback cubed,
+  wet −14 dB, +2.9 Hz, ~30/920 Hz filters) were wrong. Measured against the real Valhalla
+  (hosted via yabridge with the legacy preset): 1/8-note delay (full 24-step sync table), loop
+  gain 1.5×feedback with saturation, wet at unity, ±1.99 Hz (L up / R down from one loop, input
+  mono-summed), low cut 20+2980·v Hz, high cut 50+14950·v Hz. `FreqShiftEcho.cpp` now implements
+  the measured behaviour; see its header.
 - **ValhallaFreqEcho — REBUILT from scratch as `FreqShiftEcho.cpp`** and **A/B-matched to the
   native Valhalla by ear ("Perfect!")**. A true frequency-shifting echo: FIR Hilbert (Blackman-
   Harris **199-tap** → **115 dB** image rejection, no 2·shift-Hz beating) → single-sideband shift

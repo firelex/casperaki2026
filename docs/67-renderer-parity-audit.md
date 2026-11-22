@@ -239,3 +239,18 @@ of the diff is download refactoring and build plumbing. So every finding above h
   segment's strums (faithful to legacy, whose pool held every suffix file so it never missed);
   fix the adapter (`packages/engine-adapter/src/guitars.ts`). (b) Fret noises are silent in both
   engines today (no `fretNoise` events, and nothing in casperaki2 filled `fx.fxFretNoise`).
+
+### #12 FreqShiftEcho re-calibrated against the real Valhalla (2026-11-22)
+
+Valhalla FreqEcho hosted offline (raw VST2 host over yabridge, legacy preset chunk, fixed host
+tempo) and measured against FreqShiftEcho on the same notes. The June by-ear mappings were far
+off: echo every ~2 beats at −15 dB with almost no repeats, where Valhalla repeats every 1/8 note
+at unity with 9 repeats above −60 dB (−7 dB per repeat). Rewritten to the measured behaviour:
+mono-summed input; one loop, left shifted up and right down (±1000·|2(v−0.5)|⁵ Hz = ±1.99 Hz);
+24-step sync table (step = ceil(v·23); preset = 1/8 note); low cut 20+2980·v Hz, high cut
+50+14950·v Hz plus a fixed top roll-off; loop gain 1.5×feedback with feedback-path saturation; wet
+at unity; IIR shifter (the 199-tap FIR was 5 dB weak at 200 Hz). Result on a 440 Hz burst:
+repeats 1–6 within 0.16 dB, timing within 0.4 ms, shift within 0.01 Hz, ⅓-octave within 1 dB to
+8 kHz; L/R correlation −0.02 (Valhalla 0.01). Residual: on long overlapping notes later repeats
+differ by up to ~1.5 dB (Valhalla's shifter phase differs). This restores the lead echo that fills
+the gaps between short notes — the likely main cause of the "choppier" sound.

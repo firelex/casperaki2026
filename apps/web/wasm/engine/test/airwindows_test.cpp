@@ -93,32 +93,60 @@ static double goertzel(const float* x, int n, double freq, double sr) {
     return s1 * s1 + s2 * s2 - coeff * s1 * s2;
 }
 
-// FreqShiftEcho: a 1 kHz tone shifted +10 Hz (top of the softened musical range)
-// must come out as a CLEAN upper sideband at 1010 Hz — the 990 Hz image (bad
-// quadrature) must be well down.
+// FreqShiftEcho: a 1 kHz tone shifted 10 Hz must come out as a CLEAN single sideband —
+// UP on the left (1010 Hz) and DOWN on the right (990 Hz), Valhalla's stereo mode —
+// with the image (bad quadrature) well down. Then the measured Valhalla mappings: the
+// preset sync knob (0.2173913) is a 1/8-note echo and the shift knob reads Valhalla's
+// fifth-power taper (0.6441 -> +1.99 Hz).
 static int checkFreqShiftEcho() {
-    auto fx = casperaki::aw::makeFreqShiftEcho();
-    fx->setSampleRate(44100.0);
-    fx->setParam(0, 1.0f);   // wetDryMix
-    fx->setParam(1, 1.0f);   // shift -> (1.0-0.5)*20 = +10 Hz
-    fx->setParam(2, 0.0f);   // feedback off (single pass)
-    fx->setParam(3, 0.0f);   // sync -> short delay
-    fx->setParam(4, 0.0f);   // lowCut (HP ~20 Hz, passes)
-    fx->setParam(5, 1.0f);   // highCut (LP wide open, passes 1010 Hz)
-    const int N = 44100;
-    std::vector<float> l(N), r(N);
-    for (int i = 0; i < N; ++i) l[i] = r[i] = std::sin(2.0 * 3.14159265 * 1000.0 * i / 44100.0);
-    float* in[2] = { l.data(), r.data() }; float* out[2] = { l.data(), r.data() };
-    fx->process(in, out, N);
-    // Measure the settled second half of the L channel.
-    const float* seg = l.data() + N / 2; const int M = N / 2;
-    const double up = goertzel(seg, M, 1010.0, 44100.0);
-    const double img = goertzel(seg, M, 990.0, 44100.0);
-    const double rej = 10.0 * std::log10((up + 1e-12) / (img + 1e-12));
-    bool finite = true; for (int i = 0; i < M; ++i) if (!std::isfinite(seg[i])) finite = false;
-    std::printf("FreqShiftEcho: +10Hz shift  1010Hz/990Hz = %.1f dB sideband rejection  %s\n",
-                rej, (finite && rej > 12.0) ? "ok" : "FAIL");
-    return (finite && rej > 12.0) ? 0 : 1;
+    int fails = 0;
+    {
+        auto fx = casperaki::aw::makeFreqShiftEcho();
+        fx->setSampleRate(44100.0);
+        fx->setParam(0, 1.0f);       // wetDryMix
+        fx->setParam(1, 0.699054f);  // shift -> 1000*(2*0.199054)^5 = +10 Hz
+        fx->setParam(2, 0.0f);       // feedback off (single pass)
+        fx->setParam(3, 0.0f);       // sync step 0 -> free (shortest) delay
+        fx->setParam(4, 0.0f);       // lowCut 20 Hz (passes)
+        fx->setParam(5, 1.0f);       // highCut 15 kHz (passes 1010 Hz)
+        const int N = 44100;
+        std::vector<float> l(N), r(N);
+        for (int i = 0; i < N; ++i) l[i] = r[i] = std::sin(2.0 * 3.14159265 * 1000.0 * i / 44100.0);
+        float* in[2] = { l.data(), r.data() }; float* out[2] = { l.data(), r.data() };
+        fx->process(in, out, N);
+        // Measure the settled second half.
+        const int M = N / 2;
+        const float* segL = l.data() + M; const float* segR = r.data() + M;
+        const double rejL = 10.0 * std::log10((goertzel(segL, M, 1010.0, 44100.0) + 1e-12) /
+                                              (goertzel(segL, M, 990.0, 44100.0) + 1e-12));
+        const double rejR = 10.0 * std::log10((goertzel(segR, M, 990.0, 44100.0) + 1e-12) /
+                                              (goertzel(segR, M, 1010.0, 44100.0) + 1e-12));
+        bool finite = true;
+        for (int i = 0; i < M; ++i) if (!std::isfinite(segL[i]) || !std::isfinite(segR[i])) finite = false;
+        const bool ok = finite && rejL > 30.0 && rejR > 30.0;
+        std::printf("FreqShiftEcho: L +10Hz 1010/990 = %.1f dB, R -10Hz 990/1010 = %.1f dB sideband rejection  %s\n",
+                    rejL, rejR, ok ? "ok" : "FAIL");
+        fails += ok ? 0 : 1;
+    }
+    {
+        // Preset params, 120 bpm: an impulse's first echo lands at 1/8 note = 11025 samples.
+        auto fx = casperaki::aw::makeFreqShiftEcho();
+        fx->setSampleRate(44100.0);
+        const float p[6] = { 1.0f, 6.44100010e-1f, 3.47999990e-1f, 2.17391297e-1f, 9.20000002e-2f, 3.31103683e-1f };
+        for (int i = 0; i < 6; ++i) fx->setParam(i, p[i]);
+        fx->setTransport(0.5, 0.0);
+        const int N = 16000;
+        std::vector<float> l(N, 0.0f), r(N, 0.0f);
+        l[0] = r[0] = 0.5f;
+        float* in[2] = { l.data(), r.data() }; float* out[2] = { l.data(), r.data() };
+        fx->process(in, out, N);
+        int peak = 0; for (int i = 1; i < N; ++i) if (std::fabs(l[i]) > std::fabs(l[peak])) peak = i;
+        const bool ok = std::abs(peak - 11025) <= 44;   // within 1 ms
+        std::printf("FreqShiftEcho: preset first echo at %d samples (1/8 note @120 = 11025)  %s\n",
+                    peak, ok ? "ok" : "FAIL");
+        fails += ok ? 0 : 1;
+    }
+    return fails;
 }
 
 int main() {
