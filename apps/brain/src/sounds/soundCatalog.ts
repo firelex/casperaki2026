@@ -23,6 +23,7 @@ import {
   userSoundFamily,
   isSwappableTransition,
   transitionSoundChoices,
+  TRANSITION_TYPES,
   drumRolesForFamily,
 } from '@casperaki/arrangement';
 import { GenreSchema } from '@casperaki/song-schema';
@@ -255,16 +256,40 @@ export function soundCatalog(): Built {
   return built;
 }
 
+/** Transition types whose sound can be chosen, with how many sounds each has (Sounds page). */
+export function soundTransitions(): { type: string; label: string; count: number }[] {
+  const catalog = loadValidatedCatalog();
+  const known = soundCatalog().byId;
+  return TRANSITION_TYPES.filter((t) => isSwappableTransition(t.type)).map((t) => ({
+    type: t.type,
+    label: t.label,
+    count: transitionSoundChoices(catalog, t.type).filter((e) => known.has(e.id)).length,
+  }));
+}
+
 export function soundFamilies(): SoundFamily[] {
   const counts = new Map<string, number>();
   for (const i of soundCatalog().items) counts.set(i.family, (counts.get(i.family) ?? 0) + 1);
   return FAMILIES.map((f) => ({ ...f, count: counts.get(f.id) ?? 0 }));
 }
 
-export function searchSounds(q: { family?: string; useAs?: string; transition?: string; q?: string; style?: string; cursor: number; limit: number }): {
+export function searchSounds(q: {
+  family?: string;
+  useAs?: string;
+  transition?: string;
+  q?: string;
+  style?: string;
+  /** The sounds that suit a song in this style, by the generator's own rule:
+   *  the ones tagged with the style, or all of them when none is tagged. */
+  suits?: string;
+  cursor: number;
+  limit: number;
+}): {
   total: number;
   items: SoundItem[];
   nextCursor: number | null;
+  /** With `suits`: none of the sounds is tagged with that style, so all suit it. */
+  noneTagged?: boolean;
 } {
   if (q.family !== undefined && !FAMILY_BY_ID.has(q.family)) throw new SoundError(400, 'unknown_family', `Unknown sound family "${q.family}".`);
   if (q.useAs !== undefined && !(InstrumentFamilySchema.options as readonly string[]).includes(q.useAs)) {
@@ -280,17 +305,27 @@ export function searchSounds(q: { family?: string; useAs?: string; transition?: 
   }
   const text = q.q?.trim().toLowerCase();
   const style = q.style?.trim();
-  const matches = soundCatalog().items.filter(
+  let base = soundCatalog().items.filter(
     (i) =>
       (q.family === undefined || i.family === q.family) &&
       (q.useAs === undefined || i.useAs === q.useAs) &&
-      (transitionIds === undefined || transitionIds.has(i.id)) &&
+      (transitionIds === undefined || transitionIds.has(i.id)),
+  );
+  // Decided on the whole source (not the search text), so typing does not change it.
+  let noneTagged: boolean | undefined;
+  if (q.suits !== undefined) {
+    const tagged = base.filter((i) => i.styles.includes(q.suits!));
+    noneTagged = tagged.length === 0;
+    if (!noneTagged) base = tagged;
+  }
+  const matches = base.filter(
+    (i) =>
       (!style || i.styles.includes(style)) &&
       (!text || i.name.toLowerCase().includes(text) || i.type.toLowerCase().includes(text) || i.styles.some((s) => s.toLowerCase().includes(text))),
   );
   const items = matches.slice(q.cursor, q.cursor + q.limit);
   const next = q.cursor + q.limit;
-  return { total: matches.length, items, nextCursor: next < matches.length ? next : null };
+  return { total: matches.length, items, nextCursor: next < matches.length ? next : null, ...(noneTagged !== undefined ? { noneTagged } : {}) };
 }
 
 export class SoundError extends Error {

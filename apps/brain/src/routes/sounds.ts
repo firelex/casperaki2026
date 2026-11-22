@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { canonicalStringifySong } from '@casperaki/song-schema';
 
 import type { PlaybackService } from '../render/playbackService.js';
-import { diskPathOf, searchSounds, soundCatalog, soundFamilies, SoundError, type SoundItem } from '../sounds/soundCatalog.js';
+import { diskPathOf, searchSounds, soundCatalog, soundFamilies, soundTransitions, SoundError, type SoundItem } from '../sounds/soundCatalog.js';
 import { PREVIEW_BARS, previewSong } from '../sounds/previewSong.js';
 import { playbackPayload } from './playback.js';
 
@@ -27,6 +27,8 @@ const ListQuery = z
     useAs: z.string().min(1).optional(),
     /** Sounds a transition type can play (e.g. fxDownlifter). */
     transition: z.string().min(1).optional(),
+    /** Only the sounds that suit a song in this style (the generator's rule). */
+    suits: z.string().min(1).max(40).optional(),
     q: z.string().max(200).optional(),
     style: z.string().max(40).optional(),
     cursor: z.coerce.number().int().min(0).optional(),
@@ -58,7 +60,7 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
   const notConfigured = { error: 'playback_not_configured', message: 'CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.' };
 
   router.get('/api/sounds/families', (_req, res) => {
-    res.json({ families: soundFamilies() });
+    res.json({ families: soundFamilies(), transitions: soundTransitions() });
   });
 
   router.get('/api/sounds', (req, res) => {
@@ -72,6 +74,7 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
         ...(q.data.family !== undefined ? { family: q.data.family } : {}),
         ...(q.data.useAs !== undefined ? { useAs: q.data.useAs } : {}),
         ...(q.data.transition !== undefined ? { transition: q.data.transition } : {}),
+        ...(q.data.suits !== undefined ? { suits: q.data.suits } : {}),
         ...(q.data.q !== undefined ? { q: q.data.q } : {}),
         ...(q.data.style !== undefined ? { style: q.data.style } : {}),
         cursor: q.data.cursor ?? 0,

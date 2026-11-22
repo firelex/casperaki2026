@@ -36,7 +36,10 @@ export function TransitionsWindow({
   onSet,
   onSelectSection,
   onClose,
+  songStyle,
 }: {
+  /** The song's style: sound lists start with the sounds that suit it. */
+  songStyle: string | undefined;
   section: string;
   /** Every section in song order, with its kind (verse, chorus, …). */
   sections: readonly { name: string; kind: string }[];
@@ -224,6 +227,7 @@ export function TransitionsWindow({
           type={picking.type}
           current={picking.current}
           where={scope === 'this' ? section : `all ${kindLabel}`}
+          songStyle={songStyle}
           onClose={() => setPicking(undefined)}
           onPick={(soundId) => {
             onSet({ segments, type: picking.type, placement: picking.placement, on: true, soundId });
@@ -258,9 +262,11 @@ function TransitionSoundDialog({
   type,
   current,
   where,
+  songStyle,
   onPick,
   onClose,
 }: {
+  songStyle: string | undefined;
   label: string;
   type: string;
   current: string | null;
@@ -280,6 +286,7 @@ function TransitionSoundDialog({
         </div>
         <SoundBrowser
           source={{ transition: type }}
+          songStyle={songStyle}
           title={`${label} sounds`}
           actionLabel=""
           highlight={current ?? undefined}

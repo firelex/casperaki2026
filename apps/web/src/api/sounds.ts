@@ -32,6 +32,8 @@ export interface SoundList {
   readonly total: number;
   readonly items: readonly SoundItem[];
   readonly nextCursor: number | null;
+  /** With `suits`: none of the sounds is tagged with the song's style, so all are listed. */
+  readonly noneTagged?: boolean;
 }
 
 export const soundsQueryKeys = {
@@ -41,14 +43,19 @@ export const soundsQueryKeys = {
 };
 
 export const soundsApi = {
-  families: (signal?: AbortSignal) => defaultBrainClient.get<{ families: SoundFamily[] }>('/api/sounds/families', { signal }),
-  list: (p: ({ family: string } | { useAs: string } | { transition: string }) & { q: string; style: string; cursor: number; limit?: number }, signal?: AbortSignal) => {
+  families: (signal?: AbortSignal) =>
+    defaultBrainClient.get<{ families: SoundFamily[]; transitions: { type: string; label: string; count: number }[] }>('/api/sounds/families', { signal }),
+  list: (
+    p: ({ family: string } | { useAs: string } | { transition: string }) & { q: string; style: string; suits?: string | undefined; cursor: number; limit?: number },
+    signal?: AbortSignal,
+  ) => {
     const qs = new URLSearchParams({ cursor: String(p.cursor), limit: String(p.limit ?? 60) });
     if ('family' in p) qs.set('family', p.family);
     else if ('useAs' in p) qs.set('useAs', p.useAs);
     else qs.set('transition', p.transition);
     if (p.q) qs.set('q', p.q);
     if (p.style) qs.set('style', p.style);
+    if (p.suits) qs.set('suits', p.suits);
     return defaultBrainClient.get<SoundList>(`/api/sounds?${qs}`, { signal });
   },
   get: (id: string, signal?: AbortSignal) => defaultBrainClient.get<SoundItem>(`/api/sounds/${encodeURIComponent(id)}`, { signal }),

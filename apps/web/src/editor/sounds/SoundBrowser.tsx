@@ -34,6 +34,7 @@ export function SoundBrowser({
   status,
   autoFocus,
   playOnce,
+  songStyle,
 }: {
   source: SoundSource;
   title: string;
@@ -45,10 +46,14 @@ export function SoundBrowser({
   autoFocus?: boolean;
   /** Play audio sounds once (transitions), not as a groove or loop. */
   playOnce?: boolean;
+  /** In a song: its style (genre). "Suits this song" is then on to start with. */
+  songStyle?: string | undefined;
 }) {
   const [query, setQuery] = useState('');
   const [q, setQ] = useState('');
   const [style, setStyle] = useState('');
+  const [suits, setSuits] = useState(Boolean(songStyle));
+  const suitsStyle = suits && songStyle ? songStyle : undefined;
   const sourceKey = 'family' in source ? `family:${source.family}` : 'useAs' in source ? `useAs:${source.useAs}` : `transition:${source.transition}`;
 
   // Search as you type, a moment after typing stops.
@@ -58,13 +63,15 @@ export function SoundBrowser({
   }, [query]);
 
   const list = useInfiniteQuery({
-    queryKey: soundsQueryKeys.list(sourceKey, q, style),
-    queryFn: ({ pageParam, signal }) => soundsApi.list({ ...source, q, style, cursor: pageParam }, signal),
+    queryKey: [...soundsQueryKeys.list(sourceKey, q, style), suitsStyle ?? ''],
+    queryFn: ({ pageParam, signal }) => soundsApi.list({ ...source, q, style, suits: suitsStyle, cursor: pageParam }, signal),
     initialPageParam: 0,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
   const items = list.data?.pages.flatMap((p) => p.items) ?? [];
   const total = list.data?.pages[0]?.total;
+  const noneTagged = list.data?.pages[0]?.noneTagged === true;
+  const songStyleLabel = songStyle ? (GENRE_LABELS[songStyle as keyof typeof GENRE_LABELS] ?? songStyle) : '';
 
   // Space plays / stops the current sound (the song is not played from here).
   // Typing in a field keeps its keys.
@@ -91,6 +98,7 @@ export function SoundBrowser({
             {total === undefined ? 'Loading…' : `${total.toLocaleString('en-GB')} sound${total === 1 ? '' : 's'}`}
             {q ? ` matching “${q}”` : ''}
             {style ? ` · ${GENRE_LABELS[style as keyof typeof GENRE_LABELS] ?? style}` : ''}
+            {suitsStyle ? (noneTagged ? ` · none is tagged ${songStyleLabel}, so all suit it` : ` · suit ${songStyleLabel}`) : ''}
           </p>
         </div>
         <input
@@ -102,6 +110,17 @@ export function SoundBrowser({
           className="h-8 w-[200px] rounded-[7px] border border-black/60 bg-[#151619] px-3 text-[13px] text-white outline-none placeholder:text-white/35 focus:border-white/40"
         />
         <div className="flex flex-wrap gap-1" role="group" aria-label="Style">
+          {songStyle ? (
+            <button
+              type="button"
+              onClick={() => setSuits((v) => !v)}
+              aria-pressed={suits}
+              title={`Only the sounds that suit this ${songStyleLabel} song (tagged ${songStyleLabel}; all, when none is)`}
+              className={`mr-2 h-7 rounded-full border px-3 text-[12px] ${suits ? 'border-emerald-300 bg-emerald-300 text-black' : 'border-black/60 bg-[#2a2b30] text-white/75 hover:text-white'}`}
+            >
+              Suits this song
+            </button>
+          ) : null}
           <StyleChip label="All styles" active={style === ''} onClick={() => setStyle('')} />
           {STYLES.map((s) => (
             <StyleChip key={s} label={GENRE_LABELS[s as keyof typeof GENRE_LABELS] ?? (s === '8bit' ? '8-bit' : s)} active={style === s} onClick={() => setStyle(s)} />

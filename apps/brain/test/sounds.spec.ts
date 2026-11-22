@@ -158,3 +158,17 @@ describe('transition sounds', () => {
     expect(() => searchSounds({ transition: 'fxNoiseRise', cursor: 0, limit: 10 })).toThrow(/no sounds to choose/);
   });
 });
+
+describe('sounds that suit a song style', () => {
+  it('keeps the style-tagged sounds, or all of them when none is tagged', async () => {
+    const { searchSounds } = await import('../src/sounds/soundCatalog.js');
+    const all = searchSounds({ family: 'keys', cursor: 0, limit: 1 }).total;
+    const ballad = searchSounds({ family: 'keys', suits: 'ballad', cursor: 0, limit: 100 });
+    expect(ballad.noneTagged).toBe(false);
+    expect(ballad.total).toBeLessThan(all);
+    expect(ballad.items.every((i) => i.styles.includes('ballad'))).toBe(true);
+    const none = searchSounds({ family: 'keys', suits: 'noSuchStyle', cursor: 0, limit: 1 });
+    expect(none.noneTagged).toBe(true);
+    expect(none.total).toBe(all);
+  });
+});

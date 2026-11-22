@@ -13,11 +13,14 @@ const CONTENT =
 export function ChangeSoundDialog({
   track,
   options,
+  songStyle,
   onPick,
   onClose,
 }: {
   track: string;
   options: TrackOptions;
+  /** The song's style: the list starts with the sounds that suit it. */
+  songStyle: string | undefined;
   onPick(soundId: string): void;
   onClose(): void;
 }) {
@@ -41,6 +44,7 @@ export function ChangeSoundDialog({
         </div>
         <SoundBrowser
           source={{ useAs }}
+          songStyle={songStyle}
           title={`${family.label} sounds`}
           actionLabel=""
           highlight={info.soundId ?? undefined}
@@ -66,7 +70,18 @@ export function ChangeSoundDialog({
 }
 
 /** Replace one drum of the kit with a library hit of its kind (with previews). */
-export function DrumSoundDialog({ row, onPick, onClose }: { row: DrumKitRow; onPick(soundId: string, name: string): void; onClose(): void }) {
+export function DrumSoundDialog({
+  row,
+  songStyle,
+  onPick,
+  onClose,
+}: {
+  row: DrumKitRow;
+  /** The song's style: the list starts with the sounds that suit it. */
+  songStyle: string | undefined;
+  onPick(soundId: string, name: string): void;
+  onClose(): void;
+}) {
   useEffect(() => stopSoundPreview, []);
   return (
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
@@ -80,6 +95,7 @@ export function DrumSoundDialog({ row, onPick, onClose }: { row: DrumKitRow; onP
         </div>
         <SoundBrowser
           source={{ family: row.family }}
+          songStyle={songStyle}
           title={`${row.label} sounds`}
           actionLabel=""
           highlight={row.soundId ?? undefined}

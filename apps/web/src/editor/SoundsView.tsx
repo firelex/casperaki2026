@@ -8,7 +8,8 @@ import { useSession } from '../state/session';
 import { indexInstrumentDefinitions } from '../types/song';
 import { buildSequencerModel } from './sequencerModel';
 import { useTrackEdits } from './sequencer/useTrackEdits';
-import { tracksApi, type DrumKitRow } from '../api/tracks';
+import { tracksApi, type DrumKitRow, type TransitionPlacement } from '../api/tracks';
+import { pluralKind } from './sequencer/TransitionsWindow';
 import { SoundBrowser } from './sounds/SoundBrowser';
 
 const GROUPS = ['Instruments', 'Drum hits', 'Loops & breaks', 'FX'] as const;
@@ -29,6 +30,9 @@ export function SoundsView() {
   const [family, setFamily] = useState<string>('keys');
   const [highlight, setHighlight] = useState<string | undefined>(undefined);
   const famInfo = families.data?.families.find((f) => f.id === family);
+  // A transition type is shown as family "transition:<type>".
+  const transitionType = family.startsWith('transition:') ? family.slice('transition:'.length) : undefined;
+  const transitionInfo = transitionType ? families.data?.transitions.find((t) => t.type === transitionType) : undefined;
 
   // The song's tracks and their sounds.
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
@@ -61,7 +65,31 @@ export function SoundsView() {
     enabled: Boolean(viewSong && hasDrums),
     staleTime: Infinity,
   });
+  // The song's transitions (for transition sounds: where they can go).
+  const transitionState = useQuery({
+    queryKey: ['transition-state', JSON.stringify(viewSong ? Object.fromEntries(Object.entries(viewSong.arrangement).map(([k, v]) => [k, v.transitions ?? {}])) : null), sections.join(',')],
+    queryFn: ({ signal }) => {
+      if (!viewSong) throw new Error('No song is open.');
+      return tracksApi.transitionState(viewSong, signal);
+    },
+    enabled: Boolean(viewSong && transitionType),
+    staleTime: Infinity,
+  });
   const useOptions = (s: SoundItem): UseOption[] => {
+    if (transitionType) {
+      const state = transitionState.data;
+      if (!state) return [];
+      const label = transitionInfo?.label ?? transitionType;
+      // Sections that have this transition, by kind (all choruses, …), then everywhere.
+      const having = (model?.sections ?? []).filter((x) => state.sections[x.name]?.some((t) => t.type === transitionType));
+      const kinds = [...new Set(having.map((x) => x.kind))];
+      const opts: UseOption[] = kinds.map((k) => {
+        const segs = having.filter((x) => x.kind === k).map((x) => x.name);
+        return { kind: 'transition' as const, label, segments: segs, where: segs.length === 1 ? `in ${segs[0]!}` : `in all ${pluralKind(k)} (${segs.length})` };
+      });
+      if (kinds.length > 1) opts.push({ kind: 'transition', label, segments: having.map((x) => x.name), where: `everywhere (${having.length} sections)` });
+      return opts;
+    }
     if (s.drumRoles.length > 0) {
       const rows = (drumKit.data?.kit ?? []).filter((r) => s.drumRoles.includes(r.role) && r.soundId !== s.id);
       return rows.map((row, i) => ({ kind: 'drum' as const, row, suggested: i === 0 }));
@@ -81,7 +109,24 @@ export function SoundsView() {
     return [...replace, ...add];
   };
   const useSound = (s: SoundItem, o: UseOption) =>
-    o.kind === 'drum'
+    o.kind === 'transition'
+      ? void edits.runSongEdit(`Putting ${s.name} in as the ${o.label.toLowerCase()}`, async (song) => {
+          // One call per placement (a reverse can sit at the start in one section and the end in another).
+          const state = transitionState.data;
+          if (!state || !transitionType) throw new Error('The song’s transitions are not loaded.');
+          const byPlacement = new Map<TransitionPlacement, string[]>();
+          for (const seg of o.segments) {
+            const t = state.sections[seg]?.find((x) => x.type === transitionType);
+            if (!t) throw new Error(`${seg} has no ${o.label.toLowerCase()}.`);
+            byPlacement.set(t.placement, [...(byPlacement.get(t.placement) ?? []), seg]);
+          }
+          let out = song;
+          for (const [placement, segments] of byPlacement) {
+            out = (await tracksApi.setTransition(out, { segments, type: transitionType, placement, on: true, soundId: s.id })).song;
+          }
+          return out;
+        })
+      : o.kind === 'drum'
       ? void edits.run({ kind: 'setDrumSound', role: o.row.role, soundId: s.id }, `Putting ${s.name} in as ${o.row.label.toLowerCase()}`)
       : o.kind === 'replace'
       ? void edits.run({ kind: 'changeSound', track: o.track, soundId: s.id }, `Putting ${s.name} on ${o.track}`)
@@ -105,6 +150,19 @@ export function SoundsView() {
               </div>
             );
           })}
+          {families.data?.transitions.length ? (
+            <div className="mb-3">
+              <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">TRANSITIONS</div>
+              {families.data.transitions.map((t) => (
+                <FamilyButton
+                  key={t.type}
+                  f={{ id: `transition:${t.type}`, label: t.label, group: 'FX', count: t.count }}
+                  active={family === `transition:${t.type}`}
+                  onClick={() => setFamily(`transition:${t.type}`)}
+                />
+              ))}
+            </div>
+          ) : null}
           {songTracks.length ? (
             <div className="mt-2 border-t border-black/50 pt-3">
               <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">IN THIS SONG</div>
@@ -137,8 +195,9 @@ export function SoundsView() {
       </aside>
 
       <SoundBrowser
-        source={{ family }}
-        title={famInfo?.label ?? 'Sounds'}
+        source={transitionType ? { transition: transitionType } : { family }}
+        playOnce={Boolean(transitionType)}
+        title={transitionInfo?.label ?? famInfo?.label ?? 'Sounds'}
         actionLabel="Use"
         highlight={highlight}
         action={(s) => <UseMenu s={s} useOptions={useOptions(s)} onUse={(o) => useSound(s, o)} />}
@@ -171,7 +230,8 @@ function FamilyButton({ f, active, onClick }: { f: SoundFamily; active: boolean;
 type UseOption =
   | { kind: 'replace'; track: string; current: string | undefined; suggested: boolean }
   | { kind: 'add'; family: NonNullable<SoundItem['useAs']>; label: string }
-  | { kind: 'drum'; row: DrumKitRow; suggested: boolean };
+  | { kind: 'drum'; row: DrumKitRow; suggested: boolean }
+  | { kind: 'transition'; label: string; segments: string[]; where: string };
 
 /** Use ▾: put the sound on a track of this song (suggested first) or a new track. */
 function UseMenu({ s, useOptions, onUse }: { s: SoundItem; useOptions: UseOption[]; onUse(o: UseOption): void }) {
@@ -199,7 +259,7 @@ function UseMenu({ s, useOptions, onUse }: { s: SoundItem; useOptions: UseOption
         <DropdownMenuLabel className="px-3 py-2 text-[12px] font-normal text-white/50">Use {s.name} in this song</DropdownMenuLabel>
         {useOptions.map((o) => (
           <DropdownMenuItem
-            key={o.kind === 'replace' ? o.track : o.kind === 'drum' ? o.row.role : 'add'}
+            key={o.kind === 'replace' ? o.track : o.kind === 'drum' ? o.row.role : o.kind === 'transition' ? o.where : 'add'}
             onSelect={() => onUse(o)}
             className="flex cursor-pointer items-center gap-2 rounded-[6px] px-3 py-2 text-[13px] outline-none data-[highlighted]:bg-white/10"
           >
@@ -211,6 +271,10 @@ function UseMenu({ s, useOptions, onUse }: { s: SoundItem; useOptions: UseOption
                 </span>
                 {o.suggested ? <span className="ml-auto rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] text-emerald-300">Suggested</span> : null}
               </>
+            ) : o.kind === 'transition' ? (
+              <span>
+                Use for the {o.label.toLowerCase()} {o.where}
+              </span>
             ) : o.kind === 'drum' ? (
               <>
                 <span className="flex min-w-0 flex-col leading-tight">

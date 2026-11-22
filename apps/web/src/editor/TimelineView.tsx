@@ -802,6 +802,7 @@ export function TimelineView() {
         />
       ) : sectionDialog?.kind === 'transitions' ? (
         <TransitionsWindow
+          songStyle={viewSong.genre}
           section={sectionDialog.name}
           sections={model.sections.map((x) => ({ name: x.name, kind: x.kind }))}
           state={transitionState.data ?? (transitionState.isError ? { error: transitionState.error.message } : undefined)}
@@ -914,6 +915,7 @@ export function TimelineView() {
       {drumDialog ? (
         <DrumSoundDialog
           row={drumDialog}
+          songStyle={viewSong.genre}
           onClose={() => setDrumDialog(undefined)}
           onPick={(soundId, name) => {
             const row = drumDialog;
@@ -925,6 +927,7 @@ export function TimelineView() {
       {dialog?.kind === 'sound' && edits.options.data ? (
         <ChangeSoundDialog
           track={dialog.track}
+          songStyle={viewSong.genre}
           options={edits.options.data}
           onClose={() => setDialog(undefined)}
           onPick={(soundId) => {
