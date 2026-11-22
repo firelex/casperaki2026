@@ -344,6 +344,41 @@ int mixer_meter_bin_count() {
 
 // Lane i's per-bin peak / RMS (float[mixer_meter_bin_count()] in the heap), or
 // null on error. Filled in as the song is pulled.
+// Device views: the impulse response of one plugin (a fresh instance with these
+// params, independent of any mixer): a unit click into both channels, `frames`
+// samples recorded. Returns 2 x frames floats (left, then right), valid until the
+// next call, or null on error (mixer_last_error).
+static std::vector<float> g_ir;
+const float* mixer_impulse(const char* factory, int flen, const float* params, int nparams, int frames, int sampleRate) {
+    State& s = state();
+    try {
+        if (frames <= 0 || frames > 30 * 48000) throw std::out_of_range("mixer_impulse: frames out of range");
+        if (sampleRate <= 0) throw std::out_of_range("mixer_impulse: bad sample rate");
+        const std::string f(factory, (size_t)flen);
+        std::vector<float> pv(params, params + nparams);
+        aw::seedPortableRand(1);
+        auto plugin = casperaki::makeAwByFactory(f, (double)sampleRate, pv);
+        if (!plugin) throw std::runtime_error("mixer_impulse: unknown plugin " + f);
+        g_ir.assign((size_t)frames * 2, 0.0f);
+        const int B = 128;
+        std::vector<float> l(B), r(B);
+        for (int pos = 0; pos < frames; pos += B) {
+            const int n = std::min(B, frames - pos);
+            std::fill(l.begin(), l.end(), 0.0f);
+            std::fill(r.begin(), r.end(), 0.0f);
+            if (pos == 0) { l[0] = 1.0f; r[0] = 1.0f; }
+            float* ch[2] = { l.data(), r.data() };
+            plugin->process(ch, ch, n);
+            std::copy(l.begin(), l.begin() + n, g_ir.begin() + pos);
+            std::copy(r.begin(), r.begin() + n, g_ir.begin() + frames + pos);
+        }
+        return g_ir.data();
+    } catch (const std::exception& e) {
+        setError(s, 6, e.what());
+        return nullptr;
+    }
+}
+
 // Device views: probe the plugin at `slot` of bus `bus` (UTF-8, `len` bytes);
 // slot < 0 turns the probe off. Returns 1, or 0 on error (mixer_last_error).
 int mixer_set_probe(const char* bus, int len, int slot) {

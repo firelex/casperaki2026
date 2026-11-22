@@ -36,6 +36,7 @@ import { Mixer, type OpenDevice } from './sequencer/Mixer';
 import { DeviceWindow } from './devices/DeviceWindow';
 import { Logical4Panel } from './devices/Logical4Panel';
 import { DevicePanel } from './devices/DevicePanel';
+import { ReverbPanel } from './devices/ReverbPanel';
 import { DEVICES } from './devices/deviceDefs';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
@@ -726,6 +727,8 @@ export function TimelineView() {
         >
           {device.factory === 'makeLogical4' ? (
             <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={device.params} />
+          ) : DEVICES[device.factory]?.kind === 'reverb' ? (
+            <ReverbPanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} factory={device.factory} bus={device.bus} slot={device.slot} params={device.params} />
           ) : DEVICES[device.factory] ? (
             <DevicePanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} bus={device.bus} slot={device.slot} params={device.params} bpm={bpm} />
           ) : (

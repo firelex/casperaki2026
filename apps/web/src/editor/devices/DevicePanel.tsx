@@ -344,7 +344,7 @@ function clipView(g: CanvasRenderingContext2D, x: number, y: number, w: number, 
   g.fillStyle = '#e6e7ea';
   g.font = '600 13px ui-monospace, monospace';
   g.textAlign = 'center';
-  g.fillText(`${shaved.toFixed(1)} dB`, x + w / 2, y + 34);
+  g.fillText(`${shaved.toFixed(1)} dB`, x + w / 2, y + 50);
   g.textAlign = 'left';
   g.fillStyle = '#8f9098';
   g.font = '10px Archivo, system-ui, sans-serif';

@@ -49,7 +49,7 @@ emcc src/main_render_wasm.cpp src/audio/airwindows/*.aw.cpp src/audio/airwindows
   -o "$OUT_DIR/engine-render.wasm" \
   -sSTANDALONE_WASM=1 \
   --no-entry \
-  -sEXPORTED_FUNCTIONS=_mixer_config,_mixer_set_sample,_mixer_set_sample_id,_mixer_build,_mixer_last_error,_mixer_set_master_gain,_mixer_set_mix_enabled,_mixer_set_mix_config,_mixer_seek,_mixer_position,_mixer_last_error_message,_mixer_lane_count,_mixer_lane_name,_mixer_lane_name_length,_mixer_lane_info,_mixer_lane_info_length,_mixer_set_lane_gain,_mixer_enable_meters,_mixer_meter_bin_count,_mixer_lane_peaks,_mixer_bus_peaks,_mixer_set_probe,_mixer_probe_read,_mixer_probe_buffer,_mixer_probe_rings,_mixer_probe_spectrum_buffer,_mixer_lane_rms,_mixer_pull,_mixer_left,_mixer_right,_mixer_total_frames,_mixer_sample_rate,_malloc,_free \
+  -sEXPORTED_FUNCTIONS=_mixer_config,_mixer_set_sample,_mixer_set_sample_id,_mixer_build,_mixer_last_error,_mixer_set_master_gain,_mixer_set_mix_enabled,_mixer_set_mix_config,_mixer_seek,_mixer_position,_mixer_last_error_message,_mixer_lane_count,_mixer_lane_name,_mixer_lane_name_length,_mixer_lane_info,_mixer_lane_info_length,_mixer_set_lane_gain,_mixer_enable_meters,_mixer_meter_bin_count,_mixer_lane_peaks,_mixer_bus_peaks,_mixer_set_probe,_mixer_probe_read,_mixer_probe_buffer,_mixer_probe_rings,_mixer_impulse,_mixer_probe_spectrum_buffer,_mixer_lane_rms,_mixer_pull,_mixer_left,_mixer_right,_mixer_total_frames,_mixer_sample_rate,_malloc,_free \
   -sALLOW_MEMORY_GROWTH=1 \
   -sINITIAL_MEMORY=134217728 \
   -sMAXIMUM_MEMORY=1073741824 \

@@ -6,18 +6,40 @@
 // In:  { type: 'meter', wasmBytes, sampleRate, meterBinFrames, ...build options }
 //      { type: 'mix', wasmBytes, sampleRate, ...build options }  -> { type: 'mix', mix } (no rendering)
 //      { type: 'render', wasmBytes, sampleRate, ...build options } -> progress..., { type: 'rendered', left, right, sampleRate }
+//      { type: 'impulse', wasmBytes, sampleRate, factory, params, seconds } -> { type: 'impulse', left, right, sampleRate }
 // Out: { type: 'lanes', names, binCount, binSec, mix }   (mix: laneInfo, the resolved mix)
 //      { type: 'progress', doneBins, peaks: Float32Array[], busPeaks: Float32Array[4] }   (repeated, then)
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
 
-import { buildMixer, instantiateEngine, laneInfo, laneNames } from '../engine/casperaki-engine.js';
+import { buildMixer, instantiateEngine, laneInfo, laneNames, lastError } from '../engine/casperaki-engine.js';
 
 const BLOCK = 1024;
 const POST_EVERY_MS = 400;
 
 self.onmessage = (ev) => {
   const o = ev.data;
-  if (!o || (o.type !== 'meter' && o.type !== 'mix' && o.type !== 'render')) return;
+  if (!o || (o.type !== 'meter' && o.type !== 'mix' && o.type !== 'render' && o.type !== 'impulse')) return;
+  if (o.type === 'impulse') {
+    // One plugin's impulse response (a fresh instance with these settings), no song needed.
+    try {
+      const e = instantiateEngine(o.wasmBytes);
+      const name = new TextEncoder().encode(o.factory);
+      const namePtr = e.malloc(name.length);
+      new Uint8Array(e.memory.buffer, namePtr, name.length).set(name);
+      const paramsPtr = e.malloc(Math.max(1, o.params.length) * 4);
+      new Float32Array(e.memory.buffer, paramsPtr, o.params.length).set(o.params);
+      const frames = Math.round(o.seconds * o.sampleRate);
+      const ptr = e.mixer_impulse(namePtr, name.length, paramsPtr, o.params.length, frames, o.sampleRate);
+      if (!ptr) throw new Error(`mixer_impulse failed: ${lastError(e)}`);
+      const all = new Float32Array(e.memory.buffer, ptr, frames * 2);
+      const left = all.slice(0, frames);
+      const right = all.slice(frames);
+      self.postMessage({ type: 'impulse', left, right, sampleRate: o.sampleRate }, [left.buffer, right.buffer]);
+    } catch (err) {
+      self.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
+    }
+    return;
+  }
   if (o.type === 'render') {
     // Offline render of the whole song to PCM (for a WAV download), as fast as possible.
     try {

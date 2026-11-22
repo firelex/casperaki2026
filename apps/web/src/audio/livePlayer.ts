@@ -613,6 +613,26 @@ export class LivePlayer {
     return job;
   }
 
+  /** One plugin's impulse response (a fresh instance with these settings), rendered in a worker. */
+  async impulse(factory: string, params: readonly number[], seconds: number): Promise<{ left: Float32Array; right: Float32Array; sampleRate: number }> {
+    const ctx = this.context();
+    const wasmBytes = await this.wasm();
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(`/workers/casperaki-meter-worker.js?v=${__ENGINE_VERSION__}`, { type: 'module' });
+      worker.onerror = (ev) => {
+        worker.terminate();
+        reject(new Error(`The engine worker failed: ${ev.message || 'it could not start'}`));
+      };
+      worker.onmessage = (ev: MessageEvent) => {
+        const d = ev.data as { type: string; left?: Float32Array; right?: Float32Array; sampleRate?: number; message?: string };
+        worker.terminate();
+        if (d.type === 'impulse') resolve({ left: d.left!, right: d.right!, sampleRate: d.sampleRate! });
+        else reject(new Error(`The engine could not measure the impulse response: ${d.message ?? d.type}`));
+      };
+      worker.postMessage({ type: 'impulse', wasmBytes: wasmBytes.slice(0), sampleRate: ctx.sampleRate, factory, params: [...params], seconds });
+    });
+  }
+
   /**
    * Render a song offline in a worker (the full mix, with effects), for a
    * WAV download. `onProgress` gets the share done (0..1).
