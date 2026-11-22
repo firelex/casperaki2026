@@ -18,6 +18,7 @@ import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
 import { BARS_H, CHORD_H, HEADER_W, LOOP_H, MARKERS_H, MAX_PX_PER_BAR, MIN_PX_PER_BAR, ROW_H, RULER_H, TIME_H } from './sequencer/layout';
+import { beginRangeDrag } from './sequencer/rangeDrag';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog } from './sequencer/TrackDialogs';
@@ -239,7 +240,7 @@ export function TimelineView() {
           {/* Loop range across the tracks. */}
           {range ? (
             <div
-              className={`pointer-events-none absolute z-0 border-x ${live.looping ? 'border-sky-300/60 bg-sky-400/[0.07]' : 'border-white/30 bg-white/[0.05]'}`}
+              className={`pointer-events-none absolute z-[5] border-x ${live.looping ? 'border-sky-300 bg-sky-400/[0.16]' : 'border-white/70 bg-white/[0.12]'}`}
               style={{ left: HEADER_W + range.start * px, width: (range.end - range.start) * px, top: RULER_H, bottom: 0 }}
             />
           ) : null}
@@ -293,16 +294,24 @@ export function TimelineView() {
                   data-lane
                   className="relative shrink-0 cursor-pointer border-b border-line/25"
                   style={{ width }}
-                  onClick={(e) => {
-                    setSelectedTrack(t.name);
-                    const s = sectionIndexAt(barFromEvent(e));
-                    if (s >= 0) setActiveSegment(model.sections[s]!.name);
-                  }}
+                  onPointerDown={(e) =>
+                    beginRangeDrag(e, {
+                      el: e.currentTarget,
+                      pxPerBar: px,
+                      totalBars: model.totalBars,
+                      onRange: setRange,
+                      onClick: (bar) => {
+                        setSelectedTrack(t.name);
+                        const s = sectionIndexAt(bar);
+                        if (s >= 0) setActiveSegment(model.sections[s]!.name);
+                      },
+                    })
+                  }
                   onDoubleClick={(e) => {
                     const s = sectionIndexAt(barFromEvent(e));
                     if (s >= 0) openDetail(t, s);
                   }}
-                  title="Double-click a clip to open it; right-click for more"
+                  title="Drag to select a range · double-click a clip to open it · right-click for more"
                 >
                   <TrackCanvas
                     track={t}

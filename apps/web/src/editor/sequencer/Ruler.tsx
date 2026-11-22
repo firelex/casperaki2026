@@ -4,11 +4,9 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { BEATS_PER_BAR, type SequencerModel } from '../sequencerModel';
 import { BARS_H, clockLabel, gridStep, LOOP_H, MARKERS_H, snapUnit, TIME_H } from './layout';
 
-export interface BarRange {
-  /** In bars from the song start (fractions are beats). */
-  readonly start: number;
-  readonly end: number;
-}
+import { beginRangeDrag, type BarRange } from './rangeDrag';
+
+export type { BarRange };
 
 type Drag =
   | { mode: 'new'; anchor: number }
@@ -98,6 +96,24 @@ export function Ruler({
 
   return (
     <div className="relative shrink-0 select-none" style={{ width }}>
+      {/* Range start / end markers across the ruler. */}
+      {range ? (
+        <>
+          {[range.start, range.end].map((b, i) => (
+            <span
+              key={i}
+              className={`pointer-events-none absolute top-0 bottom-0 z-10 w-px ${looping ? 'bg-sky-300' : 'bg-white/80'}`}
+              style={{ left: b * px }}
+            >
+              <span
+                className={`absolute top-[22px] h-0 w-0 border-y-[5px] border-y-transparent ${
+                  i === 0 ? `left-0 border-l-[7px] ${looping ? 'border-l-sky-300' : 'border-l-white/80'}` : `right-0 border-r-[7px] ${looping ? 'border-r-sky-300' : 'border-r-white/80'}`
+                }`}
+              />
+            </span>
+          ))}
+        </>
+      ) : null}
       {/* Section markers. */}
       <div className="relative border-b border-black/50" style={{ height: MARKERS_H }}>
         {model.sections.map((s) => (
@@ -127,8 +143,16 @@ export function Ruler({
       <div
         className="relative cursor-pointer border-b border-black/50 bg-[#151623]"
         style={{ height: BARS_H }}
-        onClick={(e) => onSeekBar(snap(barAt(e.clientX, e.currentTarget), e.altKey))}
-        title="Click to play from here"
+        onPointerDown={(e) =>
+          beginRangeDrag(e, {
+            el: e.currentTarget,
+            pxPerBar: px,
+            totalBars: model.totalBars,
+            onRange: onRangeChange,
+            onClick: (bar, ev) => onSeekBar(snap(bar, ev.altKey)),
+          })
+        }
+        title="Click to play from here, drag to select a range"
       >
         {beats
           ? Array.from({ length: model.totalBars * BEATS_PER_BAR }, (_, b) =>
@@ -159,7 +183,16 @@ export function Ruler({
       <div
         className="relative cursor-pointer border-b border-black/50 bg-[#121320]"
         style={{ height: TIME_H }}
-        onClick={(e) => onSeekBar(barAt(e.clientX, e.currentTarget))}
+        onPointerDown={(e) =>
+          beginRangeDrag(e, {
+            el: e.currentTarget,
+            pxPerBar: px,
+            totalBars: model.totalBars,
+            onRange: onRangeChange,
+            onClick: (bar) => onSeekBar(bar),
+          })
+        }
+        title="Click to play from here, drag to select a range"
       >
         {timeMarks.map((t) => (
           <span
