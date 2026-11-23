@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@teamsuzie/ui';
 import { CommentList } from '../components/SuggestionComments';
+import { downloadBytes, fileStem } from '../export/exportMidi';
+import { mixExportStatus } from '../export/mixExportProgress';
 
 import { songsQueryKeys } from '../api/songs';
 import type { Genre } from '@casperaki/song-schema/schemas';
@@ -205,14 +208,21 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   const [mode, setMode] = useState<Mode>('context');
   // The proposal song plays only the selected pattern (a generator has just the one).
   const takeArg = (t: number) => (p.kind === 'algo' ? undefined : t);
-  const keyFor = (variant: 'proposal' | 'current', t: number = take, snd: string | undefined = sound) =>
+  const keyFor = (variant: 'proposal' | 'current', t: number = take, snd: string | undefined = sound, g: Genre = genre) =>
     variant === 'proposal'
-      ? `pattern:${p.id}:${genre}:proposal:${takeArg(t) ?? 'all'}:${snd ?? 'own'}`
-      : `pattern:${p.id}:${genre}:current:${snd ?? 'own'}`;
-  const keyOf = (m: Mode, t: number = take, snd: string | undefined = sound) => keyFor(m === 'current' ? 'current' : 'proposal', t, snd);
-  const listen = (m: Mode, t: number = take, snd: string | undefined = sound) => {
-    const key = keyOf(m, t, snd);
-    if (live.key === key && live.status === 'playing' && mode === m && t === take && snd === sound) {
+      ? `pattern:${p.id}:${g}:proposal:${takeArg(t) ?? 'all'}:${snd ?? 'own'}`
+      : `pattern:${p.id}:${g}:current:${snd ?? 'own'}`;
+  const keyOf = (m: Mode, t: number = take, snd: string | undefined = sound, g: Genre = genre) => keyFor(m === 'current' ? 'current' : 'proposal', t, snd, g);
+  /** The preview song's loader for these settings (it remembers the song's tracks and sections). */
+  const loaderFor = (m: Mode, t: number, snd: string | undefined, g: Genre) => async (signal: AbortSignal) => {
+    const payload = await patternsApi.preview(p.id, g, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), snd, signal);
+    if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
+    previewInfo.set(keyOf(m, t, snd, g), { lanes: payload.lanes, sections: payload.sections });
+    return payload;
+  };
+  const listen = (m: Mode, t: number = take, snd: string | undefined = sound, g: Genre = genre) => {
+    const key = keyOf(m, t, snd, g);
+    if (live.key === key && live.status === 'playing' && mode === m && t === take && snd === sound && g === genre) {
       void livePlayer.pause();
       return;
     }
@@ -228,10 +238,9 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       // switch to another pattern's sections. (A song not loaded yet starts there anyway.)
       if (live.key === key && (m === 'solo' || t !== take)) livePlayer.seek(start);
     }
+    const load = loaderFor(m, t, snd, g);
     const playing = livePlayer.play(key, async (signal) => {
-      const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), snd, signal);
-      if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
-      previewInfo.set(key, { lanes: payload.lanes, sections: payload.sections });
+      const payload = await load(signal);
       // Solo as the LATEST request for this song asks (it may be a Play solo pressed while this loaded).
       if (latestListen.key === key) livePlayer.setSoloLanes(latestListen.solo ? payload.lanes : []);
       applyFocus(payload.sections, energy); // depends on the pattern only, which the key names
@@ -255,6 +264,36 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     const playingHere = live.key === keyOf(mode) && live.status === 'playing';
     setSound(snd);
     if (playingHere && snd !== sound) listen(mode, take, snd);
+  };
+  // Another style while this card plays: that style's song, in the same mode and at the pattern's section.
+  const selectGenre = (g: Genre) => {
+    const playingHere = live.key === keyOf(mode) && (live.status === 'playing' || live.status === 'loading');
+    setGenre(g);
+    setSound(undefined); // the sounds on offer depend on the genre
+    if (playingHere && g !== genre) listen(mode, take, undefined, g);
+  };
+  // Download MP3: the song as last heard on this card (proposal or current, in context or solo), rendered in the
+  // browser; mastered like playback, but a solo unmastered (mastering one instrument alone would push it up).
+  const [download, setDownload] = useState<{ status: string } | { error: string } | undefined>(undefined);
+  const downloadMp3 = async () => {
+    const key = keyOf(mode);
+    const load = loaderFor(mode, take, sound, genre);
+    setDownload({ status: 'Preparing the song…' });
+    try {
+      let soloLanes: string[] | undefined;
+      if (mode === 'solo') {
+        if (!previewInfo.has(key)) await livePlayer.payloadOf(key, load);
+        const info = previewInfo.get(key);
+        if (!info) throw new Error('The preview song did not say which tracks to solo.');
+        soloLanes = info.lanes;
+      }
+      const files = await livePlayer.mixExport(key, load, (pr) => setDownload({ status: `Making the MP3: ${mixExportStatus(pr).label}` }), soloLanes);
+      const what = mode === 'current' ? 'current library' : `pattern ${take + 1}${mode === 'solo' ? ', solo' : ''}`;
+      downloadBytes(mode === 'solo' ? files.unmasteredMp3 : files.masteredMp3, `${fileStem(`${p.name} - ${GENRE_LABELS[genre]} (${what})`)}.mp3`, 'audio/mpeg');
+      setDownload(undefined);
+    } catch (err) {
+      setDownload({ error: err instanceof Error ? err.message : String(err) });
+    }
   };
   // Open in editor: the song as heard (the mode last played: the proposal, or the current library) as a new project.
   const navigate = useNavigate();
@@ -328,10 +367,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         {p.genres.length > 1 ? (
           <select
             value={genre}
-            onChange={(e) => {
-              setGenre(e.target.value as Genre);
-              setSound(undefined); // the sounds on offer depend on the genre
-            }}
+            onChange={(e) => selectGenre(e.target.value as Genre)}
             aria-label="Genre for the preview song"
             className="h-10 rounded-[8px] border border-line bg-bg px-3 text-[14px] text-white"
           >
@@ -369,16 +405,39 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         <ListenButton state={stateOf('context')} onClick={() => listen('context')} label="Play in context" primary />
         <ListenButton state={stateOf('solo')} onClick={() => listen('solo')} label="Play solo" primary />
         <ListenButton state={stateOf('current')} onClick={() => listen('current')} label="Current library" />
-        <button
-          type="button"
-          onClick={() => openInEditor.mutate()}
-          disabled={openInEditor.isPending}
-          title={`Save this song (${mode === 'current' ? 'the current library' : 'with this pattern'}${sound ? ', with the chosen sound' : ''}) as a new song and open it`}
-          className="h-10 rounded-full border border-line px-4 text-[14px] text-white/80 hover:border-white/60 hover:text-white disabled:opacity-50"
-        >
-          {openInEditor.isPending ? 'Opening…' : 'Open in editor'}
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-[18px] leading-none text-white/80 outline-none hover:border-white/60 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60"
+            aria-label="More: open in editor, download MP3"
+            title="Open in editor, download MP3"
+          >
+            ⋯
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" sideOffset={6} className="z-50 min-w-[240px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl">
+            <DropdownMenuItem
+              className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10"
+              disabled={openInEditor.isPending}
+              onSelect={() => openInEditor.mutate()}
+            >
+              Open in editor
+              <div className="text-[11px] text-white/45">This song as a new song of yours</div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10"
+              disabled={download !== undefined && 'status' in download}
+              onSelect={() => void downloadMp3()}
+            >
+              Download MP3
+              <div className="text-[11px] text-white/45">
+                {mode === 'current' ? 'The current library' : mode === 'solo' ? 'This pattern, solo' : 'This pattern in context'} · {GENRE_LABELS[genre]}
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {openInEditor.isPending ? <span className="text-[13px] text-white/55">Opening…</span> : null}
         {openInEditor.isError ? <span className="text-[13px] text-err">Not opened: {openInEditor.error.message}</span> : null}
+        {download && 'status' in download ? <span className="text-[13px] text-white/55">{download.status}</span> : null}
+        {download && 'error' in download ? <span className="text-[13px] text-err">No MP3: {download.error}</span> : null}
         {live.key === keyOf(mode) && live.status === 'loading' ? (
           <span className="text-[13px] text-white/55">{live.step}</span>
         ) : live.key === keyOf(mode) && live.status === 'error' ? (

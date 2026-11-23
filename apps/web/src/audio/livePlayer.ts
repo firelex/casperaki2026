@@ -871,6 +871,8 @@ export class LivePlayer {
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
     onProgress: (p: MixExportProgress) => void,
+    /** Only these tracks heard (the pattern lab's solo download). */
+    soloLanes?: readonly string[],
   ): Promise<MixExportFiles> {
     const ctx = this.context();
     const [{ payload, realSamples }, wasmBytes, stubs, lameBytes] = await Promise.all([
@@ -912,6 +914,7 @@ export class LivePlayer {
         samples: stubs,
         realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
         mixConfig: utf8.encode(payload.mixConfig),
+        ...(soloLanes ? { soloLanes: [...soloLanes] } : {}),
       }, [lameBytes]);
     });
   }

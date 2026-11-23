@@ -10,9 +10,10 @@
 //      { type: 'profile', wasmBytes, sampleRate, ...build options }
 //          -> { type: 'profile', bytes }  (the matched-mastering profile of the unmastered mix,
 //             for the playback worklet's live_set_profile)
-//      { type: 'mixExport', wasmBytes, lameBytes, sampleRate, ...build options }
+//      { type: 'mixExport', wasmBytes, lameBytes, sampleRate, soloLanes?, ...build options }
 //          -> { type: 'exportProgress', phase, share }..., { type: 'mixExport', files: {name: Uint8Array} }
-//             the four mix downloads: mastered.mp3/.wav, unmastered.mp3/.wav (as the server's render)
+//             the four mix downloads: mastered.mp3/.wav, unmastered.mp3/.wav (as the server's render);
+//             soloLanes: only these tracks are heard (the pattern lab's "solo" download)
 // Out: { type: 'lanes', names, binCount, binSec, mix }   (mix: laneInfo, the resolved mix)
 //      { type: 'progress', doneBins, peaks: Float32Array[], busPeaks: Float32Array[4] }   (repeated, then)
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
@@ -28,11 +29,21 @@ const POST_EVERY_MS = 400;
 /** LAME VBR quality: -V2, as the server's ffmpeg -q:a 2. */
 const MP3_VBR_QUALITY = 2;
 
+/** Only `solo` tracks heard (the others at gain 0), before the first pull. */
+function soloOnly(e, solo) {
+  const names = laneNames(e);
+  for (const lane of solo) if (!names.includes(lane)) throw new Error(`solo: the song has no track "${lane}"`);
+  names.forEach((name, i) => {
+    if (e.mixer_set_lane_gain(i, solo.includes(name) ? 1 : 0) !== 1) throw new Error(`mixer_set_lane_gain failed: ${lastError(e)}`);
+  });
+}
+
 /** The whole song, unmastered (mix on, no mastering stage), at MIX_BLOCK. */
 function renderUnmastered(o, onShare) {
   if (o.mastered || o.liveMastering) throw new Error('the unmastered render must not ask for mastering');
   const e = instantiateEngine(o.wasmBytes);
   const totalFrames = buildMixer(e, { ...o, blockFrames: MIX_BLOCK });
+  if (o.soloLanes) soloOnly(e, o.soloLanes);
   const left = new Float32Array(totalFrames);
   const right = new Float32Array(totalFrames);
   const l = new Float32Array(e.memory.buffer, e.mixer_left(), MIX_BLOCK);
