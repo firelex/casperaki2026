@@ -109,8 +109,12 @@ http://localhost:16500.
 ## Start, deploy, restart
 
 - `deploy/datigator/start.sh` starts the tmux sessions `casperaki-auth` and `casperaki-brain` if they are missing.
-- `deploy/datigator/deploy.sh [--auth]`: from a clean checkout, it installs, builds the teamsuzie packages, the
-  casperaki packages and the web app, then restarts the brain (and the auth service with `--auth`).
+- `deploy/datigator/deploy.sh [--auth] [--full]`: from a clean checkout (work in progress under `apps/models` is
+  allowed), it installs, builds the teamsuzie packages, the casperaki packages, the browser engine and MP3 encoder
+  (WASM), the native renderer and the web app, then restarts the brain (and the auth service with `--auth`). A
+  step is skipped when its inputs are unchanged since the last deploy (fingerprints in
+  `~/.local/state/casperaki-deploy/`; a missing output also rebuilds); `--full` rebuilds everything. Typical
+  times: nothing changed 6 s, web only about 30 s, everything about 65 s.
 - The auth service runs from source with tsx, on purpose. Its `tsc` build does not copy `src/migrations` into
   `dist/`, so the built server skips its migrations and never creates `oidc_models` (open_teamsuzie bug, below).
 
