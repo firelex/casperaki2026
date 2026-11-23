@@ -41,12 +41,13 @@ def main():
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--workers", type=int, default=24)
     ap.add_argument("--dataset", default="humbeats", help="dataset name inside the Beat This! layout (round two: humbeats2)")
+    ap.add_argument("--splits", default="train=train,dev=val", help="folder=part pairs (the rendered songs: train=train)")
     args = ap.parse_args()
     ann = args.out / "annotations" / args.dataset
     (ann / "annotations" / "beats").mkdir(parents=True, exist_ok=True)
     (ann / "info.json").write_text(json.dumps({"has_downbeats": True}))
     jobs, split_lines = [], []
-    for split, part in (("train", "train"), ("dev", "val")):
+    for split, part in (x.split("=") for x in args.splits.split(",")):
         if not (args.data / split).exists():
             raise SystemExit(f"{args.data / split} does not exist")
         for b in sorted((args.data / split).glob("*.beats")):
