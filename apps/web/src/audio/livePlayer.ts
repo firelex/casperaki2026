@@ -365,6 +365,7 @@ export class LivePlayer {
       this.enterLoopIfOutside();
       if (this.state.status !== 'playing') this.playStartPos = this.enginePosition();
       await resumed;
+      this.assertRunning(ctx);
       this.set({ status: 'playing' });
       return;
     }
@@ -443,6 +444,7 @@ export class LivePlayer {
         return;
       }
       await resumed;
+      this.assertRunning(ctx);
       // Where the new version starts: the current position when swapping in
       // an edit, else the start (or the loop's start).
       const swapAt = seamless ? Math.min(this.enginePosition(), durationSec) : undefined;
@@ -468,6 +470,13 @@ export class LivePlayer {
         startAt = loop.start;
         this.playStartPos = loop.start;
       } else this.playStartPos = 0;
+      // An exception on the audio thread stops the node silently: say so, and start fresh next time.
+      node.onprocessorerror = () => {
+        if (node !== this.node) return;
+        console.error(`[live] the audio engine stopped while playing ${key} (processor error)`);
+        this.teardown();
+        this.set({ status: 'error', error: 'The audio engine stopped while playing (an error on the audio thread). Press Play to start it again.' });
+      };
       node.connect(this.output(ctx));
       this.anchorTime = ctx.currentTime;
       this.anchorPos = startAt;
@@ -943,15 +952,54 @@ export class LivePlayer {
   }
 
   private context(): AudioContext {
+    // A closed context (the browser can close it) is replaced, with its worklet module and level tap.
+    if (this.ctx?.state === 'closed') {
+      this.ctx = undefined;
+      this.workletAdded = undefined;
+      this.tap = undefined;
+    }
     if (!this.ctx) this.ctx = new AudioContext({ latencyHint: 'playback', sampleRate: SAMPLE_RATE });
     return this.ctx;
+  }
+
+  /** After resume(): the browser must really be playing audio, else say so (never play silence). */
+  private assertRunning(ctx: AudioContext): void {
+    if (ctx.state !== 'running') {
+      throw new Error(`The browser's audio is ${ctx.state}, not running. Click Play again (browsers start audio only after a click).`);
+    }
+  }
+
+  private tap: AnalyserNode | undefined;
+  private tapBuf: Float32Array | undefined;
+
+  /** The loudest sample of the output just now, in dBFS (−Infinity when silent or nothing plays). */
+  outputPeakDb(): number {
+    if (!this.tap || !this.node || this.state.status !== 'playing') return -Infinity;
+    this.tapBuf ??= new Float32Array(this.tap.fftSize);
+    this.tap.getFloatTimeDomainData(this.tapBuf);
+    let peak = 0;
+    for (const v of this.tapBuf) peak = Math.max(peak, Math.abs(v));
+    return peak > 0 ? 20 * Math.log10(peak) : -Infinity;
+  }
+
+  /** Clear what one song's view left on the player: solo, mutes and the loop (a new card starts clean). */
+  clearMixState(): void {
+    this.set({ solo: [], muted: [], loopRange: undefined, looping: false });
+    this.postLaneGains();
+    this.postLoop();
   }
 
   /** The engine output goes straight to the speakers: the engine's mastering
    *  stage (NC-17) already limits the peaks, so no browser compressor colours
    *  the sound (it used to, unlike the server export). */
   private output(ctx: AudioContext): AudioNode {
-    return ctx.destination;
+    // A pass-through level tap (for "playing, but nothing is audible" checks).
+    if (!this.tap) {
+      this.tap = ctx.createAnalyser();
+      this.tap.fftSize = 2048;
+      this.tap.connect(ctx.destination);
+    }
+    return this.tap;
   }
 
   private teardown(): void {

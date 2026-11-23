@@ -239,6 +239,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       return;
     }
     setMode(m);
+    // Another song (another card, style, or the first play): start clean, nothing left from the last one.
+    if (!swap && livePlayer.getState().key !== key) livePlayer.clearMixState();
     const request = { n: latestListen.n + 1, key, solo: m === 'solo' };
     latestListen = request;
     const energy = energyOf(p, t);
@@ -273,7 +275,12 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     // A song already loading for an earlier request does not run this request's loader: set solo once it plays.
     void playing.then(() => {
       if (latestListen.n !== request.n) return;
+      const st = livePlayer.getState();
       const loaded = previewInfo.get(key);
+      console.info(
+        `[lab] ${p.id} ${m} pattern ${t + 1} ${g}${snd ? ` sound ${snd}` : ''}: ${st.status}${st.error ? ` (${st.error})` : ''}` +
+          `, loop ${st.loopRange ? `${st.loopRange.start.toFixed(1)}-${st.loopRange.end.toFixed(1)} s` : 'off'}, solo [${st.solo.join(', ')}], muted [${st.muted.join(', ')}]`,
+      );
       if (!loaded) return;
       let start: number;
       try {
@@ -473,12 +480,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         {download && 'status' in download ? <span className="text-[13px] text-white/55">{download.status}</span> : null}
         {download && 'error' in download ? <span className="text-[13px] text-err">No MP3: {download.error}</span> : null}
         {listenError ? <span className="text-[13px] text-err">{listenError}</span> : null}
-        {live.key === keyOf(mode) && live.status === 'loading' ? (
-          <span className="text-[13px] text-white/55">{live.step}</span>
-        ) : live.key === keyOf(mode) && live.status === 'error' ? (
-          <span className="text-[13px] text-err">{live.error}</span>
-        ) : null}
       </div>
+      {live.key === keyOf(mode) ? <CardStatus info={previewInfo.get(keyOf(mode))} instrument={FAMILY_LABELS[p.family]} /> : null}
       <p className="mt-2 text-[12px] text-white/40">
         In context plays a whole {GENRE_LABELS[genre]} song with this pattern on the {FAMILY_LABELS[p.family].toLowerCase()}; solo
         plays just the {FAMILY_LABELS[p.family].toLowerCase()}, where it plays.
@@ -587,4 +590,65 @@ function StatusBadge({ status, inLibrary }: { status: 'approved' | 'rejected' | 
           : ['Rejected', 'border-err/50 text-err']
         : ['To review', 'border-line text-white/70'];
   return <span className={`rounded-full border px-3 py-1 text-[12px] ${tone}`}>{text}</span>;
+}
+
+/**
+ * The playing card's status line: what it is doing (loading, which part plays, solo),
+ * any error in red, a load that stalls, and "playing, but nothing is audible" with the
+ * likely reason when the output stays silent for 3 s.
+ */
+function CardStatus({ info, instrument }: { info: { lanes: string[]; sections: PreviewSection[] } | undefined; instrument: string }) {
+  const live = useLiveState();
+  const [loadingFor, setLoadingFor] = useState(0);
+  const [quietFor, setQuietFor] = useState(0);
+  useEffect(() => {
+    setLoadingFor(0);
+    if (live.status !== 'loading') return;
+    const t0 = performance.now();
+    const t = setInterval(() => setLoadingFor(Math.floor((performance.now() - t0) / 1000)), 1000);
+    return () => clearInterval(t);
+  }, [live.status, live.key]);
+  useEffect(() => {
+    setQuietFor(0);
+    if (live.status !== 'playing') return;
+    let quiet = 0;
+    const t = setInterval(() => {
+      quiet = livePlayer.outputPeakDb() < -80 ? quiet + 500 : 0;
+      setQuietFor(quiet);
+    }, 500);
+    return () => clearInterval(t);
+  }, [live.status, live.key]);
+
+  if (live.status === 'error') return <p className="mt-2 text-[13px] text-err" role="alert">{live.error ?? 'The player stopped with an error it did not name.'}</p>;
+  if (live.status === 'loading') {
+    return (
+      <p className={`mt-2 text-[13px] ${loadingFor >= 20 ? 'text-[#ffb347]' : 'text-white/55'}`} role="status">
+        {loadingFor >= 20 ? `Still loading after ${loadingFor} s: ${live.step || 'waiting for the server'}` : live.step || 'Preparing the song…'}
+      </p>
+    );
+  }
+  if (live.status !== 'playing' || !info) return null;
+  const range = live.looping ? live.loopRange : undefined;
+  const inRange = range ? info.sections.filter((x) => x.start < range.end - 0.01 && x.end > range.start + 0.01) : info.sections;
+  const what = range ? `${inRange.map((x) => x.name).join(' + ')}, looped` : 'the whole song';
+  const solo = live.solo.length ? `, solo: ${live.solo.join(', ')}` : '';
+  let silent: string | undefined;
+  if (quietFor >= 3000) {
+    const missing = live.solo.filter((l) => !live.laneNames.includes(l));
+    silent =
+      live.solo.length && missing.length === live.solo.length
+        ? `the soloed tracks (${missing.join(', ')}) are not in this song`
+        : !inRange.some((x) => x.plays)
+          ? `the ${instrument.toLowerCase()} has no notes in ${what.replace(', looped', '')}`
+          : live.muted.length
+            ? `tracks are muted: ${live.muted.join(', ')}`
+            : 'the engine gives no sound here (a long rest in the part, or a problem: if it stays silent, tell us what you clicked)';
+  }
+  return (
+    <p className={`mt-2 text-[13px] ${silent ? 'text-[#ffb347]' : 'text-white/55'}`} role="status">
+      Playing {what}
+      {solo}
+      {silent ? ` · Playing, but nothing is audible: ${silent}.` : ''}
+    </p>
+  );
 }
