@@ -70,6 +70,23 @@ const ADAPTERS: AdapterDef[] = [
     category: 'app', // pure DSP, no weights to download
     port: 16503,
   },
+  {
+    id: 'hum',
+    label: 'Hum transcription',
+    description: 'Beats, key and notes from a hummed or sung recording (hum to song). POST /transcribe.',
+    kind: 'audio',
+    // Its weights are training runs on /mnt/d (hum-beats, hum-pitch), not a downloaded model folder.
+    category: 'app',
+    port: 16510,
+  },
+  {
+    id: 'amt',
+    label: 'Melody completion (AMT)',
+    description: 'Fill the missing bars of a hummed melody over chords (Anticipatory Music Transformer). POST /complete.',
+    kind: 'audio',
+    modelFolder: 'stanford-crfm__music-medium-800k',
+    port: 16511,
+  },
 ];
 
 function basePython(): string {
