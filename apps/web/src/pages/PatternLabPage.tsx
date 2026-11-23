@@ -49,26 +49,36 @@ const FAMILY_ORDER: readonly Family[] = ['drums', 'bass', 'keys', 'guitar', 'pad
 /** Per preview song (by player key): the tracks of the proposal's instrument and the sections. */
 const previewInfo = new Map<string, { lanes: string[]; sections: PreviewSection[] }>();
 
-/** The section a verses / choruses pattern is heard in: the first verse (or chorus), else the first
- *  section of that energy. Undefined for a pattern every section plays. */
-function focusSection(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): PreviewSection | undefined {
+/** Where a verses / choruses pattern is heard: the first run of back-to-back verses (or choruses),
+ *  e.g. verse1 + verse2, else the first run of sections of that energy. Undefined for a pattern
+ *  every section plays. */
+function focusRange(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): { start: number; end: number } | undefined {
   if (!energy) return undefined;
   const type = energy === 'low' ? 'verse' : 'chorus';
-  const hit = sections.find((x) => x.name.replace(/\d+$/u, '') === type) ?? sections.find((x) => x.energy === energy);
-  if (!hit) throw new Error(`The preview song has no ${type} to play this pattern in.`);
-  return hit;
+  const typeOf = (x: PreviewSection) => x.name.replace(/\d+$/u, '');
+  let match = (x: PreviewSection) => typeOf(x) === type;
+  let i = sections.findIndex(match);
+  if (i < 0) {
+    match = (x) => x.energy === energy;
+    i = sections.findIndex(match);
+  }
+  if (i < 0) throw new Error(`The preview song has no ${type} to play this pattern in.`);
+  let j = i;
+  while (j + 1 < sections.length && match(sections[j + 1]!)) j++;
+  return { start: sections[i]!.start, end: sections[j]!.end };
 }
 
-/** Loop the section the selected pattern belongs to (or play the whole song). */
-function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined, seekNow: boolean): void {
-  const s = focusSection(sections, energy);
-  if (!s) {
+/** Loop the sections the selected pattern belongs to (or play the whole song); returns where
+ *  that part starts. */
+function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): number {
+  const r = focusRange(sections, energy);
+  if (!r) {
     livePlayer.setLoopRange(undefined);
-    return;
+    return 0;
   }
-  livePlayer.setLoopRange({ start: s.start, end: s.end });
+  livePlayer.setLoopRange(r);
   livePlayer.setLooping(true);
-  if (seekNow) livePlayer.seek(s.start);
+  return r.start;
 }
 
 export function PatternLabPage() {
@@ -185,13 +195,18 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     const energy = energyOf(p, t);
     const info = previewInfo.get(key);
     livePlayer.setSoloLanes(m === 'solo' && info ? info.lanes : []);
-    if (info) applyFocus(info.sections, energy, live.key === key);
+    if (info) {
+      const start = applyFocus(info.sections, energy);
+      // Solo always starts from the beginning (of the pattern's sections, or of the song); so does a
+      // switch to another pattern's sections. (A song not loaded yet starts there anyway.)
+      if (live.key === key && (m === 'solo' || t !== take)) livePlayer.seek(start);
+    }
     void livePlayer.play(key, async (signal) => {
       const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), signal);
       if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
       previewInfo.set(key, { lanes: payload.lanes, sections: payload.sections });
       if (m === 'solo') livePlayer.setSoloLanes(payload.lanes);
-      applyFocus(payload.sections, energy, false);
+      applyFocus(payload.sections, energy);
       return payload;
     });
   };
@@ -287,7 +302,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       <p className="mt-2 text-[12px] text-white/40">
         In context and the current library play the same {GENRE_LABELS[genre]} song; only{' '}
         {DIFFERS[p.family]}. Solo plays just the {FAMILY_LABELS[p.family].toLowerCase()} of the in-context song.
-        {energyOf(p, take) ? ` This pattern is for ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'}: playing loops the first ${energyOf(p, take) === 'low' ? 'verse' : 'chorus'}.` : ''}
+        {energyOf(p, take) ? ` This pattern is for ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'}: playing loops the first ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'} (back-to-back ones together).` : ''}
       </p>
 
       <div className="mt-6 flex flex-col gap-3 border-t border-line/60 pt-5 sm:flex-row sm:items-end">
