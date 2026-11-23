@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Genre } from '@casperaki/song-schema/schemas';
 
-import { patternsApi, patternsQueryKey, type PatternProposal } from '../api/patterns';
+import { patternsApi, patternsQueryKey, type PatternProposal, type PreviewSection } from '../api/patterns';
 import { livePlayer } from '../audio/livePlayer';
 import { useLiveState } from '../audio/useLivePlayer';
 import { AppHeader } from '../layout/AppHeader';
@@ -46,12 +46,40 @@ const FAMILY_ORDER: readonly Family[] = ['drums', 'bass', 'keys', 'guitar', 'pad
  * Approved patterns reach new songs once exported into the library
  * (apps/brain/scripts/export-approved-patterns.ts).
  */
-/** The tracks of each proposal song's instrument, by player key (from the preview). */
-const soloLanes = new Map<string, string[]>();
+/** Per preview song (by player key): the tracks of the proposal's instrument and the sections. */
+const previewInfo = new Map<string, { lanes: string[]; sections: PreviewSection[] }>();
+
+/** The section a verses / choruses pattern is heard in: the first verse (or chorus), else the first
+ *  section of that energy. Undefined for a pattern every section plays. */
+function focusSection(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): PreviewSection | undefined {
+  if (!energy) return undefined;
+  const type = energy === 'low' ? 'verse' : 'chorus';
+  const hit = sections.find((x) => x.name.replace(/\d+$/u, '') === type) ?? sections.find((x) => x.energy === energy);
+  if (!hit) throw new Error(`The preview song has no ${type} to play this pattern in.`);
+  return hit;
+}
+
+/** Loop the section the selected pattern belongs to (or play the whole song). */
+function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined, seekNow: boolean): void {
+  const s = focusSection(sections, energy);
+  if (!s) {
+    livePlayer.setLoopRange(undefined);
+    return;
+  }
+  livePlayer.setLoopRange({ start: s.start, end: s.end });
+  livePlayer.setLooping(true);
+  if (seekNow) livePlayer.seek(s.start);
+}
 
 export function PatternLabPage() {
-  // The player is shared with the editor: leave nothing soloed behind.
-  useEffect(() => () => livePlayer.setSoloLanes([]), []);
+  // The player is shared with the editor: leave nothing soloed or looped behind.
+  useEffect(
+    () => () => {
+      livePlayer.setSoloLanes([]);
+      livePlayer.setLoopRange(undefined);
+    },
+    [],
+  );
   const [filter, setFilter] = useState<Filter>('pending');
   const [family, setFamily] = useState<Family | 'all'>('all');
   const query = useQuery({ queryKey: patternsQueryKey, queryFn: ({ signal }) => patternsApi.list(signal) });
@@ -151,17 +179,26 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       return;
     }
     setMode(m);
-    const lanes = soloLanes.get(key);
-    if (m === 'solo' && lanes) livePlayer.setSoloLanes(lanes);
-    else livePlayer.setSoloLanes([]);
+    const energy = energyOf(p, take);
+    const info = previewInfo.get(key);
+    livePlayer.setSoloLanes(m === 'solo' && info ? info.lanes : []);
+    if (info) applyFocus(info.sections, energy, false);
     void livePlayer.play(key, async (signal) => {
       const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', signal);
       if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
-      soloLanes.set(key, payload.lanes);
+      previewInfo.set(key, { lanes: payload.lanes, sections: payload.sections });
       if (m === 'solo') livePlayer.setSoloLanes(payload.lanes);
+      applyFocus(payload.sections, energy, false);
       return payload;
     });
   };
+  // Choosing another pattern while this card plays moves to that pattern's section.
+  const playingKey = live.key === keyOf(mode) && (live.status === 'playing' || live.status === 'paused') ? live.key : undefined;
+  useEffect(() => {
+    const info = playingKey ? previewInfo.get(playingKey) : undefined;
+    if (info) applyFocus(info.sections, energyOf(p, take), true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [take]);
   const stateOf = (m: Mode) => (live.key === keyOf(m) && mode === m ? live.status : 'idle');
   const status = p.review?.status;
 
@@ -248,6 +285,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       <p className="mt-2 text-[12px] text-white/40">
         In context and the current library play the same {GENRE_LABELS[genre]} song; only{' '}
         {DIFFERS[p.family]}. Solo plays just the {FAMILY_LABELS[p.family].toLowerCase()} of the in-context song.
+        {energyOf(p, take) ? ` This pattern is for ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'}: playing loops the first ${energyOf(p, take) === 'low' ? 'verse' : 'chorus'}.` : ''}
       </p>
 
       <div className="mt-6 flex flex-col gap-3 border-t border-line/60 pt-5 sm:flex-row sm:items-end">

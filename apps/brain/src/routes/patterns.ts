@@ -27,6 +27,7 @@ import {
   loadPatternProposals,
   orchestrate,
   previewParamsFor,
+  sectionEnergy,
   type PatternProposal,
 } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
@@ -143,7 +144,16 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
       const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
       // The tracks that play the proposal's instrument (the lab's "Play solo" solos them).
       const lanes = song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
-      return res.json({ ...(await playbackPayload(playback, id, canonical)), seed, lanes });
+      // Where each section plays (the lab starts a verse or chorus pattern at its section).
+      const secPerBar = (4 * 60) / song.bpm;
+      let bar = 0;
+      const sections = song.songStructure.map((seg) => {
+        const bars = seg.lengthInBars ?? seg.bars.length;
+        const s = { name: seg.name, energy: sectionEnergy(seg.name) ?? null, start: bar * secPerBar, end: (bar + bars) * secPerBar };
+        bar += bars;
+        return s;
+      });
+      return res.json({ ...(await playbackPayload(playback, id, canonical)), seed, lanes, sections });
     } catch (err) {
       return res.status(500).json({ error: 'preview_failed', message: err instanceof Error ? err.message : String(err) });
     }

@@ -72,6 +72,12 @@ describe('pattern lab', () => {
       // The tracks "Play solo" solos: at least one, all of the proposal's instrument.
       expect(body.lanes!.length, p.id).toBeGreaterThan(0);
       for (const lane of body.lanes!) expect(laneFamilyOf(lane), lane).toBe(family);
+      // Sections back to back from 0, with verses quiet and choruses full.
+      const sections = (body as unknown as { sections: { name: string; energy: string | null; start: number; end: number }[] }).sections;
+      expect(sections[0]!.start).toBe(0);
+      for (let i = 1; i < sections.length; i++) expect(sections[i]!.start).toBeCloseTo(sections[i - 1]!.end, 9);
+      expect(sections.some((x) => x.name.startsWith('verse') && x.energy === 'low')).toBe(true);
+      expect(sections.some((x) => x.name.startsWith('chorus') && x.energy === 'high')).toBe(true);
     }
   });
 });

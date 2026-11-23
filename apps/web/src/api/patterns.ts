@@ -51,12 +51,20 @@ export type PatternProposal =
   | (ProposalBase & { readonly family: LaneFamily; readonly kind: 'chordTones'; readonly patterns: ChordTonePattern[] })
   | (ProposalBase & { readonly family: 'guitar'; readonly kind: 'guitarPicks'; readonly patterns: GuitarPickPattern[] });
 
+/** A section of a preview song: where it plays (seconds) and how full it is (verses low, choruses high). */
+export interface PreviewSection {
+  readonly name: string;
+  readonly energy: 'low' | 'high' | null;
+  readonly start: number;
+  readonly end: number;
+}
+
 export const patternsApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ proposals: PatternProposal[] }>('/api/patterns', { signal }),
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
     defaultBrainClient.post<{ review: PatternReview | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
   preview: (id: string, genre: Genre, variant: 'proposal' | 'current', signal?: AbortSignal) =>
-    defaultBrainClient.post<PlaybackPayload & { seed: string; /** Tracks playing the proposal's instrument. */ lanes: string[] }>(
+    defaultBrainClient.post<PlaybackPayload & { seed: string; /** Tracks playing the proposal's instrument. */ lanes: string[]; sections: PreviewSection[] }>(
       `/api/patterns/${encodeURIComponent(id)}/preview`,
       { genre, variant },
       { signal },
