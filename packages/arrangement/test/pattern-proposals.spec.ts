@@ -21,6 +21,19 @@ const tmpProposals = (content: unknown) => {
 const base = { family: 'drums', name: 'n', genres: ['latin'], rationale: 'r' };
 
 describe('pattern proposals', () => {
+  it('a bass preview plays its pattern in every section (no arrangement override replaces it)', () => {
+    const p = loadPatternProposals().find((x) => x.id === 'urban-rnb-bass');
+    if (!p || p.kind !== 'bassPatterns') throw new Error('urban-rnb-bass proposal missing');
+    const song = orchestrate({ genre: 'urban', key: 'C', bpm: 90, seed: 'pattern-lab-urban-rnb-bass-urban', params: previewParamsFor(p, 0) });
+    const onsets = new Set(p.patterns[0]!.map(([beat]) => beat));
+    for (const seg of song.songStructure) {
+      const bars = song.arrangement[seg.name]!.overrides.Bass?.bars ?? [];
+      bars.forEach((bar, i) => {
+        for (const beat of Object.keys(bar.notes)) expect(onsets, `${seg.name} bar ${i} beat ${beat}`).toContain((i % 2) * 4 + Number(beat));
+      });
+    }
+  });
+
   it('loads the committed proposals', () => {
     const ps = loadPatternProposals();
     expect(ps.length).toBeGreaterThan(0);

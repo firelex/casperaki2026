@@ -23,6 +23,7 @@ import { MidiNoteSchema, type Segment, type SongStructure } from '@casperaki/son
 import type { GeneratorContext } from '../context.js';
 import { describeDrumBank } from '../patterns/drums-bank.js';
 import { generateDrumPattern } from '../patterns/drums.js';
+import { bassPreviewFromParams, drumPreviewFromParams } from '../patterns/proposals.js';
 import { addNoteEvent, emptyBarPattern } from '../patterns/shared.js';
 import type { BarPattern, FamilyPattern, PatternResult } from '../patterns/types.js';
 import type { InstrumentFamily, SelectionResult } from '../selection/types.js';
@@ -625,18 +626,22 @@ export function applyArrangementOverrides(
   );
 
   const segmentByName = new Map(structure.map((s) => [s.name, s]));
+  // Pattern lab: a preview of drums or bass must play the proposed pattern in every section, so
+  // that lane keeps it (the decisions above still run: the rng streams stay the same).
+  const keepDrums = drumPreviewFromParams(ctx.params.params) !== undefined;
+  const keepBass = bassPreviewFromParams(ctx.params.params) !== undefined;
 
   const segments = patterns.segments.map((segPat) => {
     const segment = segmentByName.get(segPat.segmentName);
     if (!segment) return segPat;
     const lanes: Record<string, FamilyPattern> = { ...segPat.lanes };
 
-    if (drumLane && lanes[drumLane]) {
+    if (drumLane && lanes[drumLane] && !keepDrums) {
       const dec = drumDecisions[segPat.segmentName] ?? { kind: 'none' };
       lanes[drumLane] = applyDrumDecision(ctx, segment, lanes[drumLane]!, dec);
     }
 
-    if (bassLane && lanes[bassLane]) {
+    if (bassLane && lanes[bassLane] && !keepBass) {
       const bdec = bassDecisions[segPat.segmentName];
       if (bdec) lanes[bassLane] = synthesizeBassOverrideForSegment(segment, bdec);
     }
