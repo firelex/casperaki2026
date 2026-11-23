@@ -25,6 +25,9 @@ sys.path.insert(0, str(HERE))
 from hum_pitch.model import HumNotes, frame_labels, model_inputs, reference_pitch  # noqa: E402
 
 
+KEY_SOURCES = {"exact"}  # stored keys trained on (set by --key-sources)
+
+
 def load(feat_dir: Path, name: str, limit: int = 0) -> list[dict]:
     z = np.load(feat_dir / f"{name}.npz")
     metas = [json.loads(l) for l in (feat_dir / f"{name}.jsonl").read_text().splitlines()]
@@ -33,7 +36,7 @@ def load(feat_dir: Path, name: str, limit: int = 0) -> list[dict]:
     clips = []
     for i, m in enumerate(metas[:limit] if limit else metas):
         clips.append({"id": m["id"], "feat": feat[fo[i]:fo[i + 1]], "notes": notes[no[i]:no[i + 1]], "sig": np.asarray(m["sig_soft"], np.float32),
-                      "key_label": m["key_label"]})
+                      "key_label": m["key_label"] if m["key_source"] in KEY_SOURCES else None})
     return clips
 
 
@@ -132,6 +135,8 @@ def main():
     ap.add_argument("--eval-every", type=int, default=200)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--key24", action="store_true", help="add the 24-class key head, trained on clips with a stored key")
+    ap.add_argument("--key-sources", nargs="+", default=["exact"], choices=["exact", "estimated"],
+                    help="which stored keys count as labels (default: only keys the generator chose)")
     args = ap.parse_args()
     if args.epochs != 1:
         raise SystemExit("one epoch per run (owner's rule)")
@@ -141,6 +146,8 @@ def main():
     device = "cuda"
     if not torch.cuda.is_available():
         raise SystemExit("no GPU visible")
+    KEY_SOURCES.clear()
+    KEY_SOURCES.update(args.key_sources)
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
     train = [c for name in args.train for c in load(args.features, name, args.limit)]

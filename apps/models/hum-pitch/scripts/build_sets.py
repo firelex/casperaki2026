@@ -25,6 +25,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from hum_pitch.core import SETS_DIR  # noqa: E402
+from hum_pitch.keys import key_source, stored_key  # noqa: E402
 
 HB = Path("/mnt/d/casperaki-data/hum-beats")
 PER_GROUP = {"voice": 100, "breathy": 50, "instrument": 100}
@@ -85,7 +86,8 @@ def synth(folder: Path, round_name: str, rng: np.random.Generator) -> list[dict]
                 raise FileNotFoundError(wav)
             rows.append({"id": f"{round_name}/{m['clip_id']}", "set": "synth-test", "wav": str(wav), "group": g,
                          "round": round_name, "lead": m["lead"]["kind"], "timbre": m["lead"]["timbre"],
-                         "pollution": m["pollution"]["level"], "timing": m["timing"], "bpm": m["bpm"], "notes": notes})
+                         "pollution": m["pollution"]["level"], "timing": m["timing"], "bpm": m["bpm"],
+                         "key_label": stored_key(m), "key_source": key_source(m), "notes": notes})
     return rows
 
 

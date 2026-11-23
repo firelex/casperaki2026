@@ -15,7 +15,8 @@ Labels: the reference notes [onset_s, offset_s, midi] (synthetic: INTENDED pitch
 octave-corrected score) and a key. The generator stored no key, so every clip gets (a) "sig_soft", a key-signature target: the
 diatonic scale(s) holding most of its reference notes (12 classes, the relative-major tonic; uniform over ties), and
 (b) "key", the Krumhansl-Schmuckler key of its reference notes (24 classes, for information), and (c) "key_label",
-the key the generator stored (0-23: tonic + 12 for minor-like scales), null when it stored none (rounds one, two). HumTrans recordings
+the key the generator stored (0-23: tonic + 12 for minor-like scales), null when it stored none (round one), with
+"key_source": "exact" (the generator chose it) or "estimated" (estimated from the melody afterwards). HumTrans recordings
 also get the key signature of their MIDI ("key_signature", relative-major tonic 0-11), which scores the key output.
 Writes /mnt/d/casperaki-data/hum-pitch/features/<set>.npz (all clips concatenated) and <set>.jsonl (per clip).
 """
@@ -34,6 +35,7 @@ HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "scripts"))
 from hum_pitch.core import DATA, FMAX_HZ, FMIN_HZ, frame_rms_db, hz_to_midi  # noqa: E402
+from hum_pitch.keys import key_source, stored_key  # noqa: E402
 from hum_pitch.notes import estimate_key  # noqa: E402
 from hum_pitch.sets import references  # noqa: E402
 
@@ -68,33 +70,6 @@ def signature_soft(notes) -> list[float]:
     return (best / best.sum()).round(4).tolist()
 
 
-NOTE_NAMES = {"C": 0, "C#": 1, "DB": 1, "D": 2, "D#": 3, "EB": 3, "E": 4, "F": 5, "F#": 6, "GB": 6, "G": 7, "G#": 8, "AB": 8,
-              "A": 9, "A#": 10, "BB": 10, "B": 11}
-MAJOR_LIKE = {"major", "ionian", "lydian", "mixolydian", "major_pentatonic"}
-MINOR_LIKE = {"minor", "aeolian", "natural_minor", "harmonic_minor", "melodic_minor", "dorian", "phrygian", "minor_pentatonic"}
-
-
-def stored_key(m: dict) -> int | None:
-    """The key the generator stored for a clip, as 0-23 (tonic + 12 for minor-like scales), or None when the clip has
-    no stored key. Looks at a top-level "key" object or score.key, with "tonic" (0-11 or a note name) and "mode" or
-    "scale". A key object that cannot be read is an error."""
-    k = m.get("key")
-    if k is None and isinstance(m.get("score"), dict):
-        k = m["score"].get("key")
-    if k is None:
-        return None
-    if not isinstance(k, dict) or "tonic" not in k or not ({"mode", "scale"} & set(k)):
-        raise ValueError(f"{m.get('clip_id')}: unreadable stored key {k!r}")
-    t = k["tonic"]
-    tonic = int(t) % 12 if isinstance(t, (int, float)) else NOTE_NAMES[str(t).strip().upper()]
-    mode = str(k.get("mode", k.get("scale"))).lower()
-    if mode in MAJOR_LIKE:
-        return tonic
-    if mode in MINOR_LIKE:
-        return tonic + 12
-    raise ValueError(f"{m.get('clip_id')}: unknown scale or mode {mode!r}")
-
-
 def features(wav: str) -> np.ndarray:
     import librosa
     y, sr = librosa.load(wav, sr=16000, mono=True)
@@ -115,7 +90,7 @@ def features(wav: str) -> np.ndarray:
 def _clip(row: dict) -> tuple[dict, np.ndarray, np.ndarray]:
     f = features(row["wav"])
     notes = np.asarray(row["notes"], dtype=np.float32).reshape(-1, 3)
-    meta = {"key_label": None} | {k: v for k, v in row.items() if k not in ("notes",)} | {"key": key_label(row["notes"]), "sig_soft": signature_soft(row["notes"]), "n_frames": len(f), "n_notes": len(notes)}
+    meta = {"key_label": None, "key_source": None} | {k: v for k, v in row.items() if k not in ("notes",)} | {"key": key_label(row["notes"]), "sig_soft": signature_soft(row["notes"]), "n_frames": len(f), "n_notes": len(notes)}
     if row["set"].startswith("humtrans"):
         import pretty_midi
         pm = pretty_midi.PrettyMIDI(str(HUMTRANS_MIDI / f"{row['id']}.mid"))
@@ -144,7 +119,7 @@ def synth_rows(dirs: list[str], set_name: str) -> list[dict]:
             if not notes:
                 raise ValueError(f"{m['clip_id']}: no performed notes")
             rows.append({"id": f"{Path(d).parent.name}/{m['clip_id']}", "set": set_name, "wav": str(js.with_suffix(".wav")),
-                         "round": Path(d).parent.name, "timbre": m["lead"]["timbre"], "key_label": stored_key(m),
+                         "round": Path(d).parent.name, "timbre": m["lead"]["timbre"], "key_label": stored_key(m), "key_source": key_source(m),
                          "family": m["family"], "group": lead_group(m["lead"]), "lead": m["lead"]["kind"], "notes": notes})
     return rows
 

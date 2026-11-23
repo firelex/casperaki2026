@@ -149,8 +149,12 @@ def main():
                 s = pooled([r[mk] for r in sub])
                 ks = f"{np.mean([r[f'key_{kk}_sig'] for r in sub]):.1%}" if "key_model_sig" in sub[0] else "n/a"
                 kb = f"{np.mean([r[f'key_{kk}_best'] for r in sub]):.1%}"
-                k24 = [r["key24_ok"] for r in sub if "key24_ok" in r]
-                k24s = f" (24-class key right: {np.mean(k24):.1%} of {len(k24)})" if k24 and mk == "model" else ""
+                k24s = ""
+                if mk == "model":
+                    for src in ("exact", "estimated"):
+                        k24 = [r["key24_ok"] for r in sub if "key24_ok" in r and r["c"]["key_source"] == src]
+                        if k24:
+                            k24s += f" (24-class key, {src} keys: {np.mean(k24):.1%} of {len(k24)})"
                 md.append(f"| {gname} | {sysname}{k24s} | {s['clips']} | {s['right']:.1%} | {s['precision']:.1%} | {s['f100']:.3f} | {s['err_octave']:.1%} | "
                           f"{s['err_semitone']:.1%} | {s['err_other']:.1%} | {s['missed']:.1%} | {ks} | {kb} |")
         md.append("")
