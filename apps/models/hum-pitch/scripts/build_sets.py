@@ -11,7 +11,7 @@ Sets:
 
 HumTrans reference notes are the score MIDI shifted by the per-recording time offset that hum-beats fitted (the
 singers hummed along with about 0.2 s recording latency; build_humtrans_test.py stores the shifted note times in
-each recording's JSON). They are still in the score's octave: scripts/fit_octaves.py later finds the octave each
+each recording's JSON). Notes the offset moves before the start of the recording are left out (printed). They are still in the score's octave: scripts/fit_octaves.py later finds the octave each
 person actually hummed in.
 
 Synthetic reference notes are the INTENDED pitch at the PERFORMED onset and offset. Notes the performer swallowed
@@ -50,6 +50,10 @@ def humtrans(folder: Path, set_name: str) -> list[dict]:
         if not wav.exists():
             raise FileNotFoundError(wav)
         notes = [[n["onset"], n["offset"], int(n["midi"])] for n in m["notes"]]
+        cut = [x for x in notes if x[0] < 0]
+        if cut:  # the fitted offset puts these notes before the recording starts: no onset to find in the audio
+            print(f"{m['clip_id']}: {len(cut)} reference note(s) start before the recording (offset {m['offset_s']:+.3f} s), left out")
+            notes = [x for x in notes if x[0] >= 0]
         rows.append({"id": m["clip_id"], "set": set_name, "wav": str(wav), "group": "real hum", "lead": "hum",
                      "singer": m["singer"], "sex": m["singer"][0], "offset_s": m["offset_s"], "notes": notes})
     if not rows:
