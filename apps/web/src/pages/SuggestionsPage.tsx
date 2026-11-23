@@ -121,9 +121,15 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
 const dB = (v: number) => (v <= -100 ? 'off' : `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(Math.round(v * 10) / 10)} dB`);
 const SEND_NAMES = { reverb: 'Reverb', delay: 'Delay', chorus: 'Chorus' } as const;
 
+/** The tracks a change was made on, and their sound type ("Drums · kickDrumsElectronic"). */
+function trackLabel(c: MixChange): string {
+  const lanes = [...new Set(c.values.map((v) => v.lane).filter((l): l is string => Boolean(l)))];
+  return lanes.length ? `${lanes.join(', ')} · ${c.target}` : c.target;
+}
+
 function describe(c: MixChange): { what: string; show: (v: number) => string } {
-  if (c.kind === 'volume') return { what: `${c.target}: level`, show: dB };
-  if (c.kind === 'send') return { what: `${c.target}: ${SEND_NAMES[c.detail!.send!]} send`, show: dB };
+  if (c.kind === 'volume') return { what: `${trackLabel(c)}: level`, show: dB };
+  if (c.kind === 'send') return { what: `${trackLabel(c)}: ${SEND_NAMES[c.detail!.send!]} send`, show: dB };
   const { plugin, slot, param } = c.detail!;
   const p = describeParam(plugin!, param!);
   const bus = c.target === 'master' ? 'Master' : `${c.target} bus`;

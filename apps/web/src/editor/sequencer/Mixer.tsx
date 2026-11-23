@@ -464,27 +464,50 @@ function SendRow({
   const on = db !== undefined && db > SEND_OFF_DB;
   const frac = on ? Math.max(0, Math.min(1, (db + 40) / 46)) : 0;
   if (onChange) {
-    // −40 … +6 dB; the far left is off.
+    // Drag along the bar (or arrow keys): −40 … +6 dB; the far left is off.
+    const dbAtFrac = (f: number) => (f <= 0.02 ? -100 : Math.round((f * 46 - 40) * 2) / 2);
+    const fromPointer = (el: HTMLElement, clientX: number) => {
+      const r = el.getBoundingClientRect();
+      onChange(dbAtFrac(Math.max(0, Math.min(1, (clientX - r.left) / r.width))));
+    };
+    const step = (d: number) => {
+      const cur = on ? db! : -40.5;
+      const next = cur + d;
+      onChange(next < -40 ? -100 : Math.min(6, next));
+    };
     return (
-      <label className="mb-[3px] flex items-center gap-1" title={`${name} send (drag; far left = off)`}>
+      <div className="mb-[3px] flex items-center gap-1" title={`${name} send: drag (far left = off), or use the arrow keys`}>
         <span className={`w-[26px] shrink-0 text-[9px] ${changed ? 'text-[#ffb347]' : 'text-[#a9aab1]'}`}>{name.slice(0, 3)}</span>
-        <input
-          type="range"
-          min={-41}
-          max={6}
-          step={0.5}
-          value={on ? Math.max(-40, db!) : -41}
-          onChange={(e) => {
-            const v = Number(e.target.value);
-            onChange(v <= -41 ? -100 : v);
-          }}
-          className="h-[10px] min-w-0 flex-1 accent-[#ffb347]"
+        <span
+          role="slider"
+          tabIndex={0}
           aria-label={`${name} send`}
-        />
+          aria-valuemin={-40}
+          aria-valuemax={6}
+          aria-valuenow={on ? db : -40}
+          aria-valuetext={db === undefined ? 'varies' : fmtDb(db)}
+          className="relative h-[8px] flex-1 cursor-ew-resize touch-none overflow-hidden rounded-full bg-black/50 outline-none ring-[#ffb347] focus-visible:ring-1"
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            fromPointer(e.currentTarget, e.clientX);
+          }}
+          onPointerMove={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) fromPointer(e.currentTarget, e.clientX);
+          }}
+          onPointerUp={(e) => e.currentTarget.releasePointerCapture(e.pointerId)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowUp') step(0.5);
+            else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') step(-0.5);
+            else return;
+            e.preventDefault();
+          }}
+        >
+          <span className={`absolute inset-y-0 left-0 rounded-full ${changed ? 'bg-[#ffb347]' : 'bg-[#6fb3ff]'}`} style={{ width: `${frac * 100}%` }} />
+        </span>
         <span className={`w-[30px] shrink-0 text-right font-mono text-[9px] ${changed ? 'text-[#ffb347]' : on ? 'text-[#dfe9f5]' : 'text-[#6d6e75]'}`}>
           {db === undefined ? 'var' : fmtDb(db)}
         </span>
-      </label>
+      </div>
     );
   }
   return (
