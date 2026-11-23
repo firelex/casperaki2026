@@ -4,7 +4,6 @@
 // sources. Agreement with the legacy original (to float rounding) is checked end to end
 // against its binary (see README "Mastering (matchering port)").
 #include "../src/audio/Matchering.h"
-#include "../src/audio/MasterOffline.h"
 #include "../src/audio/WavFile.h"
 #include "../vendor/json.hpp"
 
@@ -205,27 +204,6 @@ static void testErrors() {
     CHECK(shortSong.getReadPointer(1)[orig.getNumSamples() + 5] == orig.getReadPointer(1)[5], "ensureMinimumLength loops");
 }
 
-// The export's offline master (MasterOffline.h): in time with its input (the EQ filters'
-// 2048-frame delay compensated) and true peaks held at -1 dBTP.
-static void testOfflineMaster() {
-    const AudioBuffer song = testSong(20 * 44100);
-    const auto p = matchering::analyze(song, 44100.0, matchering::Style::Sergree);
-    const matchering::OfflineMaster m = matchering::masterOffline(song, p);
-    CHECK(m.out.getNumSamples() == song.getNumSamples(), "offline master keeps the length");
-    // Best-matching lag of the output against the input (mid channel, 4 s from 2 s in).
-    int bestLag = 9999;
-    double best = -1e30;
-    for (int lag = -3000; lag <= 3000; ++lag) {
-        double c = 0;
-        for (int i = 2 * 44100; i < 6 * 44100; i += 3) c += (double)song.getReadPointer(0)[i] * m.out.getReadPointer(0)[i + lag];
-        if (c > best) { best = c; bestLag = lag; }
-    }
-    std::printf("offline master: lag %d frames, true peak %.2f -> %.2f dBTP\n", bestLag, m.truePeakInDb, m.truePeakOutDb);
-    CHECK(std::abs(bestLag) <= 2, "offline master output is not in time with its input");
-    CHECK(m.truePeakOutDb <= matchering::kTruePeakCeilingDb + 0.05f, "true peak above the ceiling");
-    CHECK(matchering::offline_detail::truePeakDb(m.out) <= matchering::kTruePeakCeilingDb + 0.05f, "measured true peak above the ceiling");
-}
-
 int main(int argc, char** argv) {
     if (argc != 3) {
         std::fprintf(stderr, "usage: matchering_test <atemlos.json> <referenceAtemlos.wav>\n");
@@ -236,7 +214,6 @@ int main(int argc, char** argv) {
     testAtemlosHeader(argv[1], argv[2]);
     testStreaming();
     testErrors();
-    testOfflineMaster();
     if (failures) {
         std::fprintf(stderr, "matchering_test: %d failure(s)\n", failures);
         return 1;

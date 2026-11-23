@@ -448,9 +448,8 @@ inline MasteringProfile analyze(const AudioBuffer& song, double sampleRate, Styl
 // input frames past the profile's numFrames are 0 (and do not advance the limiter).
 class MasteringStream {
 public:
-    /** `limiterOn` false: the same chain without the NC-17 limiter (to measure what the limiter does). */
-    explicit MasteringStream(const MasteringProfile& profile, bool limiterOn = true)
-        : p_(profile), limiter_(profile.ditherSeedL, profile.ditherSeedR), limiterOn_(limiterOn) {
+    explicit MasteringStream(const MasteringProfile& profile)
+        : p_(profile), limiter_(profile.ditherSeedL, profile.ditherSeedR) {
         if (p_.numFrames <= 0) throw std::invalid_argument("MasteringStream: profile has no frames");
         limiter_.setParams(p_.limiterLouder, p_.limiterOutput);
         limiter_.prepareToPlay(kSampleRate);
@@ -467,11 +466,6 @@ public:
     }
 
     int latencyFrames() const { return p_.style == Style::Sergree ? kConvolutionBlock : 0; }
-
-    /** The EQ filters are linear-phase and centred (ifftshift by kFftSize / 2), so the sound
-     *  comes out kFftSize / 2 frames after latencyFrames(): offline masters compensate both
-     *  (the legacy output, which this port matches, was 2048 frames = 46 ms late). */
-    int filterDelayFrames() const { return p_.style == Style::Sergree ? kFftSize / 2 : 0; }
 
     void process(const float* inL, const float* inR, float* outL, float* outR, int numFrames) {
         if (numFrames < 0) throw std::invalid_argument("MasteringStream: negative frame count");
@@ -494,7 +488,7 @@ private:
             }
         }
         float* io[2] = {outL, outR};
-        if (limiterOn_) limiter_.process(io, io, valid);  // valid frames are the leading run of this block
+        limiter_.process(io, io, valid);  // valid frames are the leading run of this block
         inputPos_ += numFrames;
     }
 
@@ -534,7 +528,7 @@ private:
         if (runLen > 0) {
             // M.h:1576 NC-17 over the result, then M.h:1581 applyGain(finalAmplitudeCoefficient).
             float* io[2] = {outL + runStart, outR + runStart};
-            if (limiterOn_) limiter_.process(io, io, runLen);
+            limiter_.process(io, io, runLen);
             for (int i = runStart; i < runStart + runLen; ++i) {
                 outL[i] *= p_.finalGain;
                 outR[i] *= p_.finalGain;
@@ -544,7 +538,6 @@ private:
 
     MasteringProfile p_;
     CasperakiNC17 limiter_;
-    bool limiterOn_ = true;
     std::unique_ptr<dsp::StereoPartitionedConvolver> conv_;
     std::vector<float> inMid_, inSide_, readyMid_, readySide_;
     int pos_ = 0;
