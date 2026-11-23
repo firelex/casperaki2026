@@ -864,9 +864,14 @@ export function TimelineView() {
         return (
         <DeviceWindow
           title={device.factory === 'makeLogical4' ? 'Logical4' : (DEVICES[device.factory]?.title ?? device.factory)}
-          subtitle={`${device.bus === 'master' ? 'Master' : `${device.bus} bus`} · slot ${device.slot + 1}`}
+          subtitle={`${device.bus === 'master' ? 'Master' : `${device.bus} bus`} · slot ${device.slot + 1}${device.sharedBy ? ` · shared by ${device.sharedBy.join(', ')}` : ''}`}
           onClose={() => setDevice(undefined)}
         >
+          {devicePro && device.sharedBy ? (
+            <p className="mx-4 mt-3 rounded-[6px] border border-[#ffb347]/50 bg-[#ffb347]/10 px-3 py-2 text-[12px] text-[#ffd08a]" role="note">
+              This plugin is on the {device.bus} group bus: a change here affects every track on it ({device.sharedBy.join(', ')}).
+            </p>
+          ) : null}
           {device.factory === 'makeLogical4' ? (
             <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={params} pro={devicePro} />
           ) : DEVICES[device.factory]?.kind === 'reverb' ? (

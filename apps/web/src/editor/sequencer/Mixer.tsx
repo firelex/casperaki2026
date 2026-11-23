@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { automationAt, livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
 import { changeLane, setPro, type ProMixState } from '../../audio/proMix';
@@ -21,9 +21,30 @@ const RETURNS = [
   { key: 'chorus', bus: 'fxChorus', name: 'Chorus' },
 ] as const;
 
+/** Readable names of the group (submix) buses in mix-config rackChains. Unknown ids show as they are. */
+const BUS_NAMES: Readonly<Record<string, string>> = {
+  fx: 'FX',
+  kicks: 'Kicks',
+  drums: 'Drums',
+  percussion: 'Percussion',
+  bass: 'Bass',
+  keys: 'Keys',
+  synths: 'Synths',
+  leadSynths: 'Lead synths',
+  acousticGuitars: 'Acoustic guitars',
+  electricGuitars: 'Electric guitars',
+  orchestral: 'Orchestral',
+};
+function busName(bus: string): string {
+  return BUS_NAMES[bus] ?? bus;
+}
+/** One colour per group bus (in the order the buses appear), shown as a band on the bus and its tracks. */
+const BUS_COLORS = ['#e8a33d', '#4fb3a9', '#a77ee0', '#e0647a', '#6fa8e8', '#9cc95a', '#d98ad0', '#c9b458', '#5fc7e0', '#e07f4f', '#8f9be8'];
+
 /**
- * The mixer, as in a DAW's mixer window: a channel strip per track, then the
- * reverb / delay / chorus returns and the master. Read-only: every value is
+ * The mixer, as in a DAW's mixer window: a channel strip per track (grouped by
+ * the bus it feeds), then the group buses (each bus's shared plugin chain and
+ * the tracks feeding it), the reverb / delay / chorus returns and the master. Read-only: every value is
  * what the playback engine resolved for this version of the song (its FX
  * bus and that bus's plugin chain, send levels, target volume), so it also
  * shows how the brain's mix tables land. Meters show each track's level at
@@ -63,6 +84,20 @@ export function Mixer({
   /** What the player plays (live changes go there). */
   liveKey: string | undefined;
 }) {
+  // "Out → bus" on a track scrolls to that bus's strip and highlights it briefly.
+  const busRefs = useRef(new Map<string, HTMLDivElement>());
+  const [flash, setFlash] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(undefined), 1400);
+    return () => clearTimeout(t);
+  }, [flash]);
+  const showBus = (bus: string) => {
+    const el = busRefs.current.get(bus);
+    if (!el) throw new Error(`Mixer: no strip for the ${bus} bus`);
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    setFlash(bus);
+  };
   if (error) {
     return <div className="flex h-full items-center justify-center px-6 text-center text-[12px] text-err">{error}</div>;
   }
@@ -86,7 +121,27 @@ export function Mixer({
   /** Bus meters: 0..2 the returns in RETURNS order, 3 the master. */
   const busLevel = (bus: number) => peakAt(meters?.busPeaks[bus]);
   // Strips in track order, then any engine lane without a track row (e.g. transitions).
-  const laneOrder = [...tracks.map((t) => t.name).filter((n) => byLane.has(n)), ...[...byLane.keys()].filter((n) => !tracks.some((t) => t.name === n))];
+  const trackOrder = [...tracks.map((t) => t.name).filter((n) => byLane.has(n)), ...[...byLane.keys()].filter((n) => !tracks.some((t) => t.name === n))];
+  // The group buses, in the order their first track appears; each with the tracks feeding it.
+  const groupBuses: string[] = [];
+  const feeders = new Map<string, string[]>();
+  for (const lane of trackOrder) {
+    for (const bus of new Set(byLane.get(lane)!.map((p) => p.fxGroup))) {
+      if (!feeders.has(bus)) {
+        groupBuses.push(bus);
+        feeders.set(bus, []);
+      }
+      feeders.get(bus)!.push(lane);
+    }
+  }
+  const busColor = (bus: string) => BUS_COLORS[groupBuses.indexOf(bus) % BUS_COLORS.length]!;
+  // Tracks grouped by the (first) bus they feed, in bus order; track order within a bus.
+  const laneOrder = groupBuses.flatMap((bus) => trackOrder.filter((lane) => byLane.get(lane)![0]!.fxGroup === bus));
+  // A bus's meter: the loudest of its tracks at the playhead (before the bus's own plugins).
+  const busTrackPeak = (bus: string) => {
+    const levels = feeders.get(bus)!.map(levelOf).filter((v): v is number => v !== undefined);
+    return levels.length ? Math.max(...levels) : undefined;
+  };
 
   return (
     // Strips keep their natural height (every insert listed); a lower mixer
@@ -102,9 +157,9 @@ export function Mixer({
           color={tracks.find((t) => t.name === lane)?.color ?? '#8a8b93'}
           parts={byLane.get(lane)!}
           soundName={soundNames[lane]}
-          onOpenDevice={onOpenDevice}
           seconds={seconds}
-          chains={chains}
+          busColor={busColor}
+          onShowBus={showBus}
           level={levelOf(lane)}
           muted={muted.includes(lane)}
           soloed={solo.includes(lane)}
@@ -113,6 +168,30 @@ export function Mixer({
           override={pro.mix.lanes[lane]}
           onChange={(patch) => changeLane(liveKey, lane, patch)}
         />
+      ))}
+      <div className="w-2 shrink-0 bg-black/40" aria-hidden="true" />
+      {groupBuses.map((bus) => (
+        <div
+          key={bus}
+          ref={(el) => {
+            if (el) busRefs.current.set(bus, el);
+            else busRefs.current.delete(bus);
+          }}
+          className={`flex shrink-0 transition-shadow ${flash === bus ? 'shadow-[inset_0_0_0_2px_#ffffff]' : ''}`}
+        >
+          <BusStrip
+            name={busName(bus)}
+            bus={bus}
+            subtitle="Group bus"
+            plugins={chains.get(bus)}
+            color={busColor(bus)}
+            band={busColor(bus)}
+            from={feeders.get(bus)!}
+            level={busTrackPeak(bus)}
+            levelNote="track peak"
+            onOpenDevice={onOpenDevice}
+          />
+        </div>
       ))}
       <div className="w-2 shrink-0 bg-black/40" aria-hidden="true" />
       {RETURNS.map((r, k) => (
@@ -191,9 +270,9 @@ function ChannelStrip({
   color,
   parts,
   soundName,
-  onOpenDevice,
   seconds,
-  chains,
+  busColor,
+  onShowBus,
   level,
   muted,
   soloed,
@@ -206,10 +285,12 @@ function ChannelStrip({
   color: string;
   parts: readonly ResolvedMixLane[];
   soundName: string | undefined;
-  onOpenDevice: (d: OpenDevice) => void;
   /** The song position, for automation. */
   seconds: number;
-  chains: Map<string, MixConfigJson['rackChains'][number]['plugins']>;
+  /** The colour band of a group bus. */
+  busColor: (bus: string) => string;
+  /** Scroll to (and highlight) a group bus's strip. */
+  onShowBus: (bus: string) => void;
   level: number | undefined;
   muted: boolean;
   soloed: boolean;
@@ -231,11 +312,12 @@ function ChannelStrip({
   const standard = baseVolume !== undefined ? baseVolume + (autoDb ?? 0) : undefined;
   const volume = standard !== undefined ? standard + trim : undefined;
   const tip = parts
-    .map((p) => `${p.track}: ${p.lowLevelType || 'no type'} → ${p.fxGroup} bus, volume ${fmtDb(p.volumeDb)}, sends R ${fmtDb(p.sendsDb.reverb)} D ${fmtDb(p.sendsDb.delay)} C ${fmtDb(p.sendsDb.chorus)}`)
+    .map((p) => `${p.track}: ${p.lowLevelType || 'no type'} → ${busName(p.fxGroup)} bus, volume ${fmtDb(p.volumeDb)}, sends R ${fmtDb(p.sendsDb.reverb)} D ${fmtDb(p.sendsDb.delay)} C ${fmtDb(p.sendsDb.chorus)}`)
     .join('\n');
   return (
     <Strip
       color={color}
+      band={busColor(buses[0]!)}
       name={name}
       subtitle={soundName ?? (types.length === 1 ? types[0]! : types.length ? `${types.length} sound types` : '—')}
       title={`${soundName ? `Sound: ${soundName}\n` : ''}${tip}`}
@@ -302,12 +384,18 @@ function ChannelStrip({
         </>
       }
     >
-      <Section label="Inserts">
+      <Section label="Output">
         {buses.map((bus) => (
-          <div key={bus} className="mb-1">
-            <div className="mb-0.5 truncate text-[9px] text-[#8f9098]">→ {bus} bus</div>
-            <Inserts plugins={chains.get(bus)} bus={bus} onOpen={onOpenDevice} />
-          </div>
+          <button
+            key={bus}
+            type="button"
+            onClick={() => onShowBus(bus)}
+            className="mb-[2px] flex w-full items-center gap-1 truncate rounded-[2px] border border-black/60 bg-[#1d1e21] px-1 text-left text-[9.5px] leading-[15px] text-[#dfe0e4] hover:border-white/30"
+            title={`This track plays through the ${busName(bus)} group bus, whose plugins it shares with the other tracks on it. Click to show the bus.`}
+          >
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: busColor(bus) }} aria-hidden="true" />
+            <span className="truncate">Out → {busName(bus)}</span>
+          </button>
         ))}
       </Section>
     </Strip>
@@ -321,8 +409,11 @@ function BusStrip({
   subtitle,
   plugins,
   color,
+  band,
+  from,
   volumeDb,
   level,
+  levelNote,
 }: {
   name: string;
   /** The bus's name in the mix config ("master", "fxPlateReverb", …). */
@@ -331,25 +422,44 @@ function BusStrip({
   subtitle: string;
   plugins: MixConfigJson['rackChains'][number]['plugins'] | undefined;
   color: string;
+  /** A group bus's colour band (also on the tracks feeding it). */
+  band?: string;
+  /** A group bus: the tracks feeding it (they share its plugins). */
+  from?: readonly string[];
   volumeDb?: number;
-  /** Peak at the playhead (after the bus's rack), while playing. */
+  /** Peak at the playhead, while playing. */
   level: number | undefined;
+  /** What the meter shows, when it is not the bus's own output. */
+  levelNote?: string;
 }) {
   return (
     <Strip
       color={color}
+      band={band}
       name={name}
       subtitle={subtitle}
       bottom={
         <>
           <div className="mb-1.5 h-[52px]" aria-hidden="true" />
-          <FaderBlock volumeDb={volumeDb ?? 0} volumeNote={volumeDb === undefined ? 'unity' : undefined} level={level} />
+          {from ? (
+            // A group bus has no fader of its own: the meter shows the loudest of its tracks.
+            <FaderBlock volumeDb={undefined} volumeNote={levelNote ?? 'no fader'} level={level} />
+          ) : (
+            <FaderBlock volumeDb={volumeDb ?? 0} volumeNote={volumeDb === undefined ? 'unity' : undefined} level={level} />
+          )}
           <div className="mt-1 h-5" />
         </>
       }
     >
-      <Section label="Inserts">
-        <Inserts plugins={plugins} bus={bus} onOpen={onOpenDevice} />
+      {from ? (
+        <Section label="From">
+          <div className="text-[9.5px] leading-[13px] text-[#dfe0e4]" title={`Shared by: ${from.join(', ')}`}>
+            {from.join(', ')}
+          </div>
+        </Section>
+      ) : null}
+      <Section label={from ? 'Inserts (shared)' : 'Inserts'}>
+        <Inserts plugins={plugins} bus={bus} sharedBy={from} onOpen={onOpenDevice} />
       </Section>
     </Strip>
   );
@@ -357,6 +467,7 @@ function BusStrip({
 
 function Strip({
   color,
+  band,
   name,
   subtitle,
   title,
@@ -364,6 +475,8 @@ function Strip({
   bottom,
 }: {
   color: string;
+  /** A group bus's colour, as a band across the top (the bus and the tracks feeding it). */
+  band?: string;
   name: string;
   subtitle: string;
   title?: string;
@@ -378,6 +491,7 @@ function Strip({
       style={{ width: STRIP_W }}
       title={title}
     >
+      {band ? <div className="-mx-1.5 -mt-1.5 mb-1.5 h-[4px]" style={{ background: band }} aria-hidden="true" /> : null}
       <div className="flex-1">{children}</div>
       <div className="shrink-0 border-t border-black/40 pt-1">{bottom}</div>
       {/* Name plate, as at the foot of a console strip. */}
@@ -411,15 +525,19 @@ export interface OpenDevice {
   readonly slot: number;
   readonly factory: string;
   readonly params: readonly number[];
+  /** A group bus's plugin: the tracks sharing it (a change affects all of them). */
+  readonly sharedBy?: readonly string[];
 }
 
 function Inserts({
   plugins,
   bus,
+  sharedBy,
   onOpen,
 }: {
   plugins: MixConfigJson['rackChains'][number]['plugins'] | undefined;
   bus: string;
+  sharedBy?: readonly string[];
   onOpen?: (d: OpenDevice) => void;
 }) {
   if (!plugins) return <div className="text-[9px] text-err">No rack for {bus}</div>;
@@ -433,7 +551,7 @@ function Inserts({
           <button
             key={i}
             type="button"
-            onClick={() => onOpen({ bus, slot: i, factory: p.factory, params: p.params })}
+            onClick={() => onOpen({ bus, slot: i, factory: p.factory, params: p.params, ...(sharedBy ? { sharedBy } : {}) })}
             className={`${cls} from-[#4e7aa6] to-[#3a5e83] hover:from-[#5d8bb8] hover:text-white`}
             title={tip}
           >
