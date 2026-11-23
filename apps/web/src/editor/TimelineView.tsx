@@ -33,7 +33,8 @@ import { beginRangeDrag } from './sequencer/rangeDrag';
 import { SelectionOverlay } from './sequencer/Selection';
 import { fmtBar, Ruler, type BarRange } from './sequencer/Ruler';
 import { ChordLane } from './sequencer/ChordLane';
-import { Mixer, type OpenDevice } from './sequencer/Mixer';
+import { Mixer, ProBar, type OpenDevice } from './sequencer/Mixer';
+import { Transport } from '../layout/Transport';
 import { DeviceWindow } from './devices/DeviceWindow';
 import { Logical4Panel } from './devices/Logical4Panel';
 import { DevicePanel } from './devices/DevicePanel';
@@ -785,8 +786,16 @@ export function TimelineView() {
         </div>
       </div>
 
+      {/* The transport (play, stop, loop, position) and, on the right, the mix's Pro controls. */}
+      <div className="flex shrink-0 items-center gap-3 border-t-2 border-black/80 bg-gradient-to-b from-[#34363c] to-[#2a2b30] px-3 py-1.5">
+        <Transport />
+        <div className="ml-auto">
+          <ProBar pro={pro} onReset={() => void resetProMix(liveKey, fetchPayload)} />
+        </div>
+      </div>
+
       {mixerOpen ? (
-        <div className="relative shrink-0 border-t-2 border-black/80" style={{ height: mixerH }} aria-label="Mixer">
+        <div className="relative shrink-0 border-t border-black/80" style={{ height: mixerH }} aria-label="Mixer">
           {/* Divider: drag to share the height between tracks and mixer. */}
           <div
             className="absolute inset-x-0 -top-[5px] z-20 h-[8px] cursor-row-resize hover:bg-white/15"
@@ -797,7 +806,7 @@ export function TimelineView() {
             aria-label="Drag to resize the mixer (double-click: default, large, hidden)"
             title="Drag to resize the mixer. Double-click: default → large → hidden. X shows/hides it; Shift+X: tracks or mixer full view"
           />
-          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} onReset={() => void resetProMix(liveKey, fetchPayload)} />
+          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} />
         </div>
       ) : null}
 

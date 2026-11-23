@@ -42,7 +42,6 @@ export function Mixer({
   onOpenDevice,
   pro,
   liveKey,
-  onReset,
 }: {
   tracks: readonly SeqTrack[];
   /** The mix as the engine resolved it for this version. */
@@ -63,8 +62,6 @@ export function Mixer({
   pro: ProMixState;
   /** What the player plays (live changes go there). */
   liveKey: string | undefined;
-  /** Back to the standard mix. */
-  onReset: () => void;
 }) {
   if (error) {
     return <div className="flex h-full items-center justify-center px-6 text-center text-[12px] text-err">{error}</div>;
@@ -95,7 +92,6 @@ export function Mixer({
     // Strips keep their natural height (every insert listed); a lower mixer
     // scrolls instead of squashing them, a taller one adds room above the faders.
     <div className="flex h-full min-h-0 flex-col bg-[#202124]">
-      <ProBar pro={pro} onReset={onReset} />
     <div className="min-h-0 flex-1 overflow-auto">
       {/* All strips as tall as the tallest, so their faders line up. */}
       <div className="flex min-h-full w-max items-stretch">
@@ -138,32 +134,11 @@ export function Mixer({
   );
 }
 
-/** Pro mode switch, Reset and the save state, above the strips. */
-function ProBar({ pro, onReset }: { pro: ProMixState; onReset: () => void }) {
+/** The save state, the Pro mode switch and Reset (the transport bar's right end). */
+export function ProBar({ pro, onReset }: { pro: ProMixState; onReset: () => void }) {
   const changed = Object.keys(pro.mix.lanes).length + Object.keys(pro.mix.buses).length > 0;
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-black/60 bg-[#2a2b30] px-2 py-1">
-      <button
-        type="button"
-        onClick={() => setPro(!pro.pro)}
-        aria-pressed={pro.pro}
-        disabled={!pro.songId}
-        title={pro.songId ? 'Pro mode: change faders, sends and plugin settings' : 'Save the song first to change its mix'}
-        className={`h-6 rounded-[4px] border px-2.5 text-[11px] font-bold tracking-wide disabled:opacity-40 ${
-          pro.pro ? 'border-[#ffb347] bg-[#ffb347] text-black' : 'border-white/20 bg-[#3a3c42] text-[#d9dade] hover:border-white/40'
-        }`}
-      >
-        PRO
-      </button>
-      <button
-        type="button"
-        onClick={onReset}
-        disabled={!changed || pro.saving}
-        title="Put every fader, send and plugin back to the standard mix"
-        className="h-6 rounded-[4px] border border-white/20 bg-[#3a3c42] px-2.5 text-[11px] text-[#d9dade] hover:border-white/40 disabled:opacity-40"
-      >
-        Reset
-      </button>
+    <div className="flex shrink-0 items-center gap-2">
       <span className="text-[11px] text-[#9a9ba3]">
         {pro.error ? (
           <span className="text-err">{pro.error}</span>
@@ -177,6 +152,27 @@ function ProBar({ pro, onReset }: { pro: ProMixState; onReset: () => void }) {
           'Standard mix'
         )}
       </span>
+      <button
+        type="button"
+        onClick={() => setPro(!pro.pro)}
+        aria-pressed={pro.pro}
+        disabled={!pro.songId}
+        title={pro.songId ? 'Pro mode: change faders, sends and plugin settings' : 'Save the song first to change its mix'}
+        className={`h-7 rounded-[4px] border px-3 text-[11px] font-bold tracking-wide disabled:opacity-40 ${
+          pro.pro ? 'border-[#ffb347] bg-[#ffb347] text-black' : 'border-white/20 bg-[#3a3c42] text-[#d9dade] hover:border-white/40'
+        }`}
+      >
+        PRO
+      </button>
+      <button
+        type="button"
+        onClick={onReset}
+        disabled={!changed || pro.saving}
+        title="Put every fader, send and plugin back to the standard mix"
+        className="h-7 rounded-[4px] border border-white/20 bg-[#3a3c42] px-3 text-[11px] text-[#d9dade] hover:border-white/40 disabled:opacity-40"
+      >
+        Reset
+      </button>
     </div>
   );
 }

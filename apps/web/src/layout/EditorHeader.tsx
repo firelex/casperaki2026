@@ -72,8 +72,8 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
         </div>
       </div>
 
-      {/* Centre: the transport. */}
-      <Transport />
+      {/* Centre: the transport (in the Song tab it sits above the mixer). */}
+      {tab === 'video' ? <Transport /> : null}
 
       {/* Right: views, save, export. */}
       <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
