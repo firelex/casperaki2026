@@ -19,7 +19,7 @@
 //      { type: 'done', doneBins, peaks }  |  { type: 'error', message }
 
 import { buildMixer, instantiateEngine, laneInfo, laneNames, lastError, masterSong, masteringProfile } from '../engine/casperaki-engine.js';
-import { encodeMp3, encodeWav24, instantiateLame } from '../engine/casperaki-audio-files.js';
+import { encodeMp3, encodeWav24, instantiateLame, MP3_HEADROOM_DB } from '../engine/casperaki-audio-files.js';
 
 const BLOCK = 1024;
 /** The mix's effects work per block, so the mastering renders pull 128-frame blocks
@@ -88,10 +88,10 @@ self.onmessage = (ev) => {
       // The server encodes its 24-bit WAVs, so LAME gets the 24-bit values here too.
       const lame = instantiateLame(o.lameBytes);
       files['unmastered.mp3'] = encodeMp3(lame, left, right, {
-        sampleRate: o.sampleRate, vbrQuality: MP3_VBR_QUALITY, rounding: 'render', onProgress: (share) => progress('mp3 unmastered', share),
+        sampleRate: o.sampleRate, vbrQuality: MP3_VBR_QUALITY, rounding: 'render', gainDb: MP3_HEADROOM_DB, onProgress: (share) => progress('mp3 unmastered', share),
       });
       files['mastered.mp3'] = encodeMp3(lame, mastered.left, mastered.right, {
-        sampleRate: o.sampleRate, vbrQuality: MP3_VBR_QUALITY, rounding: 'master', onProgress: (share) => progress('mp3 mastered', share),
+        sampleRate: o.sampleRate, vbrQuality: MP3_VBR_QUALITY, rounding: 'master', gainDb: MP3_HEADROOM_DB, onProgress: (share) => progress('mp3 mastered', share),
       });
       self.postMessage({ type: 'mixExport', files }, Object.values(files).map((f) => f.buffer));
     } catch (err) {

@@ -13,8 +13,8 @@
 //               matchering, SERGREE style, bit-identical to the JUCE original):
 //               match levels and the mid/side EQ curve to the Atemlos reference,
 //               then NC-17 → out.wav (docs/67 #1).
-//   4. encode — ffmpeg (LAME VBR -V2, as legacy): out.wav → out.mp3 and
-//               out-unmastered.wav → out-unmastered.mp3.
+//   4. encode — ffmpeg (LAME VBR -V2, as legacy, 2 dB lower: MP3_HEADROOM_DB): out.wav →
+//               out.mp3 and out-unmastered.wav → out-unmastered.mp3.
 //
 // Songs are content-addressed (id = hash prefix of the canonical bytes), so
 // a render directory keyed by song id is valid forever: an edit produces a
@@ -29,6 +29,11 @@ import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+
+/** Fixed level change before encoding an MP3 (the WAVs are unchanged): MP3 encoding overshoots
+ *  the peaks it is given (a master at -1 dBFS decodes up to about +1.6 dBFS, which players clip).
+ *  Same as the browser export (public/engine/casperaki-audio-files.js). */
+const MP3_HEADROOM_DB = -2;
 
 export type RenderState = 'queued' | 'running' | 'done' | 'failed';
 
@@ -216,7 +221,7 @@ export class RenderService {
         await runLogged(
           c.ffmpegBin,
           // LAME VBR quality 2 (= lame -V2, what legacy shipped).
-          ['-y', '-hide_banner', '-loglevel', 'error', '-i', this.wavPath(songId, version), '-codec:a', 'libmp3lame', '-q:a', '2', this.mp3Path(songId, version)],
+          ['-y', '-hide_banner', '-loglevel', 'error', '-i', this.wavPath(songId, version), '-af', `volume=${MP3_HEADROOM_DB}dB`, '-codec:a', 'libmp3lame', '-q:a', '2', this.mp3Path(songId, version)],
           env,
           join(dir, `encode-${version}.log`),
           ENCODE_TIMEOUT_MS,

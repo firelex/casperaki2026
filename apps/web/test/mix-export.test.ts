@@ -51,7 +51,7 @@ describe('encodeMp3 (lame.wasm)', () => {
       l[i] = 0.3 * Math.sin((2 * Math.PI * 440 * i) / 44100);
       r[i] = 0.3 * Math.sin((2 * Math.PI * 660 * i) / 44100);
     }
-    const mp3: Uint8Array = encodeMp3(lame, l, r, { sampleRate: 44100, vbrQuality: 2, rounding: 'master' });
+    const mp3: Uint8Array = encodeMp3(lame, l, r, { sampleRate: 44100, vbrQuality: 2, rounding: 'master', gainDb: -2 });
     expect(mp3[0]).toBe(0xff);
     expect(mp3[1]! & 0xe0).toBe(0xe0);
     const head = new TextDecoder('latin1').decode(mp3.subarray(0, 400));
@@ -60,6 +60,8 @@ describe('encodeMp3 (lame.wasm)', () => {
     // ~2 s at -V2 is tens of kB, far from silence or a raw dump.
     expect(mp3.length).toBeGreaterThan(10_000);
     expect(mp3.length).toBeLessThan(200_000);
+    // Every exported MP3 states its level change (room for the codec's peak overshoot).
+    expect(() => encodeMp3(lame, l, r, { sampleRate: 44100, vbrQuality: 2, rounding: 'master' } as never)).toThrow(/gainDb is required/);
   });
 });
 

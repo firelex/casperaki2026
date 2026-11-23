@@ -85,9 +85,18 @@ export function instantiateLame(lameBytes) {
  * server's ffmpeg `-q:a 2` asks of LAME), with the Xing/LAME tag frame filled in.
  * `rounding`: 'render' or 'master' encodes the 24-bit values the WAV with that
  * rounding holds (the server encodes its 24-bit WAVs), 'none' the floats as given.
+ * `gainDb` (required): a fixed level change before encoding. MP3 encoding overshoots the
+ * peaks it is given (a master at -1 dBFS decodes up to about +1.6 dBFS, which players clip),
+ * so the exports pass MP3_HEADROOM_DB.
  * `onProgress(share)` gets 0..1.
  */
-export function encodeMp3(lame, left, right, { sampleRate, vbrQuality, rounding, onProgress }) {
+/** Fixed level change before every exported MP3 (the WAVs are unchanged): room for the MP3's
+ *  peak overshoot, so no decoded sample clips. The server's renders use the same (renderService). */
+export const MP3_HEADROOM_DB = -2;
+
+export function encodeMp3(lame, left, right, { sampleRate, vbrQuality, rounding, gainDb, onProgress }) {
+  if (typeof gainDb !== 'number' || !Number.isFinite(gainDb)) throw new Error('encodeMp3: gainDb is required (MP3_HEADROOM_DB for exports)');
+  const gain = 10 ** (gainDb / 20);
   const quantize = rounding === 'none' ? undefined : QUANTIZE[rounding];
   if (rounding !== 'none' && !quantize) throw new Error(`encodeMp3: unknown rounding "${rounding}"`);
   if (left.length !== right.length) throw new Error('encodeMp3: channel lengths differ');
@@ -109,12 +118,14 @@ export function encodeMp3(lame, left, right, { sampleRate, vbrQuality, rounding,
       const n = Math.min(chunk, left.length - pos);
       if (quantize) {
         for (let i = 0; i < n; i++) {
-          inL[i] = quantize(left[pos + i]) / 8388608;
-          inR[i] = quantize(right[pos + i]) / 8388608;
+          inL[i] = (quantize(left[pos + i]) / 8388608) * gain;
+          inR[i] = (quantize(right[pos + i]) / 8388608) * gain;
         }
       } else {
-        inL.set(left.subarray(pos, pos + n));
-        inR.set(right.subarray(pos, pos + n));
+        for (let i = 0; i < n; i++) {
+          inL[i] = left[pos + i] * gain;
+          inR[i] = right[pos + i] * gain;
+        }
       }
       take(lame.mp3_encode(n), 'encode');
       if (onProgress && (pos / chunk) % 64 === 0) onProgress(pos / left.length);
