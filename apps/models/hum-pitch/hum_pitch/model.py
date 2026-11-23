@@ -31,8 +31,12 @@ def reference_pitch(feat: np.ndarray) -> np.ndarray:
     return m[near]
 
 
+N_IN = 22
+
+
 def model_inputs(feat: np.ndarray, ref: np.ndarray) -> np.ndarray:
-    """(frames, 10) network input from the stored features and the reference pitch."""
+    """(frames, 22) network input from the stored features and the reference pitch: 10 continuous features and a soft
+    12-class pitch-class vector of the voiced frames (zero where unvoiced), which the key head pools."""
     m, v = feat[:, 0], feat[:, 1]
     r = np.nan_to_num(ref, nan=60.0)
     has = np.isfinite(ref).astype(np.float32)
@@ -41,11 +45,14 @@ def model_inputs(feat: np.ndarray, ref: np.ndarray) -> np.ndarray:
     x = np.stack([(r - 60.0) / 24.0 * has, v, feat[:, 2], feat[:, 3], feat[:, 4],
                   np.sin(ang12) * has, np.cos(ang12) * has, np.sin(ang1) * has, np.cos(ang1) * has,
                   (np.where(v > 0.5, m, r) - np.round(r)) * has], 1)
-    return x.astype(np.float32)
+    d = (m[:, None] - np.arange(12)[None]) % 12.0
+    d = np.minimum(d, 12.0 - d)
+    pc = np.exp(-0.5 * (d / 0.35) ** 2) * (v[:, None] > 0.5)
+    return np.concatenate([x, pc], 1).astype(np.float32)
 
 
 class HumNotes(nn.Module):
-    def __init__(self, n_in: int = 10, hidden: int = 128, layers: int = 2, dropout: float = 0.1):
+    def __init__(self, n_in: int = N_IN, hidden: int = 128, layers: int = 2, dropout: float = 0.1):
         super().__init__()
         self.inp = nn.Sequential(nn.Linear(n_in, hidden), nn.GELU())
         self.conv = nn.Conv1d(hidden, hidden, 5, padding=2)
@@ -53,6 +60,10 @@ class HumNotes(nn.Module):
         self.frame = nn.Sequential(nn.Linear(2 * hidden, hidden), nn.GELU(), nn.Linear(hidden, 2 + N_DELTA))
         self.att = nn.Linear(2 * hidden, 1)
         self.key = nn.Sequential(nn.Linear(2 * hidden, hidden), nn.GELU(), nn.Linear(hidden, 12))
+        # a learned 12-step template correlated with the clip's pitch-class histogram (rotation-equivariant, like
+        # Krumhansl-Schmuckler), added to the key logits
+        self.template = nn.Parameter(torch.zeros(12))
+        self.template_scale = nn.Parameter(torch.tensor(10.0))
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor):
         """x (B, T, n_in), mask (B, T) bool. Returns onset logits (B, T), active logits (B, T),
@@ -66,7 +77,12 @@ class HumNotes(nn.Module):
         f = self.frame(out)
         a = self.att(out).squeeze(-1).masked_fill(~mask, -1e9)
         pooled = (torch.softmax(a, 1).unsqueeze(-1) * out).sum(1)
-        return f[..., 0], f[..., 1], f[..., 2:], self.key(pooled)
+        pcs = x[..., -12:] * (x[..., 3:4] + 2.5).clamp(min=0) * mask.unsqueeze(-1)  # louder frames count more
+        hist = pcs.sum(1)
+        hist = hist / hist.sum(-1, keepdim=True).clamp(min=1e-6)
+        idx = (torch.arange(12, device=x.device)[:, None] + torch.arange(12, device=x.device)[None]) % 12  # [tonic, degree]
+        corr = (hist[:, idx] * self.template[None, None, :]).sum(-1)  # (B, 12): template rotated to each tonic
+        return f[..., 0], f[..., 1], f[..., 2:], self.key(pooled) + self.template_scale * corr
 
 
 def frame_labels(n_frames: int, notes: np.ndarray, ref: np.ndarray):
