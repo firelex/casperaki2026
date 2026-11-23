@@ -230,6 +230,8 @@ export {
   type SegmentType,
 } from './arrangement-polish/index.js';
 export { generateVocalMelody, writeVocals } from './vocals/index.js';
+// Hum to song: the chord fitter and the user's own chorus (see src/hum/index.ts).
+export * as hum from './hum/index.js';
 export {
   buildVocalScaffolding,
   type NoteScaffolding,

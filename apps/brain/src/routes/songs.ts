@@ -94,6 +94,42 @@ export function ownerOf(req: Request): string {
   return req.user?.id ?? DEV_OWNER_ID;
 }
 
+export interface GeneratedProject {
+  readonly id: string;
+  readonly song: Song;
+  readonly hash: string;
+}
+
+/**
+ * Generate a song and keep it as one of the owner's projects (POST /api/songs/generate; hum to song uses it too).
+ * Untitled songs get the style-and-key placeholder and are named afterwards. Generator errors are thrown.
+ */
+export function generateProject(
+  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle'] },
+  owner: string,
+  params: GenerateParams,
+  title: string | undefined,
+): GeneratedProject {
+  const { store, clock, onPlaceholderTitle } = deps;
+  const song = orchestrate(params);
+  const canonical = canonicalStringifySong(song, 2);
+  const hash = hashCanonical(canonical);
+  const id = hash.slice(0, 16);
+  const at = clock();
+  store.put({ id, song, canonical, hash, createdAt: at });
+  const existing = store.getProject(owner, id);
+  const placeholder = title === undefined && !existing ? defaultTitle(params.genre, params.key) : undefined;
+  store.upsertProject({
+    ownerId: owner,
+    songId: id,
+    title: title ?? existing?.title ?? placeholder!,
+    createdAt: existing?.createdAt ?? at,
+    updatedAt: at,
+  });
+  if (placeholder !== undefined) onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder });
+  return { id, song, hash };
+}
+
 export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
@@ -117,29 +153,14 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
       ];
       return res.status(400).json({ error: 'invalid_body', issues });
     }
-    const params: GenerateParams = parsed.data;
-    let song;
+    let made: GeneratedProject;
     try {
-      song = orchestrate(params);
+      made = generateProject({ store, clock, onPlaceholderTitle }, ownerOf(req), parsed.data, title.data);
     } catch (err) {
       return generateError(res, err);
     }
-    const canonical = canonicalStringifySong(song, 2);
-    const hash = hashCanonical(canonical);
-    const id = hash.slice(0, 16);
-    const at = clock();
-    store.put({ id, song, canonical, hash, createdAt: at });
+    const { id, song, hash } = made;
     const owner = ownerOf(req);
-    const existing = store.getProject(owner, id);
-    const placeholder = title.data === undefined && !existing ? defaultTitle(params.genre, params.key) : undefined;
-    store.upsertProject({
-      ownerId: owner,
-      songId: id,
-      title: title.data ?? existing?.title ?? placeholder!,
-      createdAt: existing?.createdAt ?? at,
-      updatedAt: at,
-    });
-    if (placeholder !== undefined) onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder });
     return res.status(201).json({ id, song, hash, project: projectJson(store.getProject(owner, id)!, renders) });
   });
 

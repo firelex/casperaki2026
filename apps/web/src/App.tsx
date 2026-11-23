@@ -16,6 +16,7 @@ const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ defa
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
 const HumLabPage = lazy(() => import('./pages/HumLabPage').then((m) => ({ default: m.HumLabPage })));
+const HumSongPage = lazy(() => import('./pages/HumSongPage').then((m) => ({ default: m.HumSongPage })));
 
 /**
  * Routes mirror rory-fe's three screens (LoginView, ProjectsView, Editor):
@@ -52,6 +53,7 @@ export function App() {
         {user.isAdmin ? <Route path="/patterns" element={<Navigate to="/suggestions" replace />} /> : null}
         {/* dev-only WASM spikes stay reachable when signed in */}
         <Route path="/lab/hum" element={<HumLabPage />} />
+        <Route path="/hum" element={<HumSongPage />} />
         <Route path="/wasm-tone" element={<WasmTonePage />} />
         <Route path="/wasm-render" element={<WasmRenderPage />} />
         <Route path="/editor" element={<Navigate to="/" replace />} />

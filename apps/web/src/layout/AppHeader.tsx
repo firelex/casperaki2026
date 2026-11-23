@@ -41,6 +41,13 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
         <div className="ml-auto flex items-center gap-3">
           <button
             type="button"
+            onClick={() => navigate('/hum')}
+            className="h-8 whitespace-nowrap rounded-full border border-white/30 px-4 text-[14px] font-semibold text-white transition-colors hover:border-white/60"
+          >
+            Hum a song
+          </button>
+          <button
+            type="button"
             onClick={() => navigate('/?create=1')}
             className="h-8 whitespace-nowrap rounded-full bg-accent px-4 text-[14px] font-semibold text-white transition-colors hover:bg-[#e00000]"
           >

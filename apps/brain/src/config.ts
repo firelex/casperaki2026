@@ -61,6 +61,10 @@ const ConfigSchema = z.object({
   beatThisPython: z.string().min(1).optional(),
   /** Where the hum lab keeps recordings sent with a meant tempo (test data for apps/models/hum-beats). */
   humLabDir: z.string().min(1).optional(),
+  /** Hum to song: the transcription service ("hum": POST /transcribe) and the melody completion service ("amt":
+   *  POST /complete), as base URLs. Unset → /api/hum answers 503 naming the setting. */
+  humServiceUrl: z.string().url().optional(),
+  amtServiceUrl: z.string().url().optional(),
   videoPlannerUrl: z.string().url().optional(),
   videoPlannerModel: z.string().min(1).optional(),
   videoPlannerKey: z.string().min(1).optional(),
@@ -122,6 +126,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     webDistDir: env.BRAIN_WEB_DIST_DIR,
     beatThisPython: env.BEAT_THIS_PYTHON || undefined,
     humLabDir: env.BRAIN_HUM_LAB_DIR || undefined,
+    humServiceUrl: env.HUM_SERVICE_URL || undefined,
+    amtServiceUrl: env.AMT_SERVICE_URL || undefined,
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
     videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
     videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,

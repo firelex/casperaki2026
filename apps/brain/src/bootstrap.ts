@@ -35,6 +35,7 @@ import { RenderService } from './render/renderService.js';
 import { renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
+import { createHumRouter } from './routes/hum.js';
 import { DeepSeekPlanner } from './video/planner.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
@@ -219,6 +220,15 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
+  app.use(
+    createHumRouter({
+      humServiceUrl: config.humServiceUrl,
+      amtServiceUrl: config.amtServiceUrl,
+      humLabDir: config.humLabDir,
+      store,
+      ...(titler ? { onPlaceholderTitle: (u: Parameters<SongTitler['name']>[0]) => titler.name(u) } : {}),
+    }),
+  );
   app.use(createSoundsRouter({ playback }));
   const assistantEp = assistantEndpoint(config);
   app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));

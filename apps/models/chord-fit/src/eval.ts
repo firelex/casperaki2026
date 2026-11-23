@@ -17,6 +17,8 @@ import { writeMidi, type MidiNote } from './midi.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RESULTS = resolve(HERE, '..', 'results');
+// The model the brain loads (packages/arrangement, loadChordFitModel()).
+const MODEL_JSON = resolve(HERE, '..', '..', '..', '..', 'packages', 'arrangement', 'data', 'hum', 'chord-fit-model.json');
 const MIDI_DIR = '/mnt/d/casperaki-data/chord-fit';
 const SALT = 'chord-fit-v1';
 const HOLDOUT = 0.2;
@@ -320,8 +322,8 @@ log();
 
 const full = buildModel(items, new Set(), bankAll);
 mkdirSync(RESULTS, { recursive: true });
-writeFileSync(resolve(RESULTS, 'model.json'), JSON.stringify({
-  $description: 'chord-fit model: prior trained on all vocal precedents with chords + the chord bank; params tuned by cross-validation. Load with src/model.ts harmonize().',
+writeFileSync(MODEL_JSON, JSON.stringify({
+  $description: 'chord-fit model: prior trained on all vocal precedents with chords + the chord bank; params tuned by cross-validation. Load with loadChordFitModel() and harmonize() from @casperaki/arrangement.',
   // Shipped variant: known progressions = chord bank + every distinct progression of the precedents, with the margin
   // tuned for that set (the bank-only variant never prefers a known progression).
   params: bestPlus,
@@ -330,4 +332,4 @@ writeFileSync(resolve(RESULTS, 'model.json'), JSON.stringify({
   known: full.plus.map((b) => ({ name: b.name, slots: b.slots })),
 }, null, 1));
 writeFileSync(resolve(RESULTS, 'scores.md'), out.join('\n') + '\n');
-console.log(`\nwrote ${resolve(RESULTS, 'scores.md')} and model.json`);
+console.log(`\nwrote ${resolve(RESULTS, 'scores.md')} and ${MODEL_JSON}`);

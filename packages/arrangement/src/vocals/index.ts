@@ -34,6 +34,7 @@ import {
   BACKING_OFFSET_2,
   generateBackings,
 } from './backing.js';
+import { userChorusOf, userChorusPrecedent } from '../hum/user-chorus.js';
 import { selectSeedPhrasePlan } from './lyrics-source/seed.js';
 import { expandMergedToSegment, selectMergedPrecedent, type MergedPrecedent } from './precedents.js';
 import { buildVocalScaffolding } from './scaffolding.js';
@@ -89,8 +90,11 @@ export function writeVocals(
     );
   }
 
-  // Phase 1 — vocal melody from precedents (Step 17b, unchanged).
+  // Phase 1 — vocal melody from precedents (Step 17b, unchanged). A user chorus
+  // (hum to song: params.params.userChorus) takes the chorus's place.
   const cachedBySegmentType = new Map<string, MergedPrecedent | undefined>();
+  const userChorus = userChorusOf(ctx.params.params);
+  if (userChorus) cachedBySegmentType.set('chorus', userChorusPrecedent(userChorus, ctx.params.key));
   const skeleton: VocalSegment[] = [];
   const sung = new Map<string, { merged: MergedPrecedent; type: string }>();
   for (const segment of structure) {
