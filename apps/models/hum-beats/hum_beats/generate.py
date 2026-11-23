@@ -426,7 +426,7 @@ def write_midi(path: Path, perf: list[dict], tmap, t0: float, meter: str, dur: f
     q_ref = round(float(tmap.position(t0)) * 8) / 8  # score position at clip time 0 (on the 1/8 grid)
     q_end = float(tmap.position(t0 + dur))
     tick = lambda q: int(round((q - q_ref) * ppq))  # noqa: E731
-    num, den = {"3/4": (3, 4), "4/4": (4, 4), "6/8": (6, 8)}[meter]
+    num, den = {"2/4": (2, 4), "3/4": (3, 4), "4/4": (4, 4), "6/8": (6, 8)}[meter]
     events = []
     first_bar = math.ceil(q_ref / bar_q - 1e-9) * bar_q
     partial = first_bar - q_ref

@@ -30,15 +30,21 @@ def main():
     ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--min-match", type=float, default=0.6)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--keys-file", type=Path, help="use exactly these recordings (one key per line) instead of sampling the TEST split")
+    ap.add_argument("--wav-dir", type=Path, default=ROOT / "wav")
+    ap.add_argument("--set-name", default="test-humtrans")
     args = ap.parse_args()
     import librosa
     import pretty_midi
     import soundfile as sf
 
-    keys = json.loads((ROOT / "download/train_valid_test_keys.json").read_text())["TEST"]
-    rng = np.random.default_rng(args.seed)
-    chosen = sorted(rng.choice(keys, size=args.n, replace=False).tolist())
-    wav_dir = ROOT / "wav"
+    if args.keys_file:
+        chosen = sorted(args.keys_file.read_text().split())
+    else:
+        keys = json.loads((ROOT / "download/train_valid_test_keys.json").read_text())["TEST"]
+        rng = np.random.default_rng(args.seed)
+        chosen = sorted(rng.choice(keys, size=args.n, replace=False).tolist())
+    wav_dir = args.wav_dir
     missing = [k for k in chosen if not (wav_dir / f"{k}.wav").exists()]
     if missing:
         subprocess.run([sys.executable, "-I", str(Path(__file__).with_name("humtrans_fetch.py")), "--out", str(wav_dir), *missing], check=True)
@@ -85,7 +91,7 @@ def main():
         with open(args.out / f"{k}.beats", "w") as f:
             f.writelines(f"{b:.5f}\t{n}\n" for b, n in zip(beats, nums))
         tempo = float(pm.get_tempo_changes()[1][0])
-        meta = {"clip_id": k, "split": "test-humtrans", "source": "HumTrans (CC BY-NC 4.0, evaluation only)", "offset_s": offset,
+        meta = {"clip_id": k, "split": args.set_name, "source": "HumTrans (CC BY-NC 4.0, evaluation only)", "offset_s": offset,
                 "onset_match": match, "bpm": tempo, "time_signatures": [(t.numerator, t.denominator) for t in pm.time_signature_changes],
                 "singer": k.split("_")[0], "piece": k.split("_")[1],
                 "notes": [{"midi": n.pitch, "onset": n.start + offset, "offset": n.end + offset} for n in notes]}

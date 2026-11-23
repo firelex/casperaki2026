@@ -461,23 +461,33 @@ def perform(rng, score: Score, tmap: TempoMap, timing: str, amounts: dict, is_la
 # Procedural melodies, round two: real rhythms, new pitches
 # --------------------------------------------------------------------------------------------------------
 
-def mutate_rhythm(rng, notes, beat_q: float, p_merge: float = 0.08, p_split: float = 0.08):
-    """Small metrical edits: merge a short note into the next one in the same beat group, or split a long note
-    at its middle beat. Keeps onsets on the same metrical grid as the source."""
+def mutate_rhythm(rng, notes, beat_q: float, bar_q: float, p_merge: float = 0.08, p_split: float = 0.08):
+    """Small metrical edits: merge a short note into the next one, or split a long note at a beat. The edit is
+    decided once per bar rhythm, so bars that repeat a rhythm keep repeating it (as in real melodies)."""
+    bars: dict[int, list] = {}
+    for n in notes:
+        bars.setdefault(int(np.floor(n[0] / bar_q + 1e-9)), []).append(n)
+    decisions: dict[tuple, int] = {}
     out = []
-    i = 0
-    while i < len(notes):
-        a, b, m = notes[i]
-        if i + 1 < len(notes) and abs(notes[i + 1][0] - b) < 1e-6 and (b - a) < beat_q and rng.random() < p_merge:
-            out.append((a, notes[i + 1][1], m))
-            i += 2
-            continue
-        if (b - a) >= 2 * beat_q - 1e-6 and rng.random() < p_split:
-            half = a + round(((b - a) / 2) / beat_q) * beat_q
-            out.extend([(a, half, m), (half, b, m)])
-        else:
-            out.append((a, b, m))
-        i += 1
+    for b in sorted(bars):
+        bn = bars[b]
+        key = tuple(round(x[0] - b * bar_q, 3) for x in bn) + tuple(round(x[1] - x[0], 3) for x in bn)
+        if key not in decisions:
+            decisions[key] = int(rng.integers(1 << 30))
+        brng = np.random.default_rng(decisions[key])
+        i = 0
+        while i < len(bn):
+            a, e, m = bn[i]
+            if i + 1 < len(bn) and abs(bn[i + 1][0] - e) < 1e-6 and (e - a) < beat_q and brng.random() < p_merge:
+                out.append((a, bn[i + 1][1], m))
+                i += 2
+                continue
+            if (e - a) >= 2 * beat_q - 1e-6 and brng.random() < p_split:
+                half = a + round(((e - a) / 2) / beat_q) * beat_q
+                out.extend([(a, half, m), (half, e, m)])
+            else:
+                out.append((a, e, m))
+            i += 1
     return out
 
 

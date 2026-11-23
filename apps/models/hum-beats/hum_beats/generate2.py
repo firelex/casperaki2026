@@ -117,7 +117,7 @@ def procedural_melody(rng, row, meter, n_bars, style, bpm, start_mode):
     a_row = {**row, "source": "precedent", "family": row["rhythm_donors"][0]}
     notes, info = clip_melody(rng, a_row, meter, n_bars, style, bpm, start_mode)
     info = {"rhythm_donor_a": row["rhythm_donors"][0], "rhythm_donor_a_window_bar": info.get("window_start_bar")}
-    if n_bars >= 4 and rng.random() < 0.5:
+    if n_bars >= 4 and rng.random() < 0.25:
         b_row = {**row, "source": "precedent", "family": row["rhythm_donors"][1]}
         b_notes, b_info = clip_melody(rng, b_row, meter, n_bars, style, bpm, "downbeat")
         half = (n_bars // 2) * bar_q
@@ -125,7 +125,7 @@ def procedural_melody(rng, row, meter, n_bars, style, bpm, start_mode):
         info["rhythm_donor_b"] = row["rhythm_donors"][1]
     if not notes:
         return [], info
-    notes = music.mutate_rhythm(rng, sorted(notes), beat_q)
+    notes = music.mutate_rhythm(rng, sorted(notes), beat_q, bar_q)
     notes, minfo = music.melodize(rng, notes, beat_q)
     info.update(minfo)
     return notes, info
