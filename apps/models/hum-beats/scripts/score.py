@@ -53,20 +53,35 @@ def band(bpm: float) -> str:
 
 
 def clip_info(meta: dict | None) -> dict:
-    if meta is None or "lead" not in meta:
+    if meta is None:
+        return {}
+    if "genre" in meta:
+        return {"genre": meta["genre"]}
+    if "singer" in meta and "lead" not in meta:
+        return {"singer": meta["singer"], "tempo_band": band(meta["bpm"])}
+    if "lead" not in meta:
         return {}
     g = meta["lead"]["group"]
     return {
         "meter": meta["meter"], "timing": meta["timing"], "style": meta["style"], "start": meta["start_mode"],
         "bars": meta["n_bars"], "pollution": meta["pollution"]["level"], "lead_group": g,
-        "lead": "voice" if g in ("voice", "vocal_sample") else ("breathy" if g == "breathy" else "instrument"),
+        "lead": "voice" if g in ("voice", "vocal_sample", "soulx") else ("breathy" if g == "breathy" else "instrument"),
         "tempo_band": band(meta["bpm"]), "timbre": meta["lead"]["timbre"], "accompaniment": "melody alone",
     }
 
 
-def load_model(name: str):
+def load_model(name: str, dbn: bool):
     from beat_this.inference import Audio2Beats
-    return Audio2Beats(checkpoint_path=name, device="cuda", float16=False, dbn=False)
+    return Audio2Beats(checkpoint_path=name, device="cuda", float16=False, dbn=dbn)
+
+
+def select(wavs, which: str | None):
+    """'even' / 'odd': keep clips whose trailing number is even / odd (GTZAN dev / test halves)."""
+    if which is None:
+        return wavs
+    if which not in ("even", "odd"):
+        raise SystemExit(f"unknown selection @{which} (use @even or @odd)")
+    return [w for w in wavs if (int(w.stem.rsplit("_", 1)[-1]) % 2 == 0) == (which == "even")]
 
 
 def hum_lab_items(folder: Path, ffmpeg: str = "ffmpeg"):
@@ -90,17 +105,25 @@ def main():
     ap.add_argument("--sets", nargs="*", default=[], help="name=folder")
     ap.add_argument("--hum-lab", type=Path)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--dbn", action="store_true", help="also score every model with Beat This!'s DBN post-processing (name+dbn)")
     args = ap.parse_args()
     if len(args.models) != len(args.names):
         raise SystemExit("--models and --names must pair up")
     args.out.mkdir(parents=True, exist_ok=True)
     rows = []
-    for model_path, model_name in zip(args.models, args.names):
-        model = load_model(model_path)
+    runs = [(p, n, False) for p, n in zip(args.models, args.names)]
+    if args.dbn:
+        runs += [(p, n + "+dbn", True) for p, n in zip(args.models, args.names)]
+    names = [n for _, n, _ in runs]
+    for model_path, model_name, dbn in runs:
+        model = load_model(model_path, dbn)
         for spec in args.sets:
             set_name, folder = spec.split("=", 1)
+            which = None
+            if "@" in folder:
+                folder, which = folder.rsplit("@", 1)
             folder = Path(folder)
-            wavs = sorted(folder.glob("*.wav"))
+            wavs = select(sorted(folder.glob("*.wav")), which)
             if not wavs:
                 raise SystemExit(f"{folder}: no .wav files")
             for w in wavs:
@@ -135,7 +158,7 @@ def main():
         torch.cuda.empty_cache()
     df = pd.DataFrame(rows)
     df.to_csv(args.out / "per_clip.csv", index=False)
-    (args.out / "summary.md").write_text(summarise(df, args.names))
+    (args.out / "summary.md").write_text(summarise(df, names))
     print((args.out / "summary.md").read_text())
 
 
@@ -170,8 +193,8 @@ def summarise(df: pd.DataFrame, names) -> str:
     for s in df["set"].unique():
         d = df[df["set"] == s]
         out.append(f"\n## {s}\n\n" + table(d, names, None))
-        if "lead" in d and d["lead"].notna().any():
-            for by in ("lead", "lead_group", "timing", "meter", "tempo_band", "pollution", "style", "start", "bars"):
+        for by in ("lead", "lead_group", "timing", "meter", "tempo_band", "pollution", "style", "start", "bars", "genre", "singer"):
+            if by in d and d[by].notna().any():
                 out.append(f"\n### {s} by {by}\n\n" + table(d, names, by))
     return "\n".join(out) + "\n"
 
