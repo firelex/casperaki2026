@@ -81,6 +81,8 @@ def main():
     ap.add_argument("--items", default=None, help="training items per dataset, e.g. humbeats2=all,humbeats=5000 (others dropped)")
     ap.add_argument("--val-datasets", default=None, help="comma list of datasets whose val items validate the run (default: all)")
     ap.add_argument("--freeze-frontend", action="store_true", help="keep the frontend (the early layers that hear the timbre) fixed")
+    ap.add_argument("--pos-weights", choices=["data", "init"], default="data",
+                    help="loss weights of beat frames: recomputed from the training data (Beat This!'s recipe) or the starting checkpoint's own")
     args = ap.parse_args()
     if args.check_loader:
         dm = BeatDataModule(args.data_dir, batch_size=64, train_length=1500, num_workers=16,
@@ -122,8 +124,8 @@ def main():
         dm.val_dataset.items = [it for it in dm.val_dataset.items if str(it["spect_path"]).split("/", 1)[0] in vds]
         if not dm.val_dataset.items:
             raise SystemExit(f"no validation items from {vds}")
-    pos_weights = dm.get_train_positive_weights(widen_target_mask=3)
     ckpt = load_checkpoint(args.init, "cpu")
+    pos_weights = dm.get_train_positive_weights(widen_target_mask=3) if args.pos_weights == "data" else dict(ckpt["hyper_parameters"]["pos_weights"])
     hp = dict(ckpt["hyper_parameters"])
     hp.update(lr=args.lr, warmup_steps=args.warmup_steps, max_epochs=1, pos_weights=pos_weights, eval_trim_beats=0, use_dbn=False)
     model = HumPL(**hp)
