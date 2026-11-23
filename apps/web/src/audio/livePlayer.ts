@@ -1009,7 +1009,12 @@ export class LivePlayer {
     const buffers = new Map<string, AudioBuffer>();
     await Promise.all(
       urls.map(async (u) => {
-        buffers.set(u, await this.decode(ctx, u));
+        try {
+          buffers.set(u, await this.decode(ctx, u));
+        } catch (err) {
+          const keys = plan.filter((x) => x.url === u).map((x) => `${x.kind} ${x.key}`).join(', ');
+          throw new Error(`The sample for ${keys} (${u}) could not be loaded: ${err instanceof Error ? err.message : String(err)}`);
+        }
         if (toFetch.has(u)) progress(++done, toFetch.size);
       }),
     );

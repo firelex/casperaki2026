@@ -14,7 +14,7 @@
 // Mirrors native audio/SampleLibrary.h (and the old dev-only plan in
 // apps/web/vite.config.ts) so the browser hears what the server render plays.
 
-import { execFile } from 'node:child_process';
+import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
@@ -64,6 +64,9 @@ interface SampleSpec {
   readonly relativePath: string;
   readonly sliceStart?: number;
   readonly sliceEnd?: number;
+  /** The slice starts past the end of the recording (e.g. a sax section's grid runs above its
+   *  range): it is silence of the slice's length, as the legacy sampler's empty region was. */
+  readonly beyondEnd?: true;
 }
 
 export const STUB_SAMPLES = ['kick.ogg', 'snare.ogg', 'hat.ogg', 'tone.ogg', 'bass-c2.ogg'] as const;
@@ -169,7 +172,14 @@ export class PlaybackService {
         const s0 = slot.sliceStart as number;
         const s1 = slot.sliceEnd as number;
         if (!(s1 > s0) || s0 < 0) continue;
-        add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1 });
+        // A slice past the end of the recording is silence (its own spec, so its own URL).
+        const fileSec = this.durationSync(entry.relativePath);
+        if (s0 >= fileSec - 0.01) {
+          this.warnBeyondEnd(entry.relativePath, fileSec, s0);
+          add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1, beyondEnd: true });
+        } else {
+          add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1 });
+        }
       }
     }
 
@@ -271,6 +281,30 @@ export class PlaybackService {
     return sec;
   }
 
+  /** Length in seconds of a library file, synchronously (for plan(); one ffprobe per file, cached). */
+  private durationSync(relativePath: string): number {
+    const cached = this.durations.get(relativePath);
+    if (cached !== undefined) return cached;
+    const src = resolve(this.libraryRoot, relativePath);
+    if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sound file points outside the library: ${relativePath}`);
+    if (!existsSync(src)) throw new Error(`sound file missing in the library: ${relativePath}`);
+    if (!/ffmpeg$/u.test(this.config.ffmpegBin)) throw new Error(`cannot find ffprobe: FFMPEG_BIN (${this.config.ffmpegBin}) does not end in "ffmpeg"`);
+    const ffprobe = this.config.ffmpegBin.replace(/ffmpeg$/u, 'ffprobe');
+    const r = spawnSync(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', src], { encoding: 'utf8', timeout: 30_000 });
+    if (r.status !== 0) throw new Error(`ffprobe failed for ${relativePath}: ${r.stderr || r.error?.message || `exit ${r.status}`}`);
+    const sec = Number(r.stdout.trim());
+    if (!(sec > 0)) throw new Error(`ffprobe gave no duration for ${relativePath}: "${r.stdout.trim()}"`);
+    this.durations.set(relativePath, sec);
+    return sec;
+  }
+
+  private readonly warnedBeyondEnd = new Set<string>();
+  private warnBeyondEnd(relativePath: string, fileSec: number, sliceStart: number): void {
+    if (this.warnedBeyondEnd.has(relativePath)) return;
+    this.warnedBeyondEnd.add(relativePath);
+    console.warn(`[playback] ${relativePath} is ${fileSec.toFixed(2)} s; its note slices from ${sliceStart.toFixed(2)} s on are past the end and play as silence`);
+  }
+
   /** Whether a sample id has been registered by some song's plan. */
   knowsSample(sampleId: string): boolean {
     return SAMPLE_ID.test(sampleId) && existsSync(join(this.config.sampleCacheDir, `${sampleId}.json`));
@@ -317,11 +351,23 @@ export class PlaybackService {
     const src = resolve(this.libraryRoot, spec.relativePath);
     if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sample ${sampleId} points outside the library`);
     if (!existsSync(src)) throw new Error(`sample ${sampleId}: library file missing: ${spec.relativePath}`);
+    const tmp = `${out}.tmp-${process.pid}`;
+    if (spec.beyondEnd) {
+      if (spec.sliceStart === undefined || spec.sliceEnd === undefined) throw new Error(`sample ${sampleId}: a beyond-the-end slice needs its start and end`);
+      await runLogged(
+        this.config.ffmpegBin,
+        ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-t', (spec.sliceEnd - spec.sliceStart).toFixed(6), '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', tmp],
+        process.env,
+        `${out}.log`,
+        TRANSCODE_TIMEOUT_MS,
+      );
+      renameSync(tmp, out);
+      return out;
+    }
     // -ss/-to after -i: cut on the decoded stream, so slice edges are exact.
     const cut = spec.sliceStart !== undefined && spec.sliceEnd !== undefined
       ? ['-ss', spec.sliceStart.toFixed(6), '-to', spec.sliceEnd.toFixed(6)]
       : [];
-    const tmp = `${out}.tmp-${process.pid}`;
     await runLogged(
       this.config.ffmpegBin,
       ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, ...cut, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', tmp],

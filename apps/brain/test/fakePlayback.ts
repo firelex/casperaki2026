@@ -38,9 +38,13 @@ writeFileSync(o + '/asset-manifest.json', JSON.stringify({
 }));
 `,
   );
-  const ffmpeg = join(dir, 'ffmpeg.sh');
+  const ffmpeg = join(dir, 'ffmpeg');
   writeFileSync(ffmpeg, '#!/bin/sh\nfor last; do :; done\necho "$@" > "$last"\n');
   chmodSync(ffmpeg, 0o755);
+  // ffprobe (next to ffmpeg): every stand-in file is 100 s long.
+  const ffprobe = join(dir, 'ffprobe');
+  writeFileSync(ffprobe, '#!/bin/sh\necho 100\n');
+  chmodSync(ffprobe, 0o755);
   return new PlaybackService({
     playbackDir: join(dir, 'playback'),
     sampleCacheDir: join(dir, 'cache'),
