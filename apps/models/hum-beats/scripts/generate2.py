@@ -71,6 +71,10 @@ def _finish(wav):
     ok = (align["checked_notes"] >= 2 and align["within_70ms"] >= 0.6 and abs(align["median_ms"]) <= 50
           and pitch["octave_off"] is not None and pitch["octave_off"] <= 0.15)
     if not ok:
+        rej = wav.parent / "rejected"
+        rej.mkdir(exist_ok=True)
+        for f in (wav, wav.with_name(f"{cid}.soulx.json"), state_path):
+            f.rename(rej / f.name)  # kept for inspection, out of the finisher's way
         return {"clip_id": cid, "rejected": {"alignment": align, "pitch": pitch}, "duration_s": st["dur"]}
     render_info = json.loads(wav.with_name(f"{cid}.soulx.json").read_text())
     sinfo = {"soulx": {"prompt": st["lead"]["prompt"], "text": st["lead"]["text"], "alignment": align, "pitch_check": pitch, **render_info}}
