@@ -269,9 +269,19 @@ def scale_set(tonic: int, mode: str) -> set:
     return set(((MAJOR_SCALE if mode == "major" else MINOR_SCALE) + tonic) % 12)
 
 
-def transcribe(row: dict, cfg: Config) -> list[list]:
-    """Notes [[onset_s, offset_s, midi_int], ...] for one clip under cfg."""
-    times, midi, voiced, level_db = load_curve(row["id"])
+def curve_from_features(feat: np.ndarray):
+    """The SwiftF0 curve as load_curve returns it, rebuilt from a scripts/features.py row block (16 ms frames; level
+    relative to the clip's loudest frame, which is all the silence gate uses)."""
+    times = np.arange(len(feat)) * 0.016
+    voiced = feat[:, 1] > 0.5
+    midi = np.where(voiced, feat[:, 0], np.nan)
+    return times, midi, voiced, feat[:, 3].astype(float) * 40.0
+
+
+def transcribe(row: dict, cfg: Config, curve=None) -> list[list]:
+    """Notes [[onset_s, offset_s, midi_int], ...] for one clip under cfg; the SwiftF0 curve comes from the predict.py
+    cache unless given (curve_from_features)."""
+    times, midi, voiced, level_db = load_curve(row["id"]) if curve is None else curve
     beats = None
     if cfg.grid:
         beats = np.loadtxt(row["wav"][:-4] + ".beats", ndmin=2)[:, 0]

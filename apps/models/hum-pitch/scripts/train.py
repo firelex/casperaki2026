@@ -32,7 +32,8 @@ def load(feat_dir: Path, name: str, limit: int = 0) -> list[dict]:
     feat, notes = z["feat"], z["notes"]
     clips = []
     for i, m in enumerate(metas[:limit] if limit else metas):
-        clips.append({"id": m["id"], "feat": feat[fo[i]:fo[i + 1]], "notes": notes[no[i]:no[i + 1]], "sig": np.asarray(m["sig_soft"], np.float32)})
+        clips.append({"id": m["id"], "feat": feat[fo[i]:fo[i + 1]], "notes": notes[no[i]:no[i + 1]], "sig": np.asarray(m["sig_soft"], np.float32),
+                      "key_label": m["key_label"]})
     return clips
 
 
@@ -44,7 +45,14 @@ def example(c: dict, shift: int):
     notes = c["notes"].copy()
     notes[:, 2] += shift
     onset, active, delta = frame_labels(len(f), notes, ref)
-    return model_inputs(f, ref), onset, active, delta, np.roll(c["sig"], shift)
+    if c["key_label"] is None:
+        sig, k24 = np.roll(c["sig"], shift), -1
+    else:  # a stored key: one-hot key signature (relative-major tonic) and the 24-class key, both transposed
+        tonic, minor = (c["key_label"] + shift) % 12, c["key_label"] >= 12
+        sig = np.zeros(12, np.float32)
+        sig[(tonic + 3) % 12 if minor else tonic] = 1.0
+        k24 = tonic + 12 * minor
+    return model_inputs(f, ref), onset, active, delta, sig, k24
 
 
 def batch(items, device):
@@ -55,16 +63,17 @@ def batch(items, device):
     de = np.full((B, T), -1, np.int64)
     mask = np.zeros((B, T), bool)
     sig = np.stack([it[4] for it in items])
-    for b, (xi, oi, ai, di, _) in enumerate(items):
+    k24 = np.array([it[5] for it in items], np.int64)
+    for b, (xi, oi, ai, di, _, _) in enumerate(items):
         n = len(xi)
         x[b, :n], on[b, :n], act[b, :n], de[b, :n], mask[b, :n] = xi, oi, ai, di, True
     t = lambda a: torch.from_numpy(a).to(device)  # noqa: E731
-    return t(x), t(on), t(act), t(de), t(mask), t(sig)
+    return t(x), t(on), t(act), t(de), t(mask), t(sig), t(k24)
 
 
 def losses(model, b, pos_weight):
-    x, on, act, de, mask, sig = b
-    lo, la, ld, lk = model(x, mask)
+    x, on, act, de, mask, sig, k24 = b
+    lo, la, ld, lk, lk24 = model(x, mask)
     m = mask.float()
     l_on = (F.binary_cross_entropy_with_logits(lo, on, reduction="none", pos_weight=torch.tensor(pos_weight, device=x.device)) * m).sum() / m.sum()
     l_act = (F.binary_cross_entropy_with_logits(la, act, reduction="none") * m).sum() / m.sum()
@@ -73,6 +82,11 @@ def losses(model, b, pos_weight):
     stats = {"delta_acc": ((ld.argmax(-1) == de) & (de >= 0)).sum().item() / max((de >= 0).sum().item(), 1),
              "delta0_acc": ((de == 4)).sum().item() / max((de >= 0).sum().item(), 1),  # the "no correction" shortcut
              "key_in_target": (sig.gather(1, lk.argmax(-1, keepdim=True)).squeeze(1) > 0).float().mean().item()}
+    if lk24 is not None and (k24 >= 0).any():
+        l_key = l_key + F.cross_entropy(lk24, k24, ignore_index=-1)
+        has = k24 >= 0
+        stats["key24_acc"] = (lk24.argmax(-1)[has] == k24[has]).float().mean().item()
+        stats["key24_clips"] = int(has.sum().item())
     return l_on, l_act, l_de, l_key, stats
 
 
@@ -85,10 +99,20 @@ def evaluate(model, dev, device, bs, pos_weight):
         l_on, l_act, l_de, l_key, st = losses(model, batch(items, device), pos_weight)
         vals = {"onset": l_on.item(), "active": l_act.item(), "delta": l_de.item(), "key": l_key.item()} | st
         for k, v in vals.items():
+            if k in ("key24_acc", "key24_clips"):
+                continue
             tot[k] = tot.get(k, 0.0) + v * len(items)
+        if "key24_acc" in st:
+            k24n = tot.get("_k24n", 0)
+            tot["_k24c"] = tot.get("_k24c", 0.0) + st["key24_acc"] * st["key24_clips"]
+            tot["_k24n"] = k24n + st["key24_clips"]
         n += len(items)
     model.train()
-    return {k: v / n for k, v in tot.items()}
+    out = {k: v / n for k, v in tot.items() if not k.startswith("_")}
+    if "_k24n" in tot:
+        out["key24_acc"] = tot["_k24c"] / tot["_k24n"]
+        out["key24_clips"] = tot["_k24n"]
+    return out
 
 
 def main():
@@ -107,6 +131,7 @@ def main():
     ap.add_argument("--key-weight", type=float, default=0.3)
     ap.add_argument("--eval-every", type=int, default=200)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--key24", action="store_true", help="add the 24-class key head, trained on clips with a stored key")
     args = ap.parse_args()
     if args.epochs != 1:
         raise SystemExit("one epoch per run (owner's rule)")
@@ -120,7 +145,9 @@ def main():
     rng = np.random.default_rng(args.seed)
     train = [c for name in args.train for c in load(args.features, name, args.limit)]
     dev = [c for name in args.dev for c in load(args.features, name)]
-    model = HumNotes(hidden=args.hidden).to(device)
+    if args.key24 and not any(c["key_label"] is not None for c in train):
+        raise SystemExit("--key24 given but no training clip has a stored key")
+    model = HumNotes(hidden=args.hidden, key24=args.key24).to(device)
     n_par = sum(p.numel() for p in model.parameters())
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
     steps = math.ceil(len(train) / args.batch)

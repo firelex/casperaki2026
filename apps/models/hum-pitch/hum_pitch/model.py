@@ -52,7 +52,7 @@ def model_inputs(feat: np.ndarray, ref: np.ndarray) -> np.ndarray:
 
 
 class HumNotes(nn.Module):
-    def __init__(self, n_in: int = N_IN, hidden: int = 128, layers: int = 2, dropout: float = 0.1):
+    def __init__(self, n_in: int = N_IN, hidden: int = 128, layers: int = 2, dropout: float = 0.1, key24: bool = False):
         super().__init__()
         self.inp = nn.Sequential(nn.Linear(n_in, hidden), nn.GELU())
         self.conv = nn.Conv1d(hidden, hidden, 5, padding=2)
@@ -64,10 +64,17 @@ class HumNotes(nn.Module):
         # Krumhansl-Schmuckler), added to the key logits
         self.template = nn.Parameter(torch.zeros(12))
         self.template_scale = nn.Parameter(torch.tensor(10.0))
+        # optional 24-class key (tonic + major/minor), trained only on clips with a stored key: same two paths, with
+        # one template per mode
+        self.has_key24 = key24
+        if key24:
+            self.key24 = nn.Sequential(nn.Linear(2 * hidden, hidden), nn.GELU(), nn.Linear(hidden, 24))
+            self.template24 = nn.Parameter(torch.zeros(2, 12))
+            self.template24_scale = nn.Parameter(torch.tensor(10.0))
 
     def forward(self, x: torch.Tensor, mask: torch.Tensor):
         """x (B, T, n_in), mask (B, T) bool. Returns onset logits (B, T), active logits (B, T),
-        correction logits (B, T, 9), key logits (B, 12)."""
+        correction logits (B, T, 9), key-signature logits (B, 12), and 24-class key logits (B, 24) or None."""
         h = self.inp(x)
         h = h + torch.relu(self.conv(h.transpose(1, 2)).transpose(1, 2))
         lengths = mask.sum(1).cpu()
@@ -82,7 +89,12 @@ class HumNotes(nn.Module):
         hist = hist / hist.sum(-1, keepdim=True).clamp(min=1e-6)
         idx = (torch.arange(12, device=x.device)[:, None] + torch.arange(12, device=x.device)[None]) % 12  # [tonic, degree]
         corr = (hist[:, idx] * self.template[None, None, :]).sum(-1)  # (B, 12): template rotated to each tonic
-        return f[..., 0], f[..., 1], f[..., 2:], self.key(pooled) + self.template_scale * corr
+        k24 = None
+        if self.has_key24:
+            rolled = hist[:, idx]  # (B, tonic, degree)
+            corr24 = torch.einsum("btd,md->bmt", rolled, self.template24).reshape(-1, 24)  # major tonics 0-11, minor 12-23
+            k24 = self.key24(pooled) + self.template24_scale * corr24
+        return f[..., 0], f[..., 1], f[..., 2:], self.key(pooled) + self.template_scale * corr, k24
 
 
 def frame_labels(n_frames: int, notes: np.ndarray, ref: np.ndarray):
@@ -107,6 +119,15 @@ def frame_labels(n_frames: int, notes: np.ndarray, ref: np.ndarray):
         d[ok] = np.where(np.abs(dd) <= 4, dd + 4, -1)
         delta[a:b] = d
     return onset, active, delta
+
+
+def load_checkpoint(path) -> "HumNotes":
+    """A trained model from final.pt; whether it has the 24-class key head is read from its weights."""
+    ck = torch.load(path, map_location="cpu")
+    model = HumNotes(hidden=ck["hidden"], key24=any(k.startswith("key24.") for k in ck["state_dict"]))
+    model.load_state_dict(ck["state_dict"])
+    model.eval()
+    return model
 
 
 def decode(onset_p: np.ndarray, active_p: np.ndarray, delta_p: np.ndarray, ref: np.ndarray,

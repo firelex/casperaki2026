@@ -21,7 +21,7 @@ HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE / "scripts"))
 from hum_pitch.core import clip_metrics  # noqa: E402
-from hum_pitch.model import FRAME_S, HumNotes, decode  # noqa: E402
+from hum_pitch.model import FRAME_S, decode, load_checkpoint  # noqa: E402
 from hum_pitch.notes import Config, estimate_key, scale_set, tuning_offset  # noqa: E402
 from score_model import load_set, pooled, run_model  # noqa: E402
 
@@ -65,12 +65,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", type=Path, required=True)
     ap.add_argument("--name", required=True)
+    ap.add_argument("--extra-sets", nargs="*", default=[], help="more feature sets (e.g. r3-test), broken down by lead group")
     args = ap.parse_args()
     torch.set_num_threads(8)
-    ck = torch.load(args.checkpoint, map_location="cpu")
-    model = HumNotes(hidden=ck["hidden"])
-    model.load_state_dict(ck["state_dict"])
-    model.eval()
+    model = load_checkpoint(args.checkpoint)
     st = json.loads((HERE / f"results/model-{args.name}-settings.json").read_text())
     t_on, t_act = st["t_on"], st["t_act"]
     systems = ["model alone", "model notes + tuning offset", "model notes + tuning + key snap (Krumhansl-Schmuckler key)",
@@ -83,7 +81,8 @@ def main():
         ("synth-test", [("all", lambda c: True), ("voice", lambda c: c["group"] == "voice"), ("breathy", lambda c: c["group"] == "breathy"),
                         ("instrument", lambda c: c["group"] == "instrument"), ("round one", lambda c: c.get("round") == "r1"),
                         ("round two", lambda c: c.get("round") == "r2b")]),
-    ):
+    ) + tuple((x, [("all", lambda c: True), ("voice", lambda c: c["group"] == "voice"), ("breathy", lambda c: c["group"] == "breathy"),
+                    ("instrument", lambda c: c["group"] == "instrument")]) for x in args.extra_sets):
         clips = load_set(set_name)
         outs = run_model(model, clips)
         rows = []
