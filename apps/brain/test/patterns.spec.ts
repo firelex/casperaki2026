@@ -91,6 +91,20 @@ describe('pattern lab', () => {
     }
   });
 
+  it('opens the song as heard in the editor: a new project of the user', async () => {
+    const p = loadPatternProposals().find((x) => x.family === 'popBrass')!;
+    const sounds = ((await (await fetch(`${h.url}/api/patterns/${p.id}/sounds?genre=${p.genres[0]}`)).json()) as { sounds: { id: string }[] }).sounds;
+    const body = { genre: p.genres[0], variant: 'proposal', take: 1, soundId: sounds[1]!.id };
+    const preview = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, body)).json()) as { songId: string };
+    const res = await post(`${h.url}/api/patterns/${p.id}/project`, body);
+    expect(res.status).toBe(201);
+    const { id } = (await res.json()) as { id: string };
+    expect(id).toBe(preview.songId); // the very song the preview played
+    const project = (await (await fetch(`${h.url}/api/songs/${id}`)).json()) as { project: { title: string } };
+    expect(project.project.title).toBe(`Pattern test: ${p.name}`);
+    expect((await post(`${h.url}/api/patterns/no-such/project`, body)).status).toBe(404);
+  });
+
   it('plays a proposal with another sound of its instrument (the instrument picker)', async () => {
     const p = loadPatternProposals().find((x) => x.family === 'popBrass')!;
     type Preview = { songId: string; message?: string; sounds: { id: string; name: string }[]; soundId: string | null };

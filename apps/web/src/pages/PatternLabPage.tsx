@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+
+import { songsQueryKeys } from '../api/songs';
 import type { Genre } from '@casperaki/song-schema/schemas';
 
 import { patternsApi, patternsQueryKey, type PatternProposal, type PreviewSection } from '../api/patterns';
@@ -228,6 +231,15 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     setSound(snd);
     if (playingHere && snd !== sound) listen(mode, take, snd);
   };
+  // Open in editor: the song as heard (the mode last played: the proposal, or the current library) as a new project.
+  const navigate = useNavigate();
+  const openInEditor = useMutation({
+    mutationFn: () => patternsApi.project(p.id, genre, mode === 'current' ? 'current' : 'proposal', mode === 'current' ? undefined : takeArg(take), sound),
+    onSuccess: ({ id }) => {
+      void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
+      navigate(`/editor/${id}/timeline`);
+    },
+  });
   const stateOf = (m: Mode) => (live.key === keyOf(m) && mode === m ? live.status : 'idle');
   const status = p.review?.status;
 
@@ -332,6 +344,16 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         <ListenButton state={stateOf('context')} onClick={() => listen('context')} label="Play in context" primary />
         <ListenButton state={stateOf('solo')} onClick={() => listen('solo')} label="Play solo" primary />
         <ListenButton state={stateOf('current')} onClick={() => listen('current')} label="Current library" />
+        <button
+          type="button"
+          onClick={() => openInEditor.mutate()}
+          disabled={openInEditor.isPending}
+          title={`Save this song (${mode === 'current' ? 'the current library' : 'with this pattern'}${sound ? ', with the chosen sound' : ''}) as a new song and open it`}
+          className="h-10 rounded-full border border-line px-4 text-[14px] text-white/80 hover:border-white/60 hover:text-white disabled:opacity-50"
+        >
+          {openInEditor.isPending ? 'Opening…' : 'Open in editor'}
+        </button>
+        {openInEditor.isError ? <span className="text-[13px] text-err">Not opened: {openInEditor.error.message}</span> : null}
         {live.key === keyOf(mode) && live.status === 'loading' ? (
           <span className="text-[13px] text-white/55">{live.step}</span>
         ) : live.key === keyOf(mode) && live.status === 'error' ? (

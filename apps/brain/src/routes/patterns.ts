@@ -4,6 +4,8 @@
 //   POST /api/patterns/:id/review      { status: 'approved' | 'rejected' | 'pending', note? }
 //   GET  /api/patterns/:id/sounds?genre=  the sounds the proposal's instrument can use in
 //                                      that genre (the instrument picker; none for drums)
+//   POST /api/patterns/:id/project     same body as a preview -> 201 { id }: that song saved as a
+//                                      new project of the user ("Open in editor")
 //   POST /api/patterns/:id/preview     { genre, seed?, variant: 'proposal' | 'current', take?, soundId? }
 //     -> a playback payload (see routes/playback.ts) for a full song in that
 //        genre, with the proposal forced in ('proposal') or the library as is
@@ -42,12 +44,13 @@ import {
   sectionEnergy,
   type PatternProposal,
 } from '@casperaki/arrangement';
-import type { Song } from '@casperaki/song-schema';
+import type { Genre, Song } from '@casperaki/song-schema';
 import { canonicalStringifySong, DEFAULT_BPM_BY_GENRE, GenreSchema } from '@casperaki/song-schema';
 
 import type { PlaybackService } from '../render/playbackService.js';
 import type { SongsStore } from '../store.js';
 import { playbackPayload } from './playback.js';
+import { ownerOf } from './songs.js';
 
 export interface PatternsRouterDeps {
   readonly store: SongsStore;
@@ -93,6 +96,52 @@ function withProposalLane(song: Song, proposal: PatternProposal): Song {
   const coverage = Math.max(0, ...lanes.map((lane) => sections.filter((s) => song.arrangement[s]?.instruments[lane] === true).length));
   if (coverage * 2 >= sections.length) return song;
   return editTrack(song, { kind: 'addTrack', family: proposal.family, segments: sections }).song;
+}
+
+class LabError extends Error {
+  constructor(
+    readonly status: 400 | 404,
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+const familyLanes = (song: Song, proposal: PatternProposal) =>
+  song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
+
+/**
+ * The lab's song for a request (a preview or Open in editor): the genre's song
+ * on the lab seed with the proposal forced in ('proposal') or the library as is
+ * ('current'), a lane of the proposal's family, and the picked sound on it.
+ */
+function labSong(req: Request): { proposal: PatternProposal; genre: Genre; seed: string | number; song: Song } {
+  const body = PreviewBody.safeParse(req.body);
+  if (!body.success) throw new LabError(400, 'invalid_body', body.error.issues[0]?.message ?? 'invalid body');
+  const proposal = loadPatternProposals().find((p) => p.id === req.params.id);
+  if (!proposal) throw new LabError(404, 'not_found', `No proposal ${req.params.id}.`);
+  const { genre, variant, soundId } = body.data;
+  const seed = body.data.seed ?? `pattern-lab-${proposal.id}-${genre}`;
+  let params: Record<string, unknown> | undefined;
+  try {
+    params = variant === 'proposal' ? previewParamsFor(proposal, body.data.take) : undefined;
+  } catch (err) {
+    throw new LabError(400, 'invalid_take', err instanceof Error ? err.message : String(err));
+  }
+  let song = withProposalLane(orchestrate({ genre, key: 'C', bpm: DEFAULT_BPM_BY_GENRE[genre], seed, ...(params ? { params } : {}) }), proposal);
+  if (soundId) {
+    if (proposal.family === 'drums') throw new LabError(400, 'drum_kit_fixed', 'The drum kit is fixed per genre; drum proposals cannot change sound.');
+    for (const lane of familyLanes(song, proposal)) {
+      try {
+        song = editTrack(song, { kind: 'changeSound', track: lane, soundId }).song;
+      } catch (err) {
+        if (err instanceof TrackEditError) throw new LabError(400, err.code, err.message);
+        throw err;
+      }
+    }
+  }
+  return { proposal, genre, seed, song };
 }
 
 /**
@@ -169,47 +218,13 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
     if (!playback) {
       return res.status(503).json({ error: 'playback_not_configured', message: 'CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.' });
     }
-    const body = PreviewBody.safeParse(req.body);
-    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.issues[0]?.message });
-    const proposal = loadPatternProposals().find((p) => p.id === req.params.id);
-    if (!proposal) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    const { genre, variant } = body.data;
-    const seed = body.data.seed ?? `pattern-lab-${proposal.id}-${genre}`;
-    let params: Record<string, unknown> | undefined;
     try {
-      params = variant === 'proposal' ? previewParamsFor(proposal, body.data.take) : undefined;
-    } catch (err) {
-      return res.status(400).json({ error: 'invalid_take', message: err instanceof Error ? err.message : String(err) });
-    }
-    try {
-      let song = withProposalLane(
-        orchestrate({
-          genre,
-          key: 'C',
-          bpm: DEFAULT_BPM_BY_GENRE[genre],
-          seed,
-          ...(params ? { params } : {}),
-        }),
-        proposal,
-      );
-      const familyLanes = () => song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
-      const { soundId } = body.data;
-      if (soundId) {
-        if (proposal.family === 'drums') return res.status(400).json({ error: 'drum_kit_fixed', message: 'The drum kit is fixed per genre; drum proposals cannot change sound.' });
-        for (const lane of familyLanes()) {
-          try {
-            song = editTrack(song, { kind: 'changeSound', track: lane, soundId }).song;
-          } catch (err) {
-            if (err instanceof TrackEditError) return res.status(err.status).json({ error: err.code, message: err.message });
-            throw err;
-          }
-        }
-      }
+      const { proposal, genre, seed, song } = labSong(req);
       const canonical = canonicalStringifySong(song, 2);
       const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
       // The tracks that play the proposal's instrument (the lab's "Play solo" solos them).
-      const lanes = familyLanes();
-      // The instrument picker: the sounds this family can use in the genre, and the one playing.
+      const lanes = familyLanes(song, proposal);
+      // The instrument picker: the sounds this family can use, and the one playing.
       const sounds = soundsFor(proposal, genre);
       const playing = song.instrumentDefinitions.find((d) => d.name === lanes[0])?.id;
       // Where each section plays (the lab starts a verse or chorus pattern at its section).
@@ -223,7 +238,34 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
       });
       return res.json({ ...(await playbackPayload(playback, id, canonical)), seed, lanes, sections, sounds, soundId: typeof playing === 'string' ? playing : null });
     } catch (err) {
+      if (err instanceof LabError) return res.status(err.status).json({ error: err.code, message: err.message });
       return res.status(500).json({ error: 'preview_failed', message: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
+  // Open in editor: the song as heard (same body as a preview) saved as a new project of the user.
+  router.post('/api/patterns/:id/project', (req, res) => {
+    try {
+      const { proposal, song } = labSong(req);
+      const canonical = canonicalStringifySong(song, 2);
+      const hash = createHash('sha256').update(canonical, 'utf8').digest('hex');
+      const id = hash.slice(0, 16);
+      const at = new Date().toISOString();
+      store.put({ id, song, canonical, hash, createdAt: at });
+      const owner = ownerOf(req);
+      const existing = store.getProject(owner, id);
+      const variant = (req.body as { variant: string }).variant === 'current' ? ' (current library)' : '';
+      store.upsertProject({
+        ownerId: owner,
+        songId: id,
+        title: existing?.title ?? `Pattern test: ${proposal.name}${variant}`,
+        createdAt: existing?.createdAt ?? at,
+        updatedAt: at,
+      });
+      return res.status(201).json({ id });
+    } catch (err) {
+      if (err instanceof LabError) return res.status(err.status).json({ error: err.code, message: err.message });
+      return res.status(500).json({ error: 'project_failed', message: err instanceof Error ? err.message : String(err) });
     }
   });
 
