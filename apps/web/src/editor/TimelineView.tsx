@@ -786,9 +786,8 @@ export function TimelineView() {
         </div>
       </div>
 
-      {/* The transport (play, stop, loop, position) and, on the right, the mix's Pro controls. */}
+      {/* The control bar: transport buttons at the left edge, the position counter always centred, the mix's Pro controls at the right edge. */}
       <div className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-t-2 border-black/80 bg-gradient-to-b from-[#34363c] to-[#2a2b30] px-3 py-1.5">
-        <span aria-hidden="true" />
         <Transport />
         <div className="justify-self-end">
           <ProBar

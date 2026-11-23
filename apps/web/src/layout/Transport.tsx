@@ -70,9 +70,11 @@ export function Transport() {
   const btn =
     'flex h-8 w-9 items-center justify-center rounded-[5px] border border-black/60 bg-gradient-to-b from-[#3b3d43] to-[#2b2c31] text-[#d9dade] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:from-[#45474e] disabled:opacity-35';
 
+  // Two cells of the control bar's three-column grid: the buttons at the left
+  // edge, the LCD in the centre column (the Pro controls take the right edge).
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-1">
+    <>
+      <div className="flex items-center gap-1 justify-self-start">
         <button type="button" onClick={() => seek(0)} disabled={!loaded} className={btn} aria-label="To the beginning" title="To the beginning">
           <SkipIcon dir="back" end />
         </button>
@@ -127,7 +129,7 @@ export function Transport() {
         </button>
       </div>
       <Lcd seconds={currentSeconds} bpm={bpm} songKey={viewSong?.key} status={isThisSong ? live.status : 'idle'} />
-    </div>
+    </>
   );
 }
 
