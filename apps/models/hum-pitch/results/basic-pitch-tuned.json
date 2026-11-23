@@ -1,0 +1,22 @@
+{
+ "chosen_on": "humtrans-tune (149 HumTrans TRAIN recordings), mean onset-only note F",
+ "onset": 0.9,
+ "frame": 0.2,
+ "min_note_ms": 180.0,
+ "tune_scores": {
+  "onset": 0.9,
+  "frame": 0.2,
+  "min_note_ms": 180.0,
+  "f_onset": 0.36864796483188017,
+  "f_onset_offset": 0.2740143157143279,
+  "pitch_ok": 0.5386444708680143
+ },
+ "default_scores": {
+  "onset": 0.5,
+  "frame": 0.3,
+  "min_note_ms": 127.7,
+  "f_onset": 0.27473972185578005,
+  "f_onset_offset": 0.17274558918780944,
+  "pitch_ok": 0.5448275862068965
+ }
+}

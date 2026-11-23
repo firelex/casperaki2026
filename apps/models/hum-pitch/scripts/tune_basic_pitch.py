@@ -8,6 +8,7 @@ against the octave-corrected references (scripts/fit_octaves.py); the best setti
 results/basic-pitch-tuned.json, the whole grid to results/basic-pitch-tuning.csv.
 """
 import argparse
+import logging
 import csv
 import itertools
 import json
@@ -17,6 +18,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 
 import numpy as np  # noqa: E402
 
@@ -26,7 +28,7 @@ from hum_pitch.core import clip_metrics  # noqa: E402
 from hum_pitch.models import _load, basic_pitch_notes  # noqa: E402
 from hum_pitch.sets import references  # noqa: E402
 
-ONSET = [0.3, 0.4, 0.5, 0.6, 0.7]
+ONSET = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 FRAME = [0.2, 0.3, 0.4, 0.5]
 MIN_NOTE_MS = [58.0, 90.0, 127.7, 180.0]
 GRID = list(itertools.product(ONSET, FRAME, MIN_NOTE_MS))
@@ -47,6 +49,7 @@ def main():
     ap.add_argument("--set", default="humtrans-tune")
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()
+    logging.getLogger().setLevel(logging.ERROR)  # basic_pitch warns about runtimes we do not use
     rows, excluded = references(args.set)
     print(f"{args.set}: {len(rows)} recordings ({len(excluded)} without a clear octave left out), {len(GRID)} settings")
     with Pool(args.workers) as pool:

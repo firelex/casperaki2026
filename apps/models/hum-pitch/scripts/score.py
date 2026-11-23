@@ -20,6 +20,7 @@ from multiprocessing import Pool
 from pathlib import Path
 
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
 
 import numpy as np  # noqa: E402
 
