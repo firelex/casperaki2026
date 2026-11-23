@@ -1,0 +1,173 @@
+{
+ "precedent 3/4": {
+  "clips": 1032,
+  "onsets": 26713,
+  "onset position": {
+   "beat 1": 0.114,
+   "eighths off the beat": 0.415,
+   "other beats": 0.264,
+   "sixteenths": 0.208
+  },
+  "long notes on a strong beat": 0.17,
+  "long notes on any beat": 0.543,
+  "phrase-end notes on a strong beat": 0.024,
+  "phrase-end notes on any beat": 0.076,
+  "bars repeating an earlier bar's rhythm": 0.437,
+  "silent share of the melody span": 0.246,
+  "phrase length in beats (median, 90th pct)": [
+   6.0,
+   22.400000000000034
+  ],
+  "notes per phrase (median)": 12.0
+ },
+ "precedent 4/4": {
+  "clips": 1028,
+  "onsets": 33046,
+  "onset position": {
+   "beat 1": 0.09,
+   "eighths off the beat": 0.425,
+   "other beats": 0.286,
+   "sixteenths": 0.199
+  },
+  "long notes on a strong beat": 0.28,
+  "long notes on any beat": 0.483,
+  "phrase-end notes on a strong beat": 0.05,
+  "phrase-end notes on any beat": 0.114,
+  "bars repeating an earlier bar's rhythm": 0.423,
+  "silent share of the melody span": 0.272,
+  "phrase length in beats (median, 90th pct)": [
+   6.5,
+   26.0
+  ],
+  "notes per phrase (median)": 12.0
+ },
+ "precedent 6/8": {
+  "clips": 1515,
+  "onsets": 22315,
+  "onset position": {
+   "beat 1": 0.201,
+   "eighths off the beat": 0.495,
+   "other beats": 0.217,
+   "sixteenths": 0.087
+  },
+  "long notes on a strong beat": 0.27,
+  "long notes on any beat": 0.441,
+  "phrase-end notes on a strong beat": 0.064,
+  "phrase-end notes on any beat": 0.234,
+  "bars repeating an earlier bar's rhythm": 0.407,
+  "silent share of the melody span": 0.283,
+  "phrase length in beats (median, 90th pct)": [
+   3.6666666666666665,
+   12.25
+  ],
+  "notes per phrase (median)": 6.0
+ },
+ "precedent all": {
+  "clips": 3575,
+  "onsets": 82074,
+  "onset position": {
+   "beat 1": 0.128,
+   "eighths off the beat": 0.441,
+   "other beats": 0.26,
+   "sixteenths": 0.171
+  },
+  "long notes on a strong beat": 0.245,
+  "long notes on any beat": 0.489,
+  "phrase-end notes on a strong beat": 0.049,
+  "phrase-end notes on any beat": 0.155,
+  "bars repeating an earlier bar's rhythm": 0.421,
+  "silent share of the melody span": 0.269,
+  "phrase length in beats (median, 90th pct)": [
+   5.0,
+   16.5
+  ],
+  "notes per phrase (median)": 9.0
+ },
+ "procedural 3/4": {
+  "clips": 1013,
+  "onsets": 20590,
+  "onset position": {
+   "beat 1": 0.142,
+   "eighths off the beat": 0.39,
+   "other (triplets etc.)": 0.016,
+   "other beats": 0.283,
+   "sixteenths": 0.17
+  },
+  "long notes on a strong beat": 0.201,
+  "long notes on any beat": 0.603,
+  "phrase-end notes on a strong beat": 0.148,
+  "phrase-end notes on any beat": 0.452,
+  "bars repeating an earlier bar's rhythm": 0.097,
+  "silent share of the melody span": 0.075,
+  "phrase length in beats (median, 90th pct)": [
+   6.5,
+   21.5
+  ],
+  "notes per phrase (median)": 10.0
+ },
+ "procedural 4/4": {
+  "clips": 1050,
+  "onsets": 26988,
+  "onset position": {
+   "beat 1": 0.112,
+   "eighths off the beat": 0.386,
+   "other (triplets etc.)": 0.018,
+   "other beats": 0.316,
+   "sixteenths": 0.168
+  },
+  "long notes on a strong beat": 0.329,
+  "long notes on any beat": 0.611,
+  "phrase-end notes on a strong beat": 0.255,
+  "phrase-end notes on any beat": 0.501,
+  "bars repeating an earlier bar's rhythm": 0.076,
+  "silent share of the melody span": 0.08,
+  "phrase length in beats (median, 90th pct)": [
+   8.0,
+   23.0
+  ],
+  "notes per phrase (median)": 12.0
+ },
+ "procedural 6/8": {
+  "clips": 1463,
+  "onsets": 21436,
+  "onset position": {
+   "beat 1": 0.197,
+   "eighths off the beat": 0.575,
+   "other beats": 0.188,
+   "sixteenths": 0.04
+  },
+  "long notes on a strong beat": 0.396,
+  "long notes on any beat": 0.731,
+  "phrase-end notes on a strong beat": 0.211,
+  "phrase-end notes on any beat": 0.427,
+  "bars repeating an earlier bar's rhythm": 0.131,
+  "silent share of the melody span": 0.103,
+  "phrase length in beats (median, 90th pct)": [
+   4.333333333333333,
+   12.333333333333334
+  ],
+  "notes per phrase (median)": 8.0
+ },
+ "procedural all": {
+  "clips": 3526,
+  "onsets": 69014,
+  "onset position": {
+   "beat 1": 0.147,
+   "eighths off the beat": 0.446,
+   "other (triplets etc.)": 0.012,
+   "other beats": 0.266,
+   "sixteenths": 0.129
+  },
+  "long notes on a strong beat": 0.305,
+  "long notes on any beat": 0.638,
+  "phrase-end notes on a strong beat": 0.209,
+  "phrase-end notes on any beat": 0.459,
+  "bars repeating an earlier bar's rhythm": 0.105,
+  "silent share of the melody span": 0.088,
+  "phrase length in beats (median, 90th pct)": [
+   6.0,
+   16.666666666666668
+  ],
+  "notes per phrase (median)": 9.0
+ }
+}
