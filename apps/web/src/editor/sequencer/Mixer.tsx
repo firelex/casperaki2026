@@ -252,15 +252,28 @@ function ChannelStrip({
               LP {cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)} kHz` : `${Math.round(cutoff)} Hz`}
             </div>
           ) : null}
-          <FaderBlock
-            automated={autoDb !== undefined}
-            volumeDb={volume}
-            volumeNote={volumes.length > 1 && volume === undefined ? 'per part' : volumes.length === 0 ? 'none' : trim !== 0 ? `${trim > 0 ? '+' : '−'}${Math.abs(Math.round(trim * 10) / 10)} Pro` : undefined}
-            level={level}
-            changed={trim !== 0}
-            onChange={pro && standard !== undefined ? (db) => onChange({ volumeDb: Math.round((db - standard) * 10) / 10 }) : undefined}
-            onReset={pro ? () => onChange({ volumeDb: 0 }) : undefined}
-          />
+          {standard === undefined && pro && parts.length > 0 ? (
+            // Parts at different standard levels (e.g. a drum kit): in Pro mode the fader is a
+            // trim over all of them (0 dB = the standard levels).
+            <FaderBlock
+              volumeDb={trim}
+              volumeNote="trim"
+              level={level}
+              changed={trim !== 0}
+              onChange={(db) => onChange({ volumeDb: Math.round(db * 10) / 10 })}
+              onReset={() => onChange({ volumeDb: 0 })}
+            />
+          ) : (
+            <FaderBlock
+              automated={autoDb !== undefined}
+              volumeDb={volume}
+              volumeNote={volumes.length > 1 && volume === undefined ? (trim !== 0 ? `per part, ${trim > 0 ? '+' : '−'}${Math.abs(trim)} Pro` : 'per part') : volumes.length === 0 ? 'none' : trim !== 0 ? `${trim > 0 ? '+' : '−'}${Math.abs(Math.round(trim * 10) / 10)} Pro` : undefined}
+              level={level}
+              changed={trim !== 0}
+              onChange={pro && standard !== undefined ? (db) => onChange({ volumeDb: Math.round((db - standard) * 10) / 10 }) : undefined}
+              onReset={pro ? () => onChange({ volumeDb: 0 }) : undefined}
+            />
+          )}
           <div className="mt-1 flex justify-center gap-1">
             <button
               type="button"
