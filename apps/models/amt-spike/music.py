@@ -57,15 +57,19 @@ def signed_shift_to(key_name):
 
 
 def precedent_notes(precedent, shift):
-    """Melody of a precedent as note dicts, transposed by shift and up one octave.
-
-    The banks number octaves one lower than standard MIDI (their c4 is midi 48),
-    so +12 puts the melody in a normal vocal range around middle C (60).
-    """
+    """Melody of a precedent as note dicts, transposed by shift and moved by whole octaves
+    so its median pitch lies in 60..71 (a normal sung range; the banks' octaves vary)."""
     notes = []
     for beat_key, entries in precedent["melody"].items():
         for e in entries:
-            notes.append({"beat": float(beat_key), "dur": float(e["duration"]), "midi": int(e["midi"]) + 12 + shift})
+            notes.append({"beat": float(beat_key), "dur": float(e["duration"]), "midi": int(e["midi"]) + shift})
+    if not notes:
+        raise ValueError(f"precedent {precedent['properties']['name']!r} has no melody notes")
+    pitches = sorted(n["midi"] for n in notes)
+    median = pitches[len(pitches) // 2]
+    octave = 12 * ((60 - median) // 12 + (1 if (60 - median) % 12 else 0))
+    for n in notes:
+        n["midi"] += octave
     notes.sort(key=lambda n: (n["beat"], n["midi"]))
     return notes
 
