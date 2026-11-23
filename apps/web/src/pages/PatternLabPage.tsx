@@ -72,6 +72,13 @@ function focusRange(sections: readonly PreviewSection[], energy: 'low' | 'high' 
 
 /** Loop the sections the selected pattern belongs to (or play the whole song); returns where
  *  that part starts. */
+/**
+ * The last thing asked to play (the player is shared by every card): which song and
+ * whether soloed. A song loads once, by whichever request came first, so solo is
+ * set from this latest request, not from the request that started the load.
+ */
+let latestListen: { n: number; key: string; solo: boolean } = { n: 0, key: '', solo: false };
+
 function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): number {
   const r = focusRange(sections, energy);
   if (!r) {
@@ -201,6 +208,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       return;
     }
     setMode(m);
+    const request = { n: latestListen.n + 1, key, solo: m === 'solo' };
+    latestListen = request;
     const energy = energyOf(p, t);
     const info = previewInfo.get(key);
     livePlayer.setSoloLanes(m === 'solo' && info ? info.lanes : []);
@@ -210,13 +219,20 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       // switch to another pattern's sections. (A song not loaded yet starts there anyway.)
       if (live.key === key && (m === 'solo' || t !== take)) livePlayer.seek(start);
     }
-    void livePlayer.play(key, async (signal) => {
+    const playing = livePlayer.play(key, async (signal) => {
       const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), snd, signal);
       if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
       previewInfo.set(key, { lanes: payload.lanes, sections: payload.sections });
-      if (m === 'solo') livePlayer.setSoloLanes(payload.lanes);
-      applyFocus(payload.sections, energy);
+      // Solo as the LATEST request for this song asks (it may be a Play solo pressed while this loaded).
+      if (latestListen.key === key) livePlayer.setSoloLanes(latestListen.solo ? payload.lanes : []);
+      applyFocus(payload.sections, energy); // depends on the pattern only, which the key names
       return payload;
+    });
+    // A song already loading for an earlier request does not run this request's loader: set solo once it plays.
+    void playing.then(() => {
+      if (latestListen.n !== request.n) return;
+      const loaded = previewInfo.get(key);
+      if (loaded) livePlayer.setSoloLanes(request.solo ? loaded.lanes : []);
     });
   };
   // Choosing another pattern while this card plays switches to it (and to its section).
