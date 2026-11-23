@@ -246,7 +246,12 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
       let bar = 0;
       const sections = song.songStructure.map((seg) => {
         const bars = seg.lengthInBars ?? seg.bars.length;
-        const s = { name: seg.name, energy: sectionEnergy(seg.name) ?? null, start: bar * secPerBar, end: (bar + bars) * secPerBar };
+        // Whether the proposal's instrument has notes here (solo then has something to play).
+        const payload = song.arrangement[seg.name];
+        const plays = lanes.some(
+          (lane) => payload?.instruments[lane] === true && (payload.overrides[lane]?.bars ?? []).some((b) => Object.values(b.notes ?? {}).some((ns) => ns !== undefined && ns.length > 0)),
+        );
+        const s = { name: seg.name, energy: sectionEnergy(seg.name) ?? null, start: bar * secPerBar, end: (bar + bars) * secPerBar, plays };
         bar += bars;
         return s;
       });

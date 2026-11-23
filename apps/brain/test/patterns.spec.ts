@@ -88,6 +88,8 @@ describe('pattern lab', () => {
       for (let i = 1; i < sections.length; i++) expect(sections[i]!.start).toBeCloseTo(sections[i - 1]!.end, 9);
       expect(sections.some((x) => x.name.startsWith('verse') && x.energy === 'low')).toBe(true);
       expect(sections.some((x) => x.name.startsWith('chorus') && x.energy === 'high')).toBe(true);
+      // Where the instrument plays (solo jumps there): somewhere, and never in a section without its notes.
+      expect((sections as unknown as { plays: boolean }[]).some((x) => x.plays), p.id).toBe(true);
     }
   });
 

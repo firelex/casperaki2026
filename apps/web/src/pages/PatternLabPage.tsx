@@ -59,24 +59,43 @@ const previewInfo = new Map<string, { lanes: string[]; sections: PreviewSection[
 /** Where a verses / choruses pattern is heard: the first run of back-to-back verses (or choruses),
  *  e.g. verse1 + verse2, else the first run of sections of that energy. Undefined for a pattern
  *  every section plays. */
-function focusRange(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): { start: number; end: number } | undefined {
-  if (!energy) return undefined;
-  const type = energy === 'low' ? 'verse' : 'chorus';
+function focusRange(
+  sections: readonly PreviewSection[],
+  energy: 'low' | 'high' | undefined,
+  solo: boolean,
+  instrument: string,
+): { start: number; end: number } | undefined {
   const typeOf = (x: PreviewSection) => x.name.replace(/\d+$/u, '');
-  let match = (x: PreviewSection) => typeOf(x) === type;
-  let i = sections.findIndex(match);
-  if (i < 0) {
-    match = (x) => x.energy === energy;
-    i = sections.findIndex(match);
+  // Solo: only sections where the instrument plays (else solo is silence).
+  if (solo && !sections.some((x) => x.plays)) {
+    throw new Error(`The ${instrument.toLowerCase()} does not play anywhere in this preview song, so solo would be silent.`);
   }
-  if (i < 0) throw new Error(`The preview song has no ${type} to play this pattern in.`);
-  let j = i;
-  while (j + 1 < sections.length && match(sections[j + 1]!)) j++;
-  return { start: sections[i]!.start, end: sections[j]!.end };
+  const usable = (x: PreviewSection) => !solo || x.plays;
+  /** The run of back-to-back sections from index i that `match` (and are usable). */
+  const runFrom = (i: number, match: (x: PreviewSection) => boolean) => {
+    let j = i;
+    while (j + 1 < sections.length && match(sections[j + 1]!) && usable(sections[j + 1]!)) j++;
+    return { start: sections[i]!.start, end: sections[j]!.end };
+  };
+  if (energy) {
+    const type = energy === 'low' ? 'verse' : 'chorus';
+    let match = (x: PreviewSection) => typeOf(x) === type;
+    if (!sections.some(match)) match = (x) => x.energy === energy;
+    if (!sections.some(match)) throw new Error(`The preview song has no ${type} to play this pattern in.`);
+    const own = sections.findIndex((x) => match(x) && usable(x));
+    if (own >= 0) return runFrom(own, match);
+    // Solo, and the instrument is silent in the pattern's own sections: the next sections where it plays.
+    const first = sections.findIndex(match);
+    const next = sections.findIndex((x, i) => i > first && x.plays);
+    const at = next >= 0 ? next : sections.findIndex((x) => x.plays);
+    return runFrom(at, (x) => typeOf(x) === typeOf(sections[at]!));
+  }
+  if (!solo) return undefined;
+  // A pattern for any section, soloed: start where the instrument first plays, and loop that part.
+  const at = sections.findIndex((x) => x.plays);
+  return runFrom(at, (x) => typeOf(x) === typeOf(sections[at]!));
 }
 
-/** Loop the sections the selected pattern belongs to (or play the whole song); returns where
- *  that part starts. */
 /**
  * The last thing asked to play (the player is shared by every card): which song and
  * whether soloed. A song loads once, by whichever request came first, so solo is
@@ -84,8 +103,10 @@ function focusRange(sections: readonly PreviewSection[], energy: 'low' | 'high' 
  */
 let latestListen: { n: number; key: string; solo: boolean } = { n: 0, key: '', solo: false };
 
-function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined): number {
-  const r = focusRange(sections, energy);
+/** Loop the sections the selected pattern belongs to (for solo: where the instrument plays), or
+ *  play the whole song; returns where that part starts. */
+function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' | undefined, solo: boolean, instrument: string): number {
+  const r = focusRange(sections, energy, solo, instrument);
   if (!r) {
     livePlayer.setLoopRange(undefined);
     return 0;
@@ -206,6 +227,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   // solos the tracks of the proposal's instrument, which the preview names.
   type Mode = 'context' | 'solo' | 'current';
   const [mode, setMode] = useState<Mode>('context');
+  /** Why the last Play did not play (e.g. solo where the instrument is silent). */
+  const [listenError, setListenError] = useState<string | undefined>(undefined);
   // The proposal song plays only the selected pattern (a generator has just the one).
   const takeArg = (t: number) => (p.kind === 'algo' ? undefined : t);
   const keyFor = (variant: 'proposal' | 'current', t: number = take, snd: string | undefined = sound, g: Genre = genre) =>
@@ -220,7 +243,9 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     previewInfo.set(keyOf(m, t, snd, g), { lanes: payload.lanes, sections: payload.sections });
     return payload;
   };
-  const listen = (m: Mode, t: number = take, snd: string | undefined = sound, g: Genre = genre) => {
+  /** `swap`: switching pattern or sound while this card plays: the current version keeps playing
+   *  while the new one loads, then they swap (a pattern switch then jumps to its sections). */
+  const listen = (m: Mode, t: number = take, snd: string | undefined = sound, g: Genre = genre, swap = false) => {
     const key = keyOf(m, t, snd, g);
     if (live.key === key && live.status === 'playing' && mode === m && t === take && snd === sound && g === genre) {
       void livePlayer.pause();
@@ -230,40 +255,63 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     const request = { n: latestListen.n + 1, key, solo: m === 'solo' };
     latestListen = request;
     const energy = energyOf(p, t);
+    const instrument = FAMILY_LABELS[p.family];
     const info = previewInfo.get(key);
-    livePlayer.setSoloLanes(m === 'solo' && info ? info.lanes : []);
+    setListenError(undefined);
     if (info) {
-      const start = applyFocus(info.sections, energy);
-      // Solo always starts from the beginning (of the pattern's sections, or of the song); so does a
+      let start: number;
+      try {
+        start = applyFocus(info.sections, energy, m === 'solo', instrument);
+      } catch (err) {
+        // E.g. solo where the instrument plays nowhere: say so instead of playing silence.
+        setListenError(err instanceof Error ? err.message : String(err));
+        void livePlayer.pause();
+        return;
+      }
+      livePlayer.setSoloLanes(m === 'solo' ? info.lanes : []);
+      // Solo always starts from the beginning (of the part it loops, or of the song); so does a
       // switch to another pattern's sections. (A song not loaded yet starts there anyway.)
       if (live.key === key && (m === 'solo' || t !== take)) livePlayer.seek(start);
-    }
+    } else if (!swap) livePlayer.setSoloLanes([]);
     const load = loaderFor(m, t, snd, g);
     const playing = livePlayer.play(key, async (signal) => {
       const payload = await load(signal);
       // Solo as the LATEST request for this song asks (it may be a Play solo pressed while this loaded).
-      if (latestListen.key === key) livePlayer.setSoloLanes(latestListen.solo ? payload.lanes : []);
-      applyFocus(payload.sections, energy); // depends on the pattern only, which the key names
+      const solo = latestListen.key === key ? latestListen.solo : m === 'solo';
+      // Throws for a solo where the instrument plays nowhere: the player shows that message.
+      applyFocus(payload.sections, energy, solo, instrument);
+      if (latestListen.key === key) livePlayer.setSoloLanes(solo ? payload.lanes : []);
       return payload;
-    });
+    }, swap ? { seamless: true } : {});
     // A song already loading for an earlier request does not run this request's loader: set solo once it plays.
     void playing.then(() => {
       if (latestListen.n !== request.n) return;
       const loaded = previewInfo.get(key);
-      if (loaded) livePlayer.setSoloLanes(request.solo ? loaded.lanes : []);
+      if (!loaded) return;
+      let start: number;
+      try {
+        start = applyFocus(loaded.sections, energy, request.solo, instrument);
+      } catch (err) {
+        setListenError(err instanceof Error ? err.message : String(err));
+        void livePlayer.pause();
+        return;
+      }
+      livePlayer.setSoloLanes(request.solo ? loaded.lanes : []);
+      // A swapped-in pattern plays in its own sections (a swapped-in sound stays where it was).
+      if (swap && t !== take) livePlayer.seek(start);
     });
   };
   // Choosing another pattern while this card plays switches to it (and to its section).
   const selectTake = (t: number) => {
     const playingHere = live.key === keyOf(mode) && live.status === 'playing';
     setTake(t);
-    if (playingHere && t !== take) listen(mode, t);
+    if (playingHere && t !== take) listen(mode, t, sound, genre, true);
   };
   // Another sound while this card plays: the same part again with it.
   const selectSound = (snd: string | undefined) => {
     const playingHere = live.key === keyOf(mode) && live.status === 'playing';
     setSound(snd);
-    if (playingHere && snd !== sound) listen(mode, take, snd);
+    if (playingHere && snd !== sound) listen(mode, take, snd, genre, true);
   };
   // Another style while this card plays: that style's song, in the same mode and at the pattern's section.
   const selectGenre = (g: Genre) => {
@@ -438,6 +486,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         {openInEditor.isError ? <span className="text-[13px] text-err">Not opened: {openInEditor.error.message}</span> : null}
         {download && 'status' in download ? <span className="text-[13px] text-white/55">{download.status}</span> : null}
         {download && 'error' in download ? <span className="text-[13px] text-err">No MP3: {download.error}</span> : null}
+        {listenError ? <span className="text-[13px] text-err">{listenError}</span> : null}
         {live.key === keyOf(mode) && live.status === 'loading' ? (
           <span className="text-[13px] text-white/55">{live.step}</span>
         ) : live.key === keyOf(mode) && live.status === 'error' ? (

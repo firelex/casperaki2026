@@ -62,6 +62,8 @@ export interface PreviewSection {
   readonly energy: 'low' | 'high' | null;
   readonly start: number;
   readonly end: number;
+  /** The proposal's instrument has notes here (solo has something to play). */
+  readonly plays: boolean;
 }
 
 export const patternsApi = {

@@ -1001,13 +1001,16 @@ export class LivePlayer {
     progress: (done: number, total: number) => void,
   ): Promise<RealSample[]> {
     const urls = [...new Set(plan.map((s) => s.url))];
+    // Count only what still has to be fetched: sounds another song (or version) already
+    // loaded are shared by URL (a sample's URL names its file and slice).
+    const toFetch = new Set(urls.filter((u) => !sharedDecoded.has(u)));
     let done = 0;
-    progress(0, urls.length);
+    if (toFetch.size) progress(0, toFetch.size);
     const buffers = new Map<string, AudioBuffer>();
     await Promise.all(
       urls.map(async (u) => {
         buffers.set(u, await this.decode(ctx, u));
-        progress(++done, urls.length);
+        if (toFetch.has(u)) progress(++done, toFetch.size);
       }),
     );
     return plan.map((s) => {
