@@ -27,7 +27,7 @@ from .deviation import DeviationModel, perform, pitch_curve_from_contours
 from .generate import _json_default, choose_lead, clip_melody, finish_notes, pick, seed_of, transpose_for, write_midi
 from .generate import precedent as g1_precedent
 from .music import METERS, Score
-from .render import (CTRL, POLLUTION_LEVELS, POLLUTION_P, VOICE_TYPES, loudness_curve, pollute, render_breathy, render_sampler,
+from .render import (CTRL, POLLUTION_LEVELS, POLLUTION_P, TRAIN_VOWELS, UNSEEN_VOWELS, VOICE_TYPES, loudness_curve, pollute, render_breathy, render_sampler,
                      render_voice, to_audio_rate)
 from .sounds import SR, SoundBank
 
@@ -60,11 +60,68 @@ def _zh_syllables(phone_set_path: Path) -> list[str]:
     return [p for p in json.loads(phone_set_path.read_text()) if p.startswith("zh_") and p[-1].isdigit()]
 
 
+MALE_SINGERS = {"M01", "M02", "M03", "M04", "M05"}
+R3_SOULX_PROMPTS = {"zh_target": 53.0, "en_prompt_m9": 57.6, "zh_prompt_m10": 56.8, "en_target_m9": 55.8}
+R3_SOULX_UNSEEN = {"yue_target": 56.1}
+MAJOR_FAMILY = {"major", "lydian", "mixolydian", "major_pentatonic"}
+KS_MAJOR = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+KS_MINOR = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+PC_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+# the scale names the notes trainer (apps/models/hum-pitch) reads; any other name stops its job
+KEY_SCALES = {"major", "minor", "harmonic minor", "melodic minor", "dorian", "phrygian", "lydian", "mixolydian", "major pentatonic", "minor pentatonic"}
+
+
+def key_label(minfo: dict, notes, shift: int) -> dict:
+    """The clip's key: exact from the generator for procedural and repitched melodies (scale + tonic moved by the
+    transposition), estimated (Krumhansl-Schmuckler, duration weighted) for the app's precedent melodies, which are
+    stored in C without a mode."""
+    if "scale" in minfo:
+        tonic, scale, src = (int(minfo["tonic"]) + shift) % 12, minfo["scale"], "generator"
+    elif "repitch_scale" in minfo:
+        tonic, scale, src = shift % 12, minfo["repitch_scale"], "generator"
+    else:
+        pcs = np.zeros(12)
+        for n in notes:
+            pcs[n.midi % 12] += n.q_off - n.q_on
+        best = max(((np.corrcoef(np.roll(prof, t), pcs)[0, 1], t, mode) for t in range(12) for prof, mode in ((KS_MAJOR, "major"), (KS_MINOR, "minor"))),
+                   key=lambda x: x[0])
+        tonic, scale, src = best[1], best[2], "estimated from the melody (Krumhansl-Schmuckler)"
+    name = str(scale).replace("_", " ")
+    if name not in KEY_SCALES:
+        raise ValueError(f"scale {scale!r} is not one the notes trainer reads")
+    return {"tonic": int(tonic), "scale": name, "info": {"tonic_name": PC_NAMES[tonic], "major_minor": "major" if scale in MAJOR_FAMILY else "minor",
+                                                          "source": src}}
+
+
+def r3_lead(rng, row: dict, bank) -> dict:
+    """Round three (male voices): SoulX low voices, or synthetic low hums (plain, breathy, chesty, mumbled), or a
+    male-range library instrument; melodies centred on MIDI 48-55 (so they sit roughly G2-D4)."""
+    unseen = row["split"] == "test-unseen"
+    if row["render"] == "soulx":
+        prompts = R3_SOULX_UNSEEN if unseen else R3_SOULX_PROMPTS
+        prompt = pick(rng, list(prompts))
+        text = pick(rng, ["en_lyrics", "zh_lyrics", "syllables"], [0.35, 0.3, 0.35])
+        syl = pick(rng, list(SYLLABLES)) if text == "syllables" else None
+        med = float(rng.uniform(max(48.0, prompts[prompt] - 4), min(55.0, prompts[prompt] + 2)))
+        return {"kind": "soulx", "prompt": prompt, "text": text, "syllable": syl, "group": "soulx", "timbre": f"soulx-{prompt}", "median_midi": med}
+    if rng.random() < 0.85:
+        vt = pick(rng, ["low_male", "high_male"], [0.6, 0.4])
+        vtim = pick(rng, ["plain", "breathy", "chesty", "mumbled"])
+        vowel = "mm" if vtim == "mumbled" else str(rng.choice(UNSEEN_VOWELS if unseen else TRAIN_VOWELS))
+        return {"kind": "voice", "voice_type": vt, "vowel": vowel, "voice_timbre": vtim, "timbre": f"voice-{vowel}-{vtim}", "group": "voice",
+                "median_midi": float(rng.uniform(48, 55))}
+    lib = [x for x in bank.sounds.values() if x["held_out"] == unseen and x["median_attack_ms"] <= 250 and x["group"] in ("bass", "keys", "guitar", "strings_brass", "synth")]
+    x = lib[int(rng.integers(len(lib)))]
+    lo, hi = bank.sounding_range(x["sound_id"])
+    return {"kind": "sampler", "sound_id": x["sound_id"], "timbre": f"lib-{x['low_level']}", "group": x["group"], "low_level": x["low_level"],
+            "preset": x["preset"], "range": [max(lo, 43), min(hi, 64)] if min(hi, 64) - max(lo, 43) >= 12 else [lo, hi]}
+
+
 def load_split_info() -> dict:
     return json.loads((DEV_DIR / "split.json").read_text())
 
 
-def make_plan2(counts: dict, soulx_share: dict, plan_seed: int = 2026) -> list[dict]:
+def make_plan2(counts: dict, soulx_share: dict, plan_seed: int = 2026, prefix: str = "r2", profile: str | None = None) -> list[dict]:
     """Rows for round two. Precedent families keep round one's split assignment (same permutation), so a
     melody never crosses splits across both rounds; procedural families are new seeds (proc2-*) whose rhythm
     donors are precedents of the same split."""
@@ -83,15 +140,16 @@ def make_plan2(counts: dict, soulx_share: dict, plan_seed: int = 2026) -> list[d
     for split, n in counts.items():
         pf = by_split[split]
         for i in range(n):
-            cid = f"r2-{split}-{i:05d}"
+            cid = f"{prefix}-{split}-{i:05d}"
             render = "soulx" if prng.random() < soulx_share[split] else "synth"
-            seed = seed_of(plan_seed, "r2", cid)
+            seed = seed_of(plan_seed, prefix, cid)
             if i % 2 == 0:
-                rows.append({"clip_id": cid, "split": split, "family": pf[(i // 2) % len(pf)], "source": "precedent", "seed": seed, "render": render})
+                rows.append({"clip_id": cid, "split": split, "family": pf[(i // 2) % len(pf)], "source": "precedent", "seed": seed, "render": render,
+                             **({"profile": profile} if profile else {})})
             else:
                 donors = [pf[int(prng.integers(len(pf)))], pf[int(prng.integers(len(pf)))]]
-                rows.append({"clip_id": cid, "split": split, "family": f"proc2-{split}-{i:05d}", "source": "procedural", "seed": seed,
-                             "render": render, "rhythm_donors": donors})
+                rows.append({"clip_id": cid, "split": split, "family": f"proc{prefix[1:]}-{split}-{i:05d}", "source": "procedural", "seed": seed,
+                             "render": render, "rhythm_donors": donors, **({"profile": profile} if profile else {})})
     return rows
 
 
@@ -175,7 +233,9 @@ def make_state(row: dict, ctx: Context) -> dict:
         start_mode = pick(rng, ["downbeat", "pickup", "midbar"], [0.3, 0.4, 0.3])
     pause = pick(rng, [None, "beat", "bar"], [0.7, 0.18, 0.12])
     pollution = pick(rng, POLLUTION_LEVELS, POLLUTION_P)
-    if row["render"] == "soulx":
+    if row.get("profile") == "r3":
+        lead = r3_lead(rng, row, ctx.bank)
+    elif row["render"] == "soulx":
         prompts = SOULX_UNSEEN_PROMPTS if row["split"] == "test-unseen" else SOULX_PROMPTS
         prompt = pick(rng, list(prompts))
         text = pick(rng, ["en_lyrics", "zh_lyrics", "syllables"], [0.35, 0.3, 0.35])
@@ -208,11 +268,13 @@ def make_state(row: dict, ctx: Context) -> dict:
     if n_bars != drawn_bars:
         minfo["n_bars_raised_from"] = drawn_bars
     shift = transpose_for(rng, notes, lead)
+    key = key_label(minfo, notes, shift)
     score = Score(meter, n_bars, notes, {"source": row["source"], "family": row["family"], **minfo, **finfo})
     q_lo = math.floor((min(n.q_on for n in notes) - 3 * bar_q) * 48) / 48
     q_hi = n_bars * bar_q + 3 * bar_q
     tmap, tparams = music.build_tempo_map(rng, score, bpm, "perfect", q_lo, q_hi, {"tempo": 0.0})
-    perf, pparams = perform(ctx.dev, rng, score, tmap, perfect_timing=timing == "perfect")
+    perf, pparams = perform(ctx.dev, rng, score, tmap, perfect_timing=timing == "perfect",
+                            singers=MALE_SINGERS if row.get("profile") == "r3" else None)
     lead_in, tail = float(rng.uniform(0.1, 1.5)), float(rng.uniform(0.3, 1.5))
     anchor = min(perf[0]["onset"], min(p["nominal_onset"] for p in perf))
     q_start = math.floor(float(tmap.position(anchor - lead_in)) * 8) / 8
@@ -226,7 +288,7 @@ def make_state(row: dict, ctx: Context) -> dict:
     return {"row": row, "rng_state": rng.bit_generator.state, "meter": meter, "n_bars": n_bars, "bpm": bpm, "tempo_source": tempo_source,
             "style": style, "timing": timing, "start_mode": start_mode, "pollution_level": pollution, "lead": lead, "transpose": shift,
             "score": score, "tmap": tmap, "t0": t0, "perf": perf, "perf_params": pparams, "dur": dur, "cents": cents,
-            "lead_in": perf[0]["onset"], "tail": tail}
+            "lead_in": perf[0]["onset"], "tail": tail, "key": key}
 
 
 def _held(cents: np.ndarray) -> np.ndarray:
@@ -259,7 +321,8 @@ def render_synth(st: dict, ctx: Context) -> tuple[np.ndarray, dict, np.ndarray]:
         cents_s = to_audio_rate(_held(cents), n_samples)
         voiced_s = env_s > 1e-4
         if lead["kind"] == "voice":
-            audio, sinfo = render_voice(rng, cents_s, voiced_s, env_s, lead["vowel"], VOICE_TYPES[lead["voice_type"]][1], perf, dur, st["row"]["split"] == "test-unseen", normalize_notes=True)
+            audio, sinfo = render_voice(rng, cents_s, voiced_s, env_s, lead["vowel"], VOICE_TYPES[lead["voice_type"]][1], perf, dur, st["row"]["split"] == "test-unseen", normalize_notes=True,
+                                         timbre=lead.get("voice_timbre"))
         else:
             audio, sinfo = render_breathy(rng, lead["instrument"], cents_s, voiced_s, env_s)
         sinfo.update(attack_s=attack, release_s=release)
@@ -377,7 +440,7 @@ def finish(st: dict, audio: np.ndarray, sinfo: dict, stored: np.ndarray, out_dir
         "sample_rate": SR, "duration_s": round(dur, 4), "meter": meter, "beats_per_bar": int(round(bar_q / beat_q)),
         "beat_unit": "dotted quarter" if meter == "6/8" else "quarter", "n_bars": n_bars, "bpm": st["bpm"], "tempo_source": st["tempo_source"],
         "style": st["style"], "timing": st["timing"], "start_mode": st["start_mode"], "pollution": fx, "lead": st["lead"],
-        "transpose": st["transpose"], "lead_in_s": st["lead_in"], "tail_s": st["tail"], "score": score.source,
+        "transpose": st["transpose"], "key": {"tonic": st["key"]["tonic"], "scale": st["key"]["scale"]}, "key_info": st["key"]["info"], "lead_in_s": st["lead_in"], "tail_s": st["tail"], "score": score.source,
         "performance": st["perf_params"], "render": sinfo,
         "beats": [{"time": round(float(t), 5), "beat_in_bar": int(n), "q": float(q)} for t, n, q in zip(beat_t, beat_num, beat_q_pos)],
         "tempo_map": {"q": tmap.q[::12].round(4).tolist(), "time_s": (tmap.t[::12] - t0).round(5).tolist()},

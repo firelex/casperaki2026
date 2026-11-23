@@ -76,8 +76,11 @@ class DeviationModel:
         self.n_notes = n
         self.singers = sorted({c["singer"] for c in self.clips})
 
-    def donor(self, rng) -> dict:
-        return self.clips[int(rng.integers(len(self.clips)))]
+    def donor(self, rng, singers: set[str] | None = None) -> dict:
+        pool = self.clips if singers is None else [c for c in self.clips if c["singer"] in singers]
+        if not pool:
+            raise ValueError(f"no fit recordings from singers {singers}")
+        return pool[int(rng.integers(len(pool)))]
 
     def _note(self, rng, singer: str, key: str, lb: int, pb: int, pos: str):
         if rng.random() < 0.5:
@@ -107,11 +110,12 @@ def warp_contour(c: np.ndarray, n_out: int, head: int = 10, tail: int = 8) -> np
     return np.concatenate([c[:head], mid_out, c[len(c) - tail:]])
 
 
-def perform(model: DeviationModel, rng, score, tmap, perfect_timing: bool, release_comp: float = 0.045) -> tuple[list[dict], dict]:
+def perform(model: DeviationModel, rng, score, tmap, perfect_timing: bool, release_comp: float = 0.045,
+            singers: set[str] | None = None) -> tuple[list[dict], dict]:
     """Nominal + performed note times, loudness and real pitch-deviation contours for every score note.
 
     perfect_timing=True keeps every onset on the score (pitch and loudness deviations still apply)."""
-    donor = model.donor(rng)
+    donor = model.donor(rng, singers)
     singer, key = donor["singer"], donor["key"]
     s_t, s_p, s_l = (float(rng.uniform(0.85, 1.15)) for _ in range(3))
     drift_curve = np.array(donor["drift_curve"]) * float(rng.uniform(0.8, 1.2))

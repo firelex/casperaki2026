@@ -76,9 +76,13 @@ def precedent(family: str) -> dict:
     return _FAMILIES[family]
 
 
-def _repitch(rng, notes):
-    """Give a rhythm-only precedent (one repeated pitch) a scale-based melody."""
-    scale = music.SCALES[rng.choice(list(music.SCALES))]
+def _repitch(rng, notes, info: dict | None = None):
+    """Give a rhythm-only precedent (one repeated pitch) a scale-based melody (tonic C before transposition; the
+    scale name goes into info["repitch_scale"] when info is given)."""
+    name = rng.choice(list(music.SCALES))
+    scale = music.SCALES[name]
+    if info is not None:
+        info["repitch_scale"] = str(name)
     deg, out = len(scale), []
     for a, b, _ in notes:
         r = rng.random()
@@ -96,7 +100,7 @@ def clip_melody(rng, row: dict, meter: str, n_bars: int, style: str, bpm: float,
         fam = precedent(row["family"])
         base = fam["notes"]
         if len({m for _, _, m in base}) <= 2:
-            base = _repitch(rng, base)
+            base = _repitch(rng, base, info)
             info["repitched"] = True
         notes, bars_avail = music.retime_precedent(base, meter)
         starts = list(range(0, bars_avail - n_bars + 1))

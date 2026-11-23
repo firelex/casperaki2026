@@ -93,10 +93,12 @@ def main():
     ap.add_argument("--stage", choices=["synth", "jobs", "finish"], required=True)
     ap.add_argument("--workers", type=int, default=24)
     ap.add_argument("--jobs-dir", type=Path, required=True, help="SoulX job folder; keep it on a Linux disk (listing /mnt/d is slow)")
+    ap.add_argument("--prefix", default="r2", help="clip id prefix (r2, r3)")
+    ap.add_argument("--profile", default=None, choices=[None, "r3"], help="r3: male voices (see hum_beats/generate2.py r3_lead)")
     args = ap.parse_args()
     counts = {k: int(v) for k, v in (x.split("=") for x in args.counts.split(","))}
     share = {k: float(v) for k, v in (x.split("=") for x in args.soulx_share.split(","))}
-    rows = g2.make_plan2(counts, share)
+    rows = g2.make_plan2(counts, share, prefix=args.prefix, profile=args.profile)
     args.out.mkdir(parents=True, exist_ok=True)
     args.jobs_dir.mkdir(parents=True, exist_ok=True)
     (args.out / "plan.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))

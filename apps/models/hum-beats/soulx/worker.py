@@ -24,7 +24,12 @@ from soulxsinger.models.soulxsinger import SoulXSinger  # noqa: E402
 from soulxsinger.utils.data_processor import DataProcessor  # noqa: E402
 from soulxsinger.utils.file_utils import load_config  # noqa: E402
 
-PROMPTS = {name: REPO / "example" / "audio" / name for name in ("en_prompt", "zh_prompt", "en_target", "zh_target", "yue_target")}
+PROMPTS = {name: (REPO / "example" / "audio" / f"{name}.json", REPO / "example" / "audio" / f"{name}.mp3")
+           for name in ("en_prompt", "zh_prompt", "en_target", "zh_target", "yue_target")}
+# extra prompts (e.g. voices lowered into the male range by scripts/make_low_prompts.py): <dir>/<name>.json + .wav
+if os.environ.get("SOULX_EXTRA_PROMPTS"):
+    for j in sorted(Path(os.environ["SOULX_EXTRA_PROMPTS"]).glob("*.json")):
+        PROMPTS[j.stem] = (j, j.with_suffix(".wav"))
 
 
 def main():
@@ -43,9 +48,9 @@ def main():
     dp = DataProcessor(hop_size=config.audio.hop_size, sample_rate=config.audio.sample_rate,
                        phoneset_path=str(REPO / "soulxsinger" / "utils" / "phoneme" / "phone_set.json"), device="cuda")
     prompts = {}
-    for name, base in PROMPTS.items():
-        meta = json.loads(base.with_suffix(".json").read_text(encoding="utf-8"))[0]
-        prompts[name] = dp.process(meta, str(base.with_suffix(".mp3")))
+    for name, (meta_path, audio_path) in PROMPTS.items():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))[0]
+        prompts[name] = dp.process(meta, str(audio_path))
     n_steps = args.n_steps or config.infer.n_steps
     print(f"worker {args.worker_id} ready (n_steps {n_steps})", flush=True)
     done = 0

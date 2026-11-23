@@ -177,12 +177,32 @@ def harmonic_source(f0: np.ndarray, voiced: np.ndarray, tilt: float, max_harm: i
     return out
 
 
+# voice timbres for round three (male voices): ranges that override the default draws
+VOICE_TIMBRES = {
+    "plain": {},
+    "breathy": {"tilt": (1.6, 2.4), "breath": (0.35, 0.6)},
+    "chesty": {"tilt": (0.9, 1.3), "breath": (0.0, 0.1), "formant": (0.9, 0.98)},
+    "mumbled": {"tilt": (1.8, 2.6), "breath": (0.1, 0.3), "lowpass": (300.0, 550.0)},
+}
+
+
 def render_voice(rng, cents_s, voiced_s, env_s, vowel: str, formant_scale: float, notes: list[dict], dur: float, unseen: bool,
-                 normalize_notes: bool = False) -> tuple[np.ndarray, dict]:
+                 normalize_notes: bool = False, timbre: str | None = None) -> tuple[np.ndarray, dict]:
     n = len(cents_s)
     f0 = 440.0 * 2 ** ((np.nan_to_num(cents_s, nan=6000.0) - 6900.0) / 1200)
     tilt = rng.uniform(1.2, 2.2)
     breath = rng.uniform(0.0, 0.35)
+    lowpass = None
+    if timbre is not None:  # drawn after the default draws, so clips without a timbre are unchanged
+        t = VOICE_TIMBRES[timbre]
+        if "tilt" in t:
+            tilt = rng.uniform(*t["tilt"])
+        if "breath" in t:
+            breath = rng.uniform(*t["breath"])
+        if "formant" in t:
+            formant_scale = formant_scale * rng.uniform(*t["formant"])
+        if "lowpass" in t:
+            lowpass = rng.uniform(*t["lowpass"])
     src = harmonic_source(f0, voiced_s, tilt, 60)
     src = src / (np.std(src[voiced_s]) + 1e-9) if np.any(voiced_s) else src
     noise = rng.normal(0, 1, n)
@@ -211,6 +231,8 @@ def render_voice(rng, cents_s, voiced_s, env_s, vowel: str, formant_scale: float
         out += g * _resonator(excitation, f, bw * formant_scale)
     if vowel == "mm":
         out = sosfilt(butter(2, rng.uniform(500, 900), "low", fs=SR, output="sos"), out)
+    if lowpass is not None:
+        out = sosfilt(butter(2, lowpass, "low", fs=SR, output="sos"), out)
     if normalize_notes:
         # the formant filters make some pitches louder than others; even that out note by note, so the loudness
         # of each note is the one the performance asked for (round two)
@@ -237,7 +259,8 @@ def render_voice(rng, cents_s, voiced_s, env_s, vowel: str, formant_scale: float
             voice_rms = float(np.sqrt(np.mean(out[voiced_s] ** 2))) if np.any(voiced_s) else 1e-3
             out[a:a + k] += bn / (np.std(bn) + 1e-12) * voice_rms * rng.uniform(0.03, 0.15)
             breaths += 1
-    return out, {"tilt": tilt, "breathiness": breath, "breaths_between_phrases": breaths}
+    return out, {"tilt": tilt, "breathiness": breath, "breaths_between_phrases": breaths, "timbre": timbre, "lowpass_hz": lowpass,
+                 "formant_scale": formant_scale}
 
 
 def render_breathy(rng, kind: str, cents_s, voiced_s, env_s) -> tuple[np.ndarray, dict]:
