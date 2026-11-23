@@ -35,6 +35,8 @@ def render(args):
     seed = f"hum-beats-song-{i}"
     d = Path(work) / f"song{i:04d}"
     d.mkdir(parents=True, exist_ok=True)
+    if all((Path(out) / "train" / f"song{i:04d}-{k}.beats").exists() for k in range(3)):
+        return {"song": i, "genre": genre, "bpm": bpm, "key": key, "clips": [f"song{i:04d}-{k}" for k in range(3)], "reused": True}
     env = {**os.environ, "CASPERAKI_SAMPLE_LIBRARY_ROOT": LIB}
     subprocess.run(["node", str(Path(__file__).with_name("make_song.mjs")), str(d), genre, key, str(bpm), seed], check=True, cwd=CA / "apps/engine-spike",
                    capture_output=True)
@@ -42,8 +44,13 @@ def render(args):
         subprocess.run(["node", "../engine-spike/scripts/emit-brain-roundtrip.mjs"], check=True, cwd=CA / "apps/brain", stdout=log, stderr=log,
                        env={**env, "BRAIN_SONG_FILE": str(d / "song-in.json"), "OUT_DIR": str(d)})
     with open(d / "render.log", "w") as log:
-        subprocess.run([str(CA / "apps/web/wasm/engine/build/casperaki_render"), str(d), str(d / "out.wav"), str(CA / "apps/engine-spike/samples"), LIB],
-                       check=True, cwd=CA / "apps/brain", stdout=log, stderr=log, env={**env, "CASPERAKI_BITS": "16", "CASPERAKI_MIX": "1"})
+        r = subprocess.run([str(CA / "apps/web/wasm/engine/build/casperaki_render"), str(d), str(d / "out.wav"), str(CA / "apps/engine-spike/samples"), LIB],
+                           cwd=CA / "apps/brain", stdout=log, stderr=log, env={**env, "CASPERAKI_BITS": "16", "CASPERAKI_MIX": "1"})
+    if r.returncode != 0:
+        # the renderer refused this song (e.g. "loop ... is 2.580635 s, shorter than one bar (2.580645 s)": an
+        # engine rounding bug at some tempos); recorded in songs.jsonl and reported, never silently replaced
+        err = (d / "render.log").read_text().strip().splitlines()[-1:]
+        return {"song": i, "genre": genre, "bpm": bpm, "key": key, "failed": err}
     y, sr = sf.read(d / "out.wav", dtype="float32")
     if y.ndim == 2:
         y = y.mean(1)
@@ -81,7 +88,7 @@ def main():
         for r in pool.map(render, [(i, str(args.work), str(args.out)) for i in range(args.n)]):
             idx.write(json.dumps(r) + "\n")
             idx.flush()
-    print(f"rendered {args.n} songs")
+    print(f"done: {args.n} songs attempted (failures are listed in songs.jsonl)")
 
 
 if __name__ == "__main__":
