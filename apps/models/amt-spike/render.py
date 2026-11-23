@@ -1,8 +1,8 @@
 """Write MIDI and piano WAV files for listening: the original next to AMT completions.
 
-  python render.py <completions.jsonl> --out <dir> --soundfont <sf2> [--count 6]
+  python render.py <completions.jsonl> --out <dir> --soundfont <sf2> --pick 1 7 12 ...
 
-For the first --count melodies it writes, per melody:
+For each picked melody (1-based position in test_melodies.json) it writes:
   NN_<name>_original.{mid,wav}
   NN_<name>_amt_<P>bars_p<top_p>_s<sample>.{mid,wav}   for every completion of that melody
 Each file holds the melody (prompt bars as given, then the model's bars) on piano, plus
@@ -64,7 +64,7 @@ def main():
     ap.add_argument("--melodies", default=str(Path(__file__).resolve().parent / "test_melodies.json"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--soundfont", required=True)
-    ap.add_argument("--count", type=int, default=6)
+    ap.add_argument("--pick", type=int, nargs="+", required=True, help="1-based melody numbers")
     ap.add_argument("--top-p", type=float, default=None, help="only completions with this top-p")
     args = ap.parse_args()
 
@@ -80,12 +80,15 @@ def main():
             by_id[r["id"]].append(r)
 
     written = 0
-    for i, m in enumerate(melodies[: args.count]):
+    for i in args.pick:
+        if not 1 <= i <= len(melodies):
+            raise SystemExit(f"--pick {i} is outside 1..{len(melodies)}")
+        m = melodies[i - 1]
         if m["id"] not in by_id:
             raise SystemExit(f"no completions for {m['id']}")
         notes = precedent_notes(m["precedent"], m["shift"])
         per_beat = precedent_chords(m["precedent"], m["shift"], TOTAL_BARS)
-        stem = f"{i + 1:02d}_{slug(m['name'])}_{m['key']}"
+        stem = f"{i:02d}_{slug(m['name'])}_{m['key']}"
         files = [(f"{stem}_original", notes)]
         for r in by_id[m["id"]]:
             prompt = [n for n in notes if n["beat"] < r["prompt_bars"] * BEATS_PER_BAR]
