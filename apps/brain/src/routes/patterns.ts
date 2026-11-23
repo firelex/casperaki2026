@@ -54,6 +54,8 @@ const PreviewBody = z
     genre: GenreSchema,
     seed: z.union([z.string().min(1), z.number().int()]).optional(),
     variant: z.enum(['proposal', 'current']),
+    /** Play only this pattern (0-based) of the proposal; omitted = the song picks among all of them. */
+    take: z.number().int().min(0).optional(),
   })
   .strict();
 
@@ -129,6 +131,12 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
     if (!proposal) return res.status(404).json({ error: 'not_found', id: req.params.id });
     const { genre, variant } = body.data;
     const seed = body.data.seed ?? `pattern-lab-${proposal.id}-${genre}`;
+    let params: Record<string, unknown> | undefined;
+    try {
+      params = variant === 'proposal' ? previewParamsFor(proposal, body.data.take) : undefined;
+    } catch (err) {
+      return res.status(400).json({ error: 'invalid_take', message: err instanceof Error ? err.message : String(err) });
+    }
     try {
       const song = withProposalLane(
         orchestrate({
@@ -136,7 +144,7 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
           key: 'C',
           bpm: DEFAULT_BPM_BY_GENRE[genre],
           seed,
-          ...(variant === 'proposal' ? { params: previewParamsFor(proposal) } : {}),
+          ...(params ? { params } : {}),
         }),
         proposal,
       );

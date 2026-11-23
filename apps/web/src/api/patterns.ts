@@ -63,10 +63,10 @@ export const patternsApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ proposals: PatternProposal[] }>('/api/patterns', { signal }),
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
     defaultBrainClient.post<{ review: PatternReview | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
-  preview: (id: string, genre: Genre, variant: 'proposal' | 'current', signal?: AbortSignal) =>
+  preview: (id: string, genre: Genre, variant: 'proposal' | 'current', take: number | undefined, signal?: AbortSignal) =>
     defaultBrainClient.post<PlaybackPayload & { seed: string; /** Tracks playing the proposal's instrument. */ lanes: string[]; sections: PreviewSection[] }>(
       `/api/patterns/${encodeURIComponent(id)}/preview`,
-      { genre, variant },
+      { genre, variant, ...(take === undefined ? {} : { take }) },
       { signal },
     ),
 };

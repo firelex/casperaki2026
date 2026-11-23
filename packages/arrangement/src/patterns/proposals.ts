@@ -116,13 +116,26 @@ export function loadPatternProposals(dir: string = PROPOSALS_DIR): PatternPropos
 }
 
 /** The generator-params value that previews a proposal. */
-export function previewParamsFor(p: PatternProposal): Record<string, unknown> {
-  if (p.kind === 'bassPatterns') return { bassPreview: { patterns: p.patterns } };
-  if (p.kind === 'chordTones' || p.kind === 'guitarPicks') {
-    return { lanePreview: { family: p.family, kind: p.kind, patterns: p.patterns } };
+/** Generator params that make a song play a proposal. With `take`, only that one pattern plays,
+ *  in every section (its verse / chorus mark is dropped); without it the song picks among all the
+ *  patterns section by section, as an approved style would. */
+export function previewParamsFor(p: PatternProposal, take?: number): Record<string, unknown> {
+  const count = p.kind === 'algo' ? 1 : p.kind === 'blueprints' ? p.blueprints.length : p.patterns.length;
+  if (take !== undefined && !(Number.isInteger(take) && take >= 0 && take < count)) {
+    throw new Error(`proposal "${p.id}" has ${count} pattern(s); there is no pattern ${take + 1}`);
+  }
+  const pick = <T,>(all: readonly T[]): T[] => (take === undefined ? [...all] : [all[take]!]);
+  if (p.kind === 'bassPatterns') return { bassPreview: { patterns: pick(p.patterns) } };
+  if (p.kind === 'chordTones') {
+    const patterns = take === undefined ? p.patterns : pick(p.patterns).map(({ energy: _energy, ...rest }) => rest);
+    return { lanePreview: { family: p.family, kind: p.kind, patterns } };
+  }
+  if (p.kind === 'guitarPicks') {
+    const patterns = take === undefined ? p.patterns : pick(p.patterns).map(({ energy: _energy, ...rest }) => rest);
+    return { lanePreview: { family: p.family, kind: p.kind, patterns } };
   }
   const drumPreview: DrumPreview =
-    p.kind === 'algo' ? { kind: 'algo', algo: p.algo } : { kind: 'blueprints', blueprints: p.blueprints };
+    p.kind === 'algo' ? { kind: 'algo', algo: p.algo } : { kind: 'blueprints', blueprints: pick(p.blueprints) };
   return { drumPreview };
 }
 

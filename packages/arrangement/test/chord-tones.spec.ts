@@ -11,7 +11,7 @@ import type { Song } from '@casperaki/song-schema';
 import { orchestrate } from '../src/index.js';
 import { authoredStylesFor } from '../src/patterns/authored-bank.js';
 import { resolveChordTone, sectionEnergy } from '../src/patterns/chord-tones.js';
-import { loadPatternProposals } from '../src/patterns/proposals.js';
+import { loadPatternProposals, previewParamsFor } from '../src/patterns/proposals.js';
 
 /** First seed whose song has a lane of `family` (by instrument name prefix). */
 function songWithLane(genre: 'ballad' | 'brightPop' | 'organicVibes', lane: string, params?: Record<string, unknown>): Song {
@@ -82,6 +82,15 @@ describe('chord-tone patterns', () => {
     expect(strum.type).toBe('strum');
     expect(strum.strings).toEqual([0, 1, 2]);
     expect(strum.offset).toEqual([0, 0.02, 0.04]);
+  });
+
+  it('a preview of one pattern plays only that pattern, in every section', () => {
+    const p = loadPatternProposals().find((x) => x.kind === 'chordTones' && x.patterns.length > 1 && x.patterns.some((t) => t.energy))!;
+    if (p.kind !== 'chordTones') throw new Error('expected a chord-tone proposal');
+    const params = previewParamsFor(p, 1) as { lanePreview: { patterns: { energy?: string; notes: unknown }[] } };
+    expect(params.lanePreview.patterns).toEqual([{ bars: p.patterns[1]!.bars, notes: p.patterns[1]!.notes }]);
+    expect((previewParamsFor(p) as typeof params).lanePreview.patterns).toHaveLength(p.patterns.length);
+    expect(() => previewParamsFor(p, p.patterns.length)).toThrow(/no pattern/);
   });
 
   it('songs are unchanged while no style is approved', () => {

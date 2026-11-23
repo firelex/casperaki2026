@@ -170,21 +170,24 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   // solos the tracks of the proposal's instrument, which the preview names.
   type Mode = 'context' | 'solo' | 'current';
   const [mode, setMode] = useState<Mode>('context');
-  const keyFor = (variant: 'proposal' | 'current') => `pattern:${p.id}:${genre}:${variant}`;
-  const keyOf = (m: Mode) => keyFor(m === 'current' ? 'current' : 'proposal');
-  const listen = (m: Mode) => {
-    const key = keyOf(m);
-    if (live.key === key && live.status === 'playing' && mode === m) {
+  // The proposal song plays only the selected pattern (a generator has just the one).
+  const takeArg = (t: number) => (p.kind === 'algo' ? undefined : t);
+  const keyFor = (variant: 'proposal' | 'current', t: number = take) =>
+    variant === 'proposal' ? `pattern:${p.id}:${genre}:proposal:${takeArg(t) ?? 'all'}` : `pattern:${p.id}:${genre}:current`;
+  const keyOf = (m: Mode, t: number = take) => keyFor(m === 'current' ? 'current' : 'proposal', t);
+  const listen = (m: Mode, t: number = take) => {
+    const key = keyOf(m, t);
+    if (live.key === key && live.status === 'playing' && mode === m && t === take) {
       void livePlayer.pause();
       return;
     }
     setMode(m);
-    const energy = energyOf(p, take);
+    const energy = energyOf(p, t);
     const info = previewInfo.get(key);
     livePlayer.setSoloLanes(m === 'solo' && info ? info.lanes : []);
-    if (info) applyFocus(info.sections, energy, false);
+    if (info) applyFocus(info.sections, energy, live.key === key);
     void livePlayer.play(key, async (signal) => {
-      const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', signal);
+      const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), signal);
       if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
       previewInfo.set(key, { lanes: payload.lanes, sections: payload.sections });
       if (m === 'solo') livePlayer.setSoloLanes(payload.lanes);
@@ -192,13 +195,12 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       return payload;
     });
   };
-  // Choosing another pattern while this card plays moves to that pattern's section.
-  const playingKey = live.key === keyOf(mode) && (live.status === 'playing' || live.status === 'paused') ? live.key : undefined;
-  useEffect(() => {
-    const info = playingKey ? previewInfo.get(playingKey) : undefined;
-    if (info) applyFocus(info.sections, energyOf(p, take), true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [take]);
+  // Choosing another pattern while this card plays switches to it (and to its section).
+  const selectTake = (t: number) => {
+    const playingHere = live.key === keyOf(mode) && live.status === 'playing';
+    setTake(t);
+    if (playingHere && t !== take) listen(mode, t);
+  };
   const stateOf = (m: Mode) => (live.key === keyOf(m) && mode === m ? live.status : 'idle');
   const status = p.review?.status;
 
@@ -226,7 +228,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setTake(i)}
+                  onClick={() => selectTake(i)}
                   className={`h-8 rounded-full px-3 text-[13px] ${take === i ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'}`}
                 >
                   Pattern {i + 1}

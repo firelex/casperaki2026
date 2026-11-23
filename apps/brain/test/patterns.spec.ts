@@ -61,6 +61,16 @@ describe('pattern lab', () => {
     expect((withP as unknown as { lanes: string[] }).lanes.map(laneFamilyOf)).toContain(p.family);
   });
 
+  it('previews one chosen pattern of a proposal, and refuses a pattern it does not have', async () => {
+    const p = loadPatternProposals().find((x) => x.kind === 'chordTones' && x.patterns.length > 1)!;
+    const body = (take: number) => ({ genre: p.genres[0], variant: 'proposal', take });
+    const one = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, body(0))).json()) as { songId: string };
+    const two = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, body(1))).json()) as { songId: string };
+    expect(one.songId).not.toBe(two.songId);
+    const bad = await post(`${h.url}/api/patterns/${p.id}/preview`, body(p.kind === 'chordTones' ? p.patterns.length : 99));
+    expect(bad.status).toBe(400);
+  });
+
   it('previews a keys / pad / strings / brass / synths / guitar proposal with a lane of its family', async () => {
     for (const family of ['keys', 'pad', 'popStrings', 'popBrass', 'synths', 'pluckedSynths', 'guitar']) {
       const p = loadPatternProposals().find((x) => x.family === family);
