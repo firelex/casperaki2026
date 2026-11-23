@@ -1,0 +1,163 @@
+[
+  {
+    "id": "b3-pop-synth-eighths",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Synth-pop pumping eighths",
+    "genres": ["brightPop"],
+    "rationale": "The pulsing eighth-note synth bass of 80s synth-pop and today's bright pop (think 'Blinding Lights' or 'Take On Me'): short, even roots on every eighth that make the track feel like it is moving even when the chords are slow. The notes are kept short so the line breathes with the kick and sidechain. Four takes: straight roots with an octave flick at the end of bar 2; roots with the octave on the 'and' of 2 and 4; a sidechain-style take that skips every downbeat; and a lighter verse take in quarters with an eighth pickup.",
+    "patterns": [
+      [[0.0, 0.35, 0], [0.5, 0.35, 0], [1.0, 0.35, 0], [1.5, 0.35, 0], [2.0, 0.35, 0], [2.5, 0.35, 0], [3.0, 0.35, 0], [3.5, 0.35, 0], [4.0, 0.35, 0], [4.5, 0.35, 0], [5.0, 0.35, 0], [5.5, 0.35, 0], [6.0, 0.35, 0], [6.5, 0.35, 0], [7.0, 0.35, 12], [7.5, 0.35, 0]],
+      [[0.0, 0.35, 0], [0.5, 0.35, 0], [1.0, 0.35, 0], [1.5, 0.35, 12], [2.0, 0.35, 0], [2.5, 0.35, 0], [3.0, 0.35, 0], [3.5, 0.35, 12], [4.0, 0.35, 0], [4.5, 0.35, 0], [5.0, 0.35, 0], [5.5, 0.35, 12], [6.0, 0.35, 0], [6.5, 0.35, 0], [7.0, 0.35, 7], [7.5, 0.35, 12]],
+      [[0.5, 0.35, 0], [1.0, 0.35, 0], [1.5, 0.35, 0], [2.5, 0.35, 0], [3.0, 0.35, 0], [3.5, 0.35, 0], [4.5, 0.35, 0], [5.0, 0.35, 0], [5.5, 0.35, 0], [6.5, 0.35, 0], [7.0, 0.35, 7], [7.5, 0.35, 12]],
+      [[0, 0.9, 0], [1, 0.9, 0], [2, 0.9, 0], [3, 0.45, 0], [3.5, 0.45, 12], [4, 0.9, 0], [5, 0.9, 0], [6, 0.9, 7], [7, 0.45, 0], [7.5, 0.45, 12]]
+    ]
+  },
+  {
+    "id": "b3-pop-disco-octaves",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Syncopated disco octaves",
+    "genres": ["brightPop"],
+    "rationale": "Disco and nu-disco octave bass (Chic, 'Get Lucky', Dua Lipa's 'Levitating' era): the root and its octave bounce against each other, with 16th-note pickups that make the line skip instead of march. It is busier and more syncopated than the straight Discofox octaves, and suits upbeat pop choruses. Three takes: octaves with a 16th pickup before every beat; a Chic-style figure that pushes the octave onto the 'a' of the beat; and a sparser verse take with held roots and octave answers.",
+    "patterns": [
+      [[0, 0.45, 0], [0.5, 0.2, 12], [0.75, 0.2, 0], [1, 0.45, 0], [1.5, 0.2, 12], [1.75, 0.2, 0], [2, 0.45, 0], [2.5, 0.2, 12], [2.75, 0.2, 0], [3, 0.45, 0], [3.5, 0.2, 12], [3.75, 0.2, 0], [4, 0.45, 0], [4.5, 0.2, 12], [4.75, 0.2, 0], [5, 0.45, 0], [5.5, 0.2, 12], [5.75, 0.2, 0], [6, 0.45, 0], [6.5, 0.2, 12], [6.75, 0.2, 0], [7, 0.45, 0], [7.5, 0.2, 7], [7.75, 0.2, 12]],
+      [[0, 0.7, 0], [0.75, 0.25, 12], [1, 0.45, 0], [1.5, 0.45, 12], [2, 0.7, 0], [2.75, 0.25, 12], [3, 0.45, 0], [3.5, 0.2, 0], [3.75, 0.2, 12], [4, 0.7, 0], [4.75, 0.25, 12], [5, 0.45, 0], [5.5, 0.45, 12], [6, 0.7, 7], [6.75, 0.25, 19], [7, 0.45, 7], [7.5, 0.45, 12]],
+      [[0, 1.4, 0], [1.5, 0.45, 12], [2, 0.9, 0], [3, 0.45, 0], [3.5, 0.45, 12], [4, 1.4, 0], [5.5, 0.45, 12], [6, 0.9, 7], [7, 0.2, 12], [7.25, 0.2, 0], [7.5, 0.45, 12]]
+    ]
+  },
+  {
+    "id": "b3-edm-trance-roll",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Rolling trance bass",
+    "genres": ["edm"],
+    "rationale": "The rolling 'galloping' bass of trance and progressive house: the kick takes each beat and the bass fills the three 16ths after it, so kick and bass together make one continuous roll. Nothing in the EDM bank plays this, though it is the signature low end of trance at 128-140 BPM. Four takes: all roots; the octave on the last 16th of every beat for extra bounce; roots with a fifth roll at the end of bar 2; and a half roll (two 16ths after the beat) for breakdowns and verses.",
+    "patterns": [
+      [[0.25, 0.2, 0], [0.5, 0.2, 0], [0.75, 0.2, 0], [1.25, 0.2, 0], [1.5, 0.2, 0], [1.75, 0.2, 0], [2.25, 0.2, 0], [2.5, 0.2, 0], [2.75, 0.2, 0], [3.25, 0.2, 0], [3.5, 0.2, 0], [3.75, 0.2, 0], [4.25, 0.2, 0], [4.5, 0.2, 0], [4.75, 0.2, 0], [5.25, 0.2, 0], [5.5, 0.2, 0], [5.75, 0.2, 0], [6.25, 0.2, 0], [6.5, 0.2, 0], [6.75, 0.2, 0], [7.25, 0.2, 0], [7.5, 0.2, 0], [7.75, 0.2, 0]],
+      [[0.25, 0.2, 0], [0.5, 0.2, 0], [0.75, 0.2, 12], [1.25, 0.2, 0], [1.5, 0.2, 0], [1.75, 0.2, 12], [2.25, 0.2, 0], [2.5, 0.2, 0], [2.75, 0.2, 12], [3.25, 0.2, 0], [3.5, 0.2, 0], [3.75, 0.2, 12], [4.25, 0.2, 0], [4.5, 0.2, 0], [4.75, 0.2, 12], [5.25, 0.2, 0], [5.5, 0.2, 0], [5.75, 0.2, 12], [6.25, 0.2, 0], [6.5, 0.2, 0], [6.75, 0.2, 12], [7.25, 0.2, 0], [7.5, 0.2, 0], [7.75, 0.2, 12]],
+      [[0.25, 0.2, 0], [0.5, 0.2, 0], [0.75, 0.2, 0], [1.25, 0.2, 0], [1.5, 0.2, 0], [1.75, 0.2, 0], [2.25, 0.2, 0], [2.5, 0.2, 0], [2.75, 0.2, 0], [3.25, 0.2, 0], [3.5, 0.2, 0], [3.75, 0.2, 0], [4.25, 0.2, 0], [4.5, 0.2, 0], [4.75, 0.2, 0], [5.25, 0.2, 0], [5.5, 0.2, 0], [5.75, 0.2, 0], [6.25, 0.2, 7], [6.5, 0.2, 7], [6.75, 0.2, 7], [7.25, 0.2, 12], [7.5, 0.2, 12], [7.75, 0.2, 7]],
+      [[0.5, 0.2, 0], [0.75, 0.2, 0], [1.5, 0.2, 0], [1.75, 0.2, 0], [2.5, 0.2, 0], [2.75, 0.2, 0], [3.5, 0.2, 0], [3.75, 0.2, 0], [4.5, 0.2, 0], [4.75, 0.2, 0], [5.5, 0.2, 0], [5.75, 0.2, 0], [6.5, 0.2, 0], [6.75, 0.2, 0], [7.5, 0.2, 0], [7.75, 0.2, 0]]
+    ]
+  },
+  {
+    "id": "b3-edm-house-bounce",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Bouncy house bass",
+    "genres": ["edm"],
+    "rationale": "Three newer flavours of house bass that build on the plain off-beat bass: the future-house 'bounce' where each off-beat root jumps straight up an octave, a deep-house line with a long-short syncopation, and a big-room pumping take. They keep the downbeats clear for the kick like the existing off-beat bass, but each has its own hook, so EDM songs do not all share one bass figure. Three takes: off-beat root plus octave hop; deep-house syncopation; and a pumping off-beat take with the fifth below at the end of each bar.",
+    "patterns": [
+      [[0.5, 0.2, 0], [0.75, 0.2, 12], [1.5, 0.2, 0], [1.75, 0.2, 12], [2.5, 0.2, 0], [2.75, 0.2, 12], [3.5, 0.2, 0], [3.75, 0.2, 12], [4.5, 0.2, 0], [4.75, 0.2, 12], [5.5, 0.2, 0], [5.75, 0.2, 12], [6.5, 0.2, 0], [6.75, 0.2, 12], [7.5, 0.2, 0], [7.75, 0.2, 12]],
+      [[0.5, 0.7, 0], [1.25, 0.2, 0], [1.75, 0.25, 0], [2.5, 0.45, 12], [3.25, 0.2, 0], [3.5, 0.45, 0], [4.5, 0.7, 0], [5.25, 0.2, 0], [5.75, 0.25, 0], [6.5, 0.45, 7], [7.25, 0.2, 12], [7.5, 0.45, 0]],
+      [[0.5, 0.4, 0], [1.5, 0.4, 0], [2.5, 0.4, 0], [3.5, 0.2, -5], [3.75, 0.2, 0], [4.5, 0.4, 0], [5.5, 0.4, 0], [6.5, 0.4, 0], [7.5, 0.2, -5], [7.75, 0.2, 12]]
+    ]
+  },
+  {
+    "id": "b3-ballad-root-fifth",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Ballad root-fifth with rising pickups",
+    "genres": ["ballad"],
+    "rationale": "A sparse ballad bass that answers each root with its fifth, the way a bassist outlines the chord under a piano ballad. It moves a little more than the held ballad bass but still leaves the space a slow song needs at 65-80 BPM, and it re-strikes on beat 3 so mid-bar chord changes are followed. Four takes: dotted root then fifth on each half bar; root, fifth and octave rising through bar 2; half-note root with a quarter fifth-below pickup; and a very sparse take with a whole-bar root and a single eighth pickup.",
+    "patterns": [
+      [[0, 1.4, 0], [1.5, 0.45, 7], [2, 1.9, 0], [4, 1.4, 0], [5.5, 0.45, 7], [6, 1.4, 0], [7.5, 0.45, 12]],
+      [[0, 1.9, 0], [2, 1.9, 7], [4, 0.9, 0], [5, 0.9, 7], [6, 1.4, 12], [7.5, 0.45, 7]],
+      [[0, 1.9, 0], [2, 0.9, 0], [3, 0.9, -5], [4, 1.9, 0], [6, 0.9, 0], [7, 0.9, -5]],
+      [[0, 1.9, 0], [2, 1.9, 0], [4, 1.9, 0], [6, 1.4, 0], [7.5, 0.45, -5]]
+    ]
+  },
+  {
+    "id": "b3-rock-power-fifths",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Rock eighths with fifth jumps",
+    "genres": ["rock"],
+    "rationale": "Driving eighth-note rock bass that jumps between root, fifth and octave in pairs, the way bass doubles a power-chord riff in punk, pop-punk and arena rock. Where the existing rock bass sits on the root, these lines climb, which lifts a chorus. Four takes: root pairs climbing to the fifth and octave; a push that rests on beat 4 and hits the 'and' hard; a reverse gallop (two 16ths and an eighth) for heavier choruses; and a half-bar riff with an octave stab.",
+    "patterns": [
+      [[0.0, 0.45, 0], [0.5, 0.45, 0], [1.0, 0.45, 0], [1.5, 0.45, 0], [2.0, 0.45, 7], [2.5, 0.45, 7], [3.0, 0.45, 12], [3.5, 0.45, 12], [4.0, 0.45, 0], [4.5, 0.45, 0], [5.0, 0.45, 0], [5.5, 0.45, 0], [6.0, 0.45, 7], [6.5, 0.45, 7], [7.0, 0.45, -5], [7.5, 0.45, -5]],
+      [[0.0, 0.45, 0], [0.5, 0.45, 0], [1.0, 0.45, 0], [1.5, 0.45, 0], [2.0, 0.45, 0], [2.5, 0.45, 0], [3.5, 0.45, 12], [4.0, 0.45, 0], [4.5, 0.45, 0], [5.0, 0.45, 0], [5.5, 0.45, 0], [6.0, 0.45, 7], [6.5, 0.45, 7], [7.5, 0.45, 12]],
+      [[0, 0.2, 0], [0.25, 0.2, 0], [0.5, 0.45, 0], [1, 0.2, 0], [1.25, 0.2, 0], [1.5, 0.45, 0], [2, 0.2, 0], [2.25, 0.2, 0], [2.5, 0.45, 0], [3, 0.2, 0], [3.25, 0.2, 0], [3.5, 0.45, 0], [4, 0.2, 0], [4.25, 0.2, 0], [4.5, 0.45, 0], [5, 0.2, 0], [5.25, 0.2, 0], [5.5, 0.45, 0], [6, 0.2, 7], [6.25, 0.2, 7], [6.5, 0.45, 7], [7, 0.2, 12], [7.25, 0.2, 12], [7.5, 0.45, 7]],
+      [[0, 0.45, 0], [0.5, 0.45, 0], [1, 0.45, 12], [1.5, 0.45, 0], [2, 0.45, 0], [2.5, 0.45, 0], [3, 0.45, 7], [3.5, 0.45, 0], [4, 0.45, 0], [4.5, 0.45, 0], [5, 0.45, 12], [5.5, 0.45, 0], [6, 0.9, 7], [7, 0.45, 12], [7.5, 0.45, 7]]
+    ]
+  },
+  {
+    "id": "b3-schlager-discofox-pickups",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Discofox octaves with 16th pickups",
+    "genres": ["schlager"],
+    "rationale": "Variants of the Discofox octave bass for Schlager at 120-129 BPM: the root still sits on every beat and the octave on every off-beat, but 16th-note pickups and fifth-below steps give it the extra spring heard in Helene Fischer or Andrea Berg choruses. They keep the four-on-the-floor bounce of the first Discofox proposal while giving songs a second and third figure. Three takes: octave off-beats doubled as two 16ths; root on the beat with the fifth below on beats 2 and 4; and a verse take with long roots and a 16th octave pickup into each beat 3.",
+    "patterns": [
+      [[0, 0.45, 0], [0.5, 0.2, 12], [0.75, 0.2, 12], [1, 0.45, 0], [1.5, 0.2, 12], [1.75, 0.2, 12], [2, 0.45, 0], [2.5, 0.2, 12], [2.75, 0.2, 12], [3, 0.45, 0], [3.5, 0.2, 12], [3.75, 0.2, 12], [4, 0.45, 0], [4.5, 0.2, 12], [4.75, 0.2, 12], [5, 0.45, 0], [5.5, 0.2, 12], [5.75, 0.2, 12], [6, 0.45, 0], [6.5, 0.2, 12], [6.75, 0.2, 12], [7, 0.45, 0], [7.5, 0.2, 12], [7.75, 0.2, 12]],
+      [[0, 0.45, 0], [0.5, 0.45, 12], [1, 0.45, -5], [1.5, 0.45, 12], [2, 0.45, 0], [2.5, 0.45, 12], [3, 0.45, -5], [3.5, 0.45, 12], [4, 0.45, 0], [4.5, 0.45, 12], [5, 0.45, -5], [5.5, 0.45, 12], [6, 0.45, 0], [6.5, 0.45, 12], [7, 0.45, -5], [7.5, 0.45, 12]],
+      [[0, 1.4, 0], [1.5, 0.2, 12], [1.75, 0.2, 12], [2, 0.9, 0], [3, 0.45, 0], [3.5, 0.45, 12], [4, 1.4, 0], [5.5, 0.2, 12], [5.75, 0.2, 12], [6, 0.9, 7], [7, 0.45, 0], [7.5, 0.45, 12]]
+    ]
+  },
+  {
+    "id": "b3-schlager-two-beat",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Schlager two-beat (root and fifth)",
+    "genres": ["schlager"],
+    "rationale": "The older Schlager and Volksschlager bass, the 'Foxtrott' two-beat: root on beat 1, fifth below on beat 3, with quarter-note walks between them. It is the bass of classic Schlager (Roland Kaiser, Wolfgang Petry ballad-ups) and gives a warmer, less disco feel than the octave bass. Three takes: plain root and fifth-below halves; quarters alternating root and fifth below; and quarters with an eighth octave pickup at the end of each bar.",
+    "patterns": [
+      [[0, 1.9, 0], [2, 1.9, -5], [4, 1.9, 0], [6, 1.9, -5]],
+      [[0, 0.9, 0], [1, 0.9, 0], [2, 0.9, -5], [3, 0.9, 0], [4, 0.9, 0], [5, 0.9, 0], [6, 0.9, -5], [7, 0.9, -5]],
+      [[0, 0.9, 0], [1, 0.9, 7], [2, 0.9, -5], [3, 0.45, 0], [3.5, 0.45, 12], [4, 0.9, 0], [5, 0.9, 7], [6, 0.9, -5], [7, 0.45, 0], [7.5, 0.45, 12]]
+    ]
+  },
+  {
+    "id": "b3-latin-bolero",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Bolero and bachata bass",
+    "genres": ["latin"],
+    "rationale": "The romantic Latin bass of the bolero and of bachata, which grew out of it: a held root on beat 1, a fifth on beat 3 and the root again on beat 4, with a softer push than the salsa tumbao. It suits the slower, ballad-like Latin pop songs in the 90-104 BPM range. Three takes: classic bolero (root, fifth below, root); a bachata-style take with an eighth-note pickup on the 'and' of 4; and a fuller take where the fifth answers on the 'and' of 2.",
+    "patterns": [
+      [[0, 1.9, 0], [2, 0.9, -5], [3, 0.9, 0], [4, 1.9, 0], [6, 0.9, -5], [7, 0.9, 0]],
+      [[0, 1.4, 0], [2, 0.9, 7], [3, 0.45, 0], [3.5, 0.45, 0], [4, 1.4, 0], [6, 0.9, 7], [7, 0.45, 0], [7.5, 0.45, 12]],
+      [[0, 1.4, 0], [1.5, 0.45, 7], [2, 0.9, 0], [3, 0.9, -5], [4, 1.4, 0], [5.5, 0.45, 7], [6, 0.9, 0], [7, 0.45, -5], [7.5, 0.45, 0]]
+    ]
+  },
+  {
+    "id": "b3-latin-cumbia",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Cumbia bass",
+    "genres": ["latin"],
+    "rationale": "The cumbia bass: a root on beat 1 and a pair of fifths on beat 3 and its 'and', which together with the güira and the off-beat guitar make the light, swaying cumbia groove of Colombian and Mexican pop. It is simpler and more on the beat than the tumbao or reggaeton bass, so Latin songs get a third, gentler feel. Three takes: root then two fifths below; root then two fifths above; and a root-octave version with a pickup into each bar.",
+    "patterns": [
+      [[0, 1.4, 0], [2, 0.45, -5], [2.5, 0.45, -5], [3, 0.9, 0], [4, 1.4, 0], [6, 0.45, -5], [6.5, 0.45, -5], [7, 0.9, 0]],
+      [[0, 1.4, 0], [2, 0.45, 7], [2.5, 0.45, 7], [3, 0.9, 0], [4, 1.4, 0], [6, 0.45, 7], [6.5, 0.45, 7], [7, 0.9, 0]],
+      [[0, 0.9, 0], [1, 0.45, 12], [2, 0.45, -5], [2.5, 0.45, -5], [3, 0.45, 0], [3.5, 0.45, 0], [4, 0.9, 0], [5, 0.45, 12], [6, 0.45, -5], [6.5, 0.45, -5], [7, 0.45, 0], [7.5, 0.45, 12]]
+    ]
+  },
+  {
+    "id": "b3-organic-folk-alternating",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Folk-pop alternating bass",
+    "genres": ["organicVibes"],
+    "rationale": "The alternating root-fifth bass of folk, country and singer-songwriter pop (Mumford, the Lumineers, Ed Sheeran's acoustic songs): root on beat 1, fifth below on beat 3, often with the 'boom-chick' quarter feel of a train beat. It sits under strummed guitars without crowding them and is warmer than the soul basses this genre has now. Four takes: root and fifth-below halves; quarters alternating root and fifth below; a stomping train-beat version in eighths; and a take with a dotted root and a fifth pickup.",
+    "patterns": [
+      [[0, 1.9, 0], [2, 1.9, -5], [4, 1.9, 0], [6, 1.4, -5], [7.5, 0.45, -5]],
+      [[0, 0.9, 0], [1, 0.9, -5], [2, 0.9, 0], [3, 0.9, -5], [4, 0.9, 0], [5, 0.9, -5], [6, 0.9, 0], [7, 0.9, 7]],
+      [[0.0, 0.4, 0], [0.5, 0.4, 0], [1.0, 0.4, -5], [1.5, 0.4, -5], [2.0, 0.4, 0], [2.5, 0.4, 0], [3.0, 0.4, -5], [3.5, 0.4, -5], [4.0, 0.4, 0], [4.5, 0.4, 0], [5.0, 0.4, -5], [5.5, 0.4, -5], [6.0, 0.4, 0], [6.5, 0.4, 0], [7.0, 0.4, 7], [7.5, 0.4, 12]],
+      [[0, 1.4, 0], [1.5, 0.45, 7], [2, 1.4, 0], [3.5, 0.45, -5], [4, 1.4, 0], [5.5, 0.45, 7], [6, 0.9, 0], [7, 0.9, 12]]
+    ]
+  },
+  {
+    "id": "b3-urban-boombap",
+    "family": "bass",
+    "kind": "bassPatterns",
+    "name": "Boom-bap and trap bounce bass",
+    "genres": ["urban"],
+    "rationale": "Syncopated hip-hop basses that follow the kick drum instead of ringing: the short, punchy root hits of 90s boom-bap and the bouncing 808 rhythms of trap, where the bass hits on off-beat 16ths and jumps to the octave. Real 808 glides are not possible here, so the movement comes from rhythm and octave jumps. Three takes: classic boom-bap (beat 1, the 'a' of 2, the 'and' of 3); a trap bounce with 16th pairs and an octave jump; and a sparse take that leaves most of bar 2 for the vocal.",
+    "patterns": [
+      [[0, 0.7, 0], [0.75, 0.45, 0], [2.5, 0.45, 0], [3.25, 0.5, 0], [4, 0.7, 0], [4.75, 0.45, 0], [6.5, 0.45, 12], [7.25, 0.5, 0]],
+      [[0, 0.7, 0], [0.75, 0.2, 0], [1.5, 0.45, 0], [2.25, 0.2, 12], [2.5, 0.9, 0], [3.75, 0.2, 0], [4, 0.7, 0], [4.75, 0.2, 0], [5.5, 0.45, 12], [6.25, 0.7, 0], [7, 0.45, 7], [7.5, 0.45, 0]],
+      [[0, 1.4, 0], [1.75, 0.25, 0], [2.5, 1.4, 0], [4, 1.4, 0], [6.75, 1.2, 12]]
+    ]
+  }
+]

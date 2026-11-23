@@ -41,18 +41,20 @@ automatic voice leading. The chord's quality (minor, 7th, sus, 9th) decides the 
 clashes with the harmony.
 
 **Do not write voicings as C major chord tones.** C-E-G (0, 4, 7) collapses over F to C-F-F (E goes up
-to F; G ties between F and A and goes down). Space simultaneous notes about a major third apart, on the
-grid … -8, -4, 0, 4, 8, 12, 16 … (C, E, G♯, C …; 9 = A works in place of 8). That grid gives every
-common triad all three of its tones: 0, 4, 8 → C: C E G, F: C F A, G: B D G, Am: C E A, Dm: D F A,
-Em: B E G. The checker's `--verbose` output shows the notes on F and G bars; look there first.
+to F; G ties between F and A and goes down). **Space simultaneous notes at least 5 semitones apart**
+(e.g. -1, 4, 9, 14 = B E A D, or -5, 0, 5, 10 = G C F Bb, or -4, 4, 12): two notes that far apart can
+never land on the same chord tone, and such voicings still give about three different chord tones over
+every common chord (checked over 12 roots × 13 chord qualities). The major-third grid (0, 4, 8, 12 …)
+is fine for single-note arpeggio lines (over C, F, G, Am, Dm, Em it gives all three tones in turn) but
+not for simultaneous notes: it loses a voice over D, F♯, B♭ and some sus / dim chords (0, 4, 8 over F♯
+→ F♯ F♯ C♯). The checker's `--verbose` output shows the notes on F and G bars; look there first.
 
 Consequences:
 
 - **Only chord tones sound.** A D or an A written over C becomes C/E or G. Passing tones, scale runs and
   non-chord colour notes are impossible; write melody-like lines as chord-tone arpeggios.
-- **Keep simultaneous notes at least a third apart** (3+ semitones, ideally a 4th or more in the low
-  register). Two notes a second apart can snap onto the same chord tone and a voice disappears
-  ("collapsed"). Example: E4 and G4 over F major become F4 and F4 (G ties between F and A and goes down).
+- **Keep simultaneous notes at least 5 semitones apart** (see above). Closer notes can snap onto the
+  same chord tone and a voice disappears ("collapsed"). Example: E4 and G4 over F major become F4 and F4 (G ties between F and A and goes down).
 - **Low register:** below E3 (-8) keep notes a 5th or more apart (or use a single note / octave).
 - **A note keeps the chord it started on.** About 7-8% of bars change chord mid-bar (on beat 3). A
   whole-bar sustain then clashes for half a bar; prefer re-striking on beat 3 (beat 2 in 0-based) in

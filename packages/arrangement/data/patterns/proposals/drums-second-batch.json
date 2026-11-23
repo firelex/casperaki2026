@@ -1,0 +1,1967 @@
+[
+  {
+    "id": "d2-edm-house",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "House four-on-the-floor",
+    "genres": [
+      "edm"
+    ],
+    "rationale": "Classic house: a kick on every beat, a clap (no snare) on 2 and 4, an open hi-hat on every off-beat and a 16th shaker, plus a tech-house take with closed off-beat hats and syncopated rim clicks, a ride-driven take, and one with a clap roll into the next bar. It is the default groove of club music at 118-128 BPM and gives EDM the plain house sound its generator lacks. Written from the standard house drum programming of the genre.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "shaker": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "hiHatClosed2": [
+          0.75,
+          1.75,
+          2.75,
+          3.75,
+          4.75,
+          5.75,
+          6.75,
+          7.75
+        ],
+        "rim": [
+          1.75,
+          3.25,
+          5.75,
+          7.25
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "ride": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.25,
+          0.75,
+          1.25,
+          1.75,
+          2.25,
+          2.75,
+          3.25,
+          3.75,
+          4.25,
+          4.75,
+          5.25,
+          5.75,
+          6.25,
+          6.75,
+          7.25,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7,
+          7.25,
+          7.5,
+          7.75
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "shaker": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-edm-bigroom",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Big-room and tribal drops",
+    "genres": [
+      "edm"
+    ],
+    "rationale": "The festival 'big room' drop: four-on-the-floor kick with a layered snare and clap on 2 and 4 and tight off-beat hats, a tribal take where the toms play a syncopated figure around the kick, and a take that pushes the kick on the last 'and' with a snare roll into the next bar. It suits the 126-132 BPM end of EDM and gives choruses a stadium punch. Written from the drum programming typical of big-room and electro house.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "tom3": [
+          0.75,
+          2.75,
+          4.75,
+          6.75
+        ],
+        "tom2": [
+          2.25,
+          6.25
+        ],
+        "tom1": [
+          7.25,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          7.5
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7,
+          7.25,
+          7.5,
+          7.75
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-edm-trance",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Trance and progressive drive",
+    "genres": [
+      "edm"
+    ],
+    "rationale": "Trance and progressive house: a kick on every beat, a clap on 2 and 4, an open hat on the off-beat and rolling 16th closed hats between them, with a ride on the beat in the fuller take. A lighter progressive take keeps only off-beat closed hats, a shaker and one rim accent, and a third ends the second bar with a snare run for section changes. This is the driving 130-140 BPM pulse of uplifting trance. Written from the standard trance drum programming.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.25,
+          0.75,
+          1.25,
+          1.75,
+          2.25,
+          2.75,
+          3.25,
+          3.75,
+          4.25,
+          4.75,
+          5.25,
+          5.75,
+          6.25,
+          6.75,
+          7.25,
+          7.75
+        ],
+        "ride": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "shaker": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ],
+        "rim": [
+          3.75,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5
+        ],
+        "snareDrum1": [
+          6,
+          6.5,
+          7,
+          7.25,
+          7.5,
+          7.75
+        ],
+        "hiHatOpen": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.25,
+          0.75,
+          1.25,
+          1.75,
+          2.25,
+          2.75,
+          3.25,
+          3.75,
+          4.25,
+          4.75,
+          5.25,
+          5.75,
+          6.25,
+          6.75,
+          7.25,
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-edm-breaks-garage",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Breakbeat and UK garage",
+    "genres": [
+      "edm"
+    ],
+    "rationale": "Broken-kick EDM grooves: a big-beat breakbeat (kick on 1, the 'a' of 2 and the 'and' of 3, snare on 2 and 4), a UK garage two-step with the kick skipping beat 3 and a shuffling hat-and-shaker figure, and the breakbeat with a tom fill at the end of the second bar. They give EDM songs at 125-140 BPM an alternative to four-on-the-floor. Written from the classic breakbeat and two-step garage patterns.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          1.75,
+          2.5,
+          4,
+          4.5,
+          5.75,
+          6.5
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7,
+          7.75
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "hiHatOpen": [
+          3.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          2.5,
+          4,
+          5.75,
+          6.5
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "hiHatClosed2": [
+          0.75,
+          2.25,
+          4.75,
+          6.25
+        ],
+        "shaker": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1.75,
+          2.5,
+          4,
+          4.5,
+          5.75
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          6.5
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0
+        ],
+        "tom1": [
+          7,
+          7.25
+        ],
+        "tom2": [
+          7.5
+        ],
+        "tom3": [
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-edm-halftime-dnb",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Half-time and drum-and-bass feel",
+    "genres": [
+      "edm"
+    ],
+    "rationale": "Grooves for the 140-150 BPM end of EDM: a half-time beat (snare and clap only on beat 3, as in dubstep and future bass), the same half-time beat with rolling 16th hats and a hat triplet, and a drum-and-bass two-step (kick on 1 and the 'and' of 3, snare on 2 and 4 over an 8th ride) that feels like slowed-down jungle at these tempos. They give heavier EDM drops and verses a different weight from the four-on-the-floor styles. Written from the standard dubstep, future-bass and drum-and-bass patterns.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          3.5,
+          4,
+          5.5
+        ],
+        "snareDrum1": [
+          2,
+          6
+        ],
+        "clap": [
+          2,
+          6
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0
+        ],
+        "hiHatOpen": [
+          3.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          0.75,
+          3.5,
+          4,
+          5.75
+        ],
+        "snareDrum1": [
+          2,
+          6
+        ],
+        "clap": [
+          2,
+          6
+        ],
+        "hiHatClosed1": [
+          0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7,
+          7.333,
+          7.667
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          2.5,
+          4,
+          6.5,
+          6.75
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "ride": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "hiHatPedal": [
+          0,
+          2,
+          4,
+          6
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-schlager-party",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Party Schlager and Schlager-pop",
+    "genres": [
+      "schlager"
+    ],
+    "rationale": "Modern Schlager-pop beyond the Discofox: a verse groove with a kick on 1, the 'and' of 2 and beat 3 under 8th hats, a 'Stampf' chorus with the kick on every beat, snare on 2 and 4 and a clap pickup on the 'and' of 4 that crowds clap along to, a ride version for a lifted last chorus, and a run of snare and toms into the next bar. All sit at the 120-129 BPM Schlager tempo. Written from the drumming of current German party Schlager and Schlager-pop.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          1.5,
+          2,
+          4,
+          5.5,
+          6
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "shaker": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          3.5,
+          5,
+          7,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "ride": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "hiHatPedal": [
+          1,
+          3,
+          5,
+          7
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          6,
+          6.5,
+          6.75
+        ],
+        "clap": [
+          1,
+          3,
+          5
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5
+        ],
+        "tom1": [
+          7
+        ],
+        "tom2": [
+          7.25,
+          7.5
+        ],
+        "tom3": [
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-schlager-motown-train",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Motown beat, train beat and shuffle",
+    "genres": [
+      "schlager"
+    ],
+    "rationale": "The older Schlager grooves under the Discofox: the Motown beat (snare on all four beats, 8th hats, a bouncing kick), a ride version with the kick on the off-beats, the country 'train' two-beat (kick on every beat, snare on every 'and') of Country-Schlager, and a four-on-the-floor kick under a shuffling ride. They suit the sing-along, 60s-and-70s flavoured side of Schlager at 120-129 BPM. From the Groove MIDI styles soul/motown (148 BPM), country (114 BPM) and rock/shuffle (125 BPM), two drummers. From the Groove MIDI Dataset (Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "snareDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "bassDrum1": [
+          0.0,
+          2.5,
+          3.5,
+          4.0,
+          6.5,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ],
+        "snareDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "hiHatPedal": [
+          1.0,
+          2.0,
+          3,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "ride": [
+          0,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5,
+          7.75
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "snareDrum1": [
+          0.5,
+          1.5,
+          2.5,
+          3.25,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.25,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "ride": [
+          0.0,
+          1.0,
+          1.75,
+          2.0,
+          3.0,
+          3.75,
+          4.0,
+          5.0,
+          5.75,
+          6.0,
+          7.0,
+          7.75
+        ],
+        "hiHatPedal": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-rock-toms-halftime",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Tom grooves and half-time rock",
+    "genres": [
+      "rock"
+    ],
+    "rationale": "Rock grooves that are not a plain hi-hat backbeat: a 'tribal' groove with the rack tom playing a 16th figure and the pedal hat on 8ths, a floor-tom beat (floor tom on every beat, kick on 1 and 3, snare on 2 and 4), and a heavy half-time beat with the snare only on beat 3 for big verses and bridges. They give rock songs the drive of indie and alternative records. From the Groove MIDI styles rock/prog (125 BPM), punk (144 BPM) and rock/halftime (140 BPM), one drummer. From the Groove MIDI Dataset (Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "hiHatPedal": [
+          0.0,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "bassDrum1": [
+          0.0,
+          4.0,
+          7.5
+        ],
+        "tom1": [
+          0.0,
+          0.5,
+          0.75,
+          1.25,
+          1.5,
+          2.0,
+          2.5,
+          2.75,
+          3.25,
+          3.5,
+          4.0,
+          4.5,
+          4.75,
+          5.25,
+          5.5,
+          6.0,
+          6.5,
+          6.75,
+          7.25,
+          7.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "tom3": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "bassDrum1": [
+          0.0,
+          2.0,
+          4.0,
+          6.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ],
+        "tom1": [
+          7.667
+        ]
+      },
+      {
+        "bassDrum1": [
+          0.0,
+          3.5,
+          4.0,
+          7.5
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ],
+        "snareDrum1": [
+          2.0,
+          6.0
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-rock-shuffle",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Rock shuffle",
+    "genres": [
+      "rock"
+    ],
+    "rationale": "The rock shuffle: hi-hats on the beat and the last triplet of each beat (the swung 'long-short' feel), kick on 1 and 3, snare on 2 and 4, as on blues-rock and boogie records. Three takes: on the hi-hat, on the ride with the pedal hat on 2 and 4 and a pushing kick, and one ending in a triplet snare-and-tom fill. Nothing in the rock bank swings, and 100-129 BPM is the classic shuffle tempo. Written from the standard shuffle groove.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          2,
+          2.667,
+          4,
+          6,
+          6.667
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0,
+          0.667,
+          1,
+          1.667,
+          2,
+          2.667,
+          3,
+          3.667,
+          4,
+          4.667,
+          5,
+          5.667,
+          6,
+          6.667,
+          7,
+          7.667
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1.667,
+          2,
+          4,
+          5.667,
+          6
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "ride": [
+          0,
+          0.667,
+          1,
+          1.667,
+          2,
+          2.667,
+          3,
+          3.667,
+          4,
+          4.667,
+          5,
+          5.667,
+          6,
+          6.667,
+          7,
+          7.667
+        ],
+        "hiHatPedal": [
+          1,
+          3,
+          5,
+          7
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          2,
+          2.667,
+          4,
+          6
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          6,
+          6.333,
+          6.667
+        ],
+        "hiHatClosed1": [
+          0,
+          0.667,
+          1,
+          1.667,
+          2,
+          2.667,
+          3,
+          3.667,
+          4,
+          4.667,
+          5,
+          5.667
+        ],
+        "tom1": [
+          7
+        ],
+        "tom2": [
+          7.333
+        ],
+        "tom3": [
+          7.667
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-ballad-soft-pop",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Soft pop ballad grooves with fills",
+    "genres": [
+      "ballad"
+    ],
+    "rationale": "Slow grooves the way a session drummer plays a pop ballad: two 16th-note hi-hat grooves with a gentle syncopated kick, and two ride grooves with the pedal hat on every beat that end in a short tom fill, so the second bar leads into the next phrase. They add movement to ballad choruses where the existing played ballad grooves stay plain. From the Groove MIDI styles rock (60 and 75 BPM) and pop/soft (83 BPM), one drummer. From the Groove MIDI Dataset (Magenta, CC BY 4.0).",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0.0,
+          0.75,
+          2.25,
+          2.5,
+          3.25,
+          3.75,
+          4.0,
+          4.75,
+          6.25,
+          6.5,
+          7.25,
+          7.75
+        ],
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25,
+          7.5,
+          7.75
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          7.0
+        ]
+      },
+      {
+        "hiHatClosed1": [
+          0.0,
+          0.25,
+          0.5,
+          0.75,
+          1.0,
+          1.25,
+          1.5,
+          1.75,
+          2.0,
+          2.25,
+          2.5,
+          2.75,
+          3.0,
+          3.25,
+          3.5,
+          3.75,
+          4.0,
+          4.25,
+          4.5,
+          4.75,
+          5.0,
+          5.25,
+          5.5,
+          5.75,
+          6.0,
+          6.25,
+          6.5,
+          6.75,
+          7.0,
+          7.25
+        ],
+        "bassDrum1": [
+          0.0,
+          1.75,
+          2.0,
+          3.75,
+          4.0,
+          6.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          5.75,
+          7.0
+        ],
+        "hiHatOpen": [
+          7.5
+        ]
+      },
+      {
+        "hiHatPedal": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0
+        ],
+        "ride": [
+          0.0,
+          1.0,
+          2.0,
+          2.5,
+          3.0,
+          4.0,
+          5.0
+        ],
+        "bassDrum1": [
+          0.0,
+          1.5,
+          3.5,
+          4.0,
+          5.5
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          6.0
+        ],
+        "tom2": [
+          6.5,
+          6.75
+        ],
+        "tom3": [
+          7.0,
+          7.25,
+          7.5
+        ]
+      },
+      {
+        "hiHatPedal": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          5.5,
+          7.0
+        ],
+        "ride": [
+          0.0,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5
+        ],
+        "bassDrum1": [
+          0.0,
+          1.5,
+          4.0
+        ],
+        "snareDrum1": [
+          1.0,
+          3.0,
+          5.0,
+          6.0,
+          6.25,
+          6.75,
+          7.0
+        ],
+        "tom2": [
+          5.75
+        ],
+        "tom1": [
+          6.5,
+          7.25
+        ],
+        "tom3": [
+          7.5,
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-ballad-sidestick",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Side-stick and half-time ballad",
+    "genres": [
+      "ballad"
+    ],
+    "rationale": "Quiet ballad patterns for verses and intros: a side-stick (rim) backbeat under 8th hats, an even sparser half-time version with the rim only on beat 3 and a shaker, a fuller chorus with the snare on 2 and 4 over an 8th ride and a lifting kick, and the chorus ending in a tom fill. Side-stick verses opening into a full snare chorus is the standard shape of a pop ballad at 65-80 BPM. Written from common ballad drumming.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          2.5,
+          4,
+          6.5
+        ],
+        "rim": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          4,
+          5.5
+        ],
+        "rim": [
+          2,
+          6
+        ],
+        "shaker": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1.75,
+          2,
+          4,
+          5.75,
+          6,
+          6.5
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "ride": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          1.75,
+          2,
+          4,
+          6
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          6.75
+        ],
+        "ride": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0
+        ],
+        "tom1": [
+          7,
+          7.25
+        ],
+        "tom2": [
+          7.5
+        ],
+        "tom3": [
+          7.75
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d2-brightpop-clap-snap",
+    "family": "drums",
+    "kind": "blueprints",
+    "name": "Clap-and-snap pop",
+    "genres": [
+      "brightPop"
+    ],
+    "rationale": "Modern radio-pop drums: a light verse with finger snaps on 2 and 4 and an off-beat shaker, a chorus with a syncopated kick (1, the 'a' of 1, 3 and the 'and' of 3), snare and clap layered on 2 and 4 and an open-hat lift, a half-time pre-chorus with the snare on beat 3, and the chorus with a tom fill at the end. Snaps, claps and syncopated kicks are the sound of today's bright pop at 95-125 BPM. Written from current pop drum programming.",
+    "blueprints": [
+      {
+        "bassDrum1": [
+          0,
+          0.75,
+          2,
+          4,
+          4.75,
+          6,
+          6.5
+        ],
+        "snap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "shaker": [
+          0.5,
+          1.5,
+          2.5,
+          3.5,
+          4.5,
+          5.5,
+          6.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          0.75,
+          2,
+          2.5,
+          4,
+          4.75,
+          6,
+          6.5
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "clap": [
+          1,
+          3,
+          5,
+          7
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0
+        ],
+        "hiHatOpen": [
+          3.5,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          0.75,
+          4,
+          4.75,
+          5.5
+        ],
+        "snareDrum1": [
+          2,
+          6
+        ],
+        "clap": [
+          2,
+          6
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          3.5,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0,
+          6.5,
+          7.0,
+          7.5
+        ]
+      },
+      {
+        "bassDrum1": [
+          0,
+          0.75,
+          2,
+          2.5,
+          4,
+          4.75,
+          6
+        ],
+        "snareDrum1": [
+          1,
+          3,
+          5,
+          6.5
+        ],
+        "clap": [
+          1,
+          3,
+          5
+        ],
+        "hiHatClosed1": [
+          0,
+          0.5,
+          1.0,
+          1.5,
+          2.0,
+          2.5,
+          3.0,
+          4.0,
+          4.5,
+          5.0,
+          5.5,
+          6.0
+        ],
+        "hiHatOpen": [
+          3.5
+        ],
+        "tom1": [
+          7
+        ],
+        "tom2": [
+          7.25,
+          7.5
+        ],
+        "tom3": [
+          7.75
+        ]
+      }
+    ]
+  }
+]
