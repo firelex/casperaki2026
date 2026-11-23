@@ -2,6 +2,8 @@ import { defaultBrainClient } from './client';
 
 /** One kind of Pro-mode change, with every song's value (GET /api/suggestions/mix). */
 export interface MixChange {
+  /** Identifies the change within its genre (for Delete). */
+  readonly key: string;
   readonly kind: 'volume' | 'send' | 'plugin';
   /** volume / send: the instrument type; plugin: the FX bus. */
   readonly target: string;
@@ -13,11 +15,13 @@ export interface MixChange {
 
 export interface GenreMixSuggestions {
   readonly genre: string;
-  /** Songs with a Pro-mode mix in this genre. */
+  /** Songs with a change listed here. */
   readonly songs: number;
   readonly changes: readonly MixChange[];
 }
 
 export const suggestionsApi = {
   mix: (signal?: AbortSignal) => defaultBrainClient.get<{ genres: GenreMixSuggestions[] }>('/api/suggestions/mix', { signal }),
+  /** Hide one change (the songs keep their mixes; a later change shows it again). */
+  dismissMix: (genre: string, key: string) => defaultBrainClient.delete(`/api/suggestions/mix?${new URLSearchParams({ genre, key }).toString()}`),
 };

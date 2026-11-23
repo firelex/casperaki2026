@@ -99,5 +99,18 @@ describe('Pro-mode mix', () => {
     expect(kinds).toContainEqual(['volume', def.lowLevelType ?? def.type, 0, 3]);
     expect(kinds).toContainEqual(['plugin', 'bass', 0.4, 0.6]);
     expect(body.genres[0]!.changes.filter((c) => c.kind === 'plugin')).toHaveLength(1); // unchanged params are not listed
+
+    // Delete hides a change; the song keeps its mix; a later save shows it again.
+    const plugin = (body.genres[0]!.changes as unknown as { key: string; kind: string }[]).find((c) => c.kind === 'plugin')!;
+    const del = await fetch(`${h.url}/api/suggestions/mix?${new URLSearchParams({ genre: 'edm', key: plugin.key })}`, { method: 'DELETE' });
+    expect(del.status).toBe(204);
+    const after = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as typeof body;
+    expect(after.genres[0]!.changes.map((c) => c.kind)).toEqual(['volume']);
+    expect(((await (await fetch(`${h.url}/api/songs/${id}`)).json()) as { project: { mixOverrides: { buses: unknown } } }).project.mixOverrides.buses).toEqual({ bass: { '1': [0.1, 0.2, 0.3, 0.6, 1] } });
+    await new Promise((r) => setTimeout(r, 5));
+    await fetch(`${h.url}/api/songs/${id}/mix`, json('PUT', { mixOverrides: { lanes: {}, buses: { bass: { '1': [0.1, 0.2, 0.3, 0.7, 1] } } } }));
+    const again = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as typeof body;
+    expect(again.genres[0]!.changes.map((c) => [c.kind, c.average])).toEqual([['plugin', 0.7]]);
+    expect((await fetch(`${h.url}/api/suggestions/mix?genre=edm`, { method: 'DELETE' })).status).toBe(400);
   });
 });

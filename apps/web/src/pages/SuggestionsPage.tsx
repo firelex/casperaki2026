@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 
 import { suggestionsApi, type GenreMixSuggestions, type MixChange } from '../api/suggestions';
@@ -71,6 +71,11 @@ function MixSection() {
 }
 
 function GenreCard({ g }: { g: GenreMixSuggestions }) {
+  const queryClient = useQueryClient();
+  const dismiss = useMutation({
+    mutationFn: (key: string) => suggestionsApi.dismissMix(g.genre, key),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] }),
+  });
   return (
     <article className="rounded-[14px] border border-line/60 bg-panel p-5 sm:p-7">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -79,10 +84,8 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
           {g.songs} {g.songs === 1 ? 'song' : 'songs'} with a Pro mix
         </span>
       </div>
-      {g.changes.length === 0 ? (
-        <p className="mt-3 text-[14px] text-white/50">Their mixes only set values back to the standard.</p>
-      ) : (
-        <div className="mt-4 overflow-x-auto">
+      {dismiss.isError ? <p className="mt-2 text-[13px] text-err">Not deleted: {dismiss.error.message}</p> : null}
+      <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead className="text-[12px] text-white/45">
               <tr>
@@ -90,13 +93,14 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                 <th className="pb-2 font-normal">Standard</th>
                 <th className="pb-2 font-normal">Pro (average)</th>
                 <th className="pb-2 font-normal">Songs</th>
+                <th className="pb-2 font-normal" aria-label="Delete" />
               </tr>
             </thead>
             <tbody>
               {g.changes.map((c) => {
                 const d = describe(c);
                 return (
-                  <tr key={`${c.kind}|${c.target}|${c.detail?.send ?? ''}|${c.detail?.slot ?? ''}|${c.detail?.param ?? ''}`} className="border-t border-line/40 align-top">
+                  <tr key={c.key} className="border-t border-line/40 align-top">
                     <td className="py-2 pr-4 text-white">{d.what}</td>
                     <td className="py-2 pr-4 font-mono text-white/60">{d.show(c.standard)}</td>
                     <td className="py-2 pr-4 font-mono text-[#ffb347]">{d.show(c.average)}</td>
@@ -107,13 +111,23 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                         {c.values.length > 3 ? ' …' : ''}
                       </span>
                     </td>
+                    <td className="py-1.5 pl-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => dismiss.mutate(c.key)}
+                        disabled={dismiss.isPending}
+                        title="Remove this suggestion. The songs keep their mixes; it comes back if someone changes it again."
+                        className="h-7 rounded-full border border-white/20 px-3 text-[12px] text-white/70 hover:border-err hover:text-err disabled:opacity-40"
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>
-      )}
     </article>
   );
 }

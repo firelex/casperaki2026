@@ -66,6 +66,12 @@ export interface PatternReview {
   readonly decidedAt: string;
 }
 
+export interface MixDismissal {
+  readonly genre: string;
+  readonly key: string;
+  readonly dismissedAt: string;
+}
+
 export interface SongsStore {
   put(input: { id: string; song: Song; canonical: string; hash: string; createdAt: string }): void;
   get(id: string): StoredSong | undefined;
@@ -83,6 +89,9 @@ export interface SongsStore {
   setProjectMix(input: { ownerId: string; songId: string; mixOverrides: MixOverrides | null; updatedAt: string }): boolean;
   /** Every project with a Pro-mode mix, newest first (the suggestions page). */
   listProjectMixes(): ProjectMixRow[];
+  /** Hide a mix suggestion (a genre's change key) from the suggestions page; changes saved later show again. */
+  dismissMixSuggestion(input: { genre: string; key: string; dismissedAt: string }): void;
+  listMixDismissals(): MixDismissal[];
   /** Pattern-lab decisions, keyed by proposal id. */
   listPatternReviews(): PatternReview[];
   setPatternReview(review: PatternReview): void;
@@ -110,6 +119,12 @@ const SONGS_SCHEMA = `
     PRIMARY KEY (owner_id, song_id)
   );
   CREATE INDEX IF NOT EXISTS projects_owner_updated ON projects(owner_id, updated_at DESC);
+  CREATE TABLE IF NOT EXISTS mix_suggestion_dismissals (
+    genre        TEXT NOT NULL,
+    change_key   TEXT NOT NULL,
+    dismissed_at TEXT NOT NULL,
+    PRIMARY KEY (genre, change_key)
+  );
   CREATE TABLE IF NOT EXISTS pattern_reviews (
     proposal_id TEXT PRIMARY KEY,
     status      TEXT NOT NULL CHECK (status IN ('approved', 'rejected')),
@@ -251,6 +266,17 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
         mixOverrides: MixOverridesSchema.parse(JSON.parse(r.mix_overrides)),
         mixUpdatedAt: r.mix_updated_at,
       }));
+    },
+    dismissMixSuggestion({ genre, key, dismissedAt }) {
+      db.prepare(
+        `INSERT INTO mix_suggestion_dismissals (genre, change_key, dismissed_at) VALUES (?, ?, ?)
+         ON CONFLICT (genre, change_key) DO UPDATE SET dismissed_at = excluded.dismissed_at`,
+      ).run(genre, key, dismissedAt);
+    },
+    listMixDismissals() {
+      return (db.prepare('SELECT genre, change_key, dismissed_at FROM mix_suggestion_dismissals').all() as Array<{ genre: string; change_key: string; dismissed_at: string }>).map(
+        (r) => ({ genre: r.genre, key: r.change_key, dismissedAt: r.dismissed_at }),
+      );
     },
     renameProject({ ownerId, songId, title, updatedAt }) {
       return renameProjectStmt.run(title, updatedAt, ownerId, songId).changes > 0;

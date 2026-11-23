@@ -488,6 +488,8 @@ function SendRow({
           aria-valuetext={db === undefined ? 'varies' : fmtDb(db)}
           className="relative h-[8px] flex-1 cursor-ew-resize touch-none overflow-hidden rounded-full bg-black/50 outline-none ring-[#ffb347] focus-visible:ring-1"
           onPointerDown={(e) => {
+            e.preventDefault(); // no text selection while dragging
+            e.currentTarget.focus();
             e.currentTarget.setPointerCapture(e.pointerId);
             fromPointer(e.currentTarget, e.clientX);
           }}
@@ -572,6 +574,7 @@ function FaderBlock({
           onPointerDown={
             onChange
               ? (e) => {
+                  e.preventDefault(); // no text selection while dragging
                   dragging.current = true;
                   e.currentTarget.setPointerCapture(e.pointerId);
                   fromPointer(e.clientY);
@@ -613,9 +616,10 @@ function FaderBlock({
           ) : null}
         </div>
       </div>
-      <div className="mt-1 text-center font-mono text-[10px] text-[#dfe0e4]">
-        {volumeDb !== undefined ? fmtDb(volumeDb) : volumeNote ?? '—'}
-        {volumeDb !== undefined && volumeNote ? <span className="text-[#8f9098]"> ({volumeNote})</span> : null}
+      {/* Always two lines (level, then the note), so the strip never changes height while a fader moves. */}
+      <div className="mt-1 flex h-[26px] flex-col items-center whitespace-nowrap font-mono text-[10px] leading-[13px] text-[#dfe0e4]">
+        <span>{volumeDb !== undefined ? fmtDb(volumeDb) : volumeNote ?? '—'}</span>
+        <span className="max-w-full truncate text-[#8f9098]">{volumeDb !== undefined && volumeNote ? volumeNote : '\u00a0'}</span>
       </div>
     </div>
   );

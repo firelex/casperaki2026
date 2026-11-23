@@ -3,7 +3,10 @@
 // from the mix config. A change that many songs of a genre agree on is a
 // candidate for the standard mix (casperaki_engine/config/mix-config.json).
 //
-//   GET /api/suggestions/mix -> { genres: [{ genre, songs, changes: [...] }] }
+//   GET    /api/suggestions/mix -> { genres: [{ genre, songs, changes: [...] }] }
+//   DELETE /api/suggestions/mix?genre=&key= -> 204: hide that change (Delete
+//          on the page). The songs keep their mixes; a value saved after the
+//          deletion shows the change again.
 //
 // A change is one of
 //   volume: an instrument type's fader trim (dB, standard 0)
@@ -12,6 +15,7 @@
 // with every song's value (newest first) and their average.
 
 import { Router, type Request } from 'express';
+import { z } from 'zod';
 
 import { parseSong } from '@casperaki/song-schema';
 
@@ -28,6 +32,8 @@ export interface SuggestionsRouterDeps {
 type ChangeKind = 'volume' | 'send' | 'plugin';
 
 export interface MixChange {
+  /** Identifies the change within its genre (for Delete). */
+  readonly key: string;
   readonly kind: ChangeKind;
   /** volume / send: the instrument type (mix config lowLevelType); plugin: the FX bus. */
   readonly target: string;
@@ -39,6 +45,7 @@ export interface MixChange {
 }
 
 const SENDS = ['reverb', 'delay', 'chorus'] as const;
+const DismissQuery = z.object({ genre: z.string().min(1), key: z.string().min(1) }).strict();
 
 export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: SuggestionsRouterDeps): Router {
   const router = Router();
@@ -48,12 +55,12 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: Su
     const lookup = new MixLookup(mixConfig);
     const chains = (JSON.parse(mixConfig) as { rackChains: { bus: string; plugins: { factory: string; params: number[] }[] }[] }).rackChains;
 
-    const byGenre = new Map<string, { songs: Set<string>; changes: Map<string, Omit<MixChange, 'average' | 'values'> & { values: MixChange['values'][number][] }> }>();
+    const dismissed = new Map(store.listMixDismissals().map((d) => [`${d.genre}|${d.key}`, d.dismissedAt]));
+    const byGenre = new Map<string, { changes: Map<string, Omit<MixChange, 'average' | 'values'> & { values: (MixChange['values'][number] & { owner: string })[] }> }>();
     for (const row of store.listProjectMixes()) {
       const genre = row.genre ?? 'unknown';
-      const g = byGenre.get(genre) ?? { songs: new Set<string>(), changes: new Map() };
+      const g = byGenre.get(genre) ?? { changes: new Map() };
       byGenre.set(genre, g);
-      g.songs.add(`${row.ownerId}/${row.songId}`);
       const song = parseSong(JSON.parse(row.canonical));
       const typeOf = (lane: string) => {
         if (lane === 'Sample Transitions FX') return 'fxTransitions';
@@ -63,9 +70,12 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: Su
         if (!t) throw new Error(`song ${row.songId}: instrument "${lane}" has no type`);
         return t;
       };
-      const add = (key: string, base: Omit<MixChange, 'average' | 'values'>, value: MixChange['values'][number]) => {
-        const c = g.changes.get(key) ?? { ...base, values: [] };
-        c.values.push(value);
+      const add = (key: string, base: Omit<MixChange, 'key' | 'average' | 'values'>, value: MixChange['values'][number]) => {
+        // Deleted on the page: only values saved since then count.
+        const gone = dismissed.get(`${genre}|${key}`);
+        if (gone !== undefined && value.updatedAt <= gone) return;
+        const c = g.changes.get(key) ?? { key, ...base, values: [] };
+        c.values.push({ ...value, owner: row.ownerId });
         g.changes.set(key, c);
       };
       const meta = { songId: row.songId, title: row.title, updatedAt: row.mixUpdatedAt };
@@ -102,15 +112,23 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: Su
 
     const order: Record<ChangeKind, number> = { volume: 0, send: 1, plugin: 2 };
     const genres = [...byGenre.entries()]
+      .filter(([, g]) => g.changes.size > 0)
       .map(([genre, g]) => ({
         genre,
-        songs: g.songs.size,
+        songs: new Set([...g.changes.values()].flatMap((c) => c.values.map((v) => `${v.owner}/${v.songId}`))).size,
         changes: [...g.changes.values()]
-          .map((c) => ({ ...c, average: c.values.reduce((s, v) => s + v.value, 0) / c.values.length }))
+          .map((c) => ({ ...c, values: c.values.map(({ owner: _owner, ...v }) => v), average: c.values.reduce((s, v) => s + v.value, 0) / c.values.length }))
           .sort((a, b) => b.values.length - a.values.length || order[a.kind] - order[b.kind] || a.target.localeCompare(b.target)),
       }))
       .sort((a, b) => a.genre.localeCompare(b.genre));
     return res.json({ genres });
+  });
+  router.delete('/api/suggestions/mix', (req, res) => {
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
+    const body = DismissQuery.safeParse(req.query);
+    if (!body.success) return res.status(400).json({ error: 'bad_request', message: body.error.message });
+    store.dismissMixSuggestion({ ...body.data, dismissedAt: new Date().toISOString() });
+    return res.status(204).end();
   });
   return router;
 }
