@@ -21,7 +21,7 @@ import numpy as np
 from .sounds import REPO
 
 PRECEDENT_DIR = REPO / "packages/arrangement/data/vocals/precedents"
-METERS = {"4/4": (4.0, 1.0), "3/4": (3.0, 1.0), "6/8": (3.0, 1.5)}  # bar length q, beat length q
+METERS = {"4/4": (4.0, 1.0), "3/4": (3.0, 1.0), "6/8": (3.0, 1.5), "2/4": (2.0, 1.0)}  # bar length q, beat length q
 
 
 @dataclass
@@ -93,6 +93,8 @@ def retime_precedent(notes: list[tuple[float, float, int]], meter: str) -> tuple
     """Re-time a 4/4 precedent for the meter. Returns notes in q and the number of bars available."""
     if meter == "4/4":
         return list(notes), 8
+    if meter == "2/4":
+        return list(notes), 16  # the same melody, a bar line every two beats
     if meter == "3/4":
         # per bar, drop the one beat (never the downbeat) with the fewest note starts; later positions in the
         # bar move one beat earlier, notes held through the dropped beat get one beat shorter
@@ -453,3 +455,67 @@ def perform(rng, score: Score, tmap: TempoMap, timing: str, amounts: dict, is_la
         })
         prev_onset = onset
     return out, {"jitter_ms": jitter_ms, "legato_share": legato_share, "swallow_probability": swallow_p, "loudness_spread": loud_spread}
+
+
+# --------------------------------------------------------------------------------------------------------
+# Procedural melodies, round two: real rhythms, new pitches
+# --------------------------------------------------------------------------------------------------------
+
+def mutate_rhythm(rng, notes, beat_q: float, p_merge: float = 0.08, p_split: float = 0.08):
+    """Small metrical edits: merge a short note into the next one in the same beat group, or split a long note
+    at its middle beat. Keeps onsets on the same metrical grid as the source."""
+    out = []
+    i = 0
+    while i < len(notes):
+        a, b, m = notes[i]
+        if i + 1 < len(notes) and abs(notes[i + 1][0] - b) < 1e-6 and (b - a) < beat_q and rng.random() < p_merge:
+            out.append((a, notes[i + 1][1], m))
+            i += 2
+            continue
+        if (b - a) >= 2 * beat_q - 1e-6 and rng.random() < p_split:
+            half = a + round(((b - a) / 2) / beat_q) * beat_q
+            out.extend([(a, half, m), (half, b, m)])
+        else:
+            out.append((a, b, m))
+        i += 1
+    return out
+
+
+def melodize(rng, rhythm, beat_q: float) -> tuple[list[tuple[float, float, int]], dict]:
+    """New pitches over a given rhythm: a scale, phrase contours, steps and leaps, phrase ends (a rest of a
+    beat or more after the note) on stable degrees, the last note on the tonic."""
+    scale_name = rng.choice(list(SCALES))
+    scale = SCALES[scale_name]
+    tonic = int(rng.integers(0, 12))
+    n_deg = len(scale)
+    lo, hi = n_deg - int(rng.integers(2, 4)), 2 * n_deg + int(rng.integers(0, 3))
+
+    def deg_to_midi(d: int) -> int:
+        o, k = divmod(d, n_deg)
+        return 48 + tonic + 12 * o + scale[k]
+
+    stable_set = (0, 2, 4) if n_deg == 7 else (0, 2, 3)
+    deg = n_deg + int(rng.integers(-2, 3))
+    out = []
+    # phrase boundaries from the rhythm itself
+    ends = [i for i in range(len(rhythm)) if i == len(rhythm) - 1 or rhythm[i + 1][0] - rhythm[i][1] >= beat_q - 1e-6]
+    start = 0
+    for e in ends:
+        contour = rng.choice(["arch", "rise", "fall", "wave"])
+        n = e - start + 1
+        for j in range(n):
+            a, b, _ = rhythm[start + j]
+            frac = j / max(1, n - 1)
+            target = {"arch": np.sin(np.pi * frac), "rise": frac, "fall": 1 - frac, "wave": 0.5 + 0.5 * np.sin(2 * np.pi * frac)}[contour]
+            target_deg = lo + target * (hi - lo)
+            r = rng.random()
+            up = rng.random() < 0.5 + 0.08 * (target_deg - deg)
+            step = 0 if r < 0.18 else (1 if up else -1) if r < 0.78 else int(rng.integers(2, 5)) * (1 if up else -1)
+            deg = int(np.clip(deg + step, lo, hi))
+            if j == n - 1:
+                last = start + j == len(rhythm) - 1
+                cands = [x for x in range(lo, hi + 1) if x % n_deg in ((0,) if last else stable_set)]
+                deg = min(cands, key=lambda x: abs(x - deg))
+            out.append((a, b, deg_to_midi(deg)))
+        start = e + 1
+    return out, {"scale": str(scale_name), "tonic": tonic}

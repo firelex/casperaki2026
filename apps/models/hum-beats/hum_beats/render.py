@@ -177,7 +177,8 @@ def harmonic_source(f0: np.ndarray, voiced: np.ndarray, tilt: float, max_harm: i
     return out
 
 
-def render_voice(rng, cents_s, voiced_s, env_s, vowel: str, formant_scale: float, notes: list[dict], dur: float, unseen: bool) -> tuple[np.ndarray, dict]:
+def render_voice(rng, cents_s, voiced_s, env_s, vowel: str, formant_scale: float, notes: list[dict], dur: float, unseen: bool,
+                 normalize_notes: bool = False) -> tuple[np.ndarray, dict]:
     n = len(cents_s)
     f0 = 440.0 * 2 ** ((np.nan_to_num(cents_s, nan=6000.0) - 6900.0) / 1200)
     tilt = rng.uniform(1.2, 2.2)
@@ -210,6 +211,19 @@ def render_voice(rng, cents_s, voiced_s, env_s, vowel: str, formant_scale: float
         out += g * _resonator(excitation, f, bw * formant_scale)
     if vowel == "mm":
         out = sosfilt(butter(2, rng.uniform(500, 900), "low", fs=SR, output="sos"), out)
+    if normalize_notes:
+        # the formant filters make some pitches louder than others; even that out note by note, so the loudness
+        # of each note is the one the performance asked for (round two)
+        gain = np.ones(n)
+        for nt in notes:
+            a, b = int(nt["onset"] * SR), min(n, int(nt["offset"] * SR))
+            if b - a > int(0.03 * SR) and nt["velocity"] > 0:
+                r = float(np.sqrt(np.mean(out[a:b] ** 2)))
+                if r > 0:
+                    gain[a:b] = 1.0 / r
+        k = int(0.02 * SR)
+        gain = np.convolve(np.concatenate([np.full(k, gain[0]), gain, np.full(k, gain[-1])]), np.ones(k) / k, mode="same")[k:k + n]
+        out = out * gain
     out *= amp
     # breath noise in the longer gaps between phrases
     breaths = 0
