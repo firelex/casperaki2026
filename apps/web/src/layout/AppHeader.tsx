@@ -6,8 +6,9 @@ import { AccountMenu } from './AccountMenu';
 
 /**
  * The navigation of every signed-in page, the editor included: wordmark,
- * page links, one "New song" action and the account menu. `compact`: the
- * editor's slimmer version (its own control bar sits below). While a song is
+ * page links, one "New song" action and the account menu, 44 px high on
+ * every page. `compact`: the editor's (solid background, as its own control
+ * bar sits below). While a song is
  * open, its title is a link back to it (the view it was left in), so the
  * sound library and the other pages are a click away from the song.
  */
@@ -22,7 +23,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
   if (inSong) lastSongPath = pathname;
   const songPath = activeSong ? (lastSongPath?.startsWith(`/editor/${activeSong.id}/`) ? lastSongPath : `/editor/${activeSong.id}/timeline`) : undefined;
   return (
-    <header className={`${compact ? 'h-11 bg-bg' : 'h-16'} shrink-0 border-b border-line/60`}>
+    <header className={`h-11 shrink-0 border-b border-line/60 ${compact ? 'bg-bg' : ''}`}>
       <div className="flex h-full items-center gap-6 px-4 sm:gap-10">
         <Link to="/" className="shrink-0" aria-label="Casperaki: your songs">
           <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={140} height={16} className="block h-[16px] w-auto" />

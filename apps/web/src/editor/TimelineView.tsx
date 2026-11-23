@@ -787,9 +787,10 @@ export function TimelineView() {
       </div>
 
       {/* The transport (play, stop, loop, position) and, on the right, the mix's Pro controls. */}
-      <div className="flex shrink-0 items-center gap-3 border-t-2 border-black/80 bg-gradient-to-b from-[#34363c] to-[#2a2b30] px-3 py-1.5">
+      <div className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-3 border-t-2 border-black/80 bg-gradient-to-b from-[#34363c] to-[#2a2b30] px-3 py-1.5">
+        <span aria-hidden="true" />
         <Transport />
-        <div className="ml-auto">
+        <div className="justify-self-end">
           <ProBar pro={pro} onReset={() => void resetProMix(liveKey, fetchPayload)} />
         </div>
       </div>

@@ -1,14 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { livePlayer } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
+import { buildSequencerModel } from '../editor/sequencerModel';
 import { useSession } from '../state/session';
 
 const TICKS_PER_BEAT = 960;
 
 /**
  * The editor's transport, in the control bar (as in Logic or Pro Tools):
- * Stop / Play / Loop, the bars|beats|ticks counter with minutes:seconds,
+ * to the beginning, previous section, Stop / Play, next section, to the end,
+ * Loop, the bars|beats|ticks counter with minutes:seconds,
  * and tempo and key. Plays the song live in the browser (the version on
  * screen, unsaved edits included).
  *
@@ -16,9 +18,18 @@ const TICKS_PER_BEAT = 960;
  */
 export function Transport() {
   const { viewSong, editorDirty } = useSession();
-  const { liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, stop, toggleLoop } = useLiveTransport();
+  const { liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, seek, stop, toggleLoop } = useLiveTransport();
   const bpm = viewSong?.bpm ?? 120;
   const loaded = Boolean(liveKey) && isThisSong && live.status !== 'loading' && live.status !== 'idle';
+  // Where each section starts (seconds), for the previous / next buttons.
+  const sectionStarts = useMemo(() => {
+    if (!viewSong) return [];
+    const secondsPerBar = (4 * 60) / viewSong.bpm;
+    return buildSequencerModel(viewSong).sections.map((x) => x.startBar * secondsPerBar);
+  }, [viewSong]);
+  // Back: to the start of this section, or the one before when just past a start (as in a DAW).
+  const prevStart = [...sectionStarts].reverse().find((t) => t < currentSeconds - 0.5) ?? 0;
+  const nextStart = sectionStarts.find((t) => t > currentSeconds + 0.05);
 
   // Get the version on screen ready in the background, so Play starts at
   // once: right away for the saved song, a moment after editing stops.
@@ -57,6 +68,12 @@ export function Transport() {
   return (
     <div className="flex items-center gap-3">
       <div className="flex items-center gap-1">
+        <button type="button" onClick={() => seek(0)} disabled={!loaded} className={btn} aria-label="To the beginning" title="To the beginning">
+          <SkipIcon dir="back" end />
+        </button>
+        <button type="button" onClick={() => seek(prevStart)} disabled={!loaded} className={btn} aria-label="Previous section" title="Back to the start of this section (again: the section before)">
+          <SkipIcon dir="back" />
+        </button>
         <button
           type="button"
           onClick={() => stop(false)}
@@ -78,6 +95,20 @@ export function Transport() {
         >
           {loading ? '…' : playing ? <PauseIcon /> : <PlayIcon />}
         </button>
+        <button
+          type="button"
+          onClick={() => nextStart !== undefined && seek(nextStart)}
+          disabled={!loaded || nextStart === undefined}
+          className={btn}
+          aria-label="Next section"
+          title="To the next section"
+        >
+          <SkipIcon dir="forward" />
+        </button>
+        <button type="button" onClick={() => seek(live.durationSec)} disabled={!loaded} className={btn} aria-label="To the end" title="To the end">
+          <SkipIcon dir="forward" end />
+        </button>
+        <span className="w-1" aria-hidden="true" />
         <button
           type="button"
           onClick={toggleLoop}
@@ -151,6 +182,25 @@ function LoopIcon() {
       <path d="M3 11V9a3 3 0 0 1 3-3h15" />
       <path d="M7 22l-4-4 4-4" />
       <path d="M21 13v2a3 3 0 0 1-3 3H3" />
+    </svg>
+  );
+}
+
+/** Skip icons: two triangles (a section back / forward); with `end`, one triangle and a bar (to the beginning / end). */
+function SkipIcon({ dir, end = false }: { dir: 'back' | 'forward'; end?: boolean }) {
+  return (
+    <svg width="14" height="12" viewBox="0 0 14 12" aria-hidden="true" style={dir === 'back' ? { transform: 'scaleX(-1)' } : undefined}>
+      {end ? (
+        <>
+          <path d="M2 1 L10 6 L2 11 Z" fill="currentColor" />
+          <rect x="10.5" y="1" width="2" height="10" fill="currentColor" />
+        </>
+      ) : (
+        <>
+          <path d="M0.5 1 L7 6 L0.5 11 Z" fill="currentColor" />
+          <path d="M7 1 L13.5 6 L7 11 Z" fill="currentColor" />
+        </>
+      )}
     </svg>
   );
 }
