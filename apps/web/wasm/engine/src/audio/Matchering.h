@@ -467,6 +467,11 @@ public:
 
     int latencyFrames() const { return p_.style == Style::Sergree ? kConvolutionBlock : 0; }
 
+    /** The EQ filters are linear-phase and centred (ifftshift by kFftSize / 2): the sound comes
+     *  out kFftSize / 2 frames after latencyFrames(). The legacy master did not compensate it, so
+     *  its exports started 46 ms late and lost their last 46 ms; offline masters compensate both. */
+    int filterDelayFrames() const { return p_.style == Style::Sergree ? kFftSize / 2 : 0; }
+
     void process(const float* inL, const float* inR, float* outL, float* outR, int numFrames) {
         if (numFrames < 0) throw std::invalid_argument("MasteringStream: negative frame count");
         if (p_.style == Style::BoostAndLimit) processBoost(inL, inR, outL, outR, numFrames);
@@ -543,6 +548,38 @@ private:
     int pos_ = 0;
     int64_t inputPos_ = 0;
 };
+
+/** Master a whole song (already padded, see ensureMinimumLength) with an analysed profile, as the
+ *  export does (the browser's master_apply and the server's casperaki_master): 512-frame blocks,
+ *  the latency and the filters' delay flushed with silence, output frame t = master of song frame t. */
+inline AudioBuffer applyOffline(const AudioBuffer& song, const MasteringProfile& profile) {
+    MasteringStream stream(profile);
+    const int delay = stream.latencyFrames() + stream.filterDelayFrames();
+    const int n = song.getNumSamples();
+    const int total = n + delay;
+    AudioBuffer out(2, n);
+    const int block = 512;
+    std::vector<float> oL((size_t)block), oR((size_t)block), iL((size_t)block), iR((size_t)block);
+    for (int start = 0; start < total; start += block) {
+        const int len = std::min(block, total - start);
+        const int fromSong = std::max(0, std::min(len, n - start));
+        std::fill(iL.begin(), iL.end(), 0.0f);
+        std::fill(iR.begin(), iR.end(), 0.0f);
+        if (fromSong > 0) {
+            std::copy(song.getReadPointer(0, start), song.getReadPointer(0, start) + fromSong, iL.begin());
+            std::copy(song.getReadPointer(1, start), song.getReadPointer(1, start) + fromSong, iR.begin());
+        }
+        stream.process(iL.data(), iR.data(), oL.data(), oR.data(), len);
+        for (int i = 0; i < len; ++i) {
+            const int t = start + i - delay;
+            if (t >= 0 && t < n) {
+                out.getWritePointer(0)[t] = oL[(size_t)i];
+                out.getWritePointer(1)[t] = oR[(size_t)i];
+            }
+        }
+    }
+    return out;
+}
 
 } // namespace matchering
 } // namespace casperaki

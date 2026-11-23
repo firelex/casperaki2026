@@ -204,6 +204,23 @@ static void testErrors() {
     CHECK(shortSong.getReadPointer(1)[orig.getNumSamples() + 5] == orig.getReadPointer(1)[5], "ensureMinimumLength loops");
 }
 
+// The export's master is in time with its input (the EQ filters' 2048-frame delay compensated).
+static void testOfflineAligned() {
+    const AudioBuffer song = testSong(20 * 44100);
+    const auto p = matchering::analyze(song, 44100.0, matchering::Style::Sergree);
+    const AudioBuffer out = matchering::applyOffline(song, p);
+    CHECK(out.getNumSamples() == song.getNumSamples(), "offline master keeps the length");
+    int bestLag = 9999;
+    double best = -1e30;
+    for (int lag = -3000; lag <= 3000; ++lag) {
+        double c = 0;
+        for (int i = 2 * 44100; i < 6 * 44100; i += 3) c += (double)song.getReadPointer(0)[i] * out.getReadPointer(0)[i + lag];
+        if (c > best) { best = c; bestLag = lag; }
+    }
+    std::printf("offline master lag: %d frames\n", bestLag);
+    CHECK(std::abs(bestLag) <= 2, "offline master output is not in time with its input");
+}
+
 int main(int argc, char** argv) {
     if (argc != 3) {
         std::fprintf(stderr, "usage: matchering_test <atemlos.json> <referenceAtemlos.wav>\n");
@@ -214,6 +231,7 @@ int main(int argc, char** argv) {
     testAtemlosHeader(argv[1], argv[2]);
     testStreaming();
     testErrors();
+    testOfflineAligned();
     if (failures) {
         std::fprintf(stderr, "matchering_test: %d failure(s)\n", failures);
         return 1;

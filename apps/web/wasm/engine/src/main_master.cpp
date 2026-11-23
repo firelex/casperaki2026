@@ -44,30 +44,11 @@ int main(int argc, char** argv) {
         const matchering::MasteringProfile profile = matchering::analyze(song, matchering::kSampleRate, style);
         const auto t1 = std::chrono::steady_clock::now();
 
-        matchering::MasteringStream stream(profile);
-        const int latency = stream.latencyFrames();
-        const int n = song.getNumSamples();
-        const int total = n + latency;
-        AudioBuffer out(2, n);
-        const int block = 512;
-        std::vector<float> zeros((size_t)block, 0.0f), oL((size_t)block), oR((size_t)block);
-        for (int start = 0; start < total; start += block) {
-            const int len = std::min(block, total - start);
-            const int fromSong = std::max(0, std::min(len, n - start));
-            std::vector<float> iL((size_t)len, 0.0f), iR((size_t)len, 0.0f);
-            if (fromSong > 0) {
-                std::copy(song.getReadPointer(0, start), song.getReadPointer(0, start) + fromSong, iL.begin());
-                std::copy(song.getReadPointer(1, start), song.getReadPointer(1, start) + fromSong, iR.begin());
-            }
-            stream.process(iL.data(), iR.data(), oL.data(), oR.data(), len);
-            for (int i = 0; i < len; ++i) {
-                const int t = start + i - latency;  // output frame t belongs to song frame t - latency
-                if (t >= 0 && t < n) {
-                    out.getWritePointer(0)[t] = oL[(size_t)i];
-                    out.getWritePointer(1)[t] = oR[(size_t)i];
-                }
-            }
-        }
+        // In time with the input (matchering::applyOffline compensates the filters' delay).
+        const AudioBuffer out = matchering::applyOffline(song, profile);
+        const int n = out.getNumSamples();
+        const matchering::MasteringStream probe(profile);
+        const int latency = probe.latencyFrames() + probe.filterDelayFrames();  // what applyOffline compensated
         const auto t2 = std::chrono::steady_clock::now();
         writeWav24File(outPath, out, (int)matchering::kSampleRate);
 
