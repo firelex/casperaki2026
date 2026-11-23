@@ -2,14 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { SoundFamiliesNav } from '../editor/SoundsView';
+import { SoundFamiliesNav } from '../editor/sounds/SoundFamiliesNav';
 import { SoundBrowser } from '../editor/sounds/SoundBrowser';
 import { AppHeader } from '../layout/AppHeader';
 
 /**
- * The sound library outside a song: the same browser as a song's Sounds tab
- * (families, search, styles, click to hear), without "Use", since no song is
- * open. Public names only, so it is open to everyone.
+ * The sound library: every sound by family, searchable and filterable by
+ * style; click a sound to hear it. (A track's sound is changed in the song,
+ * with Change sound.) Public names only, so it is open to everyone.
  */
 export function SoundLibraryPage() {
   const families = useQuery({ queryKey: soundsQueryKeys.families, queryFn: ({ signal }) => soundsApi.families(signal), staleTime: Infinity });

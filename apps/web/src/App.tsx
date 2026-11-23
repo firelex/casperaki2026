@@ -21,11 +21,11 @@ const HumLabPage = lazy(() => import('./pages/HumLabPage').then((m) => ({ defaul
  * Routes mirror rory-fe's three screens (LoginView, ProjectsView, Editor):
  *
  *   /                          → Projects   (home — listing + Create CTA)
- *   /sounds                    → Sound library (the Sounds tab's browser, no song)
+ *   /sounds                    → Sound library
  *   /catalog                   → Sample catalog (admins: source names, audit)
  *   /editor                    → redirect to Projects
  *   /editor/:songId            → redirect to Timeline tab
- *   /editor/:songId/sound      → Editor · Sound Design tab
+ *   /editor/:songId/sound      → redirects to the track view (the library is /sounds)
  *   /editor/:songId/timeline   → Editor · Song tab (the tracks)
  *   /editor/:songId/video      → Editor · Music Video tab
  *   /editor/:songId/structure  → redirects to the track view (Structure was folded in)
@@ -56,7 +56,7 @@ export function App() {
         <Route path="/wasm-render" element={<WasmRenderPage />} />
         <Route path="/editor" element={<Navigate to="/" replace />} />
         <Route path="/editor/:songId" element={<Navigate to="timeline" replace />} />
-        <Route path="/editor/:songId/sound" element={<EditorPage tab="sound" />} />
+        <Route path="/editor/:songId/sound" element={<Navigate to="../timeline" relative="path" replace />} />
         <Route path="/editor/:songId/timeline" element={<EditorPage tab="timeline" />} />
         <Route path="/editor/:songId/video" element={<EditorPage tab="video" />} />
         {/* The Structure view was folded into the track view (sections are edited from the ruler). */}

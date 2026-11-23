@@ -24,7 +24,7 @@ type ClientAction =
   | { kind: 'save' }
   | { kind: 'renameSong'; title: string }
   | { kind: 'export' }
-  | { kind: 'openTab'; tab: 'sound' | 'timeline' | 'video' };
+  | { kind: 'openTab'; tab: 'timeline' | 'video' };
 
 interface ToolResult {
   summary?: string;

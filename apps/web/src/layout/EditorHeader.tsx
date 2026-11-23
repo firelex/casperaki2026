@@ -78,7 +78,6 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
       {/* Right: views, save, export. */}
       <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
         <nav className="flex rounded-[6px] border border-black/60 bg-[#1f2023] p-0.5" aria-label="Editor views">
-          <TabLink active={tab === 'sound'} onClick={() => setTab('sound')}>Sounds</TabLink>
           <TabLink active={tab === 'timeline'} onClick={() => setTab('timeline')}>Song</TabLink>
           <TabLink active={tab === 'video'} onClick={() => setTab('video')}>Music Video</TabLink>
         </nav>
@@ -212,5 +211,5 @@ function IconBtn({
 }
 
 function tab2Path(t: EditorTab): string {
-  return t === 'sound' ? 'sound' : t === 'video' ? 'video' : 'timeline';
+  return t === 'video' ? 'video' : 'timeline';
 }

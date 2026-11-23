@@ -5,20 +5,19 @@ import { useQuery } from '@tanstack/react-query';
 import { AppHeader } from '../layout/AppHeader';
 import { EditorHeader } from '../layout/EditorHeader';
 import { StatusBar } from '../layout/StatusBar';
-import { SoundsView } from '../editor/SoundsView';
 import { MusicVideoView } from '../editor/MusicVideoView';
 import { AssistantPanel } from '../editor/AssistantPanel';
 import { TimelineView } from '../editor/TimelineView';
 import { songsApi, songsQueryKeys } from '../api/songs';
 import { useSession } from '../state/session';
 
-export type EditorTab = 'sound' | 'timeline' | 'video';
+export type EditorTab = 'timeline' | 'video';
 
 /**
  * Editor screen, laid out like a DAW window:
  *   - top:    <AppHeader>     the app's navigation, as on every page (compact)
  *             <EditorHeader>  control bar (song · transport · views · export)
- *   - main:   the view (sounds / tracks with the mixer)
+ *   - main:   the view (tracks with the mixer, or the music video)
  *   - bottom: <StatusBar>     playback status and downloads
  *
  * The view is route-driven so the URL is the source of truth (1/2
@@ -42,7 +41,7 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
     }
   }, [deepLink.data, activeSong?.id, setActiveSong]);
 
-  // Keyboard tab switching — rory-fe Editor.vue `Digit1/2/3` — plus
+  // Keyboard tab switching — rory-fe Editor.vue `Digit1/2` (Song, Music Video) — plus
   // standard undo/redo for the edit session.
   useEffect(() => {
     if (!songId) return;
@@ -63,9 +62,8 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
         if (canRedo) applyEdit({ kind: 'redo' });
         return;
       }
-      if (e.code === 'Digit1') navigate(`/editor/${songId}/sound`);
-      if (e.code === 'Digit2') navigate(`/editor/${songId}/timeline`);
-      if (e.code === 'Digit3') navigate(`/editor/${songId}/video`);
+      if (e.code === 'Digit1') navigate(`/editor/${songId}/timeline`);
+      if (e.code === 'Digit2') navigate(`/editor/${songId}/video`);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -92,7 +90,6 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
 }
 
 function TabBody({ tab }: { tab: EditorTab }) {
-  if (tab === 'sound') return <SoundsView />;
   if (tab === 'video') return <MusicVideoView />;
   // The Song tab: the tracks, with the song assistant alongside (collapsible).
   return (

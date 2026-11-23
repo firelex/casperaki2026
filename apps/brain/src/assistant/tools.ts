@@ -26,7 +26,7 @@ export type ClientAction =
   | { kind: 'save' }
   | { kind: 'renameSong'; title: string }
   | { kind: 'export' }
-  | { kind: 'openTab'; tab: 'sound' | 'timeline' | 'video' };
+  | { kind: 'openTab'; tab: 'timeline' | 'video' };
 
 /** Every tool result: what happened in plain words, the full new song when it changed, or a page action. */
 export interface ToolResult {
@@ -378,8 +378,8 @@ export const TOOLS = [
   tool({ name: 'export_audio', description: 'Open the export window (WAV, MP3, stems, MIDI, DAW projects).', params: z.object({}).strict(), run: () => ({ summary: 'Opened the export window.', action: { kind: 'export' } }) }),
   tool({
     name: 'open_tab',
-    description: 'Open another tab of the editor: sound (the sound library), timeline (the song) or video (the music video).',
-    params: z.object({ tab: z.enum(['sound', 'timeline', 'video']) }).strict(),
+    description: 'Open another tab of the editor: timeline (the song\'s tracks) or video (the music video).',
+    params: z.object({ tab: z.enum(['timeline', 'video']) }).strict(),
     run: (a) => ({ summary: `Opened the ${a.tab} tab.`, action: { kind: 'openTab', tab: a.tab } }),
   }),
 ] as const;
