@@ -134,8 +134,17 @@ export function Mixer({
   );
 }
 
-/** The save state, the Pro mode switch and Reset (the transport bar's right end). */
-export function ProBar({ pro, onReset }: { pro: ProMixState; onReset: () => void }) {
+/** The save state, the Pro mode switch and Reset (mix and tracks/mixer split; the transport bar's right end). */
+export function ProBar({
+  pro,
+  layoutChanged,
+  onReset,
+}: {
+  pro: ProMixState;
+  /** The tracks / mixer split differs from the standard one (Reset puts it back too). */
+  layoutChanged: boolean;
+  onReset: (mixChanged: boolean) => void;
+}) {
   const changed = Object.keys(pro.mix.lanes).length + Object.keys(pro.mix.buses).length > 0;
   return (
     <div className="flex shrink-0 items-center gap-2">
@@ -166,9 +175,9 @@ export function ProBar({ pro, onReset }: { pro: ProMixState; onReset: () => void
       </button>
       <button
         type="button"
-        onClick={onReset}
-        disabled={!changed || pro.saving}
-        title="Put every fader, send and plugin back to the standard mix"
+        onClick={() => onReset(changed)}
+        disabled={(!changed && !layoutChanged) || pro.saving}
+        title="Put every fader, send and plugin back to the standard mix, and the mixer back to its standard size"
         className="h-7 rounded-[4px] border border-white/20 bg-[#3a3c42] px-3 text-[11px] text-[#d9dade] hover:border-white/40 disabled:opacity-40"
       >
         Reset

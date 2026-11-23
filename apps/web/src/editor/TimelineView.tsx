@@ -791,7 +791,15 @@ export function TimelineView() {
         <span aria-hidden="true" />
         <Transport />
         <div className="justify-self-end">
-          <ProBar pro={pro} onReset={() => void resetProMix(liveKey, fetchPayload)} />
+          <ProBar
+            pro={pro}
+            layoutChanged={!mixerOpen || Math.abs(mixerShare - DEFAULT_MIXER_SHARE) > 0.001}
+            onReset={(mixChanged) => {
+              // The standard split of tracks and mixer, and (if changed) the standard mix.
+              showMixer(true, DEFAULT_MIXER_SHARE);
+              if (mixChanged) void resetProMix(liveKey, fetchPayload);
+            }}
+          />
         </div>
       </div>
 

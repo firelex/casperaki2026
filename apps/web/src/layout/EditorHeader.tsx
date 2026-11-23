@@ -6,13 +6,13 @@ import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type ReplayResul
 import { useSession } from '../state/session';
 import { useRenderStatus, useSaveSong, useStartRender } from '../state/useSongActions';
 import type { EditorTab } from '../pages/EditorPage';
-import { Transport } from './Transport';
 import { ExportDialog } from '../export/ExportDialog';
 
 /**
  * The editor's control bar, laid out like a DAW's, below the app's
- * navigation (AppHeader): song name and save state, undo/redo on the left; the transport in the
- * centre; the views, Save and Export on the right. The ⟳ button replays the
+ * navigation (AppHeader): song name and save state, undo/redo on the left;
+ * the views, Save and Export on the right. (The Song tab's transport sits
+ * above its mixer; the music video page has none.) The ⟳ button replays the
  * generator to verify determinism.
  */
 export function EditorHeader({ tab }: { tab: EditorTab }) {
@@ -72,8 +72,6 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
         </div>
       </div>
 
-      {/* Centre: the transport (in the Song tab it sits above the mixer). */}
-      {tab === 'video' ? <Transport /> : null}
 
       {/* Right: views, save, export. */}
       <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
