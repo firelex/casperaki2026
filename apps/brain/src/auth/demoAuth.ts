@@ -11,7 +11,6 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Router, type RequestHandler } from 'express';
 
 import { buildCookie, clearSessionCookie, readCookie, SESSION_COOKIE, SESSION_TTL_MS } from './middleware.js';
-import { normalizeReturnTo } from '../routes/auth.js';
 
 export const DEMO_CREDENTIALS = { email: 'demo@example.com', password: 'demo123' } as const;
 export const DEMO_USER = { id: 'demo-user', email: DEMO_CREDENTIALS.email, name: 'Demo' } as const;
@@ -35,13 +34,18 @@ export function attachDemoSession(secret: string): RequestHandler {
   };
 }
 
-export function demoAuthRouter(deps: { secret: string; webOrigin: string; postLoginDefault?: string }): Router {
+/** A same-site path to return to after signing in ('/' unless it is a plain path), so the
+ *  flow works whatever host the browser came through (WEB_ORIGIN may be localhost behind the gateway). */
+export function demoReturnPath(raw: unknown): string {
+  return typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('\\') ? raw : '/';
+}
+
+export function demoAuthRouter(deps: { secret: string }): Router {
   const r = Router();
 
   // The web's "Sign in" navigates here (as it does for OIDC): send it to the login form.
   r.get('/login', (req, res) => {
-    const returnTo = normalizeReturnTo(req.query.return_to, deps.webOrigin, deps.postLoginDefault);
-    res.redirect(`/sign-in?return_to=${encodeURIComponent(returnTo)}`);
+    res.redirect(`/sign-in?return_to=${encodeURIComponent(demoReturnPath(req.query.return_to))}`);
   });
 
   r.post('/login', (req, res) => {

@@ -21,7 +21,9 @@ export function SignInPage() {
     setBusy(true);
     try {
       await auth.demoLogin(email, password);
-      window.location.href = new URLSearchParams(window.location.search).get('return_to') ?? '/';
+      const back = new URLSearchParams(window.location.search).get('return_to') ?? '/';
+      // Only a same-site path (the brain sends one); anything else goes home.
+      window.location.href = back.startsWith('/') && !back.startsWith('//') && !back.includes('\\') ? back : '/';
     } catch (err) {
       setError(err instanceof BrainError && err.status === 401 ? 'Wrong email or password.' : `Sign-in failed: ${err instanceof Error ? err.message : String(err)}`);
       setBusy(false);

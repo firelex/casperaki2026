@@ -126,7 +126,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   if (demoSecret) {
     console.warn('[brain] BRAIN_DEMO_LOGIN=1: fake demo sign-in (demo@example.com), OIDC is not used.');
     app.use(attachDemoSession(demoSecret));
-    app.use('/api/auth', demoAuthRouter({ secret: demoSecret, webOrigin: config.webOrigin, postLoginDefault: config.postLoginDefault }));
+    app.use('/api/auth', demoAuthRouter({ secret: demoSecret }));
     app.use('/api', requireSession());
   } else if (auth) {
     if (admins.size === 0) console.warn('[brain] BRAIN_ADMIN_EMAILS is empty — nobody can browse the sound catalog.');

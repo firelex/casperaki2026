@@ -29,7 +29,9 @@ describe('demo sign-in', () => {
   it('GET /login sends the browser to the login form', async () => {
     const res = await fetch(`${baseUrl}/api/auth/login?return_to=%2Fpatterns`, { redirect: 'manual' });
     expect(res.status).toBe(302);
-    expect(res.headers.get('location')).toBe(`/sign-in?return_to=${encodeURIComponent('http://localhost:5173/patterns')}`);
+    expect(res.headers.get('location')).toBe('/sign-in?return_to=%2Fpatterns');
+    const offsite = await fetch(`${baseUrl}/api/auth/login?return_to=${encodeURIComponent('//evil.example/x')}`, { redirect: 'manual' });
+    expect(offsite.headers.get('location')).toBe('/sign-in?return_to=%2F');
   });
 
   it('refuses wrong credentials', async () => {
