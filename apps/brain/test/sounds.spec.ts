@@ -84,6 +84,17 @@ describe('sounds', () => {
     expect(fx.filter((i) => i.preview === 'sample').length).toBeGreaterThan(80);
   });
 
+  it('lists each Virtual Guitarist guitar once (not its chords and effects recordings)', async () => {
+    const { soundCatalog } = await import('../src/sounds/soundCatalog.js');
+    const cat = soundCatalog();
+    const guitars = cat.items.filter((i) => i.family === 'acousticGuitars' || i.family === 'electricGuitars');
+    const presets = new Set(guitars.map((i) => cat.validated.get(i.id)?.preset ?? 'missing'));
+    expect(presets.has('Default Chords')).toBe(false);
+    expect(presets.has('Default FX')).toBe(false);
+    expect(guitars.filter((i) => i.type.startsWith('Virtual Guitarist')).length).toBeGreaterThan(0);
+    expect(guitars.every((i) => i.type.startsWith('Virtual Guitarist') || i.type.endsWith('palm muted'))).toBe(true);
+  });
+
   it('previews a tonal sound as a pattern played by it alone, and refuses the wrong kind', async () => {
     const keys = (await get('/api/sounds?family=keys&limit=100')).body.items as Array<{ id: string; preview: string }>;
     const k = keys.find((i) => i.preview === 'pattern')!;

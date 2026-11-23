@@ -107,6 +107,12 @@ export function typeLabel(family: string, lowLevel: string, familyLabel: string)
   return label || familyLabel;
 }
 
+/** Guitars: Virtual Guitarist instruments (strums, picking and effects) vs single sampled palm-muted guitars. */
+function guitarType(e: { family: string; preset?: string | null }, type: string): string {
+  if (e.family !== 'acousticGuitars' && e.family !== 'electricGuitars') return type;
+  return e.preset === 'Default Notes' ? `Virtual Guitarist · ${type.toLowerCase()}` : `${type} · palm muted`;
+}
+
 interface Built {
   readonly items: readonly SoundItem[];
   readonly byId: ReadonlyMap<string, SoundItem>;
@@ -217,6 +223,12 @@ export function soundCatalog(): Built {
   for (const e of snapshot.entries) {
     const fam = FAMILY_BY_ID.get(e.family);
     if (!fam) continue;
+    // A Virtual Guitarist guitar is one instrument made of three recordings: its
+    // notes ("Default Notes", the row songs use), its strummed chords and its
+    // fret noises / effects. The chords and effects rows are parts of it, not
+    // instruments of their own (their files cannot play notes): not listed.
+    const guitar = e.family === 'acousticGuitars' || e.family === 'electricGuitars';
+    if (guitar && (e.preset === 'Default Chords' || e.preset === 'Default FX')) continue;
     let preview: SoundPreview = 'none';
     const sampled = (entry: ValidatedCatalogEntry) => {
       const plan = samplePlanFor(entry);
@@ -272,7 +284,7 @@ export function soundCatalog(): Built {
       name: publicNameOf(e),
       family: e.family,
       familyLabel: fam.label,
-      type: typeLabel(e.family, e.lowLevel, fam.label),
+      type: guitarType(e, typeLabel(e.family, e.lowLevel, fam.label)),
       styles: [...(e.mainStyle ? [e.mainStyle] : []), ...e.addStyles.filter((s) => s !== e.mainStyle)],
       bpm: e.bpm ?? null,
       key: e.key ?? null,
