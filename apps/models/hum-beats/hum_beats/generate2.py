@@ -25,12 +25,13 @@ import soxr
 from . import music
 from .deviation import DeviationModel, perform, pitch_curve_from_contours
 from .generate import _json_default, choose_lead, clip_melody, finish_notes, pick, seed_of, transpose_for, write_midi
+from .generate import precedent as g1_precedent
 from .music import METERS, Score
 from .render import (CTRL, POLLUTION_LEVELS, POLLUTION_P, VOICE_TYPES, loudness_curve, pollute, render_breathy, render_sampler,
                      render_voice, to_audio_rate)
 from .sounds import SR, SoundBank
 
-GENERATOR_VERSION = 2
+GENERATOR_VERSION = "2b"
 DEV_DIR = Path("/mnt/d/casperaki-data/hum-beats/deviation-model")
 METER_P = {"4/4": 0.55, "2/4": 0.15, "3/4": 0.20, "6/8": 0.10}
 SOULX_PROMPTS = {"en_prompt": 64.9, "zh_prompt": 65.9, "en_target": 64.9, "zh_target": 53.0}
@@ -102,6 +103,7 @@ class Context:
         split = load_split_info()
         self.dev = DeviationModel(DEV_DIR / "humtrans-train", set(split["fit_pieces"]))
         self.tempos = np.array(json.loads((DEV_DIR / "humtrans-train-tempos.json").read_text())["per_piece"])
+        self.densities = np.array(json.loads((DEV_DIR / "humtrans-train-density.json").read_text())["notes_per_beat"])
         self.en = _en_phonemes()
         self.zh = _zh_syllables(soulx_repo / "soulxsinger" / "utils" / "phoneme" / "phone_set.json")
 
@@ -110,6 +112,33 @@ def draw_tempo(rng, tempos: np.ndarray) -> tuple[float, str]:
     if rng.random() < 0.75:
         return float(np.clip(tempos[int(rng.integers(len(tempos)))] * rng.uniform(0.95, 1.05), 60, 200)), "humtrans-like"
     return float(rng.uniform(60, 200)), "uniform"
+
+
+def melody_density(row: dict, meter: str) -> float:
+    """Notes per beat of the source melody (the precedent, or the procedural seed's first rhythm donor)."""
+    fam = row["family"] if row["source"] == "precedent" else row["rhythm_donors"][0]
+    notes, _ = music.retime_precedent(g1_precedent(fam)["notes"], meter)
+    span = (max(b for _, b, _ in notes) - min(a for a, _, _ in notes)) / METERS[meter][1]
+    return len(notes) / span
+
+
+def time_scale(rng, density: float, densities: np.ndarray) -> tuple[int, float]:
+    """1 (as written) or 2 (half-time: every duration doubled, half the notes per beat), whichever puts the
+    melody closer to a note density drawn from real hums (HumTrans train, notes per beat, +-10%)."""
+    target = float(densities[int(rng.integers(len(densities)))] * rng.uniform(0.9, 1.1))
+    return (2 if density / 2 >= 0.9 * target else 1), target
+
+
+def thin_to_density(rng, notes, beat_q: float, bar_q: float, target: float):
+    """Bring a melody toward a target note density: merge short neighbouring notes when it is too dense,
+    split long notes when it is too sparse (pattern-consistent per bar, see music.mutate_rhythm)."""
+    if len(notes) < 2:
+        return notes
+    span = (max(b for _, b, _ in notes) - min(a for a, _, _ in notes)) / beat_q
+    r = target / (len(notes) / span)
+    if r < 1:
+        return music.mutate_rhythm(rng, sorted(notes), beat_q, bar_q, p_merge=float(min(0.95, 2 * (1 - r))), p_split=0.0)
+    return music.mutate_rhythm(rng, sorted(notes), beat_q, bar_q, p_merge=0.0, p_split=float(min(0.9, r - 1)))
 
 
 def procedural_melody(rng, row, meter, n_bars, style, bpm, start_mode):
@@ -155,13 +184,17 @@ def make_state(row: dict, ctx: Context) -> dict:
                 "median_midi": prompts[prompt] + float(rng.uniform(-3, 4))}  # SoulX will not follow a voice much below its prompt
     else:
         lead = choose_lead(rng, row["split"], ctx.bank)
+    scale, target_density = time_scale(rng, melody_density(row, meter), ctx.densities)
     drawn_bars, found = n_bars, False
     while not found:
         for _ in range(20):
+            window = max(1, n_bars // scale)
             if row["source"] == "procedural":
-                raw, minfo = procedural_melody(rng, row, meter, n_bars, style, bpm, start_mode)
+                raw, minfo = procedural_melody(rng, row, meter, window, style, bpm, start_mode)
             else:
-                raw, minfo = clip_melody(rng, row, meter, n_bars, style, bpm, start_mode)
+                raw, minfo = clip_melody(rng, row, meter, window, style, bpm, start_mode)
+            raw = thin_to_density(rng, [(a * scale, b * scale, m) for a, b, m in raw], beat_q, bar_q, target_density)
+            minfo = {**minfo, "time_scale": scale, "target_notes_per_beat": round(target_density, 3)}
             notes, finfo = finish_notes(rng, raw, meter, style, n_bars, bpm, pause)
             if len(notes) >= 4:
                 span = math.floor((min(max(n.q_off for n in notes), n_bars * bar_q) - 1e-6) / beat_q) - math.ceil((min(n.q_on for n in notes) - 1e-6) / beat_q) + 1
