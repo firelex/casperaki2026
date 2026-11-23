@@ -2,12 +2,9 @@
 // previewSong.ts): every sound on the Sounds page plays through the playback
 // engine, as a song would play it, never as its raw file.
 //
-//   drum hits    the genre's chorus groove (only the Drums track) with this
-//                sound in every kit position of its family (a snare in Snare 1
-//                and Snare 2). When the groove does not use that family, a
-//                simple figure for it is added so the sound is heard. The
-//                groove depends on the style and pattern number only, so
-//                comparing drum sounds keeps the same groove.
+//   drum hits    the hit on its own, once: the Drums track (with the style's
+//                drum processing) plays it in its first kit position (a snare
+//                as Snare 1) on the first beat of a two-bar section.
 //   loops        the Loop track (as songs play percussion loops) at the loop's
 //                own tempo, for the loop's whole length; looped. Wobble basses
 //                (tempo loops, not playable notes) play the same way.
@@ -26,22 +23,9 @@ const DRUM_PITCH: Readonly<Partial<Record<DrumRole, number>>> = {
   hiHatOpen: 46, ride: 51, crash1: 49, crash2: 57, clap: 39, snap: 31, shaker: 70, tom1: 50, tom2: 47, tom3: 43,
 };
 
-/** A figure (beats in the bar, 0-based) per kit position, added when the groove lacks the family. */
-const FIGURE: Readonly<Partial<Record<DrumRole, readonly number[]>>> = {
-  bassDrum1: [0, 2],
-  snareDrum1: [1, 3],
-  clap: [1, 3],
-  hiHatClosed1: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5],
-  hiHatOpen: [0.5, 1.5, 2.5, 3.5],
-  crash1: [0],
-  shaker: [0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75],
-  tom1: [3, 3.25],
-  tom2: [3.5],
-  tom3: [3.75],
-};
-
 export const DRUM_PREVIEW_SECTION = 'chorus1';
-export const DRUM_PREVIEW_BARS = 4;
+/** The generator writes this many bars; the hit preview keeps the first DRUM_HIT_PREVIEW_BARS. */
+const DRUM_PREVIEW_BARS = 4;
 /** The carrier song's style for one-shot / loop previews (it only chooses the unused drum kit). */
 export const SAMPLE_PREVIEW_GENRE = 'brightPop';
 
@@ -50,45 +34,32 @@ export function drumPreviewRoles(family: string): DrumRole[] {
   return drumRolesForFamily(family).filter((r) => DRUM_PITCH[r] !== undefined);
 }
 
-/** Styles that write drum grooves (every genre), the sound's own first. */
+/** Styles a drum hit can be heard in (every genre), the sound's own first: the first sets the drum processing. */
 export function drumPreviewGenres(mainStyle: string | null): string[] {
   const all = [...GenreSchema.options];
   return mainStyle && all.includes(mainStyle as (typeof all)[number]) ? [mainStyle, ...all.filter((g) => g !== mainStyle)] : all;
 }
 
-export function drumPreviewSong(entry: ValidatedCatalogEntry, roles: readonly DrumRole[], genre: string, variant: number): { song: Song; bpm: number } {
-  if (roles.length === 0) throw new Error(`drum preview: ${entry.family} fills no kit position`);
+export const DRUM_HIT_PREVIEW_BARS = 2;
+const DRUM_HIT_PREVIEW_BPM = 120;
+
+/** A drum hit on its own: one hit in its first kit position, on beat 1 of a two-bar section (room for a cymbal's ring). */
+export function drumHitPreviewSong(entry: ValidatedCatalogEntry, roles: readonly DrumRole[], genre: string): { song: Song; bpm: number } {
+  const role = roles[0];
+  if (!role) throw new Error(`drum preview: ${entry.family} fills no kit position`);
   const g = GenreSchema.parse(genre);
-  const bpm = DEFAULT_BPM_BY_GENRE[g];
-  // The seed depends on the style and pattern number only: every drum sound gets the same groove.
-  let song = orchestrate({ genre: g, key: 'C', bpm, seed: `drum-preview-${variant}`, params: { structure: [{ name: DRUM_PREVIEW_SECTION, bars: DRUM_PREVIEW_BARS }] } });
-  for (const role of roles) song = editTrack(song, { kind: 'setDrumSound', role, soundId: entry.id }).song;
+  let song = orchestrate({ genre: g, key: 'C', bpm: DRUM_HIT_PREVIEW_BPM, seed: 'drum-hit-preview', params: { structure: [{ name: DRUM_PREVIEW_SECTION, bars: DRUM_PREVIEW_BARS }] } });
+  song = editTrack(song, { kind: 'setDrumSound', role, soundId: entry.id }).song;
   const payload = song.arrangement[DRUM_PREVIEW_SECTION];
   const override = payload?.overrides?.['Drums'];
   const def = song.instrumentDefinitions.find((d) => d.name === 'Drums');
-  if (!payload || !override?.bars?.length || !def) throw new Error(`drum preview: the ${g} generator wrote no drum groove`);
-
-  // The family's notes in the groove; none → add the family's figure to every bar.
-  const pitches = new Set(roles.map((r) => DRUM_PITCH[r]!));
-  const heard = override.bars.some((b) => Object.values(b.notes ?? {}).some((ns) => (ns as { note?: number }[]).some((n) => n.note !== undefined && pitches.has(n.note))));
-  let bars = override.bars;
-  if (!heard) {
-    const figureRoles = roles.filter((r) => FIGURE[r]);
-    if (figureRoles.length === 0) throw new Error(`drum preview: no figure for ${roles.join(', ')}`);
-    bars = override.bars.map((b) => {
-      const notes: Record<string, unknown[]> = { ...(b.notes as Record<string, unknown[]>) };
-      for (const role of figureRoles) {
-        for (const beat of FIGURE[role]!) {
-          const key = Number.isInteger(beat) ? beat.toFixed(1) : String(beat);
-          notes[key] = [...(notes[key] ?? []), { type: 'note', note: DRUM_PITCH[role]! }];
-        }
-      }
-      return { ...b, notes } as typeof b;
-    });
-  }
+  const seg = song.songStructure[0];
+  if (!payload || !override?.bars?.length || !def || !seg) throw new Error(`drum preview: the ${g} generator wrote no drum part`);
+  const bars = override.bars.slice(0, DRUM_HIT_PREVIEW_BARS).map((b, i) => ({ ...b, notes: i === 0 ? { '0.0': [{ type: 'note', note: DRUM_PITCH[role]! }] } : {} }) as typeof b);
   const processors = payload.signalProcessors?.['Drums'];
   const only = parseSong({
     ...song,
+    songStructure: [{ ...seg, lengthInBars: DRUM_HIT_PREVIEW_BARS, bars: seg.bars.slice(0, DRUM_HIT_PREVIEW_BARS) }],
     arrangement: {
       [DRUM_PREVIEW_SECTION]: {
         ...payload,
@@ -103,7 +74,7 @@ export function drumPreviewSong(entry: ValidatedCatalogEntry, roles: readonly Dr
     instrumentDefinitions: [def],
     aiArtifacts: [],
   });
-  return { song: only, bpm };
+  return { song: only, bpm: DRUM_HIT_PREVIEW_BPM };
 }
 
 /** How a non-pattern sound is previewed. */

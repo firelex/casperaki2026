@@ -7,11 +7,10 @@
 //               a similar sound a genre uses (its "donor": same kind where
 //               possible, e.g. a nylon mono guitar plays a nylon stereo
 //               guitar's part, a legato orchestral string section a pad part)
-//               Drum hits are 'pattern' too: the genre's groove with the hit
-//               in its kit positions (see enginePreview.ts).
-//   'sample'  — a loop, break, effect, transition sound or single percussion
-//               hit: played through the engine on its own (Loop track or a
-//               transition), once or looped (see enginePreview.ts)
+//   'sample'  — a drum hit, loop, break, effect, transition sound or single
+//               percussion hit: played through the engine on its own (the
+//               Drums track, the Loop track or a transition), once or looped
+//               (see enginePreview.ts)
 //   'none'    — none of these (its file is missing from the library, or it
 //               lacks what the engine needs, e.g. a tempo)
 // Every preview goes through the playback engine; no raw file is played.
@@ -263,7 +262,7 @@ export function soundCatalog(): Built {
       const roles = entry ? drumPreviewRoles(e.family) : [];
       if (entry && roles.length > 0) {
         drumOf.set(e.id, { roles, genres: drumPreviewGenres(e.mainStyle ?? null), entry });
-        preview = 'pattern';
+        preview = 'sample'; // heard on its own, once (not in a groove)
       } else if (entry) {
         sampled(entry);
       }

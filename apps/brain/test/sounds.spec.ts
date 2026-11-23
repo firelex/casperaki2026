@@ -73,11 +73,11 @@ describe('sounds', () => {
     expect((await get('/api/sounds/deadbeefdeadbeef')).status).toBe(404);
   });
 
-  it('previews tonal sounds and drum hits as patterns, the rest as samples (all through the engine)', async () => {
+  it('previews tonal sounds as patterns, drum hits and the rest as single sounds (all through the engine)', async () => {
     const keys = (await get('/api/sounds?family=keys&limit=100')).body.items as Array<{ preview: string }>;
     expect(keys.some((i) => i.preview === 'pattern')).toBe(true);
     const kicks = (await get('/api/sounds?family=kickDrums&limit=100')).body.items as Array<{ preview: string }>;
-    expect(kicks.every((i) => i.preview === 'pattern')).toBe(true);
+    expect(kicks.every((i) => i.preview === 'sample')).toBe(true);
     const loops = (await get('/api/sounds?family=percussionLoops&limit=50')).body.items as Array<{ preview: string }>;
     expect(loops.every((i) => i.preview === 'sample' || i.preview === 'none')).toBe(true);
     const fx = (await get('/api/sounds?family=fx&limit=100')).body.items as Array<{ preview: string }>;
@@ -94,16 +94,12 @@ describe('sounds', () => {
     expect(p.bpm).toBeGreaterThan(40);
   });
 
-  it('previews a drum hit in a groove: same groove for every drum sound of a style and pattern number', async () => {
-    const [a, b] = (await get('/api/sounds?family=snareDrums&limit=2')).body.items as Array<{ id: string }>;
-    const post = (id: string, body: unknown) =>
-      fetch(`${h.url}/api/sounds/${id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).then(async (r) => ({ status: r.status, body: (await r.json()) as any }));
-    const pa = await post(a!.id, { genre: 'rock', variant: 2 });
-    expect(pa.status).toBe(200);
-    expect(pa.body).toMatchObject({ bars: 4, genre: 'rock', variant: 2, loop: true, kept: false });
-    expect(pa.body.genres).toContain('edm');
-    const pb = await post(b!.id, { keep: { soundId: a!.id, genre: 'rock', variant: 2 } });
-    expect(pb.body).toMatchObject({ kept: true, genre: 'rock', variant: 2, writer: a!.id });
+  it('previews a drum hit on its own, once', async () => {
+    const [a] = (await get('/api/sounds?family=snareDrums&limit=1')).body.items as Array<{ id: string }>;
+    const r = await fetch(`${h.url}/api/sounds/${a!.id}/preview`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    expect(r.status).toBe(200);
+    // (The single note itself is checked on the song below, in 'plays a drum hit once'.)
+    expect(await r.json()).toMatchObject({ bars: 2, loop: false, genres: [], kept: false });
   });
 
   it('answers a missing audio file without naming it', async () => {
@@ -212,14 +208,14 @@ describe('sounds that suit a song style', () => {
 });
 
 describe('engine previews of drum hits and samples', () => {
-  it('adds a figure when the groove lacks the drum, and plans loops / one-shots', async () => {
+  it('plays a drum hit once in its first kit position, and plans loops / one-shots', async () => {
     const { soundCatalog } = await import('../src/sounds/soundCatalog.js');
-    const { drumPreviewSong, samplePlanFor } = await import('../src/sounds/enginePreview.js');
+    const { drumHitPreviewSong, samplePlanFor } = await import('../src/sounds/enginePreview.js');
     const cat = soundCatalog();
     const tom = [...cat.drumOf.values()].find((d) => d.entry.family === 'toms')!;
-    const { song } = drumPreviewSong(tom.entry, tom.roles, 'ballad', 0);
-    const pitches = new Set(song.arrangement['chorus1']!.overrides['Drums']!.bars!.flatMap((b) => Object.values(b.notes ?? {}).flat().map((n) => (n as { note: number }).note)));
-    expect([50, 47, 43].every((p) => pitches.has(p))).toBe(true);
+    const { song } = drumHitPreviewSong(tom.entry, tom.roles, 'ballad');
+    const pitches = song.arrangement['chorus1']!.overrides['Drums']!.bars!.flatMap((b) => Object.values(b.notes ?? {}).flat().map((n) => (n as { note: number }).note));
+    expect(pitches).toEqual([50]);
     const def = song.instrumentDefinitions.find((d) => d.name === 'Drums')!;
     expect((def.details as { drumSounds: Record<string, string> }).drumSounds['tom1']).toBe(tom.entry.id);
     const kinds = new Map<string, string>();

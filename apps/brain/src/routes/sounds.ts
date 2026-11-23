@@ -19,7 +19,7 @@ import { canonicalStringifySong, GenreSchema, type Song } from '@casperaki/song-
 
 import type { PlaybackService } from '../render/playbackService.js';
 import { diskPathOf, searchSounds, soundCatalog, soundFamilies, soundTransitions, SoundError, type SoundItem } from '../sounds/soundCatalog.js';
-import { barsFor, DRUM_PREVIEW_BARS, drumPreviewSong, SAMPLE_PREVIEW_GENRE, samplePreviewSong } from '../sounds/enginePreview.js';
+import { barsFor, DRUM_HIT_PREVIEW_BARS, drumHitPreviewSong, SAMPLE_PREVIEW_GENRE, samplePreviewSong } from '../sounds/enginePreview.js';
 import { MixLookup, soundDetails, type DetailsKind } from '../sounds/soundDetails.js';
 import { PREVIEW_BARS, previewSong } from '../sounds/previewSong.js';
 import { playbackPayload } from './playback.js';
@@ -130,15 +130,12 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
         return await send(song, { bpm, bars: PREVIEW_BARS, genre, genres: target.genres, variant: kept && keep ? keep.variant : variant, kept, writer: kept && keep ? keep.soundId : item.id, loop: true });
       }
 
-      // Drum hits: the style's groove with this hit in its kit positions. The groove
-      // depends on style + pattern number only, so keeping it keeps the same groove.
+      // Drum hits: the hit on its own, once (styles, pattern numbers and keep do not apply).
       const drum = cat.drumOf.get(item.id);
       if (drum) {
-        const kept = Boolean(keep && cat.drumOf.has(keep.soundId) && drum.genres.includes(keep.genre));
-        const genre = kept && keep ? keep.genre : styleOrder(drum.genres)[0]!;
-        const v = kept && keep ? keep.variant : variant;
-        const { song, bpm } = drumPreviewSong(drum.entry, drum.roles, genre, v);
-        return await send(song, { bpm, bars: DRUM_PREVIEW_BARS, genre, genres: drum.genres, variant: v, kept, writer: kept && keep ? keep.soundId : item.id, loop: true });
+        const genre = drum.genres[0]!;
+        const { song, bpm } = drumHitPreviewSong(drum.entry, drum.roles, genre);
+        return await send(song, { bpm, bars: DRUM_HIT_PREVIEW_BARS, genre, genres: [], variant: 0, kept: false, writer: item.id, loop: false });
       }
 
       // Loops, breaks, effects, transition sounds, percussion hits: played on their own
