@@ -65,12 +65,25 @@ export const patternsApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ proposals: PatternProposal[] }>('/api/patterns', { signal }),
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
     defaultBrainClient.post<{ review: PatternReview | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
-  preview: (id: string, genre: Genre, variant: 'proposal' | 'current', take: number | undefined, signal?: AbortSignal) =>
-    defaultBrainClient.post<PlaybackPayload & { seed: string; /** Tracks playing the proposal's instrument. */ lanes: string[]; sections: PreviewSection[] }>(
+  /** `soundId`: play the proposal's instrument with this sound (undefined: the song's own). */
+  preview: (id: string, genre: Genre, variant: 'proposal' | 'current', take: number | undefined, soundId: string | undefined, signal?: AbortSignal) =>
+    defaultBrainClient.post<
+      PlaybackPayload & {
+        seed: string;
+        /** Tracks playing the proposal's instrument. */
+        lanes: string[];
+        sections: PreviewSection[];
+        /** The sound the instrument plays (null: not a library sound). */
+        soundId: string | null;
+      }
+    >(
       `/api/patterns/${encodeURIComponent(id)}/preview`,
-      { genre, variant, ...(take === undefined ? {} : { take }) },
+      { genre, variant, ...(take === undefined ? {} : { take }), ...(soundId ? { soundId } : {}) },
       { signal },
     ),
+  /** The sounds the proposal's instrument can use in `genre` (the instrument picker; none for drums). */
+  sounds: (id: string, genre: Genre, signal?: AbortSignal) =>
+    defaultBrainClient.get<{ sounds: { id: string; name: string }[] }>(`/api/patterns/${encodeURIComponent(id)}/sounds?genre=${genre}`, { signal }),
 };
 
 export const patternsQueryKey = ['patterns'] as const;

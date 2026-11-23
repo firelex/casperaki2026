@@ -165,6 +165,14 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   const queryClient = useQueryClient();
   const [genre, setGenre] = useState<Genre>(p.genres[0]!);
   const [take, setTake] = useState(0);
+  /** The instrument picker: a library sound for the proposal's instrument (undefined: the song's own). */
+  const [sound, setSound] = useState<string | undefined>(undefined);
+  const sounds = useQuery({
+    queryKey: ['patterns', p.id, 'sounds', genre],
+    queryFn: ({ signal }) => patternsApi.sounds(p.id, genre, signal),
+    enabled: p.family !== 'drums',
+    staleTime: Infinity,
+  });
   const [note, setNote] = useState(p.review?.note ?? '');
   const live = useLiveState();
   const review = useMutation({
@@ -178,12 +186,14 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   const [mode, setMode] = useState<Mode>('context');
   // The proposal song plays only the selected pattern (a generator has just the one).
   const takeArg = (t: number) => (p.kind === 'algo' ? undefined : t);
-  const keyFor = (variant: 'proposal' | 'current', t: number = take) =>
-    variant === 'proposal' ? `pattern:${p.id}:${genre}:proposal:${takeArg(t) ?? 'all'}` : `pattern:${p.id}:${genre}:current`;
-  const keyOf = (m: Mode, t: number = take) => keyFor(m === 'current' ? 'current' : 'proposal', t);
-  const listen = (m: Mode, t: number = take) => {
-    const key = keyOf(m, t);
-    if (live.key === key && live.status === 'playing' && mode === m && t === take) {
+  const keyFor = (variant: 'proposal' | 'current', t: number = take, snd: string | undefined = sound) =>
+    variant === 'proposal'
+      ? `pattern:${p.id}:${genre}:proposal:${takeArg(t) ?? 'all'}:${snd ?? 'own'}`
+      : `pattern:${p.id}:${genre}:current:${snd ?? 'own'}`;
+  const keyOf = (m: Mode, t: number = take, snd: string | undefined = sound) => keyFor(m === 'current' ? 'current' : 'proposal', t, snd);
+  const listen = (m: Mode, t: number = take, snd: string | undefined = sound) => {
+    const key = keyOf(m, t, snd);
+    if (live.key === key && live.status === 'playing' && mode === m && t === take && snd === sound) {
       void livePlayer.pause();
       return;
     }
@@ -198,7 +208,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
       if (live.key === key && (m === 'solo' || t !== take)) livePlayer.seek(start);
     }
     void livePlayer.play(key, async (signal) => {
-      const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), signal);
+      const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), snd, signal);
       if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
       previewInfo.set(key, { lanes: payload.lanes, sections: payload.sections });
       if (m === 'solo') livePlayer.setSoloLanes(payload.lanes);
@@ -211,6 +221,12 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     const playingHere = live.key === keyOf(mode) && live.status === 'playing';
     setTake(t);
     if (playingHere && t !== take) listen(mode, t);
+  };
+  // Another sound while this card plays: the same part again with it.
+  const selectSound = (snd: string | undefined) => {
+    const playingHere = live.key === keyOf(mode) && live.status === 'playing';
+    setSound(snd);
+    if (playingHere && snd !== sound) listen(mode, take, snd);
   };
   const stateOf = (m: Mode) => (live.key === keyOf(m) && mode === m ? live.status : 'idle');
   const status = p.review?.status;
@@ -275,13 +291,33 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         {p.genres.length > 1 ? (
           <select
             value={genre}
-            onChange={(e) => setGenre(e.target.value as Genre)}
+            onChange={(e) => {
+              setGenre(e.target.value as Genre);
+              setSound(undefined); // the sounds on offer depend on the genre
+            }}
             aria-label="Genre for the preview song"
             className="h-10 rounded-[8px] border border-line bg-bg px-3 text-[14px] text-white"
           >
             {p.genres.map((g) => (
               <option key={g} value={g}>
                 {GENRE_LABELS[g]}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        {p.family !== 'drums' ? (
+          <select
+            value={sound ?? ''}
+            onChange={(e) => selectSound(e.target.value || undefined)}
+            disabled={!sounds.data}
+            aria-label={`${FAMILY_LABELS[p.family]} sound for the preview`}
+            title="Hear the pattern with another sound of this instrument"
+            className="h-10 max-w-[260px] rounded-[8px] border border-line bg-bg px-3 text-[14px] text-white"
+          >
+            <option value="">{sounds.isError ? 'Sounds could not be loaded' : `The song's own ${FAMILY_LABELS[p.family].toLowerCase()} sound`}</option>
+            {(sounds.data?.sounds ?? []).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
               </option>
             ))}
           </select>

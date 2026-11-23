@@ -90,5 +90,32 @@ describe('pattern lab', () => {
       expect(sections.some((x) => x.name.startsWith('chorus') && x.energy === 'high')).toBe(true);
     }
   });
+
+  it('plays a proposal with another sound of its instrument (the instrument picker)', async () => {
+    const p = loadPatternProposals().find((x) => x.family === 'popBrass')!;
+    type Preview = { songId: string; message?: string; sounds: { id: string; name: string }[]; soundId: string | null };
+    const first = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal' })).json()) as Preview;
+    expect(first.sounds.length).toBeGreaterThan(1);
+    const listed = (await (await fetch(`${h.url}/api/patterns/${p.id}/sounds?genre=${p.genres[0]}`)).json()) as { sounds: { id: string }[] };
+    expect(listed.sounds.map((s) => s.id).sort()).toEqual(first.sounds.map((s) => s.id).sort());
+    expect(first.sounds.map((s) => s.id)).toContain(first.soundId);
+    const other = first.sounds.find((s) => s.id !== first.soundId)!;
+    for (const variant of ['proposal', 'current'] as const) {
+      const res = await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant, soundId: other.id });
+      const body = (await res.json()) as Preview;
+      expect(res.status, body.message).toBe(200);
+      expect(body.soundId).toBe(other.id);
+    }
+    // The proposal's pattern stays: same sound, proposal vs current differ.
+    const withP = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal', soundId: other.id })).json()) as Preview;
+    const current = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'current', soundId: other.id })).json()) as Preview;
+    expect(withP.songId).not.toBe(current.songId);
+    // A sound of another instrument is refused; drums have no picker.
+    const keysSound = 'ffffffffffffffff';
+    expect((await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal', soundId: keysSound })).status).toBe(400);
+    const drums = loadPatternProposals().find((x) => x.family === 'drums')!;
+    const d = await post(`${h.url}/api/patterns/${drums.id}/preview`, { genre: drums.genres[0], variant: 'proposal', soundId: other.id });
+    expect(d.status).toBe(400);
+  });
 });
 

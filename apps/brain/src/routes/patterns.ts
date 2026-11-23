@@ -2,11 +2,17 @@
 //
 //   GET  /api/patterns                 proposals + review decision + whether exported
 //   POST /api/patterns/:id/review      { status: 'approved' | 'rejected' | 'pending', note? }
-//   POST /api/patterns/:id/preview     { genre, seed?, variant: 'proposal' | 'current' }
+//   GET  /api/patterns/:id/sounds?genre=  the sounds the proposal's instrument can use in
+//                                      that genre (the instrument picker; none for drums)
+//   POST /api/patterns/:id/preview     { genre, seed?, variant: 'proposal' | 'current', take?, soundId? }
 //     -> a playback payload (see routes/playback.ts) for a full song in that
 //        genre, with the proposal forced in ('proposal') or the library as is
 //        ('current', same seed) so the two can be compared. Both songs get a
 //        lane of the proposal's family when the seed's roster has none.
+//        soundId: play the proposal's instrument with that library sound (the
+//        editor's Change sound on each of its tracks; not for drums, whose kit
+//        is fixed per genre). The answer lists the sounds the instrument can
+//        use in that genre (`sounds`) and the one playing (`soundId`).
 //
 // Proposals are files in packages/arrangement/data/patterns/proposals/;
 // approved ones reach the library via scripts/export-approved-patterns.ts.
@@ -23,7 +29,11 @@ import {
   BASS_BANK_DIR,
   DRUM_BANK_DIR,
   editTrack,
+  familySoundPool,
   laneFamilyOf,
+  loadPublicNames,
+  publicNameOf,
+  TrackEditError,
   loadPatternProposals,
   orchestrate,
   previewParamsFor,
@@ -56,6 +66,8 @@ const PreviewBody = z
     variant: z.enum(['proposal', 'current']),
     /** Play only this pattern (0-based) of the proposal; omitted = the song picks among all of them. */
     take: z.number().int().min(0).optional(),
+    /** Play the proposal's instrument with this library sound (not drums). */
+    soundId: z.string().regex(/^[0-9a-f]{16}$/u).optional(),
   })
   .strict();
 
@@ -79,6 +91,15 @@ function withProposalLane(song: Song, proposal: PatternProposal): Song {
   const coverage = Math.max(0, ...lanes.map((lane) => sections.filter((s) => song.arrangement[s]?.instruments[lane] === true).length));
   if (coverage * 2 >= sections.length) return song;
   return editTrack(song, { kind: 'addTrack', family: proposal.family, segments: sections }).song;
+}
+
+/** The sounds a proposal's instrument can use in `genre`, by public name (none for drums: the kit is fixed per genre). */
+function soundsFor(proposal: PatternProposal, genre: Parameters<typeof familySoundPool>[1]): { id: string; name: string }[] {
+  if (proposal.family === 'drums') return [];
+  const names = loadPublicNames();
+  return familySoundPool(proposal.family, genre)
+    .map((e) => ({ id: e.id, name: publicNameOf(e, names) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function createPatternsRouter({ store, playback, isAdminRequest, reviewerOf }: PatternsRouterDeps): Router {
@@ -121,6 +142,14 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
     return res.json({ review });
   });
 
+  router.get('/api/patterns/:id/sounds', (req, res) => {
+    const proposal = loadPatternProposals().find((p) => p.id === req.params.id);
+    if (!proposal) return res.status(404).json({ error: 'not_found', id: req.params.id });
+    const genre = GenreSchema.safeParse(req.query.genre);
+    if (!genre.success) return res.status(400).json({ error: 'invalid_genre', message: 'genre must be one of the canonical genres' });
+    return res.json({ sounds: soundsFor(proposal, genre.data) });
+  });
+
   router.post('/api/patterns/:id/preview', async (req, res) => {
     if (!playback) {
       return res.status(503).json({ error: 'playback_not_configured', message: 'CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.' });
@@ -138,7 +167,7 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
       return res.status(400).json({ error: 'invalid_take', message: err instanceof Error ? err.message : String(err) });
     }
     try {
-      const song = withProposalLane(
+      let song = withProposalLane(
         orchestrate({
           genre,
           key: 'C',
@@ -148,10 +177,26 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
         }),
         proposal,
       );
+      const familyLanes = () => song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
+      const { soundId } = body.data;
+      if (soundId) {
+        if (proposal.family === 'drums') return res.status(400).json({ error: 'drum_kit_fixed', message: 'The drum kit is fixed per genre; drum proposals cannot change sound.' });
+        for (const lane of familyLanes()) {
+          try {
+            song = editTrack(song, { kind: 'changeSound', track: lane, soundId }).song;
+          } catch (err) {
+            if (err instanceof TrackEditError) return res.status(err.status).json({ error: err.code, message: err.message });
+            throw err;
+          }
+        }
+      }
       const canonical = canonicalStringifySong(song, 2);
       const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
       // The tracks that play the proposal's instrument (the lab's "Play solo" solos them).
-      const lanes = song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
+      const lanes = familyLanes();
+      // The instrument picker: the sounds this family can use in the genre, and the one playing.
+      const sounds = soundsFor(proposal, genre);
+      const playing = song.instrumentDefinitions.find((d) => d.name === lanes[0])?.id;
       // Where each section plays (the lab starts a verse or chorus pattern at its section).
       const secPerBar = (4 * 60) / song.bpm;
       let bar = 0;
@@ -161,7 +206,7 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
         bar += bars;
         return s;
       });
-      return res.json({ ...(await playbackPayload(playback, id, canonical)), seed, lanes, sections });
+      return res.json({ ...(await playbackPayload(playback, id, canonical)), seed, lanes, sections, sounds, soundId: typeof playing === 'string' ? playing : null });
     } catch (err) {
       return res.status(500).json({ error: 'preview_failed', message: err instanceof Error ? err.message : String(err) });
     }
