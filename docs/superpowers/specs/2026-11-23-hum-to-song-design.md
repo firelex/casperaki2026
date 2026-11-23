@@ -41,9 +41,16 @@ the brain builds the rest of the song from it as it does for any vocal precedent
 - **Notes:** SwiftF0 plus tuning correction plus key snapping gets 71% of notes right; plain SwiftF0 gets 66%, and
   Basic Pitch 55%.
 
+## Decisions
+
+- 2026-11-23: the owner accepts training on the HumTrans-derived round-two data (the HumTrans recordings themselves stay
+  evaluation only).
+- 4-beat bars are assumed.
+- The main recording mode is a click with a count-in; free humming has a retry.
+- The melody is completed by the Anticipatory Music Transformer, hosted on datigator.
+
 ## Open decisions (owner)
 
-- Whether training may use the HumTrans-derived round-two data (the HumTrans licence is CC BY-NC).
 - Switching the hum lab to the new beat checkpoint.
 - Deleting about 22 GB of old hum-beats data.
 
