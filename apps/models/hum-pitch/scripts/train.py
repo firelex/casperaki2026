@@ -1,6 +1,6 @@
 """Train the hum-to-notes model (hum_pitch/model.py): ONE run, ONE epoch, final checkpoint is the one scored.
 
-  python scripts/train.py --features <dir with r1-train.npz/.jsonl, r1-dev.*> --train r1-train --dev r1-dev \
+  python scripts/train.py --features <dir with r1-train.npz/.jsonl, r1-dev.*> --train r1-train [r2b-train] --dev r1-dev [r2b-dev] \
       --run-dir <runs>/<name> [--limit 2000 for a pilot]
 
 Every training clip is seen once, transposed by a random -6..+5 semitones (input pitch, reference pitch and key
@@ -95,7 +95,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--features", type=Path, required=True)
     ap.add_argument("--train", nargs="+", required=True, help="feature set names (round two can be added here later)")
-    ap.add_argument("--dev", required=True)
+    ap.add_argument("--dev", nargs="+", required=True)
     ap.add_argument("--run-dir", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--epochs", type=int, default=1)
@@ -119,7 +119,7 @@ def main():
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
     train = [c for name in args.train for c in load(args.features, name, args.limit)]
-    dev = load(args.features, args.dev)
+    dev = [c for name in args.dev for c in load(args.features, name)]
     model = HumNotes(hidden=args.hidden).to(device)
     n_par = sum(p.numel() for p in model.parameters())
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
