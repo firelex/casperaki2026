@@ -21,6 +21,8 @@ import soundfile as sf
 
 def _spect(args):
     wav, out = args
+    if out.exists():
+        return len(np.load(out, mmap_mode="r"))  # already computed (the set is being filled in)
     import torch
     torch.set_num_threads(1)
     from beat_this.preprocessing import LogMelSpect
