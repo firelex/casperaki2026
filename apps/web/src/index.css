@@ -350,3 +350,33 @@ body {
   fill: #e0322b !important;
   stroke: #e0322b;
 }
+
+/* Sign-in page: the landing's neon studio photo behind a dark glass card,
+   with the photo's hot pink and violet as the accents. */
+.sign-in-shade {
+  background:
+    radial-gradient(ellipse at center, rgba(13, 13, 23, 0.55) 0%, rgba(13, 13, 23, 0.82) 70%),
+    linear-gradient(to top, rgba(13, 13, 23, 0.9) 0%, rgba(13, 13, 23, 0) 40%);
+}
+.sign-in-card {
+  background: rgba(16, 14, 28, 0.72);
+  border: 1px solid rgba(255, 46, 136, 0.28);
+  box-shadow: 0 0 0 1px rgba(155, 77, 255, 0.12), 0 24px 80px -20px rgba(255, 46, 136, 0.35),
+    0 0 60px -10px rgba(155, 77, 255, 0.3);
+  backdrop-filter: blur(14px);
+}
+.sign-in-field:focus {
+  border-color: #ff2e88;
+  box-shadow: 0 0 0 3px rgba(255, 46, 136, 0.2);
+}
+.sign-in-btn {
+  background: linear-gradient(90deg, #ff2e88 0%, #9b4dff 100%);
+  color: #fff;
+  box-shadow: 0 10px 30px -10px rgba(255, 46, 136, 0.7);
+}
+.sign-in-btn:hover {
+  filter: brightness(1.1);
+}
+.sign-in-accent {
+  color: #ff5fa8;
+}

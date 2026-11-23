@@ -49,8 +49,8 @@ function Nav({ onSignIn }: { onSignIn(): void }) {
   return (
     <header className="sticky top-0 z-20 border-b border-white/[0.06] bg-bg/85 backdrop-blur">
       <Wrap className="flex h-16 items-center justify-between gap-6">
-        <a href="#top" className="landing-wordmark text-[22px] text-white">
-          casper<span className="text-accent">aki</span>
+        <a href="#top" aria-label="Casperaki">
+          <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={162} height={19} className="block h-[19px] w-auto" />
         </a>
         <nav className="hidden md:flex items-center gap-8 text-[15px] text-white/70" aria-label="Page sections">
           <a href="#how" className="landing-link">How it works</a>
@@ -379,9 +379,7 @@ function Footer() {
   return (
     <footer className="border-t border-white/[0.06] py-10">
       <Wrap className="flex flex-wrap items-center justify-between gap-4 text-[14px] text-white/45">
-        <span className="landing-wordmark text-[18px] text-white/80">
-          casper<span className="text-accent">aki</span>
-        </span>
+        <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={136} height={16} className="block h-[16px] w-auto opacity-80" />
         <span>© {new Date().getFullYear()} Casperaki</span>
       </Wrap>
     </footer>
