@@ -98,6 +98,8 @@ def main():
                "|---|---|---|---|---|---|---|---|---|---|"]
         for gname, sel in groups:
             sub = [r for r in rows if sel(r["c"])]
+            if not sub:  # e.g. r3 has no breathy leads
+                continue
             for sname in systems:
                 s = pooled([r[sname] for r in sub])
                 md.append(f"| {gname} | {sname} | {s['clips']} | {s['right']:.1%} | {s['precision']:.1%} | {s['f100']:.3f} | {s['err_octave']:.1%} | "
