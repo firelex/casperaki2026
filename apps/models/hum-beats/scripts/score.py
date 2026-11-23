@@ -55,7 +55,7 @@ def fit_grid(beats: np.ndarray) -> tuple[float, float] | None:
 
 
 def grid_correct(pb: np.ndarray, pdb: np.ndarray, truth_bpm: float, tb: np.ndarray, td: np.ndarray | None, bpb_label: int | None,
-                 meant_bpm: float | None) -> dict:
+                 meant_bpm: float | None, meter_known: bool = False) -> dict:
     """The owner's "grid correct" (hum-to-song snaps notes to one steady grid, so single-beat wobble does not
     matter). Fit one steady grid to the predicted beats; resolve the tempo octave (a) towards the meant tempo,
     (b) into 70-140 BPM with no hint; bar lines on that grid from the predicted downbeats (beats per bar from
@@ -100,7 +100,9 @@ def grid_correct(pb: np.ndarray, pdb: np.ndarray, truth_bpm: float, tb: np.ndarr
             if best is None or hits > best[0]:
                 best = (hits, ph)
         ph = best[1]
-        bpb = int(round(float(np.median(np.diff(pdb))) / per))
+        # meter_known: the app knows the metre (e.g. the user picked it), so beats per bar come from the label and
+        # only the bar phase is judged
+        bpb = bpb_label if meter_known else int(round(float(np.median(np.diff(pdb))) / per))
         if bpb < 1:
             continue
         # bar phase: the grid beat (mod bpb) that most predicted downbeats fall on

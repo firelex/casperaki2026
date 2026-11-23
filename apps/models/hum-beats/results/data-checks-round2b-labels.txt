@@ -1,0 +1,28 @@
+
+== Parameter distributions (21819 clips)
+  split: train: 91%, test: 5%, dev: 3%, test-unseen: 2%
+  meter: 4/4: 55%, 3/4: 20%, 2/4: 15%, 6/8: 10%
+  bars: 8: 34%, 2: 33%, 4: 33%
+  style: straight: 62%, syncopated: 25%, swung: 13%
+  timing: real: 90%, perfect: 10%
+  start: pickup: 41%, downbeat: 31%, midbar: 28%
+  lead kind: voice: 32%, soulx: 29%, breathy: 8%, guitar: 5%, synth: 5%, bass: 5%, keys: 5%, strings_brass: 5%, vocal_sample: 3%
+  timbre (top 12 of 58): soulx-zh_prompt: 7%, soulx-en_prompt: 7%, soulx-en_target: 7%, soulx-zh_target: 7%, voice-mm: 6%, voice-da: 6%, voice-oo: 6%, voice-la: 6%, voice-ah: 6%, breathy-whistle: 4%, breathy-flute: 4%, lib-keysAcousticPiano: 4%
+  voice type: -: 68%, low_male: 8%, female: 8%, child: 8%, high_male: 8%
+  pollution: light: 30%, medium: 30%, heavy: 25%, none: 15%
+  source: procedural: 50%, precedent: 50%
+  pause: none: 76%, beat: 15%, bar: 10%
+  hum-like voice lead (synth voice + vocal sample): 36%
+  tempo (nominal BPM) per 20-BPM band: 60-80:5459 80-100:7502 100-120:4314 120-140:2035 140-160:966 160-180:777 180-200:766
+  tempo actually labelled (median beat interval): 5/50/95% = [ 66.1  96.  171.4]
+  clip length s: 5/50/95/max = [ 4.2  9.7 25.2] / 38.6
+  labelled beats per clip: 5/50/95 = [ 4. 13. 33.]
+
+== Splits: 12337 families, 0 appear in more than one split
+   test-unseen lead timbres also used outside test-unseen: none
+
+== Shortcut tests (labels only)
+  first labelled beat is a downbeat: 42%
+  first note exactly on beat 1: 30%
+  mean velocity on downbeats 0.714 vs elsewhere 0.706
+  tempo vs uniform(60,200): KS statistic 0.367
