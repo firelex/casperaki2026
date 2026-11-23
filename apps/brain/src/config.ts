@@ -24,6 +24,8 @@ const ConfigSchema = z.object({
   renderArtifactPath: z.string().default('../engine-spike/out/brain-roundtrip/out.wav'),
   // --- Auth (OIDC client) ---
   sessionSecret: z.string().default(''),
+  /** Fake sign-in with one fixed demo account (src/auth/demoAuth.ts) instead of OIDC. */
+  demoLogin: z.enum(['0', '1']).default('0').transform((v) => v === '1'),
   authDbPath: z.string().default('./data/auth.sqlite'),
   webOrigin: z.string().default('http://localhost:5173'),
   oidcIssuerUrl: z.string().optional(),
@@ -128,6 +130,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     assistantLlmKey: env.ASSISTANT_LLM_KEY || undefined,
     videoRenderConcurrency: env.VIDEO_RENDER_CONCURRENCY || undefined,
     adminEmails: env.BRAIN_ADMIN_EMAILS,
+    demoLogin: env.BRAIN_DEMO_LOGIN || undefined,
   });
 }
 

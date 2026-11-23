@@ -5,6 +5,7 @@ import { SessionProvider } from './state/session';
 import { useAuth } from './auth/AuthContext';
 import { LandingPage } from './pages/landing/LandingPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { SignInPage } from './pages/SignInPage';
 
 // Code-split: the signed-out landing and the projects list load first; the
 // editor, catalog and dev WASM pages are fetched when first opened.
@@ -33,7 +34,7 @@ const HumLabPage = lazy(() => import('./pages/HumLabPage').then((m) => ({ defaul
 export function App() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <BootSplash />;
-  if (!user) return <LandingPage />; // public landing for everyone signed out
+  if (!user) return window.location.pathname === '/sign-in' ? <SignInPage /> : <LandingPage />; // public landing for everyone signed out
 
   return (
     <SessionProvider>
@@ -54,6 +55,7 @@ export function App() {
         <Route path="/editor/:songId/video" element={<EditorPage tab="video" />} />
         {/* The Structure view was folded into the track view (sections are edited from the ruler). */}
         <Route path="/editor/:songId/structure" element={<StructureRedirect />} />
+        <Route path="/sign-in" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </Suspense>

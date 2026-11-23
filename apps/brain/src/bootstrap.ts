@@ -39,6 +39,7 @@ import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
 import { VideoService } from './video/videoService.js';
 import { authRouter } from './routes/auth.js';
+import { attachDemoSession, demoAuthRouter } from './auth/demoAuth.js';
 
 export interface CreateAppDeps {
   /** Optional injected store. Tests pass an in-memory store; bootstrap
@@ -96,7 +97,8 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
 
   // Build auth deps if not injected and OIDC is configured.
   let auth = deps.auth ?? null;
-  if (!auth && oidcConfigured(config)) {
+  if (config.demoLogin && auth) throw new Error('BRAIN_DEMO_LOGIN=1 cannot be combined with injected OIDC auth');
+  if (!auth && !config.demoLogin && oidcConfigured(config)) {
     const authDb = openAuthDb(config.authDbPath);
     disposers.push(() => { try { authDb.close(); } catch { /* best effort */ } });
     auth = {
@@ -120,7 +122,13 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
 
   const admins = new Set(config.adminEmails);
   const isAdmin = (email: string) => admins.has(email.toLowerCase());
-  if (auth) {
+  const demoSecret = config.demoLogin ? config.sessionSecret || resolveDevSessionSecret(config.authDbPath) : null;
+  if (demoSecret) {
+    console.warn('[brain] BRAIN_DEMO_LOGIN=1: fake demo sign-in (demo@example.com), OIDC is not used.');
+    app.use(attachDemoSession(demoSecret));
+    app.use('/api/auth', demoAuthRouter({ secret: demoSecret, webOrigin: config.webOrigin, postLoginDefault: config.postLoginDefault }));
+    app.use('/api', requireSession());
+  } else if (auth) {
     if (admins.size === 0) console.warn('[brain] BRAIN_ADMIN_EMAILS is empty — nobody can browse the sound catalog.');
     // Session resolution runs on every request; never rejects.
     app.use(attachSession(auth.sessions, auth.oidc));
@@ -218,7 +226,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     createPatternsRouter({
       store,
       playback,
-      isAdminRequest: (req) => (auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
+      isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
       reviewerOf: (req) => req.user?.email ?? 'local-dev',
     }),
   );
@@ -227,7 +235,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   // names). Single-entry lookups stay open: the editor needs them.
   app.use(
     createCatalogRouter({
-      canBrowse: (req) => (auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
+      canBrowse: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
     }),
   );
 

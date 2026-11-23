@@ -27,6 +27,11 @@ browser ──https──> Cloudflare tunnel "jeffhub-api" (~/.cloudflared/jeffh
   12-character minimum was bypassed by calling `UserService.create` directly) exists for trying the app.
   Postgres is the docker container `casperaki-pg` (127.0.0.1:5452, volume `casperaki-pg-data`, restarts
   itself). Redis is the system Redis (key prefix `casperaki-auth`).
+- **Demo sign-in** (`BRAIN_DEMO_LOGIN=1` in `brain.env`, `apps/brain/src/auth/demoAuth.ts`): while the site sits
+  behind the gateway, the brain skips OIDC and shows its own login screen (`/sign-in`) with one fixed account,
+  `demo@example.com` / `demo123`, printed on the screen as a hint. The demo user is an admin (sound library, pattern
+  lab). The session cookie is an HMAC of the user id under `SESSION_SECRET`. The auth service is not used in this
+  mode; remove the line from `brain.env` and restart the brain to go back to OIDC.
 - **Brain** (`apps/brain`) serves `/api/*` and, because `BRAIN_WEB_DIST_DIR` is set, the built web app with an SPA
   fallback. Its data is in `~/casperaki-data`: `songs.sqlite` (songs + per-user projects), `auth.sqlite` (brain
   sessions), `renders/<songId>/` and `brain.log`.

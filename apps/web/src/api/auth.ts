@@ -16,6 +16,8 @@ export interface MeResponse {
 
 export const auth = {
   me: () => defaultBrainClient.get<MeResponse>('/api/auth/me'),
+  /** The demo sign-in (brain BRAIN_DEMO_LOGIN=1): sets the session cookie or fails with 401. */
+  demoLogin: (email: string, password: string) => defaultBrainClient.post<{ ok: true }>('/api/auth/login', { email, password }),
   logout: () => defaultBrainClient.post<{ ok: true }>('/api/auth/logout', {}),
   loginUrl: (returnTo?: string): string => {
     const q = returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : '';
