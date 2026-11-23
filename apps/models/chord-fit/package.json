@@ -1,0 +1,9 @@
+{
+  "name": "chord-fit",
+  "private": true,
+  "type": "module",
+  "description": "Pick chords for a hummed melody (fit score + learned transition prior + Viterbi + known progressions). Not a workspace package; run with apps/models' tsx.",
+  "scripts": {
+    "eval": "../node_modules/.bin/tsx src/eval.ts"
+  }
+}

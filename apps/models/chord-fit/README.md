@@ -1,0 +1,67 @@
+# chord-fit: pick chords for a hummed melody
+
+The harmony step of "hum to song": a melody of 2, 4 or 8 bars (4-beat bars) and a key in, chords for 8 bars out
+(one or two per bar), as three alternatives. No training of a model: counted transition probabilities, a hand-made
+melody fit score, and the Viterbi algorithm. CPU only, runs in a few seconds.
+
+Scores: [results/scores.md](results/scores.md) (generated). Model for the brain: `results/model.json` (generated).
+
+## Why TypeScript
+
+It is meant to run inside the brain (Node/TypeScript), next to the precedent and chord-bank loaders it reads from
+`packages/arrangement`. `src/model.ts` and `src/chords.ts` are pure (no I/O) and can be imported as they are; only
+`src/data.ts` and `src/eval.ts` read files.
+
+## Method (`src/model.ts`)
+
+Grid: 8 bars, 2 half-bar slots per bar = 16 slots. Chords are roots relative to the major key's tonic plus a quality.
+
+1. **Fit score** per slot and chord: each melody note adds its weight to its pitch class; weight = metric weight of
+   the onset (beat 1: 2, beat 3: 1.5, beats 2/4: 1, eighth off-beats: 0.6, sixteenths: 0.4) x min(length in the slot,
+   2 beats). A note still sounding from an earlier slot weighs 0.5; a short step-wise passing note x0.3; a note that
+   starts at most half a beat before a slot line and is held past it counts from the line (anticipation). Fit = chord
+   tones' weight - alpha x other notes' weight + rootBonus x weight on the root.
+2. **Transition prior**: log P(first chord), log P(next | previous) inside a bar (this is where the two-chords-per-bar
+   rate is learned) and across bar lines, from the training precedents (each family weighs 1 in total) and the chord
+   bank (each entry looped to 8 bars, weight 1), smoothed toward the chord frequencies. Vocabulary: diatonic triads and
+   sevenths + every chord seen at least twice + every chord-bank chord (43 chords).
+3. **Best sequence**: Viterbi over the 16 slots maximising lambda x fit + log prior.
+4. **Known progressions**: every known progression (chord bank, optionally also every distinct training-precedent
+   progression), scored by fit. The best one becomes the recommendation when its fit is within delta x (total melody
+   weight) of the free best.
+5. **Alternatives**: (1) recommendation, (2) the other of best-free / best-known, (3) the best free sequence forced to
+   start on vi (or IV, I, V, ii when vi is already taken), for a different colour.
+
+Hum shorter than 8 bars: with 4 bars the hummed bars are looped to fill the fit of bars 5-8; with 2 bars the empty
+bars are left to the prior and the known progressions (both chosen by cross-validation).
+
+lambda, alpha, rootBonus, delta and the fill mode are tuned by 5-fold cross-validation over training families.
+
+## Evaluation (`src/eval.ts`)
+
+Precedents with chords: `drLuke`, `limitedRange`, `schlager` (141 song sections, "songs") and `stefan` (1,201 generated
+melodies over 20 four-bar loops). Families: song name (all sections and variants of one song) or, for stefan, the
+generator batch. 20% of families held out per group; chord-bank entries named like a held-out song are removed from
+the prior and the known set. Scored per half-bar slot against the original: exact, root, compatible (>= 2 shared
+notes), best of 3 alternatives, and with only the first 2 or 4 bars of melody given, against an always-I-V-vi-IV
+baseline. Listening examples (melody with alternatives 1-3, then with the original chords) go to
+`/mnt/d/casperaki-data/chord-fit/`.
+
+```bash
+cd ~/apps/casperaki/apps/models/chord-fit
+pnpm -C ../../../packages/arrangement build      # only if its dist/ is missing or stale
+../node_modules/.bin/tsx src/eval.ts             # results/scores.md, results/model.json, MIDI examples
+../node_modules/.bin/tsc -p tsconfig.json        # type check
+```
+
+## Using it in the brain
+
+```ts
+import model from '.../chord-fit/results/model.json';
+import { harmonize } from '.../chord-fit/src/model.js';
+// notes: [{ beat, midi, duration }] from bar 1, beats; melodyBars: 2 | 4 | 8; tonicPc: key tonic 0..11 (minor key:
+// pass the relative major's tonic)
+const { alternatives } = harmonize(notes, melodyBars, tonicPc, model.prior, model.known,
+  { ...model.params, fill: model.fillByMelodyBars[melodyBars] });
+// alternatives[k].slots: 16 chord ids "deg:quality"; chordSymbol(chordFromId(id), tonicPc) from src/chords.ts
+```
