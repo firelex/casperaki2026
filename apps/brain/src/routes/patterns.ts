@@ -141,7 +141,9 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
       );
       const canonical = canonicalStringifySong(song, 2);
       const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
-      return res.json({ ...(await playbackPayload(playback, id, canonical)), seed });
+      // The tracks that play the proposal's instrument (the lab's "Play solo" solos them).
+      const lanes = song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
+      return res.json({ ...(await playbackPayload(playback, id, canonical)), seed, lanes });
     } catch (err) {
       return res.status(500).json({ error: 'preview_failed', message: err instanceof Error ? err.message : String(err) });
     }

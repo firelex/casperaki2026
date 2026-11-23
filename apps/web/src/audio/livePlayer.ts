@@ -507,6 +507,12 @@ export class LivePlayer {
     this.postLaneGains();
   }
 
+  /** Replace the whole solo set (empty = nothing soloed). Applies live. */
+  setSoloLanes(lanes: readonly string[]): void {
+    this.set({ solo: [...lanes] });
+    this.postLaneGains();
+  }
+
   private postLaneGains(): void {
     if (!this.node) return;
     const { laneNames, muted, solo } = this.state;

@@ -4,7 +4,7 @@
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { loadPatternProposals } from '@casperaki/arrangement';
+import { laneFamilyOf, loadPatternProposals } from '@casperaki/arrangement';
 
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
@@ -58,6 +58,7 @@ describe('pattern lab', () => {
     expect(withP.seed).toBe(current.seed);
     expect(withP.songId).not.toBe(current.songId);
     expect(withP.samples.length).toBeGreaterThan(0);
+    expect((withP as unknown as { lanes: string[] }).lanes.map(laneFamilyOf)).toContain(p.family);
   });
 
   it('previews a keys / pad / strings / brass / synths / guitar proposal with a lane of its family', async () => {
@@ -65,9 +66,12 @@ describe('pattern lab', () => {
       const p = loadPatternProposals().find((x) => x.family === family);
       if (!p) throw new Error(`no ${family} proposal on disk`);
       const res = await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal' });
-      const body = (await res.json()) as { songId?: string; message?: string };
+      const body = (await res.json()) as { songId?: string; message?: string; lanes?: string[] };
       expect(res.status, `${p.id}: ${body.message ?? ''}`).toBe(200);
       expect(body.songId).toBeTruthy();
+      // The tracks "Play solo" solos: at least one, all of the proposal's instrument.
+      expect(body.lanes!.length, p.id).toBeGreaterThan(0);
+      for (const lane of body.lanes!) expect(laneFamilyOf(lane), lane).toBe(family);
     }
   });
 });

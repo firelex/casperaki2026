@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Genre } from '@casperaki/song-schema/schemas';
 
@@ -46,7 +46,12 @@ const FAMILY_ORDER: readonly Family[] = ['drums', 'bass', 'keys', 'guitar', 'pad
  * Approved patterns reach new songs once exported into the library
  * (apps/brain/scripts/export-approved-patterns.ts).
  */
+/** The tracks of each proposal song's instrument, by player key (from the preview). */
+const soloLanes = new Map<string, string[]>();
+
 export function PatternLabPage() {
+  // The player is shared with the editor: leave nothing soloed behind.
+  useEffect(() => () => livePlayer.setSoloLanes([]), []);
   const [filter, setFilter] = useState<Filter>('pending');
   const [family, setFamily] = useState<Family | 'all'>('all');
   const query = useQuery({ queryKey: patternsQueryKey, queryFn: ({ signal }) => patternsApi.list(signal) });
@@ -133,16 +138,31 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: patternsQueryKey }),
   });
 
+  // "Play in context" and "Play solo" play the same proposal song (one load); solo
+  // solos the tracks of the proposal's instrument, which the preview names.
+  type Mode = 'context' | 'solo' | 'current';
+  const [mode, setMode] = useState<Mode>('context');
   const keyFor = (variant: 'proposal' | 'current') => `pattern:${p.id}:${genre}:${variant}`;
-  const listen = (variant: 'proposal' | 'current') => {
-    const key = keyFor(variant);
-    if (live.key === key && live.status === 'playing') {
+  const keyOf = (m: Mode) => keyFor(m === 'current' ? 'current' : 'proposal');
+  const listen = (m: Mode) => {
+    const key = keyOf(m);
+    if (live.key === key && live.status === 'playing' && mode === m) {
       void livePlayer.pause();
       return;
     }
-    void livePlayer.play(key, (signal) => patternsApi.preview(p.id, genre, variant, signal));
+    setMode(m);
+    const lanes = soloLanes.get(key);
+    if (m === 'solo' && lanes) livePlayer.setSoloLanes(lanes);
+    else livePlayer.setSoloLanes([]);
+    void livePlayer.play(key, async (signal) => {
+      const payload = await patternsApi.preview(p.id, genre, m === 'current' ? 'current' : 'proposal', signal);
+      if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
+      soloLanes.set(key, payload.lanes);
+      if (m === 'solo') livePlayer.setSoloLanes(payload.lanes);
+      return payload;
+    });
   };
-  const stateOf = (variant: 'proposal' | 'current') => (live.key === keyFor(variant) ? live.status : 'idle');
+  const stateOf = (m: Mode) => (live.key === keyOf(m) && mode === m ? live.status : 'idle');
   const status = p.review?.status;
 
   return (
@@ -216,19 +236,18 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
             ))}
           </select>
         ) : null}
-        <ListenButton state={stateOf('proposal')} onClick={() => listen('proposal')} label="With this pattern" primary />
+        <ListenButton state={stateOf('context')} onClick={() => listen('context')} label="Play in context" primary />
+        <ListenButton state={stateOf('solo')} onClick={() => listen('solo')} label="Play solo" primary />
         <ListenButton state={stateOf('current')} onClick={() => listen('current')} label="Current library" />
-        {(['proposal', 'current'] as const).map((v) =>
-          live.key === keyFor(v) && live.status === 'loading' ? (
-            <span key={v} className="text-[13px] text-white/55">{live.step}</span>
-          ) : live.key === keyFor(v) && live.status === 'error' ? (
-            <span key={v} className="text-[13px] text-err">{live.error}</span>
-          ) : null,
-        )}
+        {live.key === keyOf(mode) && live.status === 'loading' ? (
+          <span className="text-[13px] text-white/55">{live.step}</span>
+        ) : live.key === keyOf(mode) && live.status === 'error' ? (
+          <span className="text-[13px] text-err">{live.error}</span>
+        ) : null}
       </div>
       <p className="mt-2 text-[12px] text-white/40">
-        Both play the same {GENRE_LABELS[genre]} song; only{' '}
-        {DIFFERS[p.family]}.
+        In context and the current library play the same {GENRE_LABELS[genre]} song; only{' '}
+        {DIFFERS[p.family]}. Solo plays just the {FAMILY_LABELS[p.family].toLowerCase()} of the in-context song.
       </p>
 
       <div className="mt-6 flex flex-col gap-3 border-t border-line/60 pt-5 sm:flex-row sm:items-end">

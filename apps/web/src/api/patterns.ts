@@ -56,7 +56,7 @@ export const patternsApi = {
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
     defaultBrainClient.post<{ review: PatternReview | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
   preview: (id: string, genre: Genre, variant: 'proposal' | 'current', signal?: AbortSignal) =>
-    defaultBrainClient.post<PlaybackPayload & { seed: string }>(
+    defaultBrainClient.post<PlaybackPayload & { seed: string; /** Tracks playing the proposal's instrument. */ lanes: string[] }>(
       `/api/patterns/${encodeURIComponent(id)}/preview`,
       { genre, variant },
       { signal },
