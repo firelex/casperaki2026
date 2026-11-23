@@ -33,23 +33,12 @@ const FAMILY_LABELS: Record<Family, string> = {
   popStrings: 'Strings',
   popBrass: 'Brass',
 };
-const DIFFERS: Record<Family, string> = {
-  drums: 'the drums differ (and parts that follow them)',
-  bass: 'the bass differs',
-  keys: 'the keys differ',
-  pad: 'the pads differ',
-  guitar: 'the guitar differs',
-  synths: 'the synths differ',
-  pluckedSynths: 'the plucked synths differ',
-  popStrings: 'the strings differ',
-  popBrass: 'the brass differs',
-};
 const FAMILY_ORDER: readonly Family[] = ['drums', 'bass', 'keys', 'guitar', 'pad', 'popStrings', 'popBrass', 'synths', 'pluckedSynths'];
 
 /**
  * Pattern lab (admins): review the patterns Casperaki suggests to fill thin
- * styles. Each proposal can be heard inside a full song in its genre, next
- * to the same song with the current library, then approved or rejected.
+ * styles. Each proposal can be heard inside a full song in its genre (in
+ * context or solo), commented on, then approved or rejected.
  * Approved patterns reach new songs once exported into the library
  * (apps/brain/scripts/export-approved-patterns.ts).
  */
@@ -225,20 +214,18 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
 
   // "Play in context" and "Play solo" play the same proposal song (one load); solo
   // solos the tracks of the proposal's instrument, which the preview names.
-  type Mode = 'context' | 'solo' | 'current';
+  type Mode = 'context' | 'solo';
   const [mode, setMode] = useState<Mode>('context');
   /** Why the last Play did not play (e.g. solo where the instrument is silent). */
   const [listenError, setListenError] = useState<string | undefined>(undefined);
   // The proposal song plays only the selected pattern (a generator has just the one).
   const takeArg = (t: number) => (p.kind === 'algo' ? undefined : t);
-  const keyFor = (variant: 'proposal' | 'current', t: number = take, snd: string | undefined = sound, g: Genre = genre) =>
-    variant === 'proposal'
-      ? `pattern:${p.id}:${g}:proposal:${takeArg(t) ?? 'all'}:${snd ?? 'own'}`
-      : `pattern:${p.id}:${g}:current:${snd ?? 'own'}`;
-  const keyOf = (m: Mode, t: number = take, snd: string | undefined = sound, g: Genre = genre) => keyFor(m === 'current' ? 'current' : 'proposal', t, snd, g);
+  // Context and solo play the same song (one load): the key does not name the mode.
+  const keyOf = (_m: Mode, t: number = take, snd: string | undefined = sound, g: Genre = genre) =>
+    `pattern:${p.id}:${g}:proposal:${takeArg(t) ?? 'all'}:${snd ?? 'own'}`;
   /** The preview song's loader for these settings (it remembers the song's tracks and sections). */
   const loaderFor = (m: Mode, t: number, snd: string | undefined, g: Genre) => async (signal: AbortSignal) => {
-    const payload = await patternsApi.preview(p.id, g, m === 'current' ? 'current' : 'proposal', m === 'current' ? undefined : takeArg(t), snd, signal);
+    const payload = await patternsApi.preview(p.id, g, 'proposal', takeArg(t), snd, signal);
     if (payload.lanes.length === 0) throw new Error(`The preview song has no ${FAMILY_LABELS[p.family]} track to solo.`);
     previewInfo.set(keyOf(m, t, snd, g), { lanes: payload.lanes, sections: payload.sections });
     return payload;
@@ -320,7 +307,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
     setSound(undefined); // the sounds on offer depend on the genre
     if (playingHere && g !== genre) listen(mode, take, undefined, g);
   };
-  // Download MP3: the song as last heard on this card (proposal or current, in context or solo), rendered in the
+  // Download MP3: the song as last heard on this card (in context or solo), rendered in the
   // browser; mastered like playback, but a solo unmastered (mastering one instrument alone would push it up).
   const [download, setDownload] = useState<{ status: string } | { error: string } | undefined>(undefined);
   const downloadMp3 = async () => {
@@ -336,17 +323,17 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         soloLanes = info.lanes;
       }
       const files = await livePlayer.mixExport(key, load, (pr) => setDownload({ status: `Making the MP3: ${mixExportStatus(pr).label}` }), soloLanes);
-      const what = mode === 'current' ? 'current library' : `pattern ${take + 1}${mode === 'solo' ? ', solo' : ''}`;
+      const what = `pattern ${take + 1}${mode === 'solo' ? ', solo' : ''}`;
       downloadBytes(mode === 'solo' ? files.unmasteredMp3 : files.masteredMp3, `${fileStem(`${p.name} - ${GENRE_LABELS[genre]} (${what})`)}.mp3`, 'audio/mpeg');
       setDownload(undefined);
     } catch (err) {
       setDownload({ error: err instanceof Error ? err.message : String(err) });
     }
   };
-  // Open in editor: the song as heard (the mode last played: the proposal, or the current library) as a new project.
+  // Open in editor: the song as heard (with the chosen pattern, style and sound) as a new project.
   const navigate = useNavigate();
   const openInEditor = useMutation({
-    mutationFn: () => patternsApi.project(p.id, genre, mode === 'current' ? 'current' : 'proposal', mode === 'current' ? undefined : takeArg(take), sound),
+    mutationFn: () => patternsApi.project(p.id, genre, 'proposal', takeArg(take), sound),
     onSuccess: ({ id }) => {
       void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list });
       navigate(`/editor/${id}/timeline`);
@@ -452,7 +439,6 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         ) : null}
         <ListenButton state={stateOf('context')} onClick={() => listen('context')} label="Play in context" primary />
         <ListenButton state={stateOf('solo')} onClick={() => listen('solo')} label="Play solo" primary />
-        <ListenButton state={stateOf('current')} onClick={() => listen('current')} label="Current library" />
         <DropdownMenu>
           <DropdownMenuTrigger
             className="flex h-10 w-10 items-center justify-center rounded-full border border-line text-[18px] leading-none text-white/80 outline-none hover:border-white/60 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60"
@@ -477,7 +463,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
             >
               Download MP3
               <div className="text-[11px] text-white/45">
-                {mode === 'current' ? 'The current library' : mode === 'solo' ? 'This pattern, solo' : 'This pattern in context'} · {GENRE_LABELS[genre]}
+                {mode === 'solo' ? 'This pattern, solo' : 'This pattern in context'} · {GENRE_LABELS[genre]}
               </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -494,8 +480,8 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         ) : null}
       </div>
       <p className="mt-2 text-[12px] text-white/40">
-        In context and the current library play the same {GENRE_LABELS[genre]} song; only{' '}
-        {DIFFERS[p.family]}. Solo plays just the {FAMILY_LABELS[p.family].toLowerCase()} of the in-context song.
+        In context plays a whole {GENRE_LABELS[genre]} song with this pattern on the {FAMILY_LABELS[p.family].toLowerCase()}; solo
+        plays just the {FAMILY_LABELS[p.family].toLowerCase()}, where it plays.
         {energyOf(p, take) ? ` This pattern is for ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'}: playing loops the first ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'} (back-to-back ones together).` : ''}
       </p>
 
