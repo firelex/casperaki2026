@@ -40,13 +40,96 @@ def tempo_class(pred: float | None, truth: float) -> str:
     return "other"
 
 
-def read_beats(path: Path) -> tuple[np.ndarray, np.ndarray | None]:
-    """Beat times and downbeat times; downbeats None when the file has no beat numbers (some GTZAN jazz
-    annotations): such a clip is scored on beats and tempo, and left out of the downbeat score."""
+def fit_grid(beats: np.ndarray) -> tuple[float, float] | None:
+    """One constant-tempo grid through the predicted beats: (period s, phase s), least squares on the beat
+    times against their grid index (index from the median interval, so a missed beat does not shift it)."""
+    if len(beats) < 3:
+        return None
+    p0 = float(np.median(np.diff(beats)))
+    idx = np.round((beats - beats[0]) / p0)
+    a = np.vstack([idx, np.ones_like(idx)]).T
+    (period, phase), *_ = np.linalg.lstsq(a, beats, rcond=None)
+    if period <= 0:
+        return None
+    return float(period), float(phase)
+
+
+def grid_correct(pb: np.ndarray, pdb: np.ndarray, truth_bpm: float, tb: np.ndarray, td: np.ndarray | None, bpb_label: int | None,
+                 meant_bpm: float | None) -> dict:
+    """The owner's "grid correct" (hum-to-song snaps notes to one steady grid, so single-beat wobble does not
+    matter). Fit one steady grid to the predicted beats; resolve the tempo octave (a) towards the meant tempo,
+    (b) into 70-140 BPM with no hint; bar lines on that grid from the predicted downbeats (beats per bar from
+    their median spacing, bar phase from where they fall). Correct = tempo within 4% of the label, the same
+    beats per bar as the label, and at least 80% of the labelled downbeats within the tolerance of a fitted
+    bar line (70 ms, or a quarter of the labelled beat)."""
+    out = {}
+    g = fit_grid(np.asarray(pb))
+    for mode in ("meant", "nohint"):
+        for tol in ("70ms", "quarterbeat"):
+            out[f"grid_{mode}_{tol}"] = False
+        out[f"tempo_{mode}"] = False
+    if g is None:
+        return out
+    period, phase = g
+    bpm = 60.0 / period
+    pdb = np.asarray(pdb)
+    for mode in ("meant", "nohint"):
+        if mode == "meant":
+            ref = meant_bpm if meant_bpm is not None else truth_bpm
+            m = min((0.25, 0.5, 1.0, 2.0, 4.0), key=lambda f: abs(np.log(bpm * f / ref)))
+        else:
+            m = 1.0
+            while bpm * m >= 140:
+                m /= 2
+            while bpm * m < 70:
+                m *= 2
+        t_bpm = bpm * m
+        tempo_ok = abs(t_bpm - truth_bpm) <= 0.04 * truth_bpm
+        out[f"tempo_{mode}"] = bool(tempo_ok)
+        out[f"bpm_{mode}"] = t_bpm
+        if td is None or bpb_label is None or len(pdb) < 2 or not tempo_ok:
+            continue
+        per = 60.0 / t_bpm
+        # the grid's phase at the new density: when halving (or quartering), keep the phase whose beats meet the
+        # most predicted downbeats
+        k = int(round(per / period)) if per > period else 1
+        best = None
+        for j in range(k):
+            ph = phase + j * period
+            hits = np.sum(np.abs(((pdb - ph) / per) - np.round((pdb - ph) / per)) * per < 0.07)
+            if best is None or hits > best[0]:
+                best = (hits, ph)
+        ph = best[1]
+        bpb = int(round(float(np.median(np.diff(pdb))) / per))
+        if bpb < 1:
+            continue
+        # bar phase: the grid beat (mod bpb) that most predicted downbeats fall on
+        idx = np.round((pdb - ph) / per).astype(int) % bpb
+        off = int(np.bincount(idx, minlength=bpb).argmax())
+        lo = min(tb[0], pdb[0]) - 2 * bpb * per
+        hi = max(tb[-1], pdb[-1]) + 2 * bpb * per
+        n0 = int(np.floor((lo - ph) / per))
+        n1 = int(np.ceil((hi - ph) / per))
+        grid_beats = ph + np.arange(n0, n1 + 1) * per
+        bars = grid_beats[((np.arange(n0, n1 + 1) - off) % bpb) == 0]
+        if len(bars) == 0 or len(td) == 0:
+            continue
+        dist = np.min(np.abs(td[:, None] - bars[None, :]), axis=1)
+        truth_beat = 60.0 / truth_bpm
+        for tol, sec in (("70ms", 0.07), ("quarterbeat", truth_beat / 4)):
+            out[f"grid_{mode}_{tol}"] = bool(bpb == bpb_label and np.mean(dist <= sec) >= 0.8)
+        out[f"bpb_{mode}"] = bpb
+        out[f"bar_hits_{mode}_70ms"] = float(np.mean(dist <= 0.07))
+    return out
+
+
+def read_beats(path: Path) -> tuple[np.ndarray, np.ndarray | None, int | None]:
+    """Beat times, downbeat times and beats per bar; downbeats None when the file has no beat numbers (some
+    GTZAN jazz annotations): such a clip is scored on beats and tempo, and left out of the downbeat score."""
     a = np.loadtxt(path, ndmin=2)
     if a.shape[1] == 1:
-        return a[:, 0], None
-    return a[:, 0], a[a[:, 1] == 1, 0]
+        return a[:, 0], None, None
+    return a[:, 0], a[a[:, 1] == 1, 0], int(a[:, 1].max())
 
 
 def band(bpm: float) -> str:
@@ -134,7 +217,7 @@ def main():
                 y, sr = sf.read(w, dtype="float32")
                 with torch.inference_mode():
                     pb, pd_ = model(y, sr)
-                tb, td = read_beats(w.with_suffix(".beats"))
+                tb, td, bpb_label = read_beats(w.with_suffix(".beats"))
                 jp = w.with_suffix(".json")
                 meta = json.loads(jp.read_text()) if jp.exists() else None
                 truth_tempo = tempo_from_beats(tb)
@@ -145,6 +228,8 @@ def main():
                     "downbeat_f": mir_eval.beat.f_measure(td, np.asarray(pd_)) if td is not None and len(td) else math.nan,
                     "truth_bpm": truth_tempo, "pred_bpm": pred_tempo, "tempo": tempo_class(pred_tempo, truth_tempo),
                     "n_truth_beats": len(tb), "n_pred_beats": len(pb), **clip_info(meta),
+                    **grid_correct(np.asarray(pb), np.asarray(pd_), truth_tempo, tb, td, bpb_label, None),
+                    "pred_beats": " ".join(f"{x:.3f}" for x in pb), "pred_downbeats": " ".join(f"{x:.3f}" for x in pd_),
                 })
             print(f"{model_name} {set_name}: {len(wavs)} clips scored", flush=True)
         if args.hum_lab:
@@ -153,9 +238,11 @@ def main():
                 with torch.inference_mode():
                     pb, pd_ = model(y, sr)
                 pred_tempo = tempo_from_beats(np.asarray(pb))
+                g = grid_correct(np.asarray(pb), np.asarray(pd_), meant, np.array([]), None, None, meant)
                 rows.append({"model": model_name, "set": "hum-lab", "clip": cid, "beat_f": math.nan, "downbeat_f": math.nan,
                              "truth_bpm": meant, "pred_bpm": pred_tempo, "tempo": tempo_class(pred_tempo, meant),
-                             "n_truth_beats": 0, "n_pred_beats": len(pb)})
+                             "n_truth_beats": 0, "n_pred_beats": len(pb), "tempo_meant": g["tempo_meant"], "tempo_nohint": g["tempo_nohint"],
+                             "pred_beats": " ".join(f"{x:.3f}" for x in pb), "pred_downbeats": " ".join(f"{x:.3f}" for x in pd_)})
                 n += 1
             print(f"{model_name} hum-lab: {n} recordings scored", flush=True)
         del model
@@ -190,6 +277,22 @@ def table(df: pd.DataFrame, names, by: str | None) -> str:
     return "\n".join(lines)
 
 
+def grid_table(df: pd.DataFrame, names) -> str:
+    cols = [("grid_meant_70ms", "grid (meant tempo, 70 ms)"), ("grid_meant_quarterbeat", "grid (meant tempo, 1/4 beat)"),
+            ("grid_nohint_70ms", "grid (no hint, 70 ms)"), ("grid_nohint_quarterbeat", "grid (no hint, 1/4 beat)")]
+    lines = ["| model | clips | " + " | ".join(c for _, c in cols) + " | tempo right, bars wrong (meant, 70 ms) | tempo right, bars wrong (no hint, 70 ms) |",
+             "|" + "---|" * (len(cols) + 4)]
+    for n in names:
+        g = df[df["model"] == n]
+        if "grid_meant_70ms" not in g or g["grid_meant_70ms"].isna().all():
+            continue
+        cells = [f"{g[c].astype(bool).mean():.0%}" for c, _ in cols]
+        tw_m = (g["tempo_meant"].astype(bool) & ~g["grid_meant_70ms"].astype(bool)).mean()
+        tw_n = (g["tempo_nohint"].astype(bool) & ~g["grid_nohint_70ms"].astype(bool)).mean()
+        lines.append(f"| {n} | {len(g)} | " + " | ".join(cells) + f" | {tw_m:.0%} | {tw_n:.0%} |")
+    return "\n".join(lines)
+
+
 def summarise(df: pd.DataFrame, names) -> str:
     out = ["# Scores (same files for every model)\n", "Beat and downbeat F-measure: mir_eval, 70 ms window, mean over clips, nothing trimmed. "
            "Tempo ok: the median predicted beat interval is within 4% of the labelled one (hum-lab: of the meant tempo); "
@@ -197,6 +300,11 @@ def summarise(df: pd.DataFrame, names) -> str:
     for s in df["set"].unique():
         d = df[df["set"] == s]
         out.append(f"\n## {s}\n\n" + table(d, names, None))
+        if s == "hum-lab":
+            out.append("\nTempo with the meant tempo as hint / with no hint (70-140 BPM): " + ", ".join(
+                f"{n}: {d[d['model'] == n]['tempo_meant'].astype(bool).mean():.0%} / {d[d['model'] == n]['tempo_nohint'].astype(bool).mean():.0%}" for n in names))
+        elif "grid_meant_70ms" in d:
+            out.append(f"\n### {s}: grid correct (one steady grid with bar lines; see scripts/score.py grid_correct)\n\n" + grid_table(d, names))
         for by in ("lead", "lead_group", "timing", "meter", "tempo_band", "pollution", "style", "start", "bars", "genre", "singer"):
             if by in d and d[by].notna().any():
                 out.append(f"\n### {s} by {by}\n\n" + table(d, names, by))
