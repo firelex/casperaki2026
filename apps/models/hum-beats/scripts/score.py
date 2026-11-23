@@ -40,8 +40,12 @@ def tempo_class(pred: float | None, truth: float) -> str:
     return "other"
 
 
-def read_beats(path: Path) -> tuple[np.ndarray, np.ndarray]:
+def read_beats(path: Path) -> tuple[np.ndarray, np.ndarray | None]:
+    """Beat times and downbeat times; downbeats None when the file has no beat numbers (some GTZAN jazz
+    annotations): such a clip is scored on beats and tempo, and left out of the downbeat score."""
     a = np.loadtxt(path, ndmin=2)
+    if a.shape[1] == 1:
+        return a[:, 0], None
     return a[:, 0], a[a[:, 1] == 1, 0]
 
 
@@ -138,7 +142,7 @@ def main():
                 rows.append({
                     "model": model_name, "set": set_name, "clip": w.stem,
                     "beat_f": mir_eval.beat.f_measure(tb, np.asarray(pb)),
-                    "downbeat_f": mir_eval.beat.f_measure(td, np.asarray(pd_)) if len(td) else math.nan,
+                    "downbeat_f": mir_eval.beat.f_measure(td, np.asarray(pd_)) if td is not None and len(td) else math.nan,
                     "truth_bpm": truth_tempo, "pred_bpm": pred_tempo, "tempo": tempo_class(pred_tempo, truth_tempo),
                     "n_truth_beats": len(tb), "n_pred_beats": len(pb), **clip_info(meta),
                 })
