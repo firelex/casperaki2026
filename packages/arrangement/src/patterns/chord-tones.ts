@@ -64,16 +64,26 @@ export const GuitarPickSchema = z.tuple([
   z.number().int().min(1).max(127),
 ]);
 
+/** The Virtual Guitarist effects a pattern may use (the ones the legacy patterns keep). */
+export const GUITAR_FX = ['fx1', 'fx2', 'fx4', 'fx6'] as const;
+
 export const GuitarPickPatternSchema = z
   .object({
     bars: z.number().int().min(1).max(8),
     energy: EnergySchema.optional(),
     hits: z.array(GuitarPickSchema).min(1),
+    /** Virtual Guitarist effect samples (the guitar's recorded fx1, fx2, fx4, fx6: string noises
+     *  and slides that make a part sound played), each `[beat, name]`. Guitars without effect
+     *  samples (12-string, banjo, mandolin, ukulele, TC Rectifier) skip them. */
+    fx: z.array(z.tuple([z.number().min(0), z.enum(GUITAR_FX)])).optional(),
   })
   .strict()
   .superRefine((p, ctx) => {
     p.hits.forEach(([beat], i) => {
       if (beat >= p.bars * BEATS_PER_BAR) ctx.addIssue({ code: 'custom', path: ['hits', i], message: `beat ${beat} is past the pattern's ${p.bars} bar(s)` });
+    });
+    (p.fx ?? []).forEach(([beat], i) => {
+      if (beat >= p.bars * BEATS_PER_BAR) ctx.addIssue({ code: 'custom', path: ['fx', i], message: `beat ${beat} is past the pattern's ${p.bars} bar(s)` });
     });
   });
 export type GuitarPickPattern = z.infer<typeof GuitarPickPatternSchema>;
@@ -157,6 +167,11 @@ export function emitAuthoredPatterns(rng: Rng, segment: Segment, style: Authored
           durations: [duration],
           velocities: [velocity],
         });
+      }
+      for (const [at, event] of (pattern as GuitarPickPattern).fx ?? []) {
+        if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
+        const beat = at - patternBar * BEATS_PER_BAR;
+        addNoteEvent(bars[segBar]!, beat, { type: 'virtualGuitarist', chord: chordAt(segBar, beat), event });
       }
     }
   }

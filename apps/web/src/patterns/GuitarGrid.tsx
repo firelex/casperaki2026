@@ -5,7 +5,7 @@ const STRING_LABELS = ['String 1 (bass)', 'String 2', 'String 3', 'String 4', 'S
 
 /**
  * A guitar pattern: one row per string of the chord shape (top string at the
- * top), each pick or strum shown on the strings it plays.
+ * top), each pick or strum shown on the strings it plays; effects on a row above.
  */
 export function GuitarGrid({ pattern }: { pattern: GuitarPickPattern }) {
   const beats = pattern.bars * 4;
@@ -13,7 +13,17 @@ export function GuitarGrid({ pattern }: { pattern: GuitarPickPattern }) {
   return (
     <RollGrid
       beats={beats}
-      rows={used.map((s) => ({
+      rows={[
+        ...(pattern.fx?.length
+          ? [
+              {
+                key: 'fx',
+                label: 'Guitar effects',
+                notes: pattern.fx.map(([pos, name]) => ({ pos, len: 0.5, title: `Effect ${name} at beat ${pos + 1}` })),
+              },
+            ]
+          : []),
+        ...used.map((s) => ({
         key: s,
         label: STRING_LABELS[s]!,
         notes: pattern.hits
@@ -23,7 +33,8 @@ export function GuitarGrid({ pattern }: { pattern: GuitarPickPattern }) {
             len,
             title: `${strings.length > 1 ? (strings[0]! < strings[strings.length - 1]! ? 'Down strum' : 'Up strum') : 'Pick'} at beat ${pos + 1}, ${len} beats, velocity ${vel}`,
           })),
-      }))}
+        })),
+      ]}
     />
   );
 }

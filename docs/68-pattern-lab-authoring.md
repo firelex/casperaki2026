@@ -27,7 +27,7 @@ Genre tempos (BPM): ballad 65-80, brightPop 95-129, edm 115-150, latin 90-104, o
 | drums | `algo` | name of a generator in `src/patterns/drums-authored.ts` |
 | bass | `bassPatterns` | `[[beat, length, semitones from the chord root], …]` over 2 bars |
 | keys, pad, popStrings, popBrass, synths, pluckedSynths | `chordTones` | `{ bars, energy?, notes: [[beat, semitones from middle C, length], …] }` |
-| guitar | `guitarPicks` | `{ bars, energy?, hits: [[beat, [strings], length, velocity], …] }` |
+| guitar | `guitarPicks` | `{ bars, energy?, hits: [[beat, [strings], length, velocity], …], fx?: [[beat, "fx1"], …] }` |
 
 Beats count from 0 across the whole pattern (bar 2 starts at 4). Patterns loop over the section.
 
@@ -77,6 +77,12 @@ Each hit names strings of the chord's guitar shape (engine `GuitarChord`, lowest
 on small shapes (the checker flags it). One string = a picked note; several = a strum played in the
 listed order, 0.02 beats apart (`[0,1,2,3,4,5]` down, `[5,4,3,2,1,0]` up). Velocity 1-127 is used
 (legacy picking sits around 45-90). The same chord-at-start rule applies.
+
+Optional `fx: [[beat, "fx1" | "fx2" | "fx4" | "fx6"], …]` adds the Virtual Guitarist's recorded
+effect samples (short string noises and slides, about 0.8 s each, the ones the legacy patterns keep)
+at those beats, so a part sounds played rather than programmed. Use them sparingly (a few per two
+bars, typically at the end of a phrase or between strums). Guitars without effect samples (12-string,
+banjo, mandolin, ukulele, TC Rectifier) skip them silently, as they do for the library's patterns.
 
 ## Checking a proposal
 

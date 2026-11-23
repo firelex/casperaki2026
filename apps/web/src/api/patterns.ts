@@ -30,6 +30,8 @@ export interface GuitarPickPattern {
   readonly bars: number;
   readonly energy?: Energy;
   readonly hits: ReadonlyArray<readonly [number, readonly number[], number, number]>;
+  /** Virtual Guitarist effect samples: [beat, fx1 | fx2 | fx4 | fx6]. */
+  readonly fx?: ReadonlyArray<readonly [number, string]>;
 }
 
 export type LaneFamily = 'keys' | 'pad' | 'popStrings' | 'popBrass' | 'synths' | 'pluckedSynths';

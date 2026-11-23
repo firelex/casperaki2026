@@ -84,6 +84,17 @@ describe('chord-tone patterns', () => {
     expect(strum.offset).toEqual([0, 0.02, 0.04]);
   });
 
+  it('a guitar preview plays its Virtual Guitarist effects', () => {
+    const preview = { lanePreview: { family: 'guitar', kind: 'guitarPicks', patterns: [{ bars: 1, hits: [[0, [0, 1, 2], 1, 90]], fx: [[3.5, 'fx2']] }] } };
+    const song = songWithLane('organicVibes', 'Guitar', preview);
+    const fx = laneEvents(song, 'Guitar').filter((x) => (x.e as { type: string }).type === 'virtualGuitarist');
+    expect(fx.length).toBeGreaterThan(0);
+    for (const { beat, e } of fx) {
+      expect(beat).toBe('3.5');
+      expect((e as { event: string }).event).toBe('fx2');
+    }
+  });
+
   it('a preview of one pattern plays only that pattern, in every section', () => {
     const p = loadPatternProposals().find((x) => x.kind === 'chordTones' && x.patterns.length > 1 && x.patterns.some((t) => t.energy))!;
     if (p.kind !== 'chordTones') throw new Error('expected a chord-tone proposal');
