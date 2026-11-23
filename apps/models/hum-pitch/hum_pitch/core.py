@@ -151,7 +151,7 @@ def clip_metrics(ref: list[list], est: list[list]) -> dict:
     n_ref = len(ref)
     out = {"n_ref": n_ref, "n_est": len(est)}
     if len(est) == 0:
-        return out | {"f_onset": 0.0, "p_onset": 0.0, "r_onset": 0.0, "f_onset_offset": 0.0, "pitch_ok": 0.0,
+        return out | {"n_good": 0, "f_onset": 0.0, "p_onset": 0.0, "r_onset": 0.0, "f_onset_offset": 0.0, "pitch_ok": 0.0,
                       "err_octave": 0.0, "err_semitone": 0.0, "err_other": 0.0, "missed": 1.0}
     p1, r1, f1, _ = mir_eval.transcription.precision_recall_f1_overlap(ri, rp, ei, ep, onset_tolerance=0.05, pitch_tolerance=50.0, offset_ratio=None)
     _, _, f2, _ = mir_eval.transcription.precision_recall_f1_overlap(ri, rp, ei, ep, onset_tolerance=0.05, pitch_tolerance=50.0, offset_ratio=0.2, offset_min_tolerance=0.05)
@@ -174,6 +174,6 @@ def clip_metrics(ref: list[list], est: list[list]) -> dict:
         matched_wrong = len(pairs)
     else:
         matched_wrong = 0
-    return out | {"f_onset": f1, "p_onset": p1, "r_onset": r1, "f_onset_offset": f2, "pitch_ok": len(good) / n_ref,
+    return out | {"n_good": len(good), "f_onset": f1, "p_onset": p1, "r_onset": r1, "f_onset_offset": f2, "pitch_ok": len(good) / n_ref,
                   "err_octave": octave / n_ref, "err_semitone": semitone / n_ref, "err_other": other / n_ref,
                   "missed": (len(rr) - matched_wrong) / n_ref}

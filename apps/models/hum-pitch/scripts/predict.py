@@ -1,11 +1,13 @@
 """Run one model over the clips of some sets and cache its raw output (CPU only).
 
-  python -I scripts/predict.py --model basic-pitch|pyin|swiftf0 --sets humtrans-test humtrans-tune synth-test --workers 8
+  python -I scripts/predict.py --model basic-pitch|pyin|swiftf0|onsets --sets humtrans-test humtrans-tune synth-test --workers 8
 
 Cache: /mnt/d/casperaki-data/hum-pitch/cache/<model>/<clip id>.npz (clips already cached are skipped).
   basic-pitch  the network's three outputs (note, onset, contour posteriorgrams), default ICASSP 2022 model;
                notes are made from them later with any thresholds (scripts/score.py, scripts/tune_basic_pitch.py).
   pyin         librosa pYIN at 16 kHz, 10 ms hop, 50-1600 Hz: times, f0_hz, voiced, level_db.
+  onsets       not a pitch model: librosa onset strength (log-mel spectral flux) at 16 kHz, 10 ms hop, and
+               librosa's tempo estimate from it (used by hum_pitch/notes.py for note splitting).
   swiftf0      SwiftF0 at 16 kHz (its native rate, 16 ms hop), 50-1600 Hz, voiced = confidence >= 0.5 (the
                model's calibrated threshold): times, f0_hz, voiced, confidence, level_db.
 """
@@ -42,7 +44,7 @@ def _init(name: str, threads: int):
     elif name == "swiftf0":
         from swift_f0 import SwiftF0
         _MODEL = SwiftF0(threads=threads)
-    elif name == "pyin":
+    elif name in ("pyin", "onsets"):
         _MODEL = None
     else:
         raise ValueError(f"unknown model {name}")
@@ -60,7 +62,12 @@ def _run(row: dict) -> tuple[str, float]:
     else:
         import librosa
         y, sr = librosa.load(row["wav"], sr=16000, mono=True)
-        if _NAME == "pyin":
+        if _NAME == "onsets":
+            env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=160)
+            times = librosa.times_like(env, sr=sr, hop_length=160)
+            tempo = float(librosa.feature.tempo(onset_envelope=env, sr=sr, hop_length=160)[0])
+            arrays = {"times": times, "env": env, "tempo_bpm": np.array(tempo)}
+        elif _NAME == "pyin":
             f0, voiced, _ = librosa.pyin(y, fmin=FMIN_HZ, fmax=FMAX_HZ, sr=sr, frame_length=1024, hop_length=160)
             times = librosa.times_like(f0, sr=sr, hop_length=160)
             arrays = {"times": times, "f0_hz": f0, "voiced": voiced}
@@ -77,7 +84,7 @@ def _run(row: dict) -> tuple[str, float]:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", required=True, choices=["basic-pitch", "pyin", "swiftf0"])
+    ap.add_argument("--model", required=True, choices=["basic-pitch", "pyin", "swiftf0", "onsets"])
     ap.add_argument("--sets", nargs="+", required=True)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--threads", type=int, default=2, help="CPU threads per worker")
