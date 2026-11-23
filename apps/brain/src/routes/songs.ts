@@ -16,7 +16,11 @@ import {
   formatGenreTempoRange,
   GenreSchema,
   isBpmInGenreTempoRange,
+  applyMixOverrides,
+  isEmptyMixOverrides,
+  MixOverridesSchema,
   parseSong,
+  pruneMixOverrides,
 } from '@casperaki/song-schema';
 import type { Song } from '@casperaki/song-schema';
 
@@ -51,6 +55,13 @@ const GenerateBodySchema = z
 // after their style and key.
 const TitleSchema = z.string().trim().min(1).max(120);
 
+const MixBodySchema = z.object({ mixOverrides: MixOverridesSchema.nullable() }).strict();
+
+/** The song's mixer lanes: its instruments, plus the shared transitions lane. */
+function songLaneNames(song: Song): string[] {
+  return [...song.instrumentDefinitions.map((d) => d.name), 'Sample Transitions FX'];
+}
+
 const SaveBodySchema = z
   .object({
     song: z.unknown(),
@@ -65,6 +76,9 @@ export interface SongsRouterDeps {
   /** Per-song render jobs. Absent when the sample library is not configured;
    *  render endpoints then answer 503 render_not_configured. */
   readonly renders?: RenderService;
+  /** The standard mix config (mix-config.json text), to check and apply Pro-mode
+   *  mixes. Absent without in-browser playback; saving a mix then answers 503. */
+  readonly mixConfig?: string;
   /** Hook for tests to inject a deterministic timestamp. */
   readonly now?: () => string;
   /** Told about every newly generated song that got the placeholder title
@@ -80,7 +94,7 @@ export function ownerOf(req: Request): string {
   return req.user?.id ?? DEV_OWNER_ID;
 }
 
-export function createSongsRouter({ store, renders, now, onPlaceholderTitle }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -163,6 +177,12 @@ export function createSongsRouter({ store, renders, now, onPlaceholderTitle }: S
     const at = clock();
     store.put({ id, song, canonical, hash, createdAt: at });
     store.moveProject({ ownerId: owner, fromSongId: req.params.id, toSongId: id, updatedAt: at });
+    // A Pro-mode change for a track the edit removed no longer applies.
+    const moved = store.getProject(owner, id)!;
+    if (moved.mixOverrides) {
+      const pruned = pruneMixOverrides(moved.mixOverrides, songLaneNames(song));
+      store.setProjectMix({ ownerId: owner, songId: id, mixOverrides: isEmptyMixOverrides(pruned) ? null : pruned, updatedAt: moved.mixUpdatedAt ?? at });
+    }
     if (body.data.title) store.renameProject({ ownerId: owner, songId: id, title: body.data.title, updatedAt: at });
     return res.json({ id, song, hash, project: projectJson(store.getProject(owner, id)!, renders) });
   });
@@ -216,11 +236,47 @@ export function createSongsRouter({ store, renders, now, onPlaceholderTitle }: S
 
   // --- Rendering ---------------------------------------------------------
 
+  // Pro mode: save the owner's mix changes for this song (null or an empty mix = the standard mix).
+  router.put('/api/songs/:id/mix', (req, res) => {
+    const owner = ownerOf(req);
+    const project = store.getProject(owner, req.params.id);
+    const stored = project ? store.get(req.params.id) : undefined;
+    if (!project || !stored) return res.status(404).json({ error: 'not_found', id: req.params.id });
+    const body = MixBodySchema.safeParse(req.body);
+    if (!body.success) {
+      return res.status(400).json({ error: 'invalid_body', issues: body.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) });
+    }
+    const mix = body.data.mixOverrides;
+    if (mix && !isEmptyMixOverrides(mix)) {
+      if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
+      const lanes = new Set(songLaneNames(stored.song));
+      const unknown = Object.keys(mix.lanes).filter((l) => !lanes.has(l));
+      if (unknown.length) return res.status(400).json({ error: 'unknown_lanes', message: `This song has no track ${unknown.map((l) => `"${l}"`).join(', ')}.` });
+      try {
+        applyMixOverrides(mixConfig, mix);
+      } catch (err) {
+        return res.status(400).json({ error: 'invalid_mix', message: err instanceof Error ? err.message : String(err) });
+      }
+    }
+    store.setProjectMix({ ownerId: owner, songId: req.params.id, mixOverrides: mix && !isEmptyMixOverrides(mix) ? mix : null, updatedAt: clock() });
+    return res.json({ project: projectJson(store.getProject(owner, req.params.id)!, renders) });
+  });
+
   router.post('/api/songs/:id/render', (req, res) => {
     if (!renders) return renderNotConfigured(res);
     const stored = store.getProject(ownerOf(req), req.params.id) ? store.get(req.params.id) : undefined;
     if (!stored) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    renders.enqueue(stored.id, stored.canonical);
+    const project = store.getProject(ownerOf(req), req.params.id)!;
+    let songMix: string | undefined;
+    if (project.mixOverrides) {
+      if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'This song has a Pro-mode mix, but the brain has no mix config (CASPERAKI_MIX_CONFIG).' });
+      songMix = applyMixOverrides(mixConfig, project.mixOverrides);
+    }
+    try {
+      renders.enqueue(stored.id, stored.canonical, songMix);
+    } catch (err) {
+      return res.status(409).json({ error: 'render_busy', message: err instanceof Error ? err.message : String(err) });
+    }
     return res.status(202).json(renderJson(stored.id, renders));
   });
 
@@ -325,6 +381,8 @@ function projectJson(p: ProjectRow, renders: RenderService | undefined) {
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
     sections: p.sections,
+    mixOverrides: p.mixOverrides,
+    mixUpdatedAt: p.mixUpdatedAt,
     render: renderJson(p.songId, renders),
   };
 }

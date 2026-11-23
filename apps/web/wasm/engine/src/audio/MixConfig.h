@@ -90,6 +90,25 @@ public:
             }
             c.rackChains_.push_back(std::move(rd));
         }
+
+        // Optional, per song (the app's Pro mode): one instrument lane's own fader
+        // trim (dB added to its target volume, applied with the lane's mute/solo
+        // gain) and its send levels (dB, replacing the resolved ones). Keyed by the
+        // instrument name ("Bass", "Keys 2"). Absent = the standard mix.
+        if (j.contains("laneOverrides")) {
+            for (auto it = j.at("laneOverrides").begin(); it != j.at("laneOverrides").end(); ++it) {
+                const auto& v = it.value();
+                LaneOverride o;
+                if (v.contains("volumeDb")) { o.hasVolume = true; o.volumeDb = v.at("volumeDb").get<double>(); }
+                static const char* kSends[3] = {"reverb", "delay", "chorus"};
+                for (int k = 0; k < 3; ++k)
+                    if (v.contains(kSends[k])) { o.hasSend[k] = true; o.sendDb[k] = v.at(kSends[k]).get<double>(); }
+                for (auto f = v.begin(); f != v.end(); ++f)
+                    if (f.key() != "volumeDb" && f.key() != "reverb" && f.key() != "delay" && f.key() != "chorus")
+                        throw std::runtime_error("MixConfig: laneOverrides." + it.key() + " has an unknown field '" + f.key() + "'");
+                c.laneOverrides_[it.key()] = o;
+            }
+        }
         return c;
     }
 
@@ -147,6 +166,18 @@ public:
     double volScaleFactor() const { return volScaleFactor_; }
     const std::vector<RackDef>& rackChains() const { return rackChains_; }
 
+    // A lane's Pro-mode override (see fromJson), or null when it has none.
+    struct LaneOverride {
+        bool hasVolume = false;
+        double volumeDb = 0.0;
+        bool hasSend[3] = {false, false, false};   // reverb, delay, chorus
+        double sendDb[3] = {0.0, 0.0, 0.0};
+    };
+    const LaneOverride* laneOverride(const std::string& lane) const {
+        auto it = laneOverrides_.find(lane);
+        return it != laneOverrides_.end() ? &it->second : nullptr;
+    }
+
 private:
     struct TVRule { std::string type; std::vector<std::string> genres; double db; };
     struct SendOverride { std::vector<std::string> types; bool set = false;
@@ -159,6 +190,7 @@ private:
     std::vector<SendOverride> byType_;
     std::vector<GroupGenreOverride> byGroupGenre_;
     std::vector<RackDef> rackChains_;
+    std::unordered_map<std::string, LaneOverride> laneOverrides_;
     double masterVolumeDb_ = -1.0, transitionsTrimDb_ = -10.0, volScaleFactor_ = 20.0;
     inline static const std::string kDrums_ = "drums";
 };

@@ -11,7 +11,7 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { livePlayer, patternPlayer, type LaneMeters, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
+import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
@@ -39,6 +39,8 @@ import { Logical4Panel } from './devices/Logical4Panel';
 import { DevicePanel } from './devices/DevicePanel';
 import { ReverbPanel } from './devices/ReverbPanel';
 import { DEVICES } from './devices/deviceDefs';
+import { ProParams } from './devices/ProParams';
+import { changeBusParam, openProMix, resetProMix, useProMix } from '../audio/proMix';
 import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog, DrumSoundDialog } from './sequencer/TrackDialogs';
 import { AddSectionDialog, RenameSectionDialog } from './sequencer/SectionDialogs';
@@ -76,6 +78,13 @@ export function TimelineView() {
   // The mix as the engine resolves it, read straight from the lowered song (fast).
   const [mix, setMix] = useState<ResolvedMix | undefined>(undefined);
   const [mixError, setMixError] = useState<string | undefined>(undefined);
+  /** The standard mix's FX bus chains (Pro mode marks and resets plugin changes against them). */
+  const [standardChains, setStandardChains] = useState<MixConfigJson['rackChains'] | undefined>(undefined);
+  // Pro mode: the song's own mix changes (saved with the project).
+  const pro = useProMix();
+  useEffect(() => {
+    if (activeSong) openProMix(activeSong.id, activeSong.project.mixOverrides);
+  }, [activeSong]);
   useEffect(() => {
     setMix(undefined);
     setMixError(undefined);
@@ -86,12 +95,16 @@ export function TimelineView() {
         (m) => !cancelled && setMix(m),
         (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
       );
+      livePlayer.payloadOf(liveKey, fetchPayload).then(
+        (p) => !cancelled && setStandardChains(p.standardRackChains),
+        (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
+      );
     }, editorDirty ? 1200 : 0);
     return () => {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [liveKey, fetchPayload, editorDirty]);
+  }, [liveKey, fetchPayload, editorDirty, pro.version]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   /** The section dialogs (from the ruler's right-click menu). */
   const [sectionDialog, setSectionDialog] = useState<
@@ -784,7 +797,7 @@ export function TimelineView() {
             aria-label="Drag to resize the mixer (double-click: default, large, hidden)"
             title="Drag to resize the mixer. Double-click: default → large → hidden. X shows/hides it; Shift+X: tracks or mixer full view"
           />
-          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} />
+          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} onReset={() => void resetProMix(liveKey, fetchPayload)} />
         </div>
       ) : null}
 
@@ -826,23 +839,36 @@ export function TimelineView() {
         />
       ) : null}
 
-      {device ? (
+      {device ? (() => {
+        // In Pro mode the plugin shows (and plays) the song's own settings.
+        const params = pro.mix.buses[device.bus]?.[String(device.slot)] ?? device.params;
+        const standard = standardChains?.find((c) => c.bus === device.bus)?.plugins[device.slot]?.params;
+        return (
         <DeviceWindow
           title={device.factory === 'makeLogical4' ? 'Logical4' : (DEVICES[device.factory]?.title ?? device.factory)}
           subtitle={`${device.bus === 'master' ? 'Master' : `${device.bus} bus`} · slot ${device.slot + 1}`}
           onClose={() => setDevice(undefined)}
         >
           {device.factory === 'makeLogical4' ? (
-            <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={device.params} />
+            <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={params} />
           ) : DEVICES[device.factory]?.kind === 'reverb' ? (
-            <ReverbPanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} factory={device.factory} bus={device.bus} slot={device.slot} params={device.params} />
+            <ReverbPanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} factory={device.factory} bus={device.bus} slot={device.slot} params={params} />
           ) : DEVICES[device.factory] ? (
-            <DevicePanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} bus={device.bus} slot={device.slot} params={device.params} bpm={bpm} />
+            <DevicePanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} bus={device.bus} slot={device.slot} params={params} bpm={bpm} />
           ) : (
             <p className="p-6 text-[13px] text-err">No device view for {device.factory}.</p>
           )}
+          {pro.pro && standard ? (
+            <ProParams
+              factory={device.factory}
+              params={params}
+              standard={standard}
+              onChange={(i, v) => changeBusParam(liveKey, device.bus, device.slot, params, i, v)}
+            />
+          ) : null}
         </DeviceWindow>
-      ) : null}
+        );
+      })() : null}
 
       {detail && detailTrack && detailClip ? (
         <ClipDetail

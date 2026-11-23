@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 
 import { automationAt, livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
+import { changeLane, setPro, type ProMixState } from '../../audio/proMix';
 import type { SeqTrack } from '../sequencerModel';
 import { DEVICES } from '../devices/deviceDefs';
 
@@ -39,6 +40,9 @@ export function Mixer({
   solo,
   soundNames,
   onOpenDevice,
+  pro,
+  liveKey,
+  onReset,
 }: {
   tracks: readonly SeqTrack[];
   /** The mix as the engine resolved it for this version. */
@@ -55,6 +59,12 @@ export function Mixer({
   soundNames: Readonly<Record<string, string>>;
   /** Open a plugin's device view. */
   onOpenDevice: (d: OpenDevice) => void;
+  /** Pro mode (editable mix) and the song's changes. */
+  pro: ProMixState;
+  /** What the player plays (live changes go there). */
+  liveKey: string | undefined;
+  /** Back to the standard mix. */
+  onReset: () => void;
 }) {
   if (error) {
     return <div className="flex h-full items-center justify-center px-6 text-center text-[12px] text-err">{error}</div>;
@@ -84,7 +94,9 @@ export function Mixer({
   return (
     // Strips keep their natural height (every insert listed); a lower mixer
     // scrolls instead of squashing them, a taller one adds room above the faders.
-    <div className="h-full min-h-0 overflow-auto bg-[#202124]">
+    <div className="flex h-full min-h-0 flex-col bg-[#202124]">
+      <ProBar pro={pro} onReset={onReset} />
+    <div className="min-h-0 flex-1 overflow-auto">
       {/* All strips as tall as the tallest, so their faders line up. */}
       <div className="flex min-h-full w-max items-stretch">
       {laneOrder.map((lane) => (
@@ -101,6 +113,9 @@ export function Mixer({
           muted={muted.includes(lane)}
           soloed={solo.includes(lane)}
           anySolo={solo.length > 0}
+          pro={pro.pro}
+          override={pro.mix.lanes[lane]}
+          onChange={(patch) => changeLane(liveKey, lane, patch)}
         />
       ))}
       <div className="w-2 shrink-0 bg-black/40" aria-hidden="true" />
@@ -119,6 +134,50 @@ export function Mixer({
       />
       </div>
     </div>
+    </div>
+  );
+}
+
+/** Pro mode switch, Reset and the save state, above the strips. */
+function ProBar({ pro, onReset }: { pro: ProMixState; onReset: () => void }) {
+  const changed = Object.keys(pro.mix.lanes).length + Object.keys(pro.mix.buses).length > 0;
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-b border-black/60 bg-[#2a2b30] px-2 py-1">
+      <button
+        type="button"
+        onClick={() => setPro(!pro.pro)}
+        aria-pressed={pro.pro}
+        disabled={!pro.songId}
+        title={pro.songId ? 'Pro mode: change faders, sends and plugin settings' : 'Save the song first to change its mix'}
+        className={`h-6 rounded-[4px] border px-2.5 text-[11px] font-bold tracking-wide disabled:opacity-40 ${
+          pro.pro ? 'border-[#ffb347] bg-[#ffb347] text-black' : 'border-white/20 bg-[#3a3c42] text-[#d9dade] hover:border-white/40'
+        }`}
+      >
+        PRO
+      </button>
+      <button
+        type="button"
+        onClick={onReset}
+        disabled={!changed || pro.saving}
+        title="Put every fader, send and plugin back to the standard mix"
+        className="h-6 rounded-[4px] border border-white/20 bg-[#3a3c42] px-2.5 text-[11px] text-[#d9dade] hover:border-white/40 disabled:opacity-40"
+      >
+        Reset
+      </button>
+      <span className="text-[11px] text-[#9a9ba3]">
+        {pro.error ? (
+          <span className="text-err">{pro.error}</span>
+        ) : pro.saving ? (
+          'Saving…'
+        ) : changed ? (
+          'Your mix (saved with the song)'
+        ) : pro.pro ? (
+          'Standard mix: drag a fader or send, or open a plugin to change it'
+        ) : (
+          'Standard mix'
+        )}
+      </span>
+    </div>
   );
 }
 
@@ -134,6 +193,9 @@ function ChannelStrip({
   muted,
   soloed,
   anySolo,
+  pro,
+  override,
+  onChange,
 }: {
   name: string;
   color: string;
@@ -147,6 +209,11 @@ function ChannelStrip({
   muted: boolean;
   soloed: boolean;
   anySolo: boolean;
+  /** Pro mode: the fader and sends can be changed. */
+  pro: boolean;
+  /** This track's Pro-mode changes. */
+  override: { volumeDb?: number; reverb?: number; delay?: number; chorus?: number } | undefined;
+  onChange: (patch: { volumeDb?: number; reverb?: number; delay?: number; chorus?: number }) => void;
 }) {
   const buses = [...new Set(parts.map((p) => p.fxGroup))];
   const types = [...new Set(parts.map((p) => p.lowLevelType).filter(Boolean))];
@@ -155,7 +222,9 @@ function ChannelStrip({
   // Automation at the playhead: volume moves the fader, low-pass shows its cutoff.
   const autoDb = automationAt(parts.find((p) => p.volume)?.volume, seconds);
   const cutoff = automationAt(parts.find((p) => p.lowPass)?.lowPass, seconds);
-  const volume = baseVolume !== undefined && autoDb !== undefined ? baseVolume + autoDb : baseVolume;
+  const trim = override?.volumeDb ?? 0;
+  const standard = baseVolume !== undefined ? baseVolume + (autoDb ?? 0) : undefined;
+  const volume = standard !== undefined ? standard + trim : undefined;
   const tip = parts
     .map((p) => `${p.track}: ${p.lowLevelType || 'no type'} → ${p.fxGroup} bus, volume ${fmtDb(p.volumeDb)}, sends R ${fmtDb(p.sendsDb.reverb)} D ${fmtDb(p.sendsDb.delay)} C ${fmtDb(p.sendsDb.chorus)}`)
     .join('\n');
@@ -169,7 +238,13 @@ function ChannelStrip({
         <>
           <Section label="Sends">
             {RETURNS.map((r) => (
-              <SendRow key={r.key} name={r.name} values={parts.map((p) => p.sendsDb[r.key])} />
+              <SendRow
+                key={r.key}
+                name={r.name}
+                values={override?.[r.key] !== undefined ? [override[r.key]!] : parts.map((p) => p.sendsDb[r.key])}
+                changed={override?.[r.key] !== undefined}
+                onChange={pro ? (db) => onChange({ [r.key]: db }) : undefined}
+              />
             ))}
           </Section>
           {cutoff !== undefined && cutoff < 19000 ? (
@@ -177,7 +252,15 @@ function ChannelStrip({
               LP {cutoff >= 1000 ? `${(cutoff / 1000).toFixed(1)} kHz` : `${Math.round(cutoff)} Hz`}
             </div>
           ) : null}
-          <FaderBlock automated={autoDb !== undefined} volumeDb={volume} volumeNote={volumes.length > 1 && volume === undefined ? 'per part' : volumes.length === 0 ? 'none' : undefined} level={level} />
+          <FaderBlock
+            automated={autoDb !== undefined}
+            volumeDb={volume}
+            volumeNote={volumes.length > 1 && volume === undefined ? 'per part' : volumes.length === 0 ? 'none' : trim !== 0 ? `${trim > 0 ? '+' : '−'}${Math.abs(Math.round(trim * 10) / 10)} Pro` : undefined}
+            level={level}
+            changed={trim !== 0}
+            onChange={pro && standard !== undefined ? (db) => onChange({ volumeDb: Math.round((db - standard) * 10) / 10 }) : undefined}
+            onReset={pro ? () => onChange({ volumeDb: 0 }) : undefined}
+          />
           <div className="mt-1 flex justify-center gap-1">
             <button
               type="button"
@@ -349,12 +432,48 @@ function Inserts({
 }
 
 /** One send: level bar and dB. Several parts with different levels show "varies". */
-function SendRow({ name, values }: { name: string; values: readonly (number | null)[] }) {
+function SendRow({
+  name,
+  values,
+  changed,
+  onChange,
+}: {
+  name: string;
+  values: readonly (number | null)[];
+  /** Set in Pro mode (differs from the standard mix). */
+  changed?: boolean;
+  /** Pro mode: the send can be changed (dB; −100 = off). */
+  onChange?: (db: number) => void;
+}) {
   const known = values.filter((v): v is number => v !== null);
   const same = known.length > 0 && known.every((v) => v === known[0]);
   const db = same ? known[0]! : undefined;
   const on = db !== undefined && db > SEND_OFF_DB;
   const frac = on ? Math.max(0, Math.min(1, (db + 40) / 46)) : 0;
+  if (onChange) {
+    // −40 … +6 dB; the far left is off.
+    return (
+      <label className="mb-[3px] flex items-center gap-1" title={`${name} send (drag; far left = off)`}>
+        <span className={`w-[26px] shrink-0 text-[9px] ${changed ? 'text-[#ffb347]' : 'text-[#a9aab1]'}`}>{name.slice(0, 3)}</span>
+        <input
+          type="range"
+          min={-41}
+          max={6}
+          step={0.5}
+          value={on ? Math.max(-40, db!) : -41}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            onChange(v <= -41 ? -100 : v);
+          }}
+          className="h-[10px] min-w-0 flex-1 accent-[#ffb347]"
+          aria-label={`${name} send`}
+        />
+        <span className={`w-[30px] shrink-0 text-right font-mono text-[9px] ${changed ? 'text-[#ffb347]' : on ? 'text-[#dfe9f5]' : 'text-[#6d6e75]'}`}>
+          {db === undefined ? 'var' : fmtDb(db)}
+        </span>
+      </label>
+    );
+  }
   return (
     <div className="mb-[3px] flex items-center gap-1" title={`${name} send: ${known.length ? values.map(fmtDb).join(' / ') : 'not resolved'}`}>
       <span className="w-[26px] shrink-0 text-[9px] text-[#a9aab1]">{name.slice(0, 3)}</span>
@@ -374,14 +493,30 @@ function FaderBlock({
   volumeNote,
   level,
   automated,
+  changed,
+  onChange,
+  onReset,
 }: {
   volumeDb: number | undefined;
   volumeNote?: string;
   level: number | undefined;
   /** The fader is moving with volume automation. */
   automated?: boolean;
+  /** Moved in Pro mode. */
+  changed?: boolean;
+  /** Pro mode: drag the fader (the new level, dB). */
+  onChange?: (db: number) => void;
+  /** Pro mode: double-click puts it back to the standard level. */
+  onReset?: () => void;
 }) {
   const y = (db: number) => (1 - (Math.max(BOTTOM_DB, Math.min(TOP_DB, db)) - BOTTOM_DB) / (TOP_DB - BOTTOM_DB)) * FADER_H;
+  const dbAt = (py: number) => TOP_DB - (Math.max(0, Math.min(FADER_H, py)) / FADER_H) * (TOP_DB - BOTTOM_DB);
+  const dragging = useRef(false);
+  const track = useRef<HTMLDivElement>(null);
+  const fromPointer = (clientY: number) => {
+    const r = track.current?.getBoundingClientRect();
+    if (r && onChange) onChange(dbAt(clientY - r.top));
+  };
   const levelDb = level !== undefined && level > 0 ? 20 * Math.log10(level) : undefined;
   return (
     <div className="mt-1">
@@ -394,13 +529,36 @@ function FaderBlock({
             </span>
           ))}
         </div>
-        {/* Fader track and cap. */}
-        <div className="relative w-[14px]">
+        {/* Fader track and cap (draggable in Pro mode). */}
+        <div
+          ref={track}
+          className={`relative w-[14px] ${onChange ? 'cursor-ns-resize touch-none' : ''}`}
+          onPointerDown={
+            onChange
+              ? (e) => {
+                  dragging.current = true;
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  fromPointer(e.clientY);
+                }
+              : undefined
+          }
+          onPointerMove={onChange ? (e) => dragging.current && fromPointer(e.clientY) : undefined}
+          onPointerUp={
+            onChange
+              ? (e) => {
+                  dragging.current = false;
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                }
+              : undefined
+          }
+          onDoubleClick={onReset}
+          title={onChange ? 'Drag to change the level; double-click for the standard level' : undefined}
+        >
           <span className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2 rounded-full bg-black/70" />
           {volumeDb !== undefined ? (
             <span
               className={`absolute left-1/2 h-[18px] w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-[3px] border border-black/70 bg-gradient-to-b shadow-[0_2px_3px_rgba(0,0,0,0.5)] ${
-                automated ? 'from-[#ffd28a] via-[#e09a3c] to-[#f0b860]' : 'from-[#d4d5da] via-[#9fa1a8] to-[#c9cad0]'
+                automated ? 'from-[#ffd28a] via-[#e09a3c] to-[#f0b860]' : changed ? 'from-[#ffe0b0] via-[#ffb347] to-[#ffd08a]' : 'from-[#d4d5da] via-[#9fa1a8] to-[#c9cad0]'
               }`}
               title={automated ? 'Moving with volume automation' : undefined}
               style={{ top: y(volumeDb) }}

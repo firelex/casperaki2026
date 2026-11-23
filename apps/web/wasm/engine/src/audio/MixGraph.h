@@ -262,6 +262,32 @@ public:
         target->probe.slot = slot;
         probed_ = target;
     }
+    // Set parameter `index` (raw AirWindows 0..1) of the plugin at config index
+    // `slot` of `bus`, live (the plugins read their parameters every block).
+    // Allocation-free; call between renders.
+    void setParam(const std::string& bus, int slot, int index, float value) {
+        Rack* target = nullptr;
+        if (bus == "master") target = &master_.rack;
+        else if (bus == "fxPlateReverb") target = &returns_[0].rack;
+        else if (bus == "fxStereoDelay") target = &returns_[1].rack;
+        else if (bus == "fxChorus") target = &returns_[2].rack;
+        else {
+            auto it = submixes_.find(bus);
+            if (it != submixes_.end()) target = &it->second.rack;
+        }
+        if (!target) throw std::out_of_range("MixGraph::setParam: no bus '" + bus + "' in this mix");
+        for (size_t i = 0; i < target->plugins.size(); ++i) {
+            if (target->configIndex[i] != slot) continue;
+            if (index < 0 || index >= target->plugins[i]->numParams())
+                throw std::out_of_range("MixGraph::setParam: plugin " + std::to_string(slot) + " of '" + bus + "' has no parameter " + std::to_string(index));
+            if (!(value >= 0.0f && value <= 1.0f))
+                throw std::out_of_range("MixGraph::setParam: value must be in 0..1");
+            target->plugins[i]->setParam(index, value);
+            return;
+        }
+        throw std::out_of_range("MixGraph::setParam: bus '" + bus + "' has no plugin at slot " + std::to_string(slot));
+    }
+
     // Read and reset the probe: in peak, in RMS, out peak, out RMS, frames measured.
     void readProbe(float out[5]) {
         if (!probed_ || probed_->probe.slot < 0) throw std::logic_error("MixGraph::readProbe: no probe set");

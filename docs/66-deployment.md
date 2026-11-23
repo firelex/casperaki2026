@@ -76,9 +76,12 @@ The live path plays the full mix and effects like the server render (the brain h
 `CASPERAKI_MIX_CONFIG`, i.e. casperaki_engine/config/mix-config.json; required). The WASM mix runs
 7.6-11.4x real time. Seeking renders 1.5 s silently first so reverb and delay tails are back.
 
-## Pattern lab (admins)
+## Suggestions (admins): pattern lab and Pro-mode mixes
 
-`/patterns`: Casperaki-written pattern proposals (`packages/arrangement/data/patterns/proposals/*.json`)
+`/suggestions` (header link "Suggestions", also in the account menu; `/patterns` redirects there) has two
+tabs.
+
+**Patterns** (the pattern lab): Casperaki-written pattern proposals (`packages/arrangement/data/patterns/proposals/*.json`)
 for every instrument: drums, bass, keys, guitar, pads, strings, brass, synths (formats and how to write
 them: docs/68). Each can be heard in a full
 song with the proposal or with the current library on the same seed, then approved or rejected
@@ -91,6 +94,16 @@ node_modules/.bin/tsx scripts/export-approved-patterns.ts   # writes data/patter
 
 then commit, push and `deploy.sh`. The reviewer account is `reviewer@casperaki.com` (password in
 `~/.config/casperaki/reviewer-password.txt`); admins are listed in `BRAIN_ADMIN_EMAILS`.
+
+**Mix**: what users changed in the track view's **Pro mode**, per genre, next to the standard value
+(`GET /api/suggestions/mix`). In the editor's mixer the PRO button makes the faders, the reverb / delay /
+chorus sends and every bus plugin's settings (in its device window) editable; changes play at once
+(engine `mixer_set_lane_trim` / `_lane_send` / `_bus_param`) and are saved with the project
+(`PUT /api/songs/:id/mix`, `projects.mix_overrides`). Reset puts the standard mix back. The saved changes
+are applied to the standard `mix-config.json` by one rule (`applyMixOverrides`, song-schema): track
+trims and sends as the config's `laneOverrides`, plugin settings in its `rackChains`. Live playback, the
+browser export and server renders (`CASPERAKI_MIX_CONFIG` = the song's own config) all use it. A change
+many songs of a genre agree on can be copied into `casperaki_engine/config/mix-config.json` by hand.
 
 ## Configuration (outside the repos)
 

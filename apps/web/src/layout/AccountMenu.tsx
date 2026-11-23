@@ -7,12 +7,16 @@ import {
   DropdownMenuTrigger,
 } from '@teamsuzie/ui';
 
+import { useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../auth/AuthContext';
 
 /** Account button (the user's initial) opening a menu with the signed-in
- *  email and "Sign out". */
+ *  email, the admin pages (also here for phones, where the header hides its
+ *  links) and "Sign out". */
 export function AccountMenu() {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   if (!user) return null;
   const initial = (user.name || user.email).trim().charAt(0).toUpperCase();
   return (
@@ -30,6 +34,17 @@ export function AccountMenu() {
       >
         <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">{user.email}</DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
+        {user.isAdmin ? (
+          <>
+            <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10" onSelect={() => navigate('/suggestions')}>
+              Suggestions
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10" onSelect={() => navigate('/catalog')}>
+              Sound library
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="my-1 h-px bg-line" />
+          </>
+        ) : null}
         <DropdownMenuItem
           className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10"
           onSelect={() => void signOut()}

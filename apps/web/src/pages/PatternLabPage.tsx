@@ -5,7 +5,6 @@ import type { Genre } from '@casperaki/song-schema/schemas';
 import { patternsApi, patternsQueryKey, type PatternProposal, type PreviewSection } from '../api/patterns';
 import { livePlayer } from '../audio/livePlayer';
 import { useLiveState } from '../audio/useLivePlayer';
-import { AppHeader } from '../layout/AppHeader';
 import { BassGrid } from '../patterns/BassGrid';
 import { ChordToneGrid } from '../patterns/ChordToneGrid';
 import { DrumGrid } from '../patterns/DrumGrid';
@@ -81,7 +80,8 @@ function applyFocus(sections: readonly PreviewSection[], energy: 'low' | 'high' 
   return r.start;
 }
 
-export function PatternLabPage() {
+/** The suggestions page's Patterns section (the pattern lab). */
+export function PatternsSection() {
   // The player is shared with the editor: leave nothing soloed or looped behind.
   useEffect(
     () => () => {
@@ -99,11 +99,8 @@ export function PatternLabPage() {
   const shown = proposals.filter((p) => matches(p, filter));
 
   return (
-    <div className="min-h-screen w-full bg-bg text-fg">
-      <AppHeader />
-      <main className="mx-auto w-full max-w-[1240px] px-4 pb-24 pt-10 sm:px-8 sm:pt-14">
-        <h1 className="app-heading text-[30px] leading-tight text-white sm:text-[36px]">Pattern lab</h1>
-        <p className="mt-2 max-w-[70ch] text-[15px] leading-relaxed text-white/60">
+    <>
+        <p className="mt-6 max-w-[70ch] text-[15px] leading-relaxed text-white/60">
           Patterns Casperaki suggests for styles the library covers thinly. Listen to each one in a full song, compare
           it with the same song using today&rsquo;s patterns, then approve or reject it. Approved patterns join the
           library at the next export.
@@ -154,8 +151,7 @@ export function PatternLabPage() {
             shown.map((p) => <ProposalCard key={p.id} proposal={p} />)
           )}
         </div>
-      </main>
-    </div>
+    </>
   );
 }
 

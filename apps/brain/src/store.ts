@@ -11,7 +11,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import Database, { type Database as BetterSqliteDatabase } from 'better-sqlite3';
 
-import { parseSong, type Song } from '@casperaki/song-schema';
+import { MixOverridesSchema, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
 export interface StoredSong {
   readonly id: string;
@@ -36,6 +36,20 @@ export interface ProjectRow {
   /** The song's sections in order (name, brain type tag, length in bars),
    *  for an outline of the song without loading it whole. */
   readonly sections: readonly ProjectSection[];
+  /** The owner's Pro-mode mix changes for this song (null = the standard mix). */
+  readonly mixOverrides: MixOverrides | null;
+  readonly mixUpdatedAt: string | null;
+}
+
+/** A project's Pro-mode mix, with what the suggestions page needs about its song. */
+export interface ProjectMixRow {
+  readonly ownerId: string;
+  readonly songId: string;
+  readonly title: string;
+  readonly genre: string | null;
+  readonly canonical: string;
+  readonly mixOverrides: MixOverrides;
+  readonly mixUpdatedAt: string;
 }
 
 export interface ProjectSection {
@@ -65,6 +79,10 @@ export interface SongsStore {
   moveProject(input: { ownerId: string; fromSongId: string; toSongId: string; updatedAt: string }): boolean;
   renameProject(input: { ownerId: string; songId: string; title: string; updatedAt: string }): boolean;
   deleteProject(ownerId: string, songId: string): boolean;
+  /** Save (or with null clear) a project's Pro-mode mix. Returns false if the owner has no such project. */
+  setProjectMix(input: { ownerId: string; songId: string; mixOverrides: MixOverrides | null; updatedAt: string }): boolean;
+  /** Every project with a Pro-mode mix, newest first (the suggestions page). */
+  listProjectMixes(): ProjectMixRow[];
   /** Pattern-lab decisions, keyed by proposal id. */
   listPatternReviews(): PatternReview[];
   setPatternReview(review: PatternReview): void;
@@ -114,6 +132,10 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
   db.exec(SONGS_SCHEMA);
+  // Pro-mode mix per project (added 2026-11-23; older databases get the columns here).
+  const projectCols = new Set((db.prepare(`PRAGMA table_info(projects)`).all() as Array<{ name: string }>).map((c) => c.name));
+  if (!projectCols.has('mix_overrides')) db.exec(`ALTER TABLE projects ADD COLUMN mix_overrides TEXT`);
+  if (!projectCols.has('mix_updated_at')) db.exec(`ALTER TABLE projects ADD COLUMN mix_updated_at TEXT`);
 
   const insertStmt = db.prepare(
     `INSERT OR REPLACE INTO songs
@@ -126,7 +148,7 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
      VALUES (@ownerId, @songId, @title, @createdAt, @updatedAt)
      ON CONFLICT(owner_id, song_id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at`,
   );
-  const projectSelect = `SELECT p.owner_id, p.song_id, p.title, p.created_at, p.updated_at,
+  const projectSelect = `SELECT p.owner_id, p.song_id, p.title, p.created_at, p.updated_at, p.mix_overrides, p.mix_updated_at,
                                 s.genre, s.key_text, s.bpm,
                                 json_extract(s.canonical, '$.songStructure') AS structure
                            FROM projects p JOIN songs s ON s.id = p.song_id`;
@@ -135,6 +157,12 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   const deleteProjectStmt = db.prepare(`DELETE FROM projects WHERE owner_id = ? AND song_id = ?`);
   const renameProjectStmt = db.prepare(
     `UPDATE projects SET title = ?, updated_at = ? WHERE owner_id = ? AND song_id = ?`,
+  );
+  const setMixStmt = db.prepare(`UPDATE projects SET mix_overrides = ?, mix_updated_at = ? WHERE owner_id = ? AND song_id = ?`);
+  const listMixesStmt = db.prepare(
+    `SELECT p.owner_id, p.song_id, p.title, p.mix_overrides, p.mix_updated_at, s.genre, s.canonical
+       FROM projects p JOIN songs s ON s.id = p.song_id
+      WHERE p.mix_overrides IS NOT NULL ORDER BY p.mix_updated_at DESC`,
   );
   const moveProject = db.transaction(
     (input: { ownerId: string; fromSongId: string; toSongId: string; updatedAt: string }): boolean => {
@@ -152,6 +180,8 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
         createdAt: from.created_at,
         updatedAt: input.updatedAt,
       });
+      // The Pro-mode mix moves with the project.
+      setMixStmt.run(from.mix_overrides, from.mix_updated_at, input.ownerId, input.toSongId);
       return true;
     },
   );
@@ -205,6 +235,23 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     moveProject(input) {
       return moveProject(input);
     },
+    setProjectMix({ ownerId, songId, mixOverrides, updatedAt }) {
+      const json = mixOverrides === null ? null : JSON.stringify(MixOverridesSchema.parse(mixOverrides));
+      return setMixStmt.run(json, mixOverrides === null ? null : updatedAt, ownerId, songId).changes > 0;
+    },
+    listProjectMixes() {
+      return (listMixesStmt.all() as Array<{
+        owner_id: string; song_id: string; title: string; mix_overrides: string; mix_updated_at: string; genre: string | null; canonical: string;
+      }>).map((r) => ({
+        ownerId: r.owner_id,
+        songId: r.song_id,
+        title: r.title,
+        genre: r.genre,
+        canonical: r.canonical,
+        mixOverrides: MixOverridesSchema.parse(JSON.parse(r.mix_overrides)),
+        mixUpdatedAt: r.mix_updated_at,
+      }));
+    },
     renameProject({ ownerId, songId, title, updatedAt }) {
       return renameProjectStmt.run(title, updatedAt, ownerId, songId).changes > 0;
     },
@@ -242,6 +289,8 @@ interface ProjectDbRow {
   key_text: string;
   bpm: number;
   structure: string | null;
+  mix_overrides: string | null;
+  mix_updated_at: string | null;
 }
 
 function toProjectRow(row: ProjectDbRow): ProjectRow {
@@ -255,6 +304,8 @@ function toProjectRow(row: ProjectDbRow): ProjectRow {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     sections: sectionsOf(row.song_id, row.structure),
+    mixOverrides: row.mix_overrides === null ? null : MixOverridesSchema.parse(JSON.parse(row.mix_overrides)),
+    mixUpdatedAt: row.mix_updated_at,
   };
 }
 

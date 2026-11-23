@@ -15,7 +15,7 @@
  *   GET    /api/songs/:id/render/peaks?bins=
  */
 
-import type { Song } from '@casperaki/song-schema';
+import type { MixOverrides, Song } from '@casperaki/song-schema';
 import { BrainClient, defaultBrainClient } from './client';
 import type { RenderPeaks } from './renders';
 
@@ -55,6 +55,9 @@ export interface Project {
   readonly updatedAt: string;
   /** The song's sections in order, for drawing its shape. */
   readonly sections: readonly ProjectSection[];
+  /** The owner's Pro-mode mix changes (null = the standard mix). */
+  readonly mixOverrides: MixOverrides | null;
+  readonly mixUpdatedAt: string | null;
   readonly render: RenderInfo;
 }
 
@@ -98,6 +101,11 @@ export class SongsApi {
 
   save(id: string, song: Song, title?: string): Promise<GeneratedSong> {
     return this.client.put<GeneratedSong>(songPath(id), title ? { song, title } : { song });
+  }
+
+  /** Pro mode: save the song's mix changes (null = back to the standard mix). */
+  saveMix(id: string, mixOverrides: MixOverrides | null): Promise<{ project: Project }> {
+    return this.client.put<{ project: Project }>(`${songPath(id)}/mix`, { mixOverrides });
   }
 
   rename(id: string, title: string): Promise<{ project: Project }> {

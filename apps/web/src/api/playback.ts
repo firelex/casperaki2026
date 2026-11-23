@@ -1,4 +1,6 @@
-import type { Song } from '@casperaki/song-schema';
+import type { MixOverrides, Song } from '@casperaki/song-schema';
+
+import type { MixConfigJson } from '../audio/livePlayer';
 import { defaultBrainClient } from './client';
 
 /** One sample the browser engine needs: fetch `url` (an OGG), decode, bind
@@ -23,6 +25,8 @@ export interface PlaybackPayload {
   readonly stubs: string[];
   /** mix-config.json text: the per-lane mix and rack FX, as on the server. */
   readonly mixConfig: string;
+  /** The standard mix's FX bus chains (before the song's Pro-mode changes). */
+  readonly standardRackChains: MixConfigJson['rackChains'];
 }
 
 export const playbackApi = {
@@ -30,6 +34,6 @@ export const playbackApi = {
   forSaved: (songId: string, signal?: AbortSignal) =>
     defaultBrainClient.get<PlaybackPayload>(`/api/songs/${encodeURIComponent(songId)}/playback`, { signal }),
   /** Any song, e.g. the editor's working copy with unsaved edits. */
-  forSong: (song: Song, signal?: AbortSignal) =>
-    defaultBrainClient.post<PlaybackPayload>('/api/playback', { song }, { signal }),
+  forSong: (song: Song, signal?: AbortSignal, mixOverrides?: MixOverrides) =>
+    defaultBrainClient.post<PlaybackPayload>('/api/playback', { song, ...(mixOverrides ? { mixOverrides } : {}) }, { signal }),
 };

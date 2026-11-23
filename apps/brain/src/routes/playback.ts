@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { canonicalStringifySong, parseSong } from '@casperaki/song-schema';
+import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSong, type MixOverrides } from '@casperaki/song-schema';
 
 import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
 import type { SongsStore } from '../store.js';
@@ -23,10 +23,11 @@ export interface PlaybackRouterDeps {
   readonly ownerOf: (req: Request) => string;
 }
 
-const PlayBodySchema = z.object({ song: z.unknown() }).strict();
+// mixOverrides: the editor's Pro-mode mix for a song not saved yet (a saved song's comes from its project).
+const PlayBodySchema = z.object({ song: z.unknown(), mixOverrides: MixOverridesSchema.optional() }).strict();
 
 /** Lower a song and list its samples: the body of every playback response. */
-export async function playbackPayload(service: PlaybackService, songId: string, canonical: string) {
+export async function playbackPayload(service: PlaybackService, songId: string, canonical: string, mixOverrides?: MixOverrides | null) {
   const env = await service.envelope(songId, canonical);
   const samples = service.plan(songId).map((e) => ({
     key: e.key,
@@ -40,7 +41,10 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
     insts: env.insts,
     samples,
     stubs: STUB_SAMPLES.map((n) => `/api/playback/stubs/${n}`),
-    mixConfig: service.mixConfig,
+    // The song's Pro-mode mix applied to the standard config (the same rule the export and renders use).
+    mixConfig: mixOverrides ? applyMixOverrides(service.mixConfig, mixOverrides) : service.mixConfig,
+    /** The standard mix's FX bus chains (the editor's Pro mode marks and resets changes against them). */
+    standardRackChains: (JSON.parse(service.mixConfig) as { rackChains?: unknown }).rackChains ?? [],
   };
 }
 
@@ -53,18 +57,19 @@ export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRoute
       message: 'In-browser playback is off: CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.',
     });
 
-  const respond = async (res: Response, service: PlaybackService, songId: string, canonical: string) => {
-    res.json(await playbackPayload(service, songId, canonical));
+  const respond = async (res: Response, service: PlaybackService, songId: string, canonical: string, mixOverrides?: MixOverrides | null) => {
+    res.json(await playbackPayload(service, songId, canonical, mixOverrides));
   };
 
   router.get('/api/songs/:id/playback', async (req, res) => {
     if (!playback) return notConfigured(res);
     const id = req.params.id;
-    if (!store.getProject(ownerOf(req), id)) return res.status(404).json({ error: 'not_found', id });
+    const project = store.getProject(ownerOf(req), id);
+    if (!project) return res.status(404).json({ error: 'not_found', id });
     const stored = store.get(id);
     if (!stored) return res.status(404).json({ error: 'not_found', id });
     try {
-      await respond(res, playback, id, stored.canonical);
+      await respond(res, playback, id, stored.canonical, project.mixOverrides);
     } catch (err) {
       res.status(500).json({ error: 'playback_failed', message: err instanceof Error ? err.message : String(err) });
     }
@@ -82,7 +87,7 @@ export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRoute
     }
     const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
     try {
-      await respond(res, playback, id, canonical);
+      await respond(res, playback, id, canonical, body.data.mixOverrides);
     } catch (err) {
       res.status(500).json({ error: 'playback_failed', message: err instanceof Error ? err.message : String(err) });
     }

@@ -173,6 +173,59 @@ int main() {
         check(onPk > 0.01f, "unmuted Drums lane should meter signal with the mix on");
     }
 
+    // (4) Pro mode: laneOverrides in the mix config == the same values set live, and
+    // they change what they should. Bass at -6 dB meters half the standard level.
+    {
+        nlohmann::json pro = nlohmann::json::parse(readFile(LANES_MIX_CONFIG));
+        pro["laneOverrides"] = {{"Bass", {{"volumeDb", -6.0}, {"reverb", -12.0}}}};
+        int busSlot = -1;
+        for (auto& rc : pro["rackChains"])
+            if (rc["bus"] == "bass" && rc["plugins"].size() > 1 && !rc["plugins"][1]["params"].empty()) {
+                busSlot = 1;
+                rc["plugins"][1]["params"][0] = 0.9;
+            }
+        check(busSlot == 1, "test needs a bass bus plugin with a parameter at slot 1");
+        const mix::MixConfig proCfg = mix::MixConfig::fromJson(pro);
+        auto fromCfg = std::make_unique<Mixer>(44100.0, kBlock, 2.5, stubs);
+        fromCfg->setMixEnabled(true);
+        fromCfg->setMixConfig(proCfg);
+        fromCfg->enableMeters(kBin);
+        fromCfg->build(env.ev, env.insts);
+        const std::vector<float> a = pullAll(*fromCfg);
+
+        auto live = make(true);
+        int bass = -1;
+        for (int i = 0; i < live->laneCount(); ++i) if (live->laneName(i) == "Bass") bass = i;
+        live->setLaneTrimDb(bass, -6.0f);
+        live->setLaneSendDb(bass, 0, -12.0f);
+        live->setBusParam("bass", 1, 0, 0.9f);
+        live->setLaneGain(bass, 0.0f);   // mute then unmute: the trim must survive
+        live->setLaneGain(bass, 1.0f);
+        const std::vector<float> b = pullAll(*live);
+        double d = 0.0, sig = 0.0;
+        // From 2 s on: the live values ramp in over 10 ms, and the compressors on the
+        // bass bus remember that first moment for a while.
+        for (size_t i = (size_t)2 * 44100 * 2; i < a.size(); ++i) { d += (a[i] - b[i]) * (a[i] - b[i]); sig += a[i] * a[i]; }
+        check(std::sqrt(d / sig) < 1e-4, "Pro values set live should equal the same laneOverrides, rel diff " + std::to_string(std::sqrt(d / sig)));
+
+        auto std0 = make(true);
+        pullAll(*std0);
+        double ratio = 0.0; int n = 0;
+        for (int bn = 2; bn < fullBins; ++bn) {
+            const float s0 = std0->laneRms(bass)[bn];
+            if (s0 > 1e-3f) { ratio += fromCfg->laneRms(bass)[bn] / s0; ++n; }
+        }
+        check(n > 10, "Bass should play in the test window");
+        const double avg = ratio / std::max(1, n);
+        check(std::fabs(avg - mix::dbToGain(-6.0)) < 0.01, "Bass at -6 dB should meter x0.501, got x" + std::to_string(avg));
+        std::printf("lanes_test: Pro mode live vs config rel diff %.2e, Bass -6 dB level x%.3f\n", std::sqrt(d / sig), avg);
+
+        bool threw = false;
+        try { nlohmann::json bad = pro; bad["laneOverrides"]["Bass"]["pan"] = 0; mix::MixConfig::fromJson(bad); }
+        catch (const std::exception&) { threw = true; }
+        check(threw, "an unknown laneOverrides field must be refused");
+    }
+
     if (failures == 0) std::printf("lanes_test: OK\n");
     else std::printf("lanes_test: %d FAILURE(S)\n", failures);
     return failures == 0 ? 0 : 1;

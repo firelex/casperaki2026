@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { playbackApi } from '../api/playback';
 import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
+import { currentProMix } from './proMix';
 import { useLivePosition, useLiveState } from './useLivePlayer';
 
 /**
@@ -28,7 +29,7 @@ export function useLiveTransport() {
   const fetchPayload = useCallback(
     (signal: AbortSignal) => {
       if (!viewSong) throw new Error('No song is open.');
-      return editorDirty || !songId ? playbackApi.forSong(viewSong, signal) : playbackApi.forSaved(songId, signal);
+      return editorDirty || !songId ? playbackApi.forSong(viewSong, signal, currentProMix()) : playbackApi.forSaved(songId, signal);
     },
     [viewSong, editorDirty, songId],
   );

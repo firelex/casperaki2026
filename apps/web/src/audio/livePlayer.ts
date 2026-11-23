@@ -353,12 +353,14 @@ export class LivePlayer {
   async play(
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
-    opts: { seamless?: boolean } = {},
+    /** seamless: keep playing while the new version loads, then switch at the same position.
+     *  reload: build `key` again even when it is the one loaded (its mix changed). */
+    opts: { seamless?: boolean; reload?: boolean } = {},
   ): Promise<void> {
     const ctx = this.context();
     // Resume inside the gesture, before any await, so the browser allows audio.
     const resumed = ctx.resume();
-    if (this.state.key === key && this.node && ['paused', 'playing', 'ended'].includes(this.state.status)) {
+    if (!opts.reload && this.state.key === key && this.node && ['paused', 'playing', 'ended'].includes(this.state.status)) {
       if (this.state.status === 'ended') this.seek(0);
       this.enterLoopIfOutside();
       if (this.state.status !== 'playing') this.playStartPos = this.enginePosition();
@@ -487,6 +489,37 @@ export class LivePlayer {
       // play() will retry and show the error; keep a trace for debugging.
       console.warn(`[live] preparing ${key} failed:`, err);
     });
+  }
+
+  /**
+   * Pro mode, live: a track's fader trim (dB, 0 = standard), one of its sends
+   * (bus 0 reverb, 1 delay, 2 chorus; dB), or a parameter (raw 0..1) of the
+   * plugin at `slot` of an FX bus. Goes to the engine playing `key` only (a no-op
+   * when another song or nothing is loaded: the saved mix reaches the next load).
+   */
+  proMix(
+    key: string,
+    change:
+      | { laneTrim: { lane: string; db: number } }
+      | { laneSend: { lane: string; bus: 0 | 1 | 2; db: number } }
+      | { busParam: { bus: string; slot: number; index: number; value: number } },
+  ): void {
+    if (!this.node || this.state.key !== key) return;
+    if ('busParam' in change) {
+      this.node.port.postMessage({ type: 'proMix', busParam: { ...change.busParam, bus: utf8.encode(change.busParam.bus) } });
+    } else this.node.port.postMessage({ type: 'proMix', ...change });
+  }
+
+  /**
+   * Forget every fetched song, prepared song, resolved mix and meter reading
+   * (their mix config is out of date after a Pro-mode save). What is loaded keeps
+   * playing; the next load, meter run or export fetches again.
+   */
+  forgetMixes(): void {
+    this.payloads.clear();
+    this.prepared.clear();
+    this.mixes.clear();
+    this.meterCache.clear();
   }
 
   /** Mute or unmute a track (by lane name). Applies live. */

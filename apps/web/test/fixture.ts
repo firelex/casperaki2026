@@ -21,6 +21,8 @@ export function makeFixtureSong(): GeneratedSong {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
       sections: [{ name: 'intro', type: 'intro', bars: 4 }],
+      mixOverrides: null,
+      mixUpdatedAt: null,
       render: { state: 'none' },
     },
     song: {

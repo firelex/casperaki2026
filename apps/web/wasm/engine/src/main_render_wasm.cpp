@@ -599,6 +599,30 @@ int mixer_set_lane_gain(int lane, float gain) {
     });
 }
 
+// Pro mode, live (between pulls, allocation-free): a lane's fader trim in dB,
+// one of its aux sends (bus 0 reverb, 1 delay, 2 chorus) in dB, and a raw 0..1
+// parameter of the plugin at config index `slot` of an FX bus. Return 1, or 0 on
+// error (see mixer_last_error_message).
+int mixer_set_lane_trim(int lane, float db) {
+    return laneCall("mixer_set_lane_trim", 0, [lane, db](Mixer& m) {
+        m.setLaneTrimDb(lane, db);
+        return 1;
+    });
+}
+int mixer_set_lane_send(int lane, int bus, float db) {
+    return laneCall("mixer_set_lane_send", 0, [lane, bus, db](Mixer& m) {
+        m.setLaneSendDb(lane, bus, db);
+        return 1;
+    });
+}
+int mixer_set_bus_param(const char* bus, int len, int slot, int index, float value) {
+    const std::string name(bus, (size_t)len);
+    return laneCall("mixer_set_bus_param", 0, [&name, slot, index, value](Mixer& m) {
+        m.setBusParam(name, slot, index, value);
+        return 1;
+    });
+}
+
 // Opt into per-lane meters with bins of `binFrames` frames. Before mixer_build it
 // is remembered and applied at build; after it, the arrays are allocated now
 // (heap growth: take the L/R views afterwards). Returns 1, or 0 on error.

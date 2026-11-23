@@ -131,6 +131,14 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
           }
           this.probeOn = d.slot >= 0;
           this.probeCount = 0;
+        } else if (d.type === 'proMix') {
+          // Pro mode, live: { laneTrim?: { lane, db }, laneSend?: { lane, bus (0 reverb, 1 delay, 2 chorus), db },
+          //                   busParam?: { bus: Uint8Array (UTF-8), slot, index, value } }
+          try {
+            this.applyProMix(d);
+          } catch (err) {
+            this.port.postMessage({ type: 'error', message: String(err) });
+          }
         } else if (d.type === 'laneGains') {
           try {
             this.applyLaneGains(d.gains);
@@ -168,6 +176,30 @@ class CasperakiRenderProcessor extends AudioWorkletProcessor {
       const g = gains[name] ?? 1;
       if (this.e.mixer_set_lane_gain(i, g) !== 1) throw new Error(`mixer_set_lane_gain failed: ${lastError(this.e)}`);
     });
+  }
+
+  applyProMix(d) {
+    const e = this.e;
+    const laneIndex = (name) => {
+      const i = this.lanes.indexOf(name);
+      if (i < 0) throw new Error(`unknown lane "${name}"`);
+      return i;
+    };
+    if (d.laneTrim && e.mixer_set_lane_trim(laneIndex(d.laneTrim.lane), d.laneTrim.db) !== 1) {
+      throw new Error(`mixer_set_lane_trim failed: ${lastError(e)}`);
+    }
+    if (d.laneSend && e.mixer_set_lane_send(laneIndex(d.laneSend.lane), d.laneSend.bus, d.laneSend.db) !== 1) {
+      throw new Error(`mixer_set_lane_send failed: ${lastError(e)}`);
+    }
+    if (d.busParam) {
+      const bytes = d.busParam.bus;
+      if (bytes.length > 256) throw new Error('bus name too long');
+      // The probe's name buffer (256 bytes, allocated at start): messages run one at a time.
+      new Uint8Array(e.memory.buffer, this.probeName, bytes.length).set(bytes);
+      if (e.mixer_set_bus_param(this.probeName, bytes.length, d.busParam.slot, d.busParam.index, d.busParam.value) !== 1) {
+        throw new Error(`mixer_set_bus_param failed: ${lastError(e)}`);
+      }
+    }
   }
 
   /** Copy `n` frames of the engine's block into the outputs at `at`, hard-clamped

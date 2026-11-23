@@ -26,6 +26,7 @@
 // stopped is reported as failed ("interrupted"), never silently re-run.
 
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
@@ -40,6 +41,8 @@ export interface RenderStatus {
   readonly finishedAt?: string;
   readonly error?: string;
   readonly durationSec?: number;
+  /** Fingerprint of the song's Pro-mode mix config ("" = the standard mix). */
+  readonly mixHash?: string;
 }
 
 export interface RenderServiceConfig {
@@ -122,14 +125,22 @@ export class RenderService {
   }
 
   /** Queue a render unless one is queued, running or already done. */
-  enqueue(songId: string, canonical: string): RenderStatus {
+  /** Render a song. `mixConfig`: the song's own mix config (its Pro-mode changes
+   *  applied), or undefined for the standard one. A song already rendered (or on
+   *  its way) with the same mix is not rendered again; a changed mix is. */
+  enqueue(songId: string, canonical: string, mixConfig?: string): RenderStatus {
+    const mixHash = mixConfig === undefined ? '' : createHash('sha256').update(mixConfig).digest('hex').slice(0, 16);
     const current = this.status(songId);
-    if (current && current.state !== 'failed') return current;
+    if (current && current.state !== 'failed' && (current.mixHash ?? '') === mixHash) return current;
+    if (current && (current.state === 'queued' || current.state === 'running')) {
+      throw new Error(`song ${songId} is already rendering with another mix; render again when it has finished`);
+    }
     const dir = this.dirFor(songId);
     rmSync(dir, { recursive: true, force: true });
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'song-in.json'), canonical);
-    this.set({ songId, state: 'queued', queuedAt: new Date().toISOString() });
+    if (mixConfig !== undefined) writeFileSync(join(dir, 'mix-config.json'), mixConfig);
+    this.set({ songId, state: 'queued', queuedAt: new Date().toISOString(), mixHash });
     this.queue.push({ songId, canonical });
     void this.drain();
     return this.status(songId)!;
@@ -180,7 +191,13 @@ export class RenderService {
       await runLogged(
         c.renderBin,
         [dir, unmastered, c.stubSamplesDir, c.sampleLibraryRoot],
-        { ...env, CASPERAKI_BITS: '24', ...(c.mix ? { CASPERAKI_MIX: '1' } : {}) },
+        {
+          ...env,
+          CASPERAKI_BITS: '24',
+          ...(c.mix ? { CASPERAKI_MIX: '1' } : {}),
+          // The song's own mix (Pro-mode changes), else the renderer's standard config.
+          ...(existsSync(join(dir, 'mix-config.json')) ? { CASPERAKI_MIX_CONFIG: join(dir, 'mix-config.json') } : {}),
+        },
         join(dir, 'render.log'),
         RENDER_TIMEOUT_MS,
       );

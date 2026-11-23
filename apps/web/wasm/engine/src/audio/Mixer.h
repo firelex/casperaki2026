@@ -156,6 +156,25 @@ public:
             }
             l.group = gi;
         }
+        // Pro mode (mix config laneOverrides): the lane's fader trim and send levels.
+        if (mixEnabled_ && mixCfg_) {
+            for (auto& g : groups_) {
+                const auto* o = mixCfg_->laneOverride(g.name);
+                if (o && o->hasVolume) {
+                    g.trim = o->volumeDb <= -100.0 ? 0.0f : mix::dbToGain(o->volumeDb);
+                    g.ramp.setNow(g.mute * g.trim);
+                }
+            }
+            for (auto& l : lanes_) {
+                const auto* o = mixCfg_->laneOverride(groups_[(size_t)l.group].name);
+                if (!o) continue;
+                for (int k = 0; k < 3; ++k) {
+                    if (!o->hasSend[k]) continue;
+                    l.sendDb[k] = o->sendDb[k];
+                    l.sendGain[k] = o->sendDb[k] <= -100.0 ? 0.0f : mix::dbToGain(o->sendDb[k]);
+                }
+            }
+        }
         gainRampFrames_ = std::max(1, (int)std::lround(kGainRampSec * sampleRate_));
         if (meterBinFrames_ > 0) allocateMeters();
 
@@ -311,16 +330,50 @@ public:
     // between pulls. Applied to the lane's signal before its submix and aux sends.
     // Set a lane's gain at once, without the ramp (offline renders, e.g. a stem
     // render that must not let other lanes leak in at the start).
+    // The ramp's target is mute x trim (the Pro-mode fader, setLaneTrimDb).
     void setLaneGainNow(int lane, float gain) {
         if (!(gain >= 0.0f) || !std::isfinite(gain))
             throw std::out_of_range("Mixer::setLaneGainNow: gain must be finite and >= 0");
-        group(lane).ramp.setNow(gain);
+        Group& g = groupMut(lane);
+        g.mute = gain;
+        g.ramp.setNow(g.mute * g.trim);
     }
 
     void setLaneGain(int lane, float gain) {
         if (!(gain >= 0.0f) || !std::isfinite(gain))
             throw std::out_of_range("Mixer::setLaneGain: gain must be finite and >= 0");
-        group(lane).ramp.setTarget(gain, gainRampFrames_);
+        Group& g = groupMut(lane);
+        g.mute = gain;
+        g.ramp.setTarget(g.mute * g.trim, gainRampFrames_);
+    }
+
+    // Pro mode, live: the lane's fader trim in dB (0 = the standard level), ramped
+    // like the mute gain. Allocation-free; call between pulls.
+    void setLaneTrimDb(int lane, float db) {
+        if (!std::isfinite(db) || db > 24.0f)
+            throw std::out_of_range("Mixer::setLaneTrimDb: trim must be finite and <= +24 dB");
+        Group& g = groupMut(lane);
+        g.trim = db <= -100.0f ? 0.0f : mix::dbToGain(db);
+        g.ramp.setTarget(g.mute * g.trim, gainRampFrames_);
+    }
+
+    // Pro mode, live: one aux send (0 reverb, 1 delay, 2 chorus) of every track of
+    // the lane, in dB (-100 or lower = off).
+    void setLaneSendDb(int lane, int bus, float db) {
+        if (bus < 0 || bus > 2) throw std::out_of_range("Mixer::setLaneSendDb: bus must be 0, 1 or 2");
+        if (!std::isfinite(db) || db > 12.0f) throw std::out_of_range("Mixer::setLaneSendDb: send must be finite and <= +12 dB");
+        group(lane);  // range check
+        for (auto& l : lanes_) {
+            if (l.group != lane) continue;
+            l.sendDb[bus] = db;
+            l.sendGain[bus] = db <= -100.0f ? 0.0f : mix::dbToGain(db);
+        }
+    }
+
+    // Pro mode, live: a parameter of a bus plugin (raw 0..1), see MixGraph::setParam.
+    void setBusParam(const std::string& bus, int slot, int index, float value) {
+        if (!graph_) throw std::logic_error("Mixer::setBusParam: this mixer runs without its mix");
+        graph_->setParam(bus, slot, index, value);
     }
 
     // Level meters: every pull records, per lane and per bin of `binFrames`
@@ -771,12 +824,15 @@ private:
     // An instrument lane (sequencer row): every IR track of one instrument name.
     struct Group {
         std::string name;
-        GainRamp ramp;
+        GainRamp ramp;                      // target = mute x trim
+        float mute = 1.0f;                  // mute / solo (setLaneGain)
+        float trim = 1.0f;                  // Pro-mode fader (laneOverrides volumeDb, setLaneTrimDb)
         AudioBuffer sum;                    // this block's lane signal (meters only)
         std::vector<float> peak, rms;       // per meter bin
         std::vector<double> sumSq;          // per meter bin, L^2 + R^2
     };
 
+    Group& groupMut(int lane) { return const_cast<Group&>(group(lane)); }
     const Group& group(int lane) const {
         if (lane < 0 || lane >= (int)groups_.size())
             throw std::out_of_range("Mixer: lane " + std::to_string(lane) + " outside [0, "

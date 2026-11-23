@@ -22,6 +22,7 @@ import { createDawExportRouter } from './routes/dawExport.js';
 import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
 import { createPatternsRouter } from './routes/patterns.js';
+import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
 import { PlaybackService } from './render/playbackService.js';
@@ -213,7 +214,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const titleEp = assistantEndpoint(config);
   const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
   if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
-  app.use(createSongsRouter({ store, renders, ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
+  app.use(createSongsRouter({ store, renders, ...(playback ? { mixConfig: playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
@@ -228,6 +229,13 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       playback,
       isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
       reviewerOf: (req) => req.user?.email ?? 'local-dev',
+    }),
+  );
+  app.use(
+    createSuggestionsRouter({
+      store,
+      mixConfig: playback?.mixConfig,
+      isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
     }),
   );
   app.use(createRendersRouter({ artifactPath: config.renderArtifactPath }));

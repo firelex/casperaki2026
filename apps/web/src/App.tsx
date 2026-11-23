@@ -10,7 +10,7 @@ import { SignInPage } from './pages/SignInPage';
 // Code-split: the signed-out landing and the projects list load first; the
 // editor, catalog and dev WASM pages are fetched when first opened.
 const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
-const PatternLabPage = lazy(() => import('./pages/PatternLabPage').then((m) => ({ default: m.PatternLabPage })));
+const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage').then((m) => ({ default: m.SuggestionsPage })));
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
@@ -43,7 +43,9 @@ export function App() {
         <Route path="/" element={<ProjectsPage />} />
         {/* The sound library lists source names: admins only. */}
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
-        {user.isAdmin ? <Route path="/patterns" element={<PatternLabPage />} /> : null}
+        {/* Suggestions (admins): the pattern lab and the Pro-mode mix changes. */}
+        {user.isAdmin ? <Route path="/suggestions" element={<SuggestionsPage />} /> : null}
+        {user.isAdmin ? <Route path="/patterns" element={<Navigate to="/suggestions" replace />} /> : null}
         {/* dev-only WASM spikes stay reachable when signed in */}
         <Route path="/lab/hum" element={<HumLabPage />} />
         <Route path="/wasm-tone" element={<WasmTonePage />} />
