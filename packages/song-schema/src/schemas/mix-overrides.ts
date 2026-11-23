@@ -5,8 +5,10 @@
 // so every path hears the same mix.
 //
 //   lanes: per instrument lane (its name, e.g. "Keys 2"): the fader trim in dB
-//          (0 = the standard level) and send levels in dB (replacing the standard
-//          ones; -100 = off). Written into the config's `laneOverrides`.
+//          (0 = the standard level), send levels in dB (replacing the standard
+//          ones; -100 = off) and the group bus it is routed to (fxGroup, e.g.
+//          "synths", replacing the routing by sound type; one of the config's
+//          group buses). Written into the config's `laneOverrides`.
 //   buses: per FX bus ("master", "fxPlateReverb", "bass", ...): the parameters
 //          (raw 0..1) of the plugin at a slot of its rack chain, replacing them.
 //
@@ -22,6 +24,8 @@ export const LaneMixOverrideSchema = z
     reverb: Db.min(-100).max(12).optional(),
     delay: Db.min(-100).max(12).optional(),
     chorus: Db.min(-100).max(12).optional(),
+    /** The group bus the lane's dry signal goes to instead of its standard one. */
+    fxGroup: z.string().min(1).optional(),
   })
   .strict()
   .refine((o) => Object.keys(o).length > 0, 'a lane override needs at least one value');
@@ -48,15 +52,31 @@ interface RackChain {
   plugins: { factory: string; params: number[] }[];
 }
 
+/** The master and the three aux returns: rack chains no lane can be routed to. */
+const NOT_GROUP_BUSES: ReadonlySet<string> = new Set(['master', 'fxPlateReverb', 'fxStereoDelay', 'fxChorus']);
+
+/** The group buses of a mix config (mix-config.json text): what a lane can be routed to, in rack order. */
+export function groupBusesOf(baseConfig: string): string[] {
+  const cfg = JSON.parse(baseConfig) as { rackChains: RackChain[] };
+  return cfg.rackChains.map((c) => c.bus).filter((b) => !NOT_GROUP_BUSES.has(b));
+}
+
 /**
  * The mix config a song plays with: `baseConfig` (mix-config.json text) with the
  * song's Pro changes applied. Throws when a bus, slot or parameter count does
- * not exist in the base config (a change for a mix this engine does not have).
+ * not exist in the base config (a change for a mix this engine does not have),
+ * or when a lane is routed to something that is not a group bus.
  * Lanes are not checked here: a lane the song does not have matches nothing.
  */
 export function applyMixOverrides(baseConfig: string, overrides: MixOverrides): string {
   if (isEmptyMixOverrides(overrides)) return baseConfig;
   const cfg = JSON.parse(baseConfig) as { rackChains: RackChain[]; laneOverrides?: unknown };
+  const groupBuses = new Set(cfg.rackChains.map((c) => c.bus).filter((b) => !NOT_GROUP_BUSES.has(b)));
+  for (const [lane, o] of Object.entries(overrides.lanes)) {
+    if (o.fxGroup !== undefined && !groupBuses.has(o.fxGroup)) {
+      throw new Error(`mix overrides: "${lane}" is routed to "${o.fxGroup}", which is not a group bus of the mix`);
+    }
+  }
   if (Object.keys(overrides.lanes).length > 0) cfg.laneOverrides = overrides.lanes;
   for (const [bus, slots] of Object.entries(overrides.buses)) {
     const chain = cfg.rackChains.find((c) => c.bus === bus);

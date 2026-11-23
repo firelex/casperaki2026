@@ -64,9 +64,39 @@ export function setPro(on: boolean): void {
   set({ pro: on });
 }
 
+/**
+ * Route a track to another group bus (undefined: back to its standard bus). The
+ * engine builds its buses when a song loads, so this saves at once and, if the
+ * song is playing, swaps in a version with the new routing at the same position.
+ */
+export async function changeLaneRoute(
+  liveKey: string | undefined,
+  fetchPayload: ((signal: AbortSignal) => Promise<PlaybackPayload>) | undefined,
+  lane: string,
+  fxGroup: string | undefined,
+): Promise<void> {
+  const prev: LaneMixOverride = { ...(state.mix.lanes[lane] ?? {}) } as LaneMixOverride;
+  const next: Record<string, unknown> = { ...prev };
+  if (fxGroup === undefined) delete next.fxGroup;
+  else next.fxGroup = fxGroup;
+  const lanes = { ...state.mix.lanes };
+  if (Object.keys(next).length) lanes[lane] = next as LaneMixOverride;
+  else delete lanes[lane];
+  set({ mix: { ...state.mix, lanes } });
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = undefined;
+  await save();
+  if (state.error) return;
+  // The mixer view reads the resolved mix again (the lane's bus changed).
+  set({ version: state.version + 1 });
+  if (!liveKey || !fetchPayload) return;
+  const live = livePlayer.getState();
+  if (live.key === liveKey && live.status === 'playing') await livePlayer.play(liveKey, fetchPayload, { seamless: true, reload: true });
+}
+
 /** Change a track's fader trim (dB, 0 = standard) or one send (dB). `liveKey`: what the player plays. */
-export function changeLane(liveKey: string | undefined, lane: string, patch: Partial<Record<keyof LaneMixOverride, number | undefined>>): void {
-  const prev: Record<string, number | undefined> = { ...(state.mix.lanes[lane] ?? {}) };
+export function changeLane(liveKey: string | undefined, lane: string, patch: Partial<Record<Exclude<keyof LaneMixOverride, 'fxGroup'>, number | undefined>>): void {
+  const prev: Record<string, number | string | undefined> = { ...(state.mix.lanes[lane] ?? {}) };
   for (const [k, v] of Object.entries(patch)) {
     if (v === undefined || (k === 'volumeDb' && v === 0)) delete prev[k];
     else prev[k] = v;

@@ -814,7 +814,7 @@ export function TimelineView() {
             aria-label="Drag to resize the mixer (double-click: default, large, hidden)"
             title="Drag to resize the mixer. Double-click: default → large → hidden. X shows/hides it; Shift+X: tracks or mixer full view"
           />
-          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} />
+          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} fetchPayload={fetchPayload} />
         </div>
       ) : null}
 

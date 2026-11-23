@@ -168,6 +168,10 @@ public:
             for (auto& l : lanes_) {
                 const auto* o = mixCfg_->laneOverride(groups_[(size_t)l.group].name);
                 if (!o) continue;
+                // Pro routing: the lane's dry signal goes to another group bus (every
+                // part of the instrument, e.g. a kit's kicks and the rest, together).
+                // Its sends keep their resolved levels.
+                if (!o->fxGroup.empty()) l.fxGroup = o->fxGroup;
                 for (int k = 0; k < 3; ++k) {
                     if (!o->hasSend[k]) continue;
                     l.sendDb[k] = o->sendDb[k];
@@ -1478,7 +1482,8 @@ private:
         if (endsWith(nm, "-snares") || endsWith(nm, "-toms") || endsWith(nm, "-rest")) return "drums";
         if (nm.find("Transitions") != std::string::npos) return "fx";  // shared transition lane -> fx submix
         const std::string llt = laneLowLevelType(nm);
-        if (llt.empty()) return "drums";   // fallback (FX.h:368)
+        if (llt.empty())
+            throw std::runtime_error("Mixer: track '" + nm + "' has no lowLevelType, so it has no group bus");
         return cfgFxGroup(llt);
     }
 

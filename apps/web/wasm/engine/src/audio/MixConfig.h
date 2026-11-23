@@ -7,7 +7,7 @@
 //
 // The lookup semantics mirror MixTables.h exactly:
 //   - targetVolume: ordered rules, first match wins, no match -> 0
-//   - fxGroup:      map lookup, unmapped -> "drums"
+//   - fxGroup:      map lookup, unmapped -> an error (MixTables.h keeps the legacy "drums")
 //   - instrumentFxSends: map lookup, unmapped -> {-25,-100,-100} (drums fallback)
 //   - laneSends:    instrumentFxSends(group) + the byType then byGroupGenre overrides
 // A mixconfig_test asserts this matches the hardcoded mix:: functions over every
@@ -93,8 +93,10 @@ public:
 
         // Optional, per song (the app's Pro mode): one instrument lane's own fader
         // trim (dB added to its target volume, applied with the lane's mute/solo
-        // gain) and its send levels (dB, replacing the resolved ones). Keyed by the
-        // instrument name ("Bass", "Keys 2"). Absent = the standard mix.
+        // gain), its send levels (dB, replacing the resolved ones) and the group
+        // bus its dry signal goes to (fxGroup, replacing the typeToFxGroup routing;
+        // must be one of the rack chains' group buses). Keyed by the instrument
+        // name ("Bass", "Keys 2"). Absent = the standard mix.
         if (j.contains("laneOverrides")) {
             for (auto it = j.at("laneOverrides").begin(); it != j.at("laneOverrides").end(); ++it) {
                 const auto& v = it.value();
@@ -103,8 +105,14 @@ public:
                 static const char* kSends[3] = {"reverb", "delay", "chorus"};
                 for (int k = 0; k < 3; ++k)
                     if (v.contains(kSends[k])) { o.hasSend[k] = true; o.sendDb[k] = v.at(kSends[k]).get<double>(); }
+                if (v.contains("fxGroup")) {
+                    o.fxGroup = v.at("fxGroup").get<std::string>();
+                    if (!c.isGroupBus(o.fxGroup))
+                        throw std::runtime_error("MixConfig: laneOverrides." + it.key() + ".fxGroup '" + o.fxGroup +
+                                                 "' is not a group bus of the rack chains");
+                }
                 for (auto f = v.begin(); f != v.end(); ++f)
-                    if (f.key() != "volumeDb" && f.key() != "reverb" && f.key() != "delay" && f.key() != "chorus")
+                    if (f.key() != "volumeDb" && f.key() != "reverb" && f.key() != "delay" && f.key() != "chorus" && f.key() != "fxGroup")
                         throw std::runtime_error("MixConfig: laneOverrides." + it.key() + " has an unknown field '" + f.key() + "'");
                 c.laneOverrides_[it.key()] = o;
             }
@@ -129,9 +137,20 @@ public:
         return 0.0;
     }
 
+    // The group bus a lowLevelType routes to. A type the map does not list is an
+    // error (no silent "drums": a misrouted sound must be visible).
     const std::string& fxGroup(const std::string& t) const {
         auto it = typeToFxGroup_.find(t);
-        return it != typeToFxGroup_.end() ? it->second : kDrums_;
+        if (it == typeToFxGroup_.end())
+            throw std::runtime_error("MixConfig: typeToFxGroup has no bus for lowLevelType '" + t + "'");
+        return it->second;
+    }
+
+    // A group bus: a rack chain that is not the master or one of the 3 aux returns.
+    bool isGroupBus(const std::string& bus) const {
+        if (bus == "master" || bus == "fxPlateReverb" || bus == "fxStereoDelay" || bus == "fxChorus") return false;
+        for (const auto& r : rackChains_) if (r.bus == bus) return true;
+        return false;
     }
 
     FxSends instrumentFxSends(const std::string& group) const {
@@ -172,6 +191,7 @@ public:
         double volumeDb = 0.0;
         bool hasSend[3] = {false, false, false};   // reverb, delay, chorus
         double sendDb[3] = {0.0, 0.0, 0.0};
+        std::string fxGroup;                       // empty = the standard routing
     };
     const LaneOverride* laneOverride(const std::string& lane) const {
         auto it = laneOverrides_.find(lane);
@@ -192,7 +212,6 @@ private:
     std::vector<RackDef> rackChains_;
     std::unordered_map<std::string, LaneOverride> laneOverrides_;
     double masterVolumeDb_ = -1.0, transitionsTrimDb_ = -10.0, volScaleFactor_ = 20.0;
-    inline static const std::string kDrums_ = "drums";
 };
 
 } // namespace mix

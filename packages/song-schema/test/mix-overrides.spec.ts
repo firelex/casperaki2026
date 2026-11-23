@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { applyMixOverrides, MixOverridesSchema, pruneMixOverrides } from '../src/schemas/mix-overrides.js';
+import { applyMixOverrides, groupBusesOf, MixOverridesSchema, pruneMixOverrides } from '../src/schemas/mix-overrides.js';
 
 const BASE = JSON.stringify({
   constants: { masterVolumeDb: -1 },
@@ -27,6 +27,18 @@ describe('mix overrides', () => {
     expect(() => p({ bass: { '1': [0.5] } })).toThrow(/has 5 parameters, not 1/);
     expect(() => MixOverridesSchema.parse({ lanes: { Bass: { pan: 0 } } })).toThrow();
     expect(() => MixOverridesSchema.parse({ lanes: { Bass: {} } })).toThrow();
+  });
+
+  it('routes a lane to another group bus, and only to a group bus', () => {
+    const base = JSON.stringify({
+      rackChains: ['master', 'fxPlateReverb', 'fxStereoDelay', 'fxChorus', 'keys', 'synths'].map((bus) => ({ bus, plugins: [] })),
+    });
+    expect(groupBusesOf(base)).toEqual(['keys', 'synths']);
+    const route = (fxGroup: string) => applyMixOverrides(base, MixOverridesSchema.parse({ lanes: { Keys: { fxGroup } } }));
+    expect(JSON.parse(route('synths')).laneOverrides).toEqual({ Keys: { fxGroup: 'synths' } });
+    for (const bad of ['master', 'fxPlateReverb', 'fxChorus', 'bass']) {
+      expect(() => route(bad)).toThrow(/not a group bus/);
+    }
   });
 
   it('drops lanes a song no longer has', () => {

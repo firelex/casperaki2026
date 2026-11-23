@@ -49,10 +49,19 @@ int main() {
     types.push_back("");
 
     int tvChecks = 0, fgChecks = 0, lsChecks = 0;
+    std::vector<std::string> unmapped;
     for (const auto& t : types) {
-        // fxGroup
-        check(cfg.fxGroup(t) == mix::getFxGroup(t),
-              "fxGroup mismatch for " + t + ": cfg=" + cfg.fxGroup(t) + " hc=" + mix::getFxGroup(t));
+        // fxGroup: a mapped type matches the compiled-in table; a type the map does
+        // not list throws (the compiled-in table still falls back to "drums").
+        if (j["typeToFxGroup"].contains(t)) {
+            check(cfg.fxGroup(t) == mix::getFxGroup(t),
+                  "fxGroup mismatch for " + t + ": cfg=" + cfg.fxGroup(t) + " hc=" + mix::getFxGroup(t));
+        } else {
+            bool threw = false;
+            try { (void)cfg.fxGroup(t); } catch (const std::runtime_error&) { threw = true; }
+            check(threw, "fxGroup of the unmapped type '" + t + "' did not throw");
+            unmapped.push_back(t);
+        }
         ++fgChecks;
         for (const auto& g : genres) {
             // targetVolume
@@ -102,6 +111,28 @@ int main() {
         }
     }
 
+    // Pro routing (laneOverrides.<lane>.fxGroup): a group bus is accepted and read
+    // back; the master, an aux return or a bus the rack chains lack is an error.
+    {
+        nlohmann::json pro = j;
+        pro["laneOverrides"] = { { "Keys", { { "fxGroup", "synths" } } }, { "Bass", { { "volumeDb", -3.0 } } } };
+        const auto pc = mix::MixConfig::fromJson(pro);
+        const auto* ko = pc.laneOverride("Keys");
+        check(ko && ko->fxGroup == "synths", "laneOverrides.Keys.fxGroup not read back");
+        const auto* bo = pc.laneOverride("Bass");
+        check(bo && bo->fxGroup.empty() && bo->hasVolume, "laneOverrides.Bass gained a route it was not given");
+        for (const std::string bad : { "master", "fxPlateReverb", "fxStereoDelay", "fxChorus", "noSuchBus" }) {
+            nlohmann::json b = j;
+            b["laneOverrides"] = { { "Keys", { { "fxGroup", bad } } } };
+            bool threw = false;
+            try { (void)mix::MixConfig::fromJson(b); } catch (const std::runtime_error&) { threw = true; }
+            check(threw, "laneOverrides fxGroup '" + bad + "' was accepted");
+        }
+    }
+
+    std::printf("mixconfig_test: unmapped types (throw): ");
+    for (const auto& t : unmapped) std::printf("'%s' ", t.c_str());
+    std::printf("\n");
     std::printf("mixconfig_test: %d targetVolume, %d fxGroup, %d laneSends checks; %zu racks\n",
                 tvChecks, fgChecks, lsChecks, cc.size());
     if (failures) { std::printf("mixconfig_test: %d FAILURES\n", failures); return 1; }

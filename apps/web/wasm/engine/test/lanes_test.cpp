@@ -251,6 +251,41 @@ int main() {
         check(threw, "an unknown laneOverrides field must be refused");
     }
 
+    // (5) Pro routing: laneOverrides.<lane>.fxGroup sends every part of that
+    // instrument to another group bus (the mix description says so, and the audio
+    // changes); lanes without a route keep theirs.
+    {
+        auto busesOf = [](Mixer& m, const std::string& lane) {
+            std::set<std::string> b;
+            const nlohmann::json info = nlohmann::json::parse(m.laneInfoJson());  // keep it alive while iterating
+            for (const auto& l : info.at("lanes"))
+                if (l["lane"] == lane) b.insert(l["fxGroup"].get<std::string>());
+            return b;
+        };
+        auto standard = make(true);
+        check(busesOf(*standard, "Keys") == std::set<std::string>{"keys"}, "standard Keys should go to the keys bus");
+        check(busesOf(*standard, "Drums") == (std::set<std::string>{"kicks", "drums"}), "standard Drums should split to kicks + drums");
+
+        nlohmann::json routed = nlohmann::json::parse(readFile(LANES_MIX_CONFIG));
+        routed["laneOverrides"] = {{"Keys", {{"fxGroup", "synths"}}}, {"Drums", {{"fxGroup", "percussion"}}}};
+        const mix::MixConfig routedCfg = mix::MixConfig::fromJson(routed);
+        auto r = std::make_unique<Mixer>(44100.0, kBlock, 2.5, stubs);
+        r->setMixEnabled(true);
+        r->setMixConfig(routedCfg);
+        r->enableMeters(kBin);
+        r->build(env.ev, env.insts);
+        check(busesOf(*r, "Keys") == std::set<std::string>{"synths"}, "routed Keys should go to the synths bus");
+        check(busesOf(*r, "Drums") == std::set<std::string>{"percussion"}, "routed Drums (every part) should go to the percussion bus");
+        check(busesOf(*r, "Bass") == busesOf(*standard, "Bass"), "Bass has no route and must keep its bus");
+
+        const std::vector<float> a = pullAll(*standard), b = pullAll(*r);
+        double d = 0.0, sig = 0.0;
+        for (size_t i = 0; i < a.size() && i < b.size(); ++i) { d += (a[i] - b[i]) * (a[i] - b[i]); sig += a[i] * a[i]; }
+        const double rel = std::sqrt(d / std::max(sig, 1e-12));
+        check(rel > 1e-3, "routing Keys and Drums elsewhere should change the audio, rel diff " + std::to_string(rel));
+        std::printf("lanes_test: Pro routing Keys->synths, Drums->percussion: rel diff %.3f vs standard\n", rel);
+    }
+
     if (failures == 0) std::printf("lanes_test: OK\n");
     else std::printf("lanes_test: %d FAILURE(S)\n", failures);
     return failures == 0 ? 0 : 1;

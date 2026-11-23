@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { automationAt, livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
-import { changeLane, setPro, type ProMixState } from '../../audio/proMix';
+import { changeLane, changeLaneRoute, setPro, type ProMixState } from '../../audio/proMix';
+import type { LaneMixOverride } from '@casperaki/song-schema/schemas';
+
+import type { PlaybackPayload } from '../../api/playback';
 import type { SeqTrack } from '../sequencerModel';
 import { DEVICES } from '../devices/deviceDefs';
 
@@ -63,6 +66,7 @@ export function Mixer({
   onOpenDevice,
   pro,
   liveKey,
+  fetchPayload,
 }: {
   tracks: readonly SeqTrack[];
   /** The mix as the engine resolved it for this version. */
@@ -83,7 +87,10 @@ export function Mixer({
   pro: ProMixState;
   /** What the player plays (live changes go there). */
   liveKey: string | undefined;
+  /** Loads the song the player plays (a route change swaps in a new version of it). */
+  fetchPayload: ((signal: AbortSignal) => Promise<PlaybackPayload>) | undefined;
 }) {
+  const [routeError, setRouteError] = useState<string | undefined>(undefined);
   // "Out → bus" on a track scrolls to that bus's strip and highlights it briefly.
   const busRefs = useRef(new Map<string, HTMLDivElement>());
   const [flash, setFlash] = useState<string | undefined>(undefined);
@@ -135,6 +142,8 @@ export function Mixer({
     }
   }
   const busColor = (bus: string) => BUS_COLORS[groupBuses.indexOf(bus) % BUS_COLORS.length]!;
+  // Every group bus of the mix (what a track can be routed to in Pro mode), in rack order.
+  const routable = mix.config.rackChains.map((c) => c.bus).filter((b) => b !== 'master' && !RETURNS.some((r) => r.bus === b));
   // Tracks grouped by the (first) bus they feed, in bus order; track order within a bus.
   const laneOrder = groupBuses.flatMap((bus) => trackOrder.filter((lane) => byLane.get(lane)![0]!.fxGroup === bus));
   // A bus's meter: the loudest of its tracks at the playhead (before the bus's own plugins).
@@ -147,6 +156,11 @@ export function Mixer({
     // Strips keep their natural height (every insert listed); a lower mixer
     // scrolls instead of squashing them, a taller one adds room above the faders.
     <div className="flex h-full min-h-0 flex-col bg-[#202124]">
+    {routeError ? (
+      <p className="shrink-0 border-b border-black/60 bg-err/10 px-3 py-1 text-[11px] text-red-200" role="alert">
+        {routeError}
+      </p>
+    ) : null}
     <div className="min-h-0 flex-1 overflow-auto">
       {/* All strips as tall as the tallest, so their faders line up. */}
       <div className="flex min-h-full w-max items-stretch">
@@ -167,6 +181,13 @@ export function Mixer({
           pro={pro.pro}
           override={pro.mix.lanes[lane]}
           onChange={(patch) => changeLane(liveKey, lane, patch)}
+          routable={routable}
+          onRoute={(bus) => {
+            setRouteError(undefined);
+            changeLaneRoute(liveKey, fetchPayload, lane, bus).catch((err: unknown) =>
+              setRouteError(`Routing ${lane} failed: ${err instanceof Error ? err.message : String(err)}`),
+            );
+          }}
         />
       ))}
       <div className="w-2 shrink-0 bg-black/40" aria-hidden="true" />
@@ -280,6 +301,8 @@ function ChannelStrip({
   pro,
   override,
   onChange,
+  routable,
+  onRoute,
 }: {
   name: string;
   color: string;
@@ -298,8 +321,12 @@ function ChannelStrip({
   /** Pro mode: the fader and sends can be changed. */
   pro: boolean;
   /** This track's Pro-mode changes. */
-  override: { volumeDb?: number; reverb?: number; delay?: number; chorus?: number } | undefined;
+  override: LaneMixOverride | undefined;
   onChange: (patch: { volumeDb?: number; reverb?: number; delay?: number; chorus?: number }) => void;
+  /** The group buses the track can be routed to (Pro mode). */
+  routable: readonly string[];
+  /** Pro mode: route the track to a group bus (undefined: its standard bus). */
+  onRoute: (bus: string | undefined) => void;
 }) {
   const buses = [...new Set(parts.map((p) => p.fxGroup))];
   const types = [...new Set(parts.map((p) => p.lowLevelType).filter(Boolean))];
@@ -385,6 +412,23 @@ function ChannelStrip({
       }
     >
       <Section label="Output">
+        {pro ? (
+          <label className="mb-[2px] block" title="Pro mode: the group bus this track plays through. The engine rebuilds its buses, so a change swaps in a new version of the song at the same spot.">
+            <span className="sr-only">{`Output bus of ${name}`}</span>
+            <select
+              value={override?.fxGroup ?? ''}
+              onChange={(e) => onRoute(e.target.value === '' ? undefined : e.target.value)}
+              className={`w-full rounded-[2px] border bg-[#1d1e21] px-0.5 text-[9.5px] leading-[15px] text-[#dfe0e4] ${override?.fxGroup ? 'border-[#ff8a3d]' : 'border-black/60'}`}
+            >
+              <option value="">{override?.fxGroup ? 'Standard bus' : `Standard: ${buses.map(busName).join(' + ')}`}</option>
+              {routable.map((b) => (
+                <option key={b} value={b}>
+                  {`→ ${busName(b)}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
         {buses.map((bus) => (
           <button
             key={bus}
