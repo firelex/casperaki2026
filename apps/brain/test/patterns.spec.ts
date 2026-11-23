@@ -99,7 +99,9 @@ describe('pattern lab', () => {
     const listed = (await (await fetch(`${h.url}/api/patterns/${p.id}/sounds?genre=${p.genres[0]}`)).json()) as { sounds: { id: string }[] };
     expect(listed.sounds.map((s) => s.id).sort()).toEqual(first.sounds.map((s) => s.id).sort());
     expect(first.sounds.map((s) => s.id)).toContain(first.soundId);
-    const other = first.sounds.find((s) => s.id !== first.soundId)!;
+    // Beyond the generator's brass sections: the solo horns too (what Change sound accepts).
+    expect((first.sounds as { inStyle: boolean }[]).some((s) => !s.inStyle)).toBe(true);
+    const other = first.sounds.find((s) => s.id !== first.soundId && !(s as { inStyle?: boolean }).inStyle)!;
     for (const variant of ['proposal', 'current'] as const) {
       const res = await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant, soundId: other.id });
       const body = (await res.json()) as Preview;
@@ -110,6 +112,13 @@ describe('pattern lab', () => {
     const withP = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal', soundId: other.id })).json()) as Preview;
     const current = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'current', soundId: other.id })).json()) as Preview;
     expect(withP.songId).not.toBe(current.songId);
+    // Guitars: no chords / effects recordings (parts of a Virtual Guitarist guitar, not sounds).
+    const { loadValidatedCatalog } = await import('@casperaki/arrangement');
+    const gp = loadPatternProposals().find((x) => x.family === 'guitar')!;
+    const gs = (await (await fetch(`${h.url}/api/patterns/${gp.id}/sounds?genre=${gp.genres[0]}`)).json()) as { sounds: { id: string }[] };
+    const presets = gs.sounds.map((s) => loadValidatedCatalog().entries.find((e) => e.id === s.id)?.preset);
+    expect(presets).not.toContain('Default FX');
+    expect(presets).not.toContain('Default Chords');
     // A sound of another instrument is refused; drums have no picker.
     const keysSound = 'ffffffffffffffff';
     expect((await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal', soundId: keysSound })).status).toBe(400);

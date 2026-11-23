@@ -83,7 +83,7 @@ export const patternsApi = {
     ),
   /** The sounds the proposal's instrument can use in `genre` (the instrument picker; none for drums). */
   sounds: (id: string, genre: Genre, signal?: AbortSignal) =>
-    defaultBrainClient.get<{ sounds: { id: string; name: string }[] }>(`/api/patterns/${encodeURIComponent(id)}/sounds?genre=${genre}`, { signal }),
+    defaultBrainClient.get<{ sounds: { id: string; name: string; /** In the genre's own pool (what generated songs pick from). */ inStyle: boolean }[] }>(`/api/patterns/${encodeURIComponent(id)}/sounds?genre=${genre}`, { signal }),
 };
 
 export const patternsQueryKey = ['patterns'] as const;

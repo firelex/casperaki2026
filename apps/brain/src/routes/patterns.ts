@@ -32,7 +32,9 @@ import {
   familySoundPool,
   laneFamilyOf,
   loadPublicNames,
+  loadValidatedCatalog,
   publicNameOf,
+  userSoundFamily,
   TrackEditError,
   loadPatternProposals,
   orchestrate,
@@ -93,13 +95,26 @@ function withProposalLane(song: Song, proposal: PatternProposal): Song {
   return editTrack(song, { kind: 'addTrack', family: proposal.family, segments: sections }).song;
 }
 
-/** The sounds a proposal's instrument can use in `genre`, by public name (none for drums: the kit is fixed per genre). */
-function soundsFor(proposal: PatternProposal, genre: Parameters<typeof familySoundPool>[1]): { id: string; name: string }[] {
+/**
+ * Every sound a proposal's instrument can play (what Change sound accepts), by
+ * public name: first the genre's own pool (`inStyle`, what generated songs pick
+ * from), then the instrument's other library sounds (e.g. trumpet, saxophones
+ * and trombone for brass, whose generated tracks use the brass sections). None
+ * for drums: the kit is fixed per genre.
+ */
+function soundsFor(proposal: PatternProposal, genre: Parameters<typeof familySoundPool>[1]): { id: string; name: string; inStyle: boolean }[] {
   if (proposal.family === 'drums') return [];
   const names = loadPublicNames();
-  return familySoundPool(proposal.family, genre)
-    .map((e) => ({ id: e.id, name: publicNameOf(e, names) }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const pool = familySoundPool(proposal.family, genre);
+  const inPool = new Set(pool.map((e) => e.id));
+  // (A Virtual Guitarist guitar's chords and effects recordings are parts of its notes row, not sounds.)
+  const guitarPart = (e: { preset?: string | null }) => e.preset === 'Default Chords' || e.preset === 'Default FX';
+  const others = loadValidatedCatalog().entries.filter((e) => !inPool.has(e.id) && userSoundFamily(e) === proposal.family && !guitarPart(e));
+  const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+  return [
+    ...pool.map((e) => ({ id: e.id, name: publicNameOf(e, names), inStyle: true })).sort(byName),
+    ...others.map((e) => ({ id: e.id, name: publicNameOf(e, names), inStyle: false })).sort(byName),
+  ];
 }
 
 export function createPatternsRouter({ store, playback, isAdminRequest, reviewerOf }: PatternsRouterDeps): Router {

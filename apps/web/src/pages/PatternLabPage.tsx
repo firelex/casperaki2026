@@ -315,11 +315,18 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
             className="h-10 max-w-[260px] rounded-[8px] border border-line bg-bg px-3 text-[14px] text-white"
           >
             <option value="">{sounds.isError ? 'Sounds could not be loaded' : `The song's own ${FAMILY_LABELS[p.family].toLowerCase()} sound`}</option>
-            {(sounds.data?.sounds ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+            {([true, false] as const).map((inStyle) => {
+              const list = (sounds.data?.sounds ?? []).filter((s) => s.inStyle === inStyle);
+              return list.length ? (
+                <optgroup key={String(inStyle)} label={inStyle ? `Used in ${GENRE_LABELS[genre]} songs` : `Other ${FAMILY_LABELS[p.family].toLowerCase()} sounds`}>
+                  {list.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null;
+            })}
           </select>
         ) : null}
         <ListenButton state={stateOf('context')} onClick={() => listen('context')} label="Play in context" primary />
