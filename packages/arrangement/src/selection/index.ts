@@ -124,6 +124,15 @@ function laneSupportedForGenre(familyClass: InstrumentFamily, genre: string): bo
   return set === undefined || set.has(genre);
 }
 
+/**
+ * Families a user may add (Add track, Change sound) and the pattern lab may
+ * preview in every genre, although the generator only rolls them in the
+ * genres above. Brass: the library's horns suit every style; generated songs
+ * keep brass to schlager / latin / organicVibes until more styles have brass
+ * patterns of their own (docs/68).
+ */
+const USER_ANY_GENRE: ReadonlySet<InstrumentFamily> = new Set(['popBrass']);
+
 // ---------------------------------------------------------------------------
 // Lane catalog-resolution config (the original ROLE_CONFIG, generalized to a
 // per-lane spec). `familyClass` is the lane's InstrumentFamily classifier;
@@ -823,7 +832,7 @@ export function laneFamilyOf(lane: string): InstrumentFamily | undefined {
  *  coverage for the family (orchestral gate) or the catalog has no candidate. */
 export function familySoundPool(family: InstrumentFamily, genre: string): readonly ValidatedCatalogEntry[] {
   if (!SUPPORTED_GENRES.has(genre)) throw new Error(`familySoundPool: unsupported genre "${genre}"`);
-  if (!laneSupportedForGenre(family, genre)) return [];
+  if (!USER_ANY_GENRE.has(family) && !laneSupportedForGenre(family, genre)) return [];
   const entries = loadValidatedCatalog().entries;
   const byId = new Map<string, ValidatedCatalogEntry>();
   for (const spec of ALL_LANE_SPECS) {

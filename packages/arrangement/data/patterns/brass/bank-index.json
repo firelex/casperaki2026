@@ -8,12 +8,35 @@
     "extractedAt": "2026-06-14"
   },
   "styles": {
-    "schlager": { "file": "schlager.json" }
+    "schlager": {
+      "file": "schlager.json"
+    }
   },
-  "$genreStylesNote": "docs/62 A5 (06-20): casperaki2 actively rosters+plays brass in latin and organicVibes too, mapping both to the genre-independent StefanSchlagerPatterns stabs (c2 config brassPatterns latin=[library,libraryStabs], organicVibes=[libraryStabs]; LibraryBrass loads the same bank regardless of genre). c1 was schlager-only. We follow c2 (canonical) and point latin/organicVibes at the existing `schlager` style/bank (no new data). (c2's latin also has a `library` style that throws ~half the time — an upstream bug we intentionally do NOT reproduce.)",
+  "$genreStylesNote": "docs/62 A5 (06-20): casperaki2 actively rosters+plays brass in latin and organicVibes too, mapping both to the genre-independent StefanSchlagerPatterns stabs (c2 config brassPatterns latin=[library,libraryStabs], organicVibes=[libraryStabs]; LibraryBrass loads the same bank regardless of genre). c1 was schlager-only. We follow c2 (canonical) and point latin/organicVibes at the existing `schlager` style/bank (no new data). (c2's latin also has a `library` style that throws ~half the time — an upstream bug we intentionally do NOT reproduce.) 2026-11-23: every other genre maps to the same bank too, for brass tracks users add (Add track) and the pattern lab's 'current library' — the generator still rolls brass only in schlager / latin / organicVibes (selection ORCHESTRAL_GENRE_SUPPORT).",
   "genreStyles": {
-    "schlager": ["schlager"],
-    "latin": ["schlager"],
-    "organicVibes": ["schlager"]
+    "ballad": [
+      "schlager"
+    ],
+    "brightPop": [
+      "schlager"
+    ],
+    "edm": [
+      "schlager"
+    ],
+    "latin": [
+      "schlager"
+    ],
+    "organicVibes": [
+      "schlager"
+    ],
+    "rock": [
+      "schlager"
+    ],
+    "schlager": [
+      "schlager"
+    ],
+    "urban": [
+      "schlager"
+    ]
   }
 }

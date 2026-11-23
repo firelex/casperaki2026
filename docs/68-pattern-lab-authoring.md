@@ -97,8 +97,11 @@ The report plays every chord-tone and guitar pattern over progressions from real
 flags collapsed voices, muddy low intervals, notes out of range and wrapping guitar strings;
 `--verbose` prints the resolved notes over the first progression. `loadPatternProposals()` (any test
 or the brain) validates the files: schema, energy coverage, and that the family can play in each listed
-genre (`familySoundPool`). Strings play only in ballad, edm, organicVibes, schlager, urban; brass only
-in latin, organicVibes, schlager.
+genre (`familySoundPool`). Strings play only in ballad, edm, organicVibes, schlager, urban. Brass can be
+written for every genre: users can add a brass track to any song (Add track) and the lab previews it, but
+generated songs roll brass only in latin, organicVibes and schlager (`ORCHESTRAL_GENRE_SUPPORT`). Approved
+brass patterns for the other genres play on brass tracks users add; widening that gate puts brass into
+those genres' generated songs (EDM's roster already asks for it).
 
 ## Where approved patterns go
 

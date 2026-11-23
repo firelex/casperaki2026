@@ -7,6 +7,7 @@ import { canonicalStringifySong, type Song } from '@casperaki/song-schema';
 import {
   editTrack,
   familySoundPool,
+  laneFamilyOf,
   loadPublicNames,
   orchestrate,
   TrackEditError,
@@ -162,5 +163,23 @@ describe('track edits', () => {
     expect(() => editTrack(bare as Song, { kind: 'newPattern', track: 'Drums' })).toThrow(
       expect.objectContaining({ status: 409 }),
     );
+  });
+});
+
+describe('brass in every style', () => {
+  it('can be added to a song of any style, while generated songs keep brass to schlager, latin and organicVibes', () => {
+    for (const genre of ['brightPop', 'rock', 'urban', 'ballad', 'edm'] as const) {
+      expect(familySoundPool('popBrass', genre).length).toBeGreaterThan(0);
+      for (const seed of ['brass-a', 'brass-b', 'brass-c', 'brass-d', 'brass-e', 'brass-f']) {
+        const song = orchestrate({ genre, key: 'C', bpm: genre === 'ballad' ? 72 : 120, seed });
+        expect(song.instrumentDefinitions.some((d) => laneFamilyOf(d.name) === 'popBrass')).toBe(false);
+      }
+    }
+    const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 110, seed: 'brass-add' });
+    const sections = song.songStructure.map((s) => s.name);
+    const added = editTrack(song, { kind: 'addTrack', family: 'popBrass', segments: sections }).song;
+    const lane = added.instrumentDefinitions.find((d) => laneFamilyOf(d.name) === 'popBrass');
+    expect(lane).toBeDefined();
+    expect(Object.values(added.arrangement).some((seg) => (seg.overrides[lane!.name]?.bars ?? []).some((b) => Object.keys(b.notes ?? {}).length > 0))).toBe(true);
   });
 });
