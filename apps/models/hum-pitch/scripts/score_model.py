@@ -118,7 +118,8 @@ def main():
                         ("instrument", lambda c: c["group"] == "instrument"), ("round one", lambda c: c.get("round") == "r1"),
                         ("round two", lambda c: c.get("round") == "r2b")]),
     ) + tuple((x, [("all", lambda c: True), ("voice", lambda c: c["group"] == "voice"), ("breathy", lambda c: c["group"] == "breathy"),
-                    ("instrument", lambda c: c["group"] == "instrument")]) for x in args.extra_sets):
+                    ("instrument", lambda c: c["group"] == "instrument"), ("SoulX singer", lambda c: c["lead"] == "soulx"),
+                    ("SoulX yue_target voice (strictly unseen)", lambda c: c["timbre"] == "soulx-yue_target")]) for x in args.extra_sets):
         clips = load_set(set_name)
         outs = run_model(model, clips)
         with Pool(args.workers) as pool:
