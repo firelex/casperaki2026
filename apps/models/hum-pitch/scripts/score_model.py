@@ -33,7 +33,7 @@ from hum_pitch.model import HumNotes, decode, model_inputs, reference_pitch  # n
 from hum_pitch.notes import Config, estimate_key, transcribe  # noqa: E402
 
 FEAT = DATA / "features"
-T_ON = [0.3, 0.4, 0.5, 0.6, 0.7]
+T_ON = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 T_ACT = [0.3, 0.4, 0.5, 0.6]
 
 
