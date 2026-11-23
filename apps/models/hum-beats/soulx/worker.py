@@ -66,6 +66,7 @@ def main():
         except FileNotFoundError:
             continue  # another worker claimed it first
         j = json.loads(claimed.read_text())
+        t_job = time.time()
         meta = {"duration": " ".join(f"{d:.4f}" for d in j["duration"]), "phoneme": " ".join(j["phoneme"]),
                 "note_pitch": " ".join(str(p) for p in j["note_pitch"]), "note_type": " ".join(str(t) for t in j["note_type"]),
                 "f0": " ".join(f"{f:.1f}" for f in j["f0"]), "language": j["language"]}
@@ -75,6 +76,8 @@ def main():
                                 n_steps=n_steps, cfg=config.infer.cfg, control="melody", use_fp16=False)
         out = claimed.with_name(claimed.name.split(".job.json")[0] + ".soulx.wav")
         sf.write(str(out), audio.squeeze().cpu().numpy(), config.audio.sample_rate)
+        out.with_name(out.name.replace(".soulx.wav", ".soulx.json")).write_text(
+            json.dumps({"n_steps": n_steps, "render_seconds": round(time.time() - t_job, 2), "worker": args.worker_id}))
         claimed.unlink()
         done += 1
         if done % 50 == 0:

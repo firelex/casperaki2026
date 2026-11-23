@@ -25,13 +25,15 @@ SOULX_REPO = Path(__file__).resolve().parents[2] / "services" / "soulx-singer" /
 CACHE = Path.home() / ".cache/casperaki/hum-beats-sounds"
 _CTX = None
 _OUT = None
+_JOBS = None
 
 
-def _init(out):
-    global _CTX, _OUT
+def _init(out, jobs_dir):
+    global _CTX, _OUT, _JOBS
     os.environ["OMP_NUM_THREADS"] = "1"
     _CTX = g2.Context(CACHE, SOULX_REPO)
     _OUT = Path(out)
+    _JOBS = Path(jobs_dir)
 
 
 def _summary(meta):
@@ -48,7 +50,7 @@ def _synth(row):
 def _job(row):
     st = g2.make_state(row, _CTX)
     job = g2.soulx_job(st, _CTX)
-    d = _OUT / "soulx-jobs"
+    d = _JOBS
     with open(d / f"{row['clip_id']}.state.pkl", "wb") as f:
         pickle.dump(st, f)
     tmp = d / f"{row['clip_id']}.job.tmp"
@@ -65,14 +67,18 @@ def _finish(wav):
         st = pickle.load(f)
     audio = g2.soulx_audio(wav)
     align = g2.check_soulx_alignment(audio, st["perf"])
-    ok = align["checked_notes"] >= 2 and align["within_70ms"] >= 0.6 and abs(align["median_ms"]) <= 50
+    pitch = g2.check_soulx_pitch(audio, st["cents"])
+    ok = (align["checked_notes"] >= 2 and align["within_70ms"] >= 0.6 and abs(align["median_ms"]) <= 50
+          and pitch["octave_off"] is not None and pitch["octave_off"] <= 0.15)
     if not ok:
-        return {"clip_id": cid, "rejected": align}
-    sinfo = {"soulx": {"prompt": st["lead"]["prompt"], "text": st["lead"]["text"], "alignment": align}}
+        return {"clip_id": cid, "rejected": {"alignment": align, "pitch": pitch}, "duration_s": st["dur"]}
+    render_info = json.loads(wav.with_name(f"{cid}.soulx.json").read_text())
+    sinfo = {"soulx": {"prompt": st["lead"]["prompt"], "text": st["lead"]["text"], "alignment": align, "pitch_check": pitch, **render_info}}
     meta = g2.finish(st, audio, sinfo, st["cents"], _OUT / st["row"]["split"])
     wav.unlink()
     state_path.unlink()
-    return _summary(meta) | {"soulx_alignment": align}
+    wav.with_name(f"{cid}.soulx.json").unlink()
+    return _summary(meta) | {"soulx_alignment": align, **render_info}
 
 
 def main():
@@ -82,15 +88,16 @@ def main():
     ap.add_argument("--soulx-share", required=True)
     ap.add_argument("--stage", choices=["synth", "jobs", "finish"], required=True)
     ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--jobs-dir", type=Path, required=True, help="SoulX job folder; keep it on a Linux disk (listing /mnt/d is slow)")
     args = ap.parse_args()
     counts = {k: int(v) for k, v in (x.split("=") for x in args.counts.split(","))}
     share = {k: float(v) for k, v in (x.split("=") for x in args.soulx_share.split(","))}
     rows = g2.make_plan2(counts, share)
     args.out.mkdir(parents=True, exist_ok=True)
-    (args.out / "soulx-jobs").mkdir(exist_ok=True)
+    args.jobs_dir.mkdir(parents=True, exist_ok=True)
     (args.out / "plan.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
     t = time.time()
-    with Pool(args.workers, initializer=_init, initargs=(str(args.out),)) as pool:
+    with Pool(args.workers, initializer=_init, initargs=(str(args.out), str(args.jobs_dir))) as pool:
         if args.stage == "synth":
             todo = [r for r in rows if r["render"] == "synth"]
             with open(args.out / "index-synth.jsonl", "w") as idx:
@@ -104,10 +111,10 @@ def main():
             for i, _ in enumerate(pool.imap_unordered(_job, todo, chunksize=8)):
                 if (i + 1) % 1000 == 0:
                     print(f"{i + 1}/{len(todo)} jobs, {time.time() - t:.0f} s", flush=True)
-            (args.out / "soulx-jobs" / "ALL_SUBMITTED").touch()
+            (args.jobs_dir / "ALL_SUBMITTED").touch()
             print(f"jobs done: {len(todo)} in {time.time() - t:.0f} s")
         else:
-            jobs_dir = args.out / "soulx-jobs"
+            jobs_dir = args.jobs_dir
             done = 0
             with open(args.out / "index-soulx.jsonl", "a") as idx, open(args.out / "soulx-rejected.jsonl", "a") as rej:
                 while True:

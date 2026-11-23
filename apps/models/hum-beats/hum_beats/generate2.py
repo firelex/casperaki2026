@@ -152,7 +152,7 @@ def make_state(row: dict, ctx: Context) -> dict:
         text = pick(rng, ["en_lyrics", "zh_lyrics", "syllables"], [0.35, 0.3, 0.35])
         syl = pick(rng, list(SYLLABLES)) if text == "syllables" else None
         lead = {"kind": "soulx", "prompt": prompt, "text": text, "syllable": syl, "group": "soulx", "timbre": f"soulx-{prompt}",
-                "median_midi": prompts[prompt] + float(rng.uniform(-5, 4))}
+                "median_midi": prompts[prompt] + float(rng.uniform(-3, 4))}  # SoulX will not follow a voice much below its prompt
     else:
         lead = choose_lead(rng, row["split"], ctx.bank)
     drawn_bars, found = n_bars, False
@@ -262,6 +262,19 @@ def soulx_job(st: dict, ctx: Context) -> dict:
     st["lyrics"] = words
     return {"prompt": lead["prompt"], "language": "Mandarin" if lead["text"] == "zh_lyrics" else "English", "phoneme": phon,
             "duration": durs, "note_pitch": pitch, "note_type": ntype, "f0": f0.round(2).tolist()}
+
+
+def check_soulx_pitch(audio22: np.ndarray, cents: np.ndarray) -> dict:
+    """How closely SoulX sang the f0 it was given: pYIN on the output against the stored curve."""
+    import librosa
+    f0, v, _ = librosa.pyin(audio22.astype(np.float32), fmin=50, fmax=1200, sr=SR, frame_length=2048, hop_length=220)
+    t = librosa.times_like(f0, sr=SR, hop_length=220)
+    st = np.interp(t, np.arange(len(cents)) / CTRL, cents, left=np.nan, right=np.nan)
+    ok = v & np.isfinite(st) & np.isfinite(f0)
+    if ok.sum() < 20:
+        return {"frames": int(ok.sum()), "octave_off": None, "within_50_cents": None}
+    d = 1200 * np.log2(f0[ok] / 440) + 6900 - st[ok]
+    return {"frames": int(ok.sum()), "octave_off": float(np.mean(np.abs(d) > 600)), "within_50_cents": float(np.mean(np.abs(d) < 50))}
 
 
 def check_soulx_alignment(audio22: np.ndarray, perf: list[dict]) -> dict:
