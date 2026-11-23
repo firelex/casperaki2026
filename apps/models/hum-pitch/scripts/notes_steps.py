@@ -84,12 +84,12 @@ def tune(workers: int):
         base = Config()
         print("baseline", pooled(run(pool, n, [base])[0]))
         c1 = pick("tuning", base, [replace(base, tuning="global")] + [replace(base, tuning="drift", drift_sigma_s=s) for s in (2.0, 4.0, 8.0, 16.0)])
-        c2 = pick("key", c1, [replace(c1, key="estimated", snap_margin=m) for m in (0.1, 0.2, 0.3, 0.4)])
-        grid3 = [replace(c2, split="improved", onset_delta=d, scoop_max_s=sc, min_note_beats=mb)
-                 for d, sc, mb in itertools.product((0.3, 0.5, 0.8, 1.2), (0.06, 0.12, 0.2), (0.1, 0.2, 0.3))]
+        c2 = pick("key", c1, [replace(c1, key="estimated", snap_margin=m) for m in (0.1, 0.2, 0.3, 0.4, 0.45)])
+        grid3 = [replace(c2, split="improved", onset_delta=d, scoop_max_s=sc, glide_min_st=g, min_note_beats=mb)
+                 for d, sc, g, mb in itertools.product((0.5, 0.8, 1.2, 1.6, 2.0), (0.06, 0.12, 0.2), (0.3, 0.5, 1.0), (0.1, 0.2, 0.3))]
         c3 = pick("split", c2, grid3)
         grid4 = [replace(c3, grid=True, grid_weight=w, onset_delta=d, min_note_beats=mb)
-                 for w, d, mb in itertools.product((0.0, 1.0, 2.0), (0.5, 0.8, 1.2), (0.1, 0.2, 0.3))]
+                 for w, d, mb in itertools.product((0.0, 0.5, 1.0, 2.0), (0.5, 0.8, 1.2, 1.6, 2.0), (0.1, 0.2, 0.3))]
         pick("grid", c3, grid4)
     SETTINGS.write_text(json.dumps({"tuned_on": f"humtrans-tune ({n} HumTrans TRAIN recordings), greedy, objective f100"} | chosen, indent=1))
     print("wrote", SETTINGS)

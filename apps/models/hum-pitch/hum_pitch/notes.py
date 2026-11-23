@@ -36,7 +36,8 @@ class Config:
     grid: bool = False  # improved splitting with the labelled beat grid
     onset_delta: float = 0.5  # an onset-strength peak counts when it exceeds the local mean by this (in clip-normalised units)
     grid_weight: float = 1.0  # with the grid: onset strength x (1 + weight) on a sixteenth, falling off over 30 ms
-    scoop_max_s: float = 0.12  # shorter pitch segments at a note start merge into the note
+    scoop_max_s: float = 0.12  # shorter pitch segments that glide into the next note (or away from the last) merge into it
+    glide_min_st: float = 0.5  # ... gliding = the segment ends at least this many semitones closer to the note than it starts
     min_note_beats: float = 0.2  # minimum note length as a fraction of a beat ...
     min_note_s: float = 0.06  # ... and never shorter than this
     # shared with the basic segmentation
@@ -158,24 +159,39 @@ def segment_improved(clip_id, times, midi, voiced, level_db, cfg: Config, beats=
         edges = [0] + cuts + [len(seg)]
         kinds = ["start"] + [bounds[c] for c in cuts]  # how each segment begins
         segs = [[edges[i], edges[i + 1], kinds[i]] for i in range(len(edges) - 1)]
-        # scoops: a short segment followed by a pitch boundary merges into the next segment (keeps its start)
+        def ends(s, e):
+            n = max(1, min(3, (e - s) // 3))
+            return float(np.median(seg[s:s + n])), float(np.median(seg[e - n:e]))
+
+        def centre(s, e):
+            body = seg[s:e]
+            return float(np.median(body[int(0.2 * len(body)):] if len(body) >= 5 else body))
+
+        # scoops: a short segment that glides into the next one across a pitch boundary merges into it (keeps its start)
         merged = []
         i = 0
         while i < len(segs):
             s, e, k = segs[i]
             if (e - s) * hop < cfg.scoop_max_s and i + 1 < len(segs) and segs[i + 1][2] == "pitch":
-                segs[i + 1] = [s, segs[i + 1][1], k]
-                i += 1
-                continue
+                first, last = ends(s, e)
+                p_next = centre(segs[i + 1][0], segs[i + 1][1])
+                if abs(last - p_next) <= abs(first - p_next) - cfg.glide_min_st:
+                    segs[i + 1] = [s, segs[i + 1][1], k]
+                    i += 1
+                    continue
             merged.append([s, e, k])
             i += 1
-        # falls: a short segment after a pitch boundary at the end of a run / before an onset merges into the previous
+        # falls: a short segment gliding away from the previous note (after a pitch boundary, before a silence or an
+        # onset) merges into the previous one
         out = []
         for idx, (s, e, k) in enumerate(merged):
             nxt_kind = merged[idx + 1][2] if idx + 1 < len(merged) else "end"
             if out and k == "pitch" and (e - s) * hop < cfg.scoop_max_s and nxt_kind != "pitch":
-                out[-1][1] = e
-                continue
+                first, last = ends(s, e)
+                p_prev = centre(out[-1][0], out[-1][1])
+                if abs(last - p_prev) >= abs(first - p_prev) + cfg.glide_min_st:
+                    out[-1][1] = e
+                    continue
             out.append([s, e, k])
         for s, e, k in out:
             body = seg[s:e]
