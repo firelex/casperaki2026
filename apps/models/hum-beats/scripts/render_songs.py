@@ -38,14 +38,18 @@ def render(args):
     if all((Path(out) / "train" / f"song{i:04d}-{k}.beats").exists() for k in range(3)):
         return {"song": i, "genre": genre, "bpm": bpm, "key": key, "clips": [f"song{i:04d}-{k}" for k in range(3)], "reused": True}
     env = {**os.environ, "CASPERAKI_SAMPLE_LIBRARY_ROOT": LIB}
-    subprocess.run(["node", str(Path(__file__).with_name("make_song.mjs")), str(d), genre, key, str(bpm), seed], check=True, cwd=CA / "apps/engine-spike",
-                   capture_output=True)
+    # every step has a time limit: orchestrate once spun for minutes on one song (latin, A#, 93 BPM)
+    try:
+        subprocess.run(["node", str(Path(__file__).with_name("make_song.mjs")), str(d), genre, key, str(bpm), seed], check=True,
+                       cwd=CA / "apps/engine-spike", capture_output=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        return {"song": i, "genre": genre, "bpm": bpm, "key": key, "failed": ["orchestrate did not finish within 120 s"]}
     with open(d / "lower.log", "w") as log:
         subprocess.run(["node", "../engine-spike/scripts/emit-brain-roundtrip.mjs"], check=True, cwd=CA / "apps/brain", stdout=log, stderr=log,
-                       env={**env, "BRAIN_SONG_FILE": str(d / "song-in.json"), "OUT_DIR": str(d)})
+                       env={**env, "BRAIN_SONG_FILE": str(d / "song-in.json"), "OUT_DIR": str(d)}, timeout=300)
     with open(d / "render.log", "w") as log:
         r = subprocess.run([str(CA / "apps/web/wasm/engine/build/casperaki_render"), str(d), str(d / "out.wav"), str(CA / "apps/engine-spike/samples"), LIB],
-                           cwd=CA / "apps/brain", stdout=log, stderr=log, env={**env, "CASPERAKI_BITS": "16", "CASPERAKI_MIX": "1"})
+                           cwd=CA / "apps/brain", stdout=log, stderr=log, env={**env, "CASPERAKI_BITS": "16", "CASPERAKI_MIX": "1"}, timeout=600)
     if r.returncode != 0:
         # the renderer refused this song (e.g. "loop ... is 2.580635 s, shorter than one bar (2.580645 s)": an
         # engine rounding bug at some tempos); recorded in songs.jsonl and reported, never silently replaced
