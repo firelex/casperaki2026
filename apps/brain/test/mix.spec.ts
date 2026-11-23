@@ -112,5 +112,15 @@ describe('Pro-mode mix', () => {
     const again = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as typeof body;
     expect(again.genres[0]!.changes.map((c) => [c.kind, c.average])).toEqual([['plugin', 0.7]]);
     expect((await fetch(`${h.url}/api/suggestions/mix?genre=edm`, { method: 'DELETE' })).status).toBe(400);
+
+    // Comments: kept on the change, oldest first, without changing it.
+    const c1 = await fetch(`${h.url}/api/suggestions/mix/comments`, json('POST', { genre: 'edm', key: plugin.key, body: 'Try this as the standard' }));
+    expect(c1.status).toBe(201);
+    await fetch(`${h.url}/api/suggestions/mix/comments`, json('POST', { genre: 'edm', key: plugin.key, body: 'Too loud on laptops' }));
+    const withComments = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as { genres: { changes: { key: string; comments: { body: string; author: string }[] }[] }[] };
+    const commented = withComments.genres[0]!.changes.find((c) => c.key === plugin.key)!;
+    expect(commented.comments.map((c) => c.body)).toEqual(['Try this as the standard', 'Too loud on laptops']);
+    expect(commented.comments[0]!.author).toBe('local-dev');
+    expect((await fetch(`${h.url}/api/suggestions/mix/comments`, json('POST', { genre: 'edm', key: plugin.key, body: '  ' }))).status).toBe(400);
   });
 });

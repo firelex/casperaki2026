@@ -91,6 +91,19 @@ describe('pattern lab', () => {
     }
   });
 
+  it('keeps comments on a proposal without changing its review', async () => {
+    const p = loadPatternProposals()[0]!;
+    const res = await post(`${h.url}/api/patterns/${p.id}/comments`, { body: 'Nice in the chorus, busy in the verse' });
+    expect(res.status).toBe(201);
+    await post(`${h.url}/api/patterns/${p.id}/comments`, { body: 'Second listen: keep it' });
+    const list = (await (await fetch(`${h.url}/api/patterns`)).json()) as { proposals: { id: string; review: unknown; comments: { body: string }[] }[] };
+    const got = list.proposals.find((x) => x.id === p.id)!;
+    expect(got.comments.map((c) => c.body)).toEqual(['Nice in the chorus, busy in the verse', 'Second listen: keep it']);
+    expect(got.review).toBeNull();
+    expect((await post(`${h.url}/api/patterns/${p.id}/comments`, { body: '' })).status).toBe(400);
+    expect((await post(`${h.url}/api/patterns/no-such/comments`, { body: 'x' })).status).toBe(404);
+  });
+
   it('opens the song as heard in the editor: a new project of the user', async () => {
     const p = loadPatternProposals().find((x) => x.family === 'popBrass')!;
     const sounds = ((await (await fetch(`${h.url}/api/patterns/${p.id}/sounds?genre=${p.genres[0]}`)).json()) as { sounds: { id: string }[] }).sounds;

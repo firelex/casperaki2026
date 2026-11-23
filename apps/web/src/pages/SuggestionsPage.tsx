@@ -1,7 +1,9 @@
+import { Fragment, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 
 import { suggestionsApi, type GenreMixSuggestions, type MixChange } from '../api/suggestions';
+import { CommentBox, CommentList } from '../components/SuggestionComments';
 import { describeParam, pluginTitle } from '../editor/devices/ProParams';
 import { AppHeader } from '../layout/AppHeader';
 import { GENRE_LABELS } from '../types/genres';
@@ -76,6 +78,12 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
     mutationFn: (key: string) => suggestionsApi.dismissMix(g.genre, key),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] }),
   });
+  const comment = useMutation({
+    mutationFn: ({ key, body }: { key: string; body: string }) => suggestionsApi.commentMix(g.genre, key, body),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] }),
+  });
+  /** The change whose comment box is open. */
+  const [open, setOpen] = useState<string | undefined>(undefined);
   return (
     <article className="rounded-[14px] border border-line/60 bg-panel p-5 sm:p-7">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -100,7 +108,8 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
               {g.changes.map((c) => {
                 const d = describe(c);
                 return (
-                  <tr key={c.key} className="border-t border-line/40 align-top">
+                  <Fragment key={c.key}>
+                  <tr className="border-t border-line/40 align-top">
                     <td className="py-2 pr-4 text-white">{d.what}</td>
                     <td className="py-2 pr-4 font-mono text-white/60">{d.show(c.standard)}</td>
                     <td className="py-2 pr-4 font-mono text-[#ffb347]">{d.show(c.average)}</td>
@@ -111,7 +120,16 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                         {c.values.length > 3 ? ' …' : ''}
                       </span>
                     </td>
-                    <td className="py-1.5 pl-3 text-right">
+                    <td className="whitespace-nowrap py-1.5 pl-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setOpen(open === c.key ? undefined : c.key)}
+                        aria-expanded={open === c.key}
+                        title="Leave a comment on this change"
+                        className="mr-2 h-7 rounded-full border border-white/20 px-3 text-[12px] text-white/70 hover:border-white/60 hover:text-white"
+                      >
+                        Comment{c.comments.length ? ` (${c.comments.length})` : ''}
+                      </button>
                       <button
                         type="button"
                         onClick={() => dismiss.mutate(c.key)}
@@ -123,6 +141,25 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                       </button>
                     </td>
                   </tr>
+                  {open === c.key ? (
+                    <tr>
+                      <td colSpan={5} className="pb-3 pt-1">
+                        <CommentBox
+                          comments={c.comments}
+                          onComment={(body) => comment.mutateAsync({ key: c.key, body })}
+                          pending={comment.isPending}
+                          error={comment.isError ? comment.error.message : undefined}
+                        />
+                      </td>
+                    </tr>
+                  ) : c.comments.length ? (
+                    <tr>
+                      <td colSpan={5} className="pb-3 pt-1">
+                        <CommentList comments={c.comments} />
+                      </td>
+                    </tr>
+                  ) : null}
+                  </Fragment>
                 );
               })}
             </tbody>

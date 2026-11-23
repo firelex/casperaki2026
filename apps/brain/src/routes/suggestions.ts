@@ -4,6 +4,7 @@
 // candidate for the standard mix (casperaki_engine/config/mix-config.json).
 //
 //   GET    /api/suggestions/mix -> { genres: [{ genre, songs, changes: [...] }] }
+//   POST   /api/suggestions/mix/comments { genre, key, body } -> 201 the comment (author, time)
 //   DELETE /api/suggestions/mix?genre=&key= -> 204: hide that change (Delete
 //          on the page). The songs keep their mixes; a value saved after the
 //          deletion shows the change again.
@@ -14,19 +15,21 @@
 //   plugin: one parameter (raw 0..1) of a plugin on an FX bus
 // with every song's value (newest first) and their average.
 
-import { Router, type Request } from 'express';
+import { Router, json, type Request } from 'express';
 import { z } from 'zod';
 
 import { parseSong } from '@casperaki/song-schema';
 
 import { MixLookup } from '../sounds/soundDetails.js';
-import type { SongsStore } from '../store.js';
+import type { SongsStore, SuggestionComment } from '../store.js';
 
 export interface SuggestionsRouterDeps {
   readonly store: SongsStore;
   /** The standard mix config text; without it the mix suggestions answer 503. */
   readonly mixConfig: string | undefined;
   readonly isAdminRequest: (req: Request) => boolean;
+  /** Who leaves a comment (the signed-in email). */
+  readonly authorOf: (req: Request) => string;
 }
 
 type ChangeKind = 'volume' | 'send' | 'plugin';
@@ -42,12 +45,15 @@ export interface MixChange {
   readonly standard: number;
   readonly average: number;
   readonly values: readonly { readonly value: number; readonly songId: string; readonly title: string; readonly lane?: string; readonly updatedAt: string }[];
+  /** Comments left on this change (oldest first). */
+  readonly comments: readonly SuggestionComment[];
 }
 
 const SENDS = ['reverb', 'delay', 'chorus'] as const;
+const CommentBody = z.object({ genre: z.string().min(1), key: z.string().min(1), body: z.string().trim().min(1).max(2000) }).strict();
 const DismissQuery = z.object({ genre: z.string().min(1), key: z.string().min(1) }).strict();
 
-export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: SuggestionsRouterDeps): Router {
+export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, authorOf }: SuggestionsRouterDeps): Router {
   const router = Router();
   router.get('/api/suggestions/mix', (req, res) => {
     if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
@@ -55,8 +61,10 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: Su
     const lookup = new MixLookup(mixConfig);
     const chains = (JSON.parse(mixConfig) as { rackChains: { bus: string; plugins: { factory: string; params: number[] }[] }[] }).rackChains;
 
+    const comments = new Map<string, SuggestionComment[]>();
+    for (const c of store.listSuggestionComments('mix')) comments.set(c.target, [...(comments.get(c.target) ?? []), c]);
     const dismissed = new Map(store.listMixDismissals().map((d) => [`${d.genre}|${d.key}`, d.dismissedAt]));
-    const byGenre = new Map<string, { changes: Map<string, Omit<MixChange, 'average' | 'values'> & { values: (MixChange['values'][number] & { owner: string })[] }> }>();
+    const byGenre = new Map<string, { changes: Map<string, Omit<MixChange, 'average' | 'values' | 'comments'> & { values: (MixChange['values'][number] & { owner: string })[] }> }>();
     for (const row of store.listProjectMixes()) {
       const genre = row.genre ?? 'unknown';
       const g = byGenre.get(genre) ?? { changes: new Map() };
@@ -70,7 +78,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: Su
         if (!t) throw new Error(`song ${row.songId}: instrument "${lane}" has no type`);
         return t;
       };
-      const add = (key: string, base: Omit<MixChange, 'key' | 'average' | 'values'>, value: MixChange['values'][number]) => {
+      const add = (key: string, base: Omit<MixChange, 'key' | 'average' | 'values' | 'comments'>, value: MixChange['values'][number]) => {
         // Deleted on the page: only values saved since then count.
         const gone = dismissed.get(`${genre}|${key}`);
         if (gone !== undefined && value.updatedAt <= gone) return;
@@ -117,11 +125,19 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest }: Su
         genre,
         songs: new Set([...g.changes.values()].flatMap((c) => c.values.map((v) => `${v.owner}/${v.songId}`))).size,
         changes: [...g.changes.values()]
-          .map((c) => ({ ...c, values: c.values.map(({ owner: _owner, ...v }) => v), average: c.values.reduce((s, v) => s + v.value, 0) / c.values.length }))
+          .map((c) => ({ ...c, comments: comments.get(`${genre}|${c.key}`) ?? [], values: c.values.map(({ owner: _owner, ...v }) => v), average: c.values.reduce((s, v) => s + v.value, 0) / c.values.length }))
           .sort((a, b) => b.values.length - a.values.length || order[a.kind] - order[b.kind] || a.target.localeCompare(b.target)),
       }))
       .sort((a, b) => a.genre.localeCompare(b.genre));
     return res.json({ genres });
+  });
+  router.post('/api/suggestions/mix/comments', json(), (req, res) => {
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
+    const body = CommentBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'bad_request', message: body.error.message });
+    const { genre, key } = body.data;
+    const comment = store.addSuggestionComment({ kind: 'mix', target: `${genre}|${key}`, author: authorOf(req), body: body.data.body, createdAt: new Date().toISOString() });
+    return res.status(201).json({ comment });
   });
   router.delete('/api/suggestions/mix', (req, res) => {
     if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });

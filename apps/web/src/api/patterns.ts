@@ -1,3 +1,4 @@
+import type { SuggestionComment } from '../components/SuggestionComments';
 import type { Genre } from '@casperaki/song-schema/schemas';
 
 import { defaultBrainClient } from './client';
@@ -42,6 +43,8 @@ interface ProposalBase {
   readonly genres: Genre[];
   readonly rationale: string;
   readonly review: PatternReview | null;
+  /** Comments left on it, oldest first (Comment, besides Approve / Reject). */
+  readonly comments: readonly SuggestionComment[];
   /** Exported into the pattern library (bank-index.json). */
   readonly inLibrary: boolean;
 }
@@ -63,6 +66,8 @@ export interface PreviewSection {
 
 export const patternsApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ proposals: PatternProposal[] }>('/api/patterns', { signal }),
+  comment: (id: string, body: string) =>
+    defaultBrainClient.post<{ comment: SuggestionComment }>(`/api/patterns/${encodeURIComponent(id)}/comments`, { body }),
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
     defaultBrainClient.post<{ review: PatternReview | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
   /** `soundId`: play the proposal's instrument with this sound (undefined: the song's own). */

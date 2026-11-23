@@ -2,6 +2,8 @@
 //
 //   GET  /api/patterns                 proposals + review decision + whether exported
 //   POST /api/patterns/:id/review      { status: 'approved' | 'rejected' | 'pending', note? }
+//   POST /api/patterns/:id/comments    { body } -> 201 the comment (author, time); the
+//                                      listing carries each proposal's comments
 //   GET  /api/patterns/:id/sounds?genre=  the sounds the proposal's instrument can use in
 //                                      that genre (the instrument picker; none for drums)
 //   POST /api/patterns/:id/project     same body as a preview -> 201 { id }: that song saved as a
@@ -48,7 +50,7 @@ import type { Genre, Song } from '@casperaki/song-schema';
 import { canonicalStringifySong, DEFAULT_BPM_BY_GENRE, GenreSchema } from '@casperaki/song-schema';
 
 import type { PlaybackService } from '../render/playbackService.js';
-import type { SongsStore } from '../store.js';
+import type { SongsStore, SuggestionComment } from '../store.js';
 import { playbackPayload } from './playback.js';
 import { ownerOf } from './songs.js';
 
@@ -64,6 +66,7 @@ export interface PatternsRouterDeps {
 const ReviewBody = z
   .object({ status: z.enum(['approved', 'rejected', 'pending']), note: z.string().max(2000).optional() })
   .strict();
+const CommentBody = z.object({ body: z.string().trim().min(1).max(2000) }).strict();
 const PreviewBody = z
   .object({
     genre: GenreSchema,
@@ -178,14 +181,25 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
 
   router.get('/api/patterns', (_req, res) => {
     const reviews = new Map(store.listPatternReviews().map((r) => [r.proposalId, r]));
+    const comments = new Map<string, SuggestionComment[]>();
+    for (const c of store.listSuggestionComments('pattern')) comments.set(c.target, [...(comments.get(c.target) ?? []), c]);
     const exported = exportedStyles();
     res.json({
       proposals: loadPatternProposals().map((p) => ({
         ...p,
         review: reviews.get(p.id) ?? null,
+        comments: comments.get(p.id) ?? [],
         inLibrary: exported.has(authoredStyleName(p.id)),
       })),
     });
+  });
+
+  router.post('/api/patterns/:id/comments', (req, res) => {
+    const body = CommentBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.issues[0]?.message });
+    if (!loadPatternProposals().some((p) => p.id === req.params.id)) return res.status(404).json({ error: 'not_found', id: req.params.id });
+    const comment = store.addSuggestionComment({ kind: 'pattern', target: req.params.id, author: reviewerOf(req), body: body.data.body, createdAt: new Date().toISOString() });
+    return res.status(201).json({ comment });
   });
 
   router.post('/api/patterns/:id/review', (req, res) => {

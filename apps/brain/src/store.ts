@@ -66,6 +66,17 @@ export interface PatternReview {
   readonly decidedAt: string;
 }
 
+/** A comment on a suggestion (Suggestions page): a pattern proposal or a mix change. */
+export interface SuggestionComment {
+  readonly id: number;
+  /** 'pattern': target = proposal id; 'mix': target = "<genre>|<change key>". */
+  readonly kind: 'pattern' | 'mix';
+  readonly target: string;
+  readonly author: string;
+  readonly body: string;
+  readonly createdAt: string;
+}
+
 export interface MixDismissal {
   readonly genre: string;
   readonly key: string;
@@ -92,6 +103,9 @@ export interface SongsStore {
   /** Hide a mix suggestion (a genre's change key) from the suggestions page; changes saved later show again. */
   dismissMixSuggestion(input: { genre: string; key: string; dismissedAt: string }): void;
   listMixDismissals(): MixDismissal[];
+  addSuggestionComment(input: Omit<SuggestionComment, 'id'>): SuggestionComment;
+  /** Comments of one kind, oldest first. */
+  listSuggestionComments(kind: SuggestionComment['kind']): SuggestionComment[];
   /** Pattern-lab decisions, keyed by proposal id. */
   listPatternReviews(): PatternReview[];
   setPatternReview(review: PatternReview): void;
@@ -119,6 +133,15 @@ const SONGS_SCHEMA = `
     PRIMARY KEY (owner_id, song_id)
   );
   CREATE INDEX IF NOT EXISTS projects_owner_updated ON projects(owner_id, updated_at DESC);
+  CREATE TABLE IF NOT EXISTS suggestion_comments (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind       TEXT NOT NULL CHECK (kind IN ('pattern', 'mix')),
+    target     TEXT NOT NULL,
+    author     TEXT NOT NULL,
+    body       TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS suggestion_comments_kind ON suggestion_comments(kind, target);
   CREATE TABLE IF NOT EXISTS mix_suggestion_dismissals (
     genre        TEXT NOT NULL,
     change_key   TEXT NOT NULL,
@@ -266,6 +289,17 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
         mixOverrides: MixOverridesSchema.parse(JSON.parse(r.mix_overrides)),
         mixUpdatedAt: r.mix_updated_at,
       }));
+    },
+    addSuggestionComment({ kind, target, author, body, createdAt }) {
+      const r = db
+        .prepare('INSERT INTO suggestion_comments (kind, target, author, body, created_at) VALUES (?, ?, ?, ?, ?)')
+        .run(kind, target, author, body, createdAt);
+      return { id: Number(r.lastInsertRowid), kind, target, author, body, createdAt };
+    },
+    listSuggestionComments(kind) {
+      return (db.prepare('SELECT * FROM suggestion_comments WHERE kind = ? ORDER BY id').all(kind) as Array<{
+        id: number; kind: 'pattern' | 'mix'; target: string; author: string; body: string; created_at: string;
+      }>).map((r) => ({ id: r.id, kind: r.kind, target: r.target, author: r.author, body: r.body, createdAt: r.created_at }));
     },
     dismissMixSuggestion({ genre, key, dismissedAt }) {
       db.prepare(

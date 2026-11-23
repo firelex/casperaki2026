@@ -236,6 +236,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       store,
       mixConfig: playback?.mixConfig,
       isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
+      authorOf: (req) => req.user?.email ?? 'local-dev',
     }),
   );
   app.use(createRendersRouter({ artifactPath: config.renderArtifactPath }));

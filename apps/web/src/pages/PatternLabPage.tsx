@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
+import { CommentList } from '../components/SuggestionComments';
+
 import { songsQueryKeys } from '../api/songs';
 import type { Genre } from '@casperaki/song-schema/schemas';
 
@@ -185,6 +187,13 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   });
   const [note, setNote] = useState(p.review?.note ?? '');
   const live = useLiveState();
+  const comment = useMutation({
+    mutationFn: () => patternsApi.comment(p.id, note.trim()),
+    onSuccess: () => {
+      setNote('');
+      void queryClient.invalidateQueries({ queryKey: patternsQueryKey });
+    },
+  });
   const review = useMutation({
     mutationFn: (status: 'approved' | 'rejected' | 'pending') => patternsApi.review(p.id, status, note),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: patternsQueryKey }),
@@ -382,15 +391,22 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         {energyOf(p, take) ? ` This pattern is for ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'}: playing loops the first ${energyOf(p, take) === 'low' ? 'verses' : 'choruses'} (back-to-back ones together).` : ''}
       </p>
 
-      <div className="mt-6 flex flex-col gap-3 border-t border-line/60 pt-5 sm:flex-row sm:items-end">
+      {p.comments.length ? (
+        <div className="mt-6 border-t border-line/60 pt-5">
+          <div className="mb-2 text-[13px] text-white/60">Comments</div>
+          <CommentList comments={p.comments} />
+        </div>
+      ) : null}
+
+      <div className={`${p.comments.length ? 'mt-4' : 'mt-6 border-t border-line/60 pt-5'} flex flex-col gap-3 sm:flex-row sm:items-end`}>
         <label className="flex flex-1 flex-col gap-2">
-          <span className="text-[13px] text-white/60">Note (optional)</span>
+          <span className="text-[13px] text-white/60">Note or comment</span>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
             maxLength={2000}
-            placeholder="What works, what doesn't"
+            placeholder="What works, what doesn't. Approve or Reject saves it with the decision; Comment adds it below."
             className="rounded-[8px] border border-line bg-bg px-3 py-2 text-[14px] text-white outline-none focus:border-white/50"
           />
         </label>
@@ -400,6 +416,15 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
               Undo
             </button>
           ) : null}
+          <button
+            type="button"
+            onClick={() => comment.mutate()}
+            disabled={comment.isPending || !note.trim()}
+            title="Save the text as a comment, without approving or rejecting"
+            className="h-10 rounded-full border border-line px-5 text-[14px] font-semibold text-white hover:border-white/60 disabled:opacity-40"
+          >
+            {comment.isPending ? 'Saving…' : 'Comment'}
+          </button>
           <button
             type="button"
             onClick={() => review.mutate('rejected')}
@@ -419,6 +444,7 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
         </div>
       </div>
       {review.isError ? <p className="mt-2 text-[13px] text-err">The decision was not saved: {review.error.message}</p> : null}
+      {comment.isError ? <p className="mt-2 text-[13px] text-err">The comment was not saved: {comment.error.message}</p> : null}
       {p.review ? (
         <p className="mt-3 text-[12px] text-white/40">
           {p.review.status === 'approved' ? 'Approved' : 'Rejected'} by {p.review.reviewer} on{' '}
