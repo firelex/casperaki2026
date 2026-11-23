@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useQueries, useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@teamsuzie/ui';
 import { soundsApi, soundsQueryKeys, type SoundFamily, type SoundItem } from '../api/sounds';
@@ -134,35 +134,7 @@ export function SoundsView() {
 
   return (
     <div className="flex h-full min-h-0 bg-[#1b1c1f] text-white">
-      {/* Browser sidebar. */}
-      <aside className="flex w-[260px] shrink-0 flex-col border-r border-black/70 bg-[#202124]">
-        <nav className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Sound families">
-          {families.isError ? <p className="p-2 text-[12px] text-err">{families.error.message}</p> : null}
-          {GROUPS.map((g) => {
-            const fams = (families.data?.families ?? []).filter((f) => f.group === g);
-            if (fams.length === 0) return null;
-            return (
-              <div key={g} className="mb-3">
-                <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">{g.toUpperCase()}</div>
-                {fams.map((f) => (
-                  <FamilyButton key={f.id} f={f} active={f.id === family} onClick={() => setFamily(f.id)} />
-                ))}
-              </div>
-            );
-          })}
-          {families.data?.transitions.length ? (
-            <div className="mb-3">
-              <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">TRANSITIONS</div>
-              {families.data.transitions.map((t) => (
-                <FamilyButton
-                  key={t.type}
-                  f={{ id: `transition:${t.type}`, label: t.label, group: 'FX', count: t.count }}
-                  active={family === `transition:${t.type}`}
-                  onClick={() => setFamily(`transition:${t.type}`)}
-                />
-              ))}
-            </div>
-          ) : null}
+      <SoundFamiliesNav families={families} family={family} onFamily={setFamily}>
           {songTracks.length ? (
             <div className="mt-2 border-t border-black/50 pt-3">
               <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">IN THIS SONG</div>
@@ -191,8 +163,7 @@ export function SoundsView() {
               })}
             </div>
           ) : null}
-        </nav>
-      </aside>
+      </SoundFamiliesNav>
 
       <SoundBrowser
         source={transitionType ? { transition: transitionType } : { family }}
@@ -216,6 +187,55 @@ export function SoundsView() {
         }
       />
     </div>
+  );
+}
+
+export type SoundFamilies = Awaited<ReturnType<typeof soundsApi.families>>;
+
+/** The library's sidebar: sound families by group, then the transition types; `children` below them. */
+export function SoundFamiliesNav({
+  families,
+  family,
+  onFamily,
+  children,
+}: {
+  families: UseQueryResult<SoundFamilies>;
+  family: string;
+  onFamily(id: string): void;
+  children?: ReactNode;
+}) {
+  return (
+    <aside className="flex w-[260px] shrink-0 flex-col border-r border-black/70 bg-[#202124]">
+      <nav className="min-h-0 flex-1 overflow-y-auto p-2" aria-label="Sound families">
+        {families.isError ? <p className="p-2 text-[12px] text-err">{families.error.message}</p> : null}
+        {GROUPS.map((g) => {
+          const fams = (families.data?.families ?? []).filter((f) => f.group === g);
+          if (fams.length === 0) return null;
+          return (
+            <div key={g} className="mb-3">
+              <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">{g.toUpperCase()}</div>
+              {fams.map((f) => (
+                <FamilyButton key={f.id} f={f} active={f.id === family} onClick={() => onFamily(f.id)} />
+              ))}
+            </div>
+          );
+        })}
+        {families.data?.transitions.length ? (
+          <div className="mb-3">
+            <div className="px-2 pb-1 text-[10px] font-semibold text-[#8f9098]">TRANSITIONS</div>
+            {families.data.transitions.map((t) => (
+              <FamilyButton
+                key={t.type}
+                f={{ id: `transition:${t.type}`, label: t.label, group: 'FX', count: t.count }}
+                active={family === `transition:${t.type}`}
+                onClick={() => onFamily(`transition:${t.type}`)}
+              />
+            ))}
+          </div>
+        ) : null}
+        {children}
+      </nav>
+    </aside>
   );
 }
 

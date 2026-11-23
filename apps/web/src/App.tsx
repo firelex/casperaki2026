@@ -11,6 +11,7 @@ import { SignInPage } from './pages/SignInPage';
 // editor, catalog and dev WASM pages are fetched when first opened.
 const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
 const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage').then((m) => ({ default: m.SuggestionsPage })));
+const SoundLibraryPage = lazy(() => import('./pages/SoundLibraryPage').then((m) => ({ default: m.SoundLibraryPage })));
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
@@ -20,6 +21,8 @@ const HumLabPage = lazy(() => import('./pages/HumLabPage').then((m) => ({ defaul
  * Routes mirror rory-fe's three screens (LoginView, ProjectsView, Editor):
  *
  *   /                          → Projects   (home — listing + Create CTA)
+ *   /sounds                    → Sound library (the Sounds tab's browser, no song)
+ *   /catalog                   → Sample catalog (admins: source names, audit)
  *   /editor                    → redirect to Projects
  *   /editor/:songId            → redirect to Timeline tab
  *   /editor/:songId/sound      → Editor · Sound Design tab
@@ -42,6 +45,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<ProjectsPage />} />
         {/* The sound library lists source names: admins only. */}
+        <Route path="/sounds" element={<SoundLibraryPage />} />
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
         {/* Suggestions (admins): the pattern lab and the Pro-mode mix changes. */}
         {user.isAdmin ? <Route path="/suggestions" element={<SuggestionsPage />} /> : null}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type ReplayResult } from '../api/songs';
 import { useSession } from '../state/session';
@@ -10,8 +10,8 @@ import { Transport } from './Transport';
 import { ExportDialog } from '../export/ExportDialog';
 
 /**
- * The editor's control bar, laid out like a DAW's: logo (back to the songs),
- * song name and save state, undo/redo on the left; the transport in the
+ * The editor's control bar, laid out like a DAW's, below the app's
+ * navigation (AppHeader): song name and save state, undo/redo on the left; the transport in the
  * centre; the views, Save and Export on the right. The ⟳ button replays the
  * generator to verify determinism.
  */
@@ -49,12 +49,8 @@ export function EditorHeader({ tab }: { tab: EditorTab }) {
 
   return (
     <header className="relative z-40 flex h-[56px] w-full shrink-0 items-center gap-4 border-b border-black/80 bg-gradient-to-b from-[#36383e] to-[#2a2b30] px-4 text-[#e2e3e7]">
-      {/* Left: logo, song, undo/redo. */}
+      {/* Left: song, undo/redo (the app's navigation is above). */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <Link to="/" className="shrink-0" title="Back to your songs">
-          <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={124} height={15} className="block h-[15px] w-auto" />
-        </Link>
-        <span className="h-6 w-px shrink-0 bg-black/50" aria-hidden="true" />
         <div className="flex min-w-0 flex-col leading-tight">
           {activeSong ? <EditableTitle songId={activeSong.id} title={activeSong.project.title} /> : <span className="text-[13px] font-semibold text-white">Untitled</span>}
           <span className="text-[10px] text-[#9a9ba3]">

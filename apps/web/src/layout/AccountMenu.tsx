@@ -12,8 +12,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 /** Account button (the user's initial) opening a menu with the signed-in
- *  email, the admin pages (also here for phones, where the header hides its
- *  links) and "Sign out". */
+ *  email, the sound library (phones only: the header hides its links there),
+ *  the admin pages (Suggestions, the sample catalog with source names) and
+ *  "Sign out". */
 export function AccountMenu() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -34,13 +35,16 @@ export function AccountMenu() {
       >
         <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">{user.email}</DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
+        <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 sm:hidden" onSelect={() => navigate('/sounds')}>
+          Sound library
+        </DropdownMenuItem>
         {user.isAdmin ? (
           <>
             <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10" onSelect={() => navigate('/suggestions')}>
               Suggestions
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10" onSelect={() => navigate('/catalog')}>
-              Sound library
+              Sample catalog
             </DropdownMenuItem>
             <DropdownMenuSeparator className="my-1 h-px bg-line" />
           </>

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
+import { AppHeader } from '../layout/AppHeader';
 import { EditorHeader } from '../layout/EditorHeader';
 import { StatusBar } from '../layout/StatusBar';
 import { SoundsView } from '../editor/SoundsView';
@@ -15,7 +16,8 @@ export type EditorTab = 'sound' | 'timeline' | 'video';
 
 /**
  * Editor screen, laid out like a DAW window:
- *   - top:    <EditorHeader>  control bar (logo · song · transport · views · export)
+ *   - top:    <AppHeader>     the app's navigation, as on every page (compact)
+ *             <EditorHeader>  control bar (song · transport · views · export)
  *   - main:   the view (sounds / tracks with the mixer)
  *   - bottom: <StatusBar>     playback status and downloads
  *
@@ -71,6 +73,7 @@ export function EditorPage({ tab }: { tab: EditorTab }) {
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#1b1c1f]">
+      <AppHeader compact />
       <EditorHeader tab={tab} />
 
       <div className="flex-1 min-h-0 relative flex">
