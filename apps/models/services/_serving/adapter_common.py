@@ -107,3 +107,30 @@ def download_file(url, out_path, timeout=120):
 def quote_path(path):
     """Percent-encode a filesystem path for use in a query string."""
     return urllib.parse.quote(path, safe="")
+
+
+class RequestError(Exception):
+    """Raised by a synchronous adapter route (see harness ROUTES) for a bad request: the harness answers with
+    `status` and {"error": message} instead of a 500."""
+
+    def __init__(self, status: int, message: str):
+        super().__init__(message)
+        self.status = status
+
+
+def parse_multipart(headers, body: bytes) -> dict:
+    """Fields of a multipart/form-data body: {name: bytes} (file parts give their raw bytes, text parts their
+    UTF-8 bytes). Uses the stdlib email parser; a body that is not multipart is a RequestError."""
+    from email.parser import BytesParser
+    from email.policy import HTTP
+
+    ctype = headers.get("content-type", "")
+    if not ctype.startswith("multipart/form-data"):
+        raise RequestError(400, "Send the request as multipart/form-data.")
+    msg = BytesParser(policy=HTTP).parsebytes(b"Content-Type: " + ctype.encode() + b"\r\n\r\n" + body)
+    fields = {}
+    for part in msg.iter_parts():
+        name = part.get_param("name", header="content-disposition")
+        if name:
+            fields[name] = part.get_payload(decode=True) or b""
+    return fields

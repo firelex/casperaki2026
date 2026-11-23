@@ -13,6 +13,12 @@ The harness:
         GET  /result?job=ID       -> {"state": running|done|error, "kind", "error"}
         GET  /file?job=ID         -> streams the generated file
 
+An adapter may also expose synchronous JSON endpoints: `ROUTES = {"/path": fn}`,
+where `fn(handle, headers, body: bytes) -> (status, dict)`. They answer in the
+request itself (for quick calls such as transcribing a hum), one at a time per
+service, and an exception becomes a 500 with {"error": <message>}. A handler that
+wants a 4xx raises `RequestError(status, message)` from adapter_common.
+
 Adapter `generate` is *blocking* (returns {"file","kind"} when done); the
 async job semantics live here so the contract is identical for a 5-second
 song or a 5-minute video.
@@ -199,7 +205,10 @@ def worker(jobs: Jobs, adapter, handle, out_root: Path):
             jobs.finish(job_id, state="error", error=str(e))
 
 
-def make_handler(jobs: Jobs, manifest: dict):
+def make_handler(jobs: Jobs, manifest: dict, routes: dict | None = None, handle=None):
+    routes = routes or {}
+    route_lock = threading.Lock()  # one synchronous call at a time (they share the GPU model)
+
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):  # quieter
             pass
@@ -247,6 +256,20 @@ def make_handler(jobs: Jobs, manifest: dict):
 
         def do_POST(self):
             u = urlparse(self.path)
+            if u.path in routes:
+                length = int(self.headers.get("content-length", 0))
+                body = self.rfile.read(length) if length else b""
+                try:
+                    with route_lock:
+                        code, obj = routes[u.path](handle, self.headers, body)
+                except Exception as e:  # noqa: BLE001
+                    status = getattr(e, "status", None)
+                    if status is None:
+                        traceback.print_exc()
+                    self._send(status or 500, {"error": str(e)})
+                    return
+                self._send(code, obj)
+                return
             if u.path != "/generate":
                 self._send(404, {"error": "not found"})
                 return
@@ -271,7 +294,7 @@ def serve(adapter_name: str, port: int, model_dir: str, service_dir: str, repo_d
     out_root.mkdir(parents=True, exist_ok=True)
     jobs = Jobs()
     threading.Thread(target=worker, args=(jobs, adapter, handle, out_root), daemon=True).start()
-    server = ThreadingHTTPServer(("127.0.0.1", port), make_handler(jobs, manifest))
+    server = ThreadingHTTPServer(("127.0.0.1", port), make_handler(jobs, manifest, getattr(adapter, "ROUTES", None), handle))
     log(f"ready on http://127.0.0.1:{port}")
     server.serve_forever()
 
