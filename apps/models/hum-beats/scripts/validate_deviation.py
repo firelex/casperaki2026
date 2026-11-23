@@ -24,6 +24,7 @@ from hum_beats.sounds import SR  # noqa: E402
 DEV = Path("/mnt/d/casperaki-data/hum-beats/deviation-model")
 MIDI_DIR = Path("/mnt/d/casperaki-data/humtrans/midi/midi_data")
 _MODEL = None
+_SINGERS = None
 
 
 def _score(key):
@@ -49,7 +50,7 @@ def _render(key, mode, seed):
     tmap = TempoMap(q0, 0, np.full(n, 60.0 / tempo))
     shift = float(tmap.time(0.0)) - 0.4  # clip time = score time + 0.4 s
     if mode == "model":
-        perf, params = perform(_MODEL, rng, score, tmap, perfect_timing=False)
+        perf, params = perform(_MODEL, rng, score, tmap, perfect_timing=False, singers=_SINGERS)
     else:
         timing = "humanised" if rng.random() < 0.6 else "irregular"
         amounts = {"tempo": float(rng.uniform(0, 1)), "precision": float(rng.uniform(0, 1)), "pitch": float(rng.uniform(0, 1))}
@@ -82,8 +83,9 @@ def _job(args):
     return key
 
 
-def _init():
-    global _MODEL
+def _init(singers=None):
+    global _MODEL, _SINGERS
+    _SINGERS = set(singers) if singers else None
     split = json.loads((DEV / "split.json").read_text())
     _MODEL = DeviationModel(DEV / "humtrans-train", set(split["fit_pieces"]))
 
@@ -92,14 +94,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--workers", type=int, default=20)
+    ap.add_argument("--singers", nargs="*", default=None, help="only these singers' held-out recordings, and donors from them (round three: M01-M05)")
     args = ap.parse_args()
     split = json.loads((DEV / "split.json").read_text())
     held = set(split["heldout_pieces"])
-    clips = [c for c in json.loads((DEV / "humtrans-train.clips.json").read_text()) if c["piece"] in held]
+    clips = [c for c in json.loads((DEV / "humtrans-train.clips.json").read_text()) if c["piece"] in held and (not args.singers or c["singer"] in args.singers)]
     keys = [c["key"] for c in clips]
     for mode in ("model", "round1"):
         (args.out / mode).mkdir(parents=True, exist_ok=True)
-    with ProcessPoolExecutor(args.workers, initializer=_init) as pool:
+    with ProcessPoolExecutor(args.workers, initializer=_init, initargs=(args.singers,)) as pool:
         list(pool.map(_job, [(k, m, str(args.out)) for k in keys for m in ("model", "round1")], chunksize=2))
     (args.out / "keys.txt").write_text("\n".join(keys))
     print(f"rendered {len(keys)} held-out scores twice")

@@ -110,7 +110,7 @@ def r3_lead(rng, row: dict, bank) -> dict:
         vowel = "mm" if vtim == "mumbled" else str(rng.choice(UNSEEN_VOWELS if unseen else TRAIN_VOWELS))
         return {"kind": "voice", "voice_type": vt, "vowel": vowel, "voice_timbre": vtim, "timbre": f"voice-{vowel}-{vtim}", "group": "voice",
                 "median_midi": float(rng.uniform(48, 55))}
-    lib = [x for x in bank.sounds.values() if x["held_out"] == unseen and x["median_attack_ms"] <= 250 and x["group"] in ("bass", "keys", "guitar", "strings_brass", "synth")]
+    lib = [x for x in bank.sounds.values() if x["held_out"] == unseen and x["median_attack_ms"] <= 250 and x["group"] in ("keys", "guitar", "strings_brass", "synth")]
     x = lib[int(rng.integers(len(lib)))]
     lo, hi = bank.sounding_range(x["sound_id"])
     return {"kind": "sampler", "sound_id": x["sound_id"], "timbre": f"lib-{x['low_level']}", "group": x["group"], "low_level": x["low_level"],
