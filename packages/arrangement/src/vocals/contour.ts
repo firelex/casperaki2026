@@ -9,7 +9,8 @@
 //   - Every chosen note is in [minNote, maxNote].
 //   - Each adjacent pair differs by ≤ 9 semitones.
 //
-// It does this via BFS:
+// Legacy does this via BFS (this port finds the same result without the
+// exponential enumeration, see buildContour):
 //   - Seed the queue with all octaves of the first note (±2 octaves)
 //     that fall in range.
 //   - For each partial sequence, expand to {nextOriginal, +12, -12}
@@ -57,22 +58,36 @@ export class ContourBuildError extends Error {
   }
 }
 
-interface BfsNode {
+/** A partial octave assignment: notes so far, the choices that made them (their
+ *  position in the legacy BFS order), and what the ranking looks at. */
+interface Partial {
   readonly sequence: readonly number[];
-  readonly index: number;
+  /** Per note, the index of the choice taken: first note octave -2..2 → 0..4, then
+   *  [orig, +12, -12] → 0..2. Lexicographic order of these = the legacy BFS order. */
+  readonly choices: readonly number[];
   readonly maxDistance: number;
   readonly totalDistance: number;
+  readonly peak: number;
 }
 
-interface CompletedSequence {
-  readonly sequence: readonly number[];
-  readonly maxDistance: number;
-  readonly averageDistance: number;
-}
+const earlier = (a: readonly number[], b: readonly number[]): number => {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i]! - b[i]!;
+  return 0;
+};
 
-/** Run the legacy `_buildTree` BFS on `midiSequence` and return the
- *  best-ranked octave-adjusted sequence. Throws `ContourBuildError` if
- *  none satisfies the constraints. */
+/**
+ * The legacy `_buildTree` result, found without enumerating every sequence.
+ *
+ * Legacy (and this port until 2026-11-23) ran a breadth-first search over all
+ * octave choices, up to 3 per note: exponential in the melody's length (one
+ * ballad melody took 60 s). This walks the notes once, keeping per (position,
+ * note) only the partial sequences that can still win: a partial is dropped when
+ * another one reaching the same note is at least as good on max step, total step
+ * and peak (in the priority's direction) AND comes earlier in the legacy BFS
+ * order. Every later step adds the same amounts to both, so the dropped one can
+ * never rank first (a tie goes to the earlier one, as the legacy stable sort did).
+ * The result is identical to the full search (tested against it).
+ */
 export function buildContour(
   midiSequence: readonly number[],
   options: BuildContourOptions = {},
@@ -82,70 +97,75 @@ export function buildContour(
 
   if (midiSequence.length === 0) return [];
 
-  const queue: BfsNode[] = [];
-  const completed: CompletedSequence[] = [];
+  const peakAtLeastAsGood = (a: number, b: number) => (priority === 'highNotes' ? a >= b : a <= b);
+  /** Keep the partials no earlier partial dominates (input: any order; output: legacy order). */
+  const prune = (list: Partial[]): Partial[] => {
+    list.sort((a, b) => earlier(a.choices, b.choices));
+    const kept: Partial[] = [];
+    for (const p of list) {
+      const dominated = kept.some(
+        (k) => k.maxDistance <= p.maxDistance && k.totalDistance <= p.totalDistance && peakAtLeastAsGood(k.peak, p.peak),
+      );
+      if (!dominated) kept.push(p);
+    }
+    return kept;
+  };
 
   // Seed: all in-range octaves of the first note (legacy iterates octave
   // = -2..2). lastNote check is irrelevant here — only range matters.
+  let states = new Map<number, Partial[]>();
   const firstNote = midiSequence[0]!;
   for (let octave = -2; octave <= 2; octave++) {
     const adjusted = firstNote + octave * 12;
     if (adjusted >= MIN_NOTE && adjusted <= maxNote) {
-      queue.push({ sequence: [adjusted], index: 1, maxDistance: 0, totalDistance: 0 });
+      states.set(adjusted, [{ sequence: [adjusted], choices: [octave + 2], maxDistance: 0, totalDistance: 0, peak: adjusted }]);
     }
   }
 
-  while (queue.length > 0) {
-    const node = queue.shift()!;
-    if (node.index === midiSequence.length) {
-      const avg = node.sequence.length > 1 ? node.totalDistance / (node.sequence.length - 1) : 0;
-      completed.push({
-        sequence: node.sequence,
-        maxDistance: node.maxDistance,
-        averageDistance: avg,
-      });
-      continue;
-    }
-
-    const nextOriginal = midiSequence[node.index]!;
-    const lastNote = node.sequence[node.sequence.length - 1]!;
-    // Legacy order: [orig, orig+12, orig-12]. Preserved so BFS
-    // insertion order — and therefore the stable-sort tie-break — match.
-    for (const candidate of [nextOriginal, nextOriginal + 12, nextOriginal - 12]) {
-      if (isNoteValid(candidate, lastNote, maxNote)) {
-        const distance = Math.abs(candidate - lastNote);
-        queue.push({
-          sequence: [...node.sequence, candidate],
-          index: node.index + 1,
-          maxDistance: Math.max(node.maxDistance, distance),
-          totalDistance: node.totalDistance + distance,
+  for (let index = 1; index < midiSequence.length && states.size > 0; index++) {
+    const nextOriginal = midiSequence[index]!;
+    const next = new Map<number, Partial[]>();
+    for (const partials of states.values()) {
+      for (const node of partials) {
+        const lastNote = node.sequence[node.sequence.length - 1]!;
+        // Legacy order: [orig, orig+12, orig-12] (the BFS insertion order).
+        [nextOriginal, nextOriginal + 12, nextOriginal - 12].forEach((candidate, choice) => {
+          if (!isNoteValid(candidate, lastNote, maxNote)) return;
+          const distance = Math.abs(candidate - lastNote);
+          const list = next.get(candidate) ?? [];
+          list.push({
+            sequence: [...node.sequence, candidate],
+            choices: [...node.choices, choice],
+            maxDistance: Math.max(node.maxDistance, distance),
+            totalDistance: node.totalDistance + distance,
+            peak: Math.max(node.peak, candidate),
+          });
+          next.set(candidate, list);
         });
       }
     }
+    states = new Map([...next].map(([note, list]) => [note, prune(list)]));
   }
 
+  const completed = [...states.values()].flat().sort((a, b) => earlier(a.choices, b.choices));
   if (completed.length === 0) {
     throw new ContourBuildError(midiSequence, maxNote);
   }
 
-  // Sort: maxDistance asc, averageDistance asc, then priority-driven
-  // peak-direction tie-break. Legacy intended this but shipped with a
-  // `Math.max(<array>)` bug that suppressed it (see header comment);
-  // this port writes `Math.max(...sequence)` so 'highNotes' actually
-  // prefers higher-peaked sequences and 'lowNotes' prefers lower-peaked
-  // ones.
-  const sorted = completed.slice().sort((a, b) => {
-    if (a.maxDistance !== b.maxDistance) return a.maxDistance < b.maxDistance ? -1 : 1;
-    if (a.averageDistance !== b.averageDistance)
-      return a.averageDistance < b.averageDistance ? -1 : 1;
-    const aPeak = Math.max(...a.sequence);
-    const bPeak = Math.max(...b.sequence);
-    if (aPeak === bPeak) return 0;
-    if (priority === 'highNotes') return aPeak > bPeak ? -1 : 1;
-    return aPeak > bPeak ? 1 : -1;
-  });
-
-  return [...sorted[0]!.sequence];
+  // Rank: maxDistance asc, averageDistance asc (same length: total), then the
+  // priority-driven peak (legacy intended this but shipped with a `Math.max(<array>)`
+  // bug that suppressed it, see the header); ties keep the legacy BFS order.
+  let best = completed[0]!;
+  for (const c of completed.slice(1)) {
+    const better =
+      c.maxDistance !== best.maxDistance
+        ? c.maxDistance < best.maxDistance
+        : c.totalDistance !== best.totalDistance
+          ? c.totalDistance < best.totalDistance
+          : c.peak !== best.peak && (priority === 'highNotes' ? c.peak > best.peak : c.peak < best.peak);
+    if (better) best = c;
+  }
+  return [...best.sequence];
 }
 
 /** Re-export for callers that want to feed a chord-root sequence
