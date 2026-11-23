@@ -65,9 +65,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", type=Path, required=True)
     ap.add_argument("--name", required=True)
+    ap.add_argument("--threads", type=int, default=2, help="torch CPU threads (datigator serves the live site: keep CPU use low)")
     ap.add_argument("--extra-sets", nargs="*", default=[], help="more feature sets (e.g. r3-test), broken down by lead group")
     args = ap.parse_args()
-    torch.set_num_threads(8)
+    torch.set_num_threads(args.threads)
     model = load_checkpoint(args.checkpoint)
     st = json.loads((HERE / f"results/model-{args.name}-settings.json").read_text())
     t_on, t_act = st["t_on"], st["t_act"]

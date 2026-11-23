@@ -92,10 +92,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--checkpoint", type=Path, required=True)
     ap.add_argument("--name", required=True)
-    ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--threads", type=int, default=2, help="torch CPU threads (datigator serves the live site: keep CPU use low)")
+    ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--extra-sets", nargs="*", default=[], help="more feature sets from scripts/features.py --dirs (e.g. r3-test, r3-test-unseen), broken down by lead group")
     args = ap.parse_args()
-    torch.set_num_threads(8)
+    torch.set_num_threads(args.threads)
     model = load_checkpoint(args.checkpoint)
     # thresholds on humtrans-tune
     tune = load_set("humtrans-tune")
