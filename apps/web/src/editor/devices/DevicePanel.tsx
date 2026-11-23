@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import { livePlayer, type ProbeReading } from '../../audio/livePlayer';
 import type { DeviceDef } from './deviceDefs';
-import { faceplate, knob, ledMeter } from './draw';
+import { KnobOverlay, type DeviceProControls } from './KnobOverlay';
+import { faceplate, knob, ledMeter, knobRow } from './draw';
 import { BANDS, bandFreq, bandPowersDb, F_HI, F_LO } from './spectrum';
 
 const W = 760;
@@ -31,7 +32,8 @@ interface Live {
  * and coming out with the measured change between them (for an EQ, its
  * real curve). Kinds get their own view on the right: the echo pattern of
  * the delay, the pump curve of Simple Side, peaks shaved by the clipper,
- * the output's level (reverb tail) for the others. Read-only.
+ * the output's level (reverb tail) for the others. Read-only but in Pro mode,
+ * where the knobs turn.
  */
 export function DevicePanel({
   def,
@@ -39,12 +41,15 @@ export function DevicePanel({
   slot,
   params,
   bpm,
+  pro,
 }: {
   def: DeviceDef;
   bus: string;
   slot: number;
   params: readonly number[];
   bpm: number;
+  /** Pro mode: the knobs can be turned. */
+  pro?: DeviceProControls | undefined;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const live = useRef<Live>({
@@ -130,7 +135,12 @@ export function DevicePanel({
     return () => cancelAnimationFrame(raf);
   }, [def, stableParams, bpm]);
 
-  return <canvas ref={ref} style={{ width: W, height: H }} className="block" aria-label={`${def.title} on ${bus}: spectrum, meters and controls`} />;
+  return (
+    <div className="relative" style={{ width: W, height: H }}>
+      <canvas ref={ref} style={{ width: W, height: H }} className="block" aria-label={`${def.title} on ${bus}: spectrum, meters and controls`} />
+      {pro ? <KnobOverlay knobs={knobRow(def.params.slice(0, 8).map((d) => d.name))} values={params} pro={pro} /> : null}
+    </div>
+  );
 }
 
 function drawPanel(g: CanvasRenderingContext2D, def: DeviceDef, params: readonly number[], st: Live, playing: boolean, bpm: number) {
@@ -170,10 +180,10 @@ function drawPanel(g: CanvasRenderingContext2D, def: DeviceDef, params: readonly
     g.font = '11px Archivo, system-ui, sans-serif';
     g.fillText('No controls: this stage is fixed.', 24, 270);
   }
-  const step = Math.min(120, (W - 48) / Math.max(1, shown.length));
+  const spots = knobRow(shown.map((d) => d.name));
   shown.forEach((pd, i) => {
     const v = params[i] ?? 0;
-    knob(g, 24 + step / 2 + i * step, 262, Math.max(0, Math.min(1, v)), pd.name.toUpperCase(), pd.display(v));
+    knob(g, spots[i]!.cx, spots[i]!.cy, Math.max(0, Math.min(1, v)), pd.name.toUpperCase(), pd.display(v));
   });
 }
 

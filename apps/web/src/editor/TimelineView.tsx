@@ -852,6 +852,7 @@ export function TimelineView() {
         // In Pro mode the plugin shows (and plays) the song's own settings.
         const params = pro.mix.buses[device.bus]?.[String(device.slot)] ?? device.params;
         const standard = standardChains?.find((c) => c.bus === device.bus)?.plugins[device.slot]?.params;
+        const devicePro = pro.pro && standard ? { standard, onChange: (i: number, v: number) => changeBusParam(liveKey, device.bus, device.slot, params, i, v) } : undefined;
         return (
         <DeviceWindow
           title={device.factory === 'makeLogical4' ? 'Logical4' : (DEVICES[device.factory]?.title ?? device.factory)}
@@ -859,21 +860,16 @@ export function TimelineView() {
           onClose={() => setDevice(undefined)}
         >
           {device.factory === 'makeLogical4' ? (
-            <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={params} />
+            <Logical4Panel key={`${device.bus}:${device.slot}`} bus={device.bus} slot={device.slot} params={params} pro={devicePro} />
           ) : DEVICES[device.factory]?.kind === 'reverb' ? (
-            <ReverbPanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} factory={device.factory} bus={device.bus} slot={device.slot} params={params} />
+            <ReverbPanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} factory={device.factory} bus={device.bus} slot={device.slot} params={params} pro={devicePro} />
           ) : DEVICES[device.factory] ? (
-            <DevicePanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} bus={device.bus} slot={device.slot} params={params} bpm={bpm} />
+            <DevicePanel key={`${device.bus}:${device.slot}`} def={DEVICES[device.factory]!} bus={device.bus} slot={device.slot} params={params} bpm={bpm} pro={devicePro} />
           ) : (
             <p className="p-6 text-[13px] text-err">No device view for {device.factory}.</p>
           )}
-          {pro.pro && standard ? (
-            <ProParams
-              factory={device.factory}
-              params={params}
-              standard={standard}
-              onChange={(i, v) => changeBusParam(liveKey, device.bus, device.slot, params, i, v)}
-            />
+          {devicePro && standard ? (
+            <ProParams factory={device.factory} params={params} standard={standard} onChange={devicePro.onChange} />
           ) : null}
         </DeviceWindow>
         );

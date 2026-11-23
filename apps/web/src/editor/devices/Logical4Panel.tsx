@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef } from 'react';
 
 import { livePlayer, type ProbeReading } from '../../audio/livePlayer';
+import { KnobOverlay, type DeviceProControls } from './KnobOverlay';
 import { faceplate, knob, ledMeter } from './draw';
 
 const W = 760;
 const H = 300;
 const GR_MAX = 20; // dB, the needle's full scale
 const HISTORY_SEC = 6;
+/** Where draw() puts the five controls (a knob's position is its raw value). */
+const LOGICAL4_KNOBS = ['Threshold', 'Ratio', 'Speed', 'Makeup gain', 'Dry / wet'].map((name, index) => ({ cx: 70 + index * 120, cy: 240, index, name }));
 const READINGS_PER_SEC = 30;
 
 /** Logical4's settings in its own units (Airwindows Logical4 getParameterDisplay). */
@@ -27,10 +30,10 @@ const db = (v: number) => (v > 1e-9 ? 20 * Math.log10(v) : -120);
  * Logical4 (Airwindows' SSL-style bus compressor) as a device: needle meter
  * for gain reduction, the static curve with the live input level on it,
  * input / output meters, a gain-reduction history and the five controls.
- * Read-only: it shows what the engine does, measured around this plugin
+ * Read-only but in Pro mode, where the knobs turn. It shows what the engine does, measured around this plugin
  * (gain reduction = input + makeup − output, from RMS levels).
  */
-export function Logical4Panel({ bus, slot, params }: { bus: string; slot: number; params: readonly number[] }) {
+export function Logical4Panel({ bus, slot, params, pro }: { bus: string; slot: number; params: readonly number[]; pro?: DeviceProControls | undefined }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const s = useMemo(() => logical4Settings(params), [params]);
   // Latest measured state, smoothed with meter ballistics.
@@ -95,7 +98,12 @@ export function Logical4Panel({ bus, slot, params }: { bus: string; slot: number
     return () => cancelAnimationFrame(raf);
   }, [s]);
 
-  return <canvas ref={ref} style={{ width: W, height: H }} className="block" aria-label={`Logical4 on the ${bus} bus: gain reduction meter, curve and controls`} />;
+  return (
+    <div className="relative" style={{ width: W, height: H }}>
+      <canvas ref={ref} style={{ width: W, height: H }} className="block" aria-label={`Logical4 on the ${bus} bus: gain reduction meter, curve and controls`} />
+      {pro ? <KnobOverlay knobs={LOGICAL4_KNOBS} values={params} pro={pro} /> : null}
+    </div>
+  );
 }
 
 type St = { grDb: number; inDb: number; outDb: number; inPeakDb: number; outPeakDb: number; history: number[]; error: string; live: boolean };
@@ -125,7 +133,7 @@ function draw(g: CanvasRenderingContext2D, st: St, s: Settings) {
     ['MAKEUP', (s.makeupDb + 20) / 40, `${s.makeupDb >= 0 ? '+' : ''}${s.makeupDb.toFixed(1)} dB`],
     ['DRY/WET', s.dryWet, `${Math.round(s.dryWet * 100)}%`],
   ];
-  knobs.forEach(([label, v, text], i) => knob(g, 70 + i * 120, 240, v, label, text));
+  knobs.forEach(([label, v, text], i) => knob(g, LOGICAL4_KNOBS[i]!.cx, LOGICAL4_KNOBS[i]!.cy, v, label, text));
   if (st.error) {
     g.fillStyle = '#ff6b5e';
     g.font = '11px Archivo, system-ui, sans-serif';

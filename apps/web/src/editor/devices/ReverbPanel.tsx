@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { livePlayer, type ProbeReading } from '../../audio/livePlayer';
 import type { DeviceDef } from './deviceDefs';
-import { faceplate, knob, ledMeter } from './draw';
+import { KnobOverlay, type DeviceProControls } from './KnobOverlay';
+import { faceplate, knob, ledMeter, knobRow } from './draw';
 import { analyseImpulse, type ImpulseAnalysis } from './reverbAnalysis';
 import { BANDS, bandFreq, F_HI, F_LO } from './spectrum';
 
@@ -19,7 +20,22 @@ const db = (v: number) => (v > 1e-9 ? 20 * Math.log10(v) : -120);
  * predelay and the decay of lows / mids / highs; live in/out meters and the
  * controls. Read-only.
  */
-export function ReverbPanel({ def, factory, bus, slot, params }: { def: DeviceDef; factory: string; bus: string; slot: number; params: readonly number[] }) {
+export function ReverbPanel({
+  def,
+  factory,
+  bus,
+  slot,
+  params,
+  pro,
+}: {
+  def: DeviceDef;
+  factory: string;
+  bus: string;
+  slot: number;
+  params: readonly number[];
+  /** Pro mode: the knobs can be turned. */
+  pro?: DeviceProControls | undefined;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
   const stableParams = useMemo(() => [...params], [params]);
   const [ir, setIr] = useState<ImpulseAnalysis | { error: string } | undefined>(undefined);
@@ -87,7 +103,12 @@ export function ReverbPanel({ def, factory, bus, slot, params }: { def: DeviceDe
     return () => cancelAnimationFrame(raf);
   }, [def, stableParams, ir]);
 
-  return <canvas ref={ref} style={{ width: W, height: H }} className="block" aria-label={`${def.title}: impulse response, decay times and controls`} />;
+  return (
+    <div className="relative" style={{ width: W, height: H }}>
+      <canvas ref={ref} style={{ width: W, height: H }} className="block" aria-label={`${def.title}: impulse response, decay times and controls`} />
+      {pro ? <KnobOverlay knobs={knobRow(def.params.map((d) => d.name))} values={params} pro={pro} /> : null}
+    </div>
+  );
 }
 
 function draw(
@@ -189,10 +210,10 @@ function draw(
   if (st.error) g.fillText(`Probe: ${st.error}`, W - 300, 50);
   else if (!playing) g.fillText('Play the song for the live meters.', W - 230, 50);
 
-  const step = Math.min(120, (W - 48) / Math.max(1, def.params.length));
+  const spots = knobRow(def.params.map((d) => d.name));
   def.params.forEach((pd, i) => {
     const v = params[i] ?? 0;
-    knob(g, 24 + step / 2 + i * step, 262, Math.max(0, Math.min(1, v)), pd.name.toUpperCase(), pd.display(v));
+    knob(g, spots[i]!.cx, spots[i]!.cy, Math.max(0, Math.min(1, v)), pd.name.toUpperCase(), pd.display(v));
   });
 }
 

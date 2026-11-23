@@ -84,3 +84,9 @@ export function knob(g: CanvasRenderingContext2D, cx: number, cy: number, v: num
   g.fillText(text, cx, cy + r + 32);
   g.textAlign = 'left';
 }
+
+/** The knob row of the device panels (760 px wide): centres of `names.length` knobs at y 262. */
+export function knobRow(names: readonly string[]): { cx: number; cy: number; index: number; name: string }[] {
+  const step = Math.min(120, (760 - 48) / Math.max(1, names.length));
+  return names.map((name, index) => ({ cx: 24 + step / 2 + index * step, cy: 262, index, name }));
+}
