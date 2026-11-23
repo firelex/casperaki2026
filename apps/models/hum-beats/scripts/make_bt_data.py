@@ -17,7 +17,6 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-DATASET = "humbeats"
 
 
 def _spect(args):
@@ -39,17 +38,20 @@ def main():
     ap.add_argument("--data", type=Path, required=True, help="generated set (with train/ and dev/)")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--workers", type=int, default=24)
+    ap.add_argument("--dataset", default="humbeats", help="dataset name inside the Beat This! layout (round two: humbeats2)")
     args = ap.parse_args()
-    ann = args.out / "annotations" / DATASET
+    ann = args.out / "annotations" / args.dataset
     (ann / "annotations" / "beats").mkdir(parents=True, exist_ok=True)
     (ann / "info.json").write_text(json.dumps({"has_downbeats": True}))
     jobs, split_lines = [], []
     for split, part in (("train", "train"), ("dev", "val")):
+        if not (args.data / split).exists():
+            raise SystemExit(f"{args.data / split} does not exist")
         for b in sorted((args.data / split).glob("*.beats")):
             cid = b.stem
             shutil.copyfile(b, ann / "annotations" / "beats" / f"{cid}.beats")
             split_lines.append(f"{cid}\t{part}\n")
-            jobs.append((args.data / split / f"{cid}.wav", args.out / "audio" / "spectrograms" / DATASET / cid / "track.npy"))
+            jobs.append((args.data / split / f"{cid}.wav", args.out / "audio" / "spectrograms" / args.dataset / cid / "track.npy"))
     (ann / "single.split").write_text("".join(split_lines))
     os.environ["OMP_NUM_THREADS"] = "1"
     with Pool(args.workers) as pool:

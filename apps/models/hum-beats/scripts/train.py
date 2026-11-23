@@ -78,6 +78,9 @@ def main():
     ap.add_argument("--val-every", type=int, default=150)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--check-loader", action="store_true", help="only run every training item through the data loader once")
+    ap.add_argument("--items", default=None, help="training items per dataset, e.g. humbeats2=all,humbeats=5000 (others dropped)")
+    ap.add_argument("--val-datasets", default=None, help="comma list of datasets whose val items validate the run (default: all)")
+    ap.add_argument("--freeze-frontend", action="store_true", help="keep the frontend (the early layers that hear the timbre) fixed")
     args = ap.parse_args()
     if args.check_loader:
         dm = BeatDataModule(args.data_dir, batch_size=64, train_length=1500, num_workers=16,
@@ -98,15 +101,40 @@ def main():
         test_dataset="humbeats-no-test", no_val=False, spect_fps=50, length_based_oversampling_factor=0,
     )
     dm.setup("fit")
+    mix = {}
+    if args.items:
+        rng = np.random.default_rng(args.seed)
+        wanted = dict(x.split("=") for x in args.items.split(","))
+        kept = []
+        for ds, n in wanted.items():
+            its = [it for it in dm.train_dataset.items if str(it["spect_path"]).split("/", 1)[0] == ds]
+            if not its:
+                raise SystemExit(f"no training items from dataset {ds}")
+            if n != "all":
+                if int(n) > len(its):
+                    raise SystemExit(f"asked for {n} items of {ds}, only {len(its)} exist")
+                its = [its[i] for i in rng.choice(len(its), int(n), replace=False)]
+            kept.extend(its)
+            mix[ds] = len(its)
+        dm.train_dataset.items = kept
+    if args.val_datasets:
+        vds = set(args.val_datasets.split(","))
+        dm.val_dataset.items = [it for it in dm.val_dataset.items if str(it["spect_path"]).split("/", 1)[0] in vds]
+        if not dm.val_dataset.items:
+            raise SystemExit(f"no validation items from {vds}")
     pos_weights = dm.get_train_positive_weights(widen_target_mask=3)
     ckpt = load_checkpoint(args.init, "cpu")
     hp = dict(ckpt["hyper_parameters"])
     hp.update(lr=args.lr, warmup_steps=args.warmup_steps, max_epochs=1, pos_weights=pos_weights, eval_trim_beats=0, use_dbn=False)
     model = HumPL(**hp)
     model.model.load_state_dict(replace_state_dict_key(ckpt["state_dict"], "model.", ""), strict=True)
+    if args.freeze_frontend:
+        for p in model.model.frontend.parameters():
+            p.requires_grad = False
     info = {"init": args.init, "init_pos_weights": ckpt["hyper_parameters"]["pos_weights"], "pos_weights": pos_weights,
-            "train_items": len(dm.train_dataset), "val_items": len(dm.val_dataset), "args": {k: str(v) for k, v in vars(args).items()},
-            "steps": len(dm.train_dataset) // args.batch_size, "started": time.strftime("%Y-%m-%d %H:%M:%S")}
+            "train_items": len(dm.train_dataset), "val_items": len(dm.val_dataset), "train_mix": mix,
+            "trainable_params": sum(p.numel() for p in model.parameters() if p.requires_grad), "args": {k: str(v) for k, v in vars(args).items()},
+            "steps": len(dm.train_dataset.items) // args.batch_size, "started": time.strftime("%Y-%m-%d %H:%M:%S")}
     (args.run_dir / "run.json").write_text(json.dumps(info, indent=1))
     print(json.dumps(info, indent=1), flush=True)
 
