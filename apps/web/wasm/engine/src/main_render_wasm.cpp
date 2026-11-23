@@ -56,6 +56,7 @@
 
 #include "Resolver.h"
 #include "audio/Matchering.h"
+#include "audio/MasterOffline.h"
 #include "audio/MixConfig.h"
 #include "audio/Mixer.h"
 #include "../vendor/json.hpp"
@@ -775,9 +776,8 @@ int master_analyze(const float* left, const float* right, int frames, int style)
 const uint8_t* master_profile_bytes() { return state().haveProfile ? state().profileBytes.data() : nullptr; }
 int master_profile_bytes_length() { return state().haveProfile ? (int)state().profileBytes.size() : -1; }
 
-// Apply the analysed profile to the analysed song from frame 0, exactly as
-// main_master.cpp does (512-frame blocks, the latency flushed with silence, output
-// frame t = song frame t). Returns the frame count, or 0. Output in
+// Master the analysed song as casperaki_master does (audio/MasterOffline.h: aligned,
+// true-peak limited; output frame t = song frame t). Returns the frame count, or 0. Output in
 // master_output_left/right (float32, before any WAV rounding).
 int master_apply() {
     State& s = state();
@@ -786,32 +786,10 @@ int master_apply() {
     try {
         if (!s.haveProfile || s.masterSong.getNumSamples() == 0)
             throw std::logic_error("master_apply: call master_analyze first");
-        const AudioBuffer& song = s.masterSong;
-        matchering::MasteringStream stream(s.profile);
-        const int latency = stream.latencyFrames();
-        const int n = song.getNumSamples();
-        const int total = n + latency;
-        s.masterOut.setSize(2, n);
-        const int block = 512;
-        std::vector<float> oL((size_t)block), oR((size_t)block), iL((size_t)block), iR((size_t)block);
-        for (int start = 0; start < total; start += block) {
-            const int len = std::min(block, total - start);
-            const int fromSong = std::max(0, std::min(len, n - start));
-            std::fill(iL.begin(), iL.end(), 0.0f);
-            std::fill(iR.begin(), iR.end(), 0.0f);
-            if (fromSong > 0) {
-                std::copy(song.getReadPointer(0, start), song.getReadPointer(0, start) + fromSong, iL.begin());
-                std::copy(song.getReadPointer(1, start), song.getReadPointer(1, start) + fromSong, iR.begin());
-            }
-            stream.process(iL.data(), iR.data(), oL.data(), oR.data(), len);
-            for (int i = 0; i < len; ++i) {
-                const int t = start + i - latency;
-                if (t >= 0 && t < n) {
-                    s.masterOut.getWritePointer(0)[t] = oL[(size_t)i];
-                    s.masterOut.getWritePointer(1)[t] = oR[(size_t)i];
-                }
-            }
-        }
+        // Aligned and true-peak limited, as casperaki_master (audio/MasterOffline.h).
+        matchering::OfflineMaster mastered = matchering::masterOffline(s.masterSong, s.profile);
+        s.masterOut = std::move(mastered.out);
+        const int n = s.masterOut.getNumSamples();
         return n;
     } catch (const std::exception& e) {
         setError(s, 7, std::string("master_apply: ") + e.what());
