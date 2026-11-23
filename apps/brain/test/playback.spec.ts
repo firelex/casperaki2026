@@ -17,9 +17,9 @@ interface Harness {
   stop: () => Promise<void>;
 }
 
-async function boot(): Promise<Harness> {
+async function boot(probe?: string): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback() });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback(probe ? { probe } : {}) });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -74,6 +74,24 @@ describe('in-browser playback', () => {
     const drum = await (await fetch(h.url + pb.samples[2]!.url)).text();
     expect(drum).not.toContain('-ss');
     expect((await fetch(h.url + pb.stubs[0]!)).status).toBe(200);
+  });
+
+  it('plays a pitch the recording does not reach as the highest recorded one, resampled up', async () => {
+    await h.stop();
+    h = await boot('4.48'); // the recording stops at 4.48 s: slot 901 (d#2, from 4.5 s) was never recorded
+    const gen = await fetch(`${h.url}/api/songs/generate`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ genre: 'edm', key: 'A', bpm: 124, seed: 'playback-spec-short' }),
+    });
+    const { id } = (await gen.json()) as { id: string };
+    const pb = (await (await fetch(`${h.url}/api/songs/${id}/playback`)).json()) as Payload;
+    const [c2, dSharp2] = [pb.samples[0]!, pb.samples[1]!];
+    expect(dSharp2.url).not.toBe(c2.url);
+    const shifted = await (await fetch(h.url + dSharp2.url)).text();
+    // c2's slice, played 3 semitones faster (sample rate x 2^(3/12)).
+    expect(shifted).toContain('atrim=start=0.500000:end=4.500000');
+    expect(shifted).toContain(`asetrate=${(4.48 * 2 ** (3 / 12)).toFixed(3)},aresample=4.48`);
   });
 
   it('plays an unsaved song posted by the editor, and rejects unknown samples', async () => {

@@ -64,9 +64,19 @@ interface SampleSpec {
   readonly relativePath: string;
   readonly sliceStart?: number;
   readonly sliceEnd?: number;
-  /** The slice starts past the end of the recording (e.g. a sax section's grid runs above its
-   *  range): it is silence of the slice's length, as the legacy sampler's empty region was. */
-  readonly beyondEnd?: true;
+  /** Semitones to resample the slice up by: the recording stops below this slot's pitch (e.g. a
+   *  sax section's note ladder runs above its range), so the slot plays the highest recorded
+   *  pitch of the same articulation shifted up, as a sampler stretches a sample. */
+  readonly pitchShift?: number;
+}
+
+const PITCH_CLASS: Record<string, number> = { c: 0, 'c#': 1, db: 1, d: 2, 'd#': 3, eb: 3, e: 4, f: 5, 'f#': 6, gb: 6, g: 7, 'g#': 8, ab: 8, a: 9, 'a#': 10, bb: 10, b: 11 };
+/** "c2" / "a#5" / "eb3" → MIDI note number (C4 = 60). */
+function noteToMidi(note: string): number {
+  const m = /^([a-g](?:#|b)?)(-?\d)$/u.exec(note.toLowerCase());
+  const pc = m ? PITCH_CLASS[m[1]!] : undefined;
+  if (!m || pc === undefined) throw new Error(`not a note name: "${note}"`);
+  return (Number(m[2]) + 1) * 12 + pc;
 }
 
 export const STUB_SAMPLES = ['kick.ogg', 'snare.ogg', 'hat.ogg', 'tone.ogg', 'bass-c2.ogg'] as const;
@@ -167,16 +177,26 @@ export class PlaybackService {
       if (!entry || entry.status !== 'resolved' || typeof entry.relativePath !== 'string') continue;
       const slots = entry.multisample?.slots;
       if (!Array.isArray(slots)) continue;
+      const fileSec = this.durationSync(entry.relativePath);
+      /** The highest fully recorded slot of an articulation (the stand-in for pitches past the end). */
+      const recorded = (type: unknown) =>
+        slots
+          .filter((x: any) => x?.status === 'resolved' && x.slot?.type === type && x.sliceEnd <= fileSec + 0.05 && typeof x.slot?.note === 'string')
+          .sort((a: any, b: any) => noteToMidi(b.slot.note) - noteToMidi(a.slot.note))[0];
       for (const slot of slots) {
         if (slot?.status !== 'resolved' || slot.slot?.id == null) continue;
         const s0 = slot.sliceStart as number;
         const s1 = slot.sliceEnd as number;
         if (!(s1 > s0) || s0 < 0) continue;
-        // A slice past the end of the recording is silence (its own spec, so its own URL).
-        const fileSec = this.durationSync(entry.relativePath);
+        // A pitch the recording does not reach: the highest recorded one of the same articulation,
+        // resampled up (its own spec, so its own URL past any cached broken file).
         if (s0 >= fileSec - 0.01) {
-          this.warnBeyondEnd(entry.relativePath, fileSec, s0);
-          add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1, beyondEnd: true });
+          const src = recorded(slot.slot.type);
+          if (!src) throw new Error(`${entry.relativePath} is ${fileSec.toFixed(2)} s and has no fully recorded ${String(slot.slot.type)} slot to stand in for ${String(slot.slot.note)}`);
+          const shift = noteToMidi(String(slot.slot.note)) - noteToMidi(src.slot.note);
+          if (!(shift > 0)) throw new Error(`${entry.relativePath}: ${String(slot.slot.note)} is past the end but not above the highest recorded ${src.slot.note}`);
+          this.warnBeyondEnd(entry.relativePath, fileSec, s0, src.slot.note);
+          add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: src.sliceStart, sliceEnd: src.sliceEnd, pitchShift: shift });
         } else {
           add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1 });
         }
@@ -299,10 +319,20 @@ export class PlaybackService {
   }
 
   private readonly warnedBeyondEnd = new Set<string>();
-  private warnBeyondEnd(relativePath: string, fileSec: number, sliceStart: number): void {
+  private warnBeyondEnd(relativePath: string, fileSec: number, sliceStart: number, from: string): void {
     if (this.warnedBeyondEnd.has(relativePath)) return;
     this.warnedBeyondEnd.add(relativePath);
-    console.warn(`[playback] ${relativePath} is ${fileSec.toFixed(2)} s; its note slices from ${sliceStart.toFixed(2)} s on are past the end and play as silence`);
+    console.warn(`[playback] ${relativePath} is ${fileSec.toFixed(2)} s; its pitches from ${sliceStart.toFixed(2)} s on are not recorded and play ${from} (the highest recorded) shifted up`);
+  }
+
+  /** A library file's sample rate (ffprobe, first audio stream). */
+  private async sampleRateOf(relativePath: string): Promise<number> {
+    const ffprobe = this.config.ffmpegBin.replace(/ffmpeg$/u, 'ffprobe');
+    const src = resolve(this.libraryRoot, relativePath);
+    const { stdout } = await execFileAsync(ffprobe, ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=sample_rate', '-of', 'default=nw=1:nk=1', src], { timeout: 30_000 });
+    const sr = Number(stdout.trim());
+    if (!(sr > 0)) throw new Error(`ffprobe gave no sample rate for ${relativePath}: "${stdout.trim()}"`);
+    return sr;
   }
 
   /** Whether a sample id has been registered by some song's plan. */
@@ -352,11 +382,15 @@ export class PlaybackService {
     if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sample ${sampleId} points outside the library`);
     if (!existsSync(src)) throw new Error(`sample ${sampleId}: library file missing: ${spec.relativePath}`);
     const tmp = `${out}.tmp-${process.pid}`;
-    if (spec.beyondEnd) {
-      if (spec.sliceStart === undefined || spec.sliceEnd === undefined) throw new Error(`sample ${sampleId}: a beyond-the-end slice needs its start and end`);
+    if (spec.pitchShift !== undefined) {
+      if (spec.sliceStart === undefined || spec.sliceEnd === undefined) throw new Error(`sample ${sampleId}: a pitched slice needs its start and end`);
+      // Cut, then play it faster by the interval (a sampler's pitch shift: higher and shorter).
+      const sr = await this.sampleRateOf(spec.relativePath);
+      const ratio = 2 ** (spec.pitchShift / 12);
+      const filter = `atrim=start=${spec.sliceStart.toFixed(6)}:end=${spec.sliceEnd.toFixed(6)},asetpts=PTS-STARTPTS,asetrate=${(sr * ratio).toFixed(3)},aresample=${sr}`;
       await runLogged(
         this.config.ffmpegBin,
-        ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-t', (spec.sliceEnd - spec.sliceStart).toFixed(6), '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', tmp],
+        ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-af', filter, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', tmp],
         process.env,
         `${out}.log`,
         TRANSCODE_TIMEOUT_MS,

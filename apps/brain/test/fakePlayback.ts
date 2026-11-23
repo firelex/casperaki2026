@@ -7,7 +7,7 @@ import { PlaybackService } from '../src/render/playbackService.js';
 /** Stand-in playback: the "emit" writes a one-lane envelope (a bass
  *  multisample with two slots, one drum lane), the "ffmpeg" writes its
  *  arguments into the output file so slicing can be checked. */
-export function fakePlayback(opts: { mixConfig?: string } = {}): PlaybackService {
+export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffprobe reports (duration and sample rate). */ probe?: string } = {}): PlaybackService {
   const dir = mkdtempSync(join(tmpdir(), 'casperaki-playback-test-'));
   const lib = join(dir, 'library');
   mkdirSync(join(lib, 'basses'), { recursive: true });
@@ -31,8 +31,8 @@ writeFileSync(o + '/song.json', JSON.stringify({ song: true }));
 writeFileSync(o + '/inst-1.json', JSON.stringify({ id: 1, name: 'Bass', type: 'basses', samples: [{ id: 900 }] }));
 writeFileSync(o + '/asset-manifest.json', JSON.stringify({
   Bass: { status: 'resolved', relativePath: 'basses/bass.mp3', multisample: { slots: [
-    { status: 'resolved', slot: { id: 900 }, sliceStart: 0.5, sliceEnd: 4.5 },
-    { status: 'resolved', slot: { id: 901 }, sliceStart: 4.5, sliceEnd: 8.5 },
+    { status: 'resolved', slot: { id: 900, note: 'c2', type: 'longNote' }, sliceStart: 0.5, sliceEnd: 4.5 },
+    { status: 'resolved', slot: { id: 901, note: 'd#2', type: 'longNote' }, sliceStart: 4.5, sliceEnd: 8.5 },
   ] } },
   Drums: { lanes: { bassDrum1: { status: 'resolved', relativePath: 'kicks/kick.mp3' } } },
 }));
@@ -41,9 +41,9 @@ writeFileSync(o + '/asset-manifest.json', JSON.stringify({
   const ffmpeg = join(dir, 'ffmpeg');
   writeFileSync(ffmpeg, '#!/bin/sh\nfor last; do :; done\necho "$@" > "$last"\n');
   chmodSync(ffmpeg, 0o755);
-  // ffprobe (next to ffmpeg): every stand-in file is 100 s long.
+  // ffprobe (next to ffmpeg): every stand-in file is 100 s long (and at 100 Hz), unless told otherwise.
   const ffprobe = join(dir, 'ffprobe');
-  writeFileSync(ffprobe, '#!/bin/sh\necho 100\n');
+  writeFileSync(ffprobe, `#!/bin/sh\necho ${opts.probe ?? '100'}\n`);
   chmodSync(ffprobe, 0o755);
   return new PlaybackService({
     playbackDir: join(dir, 'playback'),
