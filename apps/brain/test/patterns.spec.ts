@@ -141,6 +141,10 @@ describe('pattern lab', () => {
     const withP = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal', soundId: other.id })).json()) as Preview;
     const current = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'current', soundId: other.id })).json()) as Preview;
     expect(withP.songId).not.toBe(current.songId);
+    // Each sound once: presets rendered once per style share a name (e.g. three "Throbbing Whale" basses).
+    const bp = loadPatternProposals().find((x) => x.family === 'bass')!;
+    const bs = ((await (await fetch(`${h.url}/api/patterns/${bp.id}/sounds?genre=${bp.genres[0]}`)).json()) as { sounds: { name: string }[] }).sounds;
+    expect(new Set(bs.map((s) => s.name)).size).toBe(bs.length);
     // Guitars: no chords / effects recordings (parts of a Virtual Guitarist guitar, not sounds).
     const { loadValidatedCatalog } = await import('@casperaki/arrangement');
     const gp = loadPatternProposals().find((x) => x.family === 'guitar')!;

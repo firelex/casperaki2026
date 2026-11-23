@@ -648,6 +648,7 @@ function CardStatus({ info, instrument }: { info: { lanes: string[]; sections: P
     <p className={`mt-2 text-[13px] ${silent ? 'text-[#ffb347]' : 'text-white/55'}`} role="status">
       Playing {what}
       {solo}
+      {live.loadReport ? <span className="text-white/35"> · {live.loadReport}</span> : null}
       {silent ? ` · Playing, but nothing is audible: ${silent}.` : ''}
     </p>
   );

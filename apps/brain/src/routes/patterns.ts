@@ -163,10 +163,19 @@ function soundsFor(proposal: PatternProposal, genre: Parameters<typeof familySou
   const guitarPart = (e: { preset?: string | null }) => e.preset === 'Default Chords' || e.preset === 'Default FX';
   const others = loadValidatedCatalog().entries.filter((e) => !inPool.has(e.id) && userSoundFamily(e) === proposal.family && !guitarPart(e));
   const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
-  return [
-    ...pool.map((e) => ({ id: e.id, name: publicNameOf(e, names), inStyle: true })).sort(byName),
-    ...others.map((e) => ({ id: e.id, name: publicNameOf(e, names), inStyle: false })).sort(byName),
+  const all = [
+    ...pool.map((e) => ({ e, id: e.id, name: publicNameOf(e, names), inStyle: true })).sort(byName),
+    ...others.map((e) => ({ e, id: e.id, name: publicNameOf(e, names), inStyle: false })).sort(byName),
   ];
+  // One entry per sound: the library renders some presets once per style (e.g. "BA Burning Up 1"
+  // as latin, edm and brightPop files), which share a public name. Keep the rendering made for
+  // this genre when there is one, else the first.
+  const chosen = new Map<string, (typeof all)[number]>();
+  for (const x of all) {
+    const had = chosen.get(x.name);
+    if (!had || (had.e.mainStyle !== genre && x.e.mainStyle === genre && x.inStyle >= had.inStyle)) chosen.set(x.name, x);
+  }
+  return all.filter((x) => chosen.get(x.name) === x).map(({ id, name, inStyle }) => ({ id, name, inStyle }));
 }
 
 export function createPatternsRouter({ store, playback, isAdminRequest, reviewerOf }: PatternsRouterDeps): Router {

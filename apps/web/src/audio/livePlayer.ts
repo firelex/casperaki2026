@@ -35,6 +35,8 @@ export interface LiveState {
   readonly mastering: MasteringMode;
   /** Why matching the master failed (mastering === 'failed'). */
   readonly masteringError: string | undefined;
+  /** How the loaded song's start went, e.g. "Loaded in 3.1 s: song 0.9 s · 12 of 136 sounds fetched 1.8 s · engine 0.4 s". */
+  readonly loadReport: string | undefined;
 }
 
 /**
@@ -206,7 +208,7 @@ export class LivePlayer {
   private playStartPos = 0;
   private state: LiveState = {
     status: 'idle', key: undefined, durationSec: 0, step: '', error: undefined, laneNames: [], muted: [], solo: [],
-    loopRange: undefined, looping: false, mastering: 'stand-in', masteringError: undefined,
+    loopRange: undefined, looping: false, mastering: 'stand-in', masteringError: undefined, loadReport: undefined,
   };
   private meterWorker: Worker | undefined;
   private readonly meterCache = new Map<string, LaneMeters>();
@@ -370,6 +372,8 @@ export class LivePlayer {
       return;
     }
     const token = ++this.loadToken;
+    const playT0 = performance.now();
+    const wasPrepared = this.prepared.has(key);
     // Seamless: keep the current version playing while the new one loads,
     // then switch at the same position (an edit while listening).
     const seamless = Boolean(opts.seamless) && this.node !== undefined && this.state.status === 'playing';
@@ -387,6 +391,7 @@ export class LivePlayer {
         this.worklet(ctx),
       ]);
       if (token !== this.loadToken) return;
+      const preparedAt = performance.now();
       if (!seamless) this.set({ step: 'Starting the engine…' });
 
       const node = new AudioWorkletNode(ctx, 'casperaki-render-processor', {
@@ -480,7 +485,16 @@ export class LivePlayer {
       node.connect(this.output(ctx));
       this.anchorTime = ctx.currentTime;
       this.anchorPos = startAt;
-      this.set({ status: 'playing', step: '' });
+      const t = this.loadTimes.get(key);
+      const sec = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+      const loadReport =
+        `Loaded in ${sec(performance.now() - playT0)}: ` +
+        (wasPrepared || !t
+          ? 'song and sounds were ready'
+          : `song ${sec(t.songMs)} · ${t.fetched} of ${t.total} sounds fetched ${sec(t.soundsMs)}`) +
+        ` · engine ${sec(performance.now() - preparedAt)}`;
+      console.info(`[live] ${key}: ${loadReport}`);
+      this.set({ status: 'playing', step: '', loadReport });
     } catch (err) {
       if (token !== this.loadToken) return;
       this.teardown();
@@ -928,6 +942,9 @@ export class LivePlayer {
     });
   }
 
+  /** Per prepared song: how long its parts took (for the load report). */
+  private readonly loadTimes = new Map<string, { songMs: number; soundsMs: number; fetched: number; total: number }>();
+
   private ensurePrepared(
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
@@ -941,10 +958,20 @@ export class LivePlayer {
       return existing;
     }
     const ctx = this.context();
-    const job = this.payloadOf(key, fetchPayload).then(async (payload) => ({
-      payload,
-      realSamples: await this.loadSamples(ctx, payload.samples, progress),
-    }));
+    const t0 = performance.now();
+    const timing = { songMs: 0, soundsMs: 0, fetched: 0, total: 0 };
+    this.loadTimes.set(key, timing);
+    const job = this.payloadOf(key, fetchPayload).then(async (payload) => {
+      const t1 = performance.now();
+      timing.songMs = t1 - t0;
+      timing.total = new Set(payload.samples.map((x) => x.url)).size;
+      const realSamples = await this.loadSamples(ctx, payload.samples, (done, total) => {
+        timing.fetched = total;
+        progress(done, total);
+      });
+      timing.soundsMs = performance.now() - t1;
+      return { payload, realSamples };
+    });
     job.catch(() => this.prepared.delete(key));
     this.prepared.set(key, job);
     while (this.prepared.size > PREPARED_LIMIT) this.prepared.delete(this.prepared.keys().next().value!);
