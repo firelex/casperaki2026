@@ -451,6 +451,15 @@ export function NowPlaying() {
       </div>
     );
   }
+  if (pat.status === 'error') {
+    return (
+      <div className={`${LINE} bg-[#3a2326]`} role="alert" aria-label="Now playing">
+        <span className="text-[12px] text-err">
+          <span className="font-semibold">{now.sound.name}</span> could not be played: {pat.error ?? 'the player gave no reason'}
+        </span>
+      </div>
+    );
+  }
   const busy = pat.status === 'loading';
   const state = pat.status === 'playing' ? 'Playing' : busy ? (now.kind === 'pattern' ? 'Writing a pattern for' : 'Loading') : pat.status === 'ended' ? 'Played' : 'Paused';
   if (now.kind === 'sample') {

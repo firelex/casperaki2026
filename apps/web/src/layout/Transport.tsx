@@ -14,7 +14,8 @@ const TICKS_PER_BEAT = 960;
  * and tempo and key. Plays the song live in the browser (the version on
  * screen, unsaved edits included).
  *
- * Keys: Space play/pause · Enter back to the start · L loop on/off.
+ * Keys: Space play / stop (back to where play started) · Enter back to the
+ * beginning · L loop on/off. The Play/Pause button pauses.
  */
 export function Transport() {
   const { viewSong, editorDirty } = useSession();
@@ -52,7 +53,11 @@ export function Transport() {
       // A window with its own player (the pattern editor) takes Space while open.
       if (e.code === 'Space' && document.querySelector('[data-owns-space]')) return;
       e.preventDefault();
-      if (e.code === 'Space') playPause();
+      // Space: play, or stop back to where play started (as Stop; the Play/Pause button pauses).
+      if (e.code === 'Space') {
+        if (playing) stop(false);
+        else playPause();
+      }
       else if (e.code === 'KeyL') {
         if (live.loopRange) toggleLoop();
       } else stop(true);
@@ -60,7 +65,7 @@ export function Transport() {
     // Capture phase: runs before any element's own key handling can stop it.
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [playPause, toggleLoop, stop, live.loopRange]);
+  }, [playPause, playing, toggleLoop, stop, live.loopRange]);
 
   const btn =
     'flex h-8 w-9 items-center justify-center rounded-[5px] border border-black/60 bg-gradient-to-b from-[#3b3d43] to-[#2b2c31] text-[#d9dade] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:from-[#45474e] disabled:opacity-35';
@@ -81,7 +86,7 @@ export function Transport() {
           disabled={!loaded}
           className={btn}
           aria-label="Stop"
-          title="Stop: back to where play started (double-click or Enter: to the beginning)"
+          title="Stop: back to where play started (Space; double-click or Enter: to the beginning)"
         >
           <span className="block h-2.5 w-2.5 rounded-[1px] bg-current" aria-hidden="true" />
         </button>
@@ -91,7 +96,7 @@ export function Transport() {
           disabled={!liveKey || loading}
           className={`${btn} ${playing ? 'text-emerald-300' : ''}`}
           aria-label={playing ? 'Pause' : 'Play'}
-          title={playing ? 'Pause (Space)' : 'Play (Space)'}
+          title={playing ? 'Pause (stays here)' : 'Play (Space)'}
         >
           {loading ? '…' : playing ? <PauseIcon /> : <PlayIcon />}
         </button>
