@@ -1042,6 +1042,16 @@ private:
         lane.sources.push_back(std::move(src));
     }
 
+public:
+    // Whole bars in a loop file of `frames` samples. A file of exactly N bars holds a
+    // whole number of samples, so it can be up to one sample shorter than N bars
+    // (96218 samples = 2.181814 s for a 2.181818 s bar at 110 bpm): 1.5 samples of slack.
+    static long loopWholeBars(long frames, double sampleRate, double barSec) {
+        const double fileSec = (double)frames / sampleRate;
+        return (long)std::floor((fileSec + 1.5 / sampleRate) / barSec);
+    }
+
+private:
     // Loop period of a looped wave clip, as legacy Loop.h:58-67 sets it: the
     // file's length in WHOLE bars at the song tempo (te::BarsAndBeats.bars, rounded
     // down) x 4 beats. The rest of the file (MP3 padding, ~30-40 ms) is never played,
@@ -1051,7 +1061,7 @@ private:
         if (isStub) return d.frames;
         const double barSec = 4.0 * secPerBeat_;
         const double fileSec = (double)d.frames / (double)d.sampleRate;
-        const long bars = (long)std::floor(fileSec / barSec + 1e-9);
+        const long bars = loopWholeBars(d.frames, d.sampleRate, barSec);
         if (bars < 1)
             throw std::runtime_error("Mixer: loop '" + source + "' is " + std::to_string(fileSec)
                                      + " s, shorter than one bar (" + std::to_string(barSec) + " s) at the song tempo");

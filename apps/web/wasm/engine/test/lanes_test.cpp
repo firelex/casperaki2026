@@ -78,7 +78,32 @@ std::vector<float> pullAll(Mixer& m) {
 }
 } // namespace
 
+// A loop of exactly one bar can be a fraction of a sample short of the bar (the file
+// holds whole samples): it still counts as one bar.
+static int testLoopWholeBars() {
+    const double bar110 = 240.0 / 110.0;  // 2.181818 s
+    struct Case { long frames; double barSec; long want; };
+    const Case cases[] = {
+        {96218, bar110, 1},      // 2.181814 s: 0.18 samples short of one bar (the reported case)
+        {96219, bar110, 1},
+        {192436, bar110, 2},     // two bars, 0.36 samples short
+        {96000, bar110, 0},      // 5 ms short: really shorter than a bar
+        {88200, 2.0, 1},         // exactly one bar at 120 bpm
+        {88198, 2.0, 0},         // two samples short
+    };
+    for (const auto& c : cases) {
+        const long got = casperaki::Mixer::loopWholeBars(c.frames, 44100.0, c.barSec);
+        if (got != c.want) {
+            std::fprintf(stderr, "FAIL loopWholeBars(%ld frames, bar %.6f s) = %ld, want %ld\n", c.frames, c.barSec, got, c.want);
+            return 1;
+        }
+    }
+    std::printf("PASS loopWholeBars: whole bars with one sample of slack\n");
+    return 0;
+}
+
 int main() {
+    if (testLoopWholeBars() != 0) return 1;
     const fs::path dir = LANES_GENRE_DIR;
     Env env;
     std::vector<std::string> instStrings;
