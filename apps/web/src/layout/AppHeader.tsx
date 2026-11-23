@@ -15,7 +15,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
   const inSong = useLocation().pathname.startsWith('/editor/');
   return (
     <header className={`${compact ? 'h-11 bg-bg' : 'h-16'} shrink-0 border-b border-line/60`}>
-      <div className="mx-auto flex h-full max-w-[1240px] items-center gap-6 px-4 sm:gap-10 sm:px-8">
+      <div className={`flex h-full items-center gap-6 sm:gap-10 ${compact ? 'px-4' : 'mx-auto max-w-[1240px] px-4 sm:px-8'}`}>
         <Link to="/" className="shrink-0" aria-label="Casperaki: your songs">
           <img src="/brand/casperaki-logo.svg" alt="Casperaki" width={140} height={16} className="block h-[16px] w-auto" />
         </Link>
