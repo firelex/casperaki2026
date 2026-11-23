@@ -110,7 +110,7 @@ export function typeLabel(family: string, lowLevel: string, familyLabel: string)
 /** Guitars: Virtual Guitarist instruments (strums, picking and effects) vs single sampled palm-muted guitars. */
 function guitarType(e: { family: string; preset?: string | null }, type: string): string {
   if (e.family !== 'acousticGuitars' && e.family !== 'electricGuitars') return type;
-  return e.preset === 'Default Notes' ? `Virtual Guitarist · ${type.toLowerCase()}` : `${type} · palm muted`;
+  return e.preset === 'Default Notes' ? `Virtual Guitarist · ${type}` : `${type} · palm muted`;
 }
 
 interface Built {
