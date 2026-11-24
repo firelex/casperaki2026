@@ -11,7 +11,6 @@
  */
 
 import type { PlaybackPayload, PlaybackSample } from '../api/playback';
-import { vocalsWaitMessage } from './singVocals';
 
 export type LiveStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 'error';
 
@@ -655,7 +654,7 @@ export class LivePlayer {
       })
       .catch((err: unknown) => {
         console.error('[live] preparing track levels failed:', err);
-        if (!cancelled) onError(vocalsWaitMessage(err) ?? `Preparing this version for the engine failed: ${err instanceof Error ? err.message : String(err)}`);
+        if (!cancelled) onError(`Preparing this version for the engine failed: ${err instanceof Error ? err.message : String(err)}`);
       });
     return () => {
       cancelled = true;

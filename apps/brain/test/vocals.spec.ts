@@ -108,6 +108,13 @@ describe('sung vocals routes', () => {
     expect(st.state).toBe('current');
   });
 
+  it('a take already stored but not recorded on this copy of the song (e.g. the page was refreshed unsaved) is "stored", and playback still asks for it', async () => {
+    const s = song();
+    await h.call('/api/vocals/sing', { song: s, segment: 'verse1' });
+    const st = (await h.call('/api/vocals/status', { song: s })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
+    expect(st.state).toBe('stored');
+  });
+
   it('a section sung alike (verse2 = verse1) reuses the take without singing again', async () => {
     const before = svc.state.sings;
     const r = await h.call('/api/vocals/sing', { song: song(), segment: 'verse2' });

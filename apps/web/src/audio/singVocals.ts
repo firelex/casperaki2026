@@ -3,7 +3,6 @@
 
 import type { AIArtifact, Song } from '@casperaki/song-schema';
 
-import { BrainError } from '../api/client';
 import type { SectionStatus } from '../api/vocals';
 
 const isVocalTake = (a: AIArtifact, segment?: string) =>
@@ -48,7 +47,8 @@ export interface SingApi {
  */
 export async function singMissing(song: Song, api: SingApi, onProgress: (text: string) => void, signal?: AbortSignal): Promise<Song> {
   const sections = (await api.status(song, signal)).sections;
-  const todo = sections.filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment);
+  // A stored take is not sung again: asking for it returns the stored file at once and records it.
+  const todo = sections.filter((s) => s.state === 'missing' || s.state === 'stale' || s.state === 'stored').map((s) => s.segment);
   // A take left on a section that no longer has vocal notes would still play: drop it.
   const unused = new Set(sections.filter((s) => s.state === 'unused').map((s) => s.segment));
   let out = unused.size ? { ...song, aiArtifacts: song.aiArtifacts.filter((a) => !(isVocalTake(a) && a.attachedTo.scope === 'segment' && unused.has(a.attachedTo.segment))) } : song;
@@ -105,14 +105,20 @@ export const singRun = {
   active: (): boolean => current !== undefined,
 };
 
-/** The brain's refusal to play vocals not sung yet, as a hint for views that load the song (mixer, waveforms). */
-export function vocalsWaitMessage(err: unknown): string | undefined {
-  if (!(err instanceof BrainError) || err.status !== 409 || err.body?.error !== 'vocals_need_singing') return undefined;
-  return 'Press Play to sing the vocals; this shows once they are sung.';
+/**
+ * What the editor's views (mixer, waveforms) load: the song as it plays ('song'); the song without its vocal
+ * ('instrumental') while a section is not sung for the song as it is (the brain would refuse it; the greyed vocal
+ * track shows what is missing; Play sings first); or nothing yet ('wait') while that is not known.
+ */
+export function viewSource(song: Song, status: readonly SectionStatus[] | undefined): 'song' | 'instrumental' | 'wait' {
+  if (!song.vocals?.enabled) return 'song';
+  if (!status) return 'wait';
+  return status.every((s) => s.state === 'none' || s.state === 'current') ? 'song' : 'instrumental';
 }
 
-/** Indexes (in `sections`) of the sections whose lead vocal is not sung for the song as it is (missing or stale take):
- *  the timeline greys them out. None while the status is not known. */
+/** Indexes (in `sections`) of the sections whose lead vocal is not sung (missing or stale take; a take that is
+ *  sung and stored but not recorded on this copy counts as sung): the timeline greys them out. None while the
+ *  status is not known. */
 export function unsungSections(sections: readonly { readonly name: string }[], status: readonly SectionStatus[] | undefined): ReadonlySet<number> {
   if (!status) return new Set();
   const unsung = new Set(status.filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment));

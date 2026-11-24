@@ -11,7 +11,8 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { unsungSections as unsungSectionsOf, vocalsWaitMessage } from '../audio/singVocals';
+import { unsungSections as unsungSectionsOf, viewSource, withVocals } from '../audio/singVocals';
+import { currentProMix } from '../audio/proMix';
 import { vocalsApi } from '../api/vocals';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
@@ -88,26 +89,6 @@ export function TimelineView() {
   useEffect(() => {
     if (activeSong) openProMix(activeSong.id, activeSong.project.mixOverrides);
   }, [activeSong]);
-  useEffect(() => {
-    setMix(undefined);
-    setMixError(undefined);
-    if (!liveKey) return;
-    let cancelled = false;
-    const t = setTimeout(() => {
-      livePlayer.mixOf(liveKey, fetchPayload).then(
-        (m) => !cancelled && setMix(m),
-        (err: unknown) => !cancelled && setMixError(vocalsWaitMessage(err) ?? (err instanceof Error ? err.message : String(err))),
-      );
-      livePlayer.payloadOf(liveKey, fetchPayload).then(
-        (p) => !cancelled && setStandardChains(p.standardRackChains),
-        (err: unknown) => !cancelled && setMixError(vocalsWaitMessage(err) ?? (err instanceof Error ? err.message : String(err))),
-      );
-    }, editorDirty ? 1200 : 0);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [liveKey, fetchPayload, editorDirty, pro.version]);
   // Sung vocals on: which sections of the lead vocal have no current take (greyed out on its track).
   const vocalsOn = viewSong?.vocals?.enabled === true;
   const vocalStatus = useQuery({
@@ -120,6 +101,34 @@ export function TimelineView() {
     () => (vocalsOn && model ? unsungSectionsOf(model.sections, vocalStatus.data?.sections) : new Set<number>()),
     [vocalsOn, model, vocalStatus.data],
   );
+  // What the mixer and waveforms load: the song as it plays, or, while vocals are on but not all sung, the song
+  // without its vocal under its own key (never what Play plays), so they never wait on or fail for singing.
+  const source = viewSong ? viewSource(viewSong, vocalStatus.data?.sections) : 'wait';
+  const viewKey = !liveKey || source === 'wait' ? undefined : source === 'instrumental' ? `${liveKey}:instrumental` : liveKey;
+  const viewFetch = useMemo(
+    () => (source === 'instrumental' && viewSong ? (signal: AbortSignal) => playbackApi.forSong(withVocals(viewSong, false), signal, currentProMix()) : fetchPayload),
+    [source, viewSong, fetchPayload],
+  );
+  useEffect(() => {
+    setMix(undefined);
+    setMixError(undefined);
+    if (!viewKey) return;
+    let cancelled = false;
+    const t = setTimeout(() => {
+      livePlayer.mixOf(viewKey, viewFetch).then(
+        (m) => !cancelled && setMix(m),
+        (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
+      );
+      livePlayer.payloadOf(viewKey, viewFetch).then(
+        (p) => !cancelled && setStandardChains(p.standardRackChains),
+        (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
+      );
+    }, editorDirty ? 1200 : 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [viewKey, viewFetch, editorDirty, pro.version]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   /** The section dialogs (from the ruler's right-click menu). */
   const [sectionDialog, setSectionDialog] = useState<
@@ -173,16 +182,16 @@ export function TimelineView() {
   useEffect(() => {
     setMeters(undefined);
     setMetersError(undefined);
-    if (!liveKey) return;
+    if (!viewKey) return;
     let cancel: (() => void) | undefined;
     const t = setTimeout(() => {
-      cancel = livePlayer.meters(liveKey, fetchPayload, setMeters, setMetersError);
+      cancel = livePlayer.meters(viewKey, viewFetch, setMeters, setMetersError);
     }, editorDirty ? 1500 : 0);
     return () => {
       clearTimeout(t);
       cancel?.();
     };
-  }, [liveKey, fetchPayload, editorDirty]);
+  }, [viewKey, viewFetch, editorDirty]);
   const meterMax = useMemo(() => {
     let m = 0;
     for (const arr of meters?.peaks ?? []) for (const v of arr) if (v > m) m = v;

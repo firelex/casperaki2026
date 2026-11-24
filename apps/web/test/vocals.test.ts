@@ -55,6 +55,7 @@ describe('singMissing', () => {
         { segment: 'verse1', state: 'stale' as const },
         { segment: 'chorus1', state: 'missing' as const },
         { segment: 'verse2', state: 'current' as const },
+        { segment: 'chorus2', state: 'stored' as const },
       ] }),
       sing: async (_s: Song, segment: string) => {
         calls.push(segment);
@@ -63,9 +64,9 @@ describe('singMissing', () => {
     };
     const progress: string[] = [];
     const out = await singMissing(song({ aiArtifacts: [art('verse1', 'old')] }), api, (t) => progress.push(t));
-    expect(calls).toEqual(['verse1', 'chorus1']);
-    expect(progress).toEqual(['Singing verse1 (1 of 2)', 'Singing chorus1 (2 of 2)']);
-    expect(out.aiArtifacts.map((a) => a.id)).toEqual(['vocal-verse1-new-verse1', 'vocal-chorus1-new-chorus1']);
+    expect(calls).toEqual(['verse1', 'chorus1', 'chorus2']);
+    expect(progress).toEqual(['Singing verse1 (1 of 3)', 'Singing chorus1 (2 of 3)', 'Singing chorus2 (3 of 3)']);
+    expect(out.aiArtifacts.map((a) => a.id)).toEqual(['vocal-verse1-new-verse1', 'vocal-chorus1-new-chorus1', 'vocal-chorus2-new-chorus2']);
   });
 
   it('drops a take left on a section that no longer has vocal notes', async () => {
@@ -84,8 +85,7 @@ describe('singMissing', () => {
   });
 });
 
-import { BrainError } from '../src/api/client';
-import { singBeforePlay, singRun, vocalsWaitMessage } from '../src/audio/singVocals';
+import { singBeforePlay, singRun, viewSource } from '../src/audio/singVocals';
 
 describe('singBeforePlay', () => {
   const api = (onSing?: () => void) => ({
@@ -129,12 +129,17 @@ describe('singRun', () => {
   });
 });
 
-describe('vocalsWaitMessage', () => {
-  it('turns the brain refusal for unsung vocals into a press-Play hint, and nothing else', () => {
-    const e = new BrainError(409, { error: 'vocals_need_singing', message: 'x' } as never, 'x');
-    expect(vocalsWaitMessage(e)).toMatch(/Press Play to sing the vocals/);
-    expect(vocalsWaitMessage(new BrainError(500, undefined, 'boom'))).toBeUndefined();
-    expect(vocalsWaitMessage(new Error('x'))).toBeUndefined();
+describe('viewSource', () => {
+  const st = (state: 'none' | 'current' | 'stored' | 'stale' | 'missing' | 'unused') => [{ segment: 'verse1', state }, { segment: 'intro', state: 'none' as const }];
+  it('the mixer and waveforms load the song as it plays when vocals are off or all sung', () => {
+    expect(viewSource(song({ vocals: undefined }), undefined)).toBe('song');
+    expect(viewSource(song(), st('current'))).toBe('song');
+  });
+  it('without the vocal while a section is not sung for the song as it is (Play would sing first)', () => {
+    for (const s of ['stored', 'stale', 'missing', 'unused'] as const) expect(viewSource(song(), st(s))).toBe('instrumental');
+  });
+  it('waits while the vocals status is not known', () => {
+    expect(viewSource(song(), undefined)).toBe('wait');
   });
 });
 
@@ -148,8 +153,11 @@ describe('unsungSections', () => {
       { segment: 'verse1', state: 'current' as const },
       { segment: 'chorus1', state: 'stale' as const },
       { segment: 'verse2', state: 'missing' as const },
+      { segment: 'intro', state: 'stored' as const },
     ];
     expect([...unsungSections(sections, st)].sort()).toEqual([2, 3]);
+    // Sung and stored, only not recorded on this copy: not grey.
+    expect(unsungSections(sections, [{ segment: 'verse1', state: 'stored' as const }]).size).toBe(0);
   });
   it('nothing while the status is not known', () => {
     expect(unsungSections(sections, undefined).size).toBe(0);

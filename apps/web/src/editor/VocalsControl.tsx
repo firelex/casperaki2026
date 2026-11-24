@@ -9,6 +9,7 @@ import { useSession } from '../state/session';
 
 const STATE_LABEL: Record<Exclude<SectionState, 'none'>, string> = {
   current: 'Sung',
+  stored: 'Sung (added to the song on the next play)',
   missing: 'Sung on the next play',
   stale: 'Changed: sung again on the next play',
   unused: 'No vocal notes now: its take is dropped on the next play',
@@ -120,7 +121,7 @@ export function VocalsControl() {
                 {sections.map((s) => (
                   <li key={s.segment} className="flex items-center justify-between gap-2 py-0.5">
                     <span className="min-w-0 truncate">
-                      {s.segment} <span className={s.state === 'current' ? 'text-emerald-300/80' : 'text-[#f5b942]'}>· {STATE_LABEL[s.state as Exclude<SectionState, 'none'>]}</span>
+                      {s.segment} <span className={s.state === 'current' || s.state === 'stored' ? 'text-emerald-300/80' : 'text-[#f5b942]'}>· {STATE_LABEL[s.state as Exclude<SectionState, 'none'>]}</span>
                     </span>
                     <button type="button" className={small} onClick={() => replace(singAgain(viewSong, s.segment))} title="A fresh take of this section on the next play">
                       Sing again

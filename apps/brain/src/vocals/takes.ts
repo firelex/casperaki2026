@@ -27,8 +27,10 @@ const TAKE_PEAK_DB = -1;
 const TAKE_RATE = 44100;
 const FP = /^[0-9a-f]{64}$/u;
 
-/** none: no vocal notes and no take; unused: a take left on a section that no longer has vocal notes (drop it). */
-export type SectionState = 'none' | 'current' | 'stale' | 'missing' | 'unused';
+/** none: no vocal notes and no take; current: its take is on the song and stored; stored: sung and stored, but not
+ *  recorded on this copy of the song yet (e.g. an unsaved copy was reloaded; singing it again just records it);
+ *  stale / missing: to sing; unused: a take left on a section that no longer has vocal notes (drop it). */
+export type SectionState = 'none' | 'current' | 'stored' | 'stale' | 'missing' | 'unused';
 export interface SectionStatus {
   readonly segment: string;
   readonly state: SectionState;
@@ -216,9 +218,10 @@ export function sectionStates(song: Song, takesDir: string): SectionStatus[] {
     if (!score) return { segment: seg.name, state: takeArtifact(song, seg.name) ? 'unused' : 'none' };
     const fp = takeFingerprint(score, vocals.voice, vocals.takeNumbers[seg.name] ?? 1);
     const a = takeArtifact(song, seg.name);
-    if (!a) return { segment: seg.name, state: 'missing' };
-    if (artifactFingerprint(a) !== fp) return { segment: seg.name, state: 'stale' };
-    return { segment: seg.name, state: existsSync(join(takesDir, `${fp}.wav`)) ? 'current' : 'missing' };
+    const stored = existsSync(join(takesDir, `${fp}.wav`));
+    if (a && artifactFingerprint(a) === fp && stored) return { segment: seg.name, state: 'current' };
+    if (stored) return { segment: seg.name, state: 'stored' };
+    return { segment: seg.name, state: a && artifactFingerprint(a) !== fp ? 'stale' : 'missing' };
   });
 }
 
