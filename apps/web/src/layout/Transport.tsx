@@ -3,6 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { livePlayer } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
 import { buildSequencerModel } from '../editor/sequencerModel';
+import { VocalsControl } from '../editor/VocalsControl';
 import { useSession } from '../state/session';
 
 const TICKS_PER_BEAT = 960;
@@ -36,6 +37,8 @@ export function Transport() {
   // once: right away for the saved song, a moment after editing stops.
   useEffect(() => {
     if (!liveKey || !viewSong) return;
+    // With sung vocals on, Play sings what is missing first; preparing would ask for takes not sung yet.
+    if (viewSong.vocals?.enabled) return;
     const t = setTimeout(() => livePlayer.prepare(liveKey, fetchPayload), editorDirty ? 1200 : 0);
     return () => clearTimeout(t);
   }, [liveKey, viewSong, editorDirty, fetchPayload]);
@@ -127,6 +130,8 @@ export function Transport() {
         >
           <LoopIcon />
         </button>
+        <span className="w-1" aria-hidden="true" />
+        <VocalsControl />
       </div>
       <Lcd seconds={currentSeconds} bpm={bpm} songKey={viewSong?.key} status={isThisSong ? live.status : 'idle'} />
     </>
