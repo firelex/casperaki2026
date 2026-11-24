@@ -380,3 +380,75 @@ body {
 .sign-in-accent {
   color: #ff5fa8;
 }
+
+/*
+ * The song assistant (AssistantPanel): @teamsuzie/ui's ChatThread laid out as
+ * a chat in this panel. Questions sit right in a blue bubble, answers left in
+ * a grey one (tool rows inside, in mono); text in the app's sans at 13px.
+ * Scoped to the panel, so other ChatThreads keep the package's look.
+ */
+.casperaki-chat .ct-scroll {
+  gap: 12px;
+  padding: 14px 12px 10px;
+}
+.casperaki-chat .ct-turn {
+  gap: 8px;
+}
+.casperaki-chat .ct-user {
+  justify-content: flex-end;
+}
+.casperaki-chat .ct-user-body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  color: #ffffff;
+  background: #2f5f99;
+  border: none;
+  border-radius: 14px 14px 4px 14px;
+  padding: 7px 11px;
+  max-width: 85%;
+}
+.casperaki-chat .ct-assistant {
+  display: flex;
+}
+.casperaki-chat .ct-assistant-body {
+  font-family: var(--font-sans);
+  background: #2a2c32;
+  border-radius: 14px 14px 14px 4px;
+  padding: 8px 12px;
+  max-width: 92%;
+  min-width: 0;
+}
+.casperaki-chat .ct-assistant-body p,
+.casperaki-chat .ct-assistant-body li,
+.casperaki-chat .ct-assistant-body td,
+.casperaki-chat .ct-assistant-body th {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.casperaki-chat .ct-assistant-body > div {
+  /* MarkdownMessage's paragraphs: tighter than its page spacing. */
+  row-gap: 0;
+}
+.casperaki-chat .ct-assistant-body .space-y-3 > :not(:first-child) {
+  margin-top: 6px;
+}
+.casperaki-chat .ct-assistant-body ul,
+.casperaki-chat .ct-assistant-body ol {
+  padding-left: 1.2em;
+}
+.casperaki-chat .ct-assistant-body ul { list-style: disc; }
+.casperaki-chat .ct-assistant-body ol { list-style: decimal; }
+.casperaki-chat .ct-assistant-body strong { color: #ffffff; }
+.casperaki-chat .ct-tools {
+  margin-bottom: 6px;
+}
+.casperaki-chat .ct-tools:last-child {
+  margin-bottom: 0;
+}
+.casperaki-chat .ct-tool {
+  border-top-color: #3a3c43;
+}
+.casperaki-chat .ct-dots {
+  margin-top: 0;
+}

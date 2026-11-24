@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { ChatThread, type ChatToolCall } from '@teamsuzie/ui';
@@ -12,6 +12,21 @@ import type { Song } from '@casperaki/song-schema/schemas';
 import { buildSequencerModel } from './sequencerModel';
 
 const OPEN_STORAGE = 'casperaki.assistant.open';
+
+/**
+ * The theme tokens @teamsuzie/ui's ChatThread draws with (bubbles, borders,
+ * tool rows), in this app's dark palette. Set on the panel only: the app's
+ * own `--color-muted` is a text colour, the chat's is a surface.
+ */
+const CHAT_THEME = {
+  '--color-background': '#1e1f23',
+  '--color-foreground': '#e6e7ea',
+  '--color-primary': '#6fa8e8',
+  '--color-border': '#34363d',
+  '--color-muted': '#2a2c32',
+  '--color-muted-foreground': '#9a9ca5',
+  '--color-card': '#26282d',
+} as CSSProperties;
 
 /** Things only the page can do, asked for by the assistant's tools. */
 type ClientAction =
@@ -169,7 +184,7 @@ function OpenPanel({ onClose }: { onClose(): void }) {
   useEffect(() => setActionError(undefined), [chatKey]);
 
   return (
-    <aside className="flex w-[380px] shrink-0 flex-col border-l border-black/70 bg-[#1e1f23] text-white" aria-label="Song assistant">
+    <aside className="flex w-[380px] shrink-0 flex-col border-l border-black/70 bg-[#1e1f23] text-white" style={CHAT_THEME} aria-label="Song assistant">
       <div className="flex items-center gap-2 border-b border-black/60 px-3 py-2">
         <span className="text-[14px] font-semibold">Assistant</span>
         <span className="text-[12px] text-white/45">edits this song</span>
@@ -192,8 +207,7 @@ function OpenPanel({ onClose }: { onClose(): void }) {
           chatId={null}
           extraBody={{ songId, song: viewSong, title: viewSong?.title }}
           onToolResult={onToolResult}
-          placeholder="Ask for a change: “add a bridge after chorus 1”, “swap the keys for a warmer piano”, “loop the chorus”…"
-          className="h-full"
+          className="casperaki-chat h-full"
         />
       </div>
     </aside>
