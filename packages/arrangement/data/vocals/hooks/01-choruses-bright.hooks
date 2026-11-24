@@ -1,0 +1,214 @@
+# Bright choruses and bridges: 22 choruses (anthem, bouncy, driving, euphoric) and 4 bridges.
+
+hook: Paper Lanterns
+type: Chorus
+tempo: 110-128
+feel: anthem
+chords: C | G | Am | F | C | G | F G | C
+melody: r:0.5 e4:0.5 g4:1 g4:0.5 c5:1.5 | b4:1 a4:1 g4:2 | r:0.5 e4:0.5 a4:1 a4:0.5 c5:1.5 | c5:1 d5:1 c5:2 |
+        r:0.5 g4:0.5 e5:1 e5:0.5 d5:1.5 | d5:1 c5:1 b4:2 | a4:1 c5:1 d5:2 | c5:3 r:1 |
+
+hook: Neon Harbor
+type: Chorus
+tempo: 120-138
+feel: driving
+chords: Am | F | C | G | Am | F | C G | C
+melody: e5:0.5 e5:0.5 e5:0.5 d5:0.5 c5:1 a4:1 | c5:0.5 c5:0.5 c5:0.5 a4:0.5 f4:2 | e5:0.5 e5:0.5 e5:0.5 d5:0.5 c5:1 g4:1 | b4:2 r:1 g4:1 |
+        a4:0.5 c5:0.5 e5:1 e5:1 d5:1 | f5:2 e5:1 c5:1 | e5:1 c5:1 d5:1 b4:1 | c5:3 r:1 |
+
+hook: Glass Confetti
+type: Chorus
+tempo: 124-140
+feel: bouncy
+chords: C | Em | F | G | C | Em | F G | C
+melody: g4:1.5 a4:0.5 g4:1 e4:1 | g4:1.5 a4:0.5 b4:2 | a4:1.5 b4:0.5 a4:1 f4:1 | g4:3 r:1 |
+        c5:1.5 d5:0.5 c5:1 g4:1 | b4:1.5 c5:0.5 e5:2 | c5:1 a4:1 b4:1 d5:1 | c5:4 |
+
+hook: Static Bloom
+type: Chorus
+tempo: 100-116
+feel: anthem
+leadin: yes
+chords: G | C | Am | F | G | C | Am | F G | C
+melody: r:2 g4:0.5 a4:0.5 b4:1 | c5:3 g4:1 | e5:1 d5:1 c5:1.5 a4:0.5 | a4:2 r:1 g4:0.5 a4:0.5 | b4:1 d5:1 b4:1 g4:1 |
+        c5:2 e5:1 g5:1 | e5:3 c5:1 | c5:2 d5:2 | c5:4 |
+
+hook: Kite Season
+type: Chorus
+tempo: 112-128
+feel: euphoric
+chords: F | G | Em | Am | F | G7 | C | C
+melody: a4:1 c5:1 f5:2 | d5:1 b4:0.5 g4:2.5 | g4:1 b4:1 e5:2 | c5:1 a4:0.5 e4:2.5 |
+        a4:1 c5:1 f5:1 g5:1 | g5:2 f5:1 d5:1 | e5:3 d5:1 | c5:4 |
+
+hook: Copper Sky
+type: Chorus
+tempo: 95-110
+feel: anthem
+chords: Am | F | C | G | Am | F | G | C
+melody: r:1 e5:1 e5:1 d5:0.5 c5:0.5 | c5:2 a4:2 | r:1 e5:1 e5:1 g5:0.5 e5:0.5 | d5:4 |
+        r:1 a4:1 c5:1 e5:1 | f5:2 e5:1 c5:1 | d5:1.5 e5:0.5 d5:2 | c5:4 |
+
+hook: Satellite Hearts
+type: Chorus
+tempo: 128-145
+feel: driving
+chords: C | G | F | F | Am | G | F | C
+melody: g4:0.5 c5:1 c5:0.5 c5:1 d5:0.5 e5:0.5 | d5:2.5 r:1.5 | a4:0.5 c5:1 c5:0.5 c5:1 d5:0.5 c5:0.5 | a4:2.5 r:1.5 |
+        c5:0.5 e5:1 e5:0.5 e5:1 g5:0.5 e5:0.5 | d5:2.5 r:1 b4:0.5 | c5:1 a4:1 c5:1 d5:1 | e5:4 |
+
+hook: Midnight Parade
+type: Chorus
+tempo: 116-132
+feel: bouncy
+chords: C Am | F G | C Am | F G | Em Am | F G | Dm G | C
+melody: e5:0.5 r:0.5 c5:0.5 r:0.5 c5:0.5 r:0.5 a4:1 | a4:0.5 r:0.5 c5:0.5 r:0.5 b4:2 | e5:0.5 r:0.5 c5:0.5 r:0.5 e5:0.5 r:0.5 c5:1 | c5:1 a4:1 d5:2 |
+        g5:0.5 r:0.5 e5:0.5 r:0.5 e5:1 c5:1 | f5:0.5 r:0.5 c5:0.5 r:0.5 d5:1 b4:1 | a4:1 f4:1 g4:1 b4:1 | c5:4 |
+
+hook: Velvet Thunder
+type: Chorus
+tempo: 96-112
+feel: anthem
+chords: F | C | G | Am | F | C | Gsus4 G | C
+melody: c5:1 f5:3 | e5:1 d5:1 c5:2 | b4:1 c5:1 d5:2 | c5:3 r:1 |
+        a4:1 c5:1 f5:1 g5:1 | g5:2 e5:1 c5:1 | c5:2 b4:2 | c5:4 |
+
+hook: Open Highway
+type: Chorus
+tempo: 132-150
+feel: driving
+chords: C | Em | Am | F | C | Em | Dm G | C
+melody: r:0.5 c5:0.5 c5:0.5 g4:0.5 c5:2 | r:0.5 b4:0.5 b4:0.5 g4:0.5 b4:2 | r:0.5 c5:0.5 c5:0.5 a4:0.5 e5:2 | d5:1 c5:1 a4:2 |
+        r:0.5 e5:0.5 e5:0.5 c5:0.5 g5:2 | g5:1 e5:1 b4:2 | a4:1 d5:1 d5:1 b4:1 | c5:4 |
+
+hook: Lemon Static
+type: Chorus
+tempo: 118-134
+feel: bouncy
+chords: Cmaj7 | Fmaj7 | Am7 | G | Cmaj7 | Fmaj7 | Dm7 G | C
+melody: b4:0.5 b4:0.5 r:0.5 b4:0.5 c5:1 g4:1 | e5:0.5 e5:0.5 r:0.5 e5:0.5 f5:1 c5:1 | c5:2 a4:1 g4:1 | b4:3 r:1 |
+        b4:0.5 b4:0.5 r:0.5 b4:0.5 e5:1 g5:1 | f5:0.5 e5:0.5 r:0.5 e5:0.5 c5:2 | d5:1 c5:1 b4:1 a4:0.5 b4:0.5 | c5:4 |
+
+hook: Rooftop Fever
+type: Chorus
+tempo: 120-136
+feel: euphoric
+leadin: yes
+chords: G | C | G | Am | F | C | G | F G | C
+melody: r:3 g4:0.5 b4:0.5 | c5:1 e5:1 g5:1.5 e5:0.5 | d5:3 r:1 | c5:1 a4:1 e5:1.5 c5:0.5 | c5:3 r:0.5 g4:0.5 |
+        c5:1 e5:1 g5:2 | g5:1 f5:1 d5:2 | c5:1 a4:1 b4:1 d5:1 | e5:4 |
+
+hook: Silver Engines
+type: Chorus
+tempo: 136-150
+feel: driving
+chords: Am | F | G | Em | Am | F | G | Am
+melody: a4:1 a4:0.5 c5:1 e5:1.5 | f5:0.5 e5:0.5 c5:3 | g4:1 g4:0.5 b4:1 d5:1.5 | e5:0.5 d5:0.5 b4:3 |
+        e5:1 e5:0.5 g5:1 e5:1.5 | f5:0.5 e5:0.5 c5:2 a4:1 | b4:1 d5:1 d5:1 b4:1 | a4:4 |
+
+hook: Firefly Avenue
+type: Chorus
+tempo: 105-120
+feel: bouncy
+chords: C | Am | Dm | G | C | Am | Dm G | C
+melody: e4:0.5 g4:0.5 c5:1 r:1 g4:1 | a4:0.5 g4:0.5 e4:1 r:1 c5:1 | d5:0.5 c5:0.5 a4:1 r:1 f4:1 | g4:3 r:1 |
+        e5:0.5 d5:0.5 c5:1 r:1 g4:1 | a4:0.5 c5:0.5 e5:1 r:1 e5:1 | f5:1 d5:1 d5:1 b4:1 | c5:4 |
+
+hook: Ribbon Rush
+type: Chorus
+tempo: 140-150
+feel: euphoric
+chords: F | Am | G | C | F | Am | Gsus4 G | C
+melody: r:0.5 c5:1.5 a4:2 | r:0.5 c5:1.5 e5:2 | r:0.5 d5:1.5 b4:2 | c5:4 |
+        r:0.5 f5:1.5 c5:2 | r:0.5 e5:1.5 c5:2 | r:0.5 d5:1.5 g4:2 | c5:4 |
+
+hook: Cherry Voltage
+type: Chorus
+tempo: 108-124
+feel: anthem
+chords: Am | C | G | F | Am | C | F G | C
+melody: e5:1.5 d5:0.5 c5:1 a4:1 | g4:1 c5:1 e5:2 | d5:1.5 c5:0.5 b4:1 g4:1 | a4:3 r:1 |
+        e5:1.5 g5:0.5 e5:1 c5:1 | g5:2 e5:1 d5:1 | c5:1 a4:1 b4:1.5 g4:0.5 | c5:4 |
+
+hook: Lighthouse Choir
+type: Chorus
+tempo: 98-112
+feel: euphoric
+leadin: yes
+chords: Gsus4 | C | E7 | Am | F | C | G | F G | C
+melody: r:2 c5:1 d5:1 | e5:2 c5:1 g4:1 | g#4:2 b4:1 d5:1 | c5:3 r:1 | a4:1 c5:1 f5:2 |
+        e5:2 g5:1 e5:1 | d5:2 b4:1 g4:1 | a4:1 c5:1 d5:1 b4:1 | c5:4 |
+
+hook: Tidal Lights
+type: Chorus
+tempo: 110-126
+feel: driving
+chords: C | G | Dm | F | C | G | Dm7 G | C
+melody: g4:0.5 g4:0.5 g4:0.5 c5:1.5 e5:1 | d5:2 b4:2 | a4:0.5 a4:0.5 a4:0.5 d5:1.5 f5:1 | c5:2 a4:2 |
+        g4:0.5 c5:0.5 e5:0.5 g5:1.5 e5:1 | d5:1 b4:1 d5:2 | c5:1 a4:1 b4:2 | c5:4 |
+
+hook: Starling Rush
+type: Chorus
+tempo: 126-142
+feel: bouncy
+leadin: yes
+chords: G7 | C | F | Am | G | C | F | Dm G | C
+melody: r:2.5 g4:0.5 a4:0.5 b4:0.5 | c5:0.5 r:0.5 c5:0.5 r:0.5 e5:1 d5:1 | c5:0.5 r:0.5 c5:0.5 r:0.5 a4:2 | a4:0.5 r:0.5 a4:0.5 c5:0.5 e5:1 c5:1 | d5:2 r:1.5 g4:0.5 |
+        c5:0.5 r:0.5 e5:0.5 r:0.5 g5:1 e5:1 | f5:0.5 r:0.5 e5:0.5 r:0.5 c5:2 | d5:1 a4:1 b4:1 d5:1 | c5:4 |
+
+hook: Echo Carnival
+type: Chorus
+tempo: 100-118
+feel: euphoric
+chords: Am | Em | F | C | Dm | Am | E7 | Am
+melody: r:1 a4:1 c5:1 e5:1 | e5:2 d5:1 b4:1 | r:1 a4:1 c5:1 f5:1 | e5:3 r:1 |
+        r:1 f5:1 f5:1 e5:1 | e5:2 c5:1 a4:1 | b4:2 g#4:1 b4:1 | a4:4 |
+
+hook: Northern Spark
+type: Chorus
+tempo: 112-130
+feel: anthem
+chords: C | Fmaj7 | Am | G | C | Fmaj7 | Am G | C
+melody: c5:1 c5:0.5 d5:1 e5:1.5 | e5:1 c5:1 a4:2 | c5:1 c5:0.5 d5:1 e5:1.5 | d5:4 |
+        e5:1 e5:0.5 f5:1 g5:1.5 | f5:1 e5:1 c5:2 | e5:1 c5:1 d5:1 b4:1 | c5:3 r:1 |
+
+hook: Daylight Machine
+type: Chorus
+tempo: 140-150
+feel: driving
+chords: Am7 | G | F | G | Am7 | G | F | C
+melody: e5:0.5 e5:0.5 d5:0.5 e5:1 c5:1.5 | d5:0.5 d5:0.5 c5:0.5 d5:1 b4:1.5 | c5:0.5 c5:0.5 a4:0.5 c5:1 f5:1.5 | d5:3 r:1 |
+        e5:0.5 e5:0.5 g5:0.5 e5:1 c5:1.5 | d5:0.5 d5:0.5 g5:0.5 d5:1 b4:1.5 | a4:1 c5:1 f5:1 e5:1 | e5:2 c5:2 |
+
+hook: Quiet Orbit
+type: Bridge
+tempo: 100-128
+feel: anthem
+chords: F | G | Em | Am | Dm | Em | F | G
+melody: a4:3 g4:0.5 f4:0.5 | g4:2 d4:2 | g4:3 f4:0.5 e4:0.5 | e4:2 c4:2 |
+        f4:1 a4:1 d5:2 | b4:1 g4:1 e5:2 | c5:2 a4:1 c5:1 | d5:3 r:1 |
+
+hook: Lantern Stairway
+type: Bridge
+tempo: 112-136
+feel: euphoric
+chords: Am | Em | F | C | Dm | Am | Fmaj7 | G
+melody: r:2 c5:1 b4:1 | b4:3 g4:1 | r:2 c5:1 d5:1 | e5:3 r:1 |
+        r:2 f5:1 e5:1 | e5:2 c5:1 e5:1 | f5:1 e5:1 c5:1 a4:1 | b4:2 d5:2 |
+
+hook: Low Tide Signal
+type: Bridge
+tempo: 95-120
+feel: driving
+leadin: yes
+chords: Am | Am | F | C | G | Am | F | Dm | E7
+melody: r:3 e4:1 | a4:1 a4:1 a4:1 b4:1 | c5:2 a4:2 | g4:1 g4:1 g4:1 a4:1 | b4:2 g4:2 |
+        c5:1 c5:1 c5:1 d5:1 | f5:2 c5:2 | d5:1 d5:1 d5:1 c5:1 | b4:4 |
+
+hook: Glass Elevator
+type: Bridge
+tempo: 120-150
+feel: bouncy
+chords: Dm7 | G | Em7 | Am | Dm7 | G | Fmaj7 | G
+melody: r:0.5 f4:0.5 a4:0.5 c5:1 a4:1.5 | b4:2 r:2 | r:0.5 e4:0.5 g4:0.5 b4:1 g4:1.5 | a4:2 r:2 |
+        r:0.5 a4:0.5 c5:0.5 d5:1 c5:1.5 | b4:1 d5:1 g5:2 | e5:1 c5:1 a4:2 | b4:1 a4:1 g4:2 |
