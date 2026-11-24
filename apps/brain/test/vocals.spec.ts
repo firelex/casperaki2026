@@ -74,7 +74,7 @@ describe('sung vocals routes', () => {
   it('a fresh song: sections with vocal notes are unsung, the others none', async () => {
     const s = song();
     const { body } = await h.call('/api/vocals/status', { song: s });
-    const states = Object.fromEntries(body.sections.map((x: { segment: string; state: string }) => [x.segment, x.state]));
+    const states = Object.fromEntries(body.tracks.Vocal.map((x: { segment: string; state: string }) => [x.segment, x.state]));
     expect(states['verse1']).toBe('unsung');
     for (const seg of s.songStructure) {
       const hasVocal = (s.arrangement[seg.name]?.overrides?.['Vocal']?.bars ?? []).some((b) => Object.values(b.notes ?? {}).some((evs) => (evs as { type: string }[]).some((e) => e.type === 'vocalNote')));
@@ -84,7 +84,7 @@ describe('sung vocals routes', () => {
 
   it('sings a section into a stored take found by fingerprint: an OGG exactly as long as the section', async () => {
     const s = song();
-    const r = await h.call('/api/vocals/sing', { song: s, segment: 'verse1' });
+    const r = await h.call('/api/vocals/sing', { song: s, segment: 'verse1', track: 'Vocal' });
     expect(r.status).toBe(200);
     expect(r.body.section).toEqual({ segment: 'verse1', state: 'sung' });
     const fp = takeFingerprint(sectionScore(s, 'verse1')!, 'en_prompt', 1);
@@ -98,42 +98,59 @@ describe('sung vocals routes', () => {
     expect(info.lufs).toBeGreaterThan(TAKE_LUFS - 8);
     expect(info.lufs).toBeLessThan(TAKE_LUFS + 1);
     // Nothing recorded on the song: the same song (even reloaded unsaved) now finds the take.
-    const st = (await h.call('/api/vocals/status', { song: s })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
+    const st = (await h.call('/api/vocals/status', { song: s })).body.tracks.Vocal.find((x: { segment: string }) => x.segment === 'verse1');
     expect(st.state).toBe('sung');
   });
 
   it('a section sung alike (verse2 = verse1) is sung already, without another service call', async () => {
     const before = svc.state.sings;
-    const st = (await h.call('/api/vocals/status', { song: song() })).body.sections.find((x: { segment: string }) => x.segment === 'verse2');
+    const st = (await h.call('/api/vocals/status', { song: song() })).body.tracks.Vocal.find((x: { segment: string }) => x.segment === 'verse2');
     expect(st.state).toBe('sung');
-    expect((await h.call('/api/vocals/sing', { song: song(), segment: 'verse2' })).status).toBe(200);
+    expect((await h.call('/api/vocals/sing', { song: song(), segment: 'verse2', track: 'Vocal' })).status).toBe(200);
     expect(svc.state.sings).toBe(before);
   });
 
   it('after a tempo change, a new take number or another voice the section is unsung again', async () => {
     const s = song();
-    await h.call('/api/vocals/sing', { song: s, segment: 'verse1' });
-    const stateOf = async (x: Song) => (await h.call('/api/vocals/status', { song: x })).body.sections.find((y: { segment: string }) => y.segment === 'verse1').state;
+    await h.call('/api/vocals/sing', { song: s, segment: 'verse1', track: 'Vocal' });
+    const stateOf = async (x: Song) => (await h.call('/api/vocals/status', { song: x })).body.tracks.Vocal.find((y: { segment: string }) => y.segment === 'verse1').state;
     expect(await stateOf({ ...s, bpm: s.bpm + 4 })).toBe('unsung');
     expect(await stateOf({ ...s, vocals: { ...s.vocals!, takeNumbers: { verse1: 2 } } })).toBe('unsung');
     expect(await stateOf({ ...s, vocals: { ...s.vocals!, voice: 'zh_target' } })).toBe('unsung');
   });
 
+  it('a backing vocal track is sung with its own setting, 6 dB under the lead, and listed by track', async () => {
+    const s = { ...song(), backingVocals: { 'Backing vocals 1': { enabled: true, voice: 'en_target', takeNumbers: {} } } } as Song;
+    const before = (await h.call('/api/vocals/status', { song: s })).body.tracks;
+    expect(Object.keys(before).sort()).toEqual(['Backing vocals 1', 'Vocal']);
+    expect(before['Backing vocals 1'].find((x: { segment: string }) => x.segment === 'chorus1').state).toBe('unsung');
+    expect(before['Backing vocals 1'].find((x: { segment: string }) => x.segment === 'verse1').state).toBe('none');
+    const r = await h.call('/api/vocals/sing', { song: s, segment: 'chorus1', track: 'Backing vocals 1' });
+    expect(r.status).toBe(200);
+    const fp = takeFingerprint(sectionScore(s, 'chorus1', 'Backing vocals 1')!, 'en_target', 1, 'backing');
+    const info = JSON.parse(readFileSync(join(takesDir, `${fp}.json`), 'utf8'));
+    expect(info.lufs).toBeLessThan(TAKE_LUFS - 4);
+    const after = (await h.call('/api/vocals/status', { song: s })).body.tracks['Backing vocals 1'];
+    expect(after.find((x: { segment: string }) => x.segment === 'chorus1').state).toBe('sung');
+    // A backing track without a setting cannot be sung.
+    expect((await h.call('/api/vocals/sing', { song: song(), segment: 'chorus1', track: 'Backing vocals 2' })).status).toBe(400);
+  });
+
   it('a refusal by the service is a 422 with its message; a service that is down is a 502', async () => {
     svc.state.refuse = "phrase 0: SoulX does not know the phone 'en_QQ1'.";
-    const r = await h.call('/api/vocals/sing', { song: { ...song(), bpm: 97 }, segment: 'verse1' });
+    const r = await h.call('/api/vocals/sing', { song: { ...song(), bpm: 97 }, segment: 'verse1', track: 'Vocal' });
     expect(r.status).toBe(422);
     expect(r.body.message).toMatch(/en_QQ1/);
     svc.state.refuse = undefined;
     svc.state.down = true;
-    const d = await h.call('/api/vocals/sing', { song: { ...song(), bpm: 98 }, segment: 'verse1' });
+    const d = await h.call('/api/vocals/sing', { song: { ...song(), bpm: 98 }, segment: 'verse1', track: 'Vocal' });
     expect(d.status).toBe(502);
     svc.state.down = false;
   });
 
   it('a section without vocal notes or an unknown section is a 400', async () => {
     const s = song();
-    expect((await h.call('/api/vocals/sing', { song: s, segment: 'nope' })).status).toBe(400);
+    expect((await h.call('/api/vocals/sing', { song: s, segment: 'nope', track: 'Vocal' })).status).toBe(400);
   });
 });
 

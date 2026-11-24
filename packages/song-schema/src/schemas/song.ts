@@ -41,6 +41,8 @@ export const SongSchema = z
     aiArtifacts: z.array(AIArtifactSchema).default([]),
     // Sung vocals on/off, voice and take numbers (absent = off).
     vocals: VocalsSettingSchema.optional(),
+    // Sung backing vocals: the same setting per backing vocal track (by track name, e.g. "Backing vocals 1").
+    backingVocals: z.record(z.string().min(1), VocalsSettingSchema).optional(),
 
     generator: GeneratorBlockSchema.optional(),
   })

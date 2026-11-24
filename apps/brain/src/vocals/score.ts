@@ -59,8 +59,9 @@ interface SungNote {
   readonly phones: string;
 }
 
-/** The section's lead vocal score, or undefined when the section has no lead vocal notes. */
-export function sectionScore(song: Song, segment: string): SectionScore | undefined {
+/** A vocal track's score for the section (the lead "Vocal" unless a backing track is named), or undefined when
+ *  the section has no notes on that track. */
+export function sectionScore(song: Song, segment: string, track: string = LEAD_VOCAL): SectionScore | undefined {
   const seg = song.songStructure.find((s) => s.name === segment);
   if (!seg) throw new Error(`sectionScore: the song has no section "${segment}"`);
   const bars = seg.lengthInBars ?? seg.bars.length;
@@ -68,7 +69,7 @@ export function sectionScore(song: Song, segment: string): SectionScore | undefi
   const sectionBeats = bars * BEATS_PER_BAR;
 
   const notes: SungNote[] = [];
-  (song.arrangement[segment]?.overrides?.[LEAD_VOCAL]?.bars ?? []).slice(0, bars).forEach((bar, barIdx) => {
+  (song.arrangement[segment]?.overrides?.[track]?.bars ?? []).slice(0, bars).forEach((bar, barIdx) => {
     for (const [beat, evs] of Object.entries(bar.notes ?? {})) {
       for (const raw of evs ?? []) {
         const e = raw as { type?: string; note?: unknown; duration?: unknown; vocaloidPhonemes?: unknown };
@@ -135,9 +136,10 @@ export function sectionScore(song: Song, segment: string): SectionScore | undefi
   return { segment, lengthSec: sectionBeats * secPerBeat, phrases };
 }
 
-/** The take's fingerprint: what it was sung from (score, voice, settings) and its take number. */
-export function takeFingerprint(score: SectionScore, voice: string, takeNumber: number): string {
-  const what = { v: 1, settings: TAKE_SETTINGS, voice, takeNumber, lengthSec: round(score.lengthSec), phrases: score.phrases };
+/** The take's fingerprint: what it was sung from (score, voice, settings) and its take number. A backing take
+ *  (sung at another level) adds its role, so it never stands for a lead take with the same notes. */
+export function takeFingerprint(score: SectionScore, voice: string, takeNumber: number, role: 'lead' | 'backing' = 'lead'): string {
+  const what = { v: 1, settings: TAKE_SETTINGS, voice, takeNumber, lengthSec: round(score.lengthSec), phrases: score.phrases, ...(role === 'backing' ? { role } : {}) };
   return createHash('sha256').update(stableStringify(what)).digest('hex');
 }
 

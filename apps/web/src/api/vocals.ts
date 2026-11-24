@@ -20,7 +20,8 @@ export interface SectionStatus {
 
 export const vocalsApi = {
   voices: (signal?: AbortSignal) => defaultBrainClient.get<{ voices: VocalVoice[] }>('/api/vocals/voices', { signal }).then((r) => r.voices),
-  status: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<{ sections: SectionStatus[] }>('/api/vocals/status', { song }, { signal }),
+  /** Every sung vocal track's sections (tracks with a setting), by track name. */
+  status: (song: Song, signal?: AbortSignal) => defaultBrainClient.post<{ tracks: Record<string, SectionStatus[]> }>('/api/vocals/status', { song }, { signal }),
   /** Sings one section (nothing to do if its take is stored); slow: seconds per section. */
-  sing: (song: Song, segment: string, signal?: AbortSignal) => defaultBrainClient.post<{ section: SectionStatus }>('/api/vocals/sing', { song, segment }, { signal }),
+  sing: (song: Song, segment: string, track: string, signal?: AbortSignal) => defaultBrainClient.post<{ section: SectionStatus }>('/api/vocals/sing', { song, segment, track }, { signal }),
 };

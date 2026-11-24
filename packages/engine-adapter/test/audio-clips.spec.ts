@@ -10,14 +10,15 @@ import { toEngineFixture } from '../src/index.js';
 const GOLDEN = resolve(dirname(fileURLToPath(import.meta.url)), '../../arrangement/test/fixtures/golden/orchestrate/brightPop/brightPop-vertical-slice.song.json');
 const base = (): Song => SongSchema.parse(JSON.parse(readFileSync(GOLDEN, 'utf8')));
 const FP = (c: string) => c.repeat(64);
-const take = (segment: string, fp: string) => ({
+const take = (segment: string, fp: string, instrument = 'Vocal') => ({
   id: `vocal-${segment}`, kind: 'soulx-vocal' as const, modelId: 'soulx-singer', modelVersion: 'steps-32', seed: 1, prompt: 'en_prompt',
   conditioning: { hashes: [fp] }, output: { uri: `vocal-take:${fp}.ogg`, sha256: fp, lufs: -24, durationSeconds: 9.6 },
-  attachedTo: { scope: 'segment' as const, segment, instrument: 'Vocal' },
+  attachedTo: { scope: 'segment' as const, segment, instrument },
 });
 const lower = (song: Song, vocalTakesDir?: string) =>
   toEngineFixture(song, { brainHash: 'x', generatorParams: {}, ...(vocalTakesDir ? { vocalTakesDir } : {}) });
-const clipsInst = (f: ReturnType<typeof lower>) => f.instruments.map((i) => i.json as Record<string, any>).find((j) => j.type === 'audioClips');
+const clipsInsts = (f: ReturnType<typeof lower>) => f.instruments.map((i) => i.json as Record<string, any>).filter((j) => j.type === 'audioClips');
+const clipsInst = (f: ReturnType<typeof lower>) => clipsInsts(f).find((j) => j.name === 'Vocal');
 
 describe('sung vocal takes lowered to an audioClips instrument', () => {
   it('no takes: no audioClips instrument (Vocal stays silent)', () => {
@@ -38,6 +39,14 @@ describe('sung vocal takes lowered to an audioClips instrument', () => {
       { segment: 'verse1', key: `take-${FP('a')}.ogg`, sourcePath: `/data/takes/${FP('a')}.ogg`, durationSec: 9.6 },
       { segment: 'chorus1', key: `take-${FP('b')}.ogg`, sourcePath: `/data/takes/${FP('b')}.ogg`, durationSec: 9.6 },
     ]);
+  });
+
+  it('each vocal track with takes gets its own lane (backing vocals separately from the lead)', () => {
+    const on = { ...base(), aiArtifacts: [take('verse1', FP('a')), take('chorus1', FP('c'), 'Backing vocals 1')] } as Song;
+    const insts = clipsInsts(lower(on, '/t'));
+    expect(insts.map((j) => j.name)).toEqual(['Vocal', 'Backing vocals 1']);
+    expect(new Set(insts.map((j) => j.id)).size).toBe(2);
+    expect(insts[1]!.clips).toEqual([{ segment: 'chorus1', key: `take-${FP('c')}.ogg`, sourcePath: `/t/${FP('c')}.ogg`, durationSec: 9.6 }]);
   });
 
   it('vocals on with takes but no takes directory: an error naming the setting', () => {

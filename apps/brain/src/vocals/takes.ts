@@ -25,6 +25,8 @@ const execFileAsync = promisify(execFile);
 
 /** Loudness of a take: about 3 dB under the band once mixed (the lane plays at 0 dB; the library's -24 LUFS left the vocal ~10 dB under the band). */
 export const TAKE_LUFS = -17;
+/** Backing vocal takes: 6 dB under the lead. */
+export const TAKE_LUFS_BACKING = -23;
 /** Highest peak a take may have (dBFS); a take whose loudness gain would push it higher is left quieter. */
 const TAKE_PEAK_DB = -1;
 const TAKE_RATE = 44100;
@@ -79,9 +81,9 @@ export class VocalTakes {
     return join(this.cfg.takesDir, `${fingerprint}.ogg`);
   }
 
-  /** Each section's state: sung (a stored take matches it), unsung, or none (no lead vocal notes). */
-  status(song: Song): SectionStatus[] {
-    return sectionStates(song, this.cfg.takesDir);
+  /** Every sung vocal track's sections: sung (a stored take matches it), unsung, or none (no notes there). */
+  status(song: Song): Record<string, SectionStatus[]> {
+    return songStates(song, this.cfg.takesDir);
   }
 
   /** The voices the singing service offers. */
@@ -91,17 +93,18 @@ export class VocalTakes {
     return body.voices;
   }
 
-  /** Sings a section (nothing to do when a take with its fingerprint is stored). */
-  async sing(song: Song, segment: string): Promise<SectionStatus> {
-    const vocals = requireVocals(song);
+  /** Sings a section of a vocal track (nothing to do when a take with its fingerprint is stored). */
+  async sing(song: Song, segment: string, track: string): Promise<SectionStatus> {
+    const setting = requireSetting(song, track);
     if (!song.songStructure.some((s) => s.name === segment)) throw new VocalsError(400, 'invalid_body', `The song has no section "${segment}".`);
-    const score = sectionScore(song, segment);
-    if (!score) throw new VocalsError(400, 'invalid_body', `Section "${segment}" has no lead vocal notes to sing.`);
-    const fp = takeFingerprint(score, vocals.voice, vocals.takeNumbers[segment] ?? 1);
+    const score = sectionScore(song, segment, track);
+    if (!score) throw new VocalsError(400, 'invalid_body', `Section "${segment}" has no notes on "${track}" to sing.`);
+    const role = roleOf(track);
+    const fp = takeFingerprint(score, setting.voice, setting.takeNumbers[segment] ?? 1, role);
     if (!existsSync(this.takePath(fp))) {
       let job = this.singing.get(fp);
       if (!job) {
-        job = this.render(score, vocals.voice, fp).finally(() => this.singing.delete(fp));
+        job = this.render(score, setting.voice, fp, role === 'backing' ? TAKE_LUFS_BACKING : TAKE_LUFS).finally(() => this.singing.delete(fp));
         this.singing.set(fp, job);
       }
       await job;
@@ -109,7 +112,7 @@ export class VocalTakes {
     return { segment, state: 'sung' };
   }
 
-  private async render(score: SectionScore, voice: string, fp: string): Promise<void> {
+  private async render(score: SectionScore, voice: string, fp: string, lufsTarget: number): Promise<void> {
     const body = (await this.call('/sing', {
       voice,
       steps: TAKE_SETTINGS.steps,
@@ -139,7 +142,7 @@ export class VocalTakes {
       let peak = 0;
       for (const x of mix) peak = Math.max(peak, Math.abs(x));
       if (!Number.isFinite(rawLufs) || peak === 0) throw new VocalsError(502, 'singing_failed', 'The singing service returned silence.');
-      const gainDb = Math.min(TAKE_LUFS - rawLufs, TAKE_PEAK_DB - 20 * Math.log10(peak));
+      const gainDb = Math.min(lufsTarget - rawLufs, TAKE_PEAK_DB - 20 * Math.log10(peak));
       const out = join(tmpDir, 'take.ogg');
       // 44.1 kHz stereo, exactly the section's length, Ogg Vorbis (about a tenth of a WAV, as the sample library).
       await execFileAsync(this.cfg.ffmpegBin, [
@@ -186,49 +189,68 @@ export class VocalTakes {
   }
 }
 
-/** Each section's fingerprint as the song is now (undefined: no lead vocal notes). Needs the song's vocals setting
- *  (the voice); without one no section has a fingerprint (nothing was ever sung for it). */
-export function sectionFingerprints(song: Song): { segment: string; fp: string | undefined; hasNotes: boolean }[] {
+/** The song's sung vocal tracks: the lead ("Vocal", setting `vocals`) and each backing track with a setting
+ *  (`backingVocals`, by track name). */
+export function vocalTracks(song: Song): { track: string; setting: NonNullable<Song['vocals']> }[] {
+  return [
+    ...(song.vocals ? [{ track: LEAD_VOCAL, setting: song.vocals }] : []),
+    ...Object.entries(song.backingVocals ?? {}).map(([track, setting]) => ({ track, setting })),
+  ];
+}
+
+const roleOf = (track: string): 'lead' | 'backing' => (track === LEAD_VOCAL ? 'lead' : 'backing');
+
+/** Each section's fingerprint on a vocal track as the song is now (undefined: no notes there, or the track has no
+ *  setting, so nothing was ever sung for it). */
+export function sectionFingerprints(song: Song, track: string): { segment: string; fp: string | undefined; hasNotes: boolean }[] {
+  const setting = vocalTracks(song).find((t) => t.track === track)?.setting;
   return song.songStructure.map((seg) => {
-    const score = sectionScore(song, seg.name);
+    const score = sectionScore(song, seg.name, track);
     if (!score) return { segment: seg.name, fp: undefined, hasNotes: false };
-    if (!song.vocals) return { segment: seg.name, fp: undefined, hasNotes: true };
-    return { segment: seg.name, fp: takeFingerprint(score, song.vocals.voice, song.vocals.takeNumbers[seg.name] ?? 1), hasNotes: true };
+    if (!setting) return { segment: seg.name, fp: undefined, hasNotes: true };
+    return { segment: seg.name, fp: takeFingerprint(score, setting.voice, setting.takeNumbers[seg.name] ?? 1, roleOf(track)), hasNotes: true };
   });
 }
 
-/** Each section's state: sung (a stored take matches it), unsung, or none (no lead vocal notes). */
-export function sectionStates(song: Song, takesDir: string): SectionStatus[] {
-  return sectionFingerprints(song).map(({ segment, fp, hasNotes }): SectionStatus => ({
+/** Each section's state on a vocal track: sung (a stored take matches it), unsung, or none (no notes there). */
+export function sectionStates(song: Song, takesDir: string, track: string): SectionStatus[] {
+  return sectionFingerprints(song, track).map(({ segment, fp, hasNotes }): SectionStatus => ({
     segment,
     state: !hasNotes ? 'none' : fp && existsSync(join(takesDir, `${fp}.ogg`)) ? 'sung' : 'unsung',
   }));
 }
 
+/** The states of every sung vocal track of the song (tracks with a setting), by track name. */
+export function songStates(song: Song, takesDir: string): Record<string, SectionStatus[]> {
+  return Object.fromEntries(vocalTracks(song).map(({ track }) => [track, sectionStates(song, takesDir, track)]));
+}
+
 /** The song as the engine gets it: its vocal takes (soulx-vocal artifacts) are the stored takes that match its
- *  sections now; any take recorded on the song itself is ignored. */
+ *  sections now, on every sung vocal track; any take recorded on the song itself is ignored. */
 export function withStoredTakes(song: Song, takesDir: string): Song {
   const takes: AIArtifact[] = [];
-  for (const { segment, fp } of sectionFingerprints(song)) {
-    if (!fp || !existsSync(join(takesDir, `${fp}.ogg`))) continue;
-    const info = JSON.parse(readFileSync(join(takesDir, `${fp}.json`), 'utf8')) as { lufs: number; durationSeconds: number; sha256: string; voice: string };
-    takes.push({
-      id: `vocal-${segment}-${fp.slice(0, 12)}`,
-      kind: 'soulx-vocal',
-      modelId: TAKE_SETTINGS.model,
-      modelVersion: `steps-${TAKE_SETTINGS.steps}`,
-      prompt: info.voice,
-      conditioning: { hashes: [fp] },
-      output: { uri: `vocal-take:${fp}.ogg`, sha256: info.sha256, lufs: info.lufs, durationSeconds: info.durationSeconds },
-      attachedTo: { scope: 'segment', segment, instrument: LEAD_VOCAL },
-    } as AIArtifact);
+  for (const { track } of vocalTracks(song)) {
+    for (const { segment, fp } of sectionFingerprints(song, track)) {
+      if (!fp || !existsSync(join(takesDir, `${fp}.ogg`))) continue;
+      const info = JSON.parse(readFileSync(join(takesDir, `${fp}.json`), 'utf8')) as { lufs: number; durationSeconds: number; sha256: string; voice: string };
+      takes.push({
+        id: `vocal-${track}-${segment}-${fp.slice(0, 12)}`,
+        kind: 'soulx-vocal',
+        modelId: TAKE_SETTINGS.model,
+        modelVersion: `steps-${TAKE_SETTINGS.steps}`,
+        prompt: info.voice,
+        conditioning: { hashes: [fp] },
+        output: { uri: `vocal-take:${fp}.ogg`, sha256: info.sha256, lufs: info.lufs, durationSeconds: info.durationSeconds },
+        attachedTo: { scope: 'segment', segment, instrument: track },
+      } as AIArtifact);
+    }
   }
   return { ...song, aiArtifacts: [...song.aiArtifacts.filter((a) => a.kind !== 'soulx-vocal'), ...takes] };
 }
 
-/** The fingerprints of the takes a song plays (its sections as they are). */
+/** The fingerprints of the takes a song plays (every sung vocal track, its sections as they are). */
 export function songTakeFingerprints(song: Song): Set<string> {
-  return new Set(sectionFingerprints(song).flatMap((s) => (s.fp ? [s.fp] : [])));
+  return new Set(vocalTracks(song).flatMap(({ track }) => sectionFingerprints(song, track).flatMap((s) => (s.fp ? [s.fp] : []))));
 }
 
 /** Deletes the takes among `candidates` that are not in `used` (files .ogg and .json). Returns the deleted ones. */
@@ -249,9 +271,10 @@ export function deleteUnusedTakes(takesDir: string, candidates: Iterable<string>
   return deleted;
 }
 
-function requireVocals(song: Song): NonNullable<Song['vocals']> {
-  if (!song.vocals) throw new VocalsError(400, 'vocals_off', 'The song has no vocals setting (Vocals is off).');
-  return song.vocals;
+function requireSetting(song: Song, track: string): NonNullable<Song['vocals']> {
+  const setting = vocalTracks(song).find((t) => t.track === track)?.setting;
+  if (!setting) throw new VocalsError(400, 'vocals_off', `The song has no singing setting for "${track}" (no voice chosen).`);
+  return setting;
 }
 
 function sha256File(path: string): string {

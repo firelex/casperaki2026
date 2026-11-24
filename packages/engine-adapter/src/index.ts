@@ -122,7 +122,7 @@ import {
   buildPopStringsInst,
   buildSynthsInst,
 } from './synths.js';
-import { buildVocalClipsInst } from './audio-clips.js';
+import { buildVocalClipsInsts } from './audio-clips.js';
 
 export interface BrainProvenance {
   hash: string;
@@ -1575,8 +1575,9 @@ export function toEngineFixture(
   }
 
   // ---- Sung vocal takes (audioClips lane) ---------------------------------
-  const vocalClips = buildVocalClipsInst(song, { vocalTakesDir: options.vocalTakesDir, id: VOCAL_CLIPS_INST_ID, filenameIndex: nextInstIndex() });
-  if (vocalClips) instruments.push(vocalClips);
+  for (const lane of buildVocalClipsInsts(song, { vocalTakesDir: options.vocalTakesDir, firstId: VOCAL_CLIPS_INST_ID, firstFilenameIndex: nextInstIndex() })) {
+    instruments.push(lane);
+  }
 
   // ---- Diagnostics -------------------------------------------------------
   diagnostics.push({

@@ -1,8 +1,9 @@
 // Sung vocals (docs/superpowers/specs/2026-11-24-sung-vocals-design.md):
 //
 //   GET  /api/vocals/voices                  -> {voices}            the singing service's voices
-//   POST /api/vocals/status {song}           -> {sections: [{segment, state: none|sung|unsung}]}
-//   POST /api/vocals/sing   {song, segment}  -> {section}           sings one section (nothing to do if its take is stored)
+//   POST /api/vocals/status {song}                  -> {tracks: {<vocal track>: [{segment, state: none|sung|unsung}]}}
+//   POST /api/vocals/sing   {song, segment, track}  -> {section}   sings one section of a vocal track (lead "Vocal" or a
+//                                                                   backing track); nothing to do if its take is stored
 //
 // The song is sent whole (the editor's working copy). Takes are found by fingerprint when a song is loaded
 // (createVocalsHooks().withTakes); nothing is recorded on the song.
@@ -24,7 +25,7 @@ export interface VocalsRouterDeps {
 }
 
 const StatusBody = z.object({ song: z.unknown() }).strict();
-const SingBody = z.object({ song: z.unknown(), segment: z.string().min(1).max(100) }).strict();
+const SingBody = z.object({ song: z.unknown(), segment: z.string().min(1).max(100), track: z.string().min(1).max(100) }).strict();
 
 export function createVocalsRouter(deps: VocalsRouterDeps): Router {
   const router = Router();
@@ -67,7 +68,7 @@ export function createVocalsRouter(deps: VocalsRouterDeps): Router {
     const song = parseSong(res, body.data.song);
     if (!song) return;
     try {
-      res.json({ sections: t.status(song) });
+      res.json({ tracks: t.status(song) });
     } catch (err) {
       fail(res, err);
     }
@@ -77,11 +78,11 @@ export function createVocalsRouter(deps: VocalsRouterDeps): Router {
     const t = takes(res);
     if (!t) return;
     const body = SingBody.safeParse(req.body);
-    if (!body.success) return void res.status(400).json({ error: 'invalid_body', message: 'Send {song, segment}.' });
+    if (!body.success) return void res.status(400).json({ error: 'invalid_body', message: 'Send {song, segment, track}.' });
     const song = parseSong(res, body.data.song);
     if (!song) return;
     try {
-      res.json({ section: await t.sing(song, body.data.segment) });
+      res.json({ section: await t.sing(song, body.data.segment, body.data.track) });
     } catch (err) {
       fail(res, err);
     }

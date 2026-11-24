@@ -17,7 +17,10 @@
  *     else by the usual rule (#4 and, in minor, the raised 6th and 7th as
  *     sharps; b2, b3, b6, b7 as flats); accidentals
  *     are written only where they differ from the key signature or from an
- *     earlier accidental in the same bar.
+ *     earlier accidental in the same bar;
+ *   - a sung part (notes with syllables) stays on one staff, with its lyrics
+ *     under the notes (ABC w: lines): a syllable on a note's first written
+ *     piece, held (_) over its tied pieces, skipped (*) on a note without one.
  */
 
 export interface ScoreNote {
@@ -25,6 +28,8 @@ export interface ScoreNote {
   /** Beats from the start of the passage. */
   readonly start: number;
   readonly length: number;
+  /** The syllable sung on this note (vocal parts), as the song stores it: "Drea-" continues into the next note's syllable. */
+  readonly lyric?: string;
 }
 
 const STEPS_PER_BEAT = 4; // 16ths
@@ -185,6 +190,10 @@ interface Event {
   readonly pitches: readonly number[]; // empty: rest
   /** Tied to the next event (a note split where a chord symbol changes). */
   readonly tieNext?: boolean;
+  /** The syllable sung on it (sung parts). */
+  readonly lyric?: string;
+  /** The continuation of a note split by splitAt (its syllable is on the first part). */
+  readonly held?: boolean;
 }
 
 /** Events split at the given 16th positions (where chord symbols go), notes tied across the split. */
@@ -195,10 +204,12 @@ function splitAt(events: readonly Event[], at: ReadonlySet<number>): Event[] {
     const end = ev.start + ev.length;
     for (let p = start + 1; p < end; p++) {
       if (!at.has(p)) continue;
-      out.push({ start, length: p - start, pitches: ev.pitches, tieNext: ev.pitches.length > 0 });
+      const first = start === ev.start;
+      out.push({ start, length: p - start, pitches: ev.pitches, tieNext: ev.pitches.length > 0, ...(first && ev.lyric !== undefined ? { lyric: ev.lyric } : {}), ...(!first || ev.held ? { held: true } : {}) });
       start = p;
     }
-    out.push({ start, length: end - start, pitches: ev.pitches, ...(ev.tieNext ? { tieNext: true } : {}) });
+    const first = start === ev.start;
+    out.push({ start, length: end - start, pitches: ev.pitches, ...(ev.tieNext ? { tieNext: true } : {}), ...(first && ev.lyric !== undefined ? { lyric: ev.lyric } : {}), ...(!first || ev.held ? { held: true } : {}) });
   }
   return out;
 }
@@ -209,7 +220,7 @@ function staffEvents(notes: readonly ScoreNote[], total: number): Event[] {
     .map((n) => {
       const s = Math.max(0, Math.round(n.start * STEPS_PER_BEAT));
       const e = Math.min(total, Math.max(s + 1, Math.round((n.start + n.length) * STEPS_PER_BEAT)));
-      return { pitch: n.pitch, s, e };
+      return { pitch: n.pitch, s, e, lyric: n.lyric };
     })
     .filter((n) => n.s < total);
   const onsets = [...new Set(q.map((n) => n.s))].sort((a, b) => a - b);
@@ -220,7 +231,8 @@ function staffEvents(notes: readonly ScoreNote[], total: number): Event[] {
     const group = q.filter((n) => n.s === s);
     const next = onsets[i + 1] ?? total;
     const end = Math.min(next, ...group.map((n) => n.e));
-    events.push({ start: s, length: end - s, pitches: [...new Set(group.map((n) => n.pitch))].sort((a, b) => a - b) });
+    const lyric = group.find((n) => n.lyric !== undefined)?.lyric;
+    events.push({ start: s, length: end - s, pitches: [...new Set(group.map((n) => n.pitch))].sort((a, b) => a - b), ...(lyric !== undefined ? { lyric } : {}) });
     pos = end;
   });
   if (pos < total) events.push({ start: pos, length: total - pos, pitches: [] });
@@ -236,6 +248,7 @@ function staffMeasures(
   mergeRests: boolean,
   chords: ReadonlyMap<number, string> = new Map(),
   spellBy: ReadonlyMap<number, string> = chords,
+  lyrics = false,
 ): string[] {
   const keyAcc = keyAccidentals(key.fifths);
   const chordPositions = [...spellBy.keys()].sort((a, b) => a - b);
@@ -328,6 +341,8 @@ function staffMeasures(
         const body = ev.pitches.map(pitchText).join('');
         const tie = i < parts.length - 1 || ev.tieNext ? '-' : '';
         out += `${ev.pitches.length > 1 ? `[${body}]` : body}${dur}${tie} `;
+        // The syllable under this written note (taken out into the w: line by abcLines).
+        if (lyrics) out += `${LYRIC_OPEN}${i > 0 || ev.held ? '_' : ev.lyric !== undefined ? lyricToken(ev.lyric) : '*'}${LYRIC_CLOSE}`;
       }
       pos += len;
     });
@@ -337,14 +352,33 @@ function staffMeasures(
 
 /** Internal barline marker while building a staff (split into measures afterwards). */
 const BAR = '\u0001';
+/** Internal markers around a note's lyric token while building a staff (moved into w: lines by abcLines). */
+const LYRIC_OPEN = '\u0002';
+const LYRIC_CLOSE = '\u0003';
+const LYRIC_RE = /\u0002([^\u0003]*)\u0003/gu;
 const MEASURES_PER_LINE = 4;
 
-/** Measures as ABC lines, four a line; the last ends the piece. */
-function abcLines(measures: readonly string[]): string[] {
-  const lines: string[] = [];
+/**
+ * A stored syllable as an ABC lyric token: lower case (but "I", "I'm", …), a trailing
+ * "-" kept (the word goes on), spaces as "~", and the characters ABC lyrics reserve removed.
+ */
+function lyricToken(syllable: string): string {
+  const cont = syllable.endsWith('-');
+  let t = syllable.replace(/-+$/u, '').replace(/[_*|\\%"]/gu, '').trim().replace(/-/gu, '\\-').replace(/\s+/gu, '~');
+  t = t.replace(/[^~\\-]+/gu, (w) => (/^I($|')/u.test(w) ? w : w.toLowerCase()));
+  if (t === '') return '*';
+  return cont ? `${t}-` : t;
+}
+
+/** Measures as ABC lines, four a line; the last ends the piece. With lyrics, each line's syllables (w:) follow it. */
+function abcLines(measures: readonly string[]): { music: string; words: string | undefined }[] {
+  const lines: { music: string; words: string | undefined }[] = [];
   for (let i = 0; i < measures.length; i += MEASURES_PER_LINE) {
     const last = i + MEASURES_PER_LINE >= measures.length;
-    lines.push(`${measures.slice(i, i + MEASURES_PER_LINE).join(' | ')} ${last ? '|]' : '|'}`);
+    const text = `${measures.slice(i, i + MEASURES_PER_LINE).join(' | ')} ${last ? '|]' : '|'}`;
+    const tokens = [...text.matchAll(LYRIC_RE)].map((m) => m[1]!);
+    const words = tokens.length ? tokens.map((t) => (t.endsWith('-') ? t : `${t} `)).join('').trim() : undefined;
+    lines.push({ music: text.replace(LYRIC_RE, '').replace(/ {2,}/gu, ' '), words });
   }
   return lines;
 }
@@ -383,15 +417,17 @@ export function notesToAbc(
     ...(opts.barNumbers ? ['%%barnumbers 1'] : []),
     ...(opts.bpm ? [`Q:1/4=${Math.round(opts.bpm)}`] : []),
   ];
-  // A part that sits on one staff gets just that staff, in its clef. Lines are
-  // broken here (four measures each), not by abcjs: its line wrapping renumbers
-  // bars without counting multi-bar rests.
-  if (bass.length === 0 || treble.length === 0) {
+  // A part that sits on one staff gets just that staff, in its clef; so does a sung
+  // part (its lyrics go under one staff). Lines are broken here (four measures
+  // each), not by abcjs: its line wrapping renumbers bars without counting
+  // multi-bar rests.
+  const sung = notes.some((n) => n.lyric !== undefined);
+  if (bass.length === 0 || treble.length === 0 || sung) {
     const clef = treble.length === 0 && bass.length > 0 ? 'bass' : 'treble';
     const chords = opts.chords ?? new Map<number, string>();
     const events = chords.size ? splitAt(staffEvents(notes, total), new Set(chords.keys())) : staffEvents(notes, total);
-    const lines = abcLines(staffMeasures(events, key, marks, chords.size === 0, chords));
-    return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, ...lines.map((l) => `[V:1] ${l}`)].join('\n');
+    const lines = abcLines(staffMeasures(events, key, marks, chords.size === 0, chords, chords, sung));
+    return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, ...lines.flatMap((l) => [`[V:1] ${l.music}`, ...(l.words !== undefined ? [`w: ${l.words}`] : [])])].join('\n');
   }
   // Grand staff: bar by bar on both staves (no multi-bar rests), so their lines align.
   const chords = opts.chords ?? new Map<number, string>();
@@ -404,6 +440,6 @@ export function notesToAbc(
     'V:1 clef=treble',
     'V:2 clef=bass',
     `K:${key.abc}`,
-    ...up.flatMap((l, i) => [`[V:1] ${l}`, `[V:2] ${down[i]}`]),
+    ...up.flatMap((l, i) => [`[V:1] ${l.music}`, `[V:2] ${down[i]!.music}`]),
   ].join('\n');
 }

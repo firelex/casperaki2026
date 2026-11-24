@@ -91,9 +91,10 @@ export function TimelineView() {
   }, [activeSong]);
   // A song with a vocals setting: which sections of the lead vocal have no take (greyed out on its track).
   const vocalStatus = useVocalsStatus(viewSong);
-  const unsungSections = useMemo(
-    () => (viewSong?.vocals && model ? unsungSectionsOf(model.sections, vocalStatus.data?.sections) : new Set<number>()),
-    [viewSong?.vocals, model, vocalStatus.data],
+  /** Per sung vocal track (lead and backing tracks with a setting): its unsung sections, greyed on its track. */
+  const unsungByTrack = useMemo(
+    () => new Map(Object.entries(vocalStatus.data?.tracks ?? {}).map(([track, st]) => [track, model ? unsungSectionsOf(model.sections, st) : new Set<number>()])),
+    [model, vocalStatus.data],
   );
   useEffect(() => {
     setMix(undefined);
@@ -723,7 +724,7 @@ export function TimelineView() {
                     catalogId={catalogIdOf(defs.get(t.name)?.id)}
                     notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
                   />
-                  {t.name === 'Vocal' ? <VocalsControl /> : null}
+                  {t.isVocal ? <VocalsControl track={t.name} /> : null}
                   <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
                 </div>
                 <div
@@ -761,7 +762,7 @@ export function TimelineView() {
                     selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
                     rowH={rowH}
                     automation={automationByTrack.get(t.name)}
-                    {...(t.name === 'Vocal' ? { unsungSections } : {})}
+                    {...(unsungByTrack.has(t.name) ? { unsungSections: unsungByTrack.get(t.name)! } : {})}
                   />
                 </div>
                 </div>

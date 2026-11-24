@@ -91,6 +91,18 @@ describe('playback with sung vocals', () => {
     await h.stop();
   });
 
+  it('a backing vocal track with a setting plays its stored takes too', async () => {
+    const h = await boot();
+    const s = { ...base(), bpm: 137, backingVocals: { 'Backing vocals 1': { enabled: false, voice: 'en_target', takeNumbers: {} } } } as Song;
+    const fp = takeFingerprint(sectionScore(s, 'chorus1', 'Backing vocals 1')!, 'en_target', 1, 'backing');
+    writeFileSync(join(takesDir, `${fp}.ogg`), 'ogg');
+    writeFileSync(join(takesDir, `${fp}.json`), JSON.stringify({ lufs: -23, durationSeconds: 9.6, sha256: fp, voice: 'en_target' }));
+    const r = await h.req('/api/playback', 'POST', { song: s });
+    expect(r.status).toBe(200);
+    expect(r.body.samples.some((x: { key: string }) => x.key === `take-${fp}.ogg`)).toBe(true);
+    await h.stop();
+  });
+
   it('a take file outside the takes directory is refused', async () => {
     const h = await boot({}, '/etc/hostname');
     const s = onlyVerse1(base());

@@ -13,6 +13,12 @@ describe('song vocals setting', () => {
     expect(SongSchema.parse({ ...base, vocals }).vocals).toEqual(vocals);
   });
 
+  it('backing vocal tracks have their own settings, by track name', () => {
+    const backingVocals = { 'Backing vocals 1': { enabled: true, voice: 'zh_target', takeNumbers: {} } };
+    expect(SongSchema.parse({ ...base, backingVocals }).backingVocals).toEqual(backingVocals);
+    expect(SongSchema.safeParse({ ...base, backingVocals: { x: { enabled: true } } }).success).toBe(false);
+  });
+
   it('refuses unknown keys and take numbers below 1', () => {
     expect(VocalsSettingSchema.safeParse({ enabled: true, voice: 'v', takeNumbers: {}, extra: 1 }).success).toBe(false);
     expect(VocalsSettingSchema.safeParse({ enabled: true, voice: 'v', takeNumbers: { chorus1: 0 } }).success).toBe(false);

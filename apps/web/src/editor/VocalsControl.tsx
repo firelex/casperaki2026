@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { vocalsApi, type SectionState } from '../api/vocals';
-import { singAgain, singRun, withVocals, withVoice } from '../audio/singVocals';
+import { singAgain, singRun, trackSetting, withVocals, withVoice } from '../audio/singVocals';
 import { useVocalsStatus } from '../audio/useVocalsStatus';
 import { useVocalsProgress, vocalsProgress } from '../audio/vocalsProgress';
 import { useSession } from '../state/session';
@@ -18,13 +18,13 @@ const STATE_LABEL: Record<Exclude<SectionState, 'none'>, string> = {
  * (off by default: nothing is sung), the voice, each section's take and "Sing again". With it on, Play sings the
  * grey sections while the song plays; the progress, "Stop singing" and any error (with "Don't sing on Play") show here.
  */
-export function VocalsControl() {
+export function VocalsControl({ track }: { track: string }) {
   const { viewSong, applyEdit } = useSession();
   const progress = useVocalsProgress();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLDivElement>(null);
-  const vocals = viewSong?.vocals;
+  const vocals = viewSong ? trackSetting(viewSong, track) : undefined;
   const on = vocals?.enabled === true;
 
   // An error or progress opens the panel so it is seen.
@@ -46,7 +46,7 @@ export function VocalsControl() {
   if (!viewSong) return null;
 
   const replace = (song: typeof viewSong) => applyEdit({ kind: 'replaceSong', song });
-  const sections = (status.data?.sections ?? []).filter((s) => s.state !== 'none');
+  const sections = (status.data?.tracks[track] ?? []).filter((s) => s.state !== 'none');
   const small = 'h-6 rounded-full border border-white/25 px-2.5 text-[11px] text-white/85 hover:border-white/60 disabled:opacity-40';
   const rect = box.current?.getBoundingClientRect();
   const singing = Boolean(progress.text);
@@ -57,8 +57,8 @@ export function VocalsControl() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-label="Sung vocals"
-        title={singing ? progress.text : on ? 'Sung vocals: Play sings the grey sections' : 'Sung vocals (Play does not sing; sung sections play)'}
+        aria-label={`Sing ${track}`}
+        title={singing ? progress.text : on ? `${track}: Play sings the grey sections` : `${track}: Play does not sing (sung sections play)`}
         className={`flex h-6 items-center gap-1 rounded-[5px] border border-black/60 bg-[#33353b] px-1.5 text-[11px] hover:bg-[#3d3f46] ${on ? 'text-emerald-300' : 'text-white/70'}`}
       >
         <span aria-hidden="true" className={singing ? 'animate-pulse' : ''}>{singing ? '◉' : on ? '●' : '○'}</span> Sing
@@ -70,8 +70,9 @@ export function VocalsControl() {
           style={{ position: 'fixed', left: rect.left, top: rect.bottom + 4 }}
           className="z-[1000] w-[320px] rounded-[8px] border border-black/70 bg-[#232428] p-3 text-[12px] text-white shadow-xl"
           role="dialog"
-          aria-label="Sung vocals"
+          aria-label={`Sing ${track}`}
         >
+          <p className="mb-1.5 font-semibold">{track}</p>
           <label className="flex items-center justify-between gap-2">
             <span>Sing grey sections while playing</span>
             <input
@@ -81,7 +82,7 @@ export function VocalsControl() {
                 const voice = vocals?.voice ?? voices.data?.[0]?.id;
                 if (e.target.checked && !voice) return;
                 vocalsProgress.set({});
-                replace(withVocals(viewSong, e.target.checked, voice));
+                replace(withVocals(viewSong, track, e.target.checked, voice));
               }}
               disabled={!on && !vocals?.voice && !voices.data?.length}
               aria-label="Sing grey sections while playing"
@@ -94,7 +95,7 @@ export function VocalsControl() {
               <span className="text-white/70">Voice</span>
               <select
                 value={vocals?.voice ?? ''}
-                onChange={(e) => replace(vocals ? withVoice(viewSong, e.target.value) : withVocals(viewSong, false, e.target.value))}
+                onChange={(e) => replace(vocals ? withVoice(viewSong, track, e.target.value) : withVocals(viewSong, track, false, e.target.value))}
                 className="h-7 max-w-[200px] rounded-[6px] border border-black/60 bg-[#151619] px-1 text-[12px] text-white"
                 aria-label="Voice"
               >
@@ -111,7 +112,7 @@ export function VocalsControl() {
             <div className="mt-3 border-t border-white/10 pt-2">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-white/70">Sections</span>
-                <button type="button" className={small} disabled={sections.length === 0} onClick={() => replace(singAgain(viewSong, sections.map((s) => s.segment)))}>
+                <button type="button" className={small} disabled={sections.length === 0} onClick={() => replace(singAgain(viewSong, track, sections.map((s) => s.segment)))}>
                   Sing all again
                 </button>
               </div>
@@ -123,7 +124,7 @@ export function VocalsControl() {
                     <span className="min-w-0 truncate">
                       {s.segment} <span className={s.state === 'sung' ? 'text-emerald-300/80' : 'text-[#f5b942]'}>· {STATE_LABEL[s.state as Exclude<SectionState, 'none'>]}</span>
                     </span>
-                    <button type="button" className={small} onClick={() => replace(singAgain(viewSong, s.segment))} title="A fresh take of this section (sung on the next Play)">
+                    <button type="button" className={small} onClick={() => replace(singAgain(viewSong, track, s.segment))} title="A fresh take of this section (sung on the next Play)">
                       Sing again
                     </button>
                   </li>
@@ -140,7 +141,7 @@ export function VocalsControl() {
                 className={`${small} mt-1.5`}
                 onClick={() => {
                   vocalsProgress.set({});
-                  replace(withVocals(viewSong, false));
+                  replace(withVocals(viewSong, track, false));
                 }}
               >
                 Don't sing on Play

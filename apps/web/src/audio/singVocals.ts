@@ -7,42 +7,49 @@ import type { Song } from '@casperaki/song-schema';
 
 import type { SectionStatus } from '../api/vocals';
 
-/** Vocals on (Play sings unsung sections) or off, with a voice; take numbers are kept. */
-export function withVocals(song: Song, enabled: boolean, voice?: string): Song {
-  const v = voice ?? song.vocals?.voice;
-  if (!v) throw new Error('withVocals: the vocals setting needs a voice');
-  return { ...song, vocals: { enabled, voice: v, takeNumbers: song.vocals?.takeNumbers ?? {} } };
+export const LEAD_VOCAL = 'Vocal';
+export type VocalsSetting = NonNullable<Song['vocals']>;
+
+/** A vocal track's singing setting: the lead's is `vocals`, a backing track's `backingVocals[track]`. */
+export function trackSetting(song: Song, track: string): VocalsSetting | undefined {
+  return track === LEAD_VOCAL ? song.vocals : song.backingVocals?.[track];
 }
 
-/** Another voice (its takes are other takes: sections it has not sung are unsung). */
-export function withVoice(song: Song, voice: string): Song {
-  if (!song.vocals) throw new Error('withVoice: the song has no vocals setting');
-  return { ...song, vocals: { ...song.vocals, voice } };
+function withSetting(song: Song, track: string, setting: VocalsSetting): Song {
+  return track === LEAD_VOCAL ? { ...song, vocals: setting } : { ...song, backingVocals: { ...song.backingVocals, [track]: setting } };
 }
 
-/** A fresh take of these sections: their take numbers go up by one (they are unsung until sung). */
-export function singAgain(song: Song, segments: string | readonly string[]): Song {
-  if (!song.vocals) throw new Error('singAgain: the song has no vocals setting');
-  const takeNumbers = { ...song.vocals.takeNumbers };
+/** Singing on (Play sings the track's grey sections) or off, with a voice; take numbers are kept. */
+export function withVocals(song: Song, track: string, enabled: boolean, voice?: string): Song {
+  const cur = trackSetting(song, track);
+  const v = voice ?? cur?.voice;
+  if (!v) throw new Error(`withVocals: singing ${track} needs a voice`);
+  return withSetting(song, track, { enabled, voice: v, takeNumbers: cur?.takeNumbers ?? {} });
+}
+
+/** Another voice for the track (its takes are other takes: sections it has not sung are unsung). */
+export function withVoice(song: Song, track: string, voice: string): Song {
+  const cur = trackSetting(song, track);
+  if (!cur) throw new Error(`withVoice: ${track} has no singing setting`);
+  return withSetting(song, track, { ...cur, voice });
+}
+
+/** A fresh take of these sections of the track: their take numbers go up by one (unsung until sung). */
+export function singAgain(song: Song, track: string, segments: string | readonly string[]): Song {
+  const cur = trackSetting(song, track);
+  if (!cur) throw new Error(`singAgain: ${track} has no singing setting`);
+  const takeNumbers = { ...cur.takeNumbers };
   for (const s of typeof segments === 'string' ? [segments] : segments) takeNumbers[s] = (takeNumbers[s] ?? 1) + 1;
-  return { ...song, vocals: { ...song.vocals, takeNumbers } };
+  return withSetting(song, track, { ...cur, takeNumbers });
 }
 
-export interface SingApi {
-  status(song: Song, signal?: AbortSignal): Promise<{ sections: SectionStatus[] }>;
-  sing(song: Song, segment: string, signal?: AbortSignal): Promise<{ section: SectionStatus }>;
+/** The vocal tracks whose singing is on (Play sings their grey sections), the lead first. */
+export function singingTracks(song: Song): string[] {
+  return [...(song.vocals?.enabled ? [LEAD_VOCAL] : []), ...Object.entries(song.backingVocals ?? {}).filter(([, v]) => v.enabled).map(([t]) => t)];
 }
 
-/** Sings every unsung section, one after another ("Singing chorus1 (2 of 3)"); returns how many were sung.
- *  A failure throws (the caller shows it). */
-export async function singMissing(song: Song, api: SingApi, onProgress: (text: string) => void, signal?: AbortSignal): Promise<number> {
-  const todo = (await api.status(song, signal)).sections.filter((s) => s.state === 'unsung').map((s) => s.segment);
-  for (const [i, segment] of todo.entries()) {
-    onProgress(`Singing ${segment} (${i + 1} of ${todo.length})`);
-    await api.sing(song, segment, signal);
-  }
-  return todo.length;
-}
+/** Whether the song has any vocal track with a singing setting (its takes are looked up). */
+export const hasVocalSettings = (song: Song | undefined): boolean => Boolean(song?.vocals || Object.keys(song?.backingVocals ?? {}).length);
 
 /** The one singing run at a time: a new one (Play again) cancels the one running; the Vocals panel can stop it. */
 let current: AbortController | undefined;
@@ -81,10 +88,23 @@ export function unsungSections(sections: readonly { readonly name: string }[], s
   return new Set(sections.flatMap((s, i) => (unsung.has(s.name) ? [i] : [])));
 }
 
-/** A short token of which sections have takes: part of the player's key, so a song plays again with the takes
- *  sung since it was loaded. */
-export function takesToken(status: readonly SectionStatus[]): string {
-  return status.filter((s) => s.state === 'sung').map((s) => s.segment).join(',');
+/** A short token of which sections have takes on which tracks: part of the player's key, so a song plays again
+ *  with the takes sung since it was loaded. */
+export function takesToken(tracks: Readonly<Record<string, readonly SectionStatus[]>>): string {
+  return Object.keys(tracks)
+    .sort()
+    .map((t) => `${t}:${tracks[t]!.filter((s) => s.state === 'sung').map((s) => s.segment).join(',')}`)
+    .join(';');
+}
+
+/** The (track, section) pairs to sing while playing from `positionSec`: the singing tracks' unsung sections in
+ *  singOrder, the lead before the backing tracks within a section. */
+export function singQueue(song: Song, tracks: Readonly<Record<string, readonly SectionStatus[]>>, positionSec: number): { track: string; segment: string }[] {
+  const on = singingTracks(song);
+  const unsung = new Set(on.flatMap((t) => (tracks[t] ?? []).filter((s) => s.state === 'unsung').map((s) => s.segment)));
+  return singOrder([...unsung], sectionStarts(song), positionSec).flatMap((segment) =>
+    on.filter((t) => (tracks[t] ?? []).some((s) => s.segment === segment && s.state === 'unsung')).map((track) => ({ track, segment })),
+  );
 }
 
 /** The order to sing unsung sections while the song plays from `positionSec`: the section being played (or the

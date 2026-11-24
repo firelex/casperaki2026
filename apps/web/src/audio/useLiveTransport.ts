@@ -9,7 +9,7 @@ import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
 import { fnv1a } from './fnv1a';
-import { sectionStarts, singOrder, singRun, takesToken } from './singVocals';
+import { hasVocalSettings, LEAD_VOCAL, singingTracks, singQueue, singRun, takesToken } from './singVocals';
 import { useVocalsStatus, vocalsStatusKey } from './useVocalsStatus';
 import { vocalsProgress } from './vocalsProgress';
 import { useLivePosition, useLiveState } from './useLivePlayer';
@@ -27,7 +27,7 @@ export function useLiveTransport() {
   // A song with a vocals setting plays the takes the brain has for it: which sections have one is part of the
   // key, so a section sung since the song was loaded makes a new version to play (undefined while not known).
   const vocalStatus = useVocalsStatus(viewSong);
-  const vocalsPart = !viewSong?.vocals ? '' : vocalStatus.data ? `:v${fnv1a(takesToken(vocalStatus.data.sections))}` : undefined;
+  const vocalsPart = !hasVocalSettings(viewSong) ? '' : vocalStatus.data ? `:v${fnv1a(takesToken(vocalStatus.data.tracks))}` : undefined;
   const baseKey = viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId;
   const liveKey = useMemo(() => (baseKey && vocalsPart !== undefined ? baseKey + vocalsPart : undefined), [baseKey, vocalsPart]);
   const live = useLiveState();
@@ -50,7 +50,7 @@ export function useLiveTransport() {
     await livePlayer.play(liveKey, fetchPayload);
     // Vocals on: the song plays at once with the sections sung so far; the unsung ones are sung meanwhile, from the
     // one being played on, and each joins the playing song as soon as it is ready.
-    if (viewSong.vocals?.enabled && baseKey) void singWhilePlaying(viewSong, baseKey, fetchPayload, queryClient);
+    if (singingTracks(viewSong).length && baseKey) void singWhilePlaying(viewSong, baseKey, fetchPayload, queryClient);
   }, [liveKey, viewSong, fetchPayload, baseKey, queryClient]);
 
   const playPause = useCallback(() => {
@@ -99,15 +99,14 @@ async function singWhilePlaying(song: Song, baseKey: string, fetchPayload: (sign
   const run = singRun.start();
   try {
     const status = await vocalsApi.status(song, run.signal);
-    const unsung = status.sections.filter((s) => s.state === 'unsung').map((s) => s.segment);
-    const order = singOrder(unsung, sectionStarts(song), livePlayer.position());
-    for (const [i, segment] of order.entries()) {
-      vocalsProgress.set({ text: `Singing ${segment} (${i + 1} of ${order.length})` });
-      await vocalsApi.sing(song, segment, run.signal);
+    const queue = singQueue(song, status.tracks, livePlayer.position());
+    for (const [i, { track, segment }] of queue.entries()) {
+      vocalsProgress.set({ text: `Singing ${segment}${track === LEAD_VOCAL ? '' : ` (${track})`} (${i + 1} of ${queue.length})` });
+      await vocalsApi.sing(song, segment, track, run.signal);
       const now = await vocalsApi.status(song, run.signal);
       const live = livePlayer.getState();
       if (live.status === 'playing' && live.key?.startsWith(baseKey)) {
-        await livePlayer.play(`${baseKey}:v${fnv1a(takesToken(now.sections))}`, fetchPayload, { seamless: true });
+        await livePlayer.play(`${baseKey}:v${fnv1a(takesToken(now.tracks))}`, fetchPayload, { seamless: true });
       }
       queryClient.setQueryData(vocalsStatusKey(song), now);
     }
