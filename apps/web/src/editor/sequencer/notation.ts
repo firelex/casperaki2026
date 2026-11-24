@@ -108,6 +108,24 @@ interface Event {
   readonly start: number; // 16ths
   readonly length: number; // 16ths
   readonly pitches: readonly number[]; // empty: rest
+  /** Tied to the next event (a note split where a chord symbol changes). */
+  readonly tieNext?: boolean;
+}
+
+/** Events split at the given 16th positions (where chord symbols go), notes tied across the split. */
+function splitAt(events: readonly Event[], at: ReadonlySet<number>): Event[] {
+  const out: Event[] = [];
+  for (const ev of events) {
+    let start = ev.start;
+    const end = ev.start + ev.length;
+    for (let p = start + 1; p < end; p++) {
+      if (!at.has(p)) continue;
+      out.push({ start, length: p - start, pitches: ev.pitches, tieNext: ev.pitches.length > 0 });
+      start = p;
+    }
+    out.push({ start, length: end - start, pitches: ev.pitches, ...(ev.tieNext ? { tieNext: true } : {}) });
+  }
+  return out;
 }
 
 /** One staff's notes as a sequence of chords and rests covering [0, total). */
@@ -141,6 +159,7 @@ function staffMeasures(
   fifths: number,
   marks: ReadonlyMap<number, string>,
   mergeRests: boolean,
+  chords: ReadonlyMap<number, string> = new Map(),
 ): string[] {
   const keyAcc = keyAccidentals(fifths);
   let barAcc = new Map<string, number>();
@@ -214,10 +233,12 @@ function staffMeasures(
       // A label above the bar (e.g. the section name), on its first note or rest.
       const mark = pos % STEPS_PER_BAR === 0 ? marks.get(pos / STEPS_PER_BAR) : undefined;
       if (mark) out += `"^${mark.replace(/"/gu, "'")}"`;
+      const chord = chords.get(pos);
+      if (chord) out += `"${chord.replace(/"/gu, "'")}"`;
       if (ev.pitches.length === 0) out += `z${dur} `;
       else {
         const body = ev.pitches.map(pitchText).join('');
-        const tie = i < parts.length - 1 ? '-' : '';
+        const tie = i < parts.length - 1 || ev.tieNext ? '-' : '';
         out += `${ev.pitches.length > 1 ? `[${body}]` : body}${dur}${tie} `;
       }
       pos += len;
@@ -255,6 +276,8 @@ export function notesToAbc(
     subtitle?: string;
     /** Number every bar (whole-song scores). */
     barNumbers?: boolean;
+    /** Chord symbols above the top staff (16th position from the start → symbol); rests are then not merged. */
+    chords?: ReadonlyMap<number, string>;
   },
 ): string {
   const total = Math.round(opts.beats * STEPS_PER_BEAT);
@@ -277,11 +300,15 @@ export function notesToAbc(
   // bars without counting multi-bar rests.
   if (bass.length === 0 || treble.length === 0) {
     const clef = treble.length === 0 && bass.length > 0 ? 'bass' : 'treble';
-    const lines = abcLines(staffMeasures(staffEvents(notes, total), key.fifths, marks, true));
+    const chords = opts.chords ?? new Map<number, string>();
+    const events = chords.size ? splitAt(staffEvents(notes, total), new Set(chords.keys())) : staffEvents(notes, total);
+    const lines = abcLines(staffMeasures(events, key.fifths, marks, chords.size === 0, chords));
     return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, ...lines.map((l) => `[V:1] ${l}`)].join('\n');
   }
   // Grand staff: bar by bar on both staves (no multi-bar rests), so their lines align.
-  const up = abcLines(staffMeasures(staffEvents(treble, total), key.fifths, marks, false));
+  const chords = opts.chords ?? new Map<number, string>();
+  const upEvents = chords.size ? splitAt(staffEvents(treble, total), new Set(chords.keys())) : staffEvents(treble, total);
+  const up = abcLines(staffMeasures(upEvents, key.fifths, marks, false, chords));
   const down = abcLines(staffMeasures(staffEvents(bass, total), key.fifths, new Map(), false));
   return [
     ...head,

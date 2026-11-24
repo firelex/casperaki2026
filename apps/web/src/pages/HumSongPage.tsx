@@ -4,12 +4,29 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { GENRE_TEMPO_RANGES, type Genre } from '@casperaki/song-schema/schemas';
 
 import { HumError, humApi, type BeatNote, type HumAnalysis } from '../api/hum';
+import { Score } from '../editor/sequencer/Score';
+import { HumChordRow } from '../hum/HumChordRow';
+import { HumPianoRoll } from '../hum/HumPianoRoll';
+import {
+  addNote,
+  deleteNote,
+  keptBars,
+  moveNote,
+  resizeNote,
+  setChord,
+  setChords,
+  setMelody,
+  startEdit,
+  undo,
+  type VersionEdit,
+} from '../hum/melodyEdit';
 import { AppHeader } from '../layout/AppHeader';
 import { GENRE_LABELS } from '../types/genres';
 
 /**
  * Hum a song: record a melody (with a click, or freely), see it as notes with three chord choices and, when the hum
- * is shorter than 8 bars, a completion; listen; then make a song with it as the chorus.
+ * is shorter than 8 bars, a completion; edit the notes and chords (piano roll, with a read-only score); listen; then
+ * make a song with it as the chorus. Edits are kept per version while the page is open.
  *
  * Click mode records through an AudioWorklet in the same AudioContext as the click, so the time of beat 1 in the
  * recording is known to the sample (plus the output latency the browser reports). The hidden ?upload=1 adds an
@@ -103,7 +120,7 @@ function chordMidis(symbol: string): number[] {
 }
 
 /** Plays a melody (soft triangle) over half-bar chords (quiet sines); returns a stop function. */
-function playPhrase(melody: readonly BeatNote[], chords: readonly string[], bpm: number, onEnd: () => void): () => void {
+function playPhrase(melody: readonly BeatNote[], chords: readonly string[], bpm: number, onEnd: () => void, onBeat: (beat: number) => void): () => void {
   const ctx = new AudioContext();
   const spb = 60 / bpm;
   const t0 = ctx.currentTime + 0.1;
@@ -126,15 +143,42 @@ function playPhrase(melody: readonly BeatNote[], chords: readonly string[], bpm:
   chords.forEach((c, s) => chordMidis(c).forEach((m) => tone(m, t0 + s * 2 * spb, 2 * spb, 'sine', 0.05)));
   for (const n of melody) tone(n.midi, t0 + n.beat * spb, n.duration * spb, 'triangle', 0.22);
   const total = 8 * BEATS_PER_BAR * spb + 0.6;
+  let frame = 0;
+  const follow = () => {
+    const beat = (ctx.currentTime - t0) / spb;
+    if (beat >= 0 && beat <= 8 * BEATS_PER_BAR) onBeat(beat);
+    frame = requestAnimationFrame(follow);
+  };
+  frame = requestAnimationFrame(follow);
   const timer = window.setTimeout(() => {
+    cancelAnimationFrame(frame);
     void ctx.close();
     onEnd();
   }, total * 1000);
   return () => {
+    cancelAnimationFrame(frame);
     window.clearTimeout(timer);
     void ctx.close();
     onEnd();
   };
+}
+
+let previewCtx: AudioContext | undefined;
+/** A short tone for a note being edited. */
+function previewNote(midi: number) {
+  previewCtx ??= new AudioContext();
+  const ctx = previewCtx;
+  const at = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = mtof(midi);
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(0.2, at + 0.01);
+  g.gain.setTargetAtTime(0, at + 0.15, 0.05);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(at);
+  osc.stop(at + 0.5);
 }
 
 // ------------------------------------------------------------------ page
@@ -153,7 +197,12 @@ export function HumSongPage() {
   const [genre, setGenre] = useState<Genre | undefined>(undefined);
   const [busy, setBusy] = useState<string | undefined>(undefined);
   const [playing, setPlaying] = useState(false);
+  const [playBeat, setPlayBeat] = useState<number | undefined>(undefined);
+  /** The user's edits, per version (undefined: as Casperaki made it). */
+  const [edits, setEdits] = useState<(VersionEdit | undefined)[]>([]);
   const take = useRef<Take | undefined>(undefined);
+  /** Length of a new note: the last length the user set, one beat to start with. */
+  const lastLength = useRef(1);
   const stopPlay = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => () => {
@@ -182,6 +231,7 @@ export function HumSongPage() {
       return;
     }
     setAnalysis(a);
+    setEdits([]);
     setChoice(0);
     setPhase('done');
     // Shorter than 8 bars: finish the melody, one version at a time (several seconds each), visibly.
@@ -270,6 +320,39 @@ export function HumSongPage() {
   };
 
   const alt = analysis?.alternatives[choice];
+  const edited = edits[choice];
+  const cur = useMemo(() => edited ?? (alt ? startEdit(alt.melody, alt.chords) : undefined), [edited, alt]);
+  const change = (next: VersionEdit) => {
+    if (next === cur) return;
+    setEdits((all) => {
+      const copy = [...all];
+      copy[choice] = next;
+      return copy;
+    });
+  };
+  const scoreNotes = useMemo(() => (cur ? cur.melody.map((n) => ({ pitch: n.midi, start: n.beat, length: n.duration })) : []), [cur]);
+  const scoreChords = useMemo(() => {
+    const m = new Map<number, string>();
+    cur?.chords.forEach((c, s) => {
+      if (s === 0 || c !== cur.chords[s - 1]) m.set(s * 8, c);
+    });
+    return m;
+  }, [cur]);
+  const keep = cur && analysis ? keptBars(cur, analysis.hummedBars) : [];
+
+  // Ctrl+Z (Cmd+Z) undoes the last edit of this version.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) return;
+      if (!edited || edited.history.length === 0) return;
+      e.preventDefault();
+      change(undo(edited));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
   const styles = useMemo(() => {
     const bpm = analysis?.bpm;
     return (Object.keys(GENRE_LABELS) as Genre[]).map((g) => {
@@ -286,13 +369,20 @@ export function HumSongPage() {
       stopPlay.current?.();
       return;
     }
-    if (!alt || !analysis) return;
+    if (!cur || !analysis) return;
     setPlaying(true);
     try {
-      stopPlay.current = playPhrase(alt.melody, alt.chords, analysis.bpm, () => {
-        setPlaying(false);
-        stopPlay.current = undefined;
-      });
+      stopPlay.current = playPhrase(
+        cur.melody,
+        cur.chords,
+        analysis.bpm,
+        () => {
+          setPlaying(false);
+          setPlayBeat(undefined);
+          stopPlay.current = undefined;
+        },
+        setPlayBeat,
+      );
     } catch (err) {
       setPlaying(false);
       fail(err, 'playing');
@@ -300,12 +390,22 @@ export function HumSongPage() {
   };
 
   const reComplete = async () => {
-    if (!analysis) return;
+    if (!analysis || !cur) return;
     stopPlay.current?.();
     setBusy(`Finishing the melody of version ${choice + 1} a different way…`);
     setError(undefined);
     try {
-      setAnalysis(await humApi.complete(analysis.id, choice));
+      if (!edited) setAnalysis(await humApi.complete(analysis.id, choice));
+      else {
+        // Edited: only the bars that are neither hummed nor edited are rewritten, over the chords as they are now.
+        const i = choice;
+        const done = await humApi.complete(analysis.id, i, { melody: cur.melody, chords: cur.chords, keepBars: keep });
+        setEdits((all) => {
+          const copy = [...all];
+          copy[i] = setMelody(cur, done.alternatives[i]!.melody);
+          return copy;
+        });
+      }
     } catch (err) {
       fail(err, 'completing');
     } finally {
@@ -319,10 +419,23 @@ export function HumSongPage() {
     setBusy('Making the song…');
     setError(undefined);
     try {
-      const { songId } = await humApi.song(analysis.id, choice, genre);
+      const { songId } = await humApi.song(analysis.id, choice, genre, edited ? { melody: edited.melody, chords: edited.chords } : undefined);
       navigate(`/editor/${songId}/timeline`);
     } catch (err) {
       fail(err, 'building the song');
+      setBusy(undefined);
+    }
+  };
+
+  const refit = async () => {
+    if (!analysis || !cur) return;
+    setBusy('Fitting chords to your melody…');
+    setError(undefined);
+    try {
+      change(setChords(cur, await humApi.refit(analysis.id, cur.melody)));
+    } catch (err) {
+      fail(err, 'chords');
+    } finally {
       setBusy(undefined);
     }
   };
@@ -437,7 +550,7 @@ export function HumSongPage() {
           ) : null}
         </section>
 
-        {analysis && alt ? (
+        {analysis && alt && cur ? (
           <section className="mt-6 rounded-[14px] border border-line bg-white/[0.03] p-5" aria-label="Your melody">
             <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-[14px] text-white/70">
               <span>
@@ -466,7 +579,40 @@ export function HumSongPage() {
                 </button>
               ))}
             </div>
-            <PianoRoll melody={alt.melody} chords={alt.chords} hummedBars={analysis.hummedBars} />
+            <div className="mt-4">
+              <HumChordRow
+                chords={cur.chords}
+                onPick={(slot, chord) => change(setChord(cur, slot, chord))}
+                loadOptions={(slot) => humApi.chordOptions(analysis.id, cur.melody, slot)}
+              />
+              <HumPianoRoll
+                key={`${analysis.id}-${choice}`}
+                melody={cur.melody}
+                hummedBars={analysis.hummedBars}
+                editedBars={cur.editedBars}
+                playBeat={playBeat}
+                onAdd={(beat, midi) => {
+                  const next = addNote(cur, beat, midi, lastLength.current);
+                  if (next !== cur) previewNote(midi);
+                  change(next);
+                }}
+                onDelete={(i) => change(deleteNote(cur, i))}
+                onMove={(i, beat, midi) => change(moveNote(cur, i, beat, midi))}
+                onResize={(i, length) => {
+                  const next = resizeNote(cur, i, length);
+                  if (next !== cur) {
+                    previewNote(cur.melody[i]!.midi);
+                    lastLength.current = next.melody.find((n) => n.beat === cur.melody[i]!.beat)!.duration;
+                  }
+                  change(next);
+                }}
+                onPitch={previewNote}
+              />
+              <p className="mt-2 text-[12px] text-white/45">
+                Click to add a note · right click to delete · drag to move · hold, then drag to change the length · Ctrl+Z to undo. Red: hummed · blue:
+                completed · amber: changed by you. Click a chord to change it.
+              </p>
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button type="button" onClick={togglePlay} className="h-10 rounded-full bg-white px-5 text-[14px] font-semibold text-black">
                 {playing ? '■ Stop' : '▶ Play'}
@@ -475,12 +621,43 @@ export function HumSongPage() {
                 <button
                   type="button"
                   onClick={() => void reComplete()}
-                  disabled={Boolean(busy) || !alt.completed}
+                  disabled={Boolean(busy) || !alt.completed || keep.length >= 8 || cur.melody.length === 0}
+                  title={keep.length >= 8 ? 'Every bar is hummed or changed by you; there is nothing left to complete.' : 'Rewrite the bars you did not hum or change'}
                   className="h-10 rounded-full border border-line px-5 text-[14px] text-white/80 hover:border-white/40 disabled:opacity-40"
                 >
                   Complete a different way
                 </button>
               ) : null}
+              <button
+                type="button"
+                onClick={() => void refit()}
+                disabled={Boolean(busy) || cur.melody.length === 0}
+                className="h-10 rounded-full border border-line px-5 text-[14px] text-white/80 hover:border-white/40 disabled:opacity-40"
+              >
+                Re-fit chords
+              </button>
+              <button
+                type="button"
+                onClick={() => edited && change(undo(edited))}
+                disabled={!edited || edited.history.length === 0}
+                className="h-10 rounded-full border border-line px-4 text-[14px] text-white/80 hover:border-white/40 disabled:opacity-40"
+              >
+                Undo
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setEdits((all) => {
+                    const copy = [...all];
+                    copy[choice] = undefined;
+                    return copy;
+                  })
+                }
+                disabled={!edited}
+                className="h-10 rounded-full border border-line px-4 text-[14px] text-white/80 hover:border-white/40 disabled:opacity-40"
+              >
+                Back to the original
+              </button>
               {busy ? (
                 <span className="text-[14px] text-white/70" role="status">
                   {busy}
@@ -501,58 +678,29 @@ export function HumSongPage() {
               <button
                 type="button"
                 onClick={() => void makeSong()}
-                disabled={!genre || Boolean(busy) || !alt.completed}
+                disabled={!genre || Boolean(busy) || !alt.completed || cur.melody.length === 0}
                 className="h-10 rounded-full bg-accent px-5 text-[14px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-40"
               >
                 Make the song
               </button>
+              {cur.melody.length === 0 ? <span className="text-[13px] text-white/50">The melody has no notes: add some, or go back to the original.</span> : null}
               {!styles.some((s) => s.ok) ? <span className="text-[13px] text-white/50">No style takes {analysis.bpm} bpm: retry with the click at another tempo.</span> : null}
+            </div>
+            <div className="mt-6 border-t border-line/60 pt-3">
+              <h2 className="px-4 text-[14px] font-semibold text-white/80">Score</h2>
+              <Score
+                notes={scoreNotes}
+                beats={8 * BEATS_PER_BAR}
+                songKey={analysis.songKey}
+                bpm={analysis.bpm}
+                beat={playBeat}
+                chords={scoreChords}
+                caption="Your melody and chords, rounded to 16ths. It follows every change in the piano roll."
+              />
             </div>
           </section>
         ) : null}
       </main>
     </div>
-  );
-}
-
-/** The 8 bars: hummed bars on a lighter ground, completed notes in a second colour, the chords above. */
-function PianoRoll({ melody, chords, hummedBars }: { melody: readonly BeatNote[]; chords: readonly string[]; hummedBars: number }) {
-  const W = 960;
-  const H = 220;
-  const top = 26;
-  const beats = 8 * BEATS_PER_BAR;
-  const lo = Math.min(...melody.map((n) => n.midi)) - 2;
-  const hi = Math.max(...melody.map((n) => n.midi)) + 2;
-  const x = (b: number) => (b / beats) * W;
-  const rowH = (H - top) / (hi - lo + 1);
-  const y = (m: number) => top + (hi - m) * rowH;
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="mt-4 w-full rounded-[8px] bg-black/30" role="img" aria-label={`Melody over 8 bars, ${hummedBars} hummed`}>
-      <rect x={0} y={top} width={x(hummedBars * BEATS_PER_BAR)} height={H - top} fill="rgba(255,255,255,0.06)" />
-      {Array.from({ length: 9 }, (_, b) => (
-        <line key={b} x1={x(b * 4)} x2={x(b * 4)} y1={0} y2={H} stroke="rgba(255,255,255,0.18)" />
-      ))}
-      {chords.map((c, s) =>
-        s === 0 || c !== chords[s - 1] ? (
-          <text key={s} x={x(s * 2) + 4} y={17} fontSize={13} fill="rgba(255,255,255,0.75)">
-            {c}
-          </text>
-        ) : null,
-      )}
-      {melody.map((n, i) => (
-        <rect
-          key={i}
-          x={x(n.beat) + 1}
-          y={y(n.midi) + 1}
-          width={Math.max(3, x(n.duration) - 2)}
-          height={Math.max(3, rowH - 2)}
-          rx={2}
-          fill={n.beat < hummedBars * BEATS_PER_BAR ? '#ff3b3b' : '#5aa9ff'}
-        />
-      ))}
-      <text x={W - 8} y={H - 8} fontSize={11} textAnchor="end" fill="rgba(255,255,255,0.45)">
-        red: hummed · blue: completed
-      </text>
-    </svg>
   );
 }

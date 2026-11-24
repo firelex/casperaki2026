@@ -27,6 +27,12 @@ describe('notesToAbc', () => {
     expect(body(abc, 1)).toBe('z4 D4 z4 E4- | E4 z12 |]');
   });
 
+  it('writes chord symbols above the top staff, splitting a held note where the chord changes', () => {
+    const chords = new Map([[0, 'C'], [8, 'Am'], [16, 'F']]);
+    const abc = notesToAbc([n(64, 0, 3), n(67, 3, 3)], { beats: 8, key: 'C', chords });
+    expect(body(abc, 1)).toBe('"C"E8- "Am"E4 G4- | "F"G8 z8 |]');
+  });
+
   it('quantises slightly early or late onsets to 16ths', () => {
     const abc = notesToAbc([n(60, 0.02, 0.98), n(62, 0.99, 1)], { beats: 4, key: 'C' });
     expect(body(abc, 1)).toBe('C4 D4 z8 |]');

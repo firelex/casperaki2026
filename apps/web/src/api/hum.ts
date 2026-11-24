@@ -73,18 +73,44 @@ export const humApi = {
     }
     return body as HumAnalysis;
   },
-  async complete(analysisId: string, alternative?: number): Promise<HumAnalysis> {
+  /** Complete one alternative (or all); with an edit, only the bars not in keepBars are rewritten, over its chords. */
+  async complete(
+    analysisId: string,
+    alternative?: number,
+    edit?: { readonly melody: readonly BeatNote[]; readonly chords: readonly string[]; readonly keepBars: readonly number[] },
+  ): Promise<HumAnalysis> {
     try {
-      return await defaultBrainClient.post<HumAnalysis>('/api/hum/complete', alternative === undefined ? { analysisId } : { analysisId, alternative });
+      return await defaultBrainClient.post<HumAnalysis>('/api/hum/complete', { analysisId, ...(alternative === undefined ? {} : { alternative }), ...edit });
     } catch (err) {
       throw humError(err, 'completing');
     }
   },
-  async song(analysisId: string, alternative: number, genre: string): Promise<{ songId: string }> {
+  async song(
+    analysisId: string,
+    alternative: number,
+    genre: string,
+    edit?: { readonly melody: readonly BeatNote[]; readonly chords: readonly string[] },
+  ): Promise<{ songId: string }> {
     try {
-      return await defaultBrainClient.post<{ songId: string }>('/api/hum/song', { analysisId, alternative, genre });
+      return await defaultBrainClient.post<{ songId: string }>('/api/hum/song', { analysisId, alternative, genre, ...edit });
     } catch (err) {
       throw humError(err, 'building the song');
+    }
+  },
+  /** The fitter's chords for an edited melody (16 half bars). */
+  async refit(analysisId: string, melody: readonly BeatNote[]): Promise<string[]> {
+    try {
+      return (await defaultBrainClient.post<{ chords: string[] }>('/api/hum/refit', { analysisId, melody })).chords;
+    } catch (err) {
+      throw humError(err, 'chords');
+    }
+  },
+  /** Every chord the fitter knows for one half bar, best fit to the melody first. */
+  async chordOptions(analysisId: string, melody: readonly BeatNote[], slot: number): Promise<{ chord: string; fit: number }[]> {
+    try {
+      return (await defaultBrainClient.post<{ options: { chord: string; fit: number }[] }>('/api/hum/chord-options', { analysisId, melody, slot })).options;
+    } catch (err) {
+      throw humError(err, 'chords');
     }
   },
 };
