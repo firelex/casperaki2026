@@ -202,10 +202,11 @@ def generate(handle, params: dict, out_dir: str) -> dict:
 # Synchronous routes for the brain's sung vocals (docs/superpowers/specs/2026-11-24-sung-vocals-design.md).
 #
 #   POST /voices  {}  -> {"voices": [{"id", "label", "octave", "low", "high", "median"}]}
-#   POST /sing    {"voice", "steps", "phrases": [{"phoneme": [..], "duration": [..s], "notePitch": [..MIDI, 0 = rest],
-#                                                  "noteType": [..1 rest | 2 note | 3 slur]}]}
+#   POST /sing    {"voice", "steps", "shift", "phrases": [{"phoneme": [..], "duration": [..s], "notePitch": [..MIDI, 0 = rest],
+#                                                           "noteType": [..1 rest | 2 note | 3 slur]}]}
 #              -> {"sampleRate": 24000, "phrases": [{"wav": base64 16-bit mono WAV}], "tookMs"}
-# Pitches are the written notes; the voice's octave is applied here. Score control (MIDI notes, no pitch curve),
+# Pitches are the written notes; `shift` (semitones, a whole number of octaves chosen by the brain from the track's
+# register and the voice's range) is added to every note. Score control (MIDI notes, no pitch curve),
 # no automatic shift. A phone SoulX does not know, an unknown voice or a malformed phrase is a 422 naming it.
 
 from adapter_common import RequestError  # noqa: E402
@@ -225,7 +226,7 @@ def _body(body: bytes) -> dict:
 
 def voices(handle, headers, body: bytes):
     _body(body)
-    return 200, {"voices": [{k: v[k] for k in ("id", "label", "octave", "low", "high", "median")} for v in handle["voices"].values()]}
+    return 200, {"voices": [{k: v[k] for k in ("id", "label", "low", "high", "median")} for v in handle["voices"].values()]}
 
 
 def sing(handle, headers, body: bytes):
@@ -240,6 +241,9 @@ def sing(handle, headers, body: bytes):
     steps = data.get("steps")
     if not isinstance(steps, int) or not MIN_STEPS <= steps <= MAX_STEPS:
         raise RequestError(422, f"steps must be a whole number from {MIN_STEPS} to {MAX_STEPS}, got {steps!r}.")
+    shift = data.get("shift")
+    if not isinstance(shift, int) or shift % 12 != 0 or abs(shift) > 24:
+        raise RequestError(422, f"shift must be a whole number of octaves (-24..24 semitones), got {shift!r}.")
     phrases = data.get("phrases")
     if not isinstance(phrases, list) or not phrases:
         raise RequestError(422, "phrases must be a non-empty list.")
@@ -259,7 +263,7 @@ def sing(handle, headers, body: bytes):
                 raise RequestError(422, f"phrase {i}: SoulX does not know the phone {p!r}.")
         if any((not isinstance(d, (int, float))) or d <= 0 for d in duration):
             raise RequestError(422, f"phrase {i}: every duration must be a positive number of seconds.")
-        sung = [int(p) + voice["octave"] if int(p) > 0 else 0 for p in pitch]
+        sung = [int(p) + shift if int(p) > 0 else 0 for p in pitch]
         meta = {"duration": " ".join(f"{float(d):.4f}" for d in duration), "phoneme": " ".join(phoneme),
                 "note_pitch": " ".join(str(p) for p in sung), "note_type": " ".join(str(int(t)) for t in ntype),
                 "language": "English"}

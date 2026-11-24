@@ -41,7 +41,7 @@ export function VocalsControl({ track }: { track: string }) {
     return () => window.removeEventListener('mousedown', close);
   }, [open]);
 
-  const voices = useQuery({ queryKey: ['vocals', 'voices'], queryFn: ({ signal }) => vocalsApi.voices(signal), staleTime: Infinity, enabled: open });
+  const voices = useQuery({ queryKey: ['vocals', 'voices'], queryFn: ({ signal }) => vocalsApi.voices(signal), staleTime: Infinity });
   const status = useVocalsStatus(viewSong);
   if (!viewSong) return null;
 
@@ -55,10 +55,22 @@ export function VocalsControl({ track }: { track: string }) {
     <div ref={box} className="relative shrink-0" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          // Click: the track on or off. Its first time on, it takes the lead's voice (or the first voice);
+          // right-click chooses another.
+          const voice = vocals?.voice ?? viewSong.vocals?.voice ?? voices.data?.[0]?.id;
+          if (!voice) return setOpen(true);
+          vocalsProgress.set({});
+          replace(withVocals(viewSong, track, !on, voice));
+        }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation(); // not the track's own menu
+          setOpen((o) => !o);
+        }}
         aria-expanded={open}
         aria-label={`Sing ${track}`}
-        title={singing ? progress.text : on ? `${track}: sung (click for voice and takes)` : `${track}: not sung (click to sing it)`}
+        title={singing ? progress.text : on ? `${track} is sung — click to switch off, right-click for the voice and takes` : `${track} is not sung — click to sing it, right-click for the voice`}
         className={`flex h-5 w-5 items-center justify-center rounded-[4px] hover:bg-white/10 ${on ? 'text-emerald-300' : 'text-white/35 hover:text-white/70'} ${singing ? 'animate-pulse' : ''}`}
       >
         <MicIcon />
@@ -100,7 +112,7 @@ export function VocalsControl({ track }: { track: string }) {
                 aria-label="Voice"
               >
                 {!vocals?.voice ? <option value="">Choose a voice</option> : null}
-                {(voices.data ?? (vocals?.voice ? [{ id: vocals.voice, label: vocals.voice, octave: 0 }] : [])).map((v) => (
+                {(voices.data ?? (vocals?.voice ? [{ id: vocals.voice, label: vocals.voice, median: 0 }] : [])).map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.label}
                   </option>

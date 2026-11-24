@@ -91,3 +91,22 @@ describe('takeFingerprint', () => {
     expect(takeFingerprint({ ...score, lengthSec: score.lengthSec + 2 }, 'en_prompt', 1)).not.toBe(takeFingerprint(score, 'en_prompt', 1));
   });
 });
+
+import { registerShift, trackMedian } from '../src/vocals/score.js';
+
+describe('register: whole octaves to the voice', () => {
+  it('moves a track by the octave that puts its median nearest the voice median (no move on a tie)', () => {
+    expect(registerShift(63, 65)).toBe(0); // a lead line for a female voice: as written
+    expect(registerShift(63, 53)).toBe(-12); // for a male voice: an octave down
+    expect(registerShift(56, 65)).toBe(12); // a low backing line for a female voice: an octave up
+    expect(registerShift(59, 65)).toBe(0); // 6 below vs 6 above: a tie stays as written
+  });
+
+  it('the track median is over all its notes in the song', () => {
+    const song = golden();
+    const lead = trackMedian(song, 'Vocal')!;
+    const low = trackMedian(song, 'Backing vocals 2')!;
+    expect(lead).toBeGreaterThan(low);
+    expect(trackMedian(song, 'No such track')).toBeUndefined();
+  });
+});

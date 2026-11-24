@@ -43,7 +43,7 @@ export interface SectionScore {
 }
 
 /** Model and settings a take is sung with; part of every take's fingerprint (`level`: how the take's loudness is set). */
-export const TAKE_SETTINGS = { model: 'soulx-singer', steps: 32, level: 'gain-17lufs', format: 'ogg' } as const;
+export const TAKE_SETTINGS = { model: 'soulx-singer', steps: 32, level: 'gain-17lufs', format: 'ogg', octave: 'by-register' } as const;
 
 /** ARPAbet phonemes of one syllable (`['k', 'ih0', 'ng']`) as a SoulX English syllable (`en_K-IH0-NG`). */
 export function soulxPhones(arpabet: readonly string[]): string {
@@ -144,3 +144,26 @@ export function takeFingerprint(score: SectionScore, voice: string, takeNumber: 
 }
 
 const round = (x: number) => Math.round(x * 1e4) / 1e4;
+
+/** The median written MIDI note of a vocal track over the whole song (undefined: the track has no notes). */
+export function trackMedian(song: Song, track: string): number | undefined {
+  const notes: number[] = [];
+  for (const seg of song.songStructure) {
+    for (const bar of song.arrangement[seg.name]?.overrides?.[track]?.bars ?? []) {
+      for (const evs of Object.values(bar.notes ?? {})) {
+        for (const e of (evs ?? []) as { type?: string; note?: unknown }[]) if (e.type === 'vocalNote' && typeof e.note === 'number') notes.push(e.note);
+      }
+    }
+  }
+  if (notes.length === 0) return undefined;
+  notes.sort((a, b) => a - b);
+  return notes[Math.floor(notes.length / 2)];
+}
+
+/** The whole octaves (-12, 0 or +12) a track is sung at so its median sits nearest the voice's median (as written
+ *  on a tie): a low backing line for a female voice goes up, a lead line for a male voice goes down. */
+export function registerShift(trackMedianNote: number, voiceMedian: number): number {
+  let best = 0;
+  for (const s of [-12, 12]) if (Math.abs(trackMedianNote + s - voiceMedian) < Math.abs(trackMedianNote + best - voiceMedian)) best = s;
+  return best;
+}

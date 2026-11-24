@@ -22,14 +22,15 @@ afterAll(() => rmSync(tmp, { recursive: true }));
 
 /** A fake singing service: sine-wave phrases as long as asked; counts /sing calls; can refuse. */
 function fakeService() {
-  const state = { sings: 0, refuse: undefined as string | undefined, down: false };
+  const state = { sings: 0, refuse: undefined as string | undefined, down: false, shifts: [] as number[] };
   const impl = (async (url: string | URL, init?: RequestInit) => {
     if (state.down) throw new Error('connect ECONNREFUSED');
     const path = new URL(String(url)).pathname;
     const body = JSON.parse(String(init?.body ?? '{}'));
-    if (path === '/voices') return new Response(JSON.stringify({ voices: [{ id: 'en_prompt', label: 'Voice 1', octave: 0, low: 62, high: 68, median: 65 }] }));
+    if (path === '/voices') return new Response(JSON.stringify({ voices: [{ id: 'en_prompt', label: 'Voice 1', low: 62, high: 68, median: 65 }, { id: 'en_target', label: 'Voice 2', low: 58, high: 70, median: 65 }, { id: 'zh_target', label: 'Voice 4', low: 50, high: 56, median: 53 }] }));
     if (path === '/sing') {
       state.sings++;
+      state.shifts.push(body.shift);
       if (state.refuse) return new Response(JSON.stringify({ error: state.refuse }), { status: 422 });
       const phrases = body.phrases.map((p: { duration: number[] }) => {
         const n = Math.round(p.duration.reduce((a, b) => a + b, 0) * 24000);
@@ -134,6 +135,26 @@ describe('sung vocals routes', () => {
     expect(after.find((x: { segment: string }) => x.segment === 'chorus1').state).toBe('sung');
     // A backing track without a setting cannot be sung.
     expect((await h.call('/api/vocals/sing', { song: song(), segment: 'chorus1', track: 'Backing vocals 2' })).status).toBe(400);
+  });
+
+  it('sings each track at the octave its register needs for the voice', async () => {
+    const at = async (x: Song, segment: string, track: string) => {
+      await h.call('/api/vocals/sing', { song: x, segment, track });
+      return svc.state.shifts[svc.state.shifts.length - 1];
+    };
+    const lead = { ...song(), bpm: 101 } as Song;
+    expect(await at(lead, 'verse1', 'Vocal')).toBe(0); // female voice, lead line: as written
+    const male = { ...lead, vocals: { ...lead.vocals!, voice: 'zh_target' } } as Song;
+    expect(await at(male, 'verse1', 'Vocal')).toBe(-12); // male voice: an octave down
+    const low = { ...lead, backingVocals: { 'Backing vocals 2': { enabled: true, voice: 'en_prompt', takeNumbers: {} } } } as Song;
+    expect(await at(low, 'chorus1', 'Backing vocals 2')).toBe(12); // low backing line, female voice: an octave up
+  });
+
+  it('an unknown voice is refused before singing', async () => {
+    const bad = { ...song(), bpm: 102, vocals: { enabled: true, voice: 'nobody', takeNumbers: {} } } as Song;
+    const r = await h.call('/api/vocals/sing', { song: bad, segment: 'verse1', track: 'Vocal' });
+    expect(r.status).toBe(422);
+    expect(r.body.message).toMatch(/nobody/);
   });
 
   it('a refusal by the service is a 422 with its message; a service that is down is a 502', async () => {

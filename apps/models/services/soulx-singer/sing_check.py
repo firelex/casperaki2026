@@ -46,7 +46,7 @@ def main() -> None:
     code, v = post("/voices", {})
     assert code == 200, (code, v)
     for voice in v["voices"]:
-        code, r = post("/sing", {"voice": voice["id"], "steps": 32, "phrases": [PHRASE]})
+        code, r = post("/sing", {"voice": voice["id"], "steps": 32, "shift": 0, "phrases": [PHRASE]})
         assert code == 200, (voice["id"], code, r)
         raw = base64.b64decode(r["phrases"][0]["wav"])
         (OUT / f"{voice['id']}.wav").write_bytes(raw)
@@ -59,7 +59,7 @@ def main() -> None:
         print(f"{voice['id']:14s} {sr} Hz {secs:.2f} s (line {LENGTH:.2f} s) rms {db:.1f} dBFS  {r['tookMs']} ms")
         assert sr == 24000 and abs(secs - LENGTH) <= 0.25 and db > -40, voice["id"]
     bad = dict(PHRASE, phoneme=["<SP>", "en_QQ1"] + PHRASE["phoneme"][2:])
-    code, r = post("/sing", {"voice": v["voices"][0]["id"], "steps": 32, "phrases": [bad]})
+    code, r = post("/sing", {"voice": v["voices"][0]["id"], "steps": 32, "shift": 0, "phrases": [bad]})
     assert code == 422 and "en_QQ1" in r["error"], (code, r)
     print("unknown phone -> 422:", r["error"])
     print("ok")

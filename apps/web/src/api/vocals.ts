@@ -6,8 +6,8 @@ import { defaultBrainClient } from './client';
 export interface VocalVoice {
   readonly id: string;
   readonly label: string;
-  /** Semitones every sung note moves by (male voices sing the written line an octave down). */
-  readonly octave: number;
+  /** The voice's own range (MIDI): each track is sung at the octave nearest its median. */
+  readonly median: number;
 }
 
 /** unused: a take left on a section that no longer has vocal notes (it is dropped before playing). */

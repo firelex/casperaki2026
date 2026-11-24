@@ -19,7 +19,7 @@ import { promisify } from 'node:util';
 
 import type { AIArtifact, Song } from '@casperaki/song-schema';
 
-import { LEAD_VOCAL, sectionScore, TAKE_SETTINGS, takeFingerprint, type SectionScore } from './score.js';
+import { LEAD_VOCAL, registerShift, sectionScore, TAKE_SETTINGS, takeFingerprint, trackMedian, type SectionScore } from './score.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -42,7 +42,7 @@ export interface SectionStatus {
 export interface VocalVoice {
   readonly id: string;
   readonly label: string;
-  readonly octave: number;
+  /** The voice's own note range (MIDI, from its prompt); a track is sung at the octave nearest `median`. */
   readonly low: number;
   readonly high: number;
   readonly median: number;
@@ -86,11 +86,20 @@ export class VocalTakes {
     return songStates(song, this.cfg.takesDir);
   }
 
-  /** The voices the singing service offers. */
+  private voiceList: VocalVoice[] | undefined;
+
+  /** The voices the singing service offers (asked once; asked again when a voice is not in the list). */
   async voices(): Promise<VocalVoice[]> {
     const body = (await this.call('/voices', {})) as { voices?: VocalVoice[] };
     if (!Array.isArray(body.voices)) throw new VocalsError(502, 'singing_failed', 'The singing service answered /voices without a voice list.');
+    this.voiceList = body.voices;
     return body.voices;
+  }
+
+  private async voice(id: string): Promise<VocalVoice> {
+    const found = this.voiceList?.find((v) => v.id === id) ?? (await this.voices()).find((v) => v.id === id);
+    if (!found) throw new VocalsError(422, 'unknown_voice', `The singing service has no voice "${id}".`);
+    return found;
   }
 
   /** Sings a section of a vocal track (nothing to do when a take with its fingerprint is stored). */
@@ -102,9 +111,11 @@ export class VocalTakes {
     const role = roleOf(track);
     const fp = takeFingerprint(score, setting.voice, setting.takeNumbers[segment] ?? 1, role);
     if (!existsSync(this.takePath(fp))) {
+      // The track's register against the voice's range: whole octaves so its median sits nearest the voice's.
+      const shift = registerShift(trackMedian(song, track)!, (await this.voice(setting.voice)).median);
       let job = this.singing.get(fp);
       if (!job) {
-        job = this.render(score, setting.voice, fp, role === 'backing' ? TAKE_LUFS_BACKING : TAKE_LUFS).finally(() => this.singing.delete(fp));
+        job = this.render(score, setting.voice, fp, role === 'backing' ? TAKE_LUFS_BACKING : TAKE_LUFS, shift).finally(() => this.singing.delete(fp));
         this.singing.set(fp, job);
       }
       await job;
@@ -112,10 +123,11 @@ export class VocalTakes {
     return { segment, state: 'sung' };
   }
 
-  private async render(score: SectionScore, voice: string, fp: string, lufsTarget: number): Promise<void> {
+  private async render(score: SectionScore, voice: string, fp: string, lufsTarget: number, shift: number): Promise<void> {
     const body = (await this.call('/sing', {
       voice,
       steps: TAKE_SETTINGS.steps,
+      shift,
       phrases: score.phrases.map((p) => ({ phoneme: p.phoneme, duration: p.duration, notePitch: p.notePitch, noteType: p.noteType })),
     })) as { sampleRate?: number; phrases?: { wav?: string }[] };
     const rate = body.sampleRate;
@@ -151,7 +163,7 @@ export class VocalTakes {
         '-t', score.lengthSec.toFixed(6), '-ac', '2', '-ar', String(TAKE_RATE), '-c:a', 'libvorbis', '-q:a', '6', out,
       ]);
       const lufs = await this.measureLufs(out);
-      writeFileSync(join(tmpDir, 'take.json'), JSON.stringify({ lufs, durationSeconds: Math.round(score.lengthSec * 1e6) / 1e6, sha256: sha256File(out), voice, settings: TAKE_SETTINGS }));
+      writeFileSync(join(tmpDir, 'take.json'), JSON.stringify({ lufs, durationSeconds: Math.round(score.lengthSec * 1e6) / 1e6, sha256: sha256File(out), voice, shift, settings: TAKE_SETTINGS }));
       renameSync(join(tmpDir, 'take.json'), join(this.cfg.takesDir, `${fp}.json`));
       renameSync(out, this.takePath(fp));
     } finally {
