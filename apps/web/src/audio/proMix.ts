@@ -65,24 +65,27 @@ export function setPro(on: boolean): void {
 }
 
 /**
- * Route a track to another group bus (undefined: back to its standard bus). The
+ * Route the tracks of one instrument type to another group bus (undefined: back
+ * to their standard bus; the standard mix routes per type). The
  * engine builds its buses when a song loads, so this saves at once and, if the
  * song is playing, swaps in a version with the new routing at the same position.
  */
 export async function changeLaneRoute(
   liveKey: string | undefined,
   fetchPayload: ((signal: AbortSignal) => Promise<PlaybackPayload>) | undefined,
-  lane: string,
+  lanes: readonly string[],
   fxGroup: string | undefined,
 ): Promise<void> {
-  const prev: LaneMixOverride = { ...(state.mix.lanes[lane] ?? {}) } as LaneMixOverride;
-  const next: Record<string, unknown> = { ...prev };
-  if (fxGroup === undefined) delete next.fxGroup;
-  else next.fxGroup = fxGroup;
-  const lanes = { ...state.mix.lanes };
-  if (Object.keys(next).length) lanes[lane] = next as LaneMixOverride;
-  else delete lanes[lane];
-  set({ mix: { ...state.mix, lanes } });
+  if (!lanes.length) throw new Error('changeLaneRoute: no tracks to route');
+  const next: Record<string, LaneMixOverride> = { ...state.mix.lanes };
+  for (const lane of lanes) {
+    const o: Record<string, unknown> = { ...(next[lane] ?? {}) };
+    if (fxGroup === undefined) delete o.fxGroup;
+    else o.fxGroup = fxGroup;
+    if (Object.keys(o).length) next[lane] = o as LaneMixOverride;
+    else delete next[lane];
+  }
+  set({ mix: { ...state.mix, lanes: next } });
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = undefined;
   await save();

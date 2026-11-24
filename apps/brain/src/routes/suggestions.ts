@@ -32,16 +32,16 @@ export interface SuggestionsRouterDeps {
   readonly authorOf: (req: Request) => string;
 }
 
-type ChangeKind = 'volume' | 'send' | 'plugin';
+type ChangeKind = 'volume' | 'send' | 'route' | 'plugin';
 
 export interface MixChange {
   /** Identifies the change within its genre (for Delete). */
   readonly key: string;
   readonly kind: ChangeKind;
-  /** volume / send: the instrument type (mix config lowLevelType); plugin: the FX bus. */
+  /** volume / send / route: the instrument type (mix config lowLevelType); plugin: the FX bus. */
   readonly target: string;
-  /** send: reverb | delay | chorus; plugin: the plugin's factory and parameter index. */
-  readonly detail?: { readonly send?: 'reverb' | 'delay' | 'chorus'; readonly plugin?: string; readonly slot?: number; readonly param?: number };
+  /** send: reverb | delay | chorus; route: the group bus the type was sent to and its standard bus (values are 1); plugin: the plugin's factory and parameter index. */
+  readonly detail?: { readonly send?: 'reverb' | 'delay' | 'chorus'; readonly bus?: string; readonly standardBus?: string; readonly plugin?: string; readonly slot?: number; readonly param?: number };
   readonly standard: number;
   readonly average: number;
   readonly values: readonly { readonly value: number; readonly songId: string; readonly title: string; readonly lane?: string; readonly updatedAt: string }[];
@@ -97,7 +97,11 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
       for (const [lane, o] of Object.entries(row.mixOverrides.lanes)) {
         const type = typeOf(lane);
         if (o.volumeDb !== undefined && o.volumeDb !== 0) add(`volume|${type}`, { kind: 'volume', target: type, standard: 0 }, { ...meta, lane, value: o.volumeDb });
-        const standard = lookup.laneSends(lookup.fxGroup(type), type, row.genre);
+        const standardBus = lookup.fxGroup(type);
+        if (o.fxGroup !== undefined && o.fxGroup !== standardBus) {
+          add(`route|${type}|${o.fxGroup}`, { kind: 'route', target: type, detail: { bus: o.fxGroup, standardBus }, standard: 0 }, { ...meta, lane, value: 1 });
+        }
+        const standard = lookup.laneSends(standardBus, type, row.genre);
         for (const k of SENDS) {
           const v = o[k];
           // The standard config spells "no send" as -100 (null after the lookup).
@@ -125,7 +129,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
       }
     }
 
-    const order: Record<ChangeKind, number> = { volume: 0, send: 1, plugin: 2 };
+    const order: Record<ChangeKind, number> = { volume: 0, send: 1, route: 2, plugin: 3 };
     const genres = [...byGenre.entries()]
       .filter(([, g]) => g.changes.size > 0)
       .map(([genre, g]) => ({

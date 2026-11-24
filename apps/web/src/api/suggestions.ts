@@ -5,10 +5,11 @@ import { defaultBrainClient } from './client';
 export interface MixChange {
   /** Identifies the change within its genre (for Delete). */
   readonly key: string;
-  readonly kind: 'volume' | 'send' | 'plugin';
+  readonly kind: 'volume' | 'send' | 'route' | 'plugin';
   /** volume / send: the instrument type; plugin: the FX bus. */
   readonly target: string;
-  readonly detail?: { readonly send?: 'reverb' | 'delay' | 'chorus'; readonly plugin?: string; readonly slot?: number; readonly param?: number };
+  /** route: the group bus the type was sent to, and its standard bus (values are 1). */
+  readonly detail?: { readonly send?: 'reverb' | 'delay' | 'chorus'; readonly bus?: string; readonly standardBus?: string; readonly plugin?: string; readonly slot?: number; readonly param?: number };
   readonly standard: number;
   readonly average: number;
   readonly values: readonly { readonly value: number; readonly songId: string; readonly title: string; readonly lane?: string; readonly updatedAt: string }[];

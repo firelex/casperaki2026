@@ -179,6 +179,11 @@ function trackLabel(c: MixChange): string {
 }
 
 function describe(c: MixChange): { what: string; show: (v: number) => string } {
+  if (c.kind === 'route') {
+    const { bus, standardBus } = c.detail!;
+    // Standard shows the type's standard bus; Pro and each song the bus it was sent to.
+    return { what: `${trackLabel(c)}: output bus`, show: (v) => (v === 0 ? `${standardBus!} bus` : `→ ${bus!} bus`) };
+  }
   if (c.kind === 'volume') return { what: `${trackLabel(c)}: level`, show: dB };
   if (c.kind === 'send') return { what: `${trackLabel(c)}: ${SEND_NAMES[c.detail!.send!]} send`, show: dB };
   const { plugin, slot, param } = c.detail!;

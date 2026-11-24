@@ -192,7 +192,7 @@ export function Mixer({
           routable={routable}
           onRoute={(bus) => {
             setRouteError(undefined);
-            changeLaneRoute(liveKey, fetchPayload, lane, bus).catch((err: unknown) =>
+            changeLaneRoute(liveKey, fetchPayload, linkedLanes(lane), bus).catch((err: unknown) =>
               setRouteError(`Routing ${lane} failed: ${err instanceof Error ? err.message : String(err)}`),
             );
           }}
@@ -364,7 +364,7 @@ function ChannelStrip({
           {linkedWith.length ? (
             <div
               className="mb-1 truncate rounded-[3px] bg-[#6fa8e8]/15 px-1 text-center text-[9px] text-[#9cc3f0]"
-              title={`Same instrument type as ${linkedWith.join(', ')}. In Pro mode the fader and sends set the level for the type, so they move all of these tracks together.`}
+              title={`Same instrument type as ${linkedWith.join(', ')}. In Pro mode the fader, sends and output bus are set for the type, so they change all of these tracks together.`}
             >
               ⛓ {linkedWith.join(', ')}
             </div>
