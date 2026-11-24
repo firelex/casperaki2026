@@ -21,7 +21,7 @@
 // the bar. SM patterns can therefore harmonically follow on-beat chord
 // changes inside a bar.
 
-import { parseChord, parseKey } from '@casperaki/music-theory';
+import { parseChord, parseKey, scalePitchClasses, type ParsedChord } from '@casperaki/music-theory';
 import { MidiNoteSchema, type Segment } from '@casperaki/song-schema';
 
 import type { GeneratorContext } from '../context.js';
@@ -51,7 +51,9 @@ export function generateBassPattern(
   // SimpleBass / edmSimple / edmComplex / Library / HipHop. `urban` derives a
   // legato bass from the segment's drum pattern (HipHopBass); without one (no
   // drums this segment) it falls back to the orphan SM bank.
-  const scale = parseKey(ctx.params.key).mode;
+  const songKey = parseKey(ctx.params.key);
+  const scale = songKey.mode;
+  const keyPitchClasses = scalePitchClasses(songKey);
   let real: RealBassSelection | null = null;
   // Pattern lab: a preview forces the proposed patterns.
   const preview = bassPreviewFromParams(ctx.params.params);
@@ -123,7 +125,8 @@ export function generateBassPattern(
         // Re-rooted per bar: the bar's own root (its first note) moves to the
         // chord root the nearest way, so a line that walks its own chords
         // follows the song's instead (see templateNotes).
-        let pitch = floorSub(ev.midi + nearestRootDelta(parseChord(chordSymbol).root - barRoots.get(ev.bar)!) + lift);
+        const chord = parseChord(chordSymbol);
+        let pitch = floorSub(fitBassNote(ev.midi + nearestRootDelta(chord.root - barRoots.get(ev.bar)!), chord, keyPitchClasses) + lift);
         while (pitch < 0) pitch += 12;
         while (pitch > 127) pitch -= 12;
         const note = MidiNoteSchema.parse(pitch);
@@ -154,8 +157,8 @@ export function generateBassPattern(
       // Legacy builds the hit on its default all-C template ('C' + octave +
       // offset) and the engine moves the plain note from C to the chord root
       // the nearest way (-5..+6), not upwards: roots G..B sit below C.
-      const root = parseChord(chordSymbol).root;
-      const raw = floorSub(rootBaseMidi + nearestRootDelta(root) + semitoneOffset + lift);
+      const chord = parseChord(chordSymbol);
+      const raw = floorSub(fitBassNote(rootBaseMidi + nearestRootDelta(chord.root) + semitoneOffset, chord, keyPitchClasses) + lift);
       // Clamp into MidiNote range. SM patterns can use offsets like
       // `-5` / `+7` / `+12` that, combined with extreme chord roots,
       // would theoretically push out of [0, 127]. Octave-shift back in
@@ -175,6 +178,48 @@ export function generateBassPattern(
   }
 
   return { bars: bars.map(oneNotePerBeat) };
+}
+
+const mod12 = (n: number) => ((n % 12) + 12) % 12;
+
+/**
+ * Fits a bank note, already moved from its template root to the chord's root,
+ * to the chord itself. Casperaki rule (owner, 2026-11-24), not in the legacy:
+ * bank lines are written over C (major or minor, by the song's key), and the
+ * legacy moved them to each chord's root only, so every minor chord in a major
+ * song got a major third (C# over Am) and every bluesy line a flat seventh out
+ * of the key (Eb over F in C major).
+ * - A third becomes the chord's third (minor or major); on a suspended chord,
+ *   its suspended note.
+ * - A seventh becomes the chord's seventh; on a chord without one, the seventh
+ *   that is in the key, or else the root an octave up.
+ * - A fifth becomes the chord's fifth (diminished, perfect or augmented).
+ * - Any other note outside both the chord and the key moves a semitone or two
+ *   to the nearest note in the key (a chord tone first, then the lower one).
+ * Roots, chord tones and passing notes in the key stay where they are.
+ */
+export function fitBassNote(pitch: number, chord: ParsedChord, keyPitchClasses: readonly number[]): number {
+  const tones = new Set(chord.intervals.map(mod12));
+  const inKey = (p: number) => keyPitchClasses.includes(mod12(p));
+  const interval = mod12(pitch - chord.root);
+  const to = (target: number) => pitch + (target - interval);
+  if (interval === 3 || interval === 4) {
+    const third = [3, 4, 5, 2].find((t) => tones.has(t));
+    if (third !== undefined) return to(third);
+  } else if (interval === 10 || interval === 11) {
+    const seventh = [10, 11].find((t) => tones.has(t)) ?? [10, 11].find((t) => inKey(chord.root + t));
+    return to(seventh ?? 12);
+  } else if (interval >= 6 && interval <= 8) {
+    const fifth = [7, 6, 8].find((t) => tones.has(t));
+    if (fifth !== undefined) return to(fifth);
+  }
+  if (tones.has(interval) || inKey(pitch)) return pitch;
+  for (const d of [1, 2]) {
+    const near = [pitch - d, pitch + d].filter(inKey);
+    const pick = near.find((p) => tones.has(mod12(p - chord.root))) ?? near[0];
+    if (pick !== undefined) return pick;
+  }
+  throw new Error(`fitBassNote: no note of the key within two semitones of MIDI ${pitch} (chord ${chord.raw})`);
 }
 
 /**
