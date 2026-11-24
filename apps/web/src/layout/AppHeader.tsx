@@ -36,6 +36,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
             </HeaderLink>
           ) : null}
           <HeaderLink to="/sounds">Sound library</HeaderLink>
+          <HeaderLink to="/melodies">Melodies</HeaderLink>
           {user?.isAdmin ? <HeaderLink to="/suggestions">Suggestions</HeaderLink> : null}
         </nav>
         <div className="ml-auto flex items-center gap-3">

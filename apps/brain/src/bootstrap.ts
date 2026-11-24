@@ -25,6 +25,8 @@ import { createPatternsRouter } from './routes/patterns.js';
 import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
+import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
+import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
@@ -58,6 +60,8 @@ export interface CreateAppDeps {
   readonly assistantLlm?: AssistantLlm;
   /** Names new songs (tests inject a fake; production uses the assistant model). */
   readonly songTitler?: SongTitler;
+  /** The melody library's precedent bank directory (tests point it at fixtures). */
+  readonly melodyLibraryDir?: string;
 }
 
 /** A stable dev session secret persisted next to the auth DB. Regenerating
@@ -230,6 +234,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     }),
   );
   app.use(createSoundsRouter({ playback }));
+  app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(deps.melodyLibraryDir) }));
   const assistantEp = assistantEndpoint(config);
   app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
   app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));

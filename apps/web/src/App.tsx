@@ -11,6 +11,7 @@ import { SignInPage } from './pages/SignInPage';
 // editor, catalog and dev WASM pages are fetched when first opened.
 const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ default: m.EditorPage })));
 const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage').then((m) => ({ default: m.SuggestionsPage })));
+const MelodyLibraryPage = lazy(() => import('./pages/MelodyLibraryPage').then((m) => ({ default: m.MelodyLibraryPage })));
 const SoundLibraryPage = lazy(() => import('./pages/SoundLibraryPage').then((m) => ({ default: m.SoundLibraryPage })));
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
@@ -47,6 +48,7 @@ export function App() {
         <Route path="/" element={<ProjectsPage />} />
         {/* The sound library lists source names: admins only. */}
         <Route path="/sounds" element={<SoundLibraryPage />} />
+        <Route path="/melodies" element={<MelodyLibraryPage />} />
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
         {/* Suggestions (admins): the pattern lab and the Pro-mode mix changes. */}
         {user.isAdmin ? <Route path="/suggestions" element={<SuggestionsPage />} /> : null}
