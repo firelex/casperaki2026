@@ -1,0 +1,282 @@
+# Verses: 30 original verse melodies. Key of C major / A minor, sung pitch (C4 = middle C), range G3-G4.
+
+hook: Kitchen Table Talk
+type: Verse
+tempo: 85-100
+feel: conversational
+chords: C | G | Am | F | C | G | F | G
+melody: r:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 d4:1 | d4:1 b3:1 r:2 | r:0.5 c4:0.5 c4:0.5 b3:0.5 a3:1 c4:1 | c4:2 r:2 |
+        r:0.5 e4:0.5 e4:0.5 f4:0.5 g4:1 e4:1 | d4:1 b3:1 r:2 | r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 e4:1 | d4:3 r:1 |
+
+hook: Folded Lamplight
+type: Verse
+tempo: 66-80
+feel: tender
+leadin: yes
+chords: G | C | Am | F | G | C | Am | Dm G | C
+melody: r:2.5 g3:0.5 c4:0.5 d4:0.5 | e4:1.5 d4:0.5 c4:1 e4:1 | e4:2 r:2 | r:0.5 f4:0.5 f4:0.5 e4:0.5 f4:1 c4:1 | d4:3 r:1 |
+        r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:1 g4:1 | e4:1.5 d4:0.5 c4:2 | r:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 b3:1 | c4:4 |
+
+hook: Neon Corner
+type: Verse
+tempo: 88-100
+feel: urban
+chords: Am | F | C | G | Am | F | C | G
+melody: a3:0.5 a3:0.25 a3:0.25 c4:0.5 a3:0.5 e4:0.5 e4:0.5 d4:0.5 c4:0.5 |
+        c4:0.5 c4:0.25 c4:0.25 a3:0.5 c4:0.5 f4:0.5 e4:0.5 c4:1 |
+        e4:0.5 e4:0.25 e4:0.25 g4:0.5 e4:0.5 c4:0.5 d4:0.5 r:1 | d4:0.5 b3:0.5 g3:1 r:2 |
+        a3:0.5 a3:0.25 a3:0.25 c4:0.5 e4:0.5 e4:0.5 g4:0.5 e4:0.5 d4:0.5 |
+        c4:0.5 c4:0.25 c4:0.25 a3:0.5 c4:0.5 a3:0.5 g3:0.5 a3:1 |
+        g3:0.5 c4:0.5 e4:0.5 c4:0.5 e4:0.5 g4:0.5 e4:1 | d4:3 r:1 |
+
+hook: Slow Motion Rain
+type: Verse
+tempo: 60-72
+feel: tender
+chords: Fmaj7 | C | Fmaj7 | G | Am | Em | F | Gsus4 G
+melody: r:1 c4:0.5 c4:0.5 e4:1 f4:1 | e4:1.5 d4:0.5 c4:2 | r:1 a3:0.5 c4:0.5 e4:1 g4:1 | g4:1 f4:1 d4:2 |
+        r:1 c4:0.5 c4:0.5 c4:1 b3:1 | b3:3 r:1 | r:1 a3:0.5 c4:0.5 f4:1 e4:1 | d4:2 d4:2 |
+
+hook: Taillight Mile
+type: Verse
+tempo: 128-140
+feel: driving
+chords: C | Bb | F | C | C | Bb | F | G
+melody: c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:0.5 c4:0.5 g3:1 | f4:0.5 f4:0.5 f4:0.5 d4:0.5 d4:1 r:1 |
+        c4:0.5 c4:0.5 c4:0.5 d4:0.5 f4:0.5 e4:0.5 c4:1 | c4:2 r:2 |
+        e4:0.5 e4:0.5 e4:0.5 f4:0.5 g4:0.5 e4:0.5 c4:1 | d4:0.5 d4:0.5 d4:0.5 c4:0.5 bb3:1 r:1 |
+        a3:0.5 c4:0.5 f4:0.5 e4:0.5 f4:0.5 e4:0.5 c4:1 | d4:3 r:1 |
+
+hook: Second Hand Coat
+type: Verse
+tempo: 100-116
+feel: conversational
+leadin: yes
+chords: C | C | Em | Am | F | C | Em | F | G
+melody: r:3 g3:0.5 g3:0.5 | c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 c4:1 | b3:1 b3:0.5 g3:0.5 b3:2 |
+        r:0.5 c4:0.5 c4:0.5 c4:0.5 e4:1 d4:0.5 c4:0.5 | c4:3 r:1 |
+        r:0.5 e4:0.5 e4:0.5 e4:0.5 g4:1 e4:1 | e4:1 d4:0.5 b3:0.5 g3:2 |
+        r:0.5 a3:0.5 a3:0.5 c4:0.5 f4:1 e4:0.5 d4:0.5 | d4:4 |
+
+hook: Cold Platform
+type: Verse
+tempo: 70-84
+feel: minor
+chords: Am | Am | F | E | Am | Am | Dm | E
+melody: r:1 e4:0.5 d4:0.5 e4:1 d4:0.5 c4:0.5 | a3:2 r:2 | r:1 f4:0.5 f4:0.5 f4:1 e4:0.5 d4:0.5 | e4:1 b3:1 g#3:2 |
+        r:1 e4:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | c4:2 r:2 | r:1 d4:0.5 d4:0.5 f4:1 e4:0.5 d4:0.5 | b3:4 |
+
+hook: Mango Street Sway
+type: Verse
+tempo: 92-104
+feel: latin
+chords: Am Dm | G C | F Dm | E | Am Dm | G C | F E | Am
+melody: e4:0.75 e4:0.75 c4:0.5 d4:1 f4:1 | d4:0.75 d4:0.75 b3:0.5 c4:1 e4:1 | c4:0.75 c4:0.75 a3:0.5 a3:1 d4:1 | b3:1.5 g#3:0.5 b3:2 |
+        e4:0.75 e4:0.75 g4:0.5 f4:1 d4:1 | d4:0.75 b3:0.75 d4:0.5 e4:1 c4:1 | c4:0.75 a3:0.75 c4:0.5 b3:1 g#3:1 | a3:3 r:1 |
+
+hook: Late Bus Home
+type: Verse
+tempo: 76-88
+feel: tender
+chords: C | Em | Am | G | F | C | Dm7 | G
+melody: r:2 g3:0.5 c4:0.5 e4:0.5 d4:0.5 | e4:1.5 d4:0.5 b3:2 | r:2 a3:0.5 c4:0.5 e4:0.5 d4:0.5 | d4:1.5 c4:0.5 b3:2 |
+        r:2 a3:0.5 c4:0.5 f4:0.5 e4:0.5 | e4:1.5 d4:0.5 c4:2 | r:1 d4:0.5 e4:0.5 f4:1 c4:1 | b3:1 d4:3 |
+
+hook: Concrete Bloom
+type: Verse
+tempo: 132-148
+feel: urban
+chords: Am7 | Fmaj7 | Am7 | G | Am7 | Fmaj7 | Am7 | G
+melody: a3:0.25 a3:0.25 c4:0.5 a3:0.25 a3:0.25 c4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:0.5 |
+        c4:0.25 c4:0.25 a3:0.5 c4:0.25 c4:0.25 a3:0.5 e4:1 r:1 |
+        a3:0.25 a3:0.25 c4:0.5 a3:0.25 a3:0.25 c4:0.5 g4:0.5 e4:0.5 d4:0.5 e4:0.5 | d4:0.5 b3:0.5 g3:1 r:2 |
+        e4:0.25 e4:0.25 e4:0.5 c4:0.25 c4:0.25 e4:0.5 g4:0.5 e4:0.5 d4:0.5 c4:0.5 |
+        f4:0.25 f4:0.25 e4:0.5 c4:0.25 c4:0.25 a3:0.5 c4:1 r:1 |
+        a3:0.25 c4:0.25 e4:0.5 a3:0.25 c4:0.25 e4:0.5 g4:0.5 e4:0.5 c4:0.5 a3:0.5 | b3:0.5 d4:0.5 b3:0.5 g3:0.5 g3:2 |
+
+hook: Porch Light Hum
+type: Verse
+tempo: 84-96
+feel: groove
+chords: C | F | C | F | Am | F | G | G
+melody: r:0.5 g3:0.5 c4:0.5 c4:1 e4:0.5 c4:1 | a3:1 c4:0.5 a3:1.5 r:1 | r:0.5 g3:0.5 c4:0.5 c4:1 e4:0.5 g4:1 | f4:1 e4:0.5 c4:1.5 r:1 |
+        r:0.5 e4:0.5 e4:0.5 e4:1 d4:0.5 c4:1 | c4:1 a3:0.5 c4:1.5 r:1 | r:0.5 b3:0.5 d4:0.5 d4:1 e4:0.5 d4:1 | d4:2 b3:2 |
+
+hook: Borrowed Sunday
+type: Verse
+tempo: 72-86
+feel: conversational
+chords: Dm7 | G7 | Cmaj7 | Am7 | Dm7 | G7 | Cmaj7 | G7
+melody: r:0.5 f4:0.5 f4:0.5 e4:0.5 d4:1 c4:1 | b3:1 d4:0.5 f4:0.5 f4:2 | e4:1 e4:0.5 d4:0.5 c4:1 b3:1 | a3:3 r:1 |
+        r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 e4:1 | d4:1.5 b3:0.5 g3:2 | r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:1 e4:1 | f4:2 d4:2 |
+
+hook: Engine Heart
+type: Verse
+tempo: 140-150
+feel: driving
+chords: Am | G | F | G | Am | G | F | E
+melody: a3:0.5 a3:0.5 c4:0.5 a3:0.5 e4:1 e4:1 | d4:0.5 d4:0.5 b3:0.5 g3:0.5 d4:1 r:1 |
+        c4:0.5 c4:0.5 a3:0.5 c4:0.5 f4:1 e4:0.5 d4:0.5 | d4:2 r:2 |
+        e4:0.5 e4:0.5 c4:0.5 e4:0.5 e4:1 g4:0.5 e4:0.5 | d4:0.5 d4:0.5 b3:0.5 d4:0.5 g4:1 d4:1 |
+        f4:0.5 f4:0.5 e4:0.5 d4:0.5 c4:1 a3:1 | b3:2 g#3:2 |
+
+hook: Thin Blue Hour
+type: Verse
+tempo: 60-70
+feel: minor
+leadin: yes
+chords: E | Am | Dm | G | C | F | Dm | E | Am
+melody: r:2 b3:0.5 c4:0.5 d4:0.5 b3:0.5 | c4:2 r:0.5 a3:0.5 c4:0.5 e4:0.5 | d4:1 f4:1 d4:2 |
+        r:0.5 b3:0.5 d4:0.5 f4:0.5 g4:1 d4:1 | e4:3 r:1 | r:0.5 c4:0.5 c4:0.5 c4:0.5 f4:1 e4:0.5 c4:0.5 |
+        d4:1.5 a3:0.5 f4:2 | e4:1 d4:0.5 b3:0.5 g#3:2 | a3:4 |
+
+hook: Saltwater Steps
+type: Verse
+tempo: 104-118
+feel: latin
+chords: C G | Am F | C G | F G | C G | Am F | Dm G | C
+melody: e4:0.75 e4:0.75 d4:0.5 d4:1 b3:1 | c4:0.75 c4:0.75 e4:0.5 c4:1 a3:1 | g3:0.75 c4:0.75 e4:0.5 g4:1 d4:1 | f4:0.75 e4:0.75 c4:0.5 d4:2 |
+        e4:0.75 g4:0.75 e4:0.5 d4:1 b3:1 | c4:0.75 a3:0.75 c4:0.5 f4:1 c4:1 | d4:0.75 f4:0.75 d4:0.5 b3:1 g3:1 | c4:3 r:1 |
+
+hook: Rooftop Static
+type: Verse
+tempo: 96-108
+feel: urban
+chords: Am | Em | F | G | Am | Em | F | G
+melody: r:0.25 e4:0.25 e4:0.25 e4:0.25 c4:0.5 e4:0.5 a3:0.5 a3:0.25 c4:0.25 a3:1 |
+        b3:0.25 b3:0.25 b3:0.25 g3:0.25 b3:0.5 e4:0.5 e4:0.5 d4:0.5 b3:1 |
+        r:0.25 c4:0.25 c4:0.25 c4:0.25 a3:0.5 c4:0.5 f4:0.5 f4:0.25 e4:0.25 c4:1 | d4:2 r:2 |
+        r:0.25 a3:0.25 c4:0.25 e4:0.25 g4:0.5 e4:0.5 e4:0.5 d4:0.25 c4:0.25 a3:1 |
+        g4:0.25 g4:0.25 e4:0.25 e4:0.25 b3:0.5 b3:0.5 g3:0.5 g3:0.25 b3:0.25 e4:1 |
+        r:0.25 a3:0.25 c4:0.25 f4:0.25 f4:0.5 e4:0.5 c4:0.5 c4:0.25 d4:0.25 e4:1 | d4:3 r:1 |
+
+hook: Unfinished Letter
+type: Verse
+tempo: 92-106
+feel: tender
+leadin: yes
+chords: G | C | Am | F | C | Am | F | Dm | G
+melody: r:3 c4:0.5 d4:0.5 | e4:2 e4:0.5 d4:0.5 c4:0.5 d4:0.5 | e4:1 c4:1 a3:2 | r:1 a3:0.5 c4:0.5 f4:1.5 e4:0.5 | e4:2 r:1 d4:0.5 e4:0.5 |
+        e4:2 e4:0.5 g4:0.5 e4:0.5 d4:0.5 | c4:1 a3:1 c4:2 | r:1 d4:0.5 e4:0.5 f4:1.5 a3:0.5 | b3:2 d4:2 |
+
+hook: Gravel Road Gospel
+type: Verse
+tempo: 112-124
+feel: groove
+chords: C F | C F | C F | G F | C F | C F | Am G | F G
+melody: e4:1 e4:0.5 g4:0.5 f4:1 c4:1 | e4:0.5 d4:0.5 c4:1 a3:1 r:1 | g3:0.5 c4:0.5 e4:1 f4:1.5 e4:0.5 | d4:1 b3:1 c4:1 a3:1 |
+        e4:1 g4:0.5 e4:0.5 f4:1 a3:1 | g4:0.5 e4:0.5 c4:1 c4:1 r:1 | c4:1 e4:0.5 c4:0.5 d4:1 b3:1 | a3:1 c4:1 d4:2 |
+
+hook: Ash and Amber
+type: Verse
+tempo: 96-110
+feel: minor
+chords: Am | Dm | Am | E7 | Am | Dm | F | E7
+melody: r:1 a3:0.5 b3:0.5 c4:1 e4:1 | d4:0.5 d4:0.5 d4:0.5 c4:0.5 a3:1 r:1 | r:1 a3:0.5 b3:0.5 c4:1 e4:0.5 g4:0.5 | e4:1 d4:1 b3:2 |
+        r:1 e4:0.5 e4:0.5 e4:1 c4:1 | f4:0.5 f4:0.5 e4:0.5 d4:0.5 d4:1 a3:1 | r:1 c4:0.5 c4:0.5 f4:1 e4:0.5 c4:0.5 | b3:1 g#3:1 e4:2 |
+
+hook: Feather Weight
+type: Verse
+tempo: 80-92
+feel: tender
+chords: C | Cmaj7 | Am7 | Fmaj7 | C | Cmaj7 | Dm7 | G
+melody: g3:1 c4:1 e4:1.5 d4:0.5 | b3:3 r:1 | a3:1 c4:1 e4:1.5 g4:0.5 | e4:3 r:1 |
+        g3:1 c4:1 g4:1.5 f4:0.5 | e4:2 c4:0.5 d4:0.5 b3:1 | a3:1 c4:1 f4:1 e4:1 | d4:4 |
+
+hook: Brick Lane Shuffle
+type: Verse
+tempo: 100-112
+feel: groove
+chords: Am7 | Dm7 | G | C | Am7 | Dm7 | F | G
+melody: r:0.5 e4:0.5 r:0.5 e4:0.5 g4:0.5 e4:0.5 c4:1 | r:0.5 d4:0.5 r:0.5 d4:0.5 f4:0.5 d4:0.5 a3:1 |
+        r:0.5 b3:0.5 r:0.5 b3:0.5 d4:0.5 b3:0.5 g3:1 | c4:0.5 d4:0.5 e4:2 r:1 |
+        r:0.5 a3:0.5 r:0.5 c4:0.5 e4:0.5 g4:0.5 e4:1 | r:0.5 f4:0.5 r:0.5 f4:0.5 d4:0.5 e4:0.5 c4:1 |
+        r:0.5 c4:0.5 r:0.5 c4:0.5 a3:0.5 c4:0.5 f4:1 | d4:2.5 r:1.5 |
+
+hook: Static on the Line
+type: Verse
+tempo: 120-132
+feel: conversational
+chords: C | Am | Dm | G | C | Am | Dm | G
+melody: c4:0.5 c4:0.5 c4:0.5 c4:0.5 e4:0.5 d4:0.5 c4:1 | a3:1 r:1 c4:0.5 c4:0.5 b3:0.5 a3:0.5 |
+        d4:0.5 d4:0.5 d4:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 | b3:1 r:1 b3:0.5 c4:0.5 d4:0.5 f4:0.5 |
+        e4:0.5 e4:0.5 e4:0.5 e4:0.5 g4:0.5 f4:0.5 e4:1 | c4:1 r:1 e4:0.5 e4:0.5 d4:0.5 c4:0.5 |
+        a3:0.5 a3:0.5 d4:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 | b3:2 r:2 |
+
+hook: Quiet Engine
+type: Verse
+tempo: 120-134
+feel: minor
+leadin: yes
+chords: E | Am | F | C | G | Am | F | Dm | E
+melody: r:2 e4:0.5 d4:0.5 b3:0.5 g#3:0.5 | a3:1 a3:0.5 c4:0.5 e4:1 c4:1 | f4:1 e4:0.5 c4:0.5 a3:2 |
+        r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:1 e4:1 | d4:3 r:1 | a3:1 a3:0.5 c4:0.5 e4:1 e4:0.5 g4:0.5 |
+        f4:1 e4:0.5 d4:0.5 c4:2 | r:0.5 a3:0.5 d4:0.5 f4:0.5 f4:1 e4:1 | e4:2 b3:2 |
+
+hook: Cobblestone Rumba
+type: Verse
+tempo: 120-136
+feel: latin
+chords: Am | Dm | G | C | F | Dm | E | Am
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1 a3:1 | r:0.5 f4:0.5 f4:0.5 d4:0.5 f4:1 a3:1 | r:0.5 d4:0.5 d4:0.5 b3:0.5 d4:1 g3:1 | c4:0.75 c4:0.75 e4:0.5 c4:2 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 f4:1 c4:1 | r:0.5 d4:0.5 f4:0.5 g4:0.5 f4:1 d4:1 | e4:0.75 d4:0.75 b3:0.5 g#3:2 | a3:3 r:1 |
+
+hook: Midnight Laundromat
+type: Verse
+tempo: 70-82
+feel: urban
+chords: Am | F | Dm | E | Am | F | Dm | E
+melody: a3:0.25 a3:0.25 a3:0.25 c4:0.25 e4:0.5 c4:0.5 a3:0.25 a3:0.25 c4:0.5 e4:1 |
+        f4:0.25 f4:0.25 e4:0.25 c4:0.25 a3:0.5 c4:0.5 c4:0.25 a3:0.25 c4:0.5 f4:1 |
+        d4:0.25 d4:0.25 d4:0.25 f4:0.25 a3:0.5 d4:0.5 f4:0.25 e4:0.25 d4:0.5 a3:1 | b3:0.5 g#3:0.5 b3:1 r:2 |
+        e4:0.25 e4:0.25 e4:0.25 g4:0.25 e4:0.5 c4:0.5 c4:0.25 c4:0.25 e4:0.5 a3:1 |
+        a3:0.25 c4:0.25 f4:0.25 f4:0.25 f4:0.5 e4:0.5 c4:0.25 c4:0.25 a3:0.5 c4:1 |
+        f4:0.25 f4:0.25 e4:0.25 d4:0.25 a3:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 | e4:1 b3:1 g#3:2 |
+
+hook: Window Seat
+type: Verse
+tempo: 64-76
+feel: conversational
+leadin: yes
+chords: C | F | C | Dm | G | F | C | Dm | G
+melody: r:2 c4:0.5 d4:0.5 e4:0.5 f4:0.5 | f4:1.5 e4:0.5 c4:1 a3:1 | c4:0.5 c4:0.5 d4:0.5 e4:0.5 c4:2 |
+        r:1 a3:0.5 c4:0.5 d4:0.5 d4:0.5 f4:1 | d4:3 r:1 | a3:0.5 c4:0.5 f4:1 f4:0.5 e4:0.5 c4:1 |
+        e4:0.5 e4:0.5 g4:0.5 e4:0.5 c4:2 | r:1 d4:0.5 e4:0.5 f4:0.5 e4:0.5 d4:1 | b3:4 |
+
+hook: Highline Fever
+type: Verse
+tempo: 124-138
+feel: driving
+chords: C | G | Bb | F | C | G | F | G
+melody: g3:0.5 c4:0.5 c4:0.5 c4:0.5 e4:1 d4:0.5 c4:0.5 | d4:0.5 d4:0.5 d4:0.5 b3:0.5 g3:2 |
+        bb3:0.5 d4:0.5 d4:0.5 d4:0.5 f4:1 d4:0.5 c4:0.5 | c4:2 a3:1 r:1 |
+        g3:0.5 c4:0.5 e4:0.5 e4:0.5 g4:1 e4:0.5 d4:0.5 | d4:0.5 d4:0.5 b3:0.5 d4:0.5 g4:2 |
+        f4:0.5 f4:0.5 e4:0.5 c4:0.5 a3:1 c4:1 | b3:1 d4:3 |
+
+hook: Low Tide Lounge
+type: Verse
+tempo: 76-88
+feel: groove
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 | Dm7 | Cmaj7
+melody: r:0.5 a3:0.5 c4:0.5 e4:1 c4:0.5 a3:1 | b3:1 g3:0.5 b3:1 d4:0.5 r:1 | r:0.5 f4:0.5 f4:0.5 e4:1 d4:0.5 c4:1 | b3:1 c4:0.5 e4:1.5 r:1 |
+        r:0.5 c4:0.5 e4:0.5 g4:1 e4:0.5 c4:1 | d4:1 b3:0.5 g3:1.5 r:1 | r:0.5 a3:0.5 c4:0.5 d4:1 f4:0.5 e4:1 | e4:2 c4:2 |
+
+hook: Overpass Run
+type: Verse
+tempo: 136-150
+feel: driving
+chords: C | Am | F | G | C | Am | F G | C
+melody: e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:0.5 d4:0.5 e4:1 | r:0.5 c4:0.5 c4:0.5 b3:0.5 a3:2 |
+        f4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:0.5 e4:0.5 f4:1 | r:0.5 d4:0.5 d4:0.5 c4:0.5 b3:2 |
+        g4:0.5 g4:0.5 g4:0.5 e4:0.5 c4:0.5 e4:0.5 g4:1 | r:0.5 e4:0.5 e4:0.5 d4:0.5 c4:2 |
+        a3:0.5 c4:0.5 f4:0.5 e4:0.5 d4:1 b3:1 | c4:3 r:1 |
+
+hook: Ivy on Iron
+type: Verse
+tempo: 108-120
+feel: minor
+leadin: yes
+chords: Am | Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Dm7 | E | Am
+melody: r:3 c4:0.5 d4:0.5 | e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 a3:1 | r:1 c4:0.5 d4:0.5 f4:1 d4:1 | d4:1.5 b3:0.5 g3:1 r:0.5 c4:0.5 |
+        e4:0.5 e4:0.5 e4:0.5 g4:0.5 e4:1 c4:1 | r:1 c4:0.5 e4:0.5 f4:1 e4:1 | d4:1.5 c4:0.5 a3:2 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 e4:1 d4:0.5 b3:0.5 | c4:2 a3:2 |
