@@ -41,6 +41,7 @@ import { renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
+import { createVocalsRouterFor } from './routes/vocals.js';
 import { DeepSeekPlanner } from './video/planner.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
@@ -65,6 +66,8 @@ export interface CreateAppDeps {
   readonly songTitler?: SongTitler;
   /** The melody library's precedent bank directory (tests point it at fixtures). */
   readonly melodyLibraryDir?: string;
+  /** Tests: the fetch the sung-vocals take store calls the singing service with. */
+  readonly vocalsFetch?: typeof fetch;
   /**
    * Records the data people change in the app in git: approved patterns (exported into the
    * pattern library) and melody edits. The server passes commitAndPush; tests leave it out, and
@@ -244,6 +247,8 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       ...(titler ? { onPlaceholderTitle: (u: Parameters<SongTitler['name']>[0]) => titler.name(u) } : {}),
     }),
   );
+  // Sung vocals (section takes): answers 503 naming the settings when not set up.
+  app.use(createVocalsRouterFor(config, deps.vocalsFetch));
   app.use(createSoundsRouter({ playback }));
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
   const commit = deps.commit;

@@ -67,6 +67,10 @@ const ConfigSchema = z.object({
    *  POST /complete), as base URLs. Unset → /api/hum answers 503 naming the setting. */
   humServiceUrl: z.string().url().optional(),
   amtServiceUrl: z.string().url().optional(),
+  /** Sung vocals: the SoulX singing service (svc-soulx, POST /voices and /sing) and the directory the section takes
+   *  are kept in. Either unset → /api/vocals answers 503 naming the setting. */
+  singingServiceUrl: z.string().url().optional(),
+  vocalTakesDir: z.string().min(1).optional(),
   videoPlannerUrl: z.string().url().optional(),
   videoPlannerModel: z.string().min(1).optional(),
   videoPlannerKey: z.string().min(1).optional(),
@@ -134,6 +138,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     humLabDir: env.BRAIN_HUM_LAB_DIR || undefined,
     humServiceUrl: env.HUM_SERVICE_URL || undefined,
     amtServiceUrl: env.AMT_SERVICE_URL || undefined,
+    singingServiceUrl: env.SOULX_SERVICE_URL || undefined,
+    vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
     videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
     videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,
