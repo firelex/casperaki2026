@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createRng } from '@casperaki/music-theory';
 
-import { addThinPartners, fillScore, measureSection, partnerLane, THIN_RULES } from '../src/arrangement-polish/thin-sections.js';
+import { addThinPartners, fillScore, measureSection, partnerLane, replayThinPartners, THIN_RULES } from '../src/arrangement-polish/thin-sections.js';
 import type { ValidatedCatalogEntry } from '../src/catalog/validated-catalog.js';
 import type { GeneratorContext } from '../src/context.js';
 import type { PatternResult } from '../src/patterns/types.js';
@@ -178,10 +178,43 @@ describe('addThinPartners', () => {
     expect(r.added).toHaveLength(THIN_RULES.maxAddedTracks);
   });
 
-  it('intros, outros and breaks are sparse on purpose: never paired', () => {
-    const s = sel([inst('Pad', 'pad', 'p1')], { intro: ['Pad'], break1: ['Pad'], outro: ['Pad'] });
+  it('breaks are sparse on purpose: never paired', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { break1: ['Pad'], break2: ['Pad'] });
     const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set() });
     expect(r.added).toEqual([]);
+  });
+
+  it('a thin intro first borrows a partner track the song already has: no new track', () => {
+    // The chorus is full (keys chords on every eighth), so only the verse and the intro are thin.
+    const s = sel([inst('Pad', 'pad', 'p1'), inst('Keys', 'keys', 'k1')], { intro: ['Pad'], verse1: ['Pad'], chorus1: ['Keys'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2', 'p3'] }), reservedNames: new Set() });
+    // The verse is paired first (main sections before intros and outros), then the intro borrows its partner.
+    expect(r.added.map((a) => [a.lane, a.sectionType])).toEqual([['Pad 2', 'verse'], ['Pad 2', 'intro']]);
+    expect(r.selection.instruments.map((i) => i.lane)).toEqual(['Pad', 'Keys', 'Pad 2']);
+    expect(r.selection.segments.map((x) => x.activeLanes.includes('Pad 2'))).toEqual([true, true, false]);
+  });
+
+  it('a thin intro with no partner to borrow gets one of its own', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { intro: ['Pad'], outro: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set() });
+    // The intro gets Pad 2; the outro then borrows it.
+    expect(r.added.map((a) => [a.lane, a.sectionType])).toEqual([['Pad 2', 'intro'], ['Pad 2', 'outro']]);
+  });
+
+  it('borrowing does not count toward the track limit; the main sections are paired before the intro', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { intro: ['Pad'], verse1: ['Pad'], preChorus1: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2', 'p3', 'p4'] }), reservedNames: new Set() });
+    expect(r.selection.instruments.map((i) => i.lane)).toEqual(['Pad', 'Pad 2', 'Pad 3']);
+    expect(r.added.map((a) => a.sectionType)).toEqual(['verse', 'preChorus', 'intro']);
+  });
+
+  it('replaying recorded partners (a borrowed one included) reproduces the selection', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { intro: ['Pad'], verse1: ['Pad'], chorus1: ['Pad'] });
+    const write = writer(thinTable);
+    const r = addThinPartners({ ctx, selection: s, write, soundPool: pool({ pad: ['p1', 'p2', 'p3'] }), reservedNames: new Set() });
+    const replayed = replayThinPartners({ ctx, selection: s, write, recorded: r.added, soundFor: (_f, id) => entry(id, 'pad') });
+    expect(replayed.selection).toEqual(r.selection);
+    expect(replayed.laneForks).toEqual(r.laneForks);
   });
 
   it('is deterministic', () => {

@@ -52,7 +52,7 @@ import { applyTrackEditsToSelection, recordedDrumSounds, recordedTrackEdits } fr
 import { drumKit, DRUM_SOUNDS_DETAIL } from '../drums/kit.js';
 
 import type { ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
-import { familySoundPool, LOOP_DISPLAY_NAME } from '../selection/index.js';
+import { familySoundPool, LOOP_DISPLAY_NAME, userSoundFor } from '../selection/index.js';
 import type { InstrumentFamily, SelectionResult } from '../selection/types.js';
 import type { FamilyPattern, PatternResult } from '../patterns/types.js';
 import type { VocalBar, VocalResult } from '../vocals/types.js';
@@ -217,7 +217,7 @@ export function arrangeParts(
   const write = (sel: SelectionResult, forks: ReadonlyMap<string, string>) => resolveArrangementClashes(written(sel, new Map(), forks));
   const recorded = recordedThinPartners(params.params);
   const partners = recorded
-    ? replayThinPartners({ ctx, selection: baseSelection, write, recorded })
+    ? replayThinPartners({ ctx, selection: baseSelection, write, recorded, soundFor: (family, id) => userSoundFor(family, params.genre, id) })
     : addThinPartners({
         ctx,
         selection: baseSelection,
