@@ -112,7 +112,7 @@ export function createVocalsCheck(config: Pick<BrainConfig, 'vocalTakesDir'>): V
     if (!config.vocalTakesDir) {
       return { status: 503, body: { error: 'vocals_not_configured', message: 'The song has Vocals on, but sung vocals are not set up: set BRAIN_VOCAL_TAKES_DIR in brain.env.' } };
     }
-    const sections = sectionStates(song, config.vocalTakesDir).filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment);
+    const sections = sectionStates(song, config.vocalTakesDir).filter((s) => s.state === 'missing' || s.state === 'stale' || s.state === 'unused').map((s) => s.segment);
     if (sections.length === 0) return undefined;
     const what = `The vocals of ${sections.join(', ')} have not been sung for the song as it is now.`;
     return {

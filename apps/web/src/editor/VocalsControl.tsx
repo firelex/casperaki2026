@@ -11,6 +11,7 @@ const STATE_LABEL: Record<Exclude<SectionState, 'none'>, string> = {
   current: 'Sung',
   missing: 'Sung on the next play',
   stale: 'Changed: sung again on the next play',
+  unused: 'No vocal notes now: its take is dropped on the next play',
 };
 
 /**

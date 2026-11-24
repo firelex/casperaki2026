@@ -10,7 +10,8 @@ export interface VocalVoice {
   readonly octave: number;
 }
 
-export type SectionState = 'none' | 'current' | 'stale' | 'missing';
+/** unused: a take left on a section that no longer has vocal notes (it is dropped before playing). */
+export type SectionState = 'none' | 'current' | 'stale' | 'missing' | 'unused';
 export interface SectionStatus {
   readonly segment: string;
   readonly state: SectionState;

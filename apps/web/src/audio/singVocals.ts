@@ -3,6 +3,7 @@
 
 import type { AIArtifact, Song } from '@casperaki/song-schema';
 
+import { BrainError } from '../api/client';
 import type { SectionStatus } from '../api/vocals';
 
 const isVocalTake = (a: AIArtifact, segment?: string) =>
@@ -46,12 +47,66 @@ export interface SingApi {
  * the song with the new takes; the same song when nothing needed singing. A failure throws (the caller shows it).
  */
 export async function singMissing(song: Song, api: SingApi, onProgress: (text: string) => void, signal?: AbortSignal): Promise<Song> {
-  const todo = (await api.status(song, signal)).sections.filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment);
-  let out = song;
+  const sections = (await api.status(song, signal)).sections;
+  const todo = sections.filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment);
+  // A take left on a section that no longer has vocal notes would still play: drop it.
+  const unused = new Set(sections.filter((s) => s.state === 'unused').map((s) => s.segment));
+  let out = unused.size ? { ...song, aiArtifacts: song.aiArtifacts.filter((a) => !(isVocalTake(a) && a.attachedTo.scope === 'segment' && unused.has(a.attachedTo.segment))) } : song;
   for (const [i, segment] of todo.entries()) {
     onProgress(`Singing ${segment} (${i + 1} of ${todo.length})`);
     const { artifact } = await api.sing(song, segment, signal);
     out = withTake(out, artifact);
   }
   return out;
+}
+
+export type SingOutcome = { readonly kind: 'play'; readonly song: Song } | { readonly kind: 'changed' } | { readonly kind: 'cancelled' };
+
+/**
+ * Sings what Play needs, then says what to do: play the sung song; or nothing, because the run was cancelled or
+ * the song on screen is no longer the one sung (another song was opened or it was edited meanwhile: the takes are
+ * stored by the brain, so pressing Play again reuses them instead of overwriting the newer song).
+ */
+export async function singBeforePlay(
+  song: Song,
+  api: SingApi,
+  isStillCurrent: (song: Song) => boolean,
+  onProgress: (text: string) => void,
+  signal: AbortSignal,
+): Promise<SingOutcome> {
+  let sung: Song;
+  try {
+    sung = await singMissing(song, api, onProgress, signal);
+  } catch (err) {
+    if (signal.aborted) return { kind: 'cancelled' };
+    throw err;
+  }
+  if (signal.aborted) return { kind: 'cancelled' };
+  if (!isStillCurrent(song)) return { kind: 'changed' };
+  return { kind: 'play', song: sung };
+}
+
+/** The one singing run at a time (Play while singing cancels it). */
+let current: AbortController | undefined;
+export const singRun = {
+  /** Starts a run, or cancels the running one and returns undefined. */
+  toggle(): AbortController | undefined {
+    if (current) {
+      current.abort();
+      current = undefined;
+      return undefined;
+    }
+    current = new AbortController();
+    return current;
+  },
+  done(run: AbortController): void {
+    if (current === run) current = undefined;
+  },
+  active: (): boolean => current !== undefined,
+};
+
+/** The brain's refusal to play vocals not sung yet, as a hint for views that load the song (mixer, waveforms). */
+export function vocalsWaitMessage(err: unknown): string | undefined {
+  if (!(err instanceof BrainError) || err.status !== 409 || err.body?.error !== 'vocals_need_singing') return undefined;
+  return 'Press Play to sing the vocals; this shows once they are sung.';
 }

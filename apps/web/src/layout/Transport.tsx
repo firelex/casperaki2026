@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 
 import { livePlayer } from '../audio/livePlayer';
 import { useLiveTransport } from '../audio/useLiveTransport';
+import { useVocalsProgress } from '../audio/vocalsProgress';
 import { buildSequencerModel } from '../editor/sequencerModel';
 import { VocalsControl } from '../editor/VocalsControl';
 import { useSession } from '../state/session';
@@ -21,6 +22,8 @@ const TICKS_PER_BEAT = 960;
 export function Transport() {
   const { viewSong, editorDirty } = useSession();
   const { liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, seek, stop, toggleLoop } = useLiveTransport();
+  const vocalsText = useVocalsProgress().text;
+  const singing = Boolean(vocalsText?.startsWith('Singing') || vocalsText?.startsWith('Checking'));
   const bpm = viewSong?.bpm ?? 120;
   const loaded = Boolean(liveKey) && isThisSong && live.status !== 'loading' && live.status !== 'idle';
   // Where each section starts (seconds), for the previous / next buttons.
@@ -100,10 +103,10 @@ export function Transport() {
           onClick={playPause}
           disabled={!liveKey || loading}
           className={`${btn} ${playing ? 'text-emerald-300' : ''}`}
-          aria-label={playing ? 'Pause' : 'Play'}
-          title={playing ? 'Pause (stays here)' : 'Play (Space)'}
+          aria-label={singing ? 'Stop singing' : playing ? 'Pause' : 'Play'}
+          title={singing ? 'Singing the vocals… (press to stop)' : playing ? 'Pause (stays here)' : 'Play (Space)'}
         >
-          {loading ? '…' : playing ? <PauseIcon /> : <PlayIcon />}
+          {loading || singing ? '…' : playing ? <PauseIcon /> : <PlayIcon />}
         </button>
         <button
           type="button"

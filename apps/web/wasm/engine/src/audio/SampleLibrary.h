@@ -33,6 +33,7 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -170,9 +171,12 @@ private:
             for (const auto& c : inst["clips"]) {
                 const std::string key = c.value("key", std::string());
                 const std::string src = c.value("sourcePath", std::string());
-                if (key.empty() || src.empty()) { st.waveMissing++; continue; }
+                // A take has no stand-in: a missing or unreadable one stops the render (never a silent vocal).
+                if (key.empty() || src.empty())
+                    throw std::runtime_error("SampleLibrary: audioClips '" + inst.value("name", std::string()) + "' has a clip without key or sourcePath");
                 auto decoded = decodeCached(src, st);
-                if (!decoded || !decoded->ok) { st.waveMissing++; continue; }
+                if (!decoded || !decoded->ok)
+                    throw std::runtime_error("SampleLibrary: cannot read the audio clip " + src);
                 mixer.setSample(key, makeWaveWhole(*decoded));
                 st.waveSources++;
             }

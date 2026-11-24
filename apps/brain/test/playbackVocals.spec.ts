@@ -83,6 +83,16 @@ describe('playback with sung vocals', () => {
     await h.stop();
   });
 
+  it('a take left on a section whose vocal notes were removed refuses playback (it would sing what the score no longer has)', async () => {
+    const h = await boot();
+    const s = onlyVerse1(sungSong());
+    delete s.arrangement['verse1']!.overrides!['Vocal'];
+    const r = await h.play(s);
+    expect(r.status).toBe(409);
+    expect(r.body.sections).toEqual(['verse1']);
+    await h.stop();
+  });
+
   it('a take file outside the takes directory is refused', async () => {
     const h = await boot('/etc/hostname');
     const r = await h.play(onlyVerse1(sungSong()));
@@ -122,6 +132,30 @@ describe('server render with sung vocals', () => {
     expect(body.error).toBe('vocals_need_singing');
     expect(body.message).toMatch(/Open the song and play it/);
     expect(enqueued).toBe(0);
+    await new Promise<void>((res) => server.close(() => { store.close(); res(); }));
+  });
+});
+
+describe('DAW export with sung vocals', () => {
+  it('a saved song whose vocals are not sung as it is now is refused (409), not exported without them', async () => {
+    const store = openSongsStore({ path: ':memory:' });
+    const config = loadConfig({ BRAIN_MELODY_EDITS_PATH: join(tmp, 'edits.json'), SOULX_SERVICE_URL: 'http://soulx.test', BRAIN_VOCAL_TAKES_DIR: takesDir } as NodeJS.ProcessEnv);
+    let started = 0;
+    const dawExports = { start: () => { started++; return {}; } } as unknown as import('../src/export/dawExportService.js').DawExportService;
+    const app = createApp(config, { store, dawExports });
+    const server = await new Promise<ReturnType<typeof app.listen>>((r) => {
+      const s = app.listen(0, '127.0.0.1', () => r(s));
+    });
+    const song = { ...onlyVerse1(sungSong()), bpm: 142 };
+    const { canonicalStringifySong } = await import('@casperaki/song-schema');
+    store.put({ id: 'bbcdef0123456789', song, canonical: canonicalStringifySong(song, 2), hash: 'h', createdAt: '2026-11-24T00:00:00Z' });
+    store.upsertProject({ ownerId: 'local-dev', songId: 'bbcdef0123456789', title: 'T', createdAt: '2026-11-24T00:00:00Z', updatedAt: '2026-11-24T00:00:00Z' });
+    const r = await fetch(`http://127.0.0.1:${(server.address() as AddressInfo).port}/api/songs/bbcdef0123456789/daw-export`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ format: 'stems', tracks: [] }),
+    });
+    expect(r.status).toBe(409);
+    expect(((await r.json()) as { error: string }).error).toBe('vocals_need_singing');
+    expect(started).toBe(0);
     await new Promise<void>((res) => server.close(() => { store.close(); res(); }));
   });
 });

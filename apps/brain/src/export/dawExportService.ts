@@ -62,6 +62,8 @@ export interface DawExportConfig {
   readonly stubSamplesDir: string;
   readonly sampleLibraryRoot: string;
   readonly nodeBin: string;
+  /** Sung vocal takes (BRAIN_VOCAL_TAKES_DIR), handed to the lowering as CASPERAKI_VOCAL_TAKES_DIR. */
+  readonly vocalTakesDir?: string;
 }
 
 const LOWER_TIMEOUT_MS = 3 * 60 * 1000;
@@ -130,7 +132,13 @@ export class DawExportService {
       writeFileSync(join(dir, 'song-in.json'), song.canonical);
 
       this.set(id, { state: 'lowering' });
-      await runLogged(c.nodeBin, [c.emitScript], { ...env, BRAIN_SONG_FILE: join(dir, 'song-in.json'), OUT_DIR: dir }, join(dir, 'lower.log'), LOWER_TIMEOUT_MS);
+      await runLogged(
+        c.nodeBin,
+        [c.emitScript],
+        { ...env, BRAIN_SONG_FILE: join(dir, 'song-in.json'), OUT_DIR: dir, ...(c.vocalTakesDir ? { CASPERAKI_VOCAL_TAKES_DIR: resolve(c.vocalTakesDir) } : {}) },
+        join(dir, 'lower.log'),
+        LOWER_TIMEOUT_MS,
+      );
 
       this.set(id, { state: 'mixing' });
       const mixFile = 'Casperaki mix (reference).wav';

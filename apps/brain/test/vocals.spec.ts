@@ -123,6 +123,15 @@ describe('sung vocals routes', () => {
     expect(st.state).toBe('stale');
   });
 
+  it('a take whose section no longer has vocal notes is unused (and playback must drop it)', async () => {
+    const s = song();
+    const a = (await h.call('/api/vocals/sing', { song: s, segment: 'verse1' })).body.artifact;
+    const cleared = structuredClone({ ...s, aiArtifacts: [a] });
+    delete cleared.arrangement['verse1']!.overrides!['Vocal'];
+    const st = (await h.call('/api/vocals/status', { song: cleared })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
+    expect(st.state).toBe('unused');
+  });
+
   it('a refusal by the service is a 422 with its message; a service that is down is a 502', async () => {
     svc.state.refuse = "phrase 0: SoulX does not know the phone 'en_QQ1'.";
     const r = await h.call('/api/vocals/sing', { song: { ...song(), bpm: 97 }, segment: 'verse1' });

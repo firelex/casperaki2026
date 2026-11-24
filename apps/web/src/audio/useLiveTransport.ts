@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { playbackApi } from '../api/playback';
 import { BrainError } from '../api/client';
@@ -6,7 +6,7 @@ import { vocalsApi } from '../api/vocals';
 import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
-import { singMissing } from './singVocals';
+import { singBeforePlay, singRun } from './singVocals';
 import { vocalsProgress } from './vocalsProgress';
 import { useLivePosition, useLiveState } from './useLivePlayer';
 
@@ -19,6 +19,9 @@ import { useLivePosition, useLiveState } from './useLivePlayer';
 export function useLiveTransport() {
   const { activeSong, viewSong, editorDirty, applyEdit } = useSession();
   const songId = activeSong?.id;
+  /** The song on screen now (singing checks it is still the one it started from before applying takes). */
+  const latestSong = useRef(viewSong);
+  latestSong.current = viewSong;
   const liveKey = useMemo(
     () => (viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId),
     [viewSong, editorDirty, songId],
@@ -40,19 +43,32 @@ export function useLiveTransport() {
 
   const startPlaying = useCallback(async () => {
     if (!liveKey || !viewSong) return;
-    // Sung vocals on: first sing the sections whose take is missing or stale (seconds each), record the takes on
-    // the working copy, then play that. A failure is shown and nothing plays (no silent vocal-less playback).
+    // Sung vocals on: first sing the sections whose take is missing or stale (seconds each), then play the sung
+    // song. One run at a time: Play while singing cancels it. If the song on screen changed meanwhile (edited, or
+    // another song opened), the takes are not applied to it (they stay stored: Play again reuses them).
+    // A failure is shown and nothing plays (no silent vocal-less playback).
     if (viewSong.vocals?.enabled) {
-      let sung;
+      const run = singRun.toggle();
+      if (!run) {
+        vocalsProgress.set({});
+        return;
+      }
+      const started = viewSong;
+      let outcome;
       try {
         vocalsProgress.set({ text: 'Checking the vocals…' });
-        sung = await singMissing(viewSong, vocalsApi, (text) => vocalsProgress.set({ text }));
-        vocalsProgress.set({});
+        outcome = await singBeforePlay(started, vocalsApi, (s) => latestSong.current === s, (text) => vocalsProgress.set({ text }), run.signal);
       } catch (err) {
         vocalsProgress.set({ error: err instanceof BrainError ? (err.body?.message ?? err.message) : err instanceof Error ? err.message : String(err) });
         return;
+      } finally {
+        singRun.done(run);
       }
-      if (sung !== viewSong) {
+      if (outcome.kind === 'cancelled') return vocalsProgress.set({});
+      if (outcome.kind === 'changed') return vocalsProgress.set({ text: 'The song changed while singing; press Play again (sung sections are kept).' });
+      vocalsProgress.set({});
+      const sung = outcome.song;
+      if (sung !== started) {
         applyEdit({ kind: 'replaceSong', song: sung });
         await livePlayer.play(`edit:${fnv1a(JSON.stringify(sung))}`, (signal) => playbackApi.forSong(sung, signal, currentProMix()));
         return;

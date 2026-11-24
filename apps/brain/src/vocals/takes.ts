@@ -27,7 +27,8 @@ const TAKE_PEAK_DB = -1;
 const TAKE_RATE = 44100;
 const FP = /^[0-9a-f]{64}$/u;
 
-export type SectionState = 'none' | 'current' | 'stale' | 'missing';
+/** none: no vocal notes and no take; unused: a take left on a section that no longer has vocal notes (drop it). */
+export type SectionState = 'none' | 'current' | 'stale' | 'missing' | 'unused';
 export interface SectionStatus {
   readonly segment: string;
   readonly state: SectionState;
@@ -212,7 +213,7 @@ export function sectionStates(song: Song, takesDir: string): SectionStatus[] {
   const vocals = requireVocals(song);
   return song.songStructure.map((seg): SectionStatus => {
     const score = sectionScore(song, seg.name);
-    if (!score) return { segment: seg.name, state: 'none' };
+    if (!score) return { segment: seg.name, state: takeArtifact(song, seg.name) ? 'unused' : 'none' };
     const fp = takeFingerprint(score, vocals.voice, vocals.takeNumbers[seg.name] ?? 1);
     const a = takeArtifact(song, seg.name);
     if (!a) return { segment: seg.name, state: 'missing' };

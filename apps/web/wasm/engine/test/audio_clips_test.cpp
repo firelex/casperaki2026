@@ -139,6 +139,20 @@ int main() {
     const auto wet = render(true, sources);
     check(wet.first > 0.01, "the Vocal lane sounds with the mix on (peak " + std::to_string(wet.first) + ")");
 
+    // (4) a missing take is an error, never a silent render without the vocal
+    {
+        nlohmann::json bad = clipsInst;
+        bad["clips"][0]["sourcePath"] = (tmp / "no-such-take.wav").string();
+        std::vector<nlohmann::json> badInsts = {bad};
+        Mixer m(44100.0, 128, 0.5, stubs);
+        SampleLibrary lib("/");
+        bool threw = false;
+        try { lib.loadInto(m, genreDir, badInsts); } catch (const std::exception& e) {
+            threw = std::string(e.what()).find("no-such-take.wav") != std::string::npos;
+        }
+        check(threw, "a missing take file throws, naming it");
+    }
+
     fs::remove_all(tmp);
     if (failures == 0) std::printf("PASS audio_clips_test\n");
     return failures == 0 ? 0 : 1;

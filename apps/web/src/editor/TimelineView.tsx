@@ -11,6 +11,7 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
+import { vocalsWaitMessage } from '../audio/singVocals';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
@@ -94,11 +95,11 @@ export function TimelineView() {
     const t = setTimeout(() => {
       livePlayer.mixOf(liveKey, fetchPayload).then(
         (m) => !cancelled && setMix(m),
-        (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
+        (err: unknown) => !cancelled && setMixError(vocalsWaitMessage(err) ?? (err instanceof Error ? err.message : String(err))),
       );
       livePlayer.payloadOf(liveKey, fetchPayload).then(
         (p) => !cancelled && setStandardChains(p.standardRackChains),
-        (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
+        (err: unknown) => !cancelled && setMixError(vocalsWaitMessage(err) ?? (err instanceof Error ? err.message : String(err))),
       );
     }, editorDirty ? 1200 : 0);
     return () => {

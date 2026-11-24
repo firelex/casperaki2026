@@ -57,6 +57,8 @@ export interface CreateAppDeps {
   /** Optional injected render service (tests). Bootstrap builds one when
    *  CASPERAKI_SAMPLE_LIBRARY_ROOT is configured. */
   readonly renders?: RenderService;
+  /** Tests: the DAW export jobs. */
+  readonly dawExports?: DawExportService;
   /** Music videos (tests inject one with a fake planner / renderer). */
   readonly videos?: VideoService;
   readonly playback?: PlaybackService;
@@ -188,7 +190,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         })
       : undefined);
   // DAW exports (stems / REAPER / Logic) next to the renders: <rendersDir>/../daw-exports.
-  const dawExports = config.sampleLibraryRoot
+  const dawExports = deps.dawExports ?? (config.sampleLibraryRoot
     ? new DawExportService({
         exportsDir: join(dirname(resolve(config.rendersDir)), 'daw-exports'),
         emitScript: resolve(config.renderEmitScript),
@@ -196,8 +198,9 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         stubSamplesDir: resolve(config.renderStubSamplesDir),
         sampleLibraryRoot: config.sampleLibraryRoot,
         nodeBin: process.execPath,
+        ...(config.vocalTakesDir ? { vocalTakesDir: config.vocalTakesDir } : {}),
       })
-    : undefined;
+    : undefined);
   // Music videos next to the renders: <rendersDir>/../videos.
   const videos =
     deps.videos ??
@@ -236,7 +239,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
   if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
   app.use(createSongsRouter({ store, renders, vocalsCheck: createVocalsCheck(config), ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
-  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
+  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, vocalsCheck: createVocalsCheck(config) }));
   app.use(createPlaybackRouter({ store, playback, ownerOf, vocalsCheck: createVocalsCheck(config) }));
   app.use(createTracksRouter());
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
