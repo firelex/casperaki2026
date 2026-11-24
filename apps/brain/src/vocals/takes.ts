@@ -20,7 +20,10 @@ import { LEAD_VOCAL, sectionScore, TAKE_SETTINGS, takeFingerprint, type SectionS
 
 const execFileAsync = promisify(execFile);
 
-export const TAKE_LUFS = -24;
+/** Loudness of a take: about 3 dB under the band once mixed (the lane plays at 0 dB; the library's -24 LUFS left the vocal ~10 dB under the band). */
+export const TAKE_LUFS = -17;
+/** Highest peak a take may have (dBFS); a take whose loudness gain would push it higher is left quieter. */
+const TAKE_PEAK_DB = -1;
 const TAKE_RATE = 44100;
 const FP = /^[0-9a-f]{64}$/u;
 
@@ -151,11 +154,18 @@ export class VocalTakes {
     try {
       const raw = join(tmpDir, 'raw.wav');
       writeFileSync(raw, wav16Mono(mix, rate));
+      // One fixed gain to TAKE_LUFS (no dynamic loudness filter: it can drop or shift samples, and the phrases must
+      // stay on the beat), held so the peak stays at or below TAKE_PEAK_DB.
+      const rawLufs = await this.measureLufs(raw);
+      let peak = 0;
+      for (const x of mix) peak = Math.max(peak, Math.abs(x));
+      if (!Number.isFinite(rawLufs) || peak === 0) throw new VocalsError(502, 'singing_failed', 'The singing service returned silence.');
+      const gainDb = Math.min(TAKE_LUFS - rawLufs, TAKE_PEAK_DB - 20 * Math.log10(peak));
       const out = join(tmpDir, 'take.wav');
-      // 44.1 kHz stereo, normalised to TAKE_LUFS, exactly the section's length.
+      // 44.1 kHz stereo, exactly the section's length.
       await execFileAsync(this.cfg.ffmpegBin, [
         '-hide_banner', '-nostdin', '-y', '-i', raw,
-        '-af', `loudnorm=I=${TAKE_LUFS}:TP=-2:LRA=11,aresample=${TAKE_RATE},apad`,
+        '-af', `volume=${gainDb.toFixed(3)}dB,aresample=${TAKE_RATE},apad`,
         '-t', score.lengthSec.toFixed(6), '-ac', '2', '-ar', String(TAKE_RATE), '-c:a', 'pcm_s16le', out,
       ]);
       const lufs = await this.measureLufs(out);

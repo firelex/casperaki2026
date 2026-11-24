@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore } from '../src/store.js';
-import { wav16Mono } from '../src/vocals/takes.js';
+import { TAKE_LUFS, wav16Mono } from '../src/vocals/takes.js';
 
 const GOLDEN = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/arrangement/test/fixtures/golden/orchestrate/brightPop/brightPop-vertical-slice.song.json');
 const song = (): Song => ({ ...SongSchema.parse(JSON.parse(readFileSync(GOLDEN, 'utf8'))), vocals: { enabled: true, voice: 'en_prompt', takeNumbers: {} } });
@@ -89,13 +89,18 @@ describe('sung vocals routes', () => {
     expect(a).toMatchObject({ kind: 'soulx-vocal', modelId: 'soulx-singer', seed: 1, prompt: 'en_prompt', attachedTo: { scope: 'segment', segment: 'verse1', instrument: 'Vocal' }, output: { uri: `vocal-take:${fp}.wav` } });
     const bars = s.songStructure.find((x) => x.name === 'verse1')!.bars.length;
     expect(a.output.durationSeconds).toBeCloseTo((bars * 4 * 60) / s.bpm, 3);
-    expect(a.output.lufs).toBeGreaterThan(-25.5);
-    expect(a.output.lufs).toBeLessThan(-22.5);
+    // TAKE_LUFS, or quieter when the peak cap holds the gain back.
+    expect(a.output.lufs).toBeGreaterThan(TAKE_LUFS - 8);
+    expect(a.output.lufs).toBeLessThan(TAKE_LUFS + 1);
     const file = join(takesDir, `${fp}.wav`);
     expect(existsSync(file)).toBe(true);
     // 44.1 kHz stereo 16-bit, exactly the section's length.
     const wav = readFileSync(file);
     expect([wav.readUInt16LE(22), wav.readUInt32LE(24), wav.readUInt16LE(34)]).toEqual([2, 44100, 16]);
+    // Exactly the section's length (to the sample), so phrases stay on the beat.
+    const dataAt = wav.indexOf('data');
+    const frames = wav.readUInt32LE(dataAt + 4) / 4;
+    expect(Math.abs(frames - Math.round(((bars * 4 * 60) / s.bpm) * 44100))).toBeLessThanOrEqual(1);
 
     // Recorded on the song, the section is current.
     const sung = { ...s, aiArtifacts: [a] };
