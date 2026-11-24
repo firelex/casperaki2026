@@ -65,12 +65,13 @@ const hookById = (id: string | number): HookEntry => {
 const [A, B, C, D] = ['fx-01', 'fx-02', 'fx-03', 'fx-04'];
 
 type Rule = Record<string, unknown>;
-function useIndex(rules: Record<string, Rule>, wholeShare = 0.5): void {
+const HOOK_MAX_NOTE = { verse: 55, preChorus: 64, chorus: 64, bridge: 64 };
+function useIndex(rules: Record<string, Rule>, wholeShare = 0.5, hookMaxNote: Record<string, number> = HOOK_MAX_NOTE): void {
   setPrecedentDataForTests({
     index: {
       $schemaVersion: 1,
       banks: { hooks: { file: 'hooks.json' }, schlager: { file: 'mlDataRaw-schlager.json' } },
-      hooks: { bank: 'hooks', wholeShare },
+      hooks: { bank: 'hooks', wholeShare, maxNote: hookMaxNote },
       genres: { testGenre: rules },
     },
     files: { 'hooks.json': HOOKS, 'mlDataRaw-schlager.json': schlager },
@@ -120,7 +121,7 @@ const ids = (ms: readonly MergedPrecedent[]) => new Set(ms.map((m) => m.melodicP
 
 describe('hooks: used whole', () => {
   it('reproduces the hook exactly: its rhythm, notes and chords (no octave shift needed under maxNote 64)', () => {
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 64 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 64 });
     const picks = sample(40, 110);
     for (const m of picks) expectWholeHook(m, hookById(m.melodicPrecedentId), 0);
     expect(ids(picks)).toEqual(new Set([A, B, D]));
@@ -128,7 +129,7 @@ describe('hooks: used whole', () => {
 
   it('moves the whole hook by octaves only: the highest shift that fits [43..maxNote]', () => {
     // maxNote 76: A (52..62), B (48..62) and D (43..57) all fit one octave up, and no higher.
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 76 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 76 });
     for (const m of sample(30, 110)) expectWholeHook(m, hookById(m.melodicPrecedentId), 12);
     // A has steps of a fifth (g -> d): they stay a fifth (buildContour would have folded them).
     const a = hookById(A) as unknown as Precedent;
@@ -138,25 +139,25 @@ describe('hooks: used whole', () => {
   });
 
   it('a hook that fits no octave shift is not a candidate for whole use', () => {
-    // Default maxNote 59: only D (43..57) fits; A and B would need to go below 43.
-    useIndex({ chorus: { melodic: ['hooks'] } }, 1);
+    // maxNote 59: only D (43..57) fits; A and B would need to go below 43.
+    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 59 });
     const picks = sample(20, 110);
     expect(ids(picks)).toEqual(new Set([D]));
     for (const m of picks) expectWholeHook(m, hookById(D), 0);
   });
 
   it('no hook fits whole: an error naming section, tempo and range, or only the other listed banks', () => {
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 55 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 55 });
     expect(() => select('s', 110)).toThrow(
       /no melody for testGenre\/chorus at 110 bpm: no hook in the hooks bank "hooks" is written for chorus, has tempoMin <= 110 <= tempoMax and fits the range up to maxNote 55 by octave shifts, for use whole, and the rule lists no other melodic bank/,
     );
-    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager', maxNote: 55 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager' } }, 1, { chorus: 55 });
     const hookIds = new Set(HOOKS.map((h) => h.id));
     for (const m of sample(20, 110)) expect(hookIds.has(String(m.melodicPrecedentId))).toBe(false);
   });
 
   it('cuts a lead-in bar (start 1, end 9) off like the legacy start-1 entries (8-bar section)', () => {
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 64 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 64 });
     const withD = sample(40, 110).filter((m) => m.melodicPrecedentId === D);
     expect(withD.length).toBeGreaterThan(0);
     const d = hookById(D);
@@ -170,9 +171,35 @@ describe('hooks: used whole', () => {
   });
 });
 
+describe('hooks: their own maxNote', () => {
+  it('hooks use hooks.maxNote of the section type, not the rule maxNote (which stays for legacy picks)', () => {
+    // The rule says 55 (no fixture chorus hook fits whole); the hooks setting says 64 (A, B, D fit as written).
+    useIndex({ chorus: { melodic: ['hooks'], maxNote: 55 } }, 1, { chorus: 64 });
+    const picks = sample(30, 110);
+    expect(ids(picks)).toEqual(new Set([A, B, D]));
+    for (const m of picks) {
+      expectWholeHook(m, hookById(m.melodicPrecedentId), 0);
+      expect(m.properties.maxNote).toBe(64);
+    }
+    useIndex({ chorus: { melodic: ['hooks'], maxNote: 55 } }, 0, { chorus: 64 });
+    for (const m of sample(20, 110)) expect(m.properties.maxNote).toBe(64);
+    // A legacy pick from the same list keeps the rule's maxNote.
+    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager', maxNote: 55 } }, 1, { chorus: 64 });
+    const hookIds = new Set(HOOKS.map((h) => h.id));
+    const legacy = sample(30, 110).filter((m) => !hookIds.has(String(m.melodicPrecedentId)));
+    expect(legacy.length).toBeGreaterThan(0);
+    for (const m of legacy) expect(m.properties.maxNote).toBe(55);
+  });
+
+  it('a section type missing from hooks.maxNote is an error when its rule lists the hooks bank', () => {
+    useIndex({ bridge: { melodic: ['hooks'] } }, 1, { chorus: 64 });
+    expect(() => select('s', 110, 'bridge')).toThrow(/testGenre\/bridge lists the hooks bank but bank-index hooks.maxNote has no entry for "bridge"/);
+  });
+});
+
 describe('hooks: mixed with a second hook', () => {
   it('takes the rhythm from one hook and the pitches and chords from another (range does not filter)', () => {
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 55 } }, 0);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 0, { chorus: 55 });
     const picks = sample(40, 110);
     for (const m of picks) {
       expect(m.rhythmicPrecedentId).not.toBe(m.melodicPrecedentId);
@@ -192,7 +219,7 @@ describe('hooks: mixed with a second hook', () => {
   });
 
   it('wholeShare splits whole and mixed picks', () => {
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 64 } }, 0.5);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 0.5, { chorus: 64 });
     const whole = sample(200, 110).filter((m) => m.rhythmicPrecedentId === m.melodicPrecedentId).length;
     expect(whole).toBeGreaterThan(70);
     expect(whole).toBeLessThan(130);
@@ -208,7 +235,7 @@ describe('hooks: mixed with a second hook', () => {
 
 describe('hooks: section type and tempo filters', () => {
   it('offers only hooks with tempoMin <= tempo <= tempoMax (inclusive)', () => {
-    useIndex({ chorus: { melodic: ['hooks'], maxNote: 64 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 64 });
     expect(ids(sample(30, 135))).toEqual(new Set([B]));
     expect(ids(sample(40, 130))).toEqual(new Set([A, B]));
     expect(ids(sample(30, 85))).toEqual(new Set([D]));
@@ -216,7 +243,7 @@ describe('hooks: section type and tempo filters', () => {
   });
 
   it('offers only hooks written for the section type', () => {
-    useIndex({ verse: { melodic: ['hooks'], maxNote: 64 }, chorus: { melodic: ['hooks'], maxNote: 64 } }, 1);
+    useIndex({ verse: { melodic: ['hooks'] }, chorus: { melodic: ['hooks'] } }, 1, { verse: 64, chorus: 64 });
     expect(ids(sample(20, 70, 'verse'))).toEqual(new Set([C])); // C is the only Verse hook
     expect(() => select('s', 70, 'chorus')).toThrow(/is written for chorus/); // C suits 70 bpm but is a Verse
     expect(() => select('s', 110, 'verse')).toThrow(/is written for verse/); // D suits 110 bpm but is a Chorus
@@ -244,7 +271,7 @@ describe('several melodic banks', () => {
   });
 
   it('picks the bank first with equal weight, so ~100 hooks are not drowned by a large bank', () => {
-    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager', maxNote: 64 } }, 1);
+    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager' } }, 1);
     const hookIds = new Set(HOOKS.map((h) => h.id));
     const hooks = sample(200, 110).filter((m) => hookIds.has(String(m.melodicPrecedentId))).length;
     expect(hooks).toBeGreaterThan(70);
@@ -276,7 +303,7 @@ describe('bank index checks', () => {
   it('the real bank index names the hooks bank but no rule uses it yet', () => {
     setPrecedentDataForTests(undefined);
     const index = loadBankIndex();
-    expect(index.hooks).toEqual({ bank: 'hooks', wholeShare: 0.5 });
+    expect(index.hooks).toEqual({ bank: 'hooks', wholeShare: 0.5, maxNote: { verse: 55, preChorus: 64, chorus: 64, bridge: 64 } });
     for (const rules of Object.values(index.genres)) {
       for (const rule of Object.values(rules)) expect(typeof rule.melodic).toBe('string');
     }
@@ -291,8 +318,8 @@ describe('the real hooks bank (smoke)', () => {
       index: {
         $schemaVersion: 1,
         banks: { hooks: { file: 'mlDataRaw-hooks.json' } },
-        hooks: { bank: 'hooks', wholeShare },
-        genres: { testGenre: Object.fromEntries(Object.values(SECTION).map((s) => [s, { melodic: ['hooks'], maxNote }])) },
+        hooks: { bank: 'hooks', wholeShare, maxNote: Object.fromEntries(Object.values(SECTION).map((s) => [s, maxNote])) },
+        genres: { testGenre: Object.fromEntries(Object.values(SECTION).map((s) => [s, { melodic: ['hooks'] }])) },
       },
       files: { 'mlDataRaw-hooks.json': hooks },
     });

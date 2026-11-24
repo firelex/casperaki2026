@@ -153,7 +153,13 @@ const BankIndexSchema = z
     // The hooks bank (our own complete melodies, docs/superpowers/specs/2026-11-24-hook-library-design.md) and the
     // share of hook picks used whole (the rest are mixed with a second hook).
     hooks: z
-      .object({ bank: z.string().min(1), wholeShare: z.number().min(0).max(1) })
+      .object({
+        bank: z.string().min(1),
+        wholeShare: z.number().min(0).max(1),
+        // Highest note (legacy register) for placing hooks, per section type. Used for hooks only, whole and
+        // mixed, in place of the rule's maxNote (which keeps applying to legacy picks).
+        maxNote: z.record(z.string(), z.number().int().positive()),
+      })
       .strict()
       .optional(),
     genres: z.record(
@@ -687,6 +693,8 @@ function mergeLegacy(dispatch: DispatchResult, inputs: MergeInputs): MergedPrece
 //     Verse / Pre-chorus / Chorus / Bridge for the sections verse /
 //     preChorus / chorus / bridge);
 //   - tempo: only hooks with `tempoMin <= song tempo <= tempoMax`;
+// Hooks are placed under `hooks.maxNote[<section type>]`, not the rule's
+// maxNote (which keeps applying to legacy picks).
 //   - whole use only: the hook must fit the section's range by moving it by
 //     whole octaves (see `wholeHookOctaveShift`); mixing needs at least two
 //     hooks.
@@ -769,8 +777,15 @@ function selectFromMelodicList(
   inputs: MergeInputs,
 ): MergedPrecedent {
   const hooks = loadBankIndex().hooks;
-  const maxNote = rule.maxNote ?? DEFAULT_MAX_NOTE;
   const listsHooks = hooks !== undefined && bankIds.includes(hooks.bank);
+  // Hooks are placed under the hooks setting's maxNote for this section type, not the rule's (legacy picks keep
+  // the rule's maxNote through dispatchRule).
+  const maxNote = listsHooks ? hooks.maxNote[inputs.segmentType] : undefined;
+  if (listsHooks && maxNote === undefined) {
+    throw new Error(
+      `vocals/precedents: ${inputs.genre}/${inputs.segmentType} lists the hooks bank but bank-index hooks.maxNote has no entry for "${inputs.segmentType}"`,
+    );
+  }
   const whole = listsHooks ? inputs.rng.bool(hooks.wholeShare) : false;
   const choices: MelodicChoice[] = [];
   let hooksDroppedBecause: string | undefined;
@@ -781,7 +796,7 @@ function selectFromMelodicList(
     }
     const suiting = hooksFor(bankId, inputs.segmentType, inputs.tempo);
     if (whole) {
-      const pool = suiting.filter((h) => wholeHookOctaveShift(h, maxNote) !== undefined);
+      const pool = suiting.filter((h) => wholeHookOctaveShift(h, maxNote!) !== undefined);
       if (pool.length > 0) choices.push({ kind: 'hooks', pool });
       else {
         hooksDroppedBecause = `no hook in the hooks bank "${bankId}" is written for ${inputs.segmentType}, has tempoMin <= ${inputs.tempo} <= tempoMax and fits the range up to maxNote ${maxNote} by octave shifts, for use whole`;
@@ -799,7 +814,7 @@ function selectFromMelodicList(
   }
   const choice = inputs.rng.pick(choices);
   if (choice.kind === 'legacy') return mergeLegacy(dispatchRule(rule, choice.bankId, inputs.tempo), inputs);
-  return whole ? mergeWholeHook(choice.pool, maxNote, inputs) : mergeMixedHooks(choice.pool, maxNote, inputs);
+  return whole ? mergeWholeHook(choice.pool, maxNote!, inputs) : mergeMixedHooks(choice.pool, maxNote!, inputs);
 }
 
 function hookWhere(inputs: MergeInputs): string {
