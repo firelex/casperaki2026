@@ -16,13 +16,11 @@ import express, { type Express } from 'express';
 import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
-import { createJobs } from './jobs.js';
-import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
+import { createSongsRouter, ownerOf } from './routes/songs.js';
 import { EventHub } from './events.js';
-import { LyricsTasks } from './lyrics/tasks.js';
 import { ArtworkTasks, HarnessImageService, type ImageService } from './artwork/tasks.js';
 import { SongTitler } from './titles/songTitler.js';
-import { OpenAiLyricModel, type LyricModel } from './lyrics/lyricist.js';
+import { OpenAiChatModel, type ChatModel } from './llm/chatModel.js';
 import { createDawExportRouter } from './routes/dawExport.js';
 import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
@@ -46,7 +44,6 @@ import { renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
-import { createVocalsHooks, createVocalsRouterFor } from './routes/vocals.js';
 import { DeepSeekPlanner } from './video/planner.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
@@ -73,12 +70,10 @@ export interface CreateAppDeps {
   readonly songTitler?: SongTitler;
   /** For tests: draws song artwork instead of the image service. */
   readonly imageService?: ImageService;
-  /** The lyricist's language model (tests inject a fake). */
-  readonly lyricModel?: LyricModel;
+  /** The language model artwork briefs are written with (tests inject a fake). */
+  readonly chatModel?: ChatModel;
   /** The melody library's precedent bank directory (tests point it at fixtures). */
   readonly melodyLibraryDir?: string;
-  /** Tests: the fetch the sung-vocals take store calls the singing service with. */
-  readonly vocalsFetch?: typeof fetch;
   /**
    * Records the data people change in the app in git: approved patterns (exported into the
    * pattern library) and melody edits. The server passes commitAndPush; tests leave it out, and
@@ -247,38 +242,24 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const titleEp = assistantEndpoint(config);
   const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
   if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
-  // The lyricist writes every new song's words (and the vocal edits'); without it generating answers 503.
-  const lyricModel = deps.lyricModel ?? (titleEp ? new OpenAiLyricModel(titleEp) : undefined);
-  if (!lyricModel) console.warn('[brain] ASSISTANT_LLM_URL not set — songs cannot be generated (no lyrics model).');
-  // Sung vocals: stored takes added to songs for the engine; takes only an old song version used are cleaned up.
-  const vocalsHooks = createVocalsHooks(config, store);
-  // Events for the user's open pages (GET /api/events), e.g. lyrics written in the background.
+  const chatModel = deps.chatModel ?? (titleEp ? new OpenAiChatModel(titleEp) : undefined);
+  // Events for the user's open pages (GET /api/events), e.g. artwork drawn in the background.
   const events = new EventHub();
   app.use(events.router(ownerOf));
-  // New songs' lyrics are written in the background (src/lyrics/tasks.ts); startServer resumes unfinished ones.
-  const lyrics = lyricModel
-    ? new LyricsTasks({ store, lyricModel, events, hash: hashCanonical, clock: () => new Date().toISOString(), onSongReplaced: vocalsHooks.onSongReplaced })
-    : undefined;
-  (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks = lyrics;
   // Song artwork, drawn after the title (src/artwork/tasks.ts): needs the language model and the image service.
   if (Boolean(config.artworkServiceUrl || deps.imageService) !== Boolean(config.artworkDir)) {
     throw new Error('Set both ARTWORK_SERVICE_URL and BRAIN_ARTWORK_DIR for song artwork, or neither.');
   }
   const artwork =
-    lyricModel && config.artworkDir && (deps.imageService || config.artworkServiceUrl)
-      ? new ArtworkTasks({ store, model: lyricModel, images: deps.imageService ?? new HarnessImageService(config.artworkServiceUrl!), events, dir: resolve(config.artworkDir) })
+    chatModel && config.artworkDir && (deps.imageService || config.artworkServiceUrl)
+      ? new ArtworkTasks({ store, model: chatModel, images: deps.imageService ?? new HarnessImageService(config.artworkServiceUrl!), events, dir: resolve(config.artworkDir) })
       : undefined;
   if (!artwork) console.warn('[brain] ARTWORK_SERVICE_URL / BRAIN_ARTWORK_DIR not set — new songs get no artwork.');
   (app.locals as { artworkTasks?: ArtworkTasks }).artworkTasks = artwork;
-  // Routes that wait for the lyricist (minutes) answer as jobs when asked to (Prefer: respond-async), so they outlast
-  // the Cloudflare tunnel's 100-second limit (src/jobs.ts).
-  const jobs = createJobs(ownerOf);
-  app.post(['/api/songs/generate', '/api/hum/song', '/api/tracks/edit', '/api/sections/add'], jobs.asJob);
-  app.use(jobs.router);
-  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(lyrics ? { lyrics } : {}), ...(artwork ? { artwork } : {}) }));
-  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, withTakes: vocalsHooks.withTakes }));
-  app.use(createPlaybackRouter({ store, playback, ownerOf, withTakes: vocalsHooks.withTakes }));
-  app.use(createTracksRouter(lyricModel ? { lyricModel } : {}));
+  app.use(createSongsRouter({ store, renders, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(artwork ? { artwork } : {}) }));
+  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
+  app.use(createPlaybackRouter({ store, playback, ownerOf }));
+  app.use(createTracksRouter());
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(
     createHumRouter({
@@ -287,12 +268,9 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       humLabDir: config.humLabDir,
       store,
       ...(titler ? { onPlaceholderTitle: (u: Parameters<SongTitler['name']>[0]) => titler.name(u) } : {}),
-      ...(lyrics ? { lyrics } : {}),
       ...(artwork ? { artwork } : {}),
     }),
   );
-  // Sung vocals (section takes): answers 503 naming the settings when not set up.
-  app.use(createVocalsRouterFor(config, deps.vocalsFetch));
   app.use(createSoundsRouter({ playback }));
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
   const commit = deps.commit;
@@ -303,7 +281,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   );
   app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(melodyEdits, deps.melodyLibraryDir) }));
   const assistantEp = assistantEndpoint(config);
-  app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined), ...(lyricModel ? { lyricModel } : {}) }));
+  app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
   app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));
   app.use(
     createPatternsRouter({
@@ -389,8 +367,6 @@ export function startServer(): { stop: () => Promise<void> } {
   const server = app.listen(config.port, config.host, () => {
     console.log(`[brain] listening on http://${config.host}:${config.port}`);
   });
-  // Lyrics a restart interrupted are written now.
-  (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks?.resumeAll();
   (app.locals as { artworkTasks?: ArtworkTasks }).artworkTasks?.resumeAll();
   return {
     stop: () =>

@@ -11,9 +11,6 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { greySections, trackSetting } from '../audio/singVocals';
-import { useVocalsStatus } from '../audio/useVocalsStatus';
-import { VocalsControl } from './VocalsControl';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
@@ -49,7 +46,6 @@ import { TrackCanvas } from './sequencer/TrackCanvas';
 import { AddTrackDialog, ChangeSoundDialog, DrumSoundDialog } from './sequencer/TrackDialogs';
 import { AddSectionDialog, RenameSectionDialog } from './sequencer/SectionDialogs';
 import { TransitionsWindow } from './sequencer/TransitionsWindow';
-import { songsApi, type ProjectLyrics } from '../api/songs';
 import { tracksApi, type DrumKitRow } from '../api/tracks';
 import { useTrackEdits } from './sequencer/useTrackEdits';
 
@@ -73,7 +69,7 @@ const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none da
  * sound, new pattern, remove, add a track).
  */
 export function TimelineView() {
-  const { viewSong, activeSong, activeSegment, setActiveSegment, setActiveLyrics, applyEdit, editor } = useSession();
+  const { viewSong, activeSong, activeSegment, setActiveSegment, applyEdit, editor } = useSession();
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
   const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live, playPause } = useLiveTransport();
@@ -90,17 +86,6 @@ export function TimelineView() {
   useEffect(() => {
     if (activeSong) openProMix(activeSong.id, activeSong.project.mixOverrides);
   }, [activeSong]);
-  // A song with a vocals setting: which sections of the lead vocal have no take (greyed out on its track).
-  const vocalStatus = useVocalsStatus(viewSong);
-  /** Per vocal track: its grey boxes (all while its singing is off; with singing on, the sections not sung yet). */
-  const greyByTrack = useMemo(() => {
-    const out = new Map<string, ReadonlySet<number>>();
-    if (!model || !viewSong) return out;
-    for (const t of model.tracks) {
-      if (t.isVocal) out.set(t.name, greySections(model.sections, trackSetting(viewSong, t.name), vocalStatus.data?.tracks[t.name]));
-    }
-    return out;
-  }, [model, viewSong, vocalStatus.data]);
   useEffect(() => {
     setMix(undefined);
     setMixError(undefined);
@@ -525,21 +510,8 @@ export function TimelineView() {
   const detailClip = detail && detailTrack ? detailTrack.clips.find((c) => c.section === detail.section) : undefined;
 
   const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
-  /** Vocal edits act on every section of the clicked section's type ("chorus2" → all choruses). */
-  // A new song's words are written in the background (apps/brain/src/lyrics/tasks.ts); the Vocal track says so.
-  const lyricsState = activeSong?.project.lyrics ?? null;
-  const retryLyrics = async () => {
-    if (!activeSong) return;
-    try {
-      const { project } = await songsApi.retryLyrics(activeSong.id);
-      setActiveLyrics(project.lyrics);
-    } catch (err) {
-      setActiveLyrics({ state: 'failed', message: `Could not start writing the lyrics again: ${err instanceof Error ? err.message : String(err)}` });
-    }
-  };
-
-  const newLyrics = (section: string) => void edits.run({ kind: 'newLyrics', section }, `Writing new lyrics for all ${plural(section)}`);
-  const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody and lyrics for all ${plural(section)}`);
+  /** A new melody for every section of the clicked section's type ("chorus2" → all choruses). */
+  const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody for all ${plural(section)}`);
 
   return (
     <div ref={rootRef} className="flex h-full flex-col text-white">
@@ -708,11 +680,7 @@ export function TimelineView() {
               onLoop={(s) => loopSection(model.sections[s]!)}
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
-              onVocalEdit={
-                t.name === LEAD_VOCAL_NAME && lyricsState?.state !== 'writing'
-                  ? (s, kind) => (kind === 'lyrics' ? newLyrics(model.sections[s]!.name) : newMelody(model.sections[s]!.name))
-                  : undefined
-              }
+              onNewMelody={t.name === LEAD_VOCAL_NAME ? (s) => newMelody(model.sections[s]!.name) : undefined}
               onRemove={() => edits.removeTrack(t.name)}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
@@ -749,15 +717,7 @@ export function TimelineView() {
                     catalogId={catalogIdOf(defs.get(t.name)?.id)}
                     notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
                   />
-                  {t.isVocal ? (
-                    // The sing switch sits right before mute/solo, so it lines up on every vocal track.
-                    <span className="ml-auto flex shrink-0 items-center gap-1">
-                      <VocalsControl track={t.name} />
-                      <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
-                    </span>
-                  ) : (
-                    <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
-                  )}
+                  <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
                 </div>
                 <div
                   data-lane
@@ -794,17 +754,7 @@ export function TimelineView() {
                     selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
                     rowH={rowH}
                     automation={automationByTrack.get(t.name)}
-                    {...(greyByTrack.has(t.name)
-                      ? { unsungSections: greyByTrack.get(t.name)!, greyNote: viewSong && trackSetting(viewSong, t.name)?.enabled ? 'not sung' : undefined }
-                      : {})}
                   />
-                  {t.name === LEAD_VOCAL_NAME && lyricsState && activeSong ? (
-                    <LyricsPill
-                      lyrics={lyricsState}
-                      left={(t.clips[0]?.startBar ?? 0) * px + 6}
-                      onRetry={() => void retryLyrics()}
-                    />
-                  ) : null}
                 </div>
                 </div>
                 {/* Divider between tracks: a dark channel with a hairline highlight. */}
@@ -1062,34 +1012,6 @@ export function TimelineView() {
 }
 
 /** Right-click menu for a track row. `section` is the clip under the pointer, if any. */
-/** On the Vocal track while a new song's words are being written, or when writing them failed (with Retry). */
-function LyricsPill({ lyrics, left, onRetry }: { lyrics: ProjectLyrics; left: number; onRetry: () => void }) {
-  const base = 'absolute top-1/2 z-20 flex -translate-y-1/2 items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] shadow';
-  if (lyrics.state === 'writing') {
-    return (
-      <div className={`${base} pointer-events-none bg-violet-500/85 text-white`} style={{ left }} role="status">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" aria-hidden="true" />
-        Lyrics being generated…
-      </div>
-    );
-  }
-  return (
-    <div
-      className={`${base} bg-red-500/85 text-white`}
-      style={{ left }}
-      title={lyrics.message}
-      role="alert"
-      onPointerDown={(e) => e.stopPropagation()}
-      onDoubleClick={(e) => e.stopPropagation()}
-    >
-      Lyrics failed
-      <button type="button" className="rounded-full bg-white/20 px-2 hover:bg-white/35" onClick={onRetry}>
-        Retry
-      </button>
-    </div>
-  );
-}
-
 function TrackMenu({
   track,
   section,
@@ -1102,7 +1024,7 @@ function TrackMenu({
   onLoop,
   onChangeSound,
   onNewPattern,
-  onVocalEdit,
+  onNewMelody,
   onRemove,
   onAdd,
   onOverview,
@@ -1120,8 +1042,8 @@ function TrackMenu({
   onLoop(section: number): void;
   onChangeSound(): void;
   onNewPattern(): void;
-  /** The lead vocal: new lyrics or a new melody for every section of the clicked section's type. */
-  onVocalEdit: ((section: number, kind: 'lyrics' | 'melody') => void) | undefined;
+  /** The lead vocal: a new melody for every section of the clicked section's type. */
+  onNewMelody: ((section: number) => void) | undefined;
   onRemove(): void;
   onAdd(section: number | undefined): void;
   /** Whole-track piano roll / score (pitched tracks). */
@@ -1151,12 +1073,9 @@ function TrackMenu({
               Loop {sections[section]!.name}
             </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
-            {onVocalEdit ? (
+            {onNewMelody ? (
               <>
-                <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onVocalEdit(section, 'lyrics')}>
-                  Change lyrics <span className="ml-auto pl-6 text-[12px] text-white/40">all {plural(sections[section]!.name)}</span>
-                </ContextMenuItem>
-                <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onVocalEdit(section, 'melody')}>
+                <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onNewMelody(section)}>
                   Change melody <span className="ml-auto pl-6 text-[12px] text-white/40">all {plural(sections[section]!.name)}</span>
                 </ContextMenuItem>
                 <ContextMenuSeparator className="my-1 h-px bg-line" />

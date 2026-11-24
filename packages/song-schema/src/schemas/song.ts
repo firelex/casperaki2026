@@ -5,7 +5,6 @@ import { ArrangementSchema } from './arrangement.js';
 import { SongStructureSchema } from './structure.js';
 import { InstrumentDefinitionSchema } from './instrument-def.js';
 import { AIArtifactSchema } from './ai-artifact.js';
-import { VocalsSettingSchema } from './vocals.js';
 
 export const GeneratorBlockSchema = z
   .object({
@@ -39,10 +38,6 @@ export const SongSchema = z
 
     instrumentDefinitions: z.array(InstrumentDefinitionSchema).default([]),
     aiArtifacts: z.array(AIArtifactSchema).default([]),
-    // Sung vocals on/off, voice and take numbers (absent = off).
-    vocals: VocalsSettingSchema.optional(),
-    // Sung backing vocals: the same setting per backing vocal track (by track name, e.g. "Backing vocals 1").
-    backingVocals: z.record(z.string().min(1), VocalsSettingSchema).optional(),
 
     generator: GeneratorBlockSchema.optional(),
   })

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 import type { Song } from '@casperaki/song-schema';
 
-import type { GeneratedSong, ProjectLyrics, ReplayResult } from '../api/songs';
+import type { GeneratedSong, ReplayResult } from '../api/songs';
 import {
   applyCommand,
   canRedo as canRedoEdit,
@@ -46,8 +46,6 @@ export interface SessionState {
   setActiveSong(song: GeneratedSong | undefined): void;
   /** The saved project's title changed (rename): keeps the edit session. */
   setActiveTitle(title: string): void;
-  /** The saved project's background lyrics state changed (writing, failed): keeps the edit session. */
-  setActiveLyrics(lyrics: ProjectLyrics | null): void;
   setActiveSegment(segmentName: string | undefined): void;
   setActiveBarIndex(barIndex: number | undefined): void;
   setLastReplay(result: ReplayResult | undefined): void;
@@ -103,10 +101,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     setActiveSongState((song) => (song ? { ...song, project: { ...song.project, title } } : song));
   }, []);
 
-  const setActiveLyrics = useCallback((lyrics: ProjectLyrics | null) => {
-    setActiveSongState((song) => (song ? { ...song, project: { ...song.project, lyrics } } : song));
-  }, []);
-
   const setActiveSegment = useCallback((segmentName: string | undefined) => {
     setActiveSegmentState((prev) => {
       if (prev !== segmentName) setActiveBarIndexState(undefined);
@@ -142,7 +136,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       renderStale,
       setActiveSong,
       setActiveTitle,
-      setActiveLyrics,
       setActiveSegment,
       setActiveBarIndex,
       setLastReplay,
@@ -161,7 +154,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       renderStale,
       setActiveSong,
       setActiveTitle,
-      setActiveLyrics,
       setActiveSegment,
       setActiveBarIndex,
       setLastReplay,

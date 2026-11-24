@@ -18,53 +18,6 @@ function makeFetchMock(handler: (input: RequestInfo | URL, init?: RequestInit) =
   return fn;
 }
 
-describe('BrainClient jobs', () => {
-  it('asks POSTs to answer as a job and follows the job to its result', async () => {
-    vi.useFakeTimers();
-    try {
-      let polls = 0;
-      const fetchMock = makeFetchMock(async (input, init) => {
-        const url = String(input);
-        if (init?.method === 'POST') {
-          expect((init.headers as Record<string, string>).prefer).toBe('respond-async');
-          return jsonResponse(202, { jobId: 'j1' });
-        }
-        expect(url).toBe('/api/jobs/j1');
-        polls++;
-        return jsonResponse(200, polls < 2 ? { done: false } : { done: true, status: 201, body: { id: 'x' } });
-      });
-      const client = new BrainClient({ fetch: fetchMock });
-      const out = client.post<{ id: string }>('/api/songs/generate', {});
-      await vi.advanceTimersByTimeAsync(5000);
-      await expect(out).resolves.toEqual({ id: 'x' });
-      expect(polls).toBe(2);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("throws the job's error status and message", async () => {
-    vi.useFakeTimers();
-    try {
-      const fetchMock = makeFetchMock(async (_input, init) =>
-        init?.method === 'POST'
-          ? jsonResponse(202, { jobId: 'j2' })
-          : jsonResponse(200, { done: true, status: 503, body: { error: 'lyrics_not_configured', message: 'no model' } }),
-      );
-      const client = new BrainClient({ fetch: fetchMock });
-      const out = client.post('/api/songs/generate', {});
-      const caught = out.catch((e: unknown) => e);
-      await vi.advanceTimersByTimeAsync(3000);
-      const err = (await caught) as BrainError;
-      expect(err).toBeInstanceOf(BrainError);
-      expect(err.status).toBe(503);
-      expect(err.message).toBe('no model');
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-});
-
 describe('BrainClient', () => {
   it('serializes POST bodies as JSON and parses responses', async () => {
     const fetchMock = makeFetchMock(async () =>

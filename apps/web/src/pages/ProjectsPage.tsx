@@ -511,12 +511,6 @@ function SongCard({
         <p className="text-[14px] text-white/60">{meta}</p>
         <p className="text-[13px] text-white/40">
           Edited {timeAgo(project.updatedAt)}
-          {project.lyrics?.state === 'writing' ? <span className="ml-2 text-violet-300/90">· Writing lyrics…</span> : null}
-          {project.lyrics?.state === 'failed' ? (
-            <span className="ml-2 text-err" title={project.lyrics.message}>
-              · Lyrics failed
-            </span>
-          ) : null}
         </p>
 
         {confirmDelete ? (

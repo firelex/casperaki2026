@@ -16,7 +16,6 @@ import type { RenderService } from '../src/render/renderService.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { lyricLines, sectionDisplayName, songToVideoInput } from '../src/video/videoInput.js';
 import { VideoService } from '../src/video/videoService.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
 
@@ -70,7 +69,7 @@ async function boot(): Promise<Harness> {
     },
     probeSeconds: async () => 200,
   });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, videos });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, videos });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

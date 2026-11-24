@@ -1,18 +1,10 @@
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type { Song } from '@casperaki/song-schema';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback } from 'react';
 
-import { playbackApi, type PlaybackPayload } from '../api/playback';
-import { BrainError } from '../api/client';
-import { vocalsApi, type SectionStatus } from '../api/vocals';
+import { playbackApi } from '../api/playback';
 import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
 import { fnv1a } from './fnv1a';
-import { followOnChange } from './followOnChange';
-import { hasVocalSettings, LEAD_VOCAL, sectionStarts, singingTracks, singQueue, singRun, takesToken, worthSwapping } from './singVocals';
-import { useVocalsStatus, vocalsStatusKey } from './useVocalsStatus';
-import { vocalsProgress } from './vocalsProgress';
 import { useLivePosition, useLiveState } from './useLivePlayer';
 
 /**
@@ -24,13 +16,7 @@ import { useLivePosition, useLiveState } from './useLivePlayer';
 export function useLiveTransport() {
   const { activeSong, viewSong, editorDirty } = useSession();
   const songId = activeSong?.id;
-  const queryClient = useQueryClient();
-  // A song with a vocals setting plays the takes the brain has for it: which sections have one is part of the
-  // key, so a section sung since the song was loaded makes a new version to play (undefined while not known).
-  const vocalStatus = useVocalsStatus(viewSong);
-  const vocalsPart = !hasVocalSettings(viewSong) ? '' : vocalStatus.data ? `:v${fnv1a(takesToken(vocalStatus.data.tracks))}` : undefined;
-  const baseKey = viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId;
-  const liveKey = useMemo(() => (baseKey && vocalsPart !== undefined ? baseKey + vocalsPart : undefined), [baseKey, vocalsPart]);
+  const liveKey = viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId;
   const live = useLiveState();
   const isThisSong = live.key !== undefined && live.key === liveKey;
   const playing = isThisSong && live.status === 'playing';
@@ -46,28 +32,10 @@ export function useLiveTransport() {
     [viewSong, editorDirty, songId],
   );
 
-  // A vocal control changed the song while it played (followOnChange): switch to the new version at the same
-  // position (and sing what is now grey), instead of leaving the old version playing without the playhead.
-  const lastKey = useRef(liveKey);
-  useEffect(() => {
-    if (!liveKey) return;
-    const previous = lastKey.current;
-    lastKey.current = liveKey;
-    if (!previous || previous === liveKey || !followOnChange.take()) return;
-    const live = livePlayer.getState();
-    if (live.status !== 'playing' || live.key !== previous || !viewSong) return;
-    void livePlayer.play(liveKey, fetchPayload, { seamless: true, keepMastering: true }).then(() => {
-      if (singingTracks(viewSong).length && baseKey) void singWhilePlaying(viewSong, baseKey, fetchPayload, queryClient);
-    });
-  }, [liveKey, fetchPayload, viewSong, baseKey, queryClient]);
-
   const startPlaying = useCallback(async () => {
     if (!liveKey || !viewSong) return;
     await livePlayer.play(liveKey, fetchPayload);
-    // Vocals on: the song plays at once with the sections sung so far; the unsung ones are sung meanwhile, from the
-    // one being played on, and each joins the playing song as soon as it is ready.
-    if (singingTracks(viewSong).length && baseKey) void singWhilePlaying(viewSong, baseKey, fetchPayload, queryClient);
-  }, [liveKey, viewSong, fetchPayload, baseKey, queryClient]);
+  }, [liveKey, viewSong, fetchPayload]);
 
   const playPause = useCallback(() => {
     if (playing) void livePlayer.pause();
@@ -104,49 +72,6 @@ export function useLiveTransport() {
   return {
     liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, seek, stop, toggleLoop, editorDirty,
   };
-}
-
-/**
- * Sings the song's unsung sections one by one (from the section at the play position on); after each, the greyed
- * track updates and, if this song is playing, the player switches seamlessly to the version with the new take.
- * A new run (Play again) cancels this one; a failure is shown in the Vocals panel.
- */
-async function singWhilePlaying(song: Song, baseKey: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>, queryClient: QueryClient): Promise<void> {
-  const run = singRun.start();
-  try {
-    const status = await vocalsApi.status(song, run.signal);
-    const queue = singQueue(song, status.tracks, livePlayer.position());
-    const starts = sectionStarts(song);
-    // Sections sung since the last swap; one swap at a time (each rebuilds the engine on the audio thread).
-    let pending: string[] = [];
-    let swapping = false;
-    const maybeSwap = (tracks: Record<string, SectionStatus[]>) => {
-      const live = livePlayer.getState();
-      if (swapping || live.status !== 'playing' || !live.key?.startsWith(baseKey)) return;
-      if (!worthSwapping(pending, starts, livePlayer.position())) return;
-      pending = [];
-      swapping = true;
-      void livePlayer
-        .play(`${baseKey}:v${fnv1a(takesToken(tracks))}`, fetchPayload, { seamless: true, keepMastering: true })
-        .finally(() => {
-          swapping = false;
-        });
-    };
-    for (const [i, { track, segment }] of queue.entries()) {
-      vocalsProgress.set({ text: `Singing ${segment}${track === LEAD_VOCAL ? '' : ` (${track})`} (${i + 1} of ${queue.length})` });
-      await vocalsApi.sing(song, segment, track, run.signal);
-      const now = await vocalsApi.status(song, run.signal);
-      pending.push(segment);
-      maybeSwap(now.tracks);
-      queryClient.setQueryData(vocalsStatusKey(song), now);
-    }
-    vocalsProgress.set({});
-  } catch (err) {
-    if (run.signal.aborted) return;
-    vocalsProgress.set({ error: err instanceof BrainError ? (err.body?.message ?? err.message) : err instanceof Error ? err.message : String(err) });
-  } finally {
-    singRun.done(run);
-  }
 }
 
 export { fnv1a } from './fnv1a';

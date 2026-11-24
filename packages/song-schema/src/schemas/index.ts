@@ -4,6 +4,5 @@ export * from './structure.js';
 export * from './arrangement.js';
 export * from './instrument-def.js';
 export * from './ai-artifact.js';
-export * from './vocals.js';
 export * from './song.js';
 export * from './mix-overrides.js';

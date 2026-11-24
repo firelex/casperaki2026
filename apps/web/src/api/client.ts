@@ -71,23 +71,15 @@ export class BrainClient {
   ): Promise<T> {
     const init: RequestInit = {
       method,
-      // Routes that take minutes (writing lyrics) may answer as a job (202 { jobId }), which is then followed to its
-      // result: casperaki.com's tunnel ends any request not answered within 100 seconds (brain src/jobs.ts).
-      headers: { 'content-type': 'application/json', accept: 'application/json', ...(method === 'POST' ? { prefer: 'respond-async' } : {}) },
+      headers: { 'content-type': 'application/json', accept: 'application/json' },
       signal: opts.signal,
     };
     if (body !== undefined) init.body = JSON.stringify(body);
 
     const res = await this.fetchImpl(`${this.baseUrl}${path}`, init);
     const text = await res.text();
-    let parsed: unknown = text ? safeJson(text) : undefined;
-    let status = res.status;
-
-    if (status === 202 && parsed && typeof parsed === 'object' && typeof (parsed as { jobId?: unknown }).jobId === 'string') {
-      const result = await this.followJob((parsed as { jobId: string }).jobId, opts);
-      status = result.status;
-      parsed = result.body;
-    }
+    const parsed: unknown = text ? safeJson(text) : undefined;
+    const status = res.status;
 
     if (status < 200 || status >= 300) {
       const errBody =
@@ -100,27 +92,7 @@ export class BrainClient {
     }
     return parsed as T;
   }
-
-  /** Polls a job until it is done: the status and body its route answered. */
-  private async followJob(jobId: string, opts: RequestOptions): Promise<{ status: number; body: unknown }> {
-    for (;;) {
-      await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(resolve, JOB_POLL_MS);
-        opts.signal?.addEventListener('abort', () => {
-          clearTimeout(timer);
-          reject(opts.signal!.reason);
-        }, { once: true });
-      });
-      const job = await this.get<{ done: boolean; status?: number; body?: unknown }>(`/api/jobs/${encodeURIComponent(jobId)}`, opts);
-      if (job.done) {
-        if (typeof job.status !== 'number') throw new Error(`Brain job ${jobId} finished without a status`);
-        return { status: job.status, body: job.body };
-      }
-    }
-  }
 }
-
-const JOB_POLL_MS = 2000;
 
 function safeJson(text: string): unknown {
   try {

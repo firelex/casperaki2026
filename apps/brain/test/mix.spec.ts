@@ -12,7 +12,6 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakePlayback } from './fakePlayback.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
 
@@ -32,7 +31,7 @@ interface Harness { url: string; app: Express; store: SongsStore; mixPath: strin
 async function boot(): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
   const playback = fakePlayback({ mixConfig: MIX_CONFIG });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, playback });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

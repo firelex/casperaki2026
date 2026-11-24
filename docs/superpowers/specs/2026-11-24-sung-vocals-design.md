@@ -1,5 +1,7 @@
 # Sung vocals (SoulX-Singer on the Vocal track) — design
 
+> **Removed 2026-11-24 (owner's decision).** SoulX-Singer and the singing machinery built on it (takes, the Vocals switch, singing while playing, the song's `vocals` setting) are gone; sung vocals will come from ACE-Step instead. Kept: the audio-clip lowering (`packages/engine-adapter/src/audio-clips.ts`) and the brain's serving of take files, for ACE-Step. This document is history.
+
 Date: 2026-11-24. Status: built and live 2026-11-24 (plan docs/superpowers/plans/2026-11-24-sung-vocals.md). Calls marked "my call"; deviations found while building are in the plan's ledger rulings (voice octaves by prompt range: female voices sing as written, male an octave down; takes at -17 LUFS, about 3 dB under the band).
 
 ## Revision (2026-11-24, owner's decision after first use)

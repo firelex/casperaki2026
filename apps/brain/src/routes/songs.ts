@@ -1,8 +1,7 @@
 // Vertical-slice songs router.
 //
-// Endpoints lifted directly off @casperaki/arrangement.orchestrate; the one
-// model call is the lyricist (generation writes the song's words, see
-// src/lyrics), no engine calls, no sample-library downloads. The
+// Endpoints lifted directly off @casperaki/arrangement.orchestrate; no model
+// calls in generation, no engine calls, no sample-library downloads. The
 // `params` payload validates with Zod before the orchestrator sees it,
 // and the storage layer holds the same canonical bytes the replay
 // endpoint hashes against — see `apps/brain/src/store.ts`.
@@ -11,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { orchestrate, sungSections, writtenLyricsOf, type GenerateParams } from '@casperaki/arrangement';
+import { orchestrate, type GenerateParams } from '@casperaki/arrangement';
 import {
   canonicalStringifySong,
   formatGenreTempoRange,
@@ -28,7 +27,6 @@ import type { Song } from '@casperaki/song-schema';
 import type { RenderService, RenderStatus } from '../render/renderService.js';
 import type { ProjectRow, SongsStore } from '../store.js';
 import type { ArtworkTasks } from '../artwork/tasks.js';
-import type { LyricsTasks } from '../lyrics/tasks.js';
 import { readRenderPeaks } from './renders.js';
 
 // `genre` is validated against the canonical brain vocabulary (8 styles,
@@ -87,25 +85,8 @@ export interface SongsRouterDeps {
   /** Told about every newly generated song that got the placeholder title
    *  (no title given); the brain names it afterwards, outside this router. */
   readonly onPlaceholderTitle?: (song: { ownerId: string; songId: string; song: Song; placeholderTitle: string }) => Promise<void> | void;
-  /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
-  readonly withTakes?: (song: Song) => Song;
-  /** The vocal takes a song for the engine plays (their fingerprints, for the render cache key). */
-  readonly takesOf?: (song: Song) => string;
-  /** A saved song was saved again (new version) or deleted: clean up what only its old version used. */
-  readonly onSongReplaced?: (oldSongId: string, how: 'saved' | 'deleted') => void;
-  /** Writes the words of new songs in the background (the language model). Absent: generating answers 503
-   *  lyrics_not_configured. */
-  readonly lyrics?: LyricsTasks;
   /** Draws new songs' artwork in the background, after their title. Absent: songs get no artwork. */
   readonly artwork?: ArtworkTasks;
-}
-
-/** Generating needs the lyricist and it is not set up. */
-export class LyricsNotConfiguredError extends Error {
-  constructor() {
-    super('Songs cannot be generated: the lyrics model is not configured (set ASSISTANT_LLM_URL and ASSISTANT_LLM_MODEL).');
-    this.name = 'LyricsNotConfiguredError';
-  }
 }
 
 /** The id that owns projects. Every /api route sits behind the session gate
@@ -124,21 +105,17 @@ export interface GeneratedProject {
 
 /**
  * Generate a song and keep it as one of the owner's projects (POST /api/songs/generate; hum to song uses it too).
- * The song comes back at once with its melody; the words of every sung section that has none recorded are written
- * in the background (lyrics/tasks.ts), and the project's lyrics state says so until they are in.
+ * Its words are the lyric phrase bank's (or those recorded in the generator params).
  * Untitled songs get the style-and-key placeholder and are named afterwards. Generator errors are thrown.
  */
 export async function generateProject(
-  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly lyrics?: LyricsTasks; readonly artwork?: ArtworkTasks },
+  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly artwork?: ArtworkTasks },
   owner: string,
   params: GenerateParams,
   title: string | undefined,
 ): Promise<GeneratedProject> {
-  const { store, clock, onPlaceholderTitle, lyrics, artwork } = deps;
-  if (!lyrics) throw new LyricsNotConfiguredError();
+  const { store, clock, onPlaceholderTitle, artwork } = deps;
   const song = orchestrate(params);
-  const recorded = writtenLyricsOf(params.params);
-  const unwritten = sungSections(song).some((s) => !recorded[s.name]);
   const canonical = canonicalStringifySong(song, 2);
   const hash = hashCanonical(canonical);
   const id = hash.slice(0, 16);
@@ -153,14 +130,13 @@ export async function generateProject(
     createdAt: existing?.createdAt ?? at,
     updatedAt: at,
   });
-  if (unwritten) lyrics.start(owner, id);
   const naming = placeholder !== undefined ? onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder }) : undefined;
   // The artwork is drawn for the song's title, so it starts once naming is over.
   artwork?.start(owner, id, naming ?? Promise.resolve());
   return { id, song, hash };
 }
 
-export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced, lyrics, artwork }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, artwork }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -185,7 +161,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     }
     let made: GeneratedProject;
     try {
-      made = await generateProject({ store, clock, onPlaceholderTitle, ...(lyrics ? { lyrics } : {}), ...(artwork ? { artwork } : {}) }, ownerOf(req), parsed.data, title.data);
+      made = await generateProject({ store, clock, onPlaceholderTitle, ...(artwork ? { artwork } : {}) }, ownerOf(req), parsed.data, title.data);
     } catch (err) {
       return generateError(res, err);
     }
@@ -228,7 +204,6 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     const at = clock();
     store.put({ id, song, canonical, hash, createdAt: at });
     store.moveProject({ ownerId: owner, fromSongId: req.params.id, toSongId: id, updatedAt: at });
-    if (req.params.id !== id) onSongReplaced?.(req.params.id, 'saved');
     // A Pro-mode change for a track the edit removed no longer applies.
     const moved = store.getProject(owner, id)!;
     if (moved.mixOverrides) {
@@ -267,19 +242,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     const ok = store.deleteProject(ownerOf(req), req.params.id);
     if (ok && gone?.artwork?.state === 'done') artwork?.removeFile(gone.artwork.file);
     if (!ok) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    onSongReplaced?.(req.params.id, 'deleted');
     return res.status(204).end();
-  });
-
-  // Write the song's lyrics again after writing them failed (they are written in the background, as for a new song).
-  router.post('/api/songs/:id/lyrics', (req, res) => {
-    const owner = ownerOf(req);
-    const project = store.getProject(owner, req.params.id);
-    if (!project) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    if (!lyrics) return generateError(res, new LyricsNotConfiguredError());
-    if (project.lyrics?.state === 'writing') return res.status(409).json({ error: 'lyrics_writing', message: 'The lyrics are already being written.' });
-    lyrics.start(owner, project.songId);
-    return res.status(202).json({ project: projectJson(store.getProject(owner, project.songId)!, renders) });
   });
 
   router.post('/api/songs/:id/replay', (req, res) => {
@@ -348,8 +311,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
       songMix = applyMixOverrides(mixConfig(), project.mixOverrides);
     }
     try {
-      const forEngine = withTakes ? withTakes(parseSong(JSON.parse(stored.canonical))) : undefined;
-      renders.enqueue(stored.id, forEngine ? canonicalStringifySong(forEngine, 2) : stored.canonical, songMix, forEngine && takesOf ? takesOf(forEngine) : undefined);
+      renders.enqueue(stored.id, stored.canonical, songMix);
     } catch (err) {
       return res.status(409).json({ error: 'render_busy', message: err instanceof Error ? err.message : String(err) });
     }
@@ -459,7 +421,6 @@ function projectJson(p: ProjectRow, renders: RenderService | undefined) {
     sections: p.sections,
     mixOverrides: p.mixOverrides,
     mixUpdatedAt: p.mixUpdatedAt,
-    lyrics: p.lyrics === null ? null : p.lyrics.state === 'failed' ? { state: 'failed', message: p.lyrics.message } : { state: 'writing' },
     artwork:
       p.artwork === null
         ? null
@@ -499,7 +460,6 @@ export function hashCanonical(canonical: string): string {
 
 function generateError(res: Response, err: unknown): Response {
   const message = err instanceof Error ? err.message : String(err);
-  if (err instanceof LyricsNotConfiguredError) return res.status(503).json({ error: 'lyrics_not_configured', message });
   // Generator-level rejections (unsupported genre, missing precedent
   // entry, chord-vocab miss) surface here; treat them as 400s (bad input)
   // rather than 500s. The Zod body schema already catches non-canonical

@@ -17,7 +17,6 @@ import {
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
 
@@ -31,7 +30,6 @@ interface Harness {
 async function boot(): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
   const app = createApp(loadConfig({} as NodeJS.ProcessEnv), {
-    lyricModel: fakeLyricModel(),
     store,
     // Pin createdAt so any future timestamp-related assertions stay stable.
   });

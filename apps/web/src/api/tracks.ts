@@ -26,12 +26,8 @@ export type TrackEdit =
   | { readonly kind: 'addTrack'; readonly family: InstrumentFamily; readonly segments: readonly string[]; readonly soundId?: string }
   /** Replace one drum of the kit (null: back to the style's own). */
   | { readonly kind: 'setDrumSound'; readonly role: string; readonly soundId: string | null }
-  /** New words for every section of this section's type (the lyricist writes them). */
-  | { readonly kind: 'newLyrics'; readonly section: string }
-  /** A new melody (with its chords, the parts under it and new words) for every section of this section's type. */
-  | { readonly kind: 'newMelody'; readonly section: string }
-  /** Words the brain wrote in the background (section -> lines), put into the working song. */
-  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> };
+  /** A new melody (with its chords and the parts under it) for every section of this section's type. */
+  | { readonly kind: 'newMelody'; readonly section: string };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 

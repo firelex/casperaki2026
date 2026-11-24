@@ -1,5 +1,7 @@
 # Written lyrics (DeepSeek) and "Change melody / Change lyrics"
 
+> **Removed 2026-11-24 (owner's decision).** The brain no longer writes lyrics with the language model (no lyricist, no background task, no Change lyrics). Songs sing the lyric phrase bank's words again; words already recorded in a song's generator block still apply. Lyrics come back, simpler, with ACE-Step vocals. This document is history.
+
 Date: 2026-11-24. Replaces the random phrase bank (two phrases per genre and section, cycled or cut to fit the
 notes) as the source of a song's words.
 

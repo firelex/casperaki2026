@@ -1,13 +1,9 @@
-// A generated song's words are written in the background and saved as a new version (src/lyrics/tasks.ts), so the
-// id generation answered moves shortly after. Tests that go on using the song wait for that first.
+// The newest project's song (the one generation just made), as GET /api/songs/:id answers it.
 
 import type { Express } from 'express';
 
-import type { LyricsTasks } from '../src/lyrics/tasks.js';
-
-/** Waits for the background lyrics, then answers GET /api/songs/:id for the project generation made (the newest). */
+/** GET /api/songs/:id for the project generation made (the newest). */
 export async function settled<T>(url: string, app: Express): Promise<T> {
-  await (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks?.idle();
   const { projects } = (await (await fetch(`${url}/api/songs`)).json()) as { projects: { id: string; updatedAt: string }[] };
   const newest = [...projects].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
   if (!newest) throw new Error('settled: no project');

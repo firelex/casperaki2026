@@ -12,7 +12,6 @@ const CLIP_HEADER_H = 13;
  * track's measured waveform behind them.
  */
 /** Vocal sections not sung yet (sung vocals on). */
-const UNSUNG_GREY = '#6b6d73';
 
 export function TrackCanvas({
   track,
@@ -26,8 +25,6 @@ export function TrackCanvas({
   selectedSection,
   rowH,
   automation,
-  unsungSections,
-  greyNote,
 }: {
   track: SeqTrack;
   model: SequencerModel;
@@ -46,10 +43,6 @@ export function TrackCanvas({
   rowH: number;
   /** The engine's automation for this track: filter sweeps and volume fades. */
   automation: { readonly lowPass?: SampledAutomation; readonly volume?: SampledAutomation } | undefined;
-  /** Vocal tracks: sections drawn grey (not heard: singing off, or not sung yet). */
-  unsungSections?: ReadonlySet<number>;
-  /** Shown after a grey section's name (e.g. "not sung"); none when undefined. */
-  greyNote?: string | undefined;
 }) {
   const ROW_H = rowH;
   const ref = useRef<HTMLCanvasElement>(null);
@@ -95,8 +88,7 @@ export function TrackCanvas({
     for (const clip of track.clips) {
       const x = clip.startBar * px + 1;
       const w = Math.max(2, clip.bars * px - 2);
-      const unsung = unsungSections?.has(clip.section) ?? false;
-      const clipColor = unsung ? UNSUNG_GREY : color;
+      const clipColor = color;
       g.globalAlpha = 0.2 * alpha;
       g.fillStyle = clipColor;
       roundRect(g, x, top, w, clipH, 3);
@@ -120,7 +112,7 @@ export function TrackCanvas({
         g.beginPath();
         g.rect(x + 4, top, w - 8, CLIP_HEADER_H);
         g.clip();
-        g.fillText(`${model.sections[clip.section]!.name}${unsung && greyNote ? ` · ${greyNote}` : ''}`, x + 5, top + CLIP_HEADER_H / 2 + 0.5);
+        g.fillText(model.sections[clip.section]!.name, x + 5, top + CLIP_HEADER_H / 2 + 0.5);
         g.restore();
       }
     }
@@ -164,7 +156,7 @@ export function TrackCanvas({
     const noteH = track.isDrums ? Math.max(1.5, innerH / Math.max(1, drumLanes.length) - 0.5) : 2;
     g.fillStyle = '#ffffff';
     for (const clip of track.clips) {
-      g.globalAlpha = (peaks ? 0.6 : 0.8) * alpha * (unsungSections?.has(clip.section) ? 0.35 : 1);
+      g.globalAlpha = (peaks ? 0.6 : 0.8) * alpha;
       for (const n of clip.notes) {
         const nx = (n.start / BEATS_PER_BAR) * px;
         const nw = Math.max(1.2, (n.length / BEATS_PER_BAR) * px - 0.5);
@@ -214,7 +206,7 @@ export function TrackCanvas({
     if (automation?.volume) {
       curve(automation.volume, (d) => innerTop + (Math.min(48, Math.max(0, -d)) / 48) * innerH, (d) => Math.abs(d) > 0.1, true, 'VOL');
     }
-  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation, unsungSections, greyNote]);
+  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation]);
 
   return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }

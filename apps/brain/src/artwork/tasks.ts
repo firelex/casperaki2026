@@ -10,7 +10,7 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { EventHub } from '../events.js';
-import type { LyricModel } from '../lyrics/lyricist.js';
+import type { ChatModel } from '../llm/chatModel.js';
 import type { SongsStore } from '../store.js';
 
 /** Draws an image from a description (the serving harness's job API). */
@@ -20,7 +20,7 @@ export interface ImageService {
 
 export interface ArtworkTasksDeps {
   readonly store: SongsStore;
-  readonly model: LyricModel;
+  readonly model: ChatModel;
   readonly images: ImageService;
   readonly events: EventHub;
   /** Where the pictures are kept (one PNG per task). */

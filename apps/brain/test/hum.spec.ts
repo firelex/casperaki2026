@@ -13,10 +13,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { amtChords, chordAlternatives, keptBars, mergeCompletion, quantizeHum, songKeyOf, type Transcription } from '../src/hum/fit.js';
 import { createHumRouter } from '../src/routes/hum.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
-import { EventHub } from '../src/events.js';
-import { LyricsTasks } from '../src/lyrics/tasks.js';
-import { hashCanonical } from '../src/routes/songs.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -126,7 +122,7 @@ describe('POST /api/hum/*', () => {
     store = openSongsStore({ path: ':memory:' });
     const app = express();
     app.use(express.json());
-    app.use(createHumRouter({ humServiceUrl: 'http://hum.test', amtServiceUrl: 'http://amt.test', humLabDir: dir, store, lyrics: new LyricsTasks({ store, lyricModel: fakeLyricModel(), events: new EventHub(), hash: hashCanonical, clock: () => '2026-11-23T22:00:00.000Z' }), fetchImpl: fakeFetch, now: () => '2026-11-23T22:00:00.000Z' }));
+    app.use(createHumRouter({ humServiceUrl: 'http://hum.test', amtServiceUrl: 'http://amt.test', humLabDir: dir, store, fetchImpl: fakeFetch, now: () => '2026-11-23T22:00:00.000Z' }));
     const server = await new Promise<ReturnType<typeof app.listen>>((r) => {
       const s = app.listen(0, '127.0.0.1', () => r(s));
     });

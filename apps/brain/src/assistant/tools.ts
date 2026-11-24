@@ -5,14 +5,12 @@
 // Playback and page actions (play, mute, save, undo …) come back as a
 // ClientAction the page carries out.
 
-import { editTrack, InstrumentFamilySchema, SECTION_TYPES, setTransition, TrackEditError, trackOptions, TRANSITION_TYPES } from '@casperaki/arrangement';
+import { addSection, editTrack, InstrumentFamilySchema, SECTION_TYPES, setTransition, TrackEditError, trackOptions, TRANSITION_TYPES } from '@casperaki/arrangement';
 import { applyCommand, initEditState, type EditCommand } from '@casperaki/song-edit';
 import { GENRE_TEMPO_RANGES, GenreSchema, isBpmInGenreTempoRange, type Song } from '@casperaki/song-schema';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import { addSectionWithWords } from '../lyrics/addSection.js';
-import type { LyricModel } from '../lyrics/lyricist.js';
 import { drumKitView, transitionState } from '../routes/tracks.js';
 import { searchSounds, soundCatalog } from '../sounds/soundCatalog.js';
 import { busDetail, busSettingAction, MixToolError, mixOverview, SetBusSettingParams, SetTrackMixParams, trackMixAction, type MixSnapshot } from './mixTools.js';
@@ -50,8 +48,6 @@ export class ToolError extends Error {}
 
 interface ToolContext {
   song: Song;
-  /** Writes the words of a sung section the assistant adds. */
-  readonly lyricModel?: LyricModel;
   readonly title: string;
   /** Pro mode is on: the open song's mix (the mix tools read and update it). */
   readonly mix?: MixSnapshot;
@@ -262,7 +258,7 @@ export const TOOLS = [
       } else index = a.index!;
       let added: { song: Song; name: string };
       try {
-        added = await addSectionWithWords(ctx.song, a.type, index, a.bars, ctx.lyricModel);
+        added = addSection(ctx.song, a.type, index, a.bars);
       } catch (err) {
         if (err instanceof TrackEditError) throw new ToolError(err.message);
         throw err;

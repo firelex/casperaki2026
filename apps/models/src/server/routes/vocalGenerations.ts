@@ -10,7 +10,7 @@ import { serviceSpec } from '../services/registry.ts';
 import { getServiceStatus, startService } from '../services/serviceManager.ts';
 
 type JobState = 'running' | 'done' | 'error';
-type VocalProvider = 'ace-step' | 'soulx-singer';
+type VocalProvider = 'ace-step';
 type VocalFileKind = 'full' | 'vocals' | 'no_vocals';
 
 interface VocalJob {
@@ -49,16 +49,6 @@ const AceInput = z.object({
   bpm: z.number().int().positive().max(400).optional(),
   keyScale: z.string().min(1).optional(),
   timeSignature: z.string().min(1).optional(),
-});
-
-const SoulXInput = z.object({
-  prompt_audio: z.string().min(1),
-  prompt_filename: z.string().optional(),
-  prompt_metadata: z.union([z.string().min(1), z.array(z.unknown()), z.record(z.unknown())]),
-  target_metadata: z.union([z.string().min(1), z.array(z.unknown()), z.record(z.unknown())]),
-  control: z.enum(['melody', 'score']).default('melody'),
-  auto_shift: z.boolean().default(false),
-  pitch_shift: z.number().default(0),
 });
 
 function statusFor(err: any): number {
@@ -220,21 +210,6 @@ async function runAcePipeline(job: VocalJob, input: z.infer<typeof AceInput>): P
   }
 }
 
-async function runSoulXPipeline(job: VocalJob, input: z.infer<typeof SoulXInput>): Promise<void> {
-  try {
-    const outDir = join(OUT_ROOT, job.id);
-    await mkdir(outDir, { recursive: true });
-    const baseUrl = await waitForReady('soulx-singer');
-    const soulJobId = await submitHarnessJob(baseUrl, input as Record<string, unknown>);
-    await waitHarnessJob(baseUrl, soulJobId);
-    const full = join(outDir, 'soulx-vocal.wav');
-    await downloadHarnessFile(baseUrl, soulJobId, full);
-    updateJob(job, { state: 'done', files: { full, vocals: full } });
-  } catch (err: any) {
-    updateJob(job, { state: 'error', error: String(err?.message ?? err) });
-  }
-}
-
 export function vocalGenerationsRouter(): Router {
   const r = Router();
 
@@ -243,17 +218,6 @@ export function vocalGenerationsRouter(): Router {
       const input = AceInput.parse(req.body ?? {});
       const job = newJob('ace-step');
       void runAcePipeline(job, input);
-      res.status(202).json(job);
-    } catch (err: any) {
-      res.status(statusFor(err)).json({ error: String(err?.message ?? err) });
-    }
-  });
-
-  r.post('/vocal-generations/soulx', (req, res) => {
-    try {
-      const input = SoulXInput.parse(req.body ?? {});
-      const job = newJob('soulx-singer');
-      void runSoulXPipeline(job, input);
       res.status(202).json(job);
     } catch (err: any) {
       res.status(statusFor(err)).json({ error: String(err?.message ?? err) });

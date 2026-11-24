@@ -12,7 +12,6 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { RenderService } from '../src/render/renderService.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
 
@@ -71,7 +70,7 @@ for(let i=0;i<400;i++)b.writeInt16LE(Math.round(8000*Math.sin(i/5)),44+i*2);requ
 
 async function boot(renders?: RenderService): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, ...(renders ? { renders } : {}) });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, ...(renders ? { renders } : {}) });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

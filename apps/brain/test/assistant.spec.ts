@@ -11,7 +11,6 @@ import { runTool, toolSpecs, ToolError } from '../src/assistant/tools.js';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
 
@@ -34,7 +33,7 @@ const call = (id: string, name: string, args: unknown) => ({ id, type: 'function
 interface Harness { url: string; app: Express; stop: () => Promise<void> }
 async function boot(llm: AssistantLlm | undefined): Promise<Harness> {
   const store: SongsStore = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, ...(llm ? { assistantLlm: llm } : {}) });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, ...(llm ? { assistantLlm: llm } : {}) });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

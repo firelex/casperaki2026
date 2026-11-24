@@ -51,14 +51,12 @@ const READY_BADGE: Record<ReadyState, { variant: 'default' | 'secondary' | 'outl
 const MODEL_REPO: Record<string, string> = {
   'ace-step': 'ACE-Step/Ace-Step1.5',
   'sam-audio': 'facebook/sam-audio-large',
-  'soulx-singer': 'Soul-AILab/SoulX-Singer',
 };
 
 /** Per-service generation form, keyed by service id. */
 const SERVICE_FORMS: Record<string, (props: { serviceId: string }) => ReactNode> = {
   'ace-step': MusicForm,
   'sam-audio': SamAudioForm,
-  'soulx-singer': SoulXSingerForm,
   matchering: MatcheringForm,
 };
 
@@ -416,92 +414,6 @@ function SamAudioForm({ serviceId }: { serviceId: string }) {
       <Button type="submit" disabled={generating || !file}>
         {generating ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
         {generating ? 'Separating…' : 'Separate'}
-      </Button>
-
-      <GenerationResult serviceId={serviceId} jobId={jobId} result={result} error={error} />
-    </form>
-  );
-}
-
-function SoulXSingerForm({ serviceId }: { serviceId: string }) {
-  const [promptAudio, setPromptAudio] = useState<File | null>(null);
-  const [promptMeta, setPromptMeta] = useState<File | null>(null);
-  const [targetMeta, setTargetMeta] = useState<File | null>(null);
-  const [control, setControl] = useState<'melody' | 'score'>('melody');
-  const [autoShift, setAutoShift] = useState(false);
-  const [pitchShift, setPitchShift] = useState('0');
-  const { submit, generating, error, setError, result, jobId } = useGeneration(serviceId);
-
-  async function onSubmit() {
-    try {
-      if (!promptAudio || !promptMeta || !targetMeta) {
-        setError('Provide the reference clip plus both metadata JSON files.');
-        return;
-      }
-      submit({
-        prompt_audio: await fileToBase64(promptAudio),
-        prompt_filename: promptAudio.name,
-        prompt_metadata: await fileToText(promptMeta),
-        target_metadata: await fileToText(targetMeta),
-        control,
-        auto_shift: autoShift,
-        pitch_shift: Number(pitchShift) || 0,
-      });
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  }
-
-  const fileInput = (accept: string, onChange: (f: File | null) => void) => (
-    <input type="file" accept={accept} onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-      className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-accent" />
-  );
-
-  return (
-    <form className="space-y-3 border-t border-border pt-4" onSubmit={(e) => { e.preventDefault(); void onSubmit(); }}>
-      <p className="text-[11px] text-muted-foreground">
-        Singing is rendered from a reference voice and a preprocessed score. The metadata JSONs (phonemes, notes, F0)
-        come from the SoulX-Singer preprocessing pipeline.
-      </p>
-      <div className="space-y-1">
-        <label className={FIELD_LABEL}>Reference voice clip</label>
-        {fileInput('audio/*', setPromptAudio)}
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1">
-          <label className={FIELD_LABEL}>Prompt metadata (JSON)</label>
-          {fileInput('application/json,.json', setPromptMeta)}
-        </div>
-        <div className="space-y-1">
-          <label className={FIELD_LABEL}>Target score (JSON)</label>
-          {fileInput('application/json,.json', setTargetMeta)}
-        </div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
-        <div className="space-y-1">
-          <label className={FIELD_LABEL}>Pitch control</label>
-          <div className="flex gap-2">
-            <Button type="button" size="sm" variant={control === 'melody' ? 'default' : 'outline'} onClick={() => setControl('melody')}>
-              Melody (F0)
-            </Button>
-            <Button type="button" size="sm" variant={control === 'score' ? 'default' : 'outline'} onClick={() => setControl('score')}>
-              Score (MIDI)
-            </Button>
-          </div>
-        </div>
-        <div className="space-y-1">
-          <label className={FIELD_LABEL}>Pitch shift</label>
-          <Input type="number" min={-12} max={12} value={pitchShift} onChange={(e) => setPitchShift(e.target.value)} />
-        </div>
-      </div>
-      <label className="flex items-center gap-2 text-sm text-muted-foreground">
-        <input type="checkbox" checked={autoShift} onChange={(e) => setAutoShift(e.target.checked)} />
-        Auto pitch shift to fit the reference voice
-      </label>
-
-      <Button type="submit" disabled={generating || !promptAudio || !promptMeta || !targetMeta}>
-        {generating ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
-        {generating ? 'Synthesizing…' : 'Synthesize singing'}
       </Button>
 
       <GenerationResult serviceId={serviceId} jobId={jobId} result={result} error={error} />

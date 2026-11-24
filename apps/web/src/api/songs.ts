@@ -58,8 +58,6 @@ export interface Project {
   /** The owner's Pro-mode mix changes (null = the standard mix). */
   readonly mixOverrides: MixOverrides | null;
   readonly mixUpdatedAt: string | null;
-  /** The song's lyrics while the brain writes them in the background, or why writing them failed (null = written). */
-  readonly lyrics: ProjectLyrics | null;
   /** The song's artwork, drawn in the background after its title (null: none, the brain has no image service). */
   readonly artwork: ProjectArtwork | null;
   readonly render: RenderInfo;
@@ -69,8 +67,6 @@ export type ProjectArtwork =
   | { readonly state: 'drawing' }
   | { readonly state: 'done'; readonly url: string }
   | { readonly state: 'failed'; readonly message: string };
-
-export type ProjectLyrics = { readonly state: 'writing' } | { readonly state: 'failed'; readonly message: string };
 
 export interface ProjectSection {
   readonly name: string;
@@ -125,11 +121,6 @@ export class SongsApi {
 
   remove(id: string): Promise<void> {
     return this.client.delete(songPath(id));
-  }
-
-  /** Writes the song's lyrics again after writing them failed (in the background; announced on /api/events). */
-  retryLyrics(id: string): Promise<{ project: Project }> {
-    return this.client.post<{ project: Project }>(`${songPath(id)}/lyrics`, {});
   }
 
   replay(id: string, signal?: AbortSignal): Promise<ReplayResult> {

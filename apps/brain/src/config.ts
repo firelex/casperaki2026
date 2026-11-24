@@ -67,9 +67,7 @@ const ConfigSchema = z.object({
    *  POST /complete), as base URLs. Unset → /api/hum answers 503 naming the setting. */
   humServiceUrl: z.string().url().optional(),
   amtServiceUrl: z.string().url().optional(),
-  /** Sung vocals: the SoulX singing service (svc-soulx, POST /voices and /sing) and the directory the section takes
-   *  are kept in. Either unset → /api/vocals answers 503 naming the setting. */
-  singingServiceUrl: z.string().url().optional(),
+  /** The directory audio clips on vocal tracks (sung takes) are read from by the lowering. */
   vocalTakesDir: z.string().min(1).optional(),
   /** Song artwork: the image service (svc-artwork, small-sd on the serving harness) and the directory the pictures
    *  are kept in. Both or neither (without them songs get no artwork). */
@@ -142,7 +140,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     humLabDir: env.BRAIN_HUM_LAB_DIR || undefined,
     humServiceUrl: env.HUM_SERVICE_URL || undefined,
     amtServiceUrl: env.AMT_SERVICE_URL || undefined,
-    singingServiceUrl: env.SOULX_SERVICE_URL || undefined,
     vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
     artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,
     artworkDir: env.BRAIN_ARTWORK_DIR || undefined,

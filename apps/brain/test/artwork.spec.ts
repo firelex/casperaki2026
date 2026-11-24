@@ -11,23 +11,19 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ArtworkTasks, artworkBrief, type ImageService } from '../src/artwork/tasks.js';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
-import type { LyricModel } from '../src/lyrics/lyricist.js';
+import type { ChatModel } from '../src/llm/chatModel.js';
 import { openSongsStore } from '../src/store.js';
-import { fakeLyricModel } from './fakeLyricModel.js';
 
 const PNG = Buffer.from('89504e470d0a1a0a', 'hex');
 
-/** Lyrics as the fake lyricist writes them; a picture description for the artwork brief. */
-function model(prompts: string[]): LyricModel {
-  const lyricist = fakeLyricModel();
+/** A picture description for the artwork brief. */
+function model(prompts: string[]): ChatModel {
   return {
-    complete: async (messages, options) => {
+    complete: async (messages) => {
       const text = messages.at(-1)!.content;
-      if (text.includes('cover artwork')) {
-        prompts.push(text);
-        return JSON.stringify({ description: 'a neon city street at night in the rain' });
-      }
-      return lyricist.complete(messages, options);
+      if (!text.includes('cover artwork')) throw new Error(`unexpected prompt: ${text.slice(0, 80)}`);
+      prompts.push(text);
+      return JSON.stringify({ description: 'a neon city street at night in the rain' });
     },
   };
 }
@@ -37,7 +33,7 @@ interface Project { id: string; artwork: { state: string; url?: string; message?
 async function boot(images: ImageService, prompts: string[]) {
   const dir = mkdtempSync(join(tmpdir(), 'artwork-spec-'));
   const store = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({ BRAIN_ARTWORK_DIR: dir } as unknown as NodeJS.ProcessEnv), { store, lyricModel: model(prompts), imageService: images });
+  const app = createApp(loadConfig({ BRAIN_ARTWORK_DIR: dir } as unknown as NodeJS.ProcessEnv), { store, chatModel: model(prompts), imageService: images });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

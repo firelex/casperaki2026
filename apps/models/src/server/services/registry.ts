@@ -26,7 +26,7 @@ interface AdapterDef {
   /**
    * Filename inside `modelFolder` whose presence means the weights are on disk.
    * Defaults to `config.json` (the transformers convention), but some repos
-   * ship bare checkpoints (e.g. SoulX-Singer is just `model.pt`).
+   * ship bare checkpoints (just a weights file).
    */
   modelMarker?: string;
   port: number;
@@ -51,16 +51,6 @@ const ADAPTERS: AdapterDef[] = [
     modelFolder: 'facebook__sam-audio-large',
     // 16501 is taken by ACE's internal server; use 16505 so both can run at once.
     port: 16505,
-  },
-  {
-    id: 'soulx-singer',
-    label: 'SoulX-Singer',
-    description: 'Zero-shot singing voice synthesis (reference voice + score → singing).',
-    kind: 'audio',
-    modelFolder: 'Soul-AILab__SoulX-Singer',
-    // Bare checkpoint repo — no config.json, the weights file is the marker.
-    modelMarker: 'model.pt',
-    port: 16502,
   },
   {
     id: 'matchering',

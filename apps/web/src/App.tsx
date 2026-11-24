@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 
 import { SessionProvider } from './state/session';
-import { useLyricsEvents } from './state/useLyricsEvents';
+import { useBrainEvents } from './state/useBrainEvents';
 import { useAuth } from './auth/AuthContext';
 import { LandingPage } from './pages/landing/LandingPage';
 import { ProjectsPage } from './pages/ProjectsPage';
@@ -37,9 +37,9 @@ const HumSongPage = lazy(() => import('./pages/HumSongPage').then((m) => ({ defa
  * Signed-out users see only the landing (LandingPage). Signed-in users get
  * the full route tree wrapped in <SessionProvider>.
  */
-/** Background lyrics arriving for the open song (state/useLyricsEvents.ts). */
-function LyricsEvents(): null {
-  useLyricsEvents();
+/** The brain's events for the signed-in user (state/useBrainEvents.ts). */
+function BrainEvents(): null {
+  useBrainEvents();
   return null;
 }
 
@@ -50,7 +50,7 @@ export function App() {
 
   return (
     <SessionProvider>
-      <LyricsEvents />
+      <BrainEvents />
       <Suspense fallback={<PageSplash />}>
       <Routes>
         <Route path="/" element={<ProjectsPage />} />

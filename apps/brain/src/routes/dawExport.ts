@@ -34,10 +34,8 @@ export function createDawExportRouter(deps: {
   store: SongsStore;
   exports: DawExportService | undefined;
   ownerOf: (req: Request) => string;
-  /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
-  withTakes?: (song: Song) => Song;
 }): Router {
-  const { store, exports, ownerOf, withTakes } = deps;
+  const { store, exports, ownerOf } = deps;
   const router = Router();
   const notConfigured = { error: 'export_not_configured', message: 'CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.' };
 
@@ -52,7 +50,7 @@ export function createDawExportRouter(deps: {
     const project = store.getProject(owner, req.params.id);
     const stored = project ? store.get(req.params.id) : undefined;
     if (!project || !stored) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    const canonical = withTakes ? canonicalStringifySong(withTakes(parseSong(JSON.parse(stored.canonical))), 2) : stored.canonical;
+    const canonical = stored.canonical;
     const status = exports.start(
       owner,
       {

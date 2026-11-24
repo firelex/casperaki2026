@@ -21,8 +21,6 @@ export interface PlaybackRouterDeps {
   readonly playback: PlaybackService | undefined;
   /** The caller's owner id (signed-in user, or the dev owner with auth off). */
   readonly ownerOf: (req: Request) => string;
-  /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
-  readonly withTakes?: (song: Song) => Song;
 }
 
 // mixOverrides: the editor's Pro-mode mix for a song not saved yet (a saved song's comes from its project).
@@ -50,11 +48,10 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
   };
 }
 
-export function createPlaybackRouter({ store, playback, ownerOf, withTakes }: PlaybackRouterDeps): Router {
-  /** The engine's input for a song: its stored vocal takes added; the playback id is that input's hash (so a take
-   *  sung later gives a new id, and a new lowering). */
+export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRouterDeps): Router {
+  /** The engine's input for a song; the playback id is that input's hash. */
   const forEngine = (song: Song) => {
-    const canonical = canonicalStringifySong(withTakes ? withTakes(song) : song, 2);
+    const canonical = canonicalStringifySong(song, 2);
     return { id: createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16), canonical };
   };
   const router = Router();
@@ -76,9 +73,8 @@ export function createPlaybackRouter({ store, playback, ownerOf, withTakes }: Pl
     if (!project) return res.status(404).json({ error: 'not_found', id });
     const stored = store.get(id);
     if (!stored) return res.status(404).json({ error: 'not_found', id });
-    const engine = withTakes ? forEngine(parseSong(JSON.parse(stored.canonical))) : { id, canonical: stored.canonical };
     try {
-      await respond(res, playback, engine.id, engine.canonical, project.mixOverrides);
+      await respond(res, playback, id, stored.canonical, project.mixOverrides);
     } catch (err) {
       res.status(500).json({ error: 'playback_failed', message: err instanceof Error ? err.message : String(err) });
     }
