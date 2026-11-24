@@ -40,6 +40,7 @@ import {
   type ArrangementSignalProcessors,
   type ArrangementTransitions,
 } from '../arrangement-polish/index.js';
+import { resolveArrangementClashes } from '../arrangement-polish/clashes.js';
 import { applyArrangementOverrides, decideDrumOverrides } from '../arrangement-polish/overrides.js';
 import { generateChords } from '../chords/index.js';
 import { generatePatterns } from '../patterns/index.js';
@@ -156,11 +157,9 @@ export function orchestrate(params: GenerateParams): Song {
   const { vocals, structure: structureWithChords } = writeVocals(ctx, generateChords(ctx, structure));
   // Sequencer track edits (generator params `trackEdits`): applied to the
   // selection, so each edit only touches its own lane's streams.
-  const edited = applyTrackEditsToSelection(
-    selectInstruments(ctx, structureWithChords),
-    recordedTrackEdits(params.params),
-    params.genre,
-  );
+  const baseSelection = selectInstruments(ctx, structureWithChords);
+  const trackEdits = recordedTrackEdits(params.params);
+  const edited = applyTrackEditsToSelection(baseSelection, trackEdits, params.genre);
   const selection = edited.selection;
   // to-do #1 Phase B — bake the per-segment drum + bass override system into
   // the freshly-generated patterns (the engine reset path bypasses its own
@@ -175,13 +174,18 @@ export function orchestrate(params: GenerateParams): Song {
     structureWithChords,
     ctx.params.genre,
   );
-  const patterns = applyArrangementOverrides(
-    ctx,
-    structureWithChords,
-    selection,
-    generatePatterns(ctx, structureWithChords, selection, edited.laneVariants),
-    drumDecisions,
-  );
+  const written = (sel: typeof selection, variants: Map<string, number>) =>
+    applyArrangementOverrides(ctx, structureWithChords, sel, generatePatterns(ctx, structureWithChords, sel, variants), drumDecisions);
+  // Parts that get in each other's way are adjusted after they are written (arrangement-polish/clashes.ts): a
+  // second busy part calms down, a part in rhythmic unison with another in its register is moulded around it.
+  // Track edits only ever change their own track (they are spliced into the song as it was): clashes are resolved on
+  // the song as generated without the edits, and the edited tracks are then laid in as written. Every lane forks its
+  // own rng, so writing the patterns twice draws the same notes.
+  const editedTracks = new Set(trackEdits.flatMap((e) => ('track' in e ? [e.track] : [])));
+  const patterns =
+    editedTracks.size === 0
+      ? resolveArrangementClashes(written(selection, edited.laneVariants))
+      : withEditedTracks(resolveArrangementClashes(written(baseSelection, new Map())), written(selection, edited.laneVariants), editedTracks);
   const fills = generateFills(ctx, structureWithChords, selection);
   const mutes = generateMutes(ctx, structureWithChords, selection);
   const transitions = generateTransitions(ctx, structureWithChords, drumDecisions);
@@ -197,6 +201,20 @@ export function orchestrate(params: GenerateParams): Song {
     transitions,
     signalProcessors,
   });
+}
+
+/** The song's patterns: the edited tracks as written with their edits, every other lane as resolved without them. */
+function withEditedTracks(resolved: PatternResult, writtenWithEdits: PatternResult, editedTracks: ReadonlySet<string>): PatternResult {
+  const resolvedBySegment = new Map(resolved.segments.map((s) => [s.segmentName, s.lanes]));
+  return {
+    segments: writtenWithEdits.segments.map((seg) => {
+      const base = resolvedBySegment.get(seg.segmentName);
+      const lanes = Object.fromEntries(
+        Object.entries(seg.lanes).map(([lane, p]) => [lane, editedTracks.has(lane) || !base?.[lane] ? p : base[lane]!]),
+      );
+      return { ...seg, lanes };
+    }),
+  };
 }
 
 export interface LowerInputs {

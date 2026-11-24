@@ -1221,51 +1221,25 @@
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1273,51 +1247,25 @@
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1325,51 +1273,25 @@
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1377,57 +1299,31 @@
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Fmaj7",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Fmaj7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -1439,51 +1335,25 @@
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1491,51 +1361,25 @@
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1543,51 +1387,25 @@
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1595,51 +1413,25 @@
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Em7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Em7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -1651,63 +1443,31 @@
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1715,63 +1475,31 @@
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1779,63 +1507,31 @@
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1843,63 +1539,31 @@
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Dm7",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -3,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -8,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Dm7",
-                    "distanceFromMiddleC": 13,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -1911,51 +1575,25 @@
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -1963,51 +1601,25 @@
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -2015,51 +1627,25 @@
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -2067,51 +1653,25 @@
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G7",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G7",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -18838,51 +18398,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -18890,51 +18424,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -18942,51 +18450,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -18994,57 +18476,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -19056,51 +18512,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19108,51 +18538,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19160,51 +18564,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19212,51 +18590,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -19268,63 +18620,31 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19332,63 +18652,31 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19396,63 +18684,31 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19460,63 +18716,31 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -3,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -8,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 13,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -19528,51 +18752,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19580,51 +18778,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19632,51 +18804,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -19684,51 +18830,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -22814,51 +21934,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -22866,51 +21960,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -22918,51 +21986,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -22970,57 +22012,31 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -23032,51 +22048,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23084,51 +22074,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23136,51 +22100,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23188,51 +22126,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -23244,63 +22156,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23308,63 +22188,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23372,63 +22220,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23436,63 +22252,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -3,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -8,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 13,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -23504,51 +22288,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23556,51 +22314,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23608,51 +22340,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23660,51 +22366,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -23716,51 +22396,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23768,51 +22422,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23820,51 +22448,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23872,57 +22474,31 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -23934,51 +22510,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -23986,51 +22536,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24038,51 +22562,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24090,51 +22588,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -24146,63 +22618,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24210,63 +22650,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24274,63 +22682,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24338,63 +22714,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -3,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -8,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 13,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -24406,51 +22750,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24458,51 +22776,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24510,51 +22802,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -24562,51 +22828,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -27780,51 +26020,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -27832,51 +26046,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -27884,51 +26072,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -27936,57 +26098,31 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -27998,51 +26134,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28050,51 +26160,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28102,51 +26186,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28154,51 +26212,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -28210,63 +26242,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28274,63 +26274,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28338,63 +26306,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28402,63 +26338,31 @@
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "Am",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -3,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -8,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "Am",
-                    "distanceFromMiddleC": 13,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -28470,51 +26374,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28522,51 +26400,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28574,51 +26426,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28626,51 +26452,25 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -28682,51 +26482,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28734,51 +26508,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28786,51 +26534,25 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28838,57 +26560,31 @@
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "C",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "C",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -28900,51 +26596,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -28952,51 +26622,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29004,51 +26648,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29056,51 +26674,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -29112,63 +26704,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29176,63 +26736,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29240,63 +26768,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -27,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -27,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29304,63 +26800,31 @@
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -3,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -8,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "F",
                     "distanceFromMiddleC": 13,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -3,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -8,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "F",
-                    "distanceFromMiddleC": 13,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
@@ -29372,51 +26836,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "0.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29424,51 +26862,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "1.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29476,51 +26888,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "2.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ],
@@ -29528,51 +26914,25 @@
                   {
                     "chord": "G",
                     "distanceFromMiddleC": -15,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 9,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 4,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   },
                   {
                     "chord": "G",
                     "distanceFromMiddleC": 1,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  }
-                ],
-                "3.5": [
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": -15,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 9,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 4,
-                    "duration": 0.25,
-                    "type": "noteRelative"
-                  },
-                  {
-                    "chord": "G",
-                    "distanceFromMiddleC": 1,
-                    "duration": 0.25,
+                    "duration": 1,
                     "type": "noteRelative"
                   }
                 ]
