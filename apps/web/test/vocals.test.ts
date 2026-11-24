@@ -127,3 +127,14 @@ describe('worthSwapping', () => {
     expect(worthSwapping([], starts, 0)).toBe(false);
   });
 });
+
+import { followOnChange } from '../src/audio/followOnChange';
+
+describe('followOnChange', () => {
+  it('a request is taken once', () => {
+    expect(followOnChange.take()).toBe(false);
+    followOnChange.request();
+    expect(followOnChange.take()).toBe(true);
+    expect(followOnChange.take()).toBe(false);
+  });
+});

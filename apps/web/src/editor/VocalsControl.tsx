@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 
 import { vocalsApi, type SectionState } from '../api/vocals';
 import { singAgain, singRun, trackSetting, withVocals, withVoice } from '../audio/singVocals';
+import { followOnChange } from '../audio/followOnChange';
 import { useVocalsStatus } from '../audio/useVocalsStatus';
 import { useVocalsProgress, vocalsProgress } from '../audio/vocalsProgress';
 import { useSession } from '../state/session';
@@ -47,7 +48,11 @@ export function VocalsControl({ track }: { track: string }) {
   const status = useVocalsStatus(viewSong);
   if (!viewSong) return null;
 
-  const replace = (song: typeof viewSong) => applyEdit({ kind: 'replaceSong', song });
+  // Changes here keep the song playing: the transport switches to the new version seamlessly.
+  const replace = (song: typeof viewSong) => {
+    followOnChange.request();
+    applyEdit({ kind: 'replaceSong', song });
+  };
   const sections = (status.data?.tracks[track] ?? []).filter((s) => s.state !== 'none');
   const small = 'h-6 rounded-full border border-white/25 px-2.5 text-[11px] text-white/85 hover:border-white/60 disabled:opacity-40';
   const rect = box.current?.getBoundingClientRect();

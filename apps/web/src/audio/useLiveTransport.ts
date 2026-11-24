@@ -1,6 +1,6 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { Song } from '@casperaki/song-schema';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { playbackApi, type PlaybackPayload } from '../api/playback';
 import { BrainError } from '../api/client';
@@ -9,6 +9,7 @@ import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
 import { fnv1a } from './fnv1a';
+import { followOnChange } from './followOnChange';
 import { hasVocalSettings, LEAD_VOCAL, sectionStarts, singingTracks, singQueue, singRun, takesToken, worthSwapping } from './singVocals';
 import { useVocalsStatus, vocalsStatusKey } from './useVocalsStatus';
 import { vocalsProgress } from './vocalsProgress';
@@ -44,6 +45,21 @@ export function useLiveTransport() {
     },
     [viewSong, editorDirty, songId],
   );
+
+  // A vocal control changed the song while it played (followOnChange): switch to the new version at the same
+  // position (and sing what is now grey), instead of leaving the old version playing without the playhead.
+  const lastKey = useRef(liveKey);
+  useEffect(() => {
+    if (!liveKey) return;
+    const previous = lastKey.current;
+    lastKey.current = liveKey;
+    if (!previous || previous === liveKey || !followOnChange.take()) return;
+    const live = livePlayer.getState();
+    if (live.status !== 'playing' || live.key !== previous || !viewSong) return;
+    void livePlayer.play(liveKey, fetchPayload, { seamless: true, keepMastering: true }).then(() => {
+      if (singingTracks(viewSong).length && baseKey) void singWhilePlaying(viewSong, baseKey, fetchPayload, queryClient);
+    });
+  }, [liveKey, fetchPayload, viewSong, baseKey, queryClient]);
 
   const startPlaying = useCallback(async () => {
     if (!liveKey || !viewSong) return;
