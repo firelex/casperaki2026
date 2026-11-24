@@ -7,7 +7,7 @@ import type { MixOverrides } from '@casperaki/song-schema/schemas';
 
 import type { MixConfigJson, ResolvedMix } from '../audio/livePlayer';
 import { linkedLanes } from '../audio/proMix';
-import { describeParam, pluginTitle } from './devices/ProParams';
+import { describeParam, editableParams, pluginTitle } from './devices/ProParams';
 
 export interface MixSnapshot {
   readonly tracks: readonly {
@@ -26,7 +26,7 @@ export interface MixSnapshot {
   readonly buses: readonly {
     readonly bus: string;
     readonly kind: 'group' | 'return' | 'master';
-    readonly plugins: readonly { readonly slot: number; readonly name: string; readonly params: readonly { readonly index: number; readonly name: string; readonly value: number; readonly shown: string; readonly standard: number }[] }[];
+    readonly plugins: readonly { readonly slot: number; readonly name: string; readonly params: readonly { readonly index: number; readonly name: string; readonly value: number; readonly shown: string; readonly standard: number; readonly readOnly?: true }[] }[];
   }[];
 }
 
@@ -72,7 +72,7 @@ export function mixSnapshot(mix: ResolvedMix, overrides: MixOverrides, standardC
             const d = describeParam(p.factory, index);
             const standard = std?.plugins[slot]?.params[index];
             if (standard === undefined) throw new Error(`The standard mix has no ${c.bus} slot ${slot} parameter ${index}.`);
-            return { index, name: d.name, value: Math.round(value * 1000) / 1000, shown: d.display(value), standard: Math.round(standard * 1000) / 1000 };
+            return { index, name: d.name, value: Math.round(value * 1000) / 1000, shown: d.display(value), standard: Math.round(standard * 1000) / 1000, ...(index >= editableParams(p.factory, current.length) ? { readOnly: true as const } : {}) };
           }),
         };
       }),

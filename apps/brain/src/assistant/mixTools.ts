@@ -19,7 +19,7 @@ const TrackMixSchema = z.object({
   linkedWith: z.array(z.string()),
 });
 
-const BusParamSchema = z.object({ index: z.number().int(), name: z.string(), value: z.number(), shown: z.string(), standard: z.number() });
+const BusParamSchema = z.object({ index: z.number().int(), name: z.string(), value: z.number(), shown: z.string(), standard: z.number(), readOnly: z.literal(true).optional() });
 const BusSchema = z.object({
   bus: z.string(),
   kind: z.enum(['group', 'return', 'master']),
@@ -50,7 +50,7 @@ export function busDetail(mix: MixSnapshot, bus: string): string {
     `${b.bus}:`,
     ...b.plugins.map(
       (p) =>
-        `- slot ${p.slot} ${p.name}: ${p.params.map((q) => `[${q.index}] ${q.name} ${q.shown} (raw ${q.value}${Math.abs(q.value - q.standard) > 1e-6 ? `, standard ${q.standard}` : ''})`).join('; ') || 'no settings'}`,
+        `- slot ${p.slot} ${p.name}: ${p.params.map((q) => `[${q.index}] ${q.name} ${q.shown} (${q.readOnly ? 'fixed' : `raw ${q.value}`}${Math.abs(q.value - q.standard) > 1e-6 ? `, standard ${q.standard}` : ''})`).join('; ') || 'no settings'}`,
     ),
   ].join('\n');
 }
@@ -137,6 +137,7 @@ export function busSettingAction(mix: MixSnapshot, a: z.infer<typeof SetBusSetti
   if (!plugin) throw new MixToolError(`The ${a.bus} bus has no plugin in slot ${a.slot}; see get_bus.`);
   const param = plugin.params.find((p) => p.index === a.param);
   if (!param) throw new MixToolError(`${plugin.name} on ${a.bus} has no setting ${a.param}; see get_bus.`);
+  if (param.readOnly) throw new MixToolError(`${plugin.name}'s ${param.name} cannot be changed in Pro mode.`);
   param.value = a.value;
   return {
     summary: `${a.bus} bus, ${plugin.name}: ${param.name} set to ${a.value} (raw). This setting is shared by every track on the bus.`,

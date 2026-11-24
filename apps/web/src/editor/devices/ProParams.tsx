@@ -10,8 +10,25 @@ const LOGICAL4 = [
   { name: 'Dry / wet', display: (p: readonly number[]) => logical4Settings(p).dryWet.toFixed(2) },
 ] as const;
 
+/**
+ * SimpleSide's settings after mix and rate: its pump curve, as (x, y, shape)
+ * triples per point (engine SimpleSide.cpp). Not on a 0..1 scale, so shown but
+ * not editable in Pro mode.
+ */
+const SIMPLE_SIDE_EDITABLE = 2;
+const CURVE_PART = ['position', 'level', 'shape'] as const;
+
+/** How many of a plugin's settings Pro mode can change (the rest are shown read-only). */
+export function editableParams(factory: string, count: number): number {
+  return factory === 'makeSimpleSide' ? Math.min(SIMPLE_SIDE_EDITABLE, count) : count;
+}
+
 /** A plugin parameter's name and how one value of it reads, in the plugin's units. */
 export function describeParam(factory: string, index: number): { name: string; display: (v: number) => string } {
+  if (factory === 'makeSimpleSide' && index >= SIMPLE_SIDE_EDITABLE) {
+    const k = index - SIMPLE_SIDE_EDITABLE;
+    return { name: `Pump curve point ${Math.floor(k / 3) + 1} ${CURVE_PART[k % 3]}`, display: (v) => String(Math.round(v * 1000) / 1000) };
+  }
   if (factory === 'makeLogical4') {
     const c = LOGICAL4[index];
     if (!c) throw new Error(`Logical4 has no parameter ${index}`);
@@ -49,8 +66,9 @@ export function ProParams({
       ? LOGICAL4.map((c) => ({ name: c.name, show: () => c.display(params) }))
       : (DEVICES[factory]?.params ?? []).map((d, i) => ({ name: d.name, show: () => d.display(params[i] ?? 0) }));
   if (params.length === 0) return <p className="border-t border-black/70 px-4 py-3 text-[12px] text-[#9a9ba3]">This plugin has no settings to change.</p>;
-  if (names.length !== params.length) {
-    throw new Error(`ProParams: ${factory} has ${params.length} parameters but ${names.length} are described`);
+  const editable = editableParams(factory, params.length);
+  if (names.length !== editable) {
+    throw new Error(`ProParams: ${factory} has ${editable} changeable parameters but ${names.length} are described`);
   }
   return (
     <div className="grid grid-cols-2 gap-x-6 gap-y-2 border-t border-black/70 bg-[#1c1d21] px-4 py-3">
@@ -78,6 +96,11 @@ export function ProParams({
           </label>
         );
       })}
+      {editable < params.length ? (
+        <p className="col-span-2 text-[11px] text-[#9a9ba3]" title={params.slice(editable).map((v, i) => `${describeParam(factory, editable + i).name}: ${describeParam(factory, editable + i).display(v)}`).join('\n')}>
+          Its pump curve ({params.length - editable} values) is not changeable here.
+        </p>
+      ) : null}
     </div>
   );
 }
