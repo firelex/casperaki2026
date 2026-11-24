@@ -71,12 +71,16 @@ export function generatePatterns(
    *  number. Variation n > 0 forks `lane/<name>#v<n>` instead of `lane/<name>`,
    *  so only that lane's draws change. */
   laneVariants: ReadonlyMap<string, number> = new Map(),
+  /** Named pattern streams (thin-section partner tracks): lane → fork name used instead of `lane/<name>`; a
+   *  variation n > 0 of such a lane forks `<name>#v<n>`. */
+  laneForks: ReadonlyMap<string, string> = new Map(),
 ): PatternResult {
   // Every chord root the song uses: the bass decides its octave on them.
   const songChordRoots = new Set(structure.flatMap((seg) => seg.bars.flatMap((bar) => bar.chords.map((c) => parseChord(c).root))));
   const laneFork = (laneName: string): string => {
+    const base = laneForks.get(laneName) ?? `lane/${laneName}`;
     const v = laneVariants.get(laneName);
-    return v ? `lane/${laneName}#v${v}` : `lane/${laneName}`;
+    return v ? `${base}#v${v}` : base;
   };
   if (structure.length !== selection.segments.length) {
     throw new Error(

@@ -371,3 +371,37 @@ describe('generatePatterns (brightPop)', () => {
     expect(generated).toBe(golden);
   });
 });
+
+describe('named lane pattern streams (laneForks)', () => {
+  const ctx = makeCtx('lane-forks');
+  const structure = generateChords(ctx, generateSongStructure(ctx));
+  const selection = selectInstruments(ctx, structure);
+  // A lead synth with a free style choice (leadSynthsAnalog is forced to one style; guitar banks are small enough
+  // for two streams to draw the same pattern).
+  const lead = selection.instruments.find((i) => i.family === 'synths' && i.lowLevel !== 'leadSynthsAnalog');
+  if (!lead) throw new Error('seed lane-forks no longer has a free-style lead synth: pick another seed');
+  const lane = lead.lane;
+  const laneIn = (r: PatternResult) => r.segments.map((s) => s.lanes[lane]);
+  const others = (r: PatternResult) => r.segments.map((s) => Object.fromEntries(Object.entries(s.lanes).filter(([l]) => l !== lane)));
+  const base = generatePatterns(ctx, structure, selection);
+
+  it('no named streams: the same patterns as before', () => {
+    expect(generatePatterns(ctx, structure, selection, new Map(), new Map())).toEqual(base);
+  });
+
+  it('a named stream changes only that lane', () => {
+    const named = generatePatterns(ctx, structure, selection, new Map(), new Map([[lane, `thin/${lane}#2`]]));
+    expect(laneIn(named)).not.toEqual(laneIn(base));
+    expect(others(named)).toEqual(others(base));
+  });
+
+  it('a new pattern (variant) of a named lane forks from its name, so it never repeats another option', () => {
+    const forks = (k: number) => new Map([[lane, `thin/${lane}#${k}`]]);
+    const chosen = generatePatterns(ctx, structure, selection, new Map(), forks(2));
+    const renewed = generatePatterns(ctx, structure, selection, new Map([[lane, 1]]), forks(2));
+    const option1 = generatePatterns(ctx, structure, selection, new Map(), forks(1));
+    expect(laneIn(renewed)).not.toEqual(laneIn(chosen));
+    expect(laneIn(renewed)).not.toEqual(laneIn(option1));
+    expect(laneIn(renewed)).not.toEqual(laneIn(base));
+  });
+});
