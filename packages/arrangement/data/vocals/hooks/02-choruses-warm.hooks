@@ -1,0 +1,217 @@
+# Warm, slow and minor choruses and bridges (tender, groove, minor, dark, latin).
+
+hook: Lantern Hours
+type: Chorus
+tempo: 64-78
+feel: tender
+chords: F | C | Am | G | F | C | Dm7 G | C
+melody: r:1 a4:1 c5:2 | c5:1 g4:1 e4:2 | r:1 a4:1 c5:1 e5:1 | d5:4 |
+        r:1 a4:1 c5:1 f5:1 | e5:2 d5:1 c5:1 | a4:1 c5:1 b4:1 d5:1 | c5:4 |
+
+hook: Slow Harbour
+type: Chorus
+tempo: 60-72
+feel: tender
+leadin: yes
+chords: G | C | Em | Am | F | C | Em | Fmaj7 | C
+melody: r:2 g4:1 a4:1 | c5:3 d5:1 | b4:2 g4:2 | a4:1 c5:1 e5:2 | c5:4 |
+        r:1 g4:1 c5:1 e5:1 | g5:3 e5:1 | e5:2 c5:1 a4:1 | c5:4 |
+
+hook: Velvet Undertow
+type: Chorus
+tempo: 92-108
+feel: groove
+chords: Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 | G7 | C
+melody: r:0.5 e5:0.5 e5:0.5 c5:1 a4:1.5 | r:0.5 d5:0.5 d5:0.5 c5:1 a4:1.5 | b4:1 d5:1 g4:2 | e4:3 r:1 |
+        r:0.5 e5:0.5 e5:0.5 g5:1 e5:1.5 | r:0.5 f5:0.5 f5:0.5 d5:1 c5:1.5 | b4:1 d5:1 f5:1 d5:1 | c5:3 r:1 |
+
+hook: Ember Road
+type: Chorus
+tempo: 100-118
+feel: groove
+chords: C | Em | F | G | Am | Em | F G | C
+melody: g4:0.75 g4:0.25 g4:1 e4:1 g4:1 | b4:2 g4:1 e4:1 | a4:0.75 a4:0.25 a4:1 f4:1 a4:1 | d5:2 b4:2 |
+        c5:0.75 c5:0.25 c5:1 a4:1 e5:1 | g5:2 e5:1 b4:1 | a4:1 c5:1 b4:1 d5:1 | c5:4 |
+
+hook: Glass Lullaby
+type: Chorus
+tempo: 62-76
+feel: tender
+chords: C | Am7 | Fmaj7 | G | C | Am7 | Dm7 Gsus4 | C
+melody: e4:3 d4:1 | c4:2 a3:2 | c4:1 a3:1 e4:2 | d4:4 |
+        e4:2 g4:2 | a4:3 g4:1 | f4:1 e4:1 d4:1 c4:1 | c4:4 |
+
+hook: Midnight Orchard
+type: Chorus
+tempo: 70-84
+feel: minor
+chords: Am | F | C | G | Am | F | Dm E7 | Am
+melody: e4:2 c4:1 a3:1 | c4:3 a3:1 | g3:1 c4:1 e4:2 | d4:4 |
+        e4:2 a4:2 | a4:1 g4:1 f4:1 e4:1 | f4:1 d4:1 b3:1 g#3:1 | a3:4 |
+
+hook: Cinder Psalm
+type: Chorus
+tempo: 60-70
+feel: dark
+chords: Am | Am | F | E | Am | Dm | F E | Am
+melody: a3:3 c4:1 | e4:4 | f4:2 c4:2 | b3:3 g#3:1 |
+        a3:2 c4:2 | a4:3 f4:1 | f4:1 e4:1 b3:2 | a3:4 |
+
+hook: Fever Lagoon
+type: Chorus
+tempo: 96-112
+feel: latin
+chords: Am | Dm | G | C | F | Dm | E7 | Am
+melody: e4:1.5 c4:1.5 a3:1 | f4:1.5 d4:1.5 a3:1 | d4:1.5 b3:1.5 g3:1 | e4:0.5 d4:0.5 c4:3 |
+        a4:1.5 f4:1.5 c4:1 | a4:1.5 f4:1.5 d4:1 | e4:1 d4:0.5 b3:0.5 g#3:2 | a3:4 |
+
+hook: Saltwater Promise
+type: Chorus
+tempo: 88-104
+feel: latin
+chords: C | Dm7 | G7 | C | Am | Dm7 | G7 | C
+melody: r:0.5 g4:0.5 c5:1 e5:0.5 d5:1.5 | r:0.5 a4:0.5 d5:1 f5:0.5 e5:1.5 | d5:1 b4:1 g4:1 f4:1 | e4:2 r:2 |
+        r:0.5 a4:0.5 c5:1 e5:0.5 d5:1.5 | r:0.5 f5:0.5 g5:1 f5:0.5 e5:1.5 | d5:1 f5:1 b4:1 d5:1 | c5:4 |
+
+hook: Quiet Satellites
+type: Chorus
+tempo: 66-80
+feel: tender
+leadin: yes
+chords: C | Am | F | C | G | Am7 | F | Dm7 G | C
+melody: r:3 e4:1 | a4:2 c5:1 b4:1 | a4:3 g4:1 | g4:2 e5:2 | d5:3 b4:1 |
+        c5:1 e5:1 g5:2 | f5:2 c5:1 a4:1 | f5:1 e5:1 d5:2 | c5:4 |
+
+hook: Iron Lullaby
+type: Chorus
+tempo: 72-84
+feel: dark
+chords: Am | G | F | E | Am | G | Dm E7 | Am
+melody: e4:1.5 e4:0.5 e4:1 d4:1 | d4:1.5 d4:0.5 d4:1 b3:1 | c4:1.5 c4:0.5 c4:1 a3:1 | b3:3 r:1 |
+        e4:1 e4:1 a4:1 g4:1 | g4:1 d4:1 b3:2 | a3:1 d4:1 b3:1 g#3:1 | a3:4 |
+
+hook: Amber Sway
+type: Chorus
+tempo: 84-96
+feel: groove
+chords: Fmaj7 | Em7 | Dm7 | C | Fmaj7 | Em7 | Dm7 G | C
+melody: r:0.75 c5:0.25 e5:1 c5:0.75 a4:1.25 | r:0.75 b4:0.25 d5:1 b4:0.75 g4:1.25 | r:0.75 a4:0.25 c5:1 a4:0.75 f4:1.25 | e4:2 g4:2 |
+        r:0.75 c5:0.25 f5:1 e5:0.75 c5:1.25 | r:0.75 d5:0.25 g5:1 e5:0.75 b4:1.25 | d5:1 f5:1 d5:1 b4:1 | c5:3 r:1 |
+
+hook: Linen Moonrise
+type: Chorus
+tempo: 60-74
+feel: tender
+chords: C | G | Am | Em | F | C | F G | C
+melody: g4:2 c5:2 | d5:3 b4:1 | c5:2 e5:2 | b4:4 |
+        a4:2 c5:2 | g5:3 e5:1 | f5:1 d5:1 d5:1 b4:1 | c5:4 |
+
+hook: Smoke and Silver
+type: Chorus
+tempo: 78-92
+feel: minor
+chords: Dm | Am | E7 | Am | Dm | Am | F E | Am
+melody: f4:1 e4:0.5 d4:0.5 a3:2 | e4:1 c4:0.5 b3:0.5 a3:2 | r:1 g#3:1 b3:1 d4:1 | c4:3 r:1 |
+        a4:1 g4:0.5 f4:0.5 d4:2 | e4:1 c4:0.5 a3:0.5 e4:2 | c4:1 a3:1 b3:1 g#3:1 | a3:4 |
+
+hook: Clave Lantern
+type: Chorus
+tempo: 104-120
+feel: latin
+chords: C | Am | Dm | G | C | Am | Dm G | C
+melody: c5:0.5 c5:0.5 r:0.5 e5:1 d5:0.5 c5:1 | a4:0.5 a4:0.5 r:0.5 c5:1 b4:0.5 a4:1 | d5:0.5 d5:0.5 r:0.5 f5:1 e5:0.5 d5:1 | b4:2 g4:2 |
+        e5:0.5 e5:0.5 r:0.5 g5:1 f5:0.5 e5:1 | c5:0.5 c5:0.5 r:0.5 e5:1 d5:0.5 c5:1 | f5:1 d5:1 b4:1 d5:1 | c5:4 |
+
+hook: Shadow Ledger
+type: Chorus
+tempo: 96-110
+feel: dark
+chords: Am | C | G | Dm | Am | C | E7 | Am
+melody: r:0.5 a4:0.5 c5:0.5 e5:1 c5:1.5 | e5:2 g4:2 | r:0.5 g4:0.5 b4:0.5 d5:1 b4:1.5 | a4:2 f4:2 |
+        r:0.5 c5:0.5 e5:0.5 g5:1 e5:1.5 | g5:2 e5:2 | d5:1 b4:1 g#4:2 | a4:4 |
+
+hook: Honey Static
+type: Chorus
+tempo: 108-125
+feel: groove
+chords: Am | F | C | G | Am7 | F | Gsus4 G | C
+melody: e5:0.25 e5:0.25 e5:0.5 c5:1 a4:2 | c5:0.25 c5:0.25 c5:0.5 a4:1 f4:2 | e5:0.25 e5:0.25 e5:0.5 g5:1 e5:2 | d5:4 |
+        g5:0.25 g5:0.25 g5:0.5 e5:1 c5:2 | f5:0.25 f5:0.25 f5:0.5 e5:1 c5:2 | d5:1 c5:1 b4:1 d5:1 | c5:4 |
+
+hook: Midsummer Ash
+type: Chorus
+tempo: 60-72
+feel: minor
+leadin: yes
+chords: E7 | Am7 | Fmaj7 | C | G | Am7 | Fmaj7 | Dm7 E7 | Am
+melody: r:2 b4:1 c5:1 | e5:3 d5:1 | c5:2 a4:2 | g4:3 c5:1 | b4:2 d5:2 |
+        e5:2 c5:1 a4:1 | f5:3 e5:1 | d5:1 c5:1 b4:2 | a4:4 |
+
+hook: Bramble Heart
+type: Chorus
+tempo: 76-88
+feel: groove
+chords: Cmaj7 | Em7 | Am7 | Fmaj7 | Dm7 | Em7 | Fmaj7 G | C
+melody: e4:0.75 d4:0.25 c4:0.75 b3:0.25 g3:2 | g3:0.75 a3:0.25 b3:0.75 d4:0.25 e4:2 | e4:0.75 d4:0.25 c4:0.75 a3:0.25 g3:2 | a3:4 |
+        a3:0.75 c4:0.25 d4:0.75 f4:0.25 a4:2 | g4:0.75 e4:0.25 d4:0.75 b3:0.25 g4:2 | f4:1 e4:1 d4:1 b3:1 | c4:4 |
+
+hook: Candle Mile
+type: Chorus
+tempo: 112-125
+feel: latin
+leadin: yes
+chords: E7 | Am | G | F | E7 | Am7 | G | F E7 | Am
+melody: r:2 b4:0.5 c5:0.5 d5:1 | e5:1.5 c5:1.5 a4:1 | d5:1.5 b4:1.5 g4:1 | c5:1.5 a4:1.5 f4:1 | g#4:2 b4:1 d5:1 |
+        e5:1 g5:1 g5:1 e5:1 | g5:1.5 d5:1.5 b4:1 | c5:1 a4:1 b4:2 | a4:4 |
+
+# Bridges
+
+hook: Distant Weather
+type: Bridge
+tempo: 66-80
+feel: tender
+chords: F | G | Em | Am | Dm7 | Em7 | F | Gsus4 G
+melody: a4:2 c5:2 | b4:2 d5:2 | e5:3 b4:1 | c5:4 |
+        r:1 d5:1 f5:2 | e5:2 g5:2 | f5:1 e5:1 c5:2 | d5:2 b4:2 |
+
+hook: Rust Cathedral
+type: Bridge
+tempo: 70-84
+feel: dark
+chords: F | F | G | G | Dm | Am | E | E7
+melody: a4:1 a4:1 a4:1 g4:1 | f4:3 r:1 | b4:1 b4:1 b4:1 a4:1 | g4:3 r:1 |
+        d5:1 d5:1 f5:1 e5:1 | e5:3 c5:1 | b4:2 g#4:2 | e4:1 g#4:1 b4:2 |
+
+hook: Neon Hymnal
+type: Bridge
+tempo: 96-112
+feel: groove
+chords: Am | Em | F | C | Am | Em | Dm | G
+melody: r:1 c5:0.5 c5:0.5 c5:1 b4:1 | b4:2 g4:2 | r:1 a4:0.5 a4:0.5 a4:1 g4:1 | g4:2 e4:2 |
+        r:1 e5:0.5 e5:0.5 e5:1 d5:1 | g5:2 e5:2 | f5:1 e5:1 d5:2 | b4:1 c5:1 d5:2 |
+
+hook: Tidewater Prayer
+type: Bridge
+tempo: 60-72
+feel: minor
+leadin: yes
+chords: Am | Dm | G | C | F | Dm | Am | E | E7
+melody: r:3 a4:1 | d5:3 c5:1 | b4:2 g4:2 | c5:3 e5:1 | f5:4 |
+        d5:2 a4:2 | c5:3 b4:1 | b4:3 g#4:1 | e4:2 b4:2 |
+
+hook: Copper Rain
+type: Bridge
+tempo: 100-116
+feel: latin
+chords: Dm7 | G7 | Em7 | Am7 | Dm7 | G7 | Fmaj7 | G
+melody: f5:1.5 d5:1.5 c5:1 | b4:1.5 d5:1.5 f5:1 | e5:1.5 b4:1.5 g4:1 | a4:2 r:2 |
+        a4:1.5 c5:1.5 d5:1 | f5:1.5 d5:1.5 b4:1 | c5:1 e5:1 a4:2 | d5:1 c5:1 b4:2 |
+
+hook: Hollow Embers
+type: Bridge
+tempo: 80-96
+feel: dark
+leadin: yes
+chords: E7 | F | G | Am | Am | F | G | Dm | E
+melody: r:2 e4:1 g#4:1 | a4:1.5 a4:0.5 c5:2 | b4:1.5 b4:0.5 d5:2 | e5:3 r:1 | e5:1 d5:1 c5:1 a4:1 |
+        c5:1.5 c5:0.5 f5:2 | d5:1.5 d5:0.5 g5:2 | f5:1 e5:1 d5:1 c5:1 | b4:4 |
