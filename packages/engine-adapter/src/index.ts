@@ -122,6 +122,7 @@ import {
   buildPopStringsInst,
   buildSynthsInst,
 } from './synths.js';
+import { buildVocalClipsInst } from './audio-clips.js';
 
 export interface BrainProvenance {
   hash: string;
@@ -173,6 +174,8 @@ export interface ToEngineFixtureOptions {
    * batchRun() cache short-circuit (see docs/53w + 52f §B) keeps working.
    */
   bassAssetResolution?: AssetResolutionInfo;
+  /** Where the song's sung vocal takes are (CASPERAKI_VOCAL_TAKES_DIR); needed when the song's vocals are on. */
+  vocalTakesDir?: string;
   /** Same shape and semantics as `bassAssetResolution` (Keys family). */
   keysAssetResolution?: AssetResolutionInfo;
   /** Same shape and semantics as `bassAssetResolution` (Pad family). */
@@ -1043,6 +1046,9 @@ function finishParametricLaneInst(
  * deferred — those blocks are emitted as empty `{}` per segment so the
  * engine walks past them. See file header for per-lane status.
  */
+/** The engine instrument id of the sung-vocals audioClips lane (clear of loop playsample ids, 50000+). */
+const VOCAL_CLIPS_INST_ID = 60000;
+
 export function toEngineFixture(
   song: Song,
   options: ToEngineFixtureOptions,
@@ -1585,6 +1591,10 @@ export function toEngineFixture(
       }
     }
   }
+
+  // ---- Sung vocal takes (audioClips lane) ---------------------------------
+  const vocalClips = buildVocalClipsInst(song, { vocalTakesDir: options.vocalTakesDir, id: VOCAL_CLIPS_INST_ID, filenameIndex: nextInstIndex() });
+  if (vocalClips) instruments.push(vocalClips);
 
   // ---- Diagnostics -------------------------------------------------------
   diagnostics.push({

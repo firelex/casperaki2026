@@ -409,6 +409,8 @@ const fixture = toEngineFixture(song, {
   transitionCatalog: catalog,
   getTransitionSampleDurationSeconds,
   loopSampleProbe,
+  // Sung vocal takes (audioClips lane): where the brain keeps them.
+  ...(process.env.CASPERAKI_VOCAL_TAKES_DIR ? { vocalTakesDir: process.env.CASPERAKI_VOCAL_TAKES_DIR } : {}),
 });
 
 mkdirSync(OUT, { recursive: true });
