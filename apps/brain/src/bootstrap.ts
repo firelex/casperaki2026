@@ -20,6 +20,7 @@ import { createJobs } from './jobs.js';
 import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
 import { EventHub } from './events.js';
 import { LyricsTasks } from './lyrics/tasks.js';
+import { ArtworkTasks, HarnessImageService, type ImageService } from './artwork/tasks.js';
 import { SongTitler } from './titles/songTitler.js';
 import { OpenAiLyricModel, type LyricModel } from './lyrics/lyricist.js';
 import { createDawExportRouter } from './routes/dawExport.js';
@@ -70,6 +71,8 @@ export interface CreateAppDeps {
   readonly assistantLlm?: AssistantLlm;
   /** Names new songs (tests inject a fake; production uses the assistant model). */
   readonly songTitler?: SongTitler;
+  /** For tests: draws song artwork instead of the image service. */
+  readonly imageService?: ImageService;
   /** The lyricist's language model (tests inject a fake). */
   readonly lyricModel?: LyricModel;
   /** The melody library's precedent bank directory (tests point it at fixtures). */
@@ -257,12 +260,22 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     ? new LyricsTasks({ store, lyricModel, events, hash: hashCanonical, clock: () => new Date().toISOString(), onSongReplaced: vocalsHooks.onSongReplaced })
     : undefined;
   (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks = lyrics;
+  // Song artwork, drawn after the title (src/artwork/tasks.ts): needs the language model and the image service.
+  if (Boolean(config.artworkServiceUrl || deps.imageService) !== Boolean(config.artworkDir)) {
+    throw new Error('Set both ARTWORK_SERVICE_URL and BRAIN_ARTWORK_DIR for song artwork, or neither.');
+  }
+  const artwork =
+    lyricModel && config.artworkDir && (deps.imageService || config.artworkServiceUrl)
+      ? new ArtworkTasks({ store, model: lyricModel, images: deps.imageService ?? new HarnessImageService(config.artworkServiceUrl!), events, dir: resolve(config.artworkDir) })
+      : undefined;
+  if (!artwork) console.warn('[brain] ARTWORK_SERVICE_URL / BRAIN_ARTWORK_DIR not set — new songs get no artwork.');
+  (app.locals as { artworkTasks?: ArtworkTasks }).artworkTasks = artwork;
   // Routes that wait for the lyricist (minutes) answer as jobs when asked to (Prefer: respond-async), so they outlast
   // the Cloudflare tunnel's 100-second limit (src/jobs.ts).
   const jobs = createJobs(ownerOf);
   app.post(['/api/songs/generate', '/api/hum/song', '/api/tracks/edit', '/api/sections/add'], jobs.asJob);
   app.use(jobs.router);
-  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(lyrics ? { lyrics } : {}) }));
+  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(lyrics ? { lyrics } : {}), ...(artwork ? { artwork } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, withTakes: vocalsHooks.withTakes }));
   app.use(createPlaybackRouter({ store, playback, ownerOf, withTakes: vocalsHooks.withTakes }));
   app.use(createTracksRouter(lyricModel ? { lyricModel } : {}));
@@ -275,6 +288,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       store,
       ...(titler ? { onPlaceholderTitle: (u: Parameters<SongTitler['name']>[0]) => titler.name(u) } : {}),
       ...(lyrics ? { lyrics } : {}),
+      ...(artwork ? { artwork } : {}),
     }),
   );
   // Sung vocals (section takes): answers 503 naming the settings when not set up.
@@ -377,6 +391,7 @@ export function startServer(): { stop: () => Promise<void> } {
   });
   // Lyrics a restart interrupted are written now.
   (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks?.resumeAll();
+  (app.locals as { artworkTasks?: ArtworkTasks }).artworkTasks?.resumeAll();
   return {
     stop: () =>
       new Promise<void>((resolvePromise, reject) => {

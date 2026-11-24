@@ -37,14 +37,15 @@ export class SongTitler {
     private readonly now: () => string = () => new Date().toISOString(),
   ) {}
 
-  /** Start naming a new song in the background. */
-  name(untitled: UntitledSong): void {
+  /** Start naming a new song in the background; settles when naming is over (named or not). */
+  name(untitled: UntitledSong): Promise<void> {
     const job = this.run(untitled)
       .catch((err: unknown) => {
         console.error(`[titles] could not name song ${untitled.songId}: ${err instanceof Error ? err.message : String(err)}`);
       })
       .finally(() => this.pending.delete(job));
     this.pending.add(job);
+    return job;
   }
 
   /** Resolves when every started naming job has finished (for tests and shutdown). */

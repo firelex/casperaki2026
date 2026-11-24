@@ -13,7 +13,10 @@ export type BrainEvent =
   /** Lyrics written in the background for a project: saved as `newSongId` (the project moved there), with the words
    *  per section; or writing them failed. `songId` is the project's song when the event was sent. */
   | { readonly type: 'lyrics'; readonly state: 'done'; readonly songId: string; readonly newSongId: string; readonly lyrics: Readonly<Record<string, readonly string[]>> }
-  | { readonly type: 'lyrics'; readonly state: 'failed'; readonly songId: string; readonly message: string };
+  | { readonly type: 'lyrics'; readonly state: 'failed'; readonly songId: string; readonly message: string }
+  /** The song's artwork was drawn (GET /api/songs/:songId/artwork), or drawing it failed. */
+  | { readonly type: 'artwork'; readonly state: 'done'; readonly songId: string }
+  | { readonly type: 'artwork'; readonly state: 'failed'; readonly songId: string; readonly message: string };
 
 export class EventHub {
   private readonly streams = new Map<string, Set<(event: BrainEvent) => void>>();

@@ -41,7 +41,15 @@ export interface ProjectRow {
   readonly mixUpdatedAt: string | null;
   /** The song's lyrics while they are being written in the background, or why writing them failed (null = written). */
   readonly lyrics: ProjectLyrics | null;
+  /** The song's artwork: being drawn, drawn (its file), or why drawing it failed (null = none asked for). */
+  readonly artwork: ProjectArtwork | null;
 }
+
+/** A project's artwork, drawn in the background (see artwork/tasks.ts). */
+export type ProjectArtwork =
+  | { readonly state: 'drawing'; readonly task: string }
+  | { readonly state: 'done'; readonly task: string; readonly file: string }
+  | { readonly state: 'failed'; readonly task: string; readonly message: string };
 
 /** Lyrics being written for a project in the background (see lyrics/tasks.ts). */
 export type ProjectLyrics =
@@ -111,6 +119,12 @@ export interface SongsStore {
   projectOfLyricsTask(ownerId: string, task: string): ProjectRow | undefined;
   /** Every project whose lyrics are still being written (resumed when the brain starts). */
   listWritingLyrics(): ProjectRow[];
+  /** Sets the project's artwork state. False when there is no such project. */
+  setProjectArtwork(input: { ownerId: string; songId: string; artwork: ProjectArtwork }): boolean;
+  /** The project an artwork task draws for, wherever saves have moved it since. */
+  projectOfArtworkTask(ownerId: string, task: string): ProjectRow | undefined;
+  /** Every project whose artwork is still being drawn (resumed when the brain starts). */
+  listDrawingArtwork(): ProjectRow[];
   /** Save (or with null clear) a project's Pro-mode mix. Returns false if the owner has no such project. */
   setProjectMix(input: { ownerId: string; songId: string; mixOverrides: MixOverrides | null; updatedAt: string }): boolean;
   /** Every project with a Pro-mode mix, newest first (the suggestions page). */
@@ -193,6 +207,10 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   if (!projectCols.has('lyrics_state')) db.exec(`ALTER TABLE projects ADD COLUMN lyrics_state TEXT`);
   if (!projectCols.has('lyrics_task')) db.exec(`ALTER TABLE projects ADD COLUMN lyrics_task TEXT`);
   if (!projectCols.has('lyrics_message')) db.exec(`ALTER TABLE projects ADD COLUMN lyrics_message TEXT`);
+  // Artwork drawn in the background (added 2026-11-24): its state, task, file or failure.
+  if (!projectCols.has('artwork_state')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_state TEXT`);
+  if (!projectCols.has('artwork_task')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_task TEXT`);
+  if (!projectCols.has('artwork_detail')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_detail TEXT`);
 
   const insertStmt = db.prepare(
     `INSERT OR REPLACE INTO songs
@@ -207,6 +225,7 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   );
   const projectSelect = `SELECT p.owner_id, p.song_id, p.title, p.created_at, p.updated_at, p.mix_overrides, p.mix_updated_at,
                                 p.lyrics_state, p.lyrics_task, p.lyrics_message,
+                                p.artwork_state, p.artwork_task, p.artwork_detail,
                                 s.genre, s.key_text, s.bpm,
                                 json_extract(s.canonical, '$.songStructure') AS structure
                            FROM projects p JOIN songs s ON s.id = p.song_id`;
@@ -221,6 +240,11 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   );
   const lyricsTaskStmt = db.prepare(`${projectSelect} WHERE p.owner_id = ? AND p.lyrics_task = ?`);
   const writingLyricsStmt = db.prepare(`${projectSelect} WHERE p.lyrics_state = 'writing'`);
+  const setArtworkStmt = db.prepare(
+    `UPDATE projects SET artwork_state = ?, artwork_task = ?, artwork_detail = ? WHERE owner_id = ? AND song_id = ?`,
+  );
+  const artworkTaskStmt = db.prepare(`${projectSelect} WHERE p.owner_id = ? AND p.artwork_task = ?`);
+  const drawingArtworkStmt = db.prepare(`${projectSelect} WHERE p.artwork_state = 'drawing'`);
   const setMixStmt = db.prepare(`UPDATE projects SET mix_overrides = ?, mix_updated_at = ? WHERE owner_id = ? AND song_id = ?`);
   const listMixesStmt = db.prepare(
     `SELECT p.owner_id, p.song_id, p.title, p.mix_overrides, p.mix_updated_at, s.genre, s.canonical
@@ -247,6 +271,7 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
       setMixStmt.run(from.mix_overrides, from.mix_updated_at, input.ownerId, input.toSongId);
       // So do lyrics still being written for it.
       setLyricsStmt.run(from.lyrics_state, from.lyrics_task, from.lyrics_message, input.ownerId, input.toSongId);
+      setArtworkStmt.run(from.artwork_state, from.artwork_task, from.artwork_detail, input.ownerId, input.toSongId);
       return true;
     },
   );
@@ -375,6 +400,17 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     listWritingLyrics() {
       return (writingLyricsStmt.all() as ProjectDbRow[]).map(toProjectRow);
     },
+    setProjectArtwork({ ownerId, songId, artwork }) {
+      const detail = artwork.state === 'done' ? artwork.file : artwork.state === 'failed' ? artwork.message : null;
+      return setArtworkStmt.run(artwork.state, artwork.task, detail, ownerId, songId).changes > 0;
+    },
+    projectOfArtworkTask(ownerId, task) {
+      const row = artworkTaskStmt.get(ownerId, task) as ProjectDbRow | undefined;
+      return row ? toProjectRow(row) : undefined;
+    },
+    listDrawingArtwork() {
+      return (drawingArtworkStmt.all() as ProjectDbRow[]).map(toProjectRow);
+    },
     close() {
       db.close();
     },
@@ -396,6 +432,9 @@ interface ProjectDbRow {
   lyrics_state: string | null;
   lyrics_task: string | null;
   lyrics_message: string | null;
+  artwork_state: string | null;
+  artwork_task: string | null;
+  artwork_detail: string | null;
 }
 
 function toProjectRow(row: ProjectDbRow): ProjectRow {
@@ -412,7 +451,21 @@ function toProjectRow(row: ProjectDbRow): ProjectRow {
     mixOverrides: row.mix_overrides === null ? null : MixOverridesSchema.parse(JSON.parse(row.mix_overrides)),
     mixUpdatedAt: row.mix_updated_at,
     lyrics: lyricsOf(row),
+    artwork: artworkOf(row),
   };
+}
+
+function artworkOf(row: ProjectDbRow): ProjectArtwork | null {
+  if (row.artwork_state === null) return null;
+  const task = row.artwork_task;
+  if (task === null) throw new Error(`Project ${row.song_id}: artwork state "${row.artwork_state}" without a task.`);
+  if (row.artwork_state === 'drawing') return { state: 'drawing', task };
+  if (row.artwork_state === 'done') {
+    if (!row.artwork_detail) throw new Error(`Project ${row.song_id}: artwork done without a file.`);
+    return { state: 'done', task, file: row.artwork_detail };
+  }
+  if (row.artwork_state === 'failed') return { state: 'failed', task, message: row.artwork_detail ?? '' };
+  throw new Error(`Project ${row.song_id}: unknown artwork state "${row.artwork_state}".`);
 }
 
 function lyricsOf(row: ProjectDbRow): ProjectLyrics | null {

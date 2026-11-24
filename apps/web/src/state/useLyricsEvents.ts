@@ -46,6 +46,8 @@ export function useLyricsEvents(): void {
         },
       });
     stream.addEventListener('lyrics', (m) => void onLyrics(JSON.parse((m as MessageEvent<string>).data) as LyricsEvent));
+    // A song's artwork was drawn (or failed): the project list shows it.
+    stream.addEventListener('artwork', () => void queryClient.invalidateQueries({ queryKey: songsQueryKeys.list }));
     return () => stream.close();
   }, [queryClient, navigate]);
 }

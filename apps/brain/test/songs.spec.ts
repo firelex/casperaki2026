@@ -84,7 +84,7 @@ describe('POST /api/songs/generate', () => {
     expect(body.id).toMatch(/^[a-f0-9]{16}$/u);
     expect(body.hash).toMatch(/^[a-f0-9]{64}$/u);
     expect(() => parseSong(body.song)).not.toThrow();
-  });
+  }, 30_000); // the file's first song loads the generator's data cold (slow under a full parallel run)
 
   it('same seed → same canonical hash + id (idempotent)', async () => {
     const post = () =>

@@ -27,6 +27,7 @@ import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
 import type { ProjectRow, SongsStore } from '../store.js';
+import type { ArtworkTasks } from '../artwork/tasks.js';
 import type { LyricsTasks } from '../lyrics/tasks.js';
 import { readRenderPeaks } from './renders.js';
 
@@ -85,7 +86,7 @@ export interface SongsRouterDeps {
   readonly now?: () => string;
   /** Told about every newly generated song that got the placeholder title
    *  (no title given); the brain names it afterwards, outside this router. */
-  readonly onPlaceholderTitle?: (song: { ownerId: string; songId: string; song: Song; placeholderTitle: string }) => void;
+  readonly onPlaceholderTitle?: (song: { ownerId: string; songId: string; song: Song; placeholderTitle: string }) => Promise<void> | void;
   /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
   readonly withTakes?: (song: Song) => Song;
   /** The vocal takes a song for the engine plays (their fingerprints, for the render cache key). */
@@ -95,6 +96,8 @@ export interface SongsRouterDeps {
   /** Writes the words of new songs in the background (the language model). Absent: generating answers 503
    *  lyrics_not_configured. */
   readonly lyrics?: LyricsTasks;
+  /** Draws new songs' artwork in the background, after their title. Absent: songs get no artwork. */
+  readonly artwork?: ArtworkTasks;
 }
 
 /** Generating needs the lyricist and it is not set up. */
@@ -126,12 +129,12 @@ export interface GeneratedProject {
  * Untitled songs get the style-and-key placeholder and are named afterwards. Generator errors are thrown.
  */
 export async function generateProject(
-  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly lyrics?: LyricsTasks },
+  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly lyrics?: LyricsTasks; readonly artwork?: ArtworkTasks },
   owner: string,
   params: GenerateParams,
   title: string | undefined,
 ): Promise<GeneratedProject> {
-  const { store, clock, onPlaceholderTitle, lyrics } = deps;
+  const { store, clock, onPlaceholderTitle, lyrics, artwork } = deps;
   if (!lyrics) throw new LyricsNotConfiguredError();
   const song = orchestrate(params);
   const recorded = writtenLyricsOf(params.params);
@@ -151,11 +154,13 @@ export async function generateProject(
     updatedAt: at,
   });
   if (unwritten) lyrics.start(owner, id);
-  if (placeholder !== undefined) onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder });
+  const naming = placeholder !== undefined ? onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder }) : undefined;
+  // The artwork is drawn for the song's title, so it starts once naming is over.
+  artwork?.start(owner, id, naming ?? Promise.resolve());
   return { id, song, hash };
 }
 
-export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced, lyrics }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced, lyrics, artwork }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -180,7 +185,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     }
     let made: GeneratedProject;
     try {
-      made = await generateProject({ store, clock, onPlaceholderTitle, ...(lyrics ? { lyrics } : {}) }, ownerOf(req), parsed.data, title.data);
+      made = await generateProject({ store, clock, onPlaceholderTitle, ...(lyrics ? { lyrics } : {}), ...(artwork ? { artwork } : {}) }, ownerOf(req), parsed.data, title.data);
     } catch (err) {
       return generateError(res, err);
     }
@@ -248,8 +253,19 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     return res.json({ project: projectJson(store.getProject(owner, req.params.id)!, renders) });
   });
 
+  // The song's artwork (a PNG), once drawn.
+  router.get('/api/songs/:id/artwork', (req, res) => {
+    const project = store.getProject(ownerOf(req), req.params.id);
+    if (!project) return res.status(404).json({ error: 'not_found', id: req.params.id });
+    if (project.artwork?.state !== 'done' || !artwork) return res.status(404).json({ error: 'no_artwork', message: 'This song has no artwork (yet).' });
+    res.setHeader('cache-control', 'private, max-age=31536000, immutable');
+    return res.sendFile(artwork.fileOf(project.artwork.file));
+  });
+
   router.delete('/api/songs/:id', (req, res) => {
+    const gone = store.getProject(ownerOf(req), req.params.id);
     const ok = store.deleteProject(ownerOf(req), req.params.id);
+    if (ok && gone?.artwork?.state === 'done') artwork?.removeFile(gone.artwork.file);
     if (!ok) return res.status(404).json({ error: 'not_found', id: req.params.id });
     onSongReplaced?.(req.params.id, 'deleted');
     return res.status(204).end();
@@ -444,6 +460,14 @@ function projectJson(p: ProjectRow, renders: RenderService | undefined) {
     mixOverrides: p.mixOverrides,
     mixUpdatedAt: p.mixUpdatedAt,
     lyrics: p.lyrics === null ? null : p.lyrics.state === 'failed' ? { state: 'failed', message: p.lyrics.message } : { state: 'writing' },
+    artwork:
+      p.artwork === null
+        ? null
+        : p.artwork.state === 'done'
+          ? { state: 'done', url: `/api/songs/${p.songId}/artwork?v=${p.artwork.task}` }
+          : p.artwork.state === 'failed'
+            ? { state: 'failed', message: p.artwork.message }
+            : { state: 'drawing' },
     render: renderJson(p.songId, renders),
   };
 }

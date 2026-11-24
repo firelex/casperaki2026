@@ -24,6 +24,7 @@ export function makeFixtureSong(): GeneratedSong {
       mixOverrides: null,
       mixUpdatedAt: null,
       lyrics: null,
+      artwork: null,
       render: { state: 'none' },
     },
     song: {

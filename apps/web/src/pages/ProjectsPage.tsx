@@ -472,6 +472,7 @@ function SongCard({
       >
         <input type="checkbox" checked={selected} onChange={onToggleSelected} aria-label={`Select ${project.title}`} className="h-4 w-4 accent-white" />
       </label>
+      <Artwork project={project} />
       <SectionStrip project={project} progress={progress} />
       <div className="pointer-events-none relative z-10 flex flex-1 flex-col gap-1 px-5 pb-4 pt-4">
         {editing ? (
@@ -508,7 +509,15 @@ function SongCard({
           </h3>
         )}
         <p className="text-[14px] text-white/60">{meta}</p>
-        <p className="text-[13px] text-white/40">Edited {timeAgo(project.updatedAt)}</p>
+        <p className="text-[13px] text-white/40">
+          Edited {timeAgo(project.updatedAt)}
+          {project.lyrics?.state === 'writing' ? <span className="ml-2 text-violet-300/90">· Writing lyrics…</span> : null}
+          {project.lyrics?.state === 'failed' ? (
+            <span className="ml-2 text-err" title={project.lyrics.message}>
+              · Lyrics failed
+            </span>
+          ) : null}
+        </p>
 
         {confirmDelete ? (
           <div className="pointer-events-auto mt-4 flex items-center justify-between gap-3 rounded-[8px] bg-err/10 px-3 py-2">
@@ -560,6 +569,27 @@ function SongCard({
         ) : null}
       </div>
     </article>
+  );
+}
+
+/** The song's artwork (drawn after its title by the brain's image service), or a placeholder while it is drawn. */
+function Artwork({ project }: { project: Project }) {
+  const art = project.artwork;
+  if (!art) return null;
+  if (art.state === 'done') {
+    return <img src={art.url} alt="" className="pointer-events-none aspect-[16/9] w-full object-cover" loading="lazy" />;
+  }
+  if (art.state === 'drawing') {
+    return (
+      <div className="pointer-events-none flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
+        <span className="animate-pulse text-[13px] text-white/45">Drawing the artwork…</span>
+      </div>
+    );
+  }
+  return (
+    <div className="pointer-events-none flex aspect-[16/9] w-full items-center justify-center bg-white/[0.03]" title={art.message}>
+      <span className="text-[13px] text-err/80">The artwork could not be drawn</span>
+    </div>
   );
 }
 

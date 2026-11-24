@@ -71,6 +71,10 @@ const ConfigSchema = z.object({
    *  are kept in. Either unset → /api/vocals answers 503 naming the setting. */
   singingServiceUrl: z.string().url().optional(),
   vocalTakesDir: z.string().min(1).optional(),
+  /** Song artwork: the image service (svc-artwork, small-sd on the serving harness) and the directory the pictures
+   *  are kept in. Both or neither (without them songs get no artwork). */
+  artworkServiceUrl: z.string().url().optional(),
+  artworkDir: z.string().min(1).optional(),
   videoPlannerUrl: z.string().url().optional(),
   videoPlannerModel: z.string().min(1).optional(),
   videoPlannerKey: z.string().min(1).optional(),
@@ -140,6 +144,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     amtServiceUrl: env.AMT_SERVICE_URL || undefined,
     singingServiceUrl: env.SOULX_SERVICE_URL || undefined,
     vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
+    artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,
+    artworkDir: env.BRAIN_ARTWORK_DIR || undefined,
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
     videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
     videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,
