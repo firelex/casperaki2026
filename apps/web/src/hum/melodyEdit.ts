@@ -57,12 +57,23 @@ function limitAfter(melody: readonly BeatNote[], beat: number, skip?: number): n
   return end;
 }
 
+/**
+ * Add a note. Where another note is sounding at that moment (one voice), it is cut short there, or replaced when the
+ * new note starts where it starts; clicking inside a note of the same pitch changes nothing.
+ */
 export function addNote(e: VersionEdit, beat: number, midi: number, length: number): VersionEdit {
   const start = Math.max(0, Math.min(TOTAL_BEATS - GRID, snapDown(beat)));
-  if (e.melody.some((n) => overlaps(n, { beat: start, midi, duration: GRID }))) return e;
-  const duration = Math.min(Math.max(GRID, snap(length)), limitAfter(e.melody, start) - start);
+  const covering = e.melody.findIndex((n) => overlaps(n, { beat: start, midi, duration: GRID }));
+  const hit = covering >= 0 ? e.melody[covering]! : undefined;
+  if (hit && hit.midi === midi) return e;
+  const rest = hit
+    ? hit.beat === start
+      ? e.melody.filter((_, i) => i !== covering)
+      : e.melody.map((n, i) => (i === covering ? { ...n, duration: start - n.beat } : n))
+    : e.melody;
+  const duration = Math.min(Math.max(GRID, snap(length)), limitAfter(rest, start) - start);
   const note = { beat: start, midi, duration };
-  return commit(e, { melody: [...e.melody, note] }, [note]);
+  return commit(e, { melody: [...rest, note] }, hit ? [note, hit] : [note]);
 }
 
 export function deleteNote(e: VersionEdit, index: number): VersionEdit {

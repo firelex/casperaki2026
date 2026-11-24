@@ -346,7 +346,7 @@ export function HumSongPage() {
       if (e.key.toLowerCase() !== 'z' || !(e.ctrlKey || e.metaKey) || e.shiftKey) return;
       const t = e.target as HTMLElement | null;
       if (t && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)) return;
-      if (!edited || edited.history.length === 0) return;
+      if (busy || !edited || edited.history.length === 0) return;
       e.preventDefault();
       change(undo(edited));
     };
@@ -584,6 +584,7 @@ export function HumSongPage() {
                 chords={cur.chords}
                 onPick={(slot, chord) => change(setChord(cur, slot, chord))}
                 loadOptions={(slot) => humApi.chordOptions(analysis.id, cur.melody, slot)}
+                disabled={Boolean(busy)}
               />
               <HumPianoRoll
                 key={`${analysis.id}-${choice}`}
@@ -607,6 +608,7 @@ export function HumSongPage() {
                   change(next);
                 }}
                 onPitch={previewNote}
+                disabled={Boolean(busy)}
               />
               <p className="mt-2 text-[12px] text-white/45">
                 Click to add a note · right click to delete · drag to move · hold, then drag to change the length · Ctrl+Z to undo. Red: hummed · blue:
@@ -639,7 +641,7 @@ export function HumSongPage() {
               <button
                 type="button"
                 onClick={() => edited && change(undo(edited))}
-                disabled={!edited || edited.history.length === 0}
+                disabled={Boolean(busy) || !edited || edited.history.length === 0}
                 className="h-10 rounded-full border border-line px-4 text-[14px] text-white/80 hover:border-white/40 disabled:opacity-40"
               >
                 Undo
@@ -653,7 +655,7 @@ export function HumSongPage() {
                     return copy;
                   })
                 }
-                disabled={!edited}
+                disabled={Boolean(busy) || !edited}
                 className="h-10 rounded-full border border-line px-4 text-[14px] text-white/80 hover:border-white/40 disabled:opacity-40"
               >
                 Back to the original

@@ -14,10 +14,13 @@ export function HumChordRow({
   chords,
   onPick,
   loadOptions,
+  disabled,
 }: {
   chords: readonly string[];
   onPick(slot: number, chord: string): void;
   loadOptions(slot: number): Promise<{ chord: string; fit: number }[]>;
+  /** While a request runs. */
+  disabled: boolean;
 }) {
   const [open, setOpen] = useState<number | undefined>(undefined);
   const [options, setOptions] = useState<Options>({ state: 'loading' });
@@ -37,10 +40,11 @@ export function HumChordRow({
       <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${chords.length}, minmax(0, 1fr))` }}>
         {chords.map((c, s) => (
           <DropdownMenu key={s} open={open === s} onOpenChange={(o) => (o ? openSlot(s) : setOpen(undefined))}>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild disabled={disabled}>
               <button
                 type="button"
-                className={`h-8 truncate border-l px-1 text-left text-[13px] hover:bg-white/10 ${s % 2 === 0 ? 'border-white/25' : 'border-white/[0.07]'} ${
+                disabled={disabled}
+                className={`h-8 truncate border-l px-1 text-left text-[13px] hover:bg-white/10 disabled:opacity-60 ${s % 2 === 0 ? 'border-white/25' : 'border-white/[0.07]'} ${
                   s > 0 && chords[s - 1] === c ? 'text-white/30' : 'font-semibold text-white'
                 } ${open === s ? 'bg-white/15' : ''}`}
                 title={`Bar ${Math.floor(s / 2) + 1}, ${s % 2 === 0 ? 'first' : 'second'} half: ${c}. Click to change.`}

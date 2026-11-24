@@ -53,6 +53,7 @@ export function HumPianoRoll({
   onMove,
   onResize,
   onPitch,
+  disabled,
 }: {
   melody: readonly BeatNote[];
   hummedBars: number;
@@ -65,6 +66,8 @@ export function HumPianoRoll({
   onResize(index: number, length: number): void;
   /** A pitch to sound briefly (a note dragged to a new pitch). */
   onPitch(midi: number): void;
+  /** While a request runs: shown, not editable (its answer replaces the melody). */
+  disabled: boolean;
 }) {
   const [range, setRange] = useState(() => rangeOf(melody));
   const [drag, setDrag] = useState<Drag | undefined>(undefined);
@@ -138,9 +141,7 @@ export function HumPianoRoll({
       if (midi !== d.midi) onPitch(midi);
       d.beat = beat;
       d.midi = midi;
-      // Dragging to the top or bottom row opens a row beyond it.
-      if (midi >= hi) setRange((r) => ({ ...r, hi: Math.min(108, midi + 1) }));
-      if (midi <= lo) setRange((r) => ({ ...r, lo: Math.max(21, midi - 1) }));
+      // (The rows grow after the drop, to take in the moved note; growing them mid-drag shifts the grid under the pointer.)
     } else {
       d.duration = Math.max(GRID, Math.min(TOTAL_BEATS - n.beat, snap(p.beat - n.beat + GRID)));
     }
@@ -159,6 +160,8 @@ export function HumPianoRoll({
 
   const onContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
+    // A long touch also fires contextmenu (Android): that is the resize gesture, not a delete.
+    if (dragRef.current || (e.nativeEvent as PointerEvent).pointerType === 'touch') return;
     const noteEl = (e.target as HTMLElement).closest<HTMLElement>('[data-note]');
     if (noteEl) onDelete(Number(noteEl.dataset['note']));
   };
@@ -183,7 +186,8 @@ export function HumPianoRoll({
       </div>
       <div
         ref={gridRef}
-        className={`relative flex-1 touch-none overflow-hidden ${drag?.mode === 'resize' ? 'cursor-ew-resize' : drag?.mode === 'move' ? 'cursor-grabbing' : 'cursor-crosshair'}`}
+        aria-disabled={disabled}
+        className={`relative flex-1 touch-none overflow-hidden ${disabled ? 'pointer-events-none opacity-60' : ''} ${drag?.mode === 'resize' ? 'cursor-ew-resize' : drag?.mode === 'move' ? 'cursor-grabbing' : 'cursor-crosshair'}`}
         style={{ height: rows * ROW_H }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}

@@ -21,9 +21,17 @@ describe('melodyEdit', () => {
     expect([...e.editedBars]).toEqual([0]);
   });
 
-  it('refuses to add inside a note', () => {
+  it('adding inside a note at another pitch cuts that note there; at its start it replaces it', () => {
+    const cut = addNote(base(), 0.5, 70, 1);
+    expect(cut.melody.slice(0, 2)).toEqual([
+      { beat: 0, midi: 60, duration: 0.5 },
+      { beat: 0.5, midi: 70, duration: 1 },
+    ]);
+    const replaced = addNote(base(), 3, 70, 1);
+    expect(replaced.melody.filter((n) => n.beat === 3)).toEqual([{ beat: 3, midi: 70, duration: 1 }]);
+    expect(replaced.melody).toHaveLength(3);
     const e0 = base();
-    expect(addNote(e0, 0.5, 70, 1)).toBe(e0);
+    expect(addNote(e0, 0.5, 60, 1)).toBe(e0);
   });
 
   it('cuts a new note at the next note', () => {

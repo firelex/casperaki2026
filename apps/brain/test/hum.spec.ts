@@ -218,6 +218,9 @@ describe('POST /api/hum/*', () => {
       expect(mel.filter((n) => n.beat >= 20 && n.beat < 24)).toEqual([edited[2]]);
       expect(mel.some((n) => n.beat >= 4 && n.beat < 20)).toBe(true);
       expect(after.alternatives[2]!.chords).toEqual(chords);
+      // The stored version stays as Casperaki made it ("Back to the original", and a song without edits, use it).
+      const stored = JSON.parse(readFileSync(join(dir, `${a.id}.json`), 'utf8')) as typeof a;
+      expect(stored.alternatives[2]).toEqual(a.alternatives[2]);
       for (let i = 1; i < mel.length; i++) expect(mel[i - 1]!.beat + mel[i - 1]!.duration).toBeLessThanOrEqual(mel[i]!.beat);
     });
 

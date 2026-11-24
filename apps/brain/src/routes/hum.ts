@@ -345,10 +345,10 @@ export function createHumRouter(deps: HumRouterDeps): Router {
         const i = body.data.alternative!;
         const t0 = Date.now();
         const melody = await completeEdit(a, edit.melody, edit.slots, keepBars);
-        a.alternatives[i] = { label: a.alternatives[i]!.label, slots: edit.slots, chords: edit.chords, melody, completed: true };
-        a.timings[`completeEditMs${i}`] = Date.now() - t0;
-        await writeFile(fileOf(a.id), JSON.stringify(a, null, 1));
-        return res.json(publicJson(a));
+        // Answered, not stored: the stored version stays as Casperaki made it; the page keeps the user's edit.
+        const answer = { ...a, alternatives: a.alternatives.map((x, j) => (j === i ? { label: x.label, slots: edit.slots, chords: edit.chords, melody, completed: true } : x)) };
+        answer.timings = { ...a.timings, [`completeEditMs${i}`]: Date.now() - t0 };
+        return res.json(publicJson(answer));
       }
       if (a.hummedBars >= PHRASE_BARS) return res.status(400).json({ error: 'nothing_to_complete', message: 'The hum fills all 8 bars; there is nothing to complete.' });
       const which = body.data.alternative === undefined ? [0, 1, 2] : [body.data.alternative];
