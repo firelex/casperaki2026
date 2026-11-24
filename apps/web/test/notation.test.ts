@@ -112,3 +112,37 @@ describe('notesToAbc lines', () => {
     expect(lines[3]!.endsWith(' |]')).toBe(true);
   });
 });
+
+describe('notesToAbc: lyrics of a sung part', () => {
+  const sung = (pitch: number, start: number, length: number, lyric?: string) => ({ pitch, start, length, ...(lyric !== undefined ? { lyric } : {}) });
+  // A phrase across middle C (55..64): one staff, the syllables under it.
+  const phrase = [
+    sung(60, 0, 0.5, 'Drea-'), sung(57, 0.5, 0.5, 'Ming'), sung(55, 1, 0.5, 'Of'), sung(60, 1.5, 0.5, 'A'),
+    sung(64, 2, 3, 'Brand'), // three beats from beat 3: tied across the barline
+    sung(62, 5, 1, "I'm"), sung(60, 6, 1),
+  ];
+
+  it('keeps the part on one staff and writes a w: line under it', () => {
+    const abc = notesToAbc(phrase, { beats: 8, key: 'C' });
+    expect(abc).not.toContain('V:2');
+    const lines = abc.split('\n');
+    const music = lines.findIndex((l) => l.startsWith('[V:1]'));
+    expect(lines[music]).toBe("[V:1] C2 A,2 G,2 C2 E8- | E4 D4 C4 z4 |]");
+    expect(lines[music + 1]).toBe("w: drea-ming of a brand _ I'm *");
+  });
+
+  it('puts each syllable under its note, holds it over tied notes and skips notes without one', async () => {
+    const abcjs = (await import('abcjs')).default;
+    const [tune] = abcjs.parseOnly(notesToAbc(phrase, { beats: 8, key: 'C' }));
+    const sungNotes: { pitch: string; lyric: string | undefined }[] = [];
+    for (const line of tune!.lines) for (const staff of line.staff ?? []) for (const voice of staff.voices ?? []) for (const el of voice) {
+      const e = el as { el_type: string; rest?: unknown; pitches?: { name: string }[]; lyric?: { syllable: string }[] };
+      if (e.el_type === 'note' && !e.rest) sungNotes.push({ pitch: e.pitches![0]!.name, lyric: e.lyric?.[0]?.syllable });
+    }
+    expect(sungNotes.map((x) => x.lyric ?? '')).toEqual(['drea', 'ming', 'of', 'a', 'brand', '', "I'm", '']);
+  });
+
+  it('leaves parts without lyrics as they were', () => {
+    expect(notesToAbc([n(60, 0, 4)], { beats: 4, key: 'C' })).not.toContain('w:');
+  });
+});

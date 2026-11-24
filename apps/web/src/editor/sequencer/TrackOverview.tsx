@@ -57,8 +57,9 @@ export function TrackOverview({
   const beats = totalBars * BEATS_PER_BAR;
   const marks = useMemo(() => new Map(sections.map((s) => [s.startBar, s.name])), [sections]);
   const scoreNotes = useMemo(
-    () => (notes && 'notes' in notes ? notes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length })) : []),
-    [notes],
+    // Sung parts carry their syllables (the lyrics go under the score).
+    () => (notes && 'notes' in notes ? notes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length, ...(track.isVocal && n.label ? { lyric: n.label } : {}) })) : []),
+    [notes, track.isVocal],
   );
 
   const exportPdf = async () => {

@@ -116,8 +116,9 @@ export function ClipDetail({
   const showScore = !track.isDrums && view === 'score';
   // Stable notes for the score (re-engraving only when the notes change).
   const scoreNotes = useMemo(
-    () => (engineNotes && 'notes' in engineNotes ? engineNotes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length })) : []),
-    [engineNotes],
+    // Sung parts carry their syllables (the lyrics go under the score).
+    () => (engineNotes && 'notes' in engineNotes ? engineNotes.notes.map((n) => ({ pitch: n.pitch!, start: n.start, length: n.length, ...(track.isVocal && n.label ? { lyric: n.label } : {}) })) : []),
+    [engineNotes, track.isVocal],
   );
 
   const beats = clip.bars * BEATS_PER_BAR;
