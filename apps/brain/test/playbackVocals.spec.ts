@@ -162,6 +162,21 @@ describe('take clean-up', () => {
     await h.stop();
   });
 
+  it('deleting a song also clears takes no saved song plays (e.g. sung for a song whose singing was never saved)', async () => {
+    const h = await boot();
+    const unsaved = { ...onlyVerse1(base()), bpm: 122 };
+    const orphan = storeTake(unsaved);
+    const s = { ...onlyVerse1(base()), bpm: 123 };
+    const kept = storeTake(s);
+    h.save('fffdef0123456789', s);
+    const other = { ...onlyVerse1(base()), bpm: 124 };
+    h.save('aaadef0123456789', other);
+    expect((await h.req('/api/songs/aaadef0123456789', 'DELETE')).status).toBe(204);
+    expect(existsSync(join(takesDir, `${orphan}.ogg`))).toBe(false);
+    expect(existsSync(join(takesDir, `${kept}.ogg`))).toBe(true); // a saved song still plays it
+    await h.stop();
+  });
+
   it('deleting a song deletes its takes', async () => {
     const h = await boot();
     const s = { ...onlyVerse1(base()), bpm: 121 };

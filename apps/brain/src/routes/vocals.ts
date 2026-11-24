@@ -9,6 +9,8 @@
 // (createVocalsHooks().withTakes); nothing is recorded on the song.
 // Not configured (SOULX_SERVICE_URL or BRAIN_VOCAL_TAKES_DIR unset) -> 503 naming what is missing.
 
+import { readdirSync } from 'node:fs';
+
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
@@ -104,15 +106,15 @@ export function createVocalsRouterFor(config: Pick<BrainConfig, 'singingServiceU
 /**
  * What the rest of the brain needs from sung vocals:
  *   - withTakes(song): the song as the engine gets it, its sections' stored takes added (play, export, render);
- *   - onSongReplaced(songId): a saved song was saved again or deleted: the takes its old version used that no saved
- *     song uses any more are deleted (no grace period: the owner wants the space back).
+ *   - onSongReplaced(songId, how): a saved song was saved again (the takes its old version used that no saved song
+ *     uses any more are deleted) or deleted (every take no saved song plays is deleted); no grace period.
  * Without BRAIN_VOCAL_TAKES_DIR there are no takes: songs are lowered as they are and nothing is cleaned.
  */
 export interface VocalsHooks {
   readonly withTakes: (song: Song) => Song;
   /** The fingerprints of the takes on a song from withTakes (for the render cache key). */
   readonly takesOf: (song: Song) => string;
-  readonly onSongReplaced: (oldSongId: string) => void;
+  readonly onSongReplaced: (oldSongId: string, how: 'saved' | 'deleted') => void;
 }
 
 const takesOf = (song: Song) =>
@@ -126,18 +128,23 @@ export function createVocalsHooks(config: Pick<BrainConfig, 'vocalTakesDir'>, st
   return {
     withTakes: (song) => withStoredTakes(song, dir),
     takesOf,
-    onSongReplaced: (oldSongId) => {
-      const old = store.get(oldSongId);
-      if (!old) return;
-      const candidates = fingerprintsOf(old.canonical);
-      if (candidates.size === 0) return;
+    onSongReplaced: (oldSongId, how) => {
       const used = new Set<string>();
       for (const id of store.listProjectSongIds()) {
         const s = store.get(id);
         if (s) for (const fp of fingerprintsOf(s.canonical)) used.add(fp);
       }
+      // Saved again: the takes the old version used. Deleted: every take no saved song plays (a song's takes may
+      // have been sung while its singing setting was never saved, so the deleted version does not name them).
+      const old = store.get(oldSongId);
+      const candidates =
+        how === 'deleted'
+          ? readdirSync(dir).filter((n) => /^[0-9a-f]{64}\.ogg$/u.test(n)).map((n) => n.slice(0, 64))
+          : old
+            ? [...fingerprintsOf(old.canonical)]
+            : [];
       const deleted = deleteUnusedTakes(dir, candidates, used);
-      if (deleted.length) console.log(`[vocals] deleted ${deleted.length} take(s) no saved song uses any more (song ${oldSongId} replaced)`);
+      if (deleted.length) console.log(`[vocals] deleted ${deleted.length} take(s) no saved song plays (song ${oldSongId} ${how})`);
     },
   };
 }

@@ -91,7 +91,7 @@ export interface SongsRouterDeps {
   /** The vocal takes a song for the engine plays (their fingerprints, for the render cache key). */
   readonly takesOf?: (song: Song) => string;
   /** A saved song was saved again (new version) or deleted: clean up what only its old version used. */
-  readonly onSongReplaced?: (oldSongId: string) => void;
+  readonly onSongReplaced?: (oldSongId: string, how: 'saved' | 'deleted') => void;
   /** Writes the words of new songs (the language model). Absent: generating answers 503 lyrics_not_configured. */
   readonly lyricModel?: LyricModel;
 }
@@ -223,7 +223,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     const at = clock();
     store.put({ id, song, canonical, hash, createdAt: at });
     store.moveProject({ ownerId: owner, fromSongId: req.params.id, toSongId: id, updatedAt: at });
-    if (req.params.id !== id) onSongReplaced?.(req.params.id);
+    if (req.params.id !== id) onSongReplaced?.(req.params.id, 'saved');
     // A Pro-mode change for a track the edit removed no longer applies.
     const moved = store.getProject(owner, id)!;
     if (moved.mixOverrides) {
@@ -251,7 +251,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
   router.delete('/api/songs/:id', (req, res) => {
     const ok = store.deleteProject(ownerOf(req), req.params.id);
     if (!ok) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    onSongReplaced?.(req.params.id);
+    onSongReplaced?.(req.params.id, 'deleted');
     return res.status(204).end();
   });
 
