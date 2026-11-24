@@ -155,13 +155,17 @@ describe('assistant tools', () => {
     };
     const ctx = { song, title: 't', mix };
     expect(runTool('get_mix', {}, ctx).summary).toMatch(/Synths \(leadSynthsSoft\) → leadSynths bus; level −3 dB;.*same type as Synths 2/u);
-    const r = runTool('set_track_mix', { track: 'Synths', levelDb: -2, reverb: 'off', bus: 'synths' }, ctx);
+    const r = runTool('set_track_mix', { track: 'Synths', changeLevelDb: -2, reverb: 'off', bus: 'synths' }, ctx);
     expect(r.action).toEqual({ kind: 'mixTrack', track: 'Synths', levelDb: -2, reverb: -100, bus: 'synths' });
+    expect(r.summary).toMatch(/level now −5 dB \(standard −3 dB\)/u);
     expect(r.summary).toMatch(/Synths, Synths 2 \(same type\)/u);
     // The snapshot follows, on both tracks of the type.
     expect(runTool('get_mix', {}, ctx).summary).toMatch(/Synths 2 \(leadSynthsSoft\) → synths bus \(standard leadSynths\); level −5 dB \(standard −3 dB, Pro −2 dB\); sends reverb off/u);
     expect(() => runTool('set_track_mix', { track: 'Synths', bus: 'fxPlateReverb' }, ctx)).toThrow(ToolError);
-    expect(() => runTool('set_track_mix', { track: 'Nope', levelDb: 1 }, ctx)).toThrow(/no track "Nope"/u);
+    expect(() => runTool('set_track_mix', { track: 'Nope', changeLevelDb: 1 }, ctx)).toThrow(/no track "Nope"/u);
+    // Changes add up from where the level is now (the snapshot followed the first change); standard puts it back.
+    expect(runTool('set_track_mix', { track: 'Synths 2', changeLevelDb: -1 }, ctx).action).toMatchObject({ levelDb: -3 });
+    expect(runTool('set_track_mix', { track: 'Synths', standardLevel: true }, ctx).action).toMatchObject({ levelDb: 0 });
     expect(() => runTool('set_track_mix', { track: 'Synths' }, ctx)).toThrow(/Say what to change/u);
     expect(runTool('set_bus_setting', { bus: 'leadSynths', slot: 1, param: 0, value: 0.5 }, ctx).action).toEqual({ kind: 'busSetting', bus: 'leadSynths', slot: 1, param: 0, value: 0.5 });
     expect(() => runTool('set_bus_setting', { bus: 'leadSynths', slot: 2, param: 0, value: 0.5 }, ctx)).toThrow(/no plugin in slot 2/u);

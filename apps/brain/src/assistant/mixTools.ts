@@ -72,7 +72,8 @@ export class MixToolError extends Error {}
 export const SetTrackMixParams = z
   .object({
     track: z.string(),
-    levelDb: z.number().min(-60).max(12).optional().describe('The Pro level change against the standard level, in dB (0 = the standard level, -3 = 3 dB quieter than standard). Not added to the current change: it replaces it.'),
+    changeLevelDb: z.number().min(-48).max(24).optional().describe('How much to change the level from where it is now, in dB: -3 = 3 dB quieter, +2 = 2 dB louder. Give it once per instrument type: tracks of the same type change together.'),
+    standardLevel: z.literal(true).optional().describe('Put the level back to the standard level.'),
     reverb: z.union([z.number().min(-60).max(12), z.literal('off')]).optional().describe('Reverb send level in dB, or "off".'),
     delay: z.union([z.number().min(-60).max(12), z.literal('off')]).optional().describe('Delay send level in dB, or "off".'),
     chorus: z.union([z.number().min(-60).max(12), z.literal('off')]).optional().describe('Chorus send level in dB, or "off".'),
@@ -92,9 +93,13 @@ export const SetBusSettingParams = z
 /** The page action of a set_track_mix call, after checking it against the mix (and updating the snapshot). */
 export function trackMixAction(mix: MixSnapshot, a: z.infer<typeof SetTrackMixParams>) {
   const t = requireMixTrack(mix, a.track);
-  if (a.levelDb === undefined && a.reverb === undefined && a.delay === undefined && a.chorus === undefined && a.bus === undefined) {
-    throw new MixToolError('Say what to change: levelDb, reverb, delay, chorus or bus.');
+  if (a.changeLevelDb === undefined && !a.standardLevel && a.reverb === undefined && a.delay === undefined && a.chorus === undefined && a.bus === undefined) {
+    throw new MixToolError('Say what to change: changeLevelDb, standardLevel, reverb, delay, chorus or bus.');
   }
+  if (a.changeLevelDb !== undefined && a.standardLevel) throw new MixToolError('Give changeLevelDb or standardLevel, not both.');
+  // The Pro trim (against the standard) the page sets on every track of the type.
+  const trim = a.standardLevel ? 0 : a.changeLevelDb !== undefined ? Math.round((t.trimDb + a.changeLevelDb) * 10) / 10 : undefined;
+  if (trim !== undefined && (trim < -60 || trim > 12)) throw new MixToolError(`That would put ${a.track} ${fmtDb(trim)} from its standard level; Pro mode allows −60 to +12 dB.`);
   let bus: string | null | undefined;
   if (a.bus !== undefined) {
     if (a.bus === 'standard') bus = null;
@@ -107,7 +112,7 @@ export function trackMixAction(mix: MixSnapshot, a: z.infer<typeof SetTrackMixPa
   const action = {
     kind: 'mixTrack' as const,
     track: a.track,
-    ...(a.levelDb !== undefined ? { levelDb: a.levelDb } : {}),
+    ...(trim !== undefined ? { levelDb: trim } : {}),
     ...(a.reverb !== undefined ? { reverb: send(a.reverb)! } : {}),
     ...(a.delay !== undefined ? { delay: send(a.delay)! } : {}),
     ...(a.chorus !== undefined ? { chorus: send(a.chorus)! } : {}),
@@ -115,7 +120,7 @@ export function trackMixAction(mix: MixSnapshot, a: z.infer<typeof SetTrackMixPa
   };
   // Later calls in this turn see the change (on every track of the type).
   for (const x of mix.tracks.filter((x) => x === t || t.linkedWith.includes(x.track))) {
-    if (a.levelDb !== undefined) x.trimDb = a.levelDb;
+    if (trim !== undefined) x.trimDb = trim;
     for (const k of ['reverb', 'delay', 'chorus'] as const) {
       const v = send(a[k]);
       if (v !== undefined) x.sends[k] = v <= -100 ? null : v;
@@ -123,7 +128,7 @@ export function trackMixAction(mix: MixSnapshot, a: z.infer<typeof SetTrackMixPa
     if (bus !== undefined) x.bus = bus ?? x.standardBus;
   }
   const parts = [
-    a.levelDb !== undefined ? `level ${fmtDb(a.levelDb)} against standard` : '',
+    trim !== undefined ? `level now ${t.levelDb === null ? `${fmtDb(trim)} from standard` : `${fmtDb(t.levelDb + trim)} (standard ${fmtDb(t.levelDb)})`}` : '',
     ...(['reverb', 'delay', 'chorus'] as const).map((k) => (a[k] !== undefined ? `${k} ${a[k] === 'off' ? 'off' : fmtDb(a[k] as number)}` : '')),
     bus !== undefined ? `bus ${bus ?? `${t.standardBus} (standard)`}` : '',
   ].filter(Boolean);
