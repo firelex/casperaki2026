@@ -17,7 +17,9 @@ import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
 import { createJobs } from './jobs.js';
-import { createSongsRouter, ownerOf } from './routes/songs.js';
+import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
+import { EventHub } from './events.js';
+import { LyricsTasks } from './lyrics/tasks.js';
 import { SongTitler } from './titles/songTitler.js';
 import { OpenAiLyricModel, type LyricModel } from './lyrics/lyricist.js';
 import { createDawExportRouter } from './routes/dawExport.js';
@@ -247,12 +249,20 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   if (!lyricModel) console.warn('[brain] ASSISTANT_LLM_URL not set — songs cannot be generated (no lyrics model).');
   // Sung vocals: stored takes added to songs for the engine; takes only an old song version used are cleaned up.
   const vocalsHooks = createVocalsHooks(config, store);
+  // Events for the user's open pages (GET /api/events), e.g. lyrics written in the background.
+  const events = new EventHub();
+  app.use(events.router(ownerOf));
+  // New songs' lyrics are written in the background (src/lyrics/tasks.ts); startServer resumes unfinished ones.
+  const lyrics = lyricModel
+    ? new LyricsTasks({ store, lyricModel, events, hash: hashCanonical, clock: () => new Date().toISOString(), onSongReplaced: vocalsHooks.onSongReplaced })
+    : undefined;
+  (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks = lyrics;
   // Routes that wait for the lyricist (minutes) answer as jobs when asked to (Prefer: respond-async), so they outlast
   // the Cloudflare tunnel's 100-second limit (src/jobs.ts).
   const jobs = createJobs(ownerOf);
   app.post(['/api/songs/generate', '/api/hum/song', '/api/tracks/edit', '/api/sections/add'], jobs.asJob);
   app.use(jobs.router);
-  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(lyricModel ? { lyricModel } : {}) }));
+  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(lyrics ? { lyrics } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, withTakes: vocalsHooks.withTakes }));
   app.use(createPlaybackRouter({ store, playback, ownerOf, withTakes: vocalsHooks.withTakes }));
   app.use(createTracksRouter(lyricModel ? { lyricModel } : {}));
@@ -264,7 +274,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       humLabDir: config.humLabDir,
       store,
       ...(titler ? { onPlaceholderTitle: (u: Parameters<SongTitler['name']>[0]) => titler.name(u) } : {}),
-      ...(lyricModel ? { lyricModel } : {}),
+      ...(lyrics ? { lyrics } : {}),
     }),
   );
   // Sung vocals (section takes): answers 503 naming the settings when not set up.
@@ -365,6 +375,8 @@ export function startServer(): { stop: () => Promise<void> } {
   const server = app.listen(config.port, config.host, () => {
     console.log(`[brain] listening on http://${config.host}:${config.port}`);
   });
+  // Lyrics a restart interrupted are written now.
+  (app.locals as { lyricsTasks?: LyricsTasks }).lyricsTasks?.resumeAll();
   return {
     stop: () =>
       new Promise<void>((resolvePromise, reject) => {

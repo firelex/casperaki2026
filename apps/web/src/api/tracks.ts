@@ -29,7 +29,9 @@ export type TrackEdit =
   /** New words for every section of this section's type (the lyricist writes them). */
   | { readonly kind: 'newLyrics'; readonly section: string }
   /** A new melody (with its chords, the parts under it and new words) for every section of this section's type. */
-  | { readonly kind: 'newMelody'; readonly section: string };
+  | { readonly kind: 'newMelody'; readonly section: string }
+  /** Words the brain wrote in the background (section -> lines), put into the working song. */
+  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 

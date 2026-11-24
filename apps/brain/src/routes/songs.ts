@@ -11,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { orchestrate, paramsWithLyrics, sungSections, writtenLyricsOf, type GenerateParams } from '@casperaki/arrangement';
+import { orchestrate, sungSections, writtenLyricsOf, type GenerateParams } from '@casperaki/arrangement';
 import {
   canonicalStringifySong,
   formatGenreTempoRange,
@@ -27,7 +27,7 @@ import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
 import type { ProjectRow, SongsStore } from '../store.js';
-import { writeLyrics, type LyricModel } from '../lyrics/lyricist.js';
+import type { LyricsTasks } from '../lyrics/tasks.js';
 import { readRenderPeaks } from './renders.js';
 
 // `genre` is validated against the canonical brain vocabulary (8 styles,
@@ -92,8 +92,9 @@ export interface SongsRouterDeps {
   readonly takesOf?: (song: Song) => string;
   /** A saved song was saved again (new version) or deleted: clean up what only its old version used. */
   readonly onSongReplaced?: (oldSongId: string, how: 'saved' | 'deleted') => void;
-  /** Writes the words of new songs (the language model). Absent: generating answers 503 lyrics_not_configured. */
-  readonly lyricModel?: LyricModel;
+  /** Writes the words of new songs in the background (the language model). Absent: generating answers 503
+   *  lyrics_not_configured. */
+  readonly lyrics?: LyricsTasks;
 }
 
 /** Generating needs the lyricist and it is not set up. */
@@ -120,23 +121,21 @@ export interface GeneratedProject {
 
 /**
  * Generate a song and keep it as one of the owner's projects (POST /api/songs/generate; hum to song uses it too).
- * The melody comes first; then the lyricist writes words for every sung section that has none recorded, and the
- * song is generated again with them (recorded in its generator block, so replay rebuilds it).
- * Untitled songs get the style-and-key placeholder and are named afterwards. Generator and lyricist errors are thrown.
+ * The song comes back at once with its melody; the words of every sung section that has none recorded are written
+ * in the background (lyrics/tasks.ts), and the project's lyrics state says so until they are in.
+ * Untitled songs get the style-and-key placeholder and are named afterwards. Generator errors are thrown.
  */
 export async function generateProject(
-  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly lyricModel?: LyricModel },
+  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly lyrics?: LyricsTasks },
   owner: string,
   params: GenerateParams,
   title: string | undefined,
 ): Promise<GeneratedProject> {
-  const { store, clock, onPlaceholderTitle, lyricModel } = deps;
-  if (!lyricModel) throw new LyricsNotConfiguredError();
-  const draft = orchestrate(params);
+  const { store, clock, onPlaceholderTitle, lyrics } = deps;
+  if (!lyrics) throw new LyricsNotConfiguredError();
+  const song = orchestrate(params);
   const recorded = writtenLyricsOf(params.params);
-  const unwritten = sungSections(draft).map((s) => s.name).filter((name) => !recorded[name]);
-  const lyrics = unwritten.length > 0 ? await writeLyrics(draft, lyricModel, { sections: unwritten, ...(title ? { title } : {}) }) : {};
-  const song = Object.keys(lyrics).length > 0 ? orchestrate(paramsWithLyrics(params, lyrics)) : draft;
+  const unwritten = sungSections(song).some((s) => !recorded[s.name]);
   const canonical = canonicalStringifySong(song, 2);
   const hash = hashCanonical(canonical);
   const id = hash.slice(0, 16);
@@ -151,11 +150,12 @@ export async function generateProject(
     createdAt: existing?.createdAt ?? at,
     updatedAt: at,
   });
+  if (unwritten) lyrics.start(owner, id);
   if (placeholder !== undefined) onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder });
   return { id, song, hash };
 }
 
-export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced, lyricModel }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced, lyrics }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -180,7 +180,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     }
     let made: GeneratedProject;
     try {
-      made = await generateProject({ store, clock, onPlaceholderTitle, ...(lyricModel ? { lyricModel } : {}) }, ownerOf(req), parsed.data, title.data);
+      made = await generateProject({ store, clock, onPlaceholderTitle, ...(lyrics ? { lyrics } : {}) }, ownerOf(req), parsed.data, title.data);
     } catch (err) {
       return generateError(res, err);
     }
@@ -253,6 +253,17 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     if (!ok) return res.status(404).json({ error: 'not_found', id: req.params.id });
     onSongReplaced?.(req.params.id, 'deleted');
     return res.status(204).end();
+  });
+
+  // Write the song's lyrics again after writing them failed (they are written in the background, as for a new song).
+  router.post('/api/songs/:id/lyrics', (req, res) => {
+    const owner = ownerOf(req);
+    const project = store.getProject(owner, req.params.id);
+    if (!project) return res.status(404).json({ error: 'not_found', id: req.params.id });
+    if (!lyrics) return generateError(res, new LyricsNotConfiguredError());
+    if (project.lyrics?.state === 'writing') return res.status(409).json({ error: 'lyrics_writing', message: 'The lyrics are already being written.' });
+    lyrics.start(owner, project.songId);
+    return res.status(202).json({ project: projectJson(store.getProject(owner, project.songId)!, renders) });
   });
 
   router.post('/api/songs/:id/replay', (req, res) => {
@@ -432,6 +443,7 @@ function projectJson(p: ProjectRow, renders: RenderService | undefined) {
     sections: p.sections,
     mixOverrides: p.mixOverrides,
     mixUpdatedAt: p.mixUpdatedAt,
+    lyrics: p.lyrics === null ? null : p.lyrics.state === 'failed' ? { state: 'failed', message: p.lyrics.message } : { state: 'writing' },
     render: renderJson(p.songId, renders),
   };
 }
@@ -457,7 +469,7 @@ function paramsFromStored(song: unknown): GenerateParams | undefined {
   };
 }
 
-function hashCanonical(canonical: string): string {
+export function hashCanonical(canonical: string): string {
   return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 

@@ -11,6 +11,8 @@
 //       | { kind: 'newLyrics', section }   new words for every section of that type
 //       | { kind: 'newMelody', section }   a new melody (its chords and every part
 //                                          under it, new words) for every section of that type
+//       | { kind: 'applyLyrics', lyrics }   words written in the background (section -> lines), put into
+//                                          the working song (the editor's unsaved edits keep)
 //     The edit is recorded in the song's generator block and only the edited
 //     track changes in the posted (working) song (for a new melody: every track
 //     of the sections of that type). Removing a track is a client-side edit.
@@ -45,7 +47,7 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { applyWrittenLyrics, lyricsTargets, newMelody, segmentType } from '@casperaki/arrangement';
+import { applyWrittenLyrics, lyricsTargets, newMelody, segmentType, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 import { addSectionWithWords, SectionWordsUnavailableError } from '../lyrics/addSection.js';
@@ -55,6 +57,7 @@ const OptionsBody = z.object({ song: z.unknown() }).strict();
 const VocalEditSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('newLyrics'), section: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('newMelody'), section: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal('applyLyrics'), lyrics: WrittenLyricsSchema }).strict(),
 ]);
 const EditBody = z.object({ song: z.unknown(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
 
@@ -101,6 +104,7 @@ export function createTracksRouter({ lyricModel }: TracksRouterDeps = {}): Route
     const song = songOf(body.data.song, res);
     if (!song) return;
     const op = body.data.op;
+    if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));
     if (op.kind === 'newLyrics' || op.kind === 'newMelody') {
       if (!lyricModel) {
         return res.status(503).json({ error: 'lyrics_not_configured', message: 'The lyrics model is not configured (set ASSISTANT_LLM_URL and ASSISTANT_LLM_MODEL).' });

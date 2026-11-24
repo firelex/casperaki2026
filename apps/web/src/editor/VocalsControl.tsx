@@ -19,7 +19,9 @@ const STATE_LABEL: Record<Exclude<SectionState, 'none'>, string> = {
  * grey. Its panel: the switch, the voice, each section's take with "Sing again", the progress and "Stop singing".
  */
 export function VocalsControl({ track }: { track: string }) {
-  const { viewSong, applyEdit } = useSession();
+  const { viewSong, activeSong, applyEdit } = useSession();
+  // A new song's words are still being written: singing now would sing words that are about to change.
+  const waitingForLyrics = activeSong?.project.lyrics?.state === 'writing';
   const progress = useVocalsProgress();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -58,6 +60,7 @@ export function VocalsControl({ track }: { track: string }) {
         onClick={() => {
           // Click: the track on or off. Its first time on, it takes the lead's voice (or the first voice);
           // right-click chooses another.
+          if (waitingForLyrics && !on) return;
           const voice = vocals?.voice ?? viewSong.vocals?.voice ?? voices.data?.[0]?.id;
           if (!voice) return setOpen(true);
           vocalsProgress.set({});
@@ -70,8 +73,8 @@ export function VocalsControl({ track }: { track: string }) {
         }}
         aria-expanded={open}
         aria-label={`Sing ${track}`}
-        title={singing ? progress.text : on ? `${track} is sung — click to switch off, right-click for the voice and takes` : `${track} is not sung — click to sing it, right-click for the voice`}
-        className={`flex h-5 w-5 items-center justify-center rounded-[4px] hover:bg-white/10 ${on ? 'text-emerald-300' : 'text-white/35 hover:text-white/70'} ${singing ? 'animate-pulse' : ''}`}
+        title={singing ? progress.text : waitingForLyrics && !on ? `${track} can be sung once the lyrics are written` : on ? `${track} is sung — click to switch off, right-click for the voice and takes` : `${track} is not sung — click to sing it, right-click for the voice`}
+        className={`flex h-5 w-5 items-center justify-center rounded-[4px] hover:bg-white/10 ${on ? 'text-emerald-300' : waitingForLyrics ? 'cursor-not-allowed text-white/20' : 'text-white/35 hover:text-white/70'} ${singing ? 'animate-pulse' : ''}`}
       >
         <MicIcon />
       </button>

@@ -18,9 +18,12 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { settled } from './settled.js';
+import type { Express } from 'express';
 
 interface Harness {
   url: string;
+  app: Express;
   store: SongsStore;
   stop: () => Promise<void>;
 }
@@ -38,6 +41,7 @@ async function boot(): Promise<Harness> {
   const address = server.address() as AddressInfo;
   return {
     url: `http://127.0.0.1:${address.port}`,
+    app,
     store,
     stop: () =>
       new Promise<void>((resolve) => {
@@ -209,7 +213,8 @@ describe('GET /api/songs/:id', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(BRIGHTPOP_BODY),
     });
-    const created = (await post.json()) as { id: string; song: unknown; hash: string };
+    expect(post.status).toBe(201);
+    const created = await settled<{ id: string; song: unknown; hash: string }>(h.url, h.app);
     const get = await fetch(`${h.url}/api/songs/${created.id}`);
     expect(get.status).toBe(200);
     const fetched = (await get.json()) as { id: string; song: unknown; hash: string };
@@ -244,7 +249,8 @@ describe('POST /api/songs/:id/replay', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(BRIGHTPOP_BODY),
     });
-    const created = (await post.json()) as { id: string; hash: string };
+    expect(post.status).toBe(201);
+    const created = await settled<{ id: string; hash: string }>(h.url, h.app);
     const res = await fetch(`${h.url}/api/songs/${created.id}/replay`, { method: 'POST' });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { id: string; ok: boolean; hash: string; replayHash: string };
@@ -264,7 +270,8 @@ describe('POST /api/songs/:id/replay', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(BRIGHTPOP_BODY),
     });
-    const { id, hash } = (await post.json()) as { id: string; hash: string };
+    expect(post.status).toBe(201);
+    const { id, hash } = await settled<{ id: string; hash: string }>(h.url, h.app);
     for (let i = 0; i < 3; i++) {
       const res = await fetch(`${h.url}/api/songs/${id}/replay`, { method: 'POST' });
       const body = (await res.json()) as { ok: boolean; replayHash: string };
@@ -286,7 +293,8 @@ describe('store hardening', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(BRIGHTPOP_BODY),
       });
-      const { id } = (await post.json()) as { id: string };
+      expect(post.status).toBe(201);
+      const { id } = await settled<{ id: string }>(h.url, h.app);
       const stored = h.store.get(id)!;
       h.store.put({
         id,
@@ -310,7 +318,8 @@ describe('store hardening', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(BRIGHTPOP_BODY),
       });
-      const { id } = (await post.json()) as { id: string };
+      expect(post.status).toBe(201);
+      const { id } = await settled<{ id: string }>(h.url, h.app);
 
       // Reach into the store and overwrite that row with a canonical
       // payload whose generator.seed is missing/non-scalar. parseSong

@@ -17,6 +17,8 @@ import { openSongsStore, type SongsStore } from '../src/store.js';
 import { lyricLines, sectionDisplayName, songToVideoInput } from '../src/video/videoInput.js';
 import { VideoService } from '../src/video/videoService.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { settled } from './settled.js';
+import type { Express } from 'express';
 
 describe('songToVideoInput', () => {
   const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'video-input-1' });
@@ -41,7 +43,7 @@ describe('songToVideoInput', () => {
   });
 });
 
-interface Harness { url: string; stop: () => Promise<void>; renders: RenderRequest[] }
+interface Harness { url: string; app: Express; stop: () => Promise<void>; renders: RenderRequest[] }
 
 async function boot(): Promise<Harness> {
   const store: SongsStore = openSongsStore({ path: ':memory:' });
@@ -74,6 +76,7 @@ async function boot(): Promise<Harness> {
   });
   return {
     url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    app,
     renders,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
   };
@@ -89,7 +92,8 @@ describe('music video routes', () => {
 
   it('makes a video for a song and serves it', async () => {
     const gen = await post(`${h.url}/api/songs/generate`, { genre: 'brightPop', key: 'C', bpm: 120, seed: 'video-route-1' });
-    const { id } = (await gen.json()) as { id: string };
+    expect(gen.status).toBe(201);
+    const { id } = await settled<{ id: string }>(h.url, h.app);
     const bad = await post(`${h.url}/api/songs/${id}/video`, { orientation: 'square', artist: 'Me' });
     expect(bad.status).toBe(400);
     const start = await post(`${h.url}/api/songs/${id}/video`, { orientation: 'portrait', artist: 'Me' });

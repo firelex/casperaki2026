@@ -12,6 +12,8 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { settled } from './settled.js';
+import type { Express } from 'express';
 
 type Script = (messages: readonly ChatMessage[], round: number) => ModelTurn;
 
@@ -29,7 +31,7 @@ class FakeLlm implements AssistantLlm {
 
 const call = (id: string, name: string, args: unknown) => ({ id, type: 'function' as const, function: { name, arguments: JSON.stringify(args) } });
 
-interface Harness { url: string; stop: () => Promise<void> }
+interface Harness { url: string; app: Express; stop: () => Promise<void> }
 async function boot(llm: AssistantLlm | undefined): Promise<Harness> {
   const store: SongsStore = openSongsStore({ path: ':memory:' });
   const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, ...(llm ? { assistantLlm: llm } : {}) });
@@ -38,6 +40,7 @@ async function boot(llm: AssistantLlm | undefined): Promise<Harness> {
   });
   return {
     url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    app,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
   };
 }
@@ -51,7 +54,8 @@ async function events(res: Response): Promise<Record<string, unknown>[]> {
 
 async function newSong(h: Harness): Promise<{ id: string; song: Song }> {
   const res = await post(`${h.url}/api/songs/generate`, { genre: 'brightPop', key: 'C', bpm: 120, seed: 'assistant-1' });
-  return (await res.json()) as { id: string; song: Song };
+  expect(res.status).toBe(201);
+  return settled<{ id: string; song: Song }>(h.url, h.app);
 }
 
 describe('POST /api/assistant/chat', () => {

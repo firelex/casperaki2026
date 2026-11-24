@@ -332,7 +332,7 @@ export function HumSongPage() {
   const makeSong = async () => {
     if (!analysis || !genre) return;
     stopPlay.current?.();
-    setBusy('Making the song and writing its lyrics (a minute or two)…');
+    setBusy('Making the song…');
     setError(undefined);
     try {
       const { songId } = await humApi.song(analysis.id, choice, genre, edited ? { melody: edited.melody, chords: edited.chords } : undefined);

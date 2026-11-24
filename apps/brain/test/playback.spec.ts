@@ -11,9 +11,12 @@ import { loadConfig } from '../src/config.js';
 import { fakePlayback } from './fakePlayback.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { settled } from './settled.js';
+import type { Express } from 'express';
 
 interface Harness {
   url: string;
+  app: Express;
   store: SongsStore;
   stop: () => Promise<void>;
 }
@@ -26,6 +29,7 @@ async function boot(probe?: string): Promise<Harness> {
   });
   return {
     url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    app,
     store,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
   };
@@ -54,7 +58,8 @@ describe('in-browser playback', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ genre: 'edm', key: 'A', bpm: 124, seed: 'playback-spec' }),
     });
-    const { id } = (await gen.json()) as { id: string };
+    expect(gen.status).toBe(201);
+    const { id } = await settled<{ id: string }>(h.url, h.app);
     const res = await fetch(`${h.url}/api/songs/${id}/playback`);
     expect(res.status).toBe(200);
     const pb = (await res.json()) as Payload;
@@ -85,7 +90,8 @@ describe('in-browser playback', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ genre: 'edm', key: 'A', bpm: 124, seed: 'playback-spec-short' }),
     });
-    const { id } = (await gen.json()) as { id: string };
+    expect(gen.status).toBe(201);
+    const { id } = await settled<{ id: string }>(h.url, h.app);
     const pb = (await (await fetch(`${h.url}/api/songs/${id}/playback`)).json()) as Payload;
     const [c2, dSharp2] = [pb.samples[0]!, pb.samples[1]!];
     expect(dSharp2.url).not.toBe(c2.url);

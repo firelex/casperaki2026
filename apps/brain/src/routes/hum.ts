@@ -54,7 +54,7 @@ export interface HumRouterDeps {
   readonly now?: () => string;
   readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle'];
   /** Writes the new song's words (see routes/songs.ts generateProject). */
-  readonly lyricModel?: SongsRouterDeps['lyricModel'];
+  readonly lyrics?: SongsRouterDeps['lyrics'];
   /** For tests: the services' fetch. */
   readonly fetchImpl?: typeof fetch;
 }
@@ -400,7 +400,7 @@ export function createHumRouter(deps: HumRouterDeps): Router {
       let made;
       try {
         made = await generateProject(
-          { store: deps.store, clock, ...(deps.onPlaceholderTitle ? { onPlaceholderTitle: deps.onPlaceholderTitle } : {}), ...(deps.lyricModel ? { lyricModel: deps.lyricModel } : {}) },
+          { store: deps.store, clock, ...(deps.onPlaceholderTitle ? { onPlaceholderTitle: deps.onPlaceholderTitle } : {}), ...(deps.lyrics ? { lyrics: deps.lyrics } : {}) },
           ownerOf(req),
           { genre, key: a.songKey, bpm: a.bpm, seed: `hum-${a.id}-${alternative}`, params: { userChorus: { melody: chorus.melody, chords: chorus.chords } } },
           body.data.title,

@@ -1,0 +1,45 @@
+// Events for the signed-in user's open pages: GET /api/events is a server-sent event stream (text/event-stream). An
+// event goes to every stream its owner has open. A comment line every HEARTBEAT_MS keeps the stream alive through the
+// Cloudflare tunnel in front of casperaki.com, which closes a connection idle for 100 seconds.
+//
+// Events are not stored: a page that was closed when one happened reads the state from the song again
+// (GET /api/songs/:id), which carries it too.
+
+import { Router, type Request } from 'express';
+
+const HEARTBEAT_MS = 25_000;
+
+export type BrainEvent =
+  /** Lyrics written in the background for a project: saved as `newSongId` (the project moved there), with the words
+   *  per section; or writing them failed. `songId` is the project's song when the event was sent. */
+  | { readonly type: 'lyrics'; readonly state: 'done'; readonly songId: string; readonly newSongId: string; readonly lyrics: Readonly<Record<string, readonly string[]>> }
+  | { readonly type: 'lyrics'; readonly state: 'failed'; readonly songId: string; readonly message: string };
+
+export class EventHub {
+  private readonly streams = new Map<string, Set<(event: BrainEvent) => void>>();
+
+  publish(owner: string, event: BrainEvent): void {
+    for (const send of this.streams.get(owner) ?? []) send(event);
+  }
+
+  router(ownerOf: (req: Request) => string): Router {
+    const router = Router();
+    router.get('/api/events', (req, res) => {
+      const owner = ownerOf(req);
+      res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive', 'x-accel-buffering': 'no' });
+      res.write(': connected\n\n');
+      const send = (event: BrainEvent) => res.write(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`);
+      const set = this.streams.get(owner) ?? new Set();
+      set.add(send);
+      this.streams.set(owner, set);
+      const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), HEARTBEAT_MS);
+      heartbeat.unref();
+      req.on('close', () => {
+        clearInterval(heartbeat);
+        set.delete(send);
+        if (set.size === 0) this.streams.delete(owner);
+      });
+    });
+    return router;
+  }
+}

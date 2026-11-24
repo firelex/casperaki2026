@@ -13,6 +13,8 @@ import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakePlayback } from './fakePlayback.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { settled } from './settled.js';
+import type { Express } from 'express';
 
 // Every sound type routes to a bus (as in the real config); the rest is small.
 const REAL_ROUTES = (JSON.parse(readFileSync(fileURLToPath(new URL('../../../../casperaki_engine/config/mix-config.json', import.meta.url)), 'utf8')) as { typeToFxGroup: Record<string, string> }).typeToFxGroup;
@@ -25,7 +27,7 @@ const MIX_CONFIG = JSON.stringify({
   rackChains: [{ bus: 'bass', plugins: [{ factory: 'makeConsole8SubIn', params: [] }, { factory: 'makeLogical4', params: [0.1, 0.2, 0.3, 0.4, 1] }] }],
 });
 
-interface Harness { url: string; store: SongsStore; mixPath: string; stop: () => Promise<void> }
+interface Harness { url: string; app: Express; store: SongsStore; mixPath: string; stop: () => Promise<void> }
 
 async function boot(): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
@@ -36,6 +38,7 @@ async function boot(): Promise<Harness> {
   });
   return {
     url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    app,
     store,
     mixPath: (playback as unknown as { config: { mixConfigPath: string } }).config.mixConfigPath,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
@@ -47,7 +50,7 @@ const json = (method: string, body: unknown) => ({ method, headers: { 'content-t
 async function generate(h: Harness, opts: { genre: string; seed: string } = { genre: 'edm', seed: 'mix-spec' }) {
   const res = await fetch(`${h.url}/api/songs/generate`, json('POST', { genre: opts.genre, key: 'A', bpm: 124, seed: opts.seed }));
   expect(res.status).toBe(201);
-  return (await res.json()) as { id: string; song: { instrumentDefinitions: { name: string; lowLevelType?: string; type?: string }[] } };
+  return settled<{ id: string; song: { instrumentDefinitions: { name: string; lowLevelType?: string; type?: string }[] } }>(h.url, h.app);
 }
 
 /** A song with two lead synth tracks of the same sound type. */
@@ -129,7 +132,8 @@ describe('Pro-mode mix', () => {
     const approve = (key: string) => fetch(`${h.url}/api/suggestions/mix/approve`, json('POST', { genre: 'brightPop', key }));
     const standardMix = async () => {
       const other = await fetch(`${h.url}/api/songs/generate`, json('POST', { genre: 'brightPop', key: 'C', bpm: 120, seed: `std-${Math.random()}` }));
-      const { id: otherId } = (await other.json()) as { id: string };
+      expect(other.status).toBe(201);
+      const { id: otherId } = await settled<{ id: string }>(h.url, h.app);
       return JSON.parse(((await (await fetch(`${h.url}/api/songs/${otherId}/playback`)).json()) as { mixConfig: string }).mixConfig) as {
         typeToFxGroup: Record<string, string>; instrumentTargetVolume: { type: string; genres?: string[]; db: number }[];
         laneSendOverrides: { byType: { types: string[]; op: string; reverb?: number; delay?: number; chorus?: number }[] }; rackChains: { bus: string; plugins: { params: number[] }[] }[];

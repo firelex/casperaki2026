@@ -23,6 +23,7 @@ export function makeFixtureSong(): GeneratedSong {
       sections: [{ name: 'intro', type: 'intro', bars: 4 }],
       mixOverrides: null,
       mixUpdatedAt: null,
+      lyrics: null,
       render: { state: 'none' },
     },
     song: {

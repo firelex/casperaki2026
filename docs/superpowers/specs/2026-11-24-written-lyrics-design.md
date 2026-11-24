@@ -5,10 +5,11 @@ notes) as the source of a song's words.
 
 ## What the user gets
 
-- Every generated song (Generate and hum to song) comes back with lyrics written for its melody by the language
-  model (the self-hosted DeepSeek). If the model is not configured, unreachable, or cannot write lines that pass the
-  checks after a few rounds, generation fails with a clear error. There is no fallback. An added sung section gets
-  words the same way.
+- Every generated song (Generate and hum to song) comes back at once with its melody; its lyrics are written for
+  that melody by the language model (the self-hosted DeepSeek) in the background, which takes a minute or two (see
+  "Background lyrics" below). Without a configured model, generating answers 503. If the model is unreachable, or
+  cannot write lines that pass the checks after a few rounds, the Vocal track says so and offers Retry. There is no
+  fallback. An added sung section gets words the same way (that edit waits for them).
 - Right-click the Vocal track on a sung section:
   - **Change lyrics**: new words for that section type, throughout the song (every chorus gets the same new chorus).
   - **Change melody**: a new borrowed melody for that section type, throughout the song. Its chords come with it,
@@ -52,6 +53,22 @@ limit after about 4 minutes) and wrote plainer lyrics; the first draft without r
 100 seconds. The routes that wait for the lyricist (generate, hum to song, track edits, add section) answer a request
 sent with `Prefer: respond-async` with 202 `{ jobId }`; the web client polls `GET /api/jobs/:id` until it gets the
 status and body the route would have answered (apps/brain/src/jobs.ts).
+
+## Background lyrics (2026-11-24, owner's request)
+
+Generating a song takes a fraction of a second; only the words take long. So `generateProject` saves the song with
+its melody and starts a lyrics task (apps/brain/src/lyrics/tasks.ts):
+- The project's lyrics state (`projects.lyrics_state` / `lyrics_task` / `lyrics_message`) is "writing" until the words
+  are in, "failed" with the reason, or empty. It moves with the project when a save moves it, and the brain resumes
+  every "writing" task when it starts, so a restart or deploy loses nothing.
+- When the words are written, they are spliced into the project's song as it is then (`applyWrittenLyrics`: edits
+  saved meanwhile stay), saved as a new version (the project moves to it), and sent to the owner's open pages on
+  `GET /api/events` (server-sent events: `{type:'lyrics', state:'done', songId, newSongId, lyrics}` or
+  `{state:'failed', message}`).
+- The editor (apps/web/src/state/useLyricsEvents.ts) switches to the new version; unsaved edits are kept, with the
+  words put into them (`/api/tracks/edit` op `applyLyrics`). The Vocal track shows a pill, "Lyrics being
+  generated…", or "Lyrics failed" with Retry (`POST /api/songs/:id/lyrics`); Change lyrics / Change melody and the
+  sing switch wait until the words are in.
 
 ## Where the words are kept
 

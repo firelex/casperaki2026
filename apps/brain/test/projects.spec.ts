@@ -13,6 +13,8 @@ import { loadConfig } from '../src/config.js';
 import { RenderService } from '../src/render/renderService.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { settled } from './settled.js';
+import type { Express } from 'express';
 
 interface Harness {
   url: string;
@@ -76,6 +78,7 @@ async function boot(renders?: RenderService): Promise<Harness> {
   const address = server.address() as AddressInfo;
   return {
     url: `http://127.0.0.1:${address.port}`,
+    app,
     store,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
   };
@@ -90,7 +93,7 @@ async function generate(h: Harness, extra: Record<string, unknown> = {}) {
     body: JSON.stringify({ ...BODY, ...extra }),
   });
   expect(res.status).toBe(201);
-  return (await res.json()) as { id: string; song: Record<string, unknown>; project: { title: string } };
+  return settled<{ id: string; song: Record<string, unknown>; project: { title: string } }>(h.url, h.app);
 }
 
 async function waitForRender(h: Harness, id: string): Promise<{ state: string; error?: string; mp3Url?: string; wavUrl?: string; unmasteredMp3Url?: string; unmasteredWavUrl?: string }> {
