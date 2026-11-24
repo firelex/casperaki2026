@@ -230,6 +230,17 @@ export {
   type SegmentType,
 } from './arrangement-polish/index.js';
 export { generateVocalMelody, writeVocals } from './vocals/index.js';
+// Vocal precedent banks (legacy remix patterns + our hooks) and the admin's edits overlay (melody library).
+export {
+  loadBankIndex,
+  loadPrecedentBank,
+  setPrecedentEdits,
+  type BankIndex,
+  type Precedent,
+  type PrecedentEdit,
+  type PrecedentSource,
+} from './vocals/precedents.js';
+export { checkPrecedentEntry, melodyStats, parseHookText, precedentEntryFromNotes, type HookEntry } from './vocals/hook-text.js';
 // Hum to song: the chord fitter and the user's own chorus (see src/hum/index.ts).
 export * as hum from './hum/index.js';
 export {

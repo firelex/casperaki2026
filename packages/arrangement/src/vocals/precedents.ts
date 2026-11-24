@@ -78,6 +78,7 @@ import { parseChord } from '@casperaki/music-theory';
 
 import { DataAssetError, type DataAssetMeta } from '../data/loader.js';
 import { buildContour } from './contour.js';
+import { melodyStats } from './hook-text.js';
 import { MIN_NOTE } from './range.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -100,6 +101,16 @@ const ChordEntrySchema = z
   .object({ chord: z.string().min(1) })
   .passthrough();
 
+const PrecedentSourceSchema = z
+  .object({
+    kind: z.enum(['song', 'melodySauce', 'casperaki']),
+    title: z.string().min(1).optional(),
+    artist: z.string().min(1).optional(),
+  })
+  .strict();
+
+export type PrecedentSource = z.infer<typeof PrecedentSourceSchema>;
+
 const PrecedentPropertiesSchema = z
   .object({
     name: z.string().optional(),
@@ -113,6 +124,10 @@ const PrecedentPropertiesSchema = z
     lowestNote: z.number().optional(),
     highestNote: z.number().optional(),
     medianNote: z.number().optional(),
+    // Required on every entry (written into the bank files by scripts/add-precedent-flags.mjs; no defaults).
+    useOriginal: z.boolean(), // may be sung whole, exactly as written (moved by octaves only)
+    useRemix: z.boolean(), // may take part in the mixing merge
+    source: PrecedentSourceSchema,
   })
   .passthrough();
 
@@ -129,6 +144,74 @@ const BankSchema = z.array(PrecedentSchema).min(1);
 
 export type Precedent = z.infer<typeof PrecedentSchema>;
 export type PrecedentMelodyNote = z.infer<typeof MelodyNoteSchema>;
+
+// ---- edits overlay ----
+//
+// The brain keeps the admin's edits of bank entries outside the repo and hands them over with `setPrecedentEdits`
+// (at startup and after each save). `loadPrecedentBank`, and so every selection, sees the edited entries: `melody`
+// and `chords` replace the bank's wholesale (and the melody's statistics busyness / lowestNote / highestNote /
+// medianNote are recomputed from it, as hook-text does); `useOriginal`, `useRemix` and `source` replace those
+// properties (`source` as a whole object); `editedAt` / `editedBy` are recorded in the properties. Everything else
+// stays as in the bank file. Edits are in the bank format and register, exactly as the bank files.
+
+const PrecedentEditSchema = z
+  .object({
+    melody: z.record(BeatStringSchema, z.array(MelodyNoteSchema).min(1)).optional(),
+    chords: z.record(BeatStringSchema, ChordEntrySchema).optional(),
+    useOriginal: z.boolean().optional(),
+    useRemix: z.boolean().optional(),
+    source: PrecedentSourceSchema.optional(),
+    editedAt: z.string().min(1),
+    editedBy: z.string().min(1).optional(),
+  })
+  .strict();
+
+export type PrecedentEdit = z.infer<typeof PrecedentEditSchema>;
+
+let precedentEdits: Readonly<Record<string, PrecedentEdit>> = {};
+
+function applyEdit(entry: Precedent, edit: PrecedentEdit): Precedent {
+  const melody = edit.melody ?? entry.melody;
+  const properties: Record<string, unknown> = { ...entry.properties };
+  if (edit.melody) Object.assign(properties, melodyStats(edit.melody));
+  if (edit.useOriginal !== undefined) properties['useOriginal'] = edit.useOriginal;
+  if (edit.useRemix !== undefined) properties['useRemix'] = edit.useRemix;
+  if (edit.source !== undefined) properties['source'] = edit.source;
+  properties['editedAt'] = edit.editedAt;
+  if (edit.editedBy !== undefined) properties['editedBy'] = edit.editedBy;
+  return { ...entry, properties: properties as Precedent['properties'], melody, chords: edit.chords ?? entry.chords };
+}
+
+/** Replaces the edits overlay (keys "<bank>/<id>"). Throws, leaving the previous overlay in place, when an edit is
+ *  invalid, names an unknown bank or entry, or makes an entry invalid. */
+export function setPrecedentEdits(edits: Readonly<Record<string, PrecedentEdit>>): void {
+  const parsed: Record<string, PrecedentEdit> = {};
+  for (const [key, edit] of Object.entries(edits)) {
+    const r = PrecedentEditSchema.safeParse(edit);
+    if (!r.success) throw new Error(`vocals/precedents: invalid edit "${key}": ${r.error.message}`);
+    parsed[key] = r.data;
+  }
+  const previous = precedentEdits;
+  precedentEdits = parsed;
+  cachedBanks.clear();
+  try {
+    const index = loadBankIndex();
+    for (const key of Object.keys(parsed)) {
+      const slash = key.indexOf('/');
+      const bankId = slash === -1 ? '' : key.slice(0, slash);
+      const id = key.slice(slash + 1);
+      if (!index.banks[bankId]) throw new Error(`vocals/precedents: edit "${key}" names an unknown bank "${bankId}"`);
+      if (!loadRawBank(bankId).some((e) => String(e.id) === id)) {
+        throw new Error(`vocals/precedents: edit "${key}": bank "${bankId}" has no entry "${id}"`);
+      }
+    }
+    for (const bankId of new Set(Object.keys(parsed).map((k) => k.slice(0, k.indexOf('/'))))) loadPrecedentBank(bankId);
+  } catch (err) {
+    precedentEdits = previous;
+    cachedBanks.clear();
+    throw err;
+  }
+}
 
 // ---- bank index schema ----
 
@@ -213,7 +296,8 @@ const BANK_INDEX_META: DataAssetMeta = {
 };
 
 let cachedIndex: BankIndex | undefined;
-const cachedBanks = new Map<string, readonly Precedent[]>();
+const cachedBanks = new Map<string, readonly Precedent[]>(); // with the edits overlay
+const cachedRawBanks = new Map<string, readonly Precedent[]>(); // as in the files
 
 /** Test-only replacement for the files under data/vocals/precedents: `index` stands for bank-index.json and
  *  `files` maps a bank file name (as the index's `banks.<id>.file` gives it) to its parsed JSON. Both go through
@@ -228,6 +312,7 @@ export function setPrecedentDataForTests(data: PrecedentTestData | undefined): v
   testData = data;
   cachedIndex = undefined;
   cachedBanks.clear();
+  cachedRawBanks.clear();
 }
 
 function readPrecedentJson(filename: string): unknown {
@@ -258,8 +343,9 @@ export function loadBankIndex(): BankIndex {
   return cachedIndex;
 }
 
-export function loadPrecedentBank(bankId: string): readonly Precedent[] {
-  const cached = cachedBanks.get(bankId);
+/** A bank as in its file (validated, no edits). */
+function loadRawBank(bankId: string): readonly Precedent[] {
+  const cached = cachedRawBanks.get(bankId);
   if (cached) return cached;
   const index = loadBankIndex();
   const entry = index.banks[bankId];
@@ -282,8 +368,30 @@ export function loadPrecedentBank(bankId: string): readonly Precedent[] {
     throw new DataAssetError(meta, `invalid bank shape: ${parsed.error.message}`);
   }
   const frozen = Object.freeze(parsed.data) as readonly Precedent[];
-  cachedBanks.set(bankId, frozen);
+  cachedRawBanks.set(bankId, frozen);
   return frozen;
+}
+
+/** A bank with the edits overlay applied (see `setPrecedentEdits`). */
+export function loadPrecedentBank(bankId: string): readonly Precedent[] {
+  const cached = cachedBanks.get(bankId);
+  if (cached) return cached;
+  const raw = loadRawBank(bankId);
+  const prefix = `${bankId}/`;
+  const editKeys = Object.keys(precedentEdits).filter((k) => k.startsWith(prefix));
+  let bank = raw;
+  if (editKeys.length > 0) {
+    bank = raw.map((e) => {
+      const edit = precedentEdits[`${prefix}${String(e.id)}`];
+      if (!edit) return e;
+      const r = PrecedentSchema.safeParse(applyEdit(e, edit));
+      if (!r.success) throw new Error(`vocals/precedents: the edit of "${prefix}${String(e.id)}" makes an invalid entry: ${r.error.message}`);
+      return r.data;
+    });
+    Object.freeze(bank);
+  }
+  cachedBanks.set(bankId, bank);
+  return bank;
 }
 
 // ---- dispatcher ----

@@ -16,7 +16,12 @@
    "kind": "hook",
    "tempoMin": 110,
    "tempoMax": 128,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -311,7 +316,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 138,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -655,7 +665,12 @@
    "kind": "hook",
    "tempoMin": 124,
    "tempoMax": 140,
-   "feel": "bouncy"
+   "feel": "bouncy",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -943,7 +958,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 116,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -1243,7 +1263,12 @@
    "kind": "hook",
    "tempoMin": 112,
    "tempoMax": 128,
-   "feel": "euphoric"
+   "feel": "euphoric",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -1517,7 +1542,12 @@
    "kind": "hook",
    "tempoMin": 95,
    "tempoMax": 110,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -1784,7 +1814,12 @@
    "kind": "hook",
    "tempoMin": 128,
    "tempoMax": 145,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -2093,7 +2128,12 @@
    "kind": "hook",
    "tempoMin": 116,
    "tempoMax": 132,
-   "feel": "bouncy"
+   "feel": "bouncy",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -2402,7 +2442,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 112,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -2655,7 +2700,12 @@
    "kind": "hook",
    "tempoMin": 132,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -2964,7 +3014,12 @@
    "kind": "hook",
    "tempoMin": 118,
    "tempoMax": 134,
-   "feel": "bouncy"
+   "feel": "bouncy",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -3287,7 +3342,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 136,
-   "feel": "euphoric"
+   "feel": "euphoric",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -3587,7 +3647,12 @@
    "kind": "hook",
    "tempoMin": 136,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -3896,7 +3961,12 @@
    "kind": "hook",
    "tempoMin": 105,
    "tempoMax": 120,
-   "feel": "bouncy"
+   "feel": "bouncy",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -4198,7 +4268,12 @@
    "kind": "hook",
    "tempoMin": 140,
    "tempoMax": 150,
-   "feel": "euphoric"
+   "feel": "euphoric",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -4416,7 +4491,12 @@
    "kind": "hook",
    "tempoMin": 108,
    "tempoMax": 124,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -4704,7 +4784,12 @@
    "kind": "hook",
    "tempoMin": 98,
    "tempoMax": 112,
-   "feel": "euphoric"
+   "feel": "euphoric",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -4997,7 +5082,12 @@
    "kind": "hook",
    "tempoMin": 110,
    "tempoMax": 126,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -5299,7 +5389,12 @@
    "kind": "hook",
    "tempoMin": 126,
    "tempoMax": 142,
-   "feel": "bouncy"
+   "feel": "bouncy",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.5": [
@@ -5634,7 +5729,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 118,
-   "feel": "euphoric"
+   "feel": "euphoric",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -5894,7 +5994,12 @@
    "kind": "hook",
    "tempoMin": 112,
    "tempoMax": 130,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -6182,7 +6287,12 @@
    "kind": "hook",
    "tempoMin": 140,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -6526,7 +6636,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 128,
-   "feel": "anthem"
+   "feel": "anthem",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -6786,7 +6901,12 @@
    "kind": "hook",
    "tempoMin": 112,
    "tempoMax": 136,
-   "feel": "euphoric"
+   "feel": "euphoric",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -7032,7 +7152,12 @@
    "kind": "hook",
    "tempoMin": 95,
    "tempoMax": 120,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -7332,7 +7457,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 150,
-   "feel": "bouncy"
+   "feel": "bouncy",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -7613,7 +7743,12 @@
    "kind": "hook",
    "tempoMin": 64,
    "tempoMax": 78,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -7873,7 +8008,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 72,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -8138,7 +8278,12 @@
    "kind": "hook",
    "tempoMin": 92,
    "tempoMax": 108,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -8433,7 +8578,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 118,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -8749,7 +8899,12 @@
    "kind": "hook",
    "tempoMin": 62,
    "tempoMax": 76,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -8988,7 +9143,12 @@
    "kind": "hook",
    "tempoMin": 70,
    "tempoMax": 84,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -9248,7 +9408,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 70,
-   "feel": "dark"
+   "feel": "dark",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -9473,7 +9638,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 112,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -9754,7 +9924,12 @@
    "kind": "hook",
    "tempoMin": 88,
    "tempoMax": 104,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -10056,7 +10231,12 @@
    "kind": "hook",
    "tempoMin": 66,
    "tempoMax": 80,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -10328,7 +10508,12 @@
    "kind": "hook",
    "tempoMin": 72,
    "tempoMax": 84,
-   "feel": "dark"
+   "feel": "dark",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -10623,7 +10808,12 @@
    "kind": "hook",
    "tempoMin": 84,
    "tempoMax": 96,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.75": [
@@ -10932,7 +11122,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 74,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -11164,7 +11359,12 @@
    "kind": "hook",
    "tempoMin": 78,
    "tempoMax": 92,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -11459,7 +11659,12 @@
    "kind": "hook",
    "tempoMin": 104,
    "tempoMax": 120,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -11803,7 +12008,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 110,
-   "feel": "dark"
+   "feel": "dark",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -12077,7 +12287,12 @@
    "kind": "hook",
    "tempoMin": 108,
    "tempoMax": 125,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -12414,7 +12629,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 72,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -12679,7 +12899,12 @@
    "kind": "hook",
    "tempoMin": 76,
    "tempoMax": 88,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -13016,7 +13241,12 @@
    "kind": "hook",
    "tempoMin": 112,
    "tempoMax": 125,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -13330,7 +13560,12 @@
    "kind": "hook",
    "tempoMin": 66,
    "tempoMax": 80,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -13562,7 +13797,12 @@
    "kind": "hook",
    "tempoMin": 70,
    "tempoMax": 84,
-   "feel": "dark"
+   "feel": "dark",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -13829,7 +14069,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 112,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -14117,7 +14362,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 72,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -14361,7 +14611,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 116,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -14635,7 +14890,12 @@
    "kind": "hook",
    "tempoMin": 80,
    "tempoMax": 96,
-   "feel": "dark"
+   "feel": "dark",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -14935,7 +15195,12 @@
    "kind": "hook",
    "tempoMin": 85,
    "tempoMax": 100,
-   "feel": "conversational"
+   "feel": "conversational",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -15237,7 +15502,12 @@
    "kind": "hook",
    "tempoMin": 66,
    "tempoMax": 80,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.5": [
@@ -15565,7 +15835,12 @@
    "kind": "hook",
    "tempoMin": 88,
    "tempoMax": 100,
-   "feel": "urban"
+   "feel": "urban",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -16049,7 +16324,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 72,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -16344,7 +16624,12 @@
    "kind": "hook",
    "tempoMin": 128,
    "tempoMax": 140,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -16744,7 +17029,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 116,
-   "feel": "conversational"
+   "feel": "conversational",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -17121,7 +17411,12 @@
    "kind": "hook",
    "tempoMin": 70,
    "tempoMax": 84,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -17423,7 +17718,12 @@
    "kind": "hook",
    "tempoMin": 92,
    "tempoMax": 104,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -17781,7 +18081,12 @@
    "kind": "hook",
    "tempoMin": 76,
    "tempoMax": 88,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -18090,7 +18395,12 @@
    "kind": "hook",
    "tempoMin": 132,
    "tempoMax": 148,
-   "feel": "urban"
+   "feel": "urban",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -18644,7 +18954,12 @@
    "kind": "hook",
    "tempoMin": 84,
    "tempoMax": 96,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -18981,7 +19296,12 @@
    "kind": "hook",
    "tempoMin": 72,
    "tempoMax": 86,
-   "feel": "conversational"
+   "feel": "conversational",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -19311,7 +19631,12 @@
    "kind": "hook",
    "tempoMin": 140,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -19711,7 +20036,12 @@
    "kind": "hook",
    "tempoMin": 60,
    "tempoMax": 70,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -20060,7 +20390,12 @@
    "kind": "hook",
    "tempoMin": 104,
    "tempoMax": 118,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -20425,7 +20760,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 108,
-   "feel": "urban"
+   "feel": "urban",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.25": [
@@ -20944,7 +21284,12 @@
    "kind": "hook",
    "tempoMin": 92,
    "tempoMax": 106,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -21293,7 +21638,12 @@
    "kind": "hook",
    "tempoMin": 112,
    "tempoMax": 124,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -21658,7 +22008,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 110,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -22023,7 +22378,12 @@
    "kind": "hook",
    "tempoMin": 80,
    "tempoMax": 92,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -22304,7 +22664,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 112,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -22662,7 +23027,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 132,
-   "feel": "conversational"
+   "feel": "conversational",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -23090,7 +23460,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 134,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -23474,7 +23849,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 136,
-   "feel": "latin"
+   "feel": "latin",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -23832,7 +24212,12 @@
    "kind": "hook",
    "tempoMin": 70,
    "tempoMax": 82,
-   "feel": "urban"
+   "feel": "urban",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -24407,7 +24792,12 @@
    "kind": "hook",
    "tempoMin": 64,
    "tempoMax": 76,
-   "feel": "conversational"
+   "feel": "conversational",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -24791,7 +25181,12 @@
    "kind": "hook",
    "tempoMin": 124,
    "tempoMax": 138,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -25198,7 +25593,12 @@
    "kind": "hook",
    "tempoMin": 76,
    "tempoMax": 88,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -25542,7 +25942,12 @@
    "kind": "hook",
    "tempoMin": 136,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -25942,7 +26347,12 @@
    "kind": "hook",
    "tempoMin": 108,
    "tempoMax": 120,
-   "feel": "minor"
+   "feel": "minor",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -26333,7 +26743,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 120,
-   "feel": "rising"
+   "feel": "rising",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -26628,7 +27043,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 124,
-   "feel": "suspense"
+   "feel": "suspense",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -26881,7 +27301,12 @@
    "kind": "hook",
    "tempoMin": 108,
    "tempoMax": 126,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -27239,7 +27664,12 @@
    "kind": "hook",
    "tempoMin": 66,
    "tempoMax": 80,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -27527,7 +27957,12 @@
    "kind": "hook",
    "tempoMin": 132,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -27920,7 +28355,12 @@
    "kind": "hook",
    "tempoMin": 84,
    "tempoMax": 100,
-   "feel": "suspense"
+   "feel": "suspense",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -28234,7 +28674,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 140,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -28543,7 +28988,12 @@
    "kind": "hook",
    "tempoMin": 70,
    "tempoMax": 88,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -28775,7 +29225,12 @@
    "kind": "hook",
    "tempoMin": 92,
    "tempoMax": 108,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -29098,7 +29553,12 @@
    "kind": "hook",
    "tempoMin": 76,
    "tempoMax": 92,
-   "feel": "suspense"
+   "feel": "suspense",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -29351,7 +29811,12 @@
    "kind": "hook",
    "tempoMin": 136,
    "tempoMax": 150,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -29681,7 +30146,12 @@
    "kind": "hook",
    "tempoMin": 88,
    "tempoMax": 104,
-   "feel": "rising"
+   "feel": "rising",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.5": [
@@ -29988,7 +30458,12 @@
    "kind": "hook",
    "tempoMin": 65,
    "tempoMax": 78,
-   "feel": "rising"
+   "feel": "rising",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "3.0": [
@@ -30288,7 +30763,12 @@
    "kind": "hook",
    "tempoMin": 100,
    "tempoMax": 116,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -30632,7 +31112,12 @@
    "kind": "hook",
    "tempoMin": 126,
    "tempoMax": 144,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -31018,7 +31503,12 @@
    "kind": "hook",
    "tempoMin": 68,
    "tempoMax": 84,
-   "feel": "tender"
+   "feel": "tender",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.0": [
@@ -31290,7 +31780,12 @@
    "kind": "hook",
    "tempoMin": 112,
    "tempoMax": 124,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.5": [
@@ -31662,7 +32157,12 @@
    "kind": "hook",
    "tempoMin": 116,
    "tempoMax": 132,
-   "feel": "rising"
+   "feel": "rising",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "1.0": [
@@ -31922,7 +32422,12 @@
    "kind": "hook",
    "tempoMin": 90,
    "tempoMax": 104,
-   "feel": "groove"
+   "feel": "groove",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "2.5": [
@@ -32271,7 +32776,12 @@
    "kind": "hook",
    "tempoMin": 124,
    "tempoMax": 140,
-   "feel": "driving"
+   "feel": "driving",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -32622,7 +33132,12 @@
    "kind": "hook",
    "tempoMin": 96,
    "tempoMax": 112,
-   "feel": "chant"
+   "feel": "chant",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -32966,7 +33481,12 @@
    "kind": "hook",
    "tempoMin": 120,
    "tempoMax": 136,
-   "feel": "chant"
+   "feel": "chant",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -33254,7 +33774,12 @@
    "kind": "hook",
    "tempoMin": 80,
    "tempoMax": 96,
-   "feel": "chant"
+   "feel": "chant",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [
@@ -33598,7 +34123,12 @@
    "kind": "hook",
    "tempoMin": 136,
    "tempoMax": 150,
-   "feel": "chant"
+   "feel": "chant",
+   "useOriginal": true,
+   "useRemix": true,
+   "source": {
+    "kind": "casperaki"
+   }
   },
   "melody": {
    "0.0": [

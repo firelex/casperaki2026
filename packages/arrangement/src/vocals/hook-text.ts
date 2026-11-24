@@ -17,6 +17,7 @@
 // Pure (no I/O): scripts/build-hooks.mjs reads the text files and writes the bank.
 
 import { QUALITY_INTERVALS, parseChordSymbol, type Chord } from '../hum/chords.js';
+import type { Precedent } from './precedents.js';
 
 export interface HookEntry {
   readonly id: string;
@@ -36,6 +37,9 @@ export interface HookEntry {
     readonly tempoMin: number;
     readonly tempoMax: number;
     readonly feel: string;
+    readonly useOriginal: true;
+    readonly useRemix: true;
+    readonly source: { readonly kind: 'casperaki' };
   };
   readonly melody: Record<string, { note: string; midi: number; duration: number }[]>;
   readonly chords: Record<string, { chord: string }>;
@@ -218,10 +222,110 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
         busyness: bank.length / 8, type, start: leadin === 'yes' ? 1 : 0, end: leadin === 'yes' ? 9 : 8,
         lowestNote: sorted[0]!, highestNote: sorted[sorted.length - 1]!, medianNote: sorted[Math.floor(sorted.length / 2)]!,
         kind: 'hook', tempoMin: Number(tm[1]), tempoMax: Number(tm[2]), feel: b['feel']!.trim(),
+        useOriginal: true, useRemix: true, source: { kind: 'casperaki' },
       },
       melody,
       chords: chordMap,
     });
   });
   return { hooks, errors };
+}
+
+// ---- bank-format entries: checks, rebuilding from notes ----
+
+/** Statistics of a bank melody, as the hook builder writes them: busyness = notes / 8, lowest, highest and median
+ *  (upper median) midi. */
+export function melodyStats(melody: Precedent['melody']): { busyness: number; lowestNote: number; highestNote: number; medianNote: number } {
+  const sorted = Object.values(melody).map((n) => n[0]!.midi).sort((x, y) => x - y);
+  if (sorted.length === 0) throw new Error('melodyStats: the melody has no notes');
+  return {
+    busyness: sorted.length / 8,
+    lowestNote: sorted[0]!,
+    highestNote: sorted[sorted.length - 1]!,
+    medianNote: sorted[Math.floor(sorted.length / 2)]!,
+  };
+}
+
+/** A copy of `base` with its melody and chords rebuilt from notes (bank register: midi 48 is "c4") and one chord
+ *  symbol per half bar (`(end) * 2` of them, lead-in bar included), and the melody statistics recomputed as the
+ *  hook builder does. Every other property is kept. Throws when the chord count does not match. */
+export function precedentEntryFromNotes(
+  base: Precedent,
+  notes: readonly { beat: number; midi: number; duration: number }[],
+  halfBarChords: readonly string[],
+): Precedent {
+  const halfBars = base.properties.end * 2;
+  if (halfBarChords.length !== halfBars) {
+    throw new Error(`precedentEntryFromNotes: ${halfBarChords.length} half-bar chords, but the entry has ${halfBars} half bars (end ${base.properties.end})`);
+  }
+  const melody: Precedent['melody'] = {};
+  for (const n of [...notes].sort((a, b) => a.beat - b.beat)) {
+    melody[beatKey(n.beat)] = [{ note: `${NAMES[n.midi % 12]}${Math.floor(n.midi / 12)}`, midi: n.midi, duration: n.duration }];
+  }
+  const chords: Precedent['chords'] = {};
+  for (let beat = 0; beat < base.properties.end * 4; beat++) chords[beatKey(beat)] = { chord: halfBarChords[Math.floor(beat / 2)]! };
+  return { ...base, properties: { ...base.properties, ...melodyStats(melody) }, melody, chords };
+}
+
+/** What is wrong with a bank entry, in words ([] = fine). Both kinds: notes on the 16th grid (quarter beats) from
+ *  0 and ending by the entry's end (end * 4 beats; a lead-in bar counts), one note per beat, no overlapping notes,
+ *  every chord readable and on a whole beat inside the entry. "hook" (our own entries) also needs a chord on every
+ *  beat and gets the musical checks hooks are written to (chord tones on strong beats, notes in the key, leaps,
+ *  ending, range, span). "legacy" entries were not written to those rules and may have no chords (the rhythmic
+ *  banks), so they get the mechanical checks only. */
+export function checkPrecedentEntry(entry: Precedent, kind: 'hook' | 'legacy'): string[] {
+  const out: string[] = [];
+  const { start, end } = entry.properties;
+  const totalBeats = end * 4;
+  const onGrid = (x: number) => Math.abs(x * 4 - Math.round(x * 4)) < 1e-9;
+
+  const notes: SungNote[] = [];
+  for (const [key, list] of Object.entries(entry.melody)) {
+    const beat = Number(key);
+    if (!Number.isFinite(beat)) {
+      out.push(`melody beat "${key}" is not a number`);
+      continue;
+    }
+    if (list.length !== 1) out.push(`beat ${beat} has ${list.length} notes; one note per beat`);
+    const n = list[0];
+    if (!n) continue;
+    if (beat < 0 || !onGrid(beat)) out.push(`the note at beat ${beat} is not on the 16th grid from 0`);
+    if (!(n.duration > 0) || !onGrid(n.duration)) out.push(`the note at beat ${beat} lasts ${n.duration} beats; lengths are positive multiples of 0.25`);
+    if (beat + n.duration > totalBeats + 1e-9) out.push(`the note at beat ${beat} ends at beat ${beat + n.duration}, after the end (${totalBeats} beats)`);
+    notes.push({ beat, midi: n.midi + 12, duration: n.duration });
+  }
+  notes.sort((a, b) => a.beat - b.beat);
+  if (notes.length === 0) out.push('the melody has no notes');
+  for (let i = 1; i < notes.length; i++) {
+    const prev = notes[i - 1]!;
+    if (prev.beat + prev.duration > notes[i]!.beat + 1e-9) {
+      out.push(`the note at beat ${prev.beat} (${prev.duration} beats) overlaps the note at beat ${notes[i]!.beat}`);
+    }
+  }
+
+  for (const [key, c] of Object.entries(entry.chords)) {
+    const beat = Number(key);
+    if (!Number.isInteger(beat) || beat < 0 || beat >= totalBeats) out.push(`a chord at beat "${key}", outside the whole beats 0..${totalBeats - 1}`);
+    try {
+      parseChordSymbol(c.chord, 0);
+    } catch (e) {
+      out.push(`chord "${c.chord}" at beat ${key}: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
+  if (kind === 'legacy') return out;
+
+  const chords: (Chord & { symbol: string })[] = [];
+  for (let beat = 0; beat < totalBeats; beat++) {
+    const c = entry.chords[beatKey(beat)];
+    if (!c) out.push(`no chord at beat ${beat}`);
+    else {
+      try {
+        chords.push({ ...parseChordSymbol(c.chord, 0), symbol: c.chord });
+      } catch {
+        // already reported above
+      }
+    }
+  }
+  if (out.length === 0) out.push(...checkMusic(notes, chords, start * 4));
+  return out;
 }
