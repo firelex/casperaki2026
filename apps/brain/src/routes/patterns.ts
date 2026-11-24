@@ -2,6 +2,8 @@
 //
 //   GET  /api/patterns                 proposals + review decision + whether exported
 //   POST /api/patterns/:id/review      { status: 'approved' | 'rejected' | 'pending', note? } -> { review, library }
+//   POST /api/patterns/review          { ids, status, note? } -> { reviews, library }: the same decision for many
+//                                      proposals at once (one library export, one commit)
 //   POST /api/patterns/:id/comments    { body } -> 201 the comment (author, time); the
 //                                      listing carries each proposal's comments
 //   GET  /api/patterns/:id/sounds?genre=  the sounds the proposal's instrument can use in
@@ -71,6 +73,9 @@ export interface PatternsRouterDeps {
 
 const ReviewBody = z
   .object({ status: z.enum(['approved', 'rejected', 'pending']), note: z.string().max(2000).optional() })
+  .strict();
+const BulkReviewBody = z
+  .object({ ids: z.array(z.string().min(1)).min(1).max(500), status: z.enum(['approved', 'rejected', 'pending']), note: z.string().max(2000).optional() })
   .strict();
 const CommentBody = z.object({ body: z.string().trim().min(1).max(2000) }).strict();
 const PreviewBody = z
@@ -217,29 +222,46 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
     return res.status(201).json({ comment });
   });
 
+  /** One decision for some proposals: the library follows it (and is committed) before it is saved, so a failed
+   *  export saves nothing. */
+  const decide = (req: Request, ids: readonly string[], status: 'approved' | 'rejected' | 'pending', note: string | undefined): string[] | null => {
+    let library: string[] | null = null;
+    if (publishLibrary) {
+      const approved = new Set(store.listPatternReviews().filter((r) => r.status === 'approved').map((r) => r.proposalId));
+      for (const id of ids) {
+        if (status === 'approved') approved.add(id);
+        else approved.delete(id);
+      }
+      const verb = status === 'approved' ? 'approved' : status === 'rejected' ? 'rejected' : 'took back the decision on';
+      const what = ids.length === 1 ? ids[0]! : `${ids.length} proposals`;
+      library = publishLibrary(approved, `patterns: ${reviewerOf(req).split('@')[0]} ${verb} ${what}${ids.length > 1 ? `\n\n${ids.join('\n')}` : ''}`);
+    }
+    const decidedAt = new Date().toISOString();
+    for (const id of ids) {
+      if (status === 'pending') store.clearPatternReview(id);
+      else store.setPatternReview({ proposalId: id, status, note: note ?? '', reviewer: reviewerOf(req), decidedAt });
+    }
+    return library;
+  };
+
+  router.post('/api/patterns/review', (req, res) => {
+    const body = BulkReviewBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.issues[0]?.message });
+    const ids = [...new Set(body.data.ids)];
+    const known = new Set(loadPatternProposals().map((p) => p.id));
+    const unknown = ids.filter((id) => !known.has(id));
+    if (unknown.length) return res.status(404).json({ error: 'not_found', message: `No such proposals: ${unknown.join(', ')}` });
+    const library = decide(req, ids, body.data.status, body.data.note);
+    const reviews = new Map(store.listPatternReviews().map((r) => [r.proposalId, r]));
+    return res.json({ reviews: Object.fromEntries(ids.map((id) => [id, reviews.get(id) ?? null])), library });
+  });
+
   router.post('/api/patterns/:id/review', (req, res) => {
     const body = ReviewBody.safeParse(req.body);
     if (!body.success) return res.status(400).json({ error: 'invalid_body' });
     const id = req.params.id;
     if (!loadPatternProposals().some((p) => p.id === id)) return res.status(404).json({ error: 'not_found', id });
-    // The library follows the decision (and is committed) before the decision is saved: a failed export saves nothing.
-    let library: string[] | null = null;
-    if (publishLibrary) {
-      const approved = new Set(store.listPatternReviews().filter((r) => r.status === 'approved').map((r) => r.proposalId));
-      if (body.data.status === 'approved') approved.add(id);
-      else approved.delete(id);
-      const verb = body.data.status === 'approved' ? 'approved' : body.data.status === 'rejected' ? 'rejected' : 'took back the decision on';
-      library = publishLibrary(approved, `patterns: ${reviewerOf(req).split('@')[0]} ${verb} ${id}`);
-    }
-    if (body.data.status === 'pending') store.clearPatternReview(id);
-    else
-      store.setPatternReview({
-        proposalId: id,
-        status: body.data.status,
-        note: body.data.note ?? '',
-        reviewer: reviewerOf(req),
-        decidedAt: new Date().toISOString(),
-      });
+    const library = decide(req, [id], body.data.status, body.data.note);
     const review = store.listPatternReviews().find((r) => r.proposalId === id) ?? null;
     return res.json({ review, library });
   });

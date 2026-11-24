@@ -178,6 +178,40 @@ describe('Pro-mode mix', () => {
     expect(execFileSync('git', ['status', '--porcelain'], { cwd: dirname(h.mixPath), encoding: 'utf8' })).toBe('');
   });
 
+  it('approves several changes in one commit, or none when one cannot be approved', async () => {
+    const { id, song } = await generate(h, TWO_OF_A_TYPE);
+    const typeOf = (d: { lowLevelType?: string; type?: string }) => (d.lowLevelType ?? d.type)!;
+    const a = song.instrumentDefinitions.find((d) => song.instrumentDefinitions.some((o) => o !== d && typeOf(o) === typeOf(d)))!;
+    const b = song.instrumentDefinitions.find((o) => o !== a && typeOf(o) === typeOf(a))!;
+    const type = typeOf(a);
+    await fetch(`${h.url}/api/songs/${id}/mix`, json('PUT', { mixOverrides: {
+      lanes: { [a.name]: { volumeDb: -2, fxGroup: 'bass', reverb: -12 }, [b.name]: { volumeDb: -4, fxGroup: 'bass', reverb: -12 }, 'Sample Transitions FX': { delay: -6 } },
+      buses: { bass: { '1': [0.1, 0.2, 0.3, 0.6, 1] } },
+    } }));
+    const many = (keys: string[]) => fetch(`${h.url}/api/suggestions/mix/approve-many`, json('POST', { items: keys.map((key) => ({ genre: 'brightPop', key })) }));
+    const log = () => execFileSync('git', ['log', '--format=%s', 'origin/main'], { cwd: dirname(h.mixPath), encoding: 'utf8' }).trim().split('\n');
+    const before = log();
+
+    // One that cannot be approved refuses the lot: nothing is committed.
+    expect((await many([`route|${type}|bass`, 'send|fxTransitions|delay'])).status).toBe(409);
+    expect(log()).toEqual(before);
+
+    const res = await many([`volume|${type}`, `route|${type}|bass`, `send|${type}|reverb`, 'plugin|bass|1|3']);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { summaries: string[] }).summaries).toHaveLength(4);
+    expect(log()).toEqual(['mix: approve 4 changes (local-dev)', ...before]);
+    // The trims drop by the 3 dB the standard dropped, as for a single approval.
+    const lanes = ((await (await fetch(`${h.url}/api/songs/${id}`)).json()) as { project: { mixOverrides: { lanes: Record<string, { volumeDb?: number }> } } }).project.mixOverrides.lanes;
+    expect([lanes[a.name]!.volumeDb, lanes[b.name]!.volumeDb]).toEqual([1, -1]);
+    const left = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as { genres: { changes: { key: string }[] }[] };
+    expect(left.genres[0]!.changes.map((c) => c.key).sort()).toEqual([`volume|${type}`, 'send|fxTransitions|delay'].sort());
+
+    // Delete several at once.
+    expect((await fetch(`${h.url}/api/suggestions/mix/dismiss-many`, json('POST', { items: left.genres[0]!.changes.map((c) => ({ genre: 'brightPop', key: c.key })) }))).status).toBe(204);
+    const gone = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as { genres: unknown[] };
+    expect(gone.genres).toEqual([]);
+  });
+
   it('summarises every song\'s changes per genre for the suggestions page', async () => {
     const { id, song } = await generate(h);
     const def = song.instrumentDefinitions[0]!;

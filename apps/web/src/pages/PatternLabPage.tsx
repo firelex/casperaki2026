@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@teamsuzie/ui';
+import { BulkActionBarItemBar, Checkbox, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@teamsuzie/ui';
 import { CommentList } from '../components/SuggestionComments';
 import { downloadBytes, fileStem } from '../export/exportMidi';
 import { mixExportStatus } from '../export/mixExportProgress';
@@ -122,6 +122,30 @@ export function PatternsSection() {
   const families = FAMILY_ORDER.filter((f) => (query.data?.proposals ?? []).some((p) => p.family === f));
   const count = (f: Filter) => proposals.filter((p) => matches(p, f)).length;
   const shown = proposals.filter((p) => matches(p, filter));
+  // Bulk decisions: the ticked proposals among those shown.
+  const queryClient = useQueryClient();
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const selected = shown.filter((p) => ticked.has(p.id));
+  const tick = (id: string, on: boolean) =>
+    setTicked((t) => {
+      const next = new Set(t);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const bulk = useMutation({
+    mutationFn: (status: 'approved' | 'rejected' | 'pending') => patternsApi.reviewMany(selected.map((p) => p.id), status),
+    onSuccess: () => {
+      setTicked(new Set());
+      void queryClient.invalidateQueries({ queryKey: patternsQueryKey });
+    },
+  });
+  const decideSelected = (status: 'approved' | 'rejected' | 'pending') => {
+    const n = selected.length;
+    const verb = status === 'approved' ? 'Approve' : status === 'rejected' ? 'Reject' : 'Send back to review';
+    if (status === 'approved' && !window.confirm(`${verb} ${n} ${n === 1 ? 'proposal' : 'proposals'}? Approved patterns join the library at once.`)) return;
+    bulk.mutate(status);
+  };
 
   return (
     <>
@@ -165,7 +189,31 @@ export function PatternsSection() {
           </div>
         ) : null}
 
-        <div className="mt-8 flex flex-col gap-6">
+        {shown.length > 0 ? (
+          <div className="ts-scope sticky top-0 z-10 mt-6 flex flex-col gap-2 bg-bg/95 py-2 backdrop-blur">
+            <label className="flex w-fit cursor-pointer items-center gap-2 text-[14px] text-white/75">
+              <Checkbox
+                checked={selected.length > 0}
+                indeterminate={selected.length > 0 && selected.length < shown.length}
+                onChange={(e) => setTicked(e.target.checked ? new Set(shown.map((p) => p.id)) : new Set())}
+              />
+              Select all {shown.length} shown
+            </label>
+            <BulkActionBarItemBar
+              selectionCount={selected.length}
+              itemNoun="proposal"
+              onClear={() => setTicked(new Set())}
+              actions={[
+                ...(selected.some((p) => p.review) ? [{ id: 'pending', label: 'Back to review', variant: 'outline' as const, disabled: bulk.isPending, onClick: () => decideSelected('pending') }] : []),
+                { id: 'reject', label: 'Reject', variant: 'outline', disabled: bulk.isPending, onClick: () => decideSelected('rejected') },
+                { id: 'approve', label: bulk.isPending ? 'Saving…' : 'Approve', variant: 'default', disabled: bulk.isPending, onClick: () => decideSelected('approved') },
+              ]}
+            />
+            {bulk.isError ? <p className="text-[13px] text-err" role="alert">The decisions were not saved: {bulk.error.message}</p> : null}
+          </div>
+        ) : null}
+
+        <div className="mt-6 flex flex-col gap-6">
           {query.isLoading ? (
             <p className="text-white/55">Loading proposals…</p>
           ) : query.isError ? (
@@ -173,7 +221,7 @@ export function PatternsSection() {
           ) : shown.length === 0 ? (
             <p className="text-white/55">{filter === 'pending' ? 'Nothing left to review.' : 'No proposals here.'}</p>
           ) : (
-            shown.map((p) => <ProposalCard key={p.id} proposal={p} />)
+            shown.map((p) => <ProposalCard key={p.id} proposal={p} selected={ticked.has(p.id)} onSelect={(on) => tick(p.id, on)} />)
           )}
         </div>
     </>
@@ -186,7 +234,7 @@ function matches(p: PatternProposal, f: Filter): boolean {
   return p.review?.status === f;
 }
 
-function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
+function ProposalCard({ proposal: p, selected, onSelect }: { proposal: PatternProposal; selected: boolean; onSelect: (on: boolean) => void }) {
   const queryClient = useQueryClient();
   const [genre, setGenre] = useState<Genre>(p.genres[0]!);
   const [take, setTake] = useState(0);
@@ -350,15 +398,18 @@ function ProposalCard({ proposal: p }: { proposal: PatternProposal }) {
   const status = p.review?.status;
 
   return (
-    <article className="rounded-[14px] border border-line/60 bg-panel p-5 sm:p-7">
+    <article className="ts-scope rounded-[14px] border border-line/60 bg-panel p-5 sm:p-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="flex items-start gap-3">
+          <Checkbox className="mt-1.5" checked={selected} onChange={(e) => onSelect(e.target.checked)} aria-label={`Select ${p.name}`} />
+          <div>
           <h2 className="text-[20px] font-semibold text-white">{p.name}</h2>
           <p className="mt-1 text-[14px] text-white/55">
             {FAMILY_LABELS[p.family]} ·{' '}
             {p.kind === 'algo' ? 'generator (new variations every song)' : `${takes(p)} fixed patterns`} ·{' '}
             {p.genres.map((g) => GENRE_LABELS[g]).join(', ')}
           </p>
+          </div>
         </div>
         <StatusBadge status={status} inLibrary={p.inLibrary} />
       </div>

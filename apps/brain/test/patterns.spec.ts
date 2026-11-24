@@ -51,6 +51,19 @@ describe('pattern lab', () => {
     expect((await post(`${h.url}/api/patterns/no-such/review`, { status: 'approved' })).status).toBe(404);
   });
 
+  it('records one decision for many proposals at once, or none when one is unknown', async () => {
+    const ids = loadPatternProposals().slice(0, 2).map((p) => p.id);
+    expect(ids).toHaveLength(2);
+    expect((await post(`${h.url}/api/patterns/review`, { ids: [...ids, 'no-such'], status: 'approved' })).status).toBe(404);
+    expect(h.store.listPatternReviews()).toEqual([]);
+    const res = await post(`${h.url}/api/patterns/review`, { ids, status: 'rejected', note: 'too busy' });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { reviews: Record<string, { status: string; note: string } | null> };
+    for (const id of ids) expect(body.reviews[id]).toMatchObject({ status: 'rejected', note: 'too busy' });
+    const back = (await (await post(`${h.url}/api/patterns/review`, { ids, status: 'pending' })).json()) as { reviews: Record<string, unknown> };
+    expect(Object.values(back.reviews)).toEqual([null, null]);
+  });
+
   it('previews a proposal and the current library as different songs on the same seed', async () => {
     const p = loadPatternProposals()[0]!;
     const withP = (await (await post(`${h.url}/api/patterns/${p.id}/preview`, { genre: p.genres[0], variant: 'proposal' })).json()) as { songId: string; seed: string; samples: unknown[] };

@@ -8,6 +8,10 @@
 //   DELETE /api/suggestions/mix?genre=&key= -> 204: hide that change (Delete
 //          on the page). The songs keep their mixes; a value saved after the
 //          deletion shows the change again.
+//   POST   /api/suggestions/mix/approve-many { items: [{ genre, key }] } -> { summaries }: the same for
+//          several changes, applied in order, in one commit (all or none: one that cannot be approved
+//          refuses the lot)
+//   POST   /api/suggestions/mix/dismiss-many { items: [{ genre, key }] } -> 204: Delete for several changes
 //   POST   /api/suggestions/mix/approve { genre, key } -> { summary }: the change's
 //          average becomes the standard (mix-config.json is rewritten, committed
 //          in its repo and pushed; see sounds/approveMixChange.ts). Songs keep sounding as they did: their
@@ -20,7 +24,7 @@
 //   plugin: one parameter (raw 0..1) of a plugin on an FX bus
 // with every song's value (newest first) and their average.
 
-import { Router, json, type Request } from 'express';
+import { Router, json, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { parseSong } from '@casperaki/song-schema';
@@ -64,6 +68,14 @@ const SENDS = ['reverb', 'delay', 'chorus'] as const;
 const CommentBody = z.object({ genre: z.string().min(1), key: z.string().min(1), body: z.string().trim().min(1).max(2000) }).strict();
 const DismissQuery = z.object({ genre: z.string().min(1), key: z.string().min(1) }).strict();
 const ApproveBody = DismissQuery;
+const ManyBody = z.object({ items: z.array(DismissQuery).min(1).max(500) }).strict();
+
+/** A request that cannot be approved as asked (answered 404 / 409 with its message). */
+class RefusedError extends Error {
+  constructor(readonly status: 404 | 409, readonly code: string, message: string) {
+    super(message);
+  }
+}
 const TRANSITIONS_BLOCKED = 'The transitions track plays each transition through its own type’s bus and sends: there is no one standard to change.';
 const KIT_BLOCKED = 'The engine routes a drum kit by position (kicks to the kicks bus, the rest to the drums bus) with the drums group’s sends: not a setting of the standard mix.';
 
@@ -171,49 +183,106 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
     if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
     return res.json({ genres: summarise(mixConfig.mixConfig) });
   });
+  /**
+   * Approves changes in order into the standard mix, as one commit: each is found in the suggestions as the config
+   * stands after the ones before it. Nothing is written unless every one can be approved. Then the level trims of
+   * the songs are lowered by what each standard rose, and each change gets an "Approved" comment.
+   */
+  const approveAll = (req: Request, items: readonly { genre: string; key: string }[]): string[] => {
+    const cfg = mixConfig!;
+    let text = cfg.mixConfig;
+    const done: { genre: string; key: string; kind: ChangeKind; approval: ReturnType<typeof approveMixChange> }[] = [];
+    for (const { genre, key } of items) {
+      const change = summarise(text).find((g) => g.genre === genre)?.changes.find((c) => c.key === key);
+      if (!change) throw new RefusedError(404, 'not_found', `No ${key} change in ${genre}.`);
+      if (change.blocked) throw new RefusedError(409, 'not_approvable', `${genre} ${key}: ${change.blocked}`);
+      let approval;
+      try {
+        approval = approveMixChange(text, change, genre);
+      } catch (err) {
+        if (err instanceof ApproveError) throw new RefusedError(409, 'not_approvable', `${genre} ${key}: ${err.message}`);
+        throw err;
+      }
+      const shift = approval.trimShift;
+      // The trims are lowered after the config is written, from the songs as saved: two shifts of one type in an
+      // overlapping set of genres would each be measured against trims the other already moved.
+      const clash = shift && done.find((d) => d.approval.trimShift?.type === shift.type && (d.approval.trimShift.genre === null || shift.genre === null || d.approval.trimShift.genre === shift.genre));
+      if (clash) throw new RefusedError(409, 'approve_separately', `${clash.genre} ${clash.key} and ${genre} ${key} both change the level of ${shift.type}: approve them one at a time.`);
+      text = approval.text;
+      done.push({ genre, key, kind: change.kind, approval });
+    }
+    const who = authorOf(req).split('@')[0];
+    const message =
+      done.length === 1
+        ? `mix: approve ${done[0]!.genre} ${done[0]!.kind} change (${who})\n\n${done[0]!.approval.summary}.`
+        : `mix: approve ${done.length} changes (${who})\n\n${done.map((d) => `${d.genre}: ${d.approval.summary}.`).join('\n')}`;
+    cfg.replaceMixConfig(text, message);
+    for (const { approval } of done) if (approval.trimShift) shiftTrims(approval.trimShift);
+    const at = new Date().toISOString();
+    for (const { genre, key, approval } of done) {
+      store.addSuggestionComment({ kind: 'mix', target: `${genre}|${key}`, author: authorOf(req), body: `Approved: ${approval.summary}.`, createdAt: at });
+    }
+    return done.map((d) => d.approval.summary);
+  };
+
+  /** Level trims are relative to the standard: lower them by what the standard rose. */
+  const shiftTrims = (shift: { readonly type: string; readonly genre: string | null; readonly db: number }) => {
+    for (const row of store.listProjectMixes()) {
+      if (shift.genre !== null && row.genre !== shift.genre) continue;
+      const song = parseSong(JSON.parse(row.canonical));
+      let changed = false;
+      const lanes = Object.fromEntries(
+        Object.entries(row.mixOverrides.lanes).flatMap(([lane, o]) => {
+          const type = laneMixType(song, lane);
+          if (type !== shift.type || o.volumeDb === undefined) return [[lane, o]];
+          changed = true;
+          const { volumeDb, ...rest } = o;
+          const v = Math.round((volumeDb - shift.db) * 10) / 10;
+          const next = v === 0 ? rest : { ...rest, volumeDb: v };
+          return Object.keys(next).length ? [[lane, next]] : [];
+        }),
+      );
+      if (!changed) continue;
+      const mix = { ...row.mixOverrides, lanes };
+      const empty = !Object.keys(mix.lanes).length && !Object.keys(mix.buses).length;
+      store.setProjectMix({ ownerId: row.ownerId, songId: row.songId, mixOverrides: empty ? null : mix, updatedAt: row.mixUpdatedAt });
+    }
+  };
+
+  const refused = (res: Response, err: unknown) => {
+    if (err instanceof RefusedError) return res.status(err.status).json({ error: err.code, message: err.message });
+    throw err;
+  };
+
   router.post('/api/suggestions/mix/approve', json(), (req, res) => {
     if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
     if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
     const body = ApproveBody.safeParse(req.body);
     if (!body.success) return res.status(400).json({ error: 'bad_request', message: body.error.message });
-    const { genre, key } = body.data;
-    const change = summarise(mixConfig.mixConfig).find((g) => g.genre === genre)?.changes.find((c) => c.key === key);
-    if (!change) return res.status(404).json({ error: 'not_found', message: `No ${key} change in ${genre}.` });
-    if (change.blocked) return res.status(409).json({ error: 'not_approvable', message: change.blocked });
-    let approval;
     try {
-      approval = approveMixChange(mixConfig.mixConfig, change, genre);
+      return res.json({ summary: approveAll(req, [body.data])[0] });
     } catch (err) {
-      if (err instanceof ApproveError) return res.status(409).json({ error: 'not_approvable', message: err.message });
-      throw err;
+      return refused(res, err);
     }
-    mixConfig.replaceMixConfig(approval.text, `mix: approve ${genre} ${change.kind} change (${authorOf(req).split('@')[0]})\n\n${approval.summary}.`);
-    // Level trims are relative to the standard: lower them by what the standard rose.
-    const shift = approval.trimShift;
-    if (shift) {
-      for (const row of store.listProjectMixes()) {
-        if (shift.genre !== null && row.genre !== shift.genre) continue;
-        const song = parseSong(JSON.parse(row.canonical));
-        let changed = false;
-        const lanes = Object.fromEntries(
-          Object.entries(row.mixOverrides.lanes).flatMap(([lane, o]) => {
-            const type = laneMixType(song, lane);
-            if (type !== shift.type || o.volumeDb === undefined) return [[lane, o]];
-            changed = true;
-            const { volumeDb, ...rest } = o;
-            const v = Math.round((volumeDb - shift.db) * 10) / 10;
-            const next = v === 0 ? rest : { ...rest, volumeDb: v };
-            return Object.keys(next).length ? [[lane, next]] : [];
-          }),
-        );
-        if (!changed) continue;
-        const mix = { ...row.mixOverrides, lanes };
-        const empty = !Object.keys(mix.lanes).length && !Object.keys(mix.buses).length;
-        store.setProjectMix({ ownerId: row.ownerId, songId: row.songId, mixOverrides: empty ? null : mix, updatedAt: row.mixUpdatedAt });
-      }
+  });
+  router.post('/api/suggestions/mix/approve-many', json(), (req, res) => {
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
+    if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
+    const body = ManyBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'bad_request', message: body.error.message });
+    try {
+      return res.json({ summaries: approveAll(req, body.data.items) });
+    } catch (err) {
+      return refused(res, err);
     }
-    store.addSuggestionComment({ kind: 'mix', target: `${genre}|${key}`, author: authorOf(req), body: `Approved: ${approval.summary}.`, createdAt: new Date().toISOString() });
-    return res.json({ summary: approval.summary });
+  });
+  router.post('/api/suggestions/mix/dismiss-many', json(), (req, res) => {
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
+    const body = ManyBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'bad_request', message: body.error.message });
+    const at = new Date().toISOString();
+    for (const item of body.data.items) store.dismissMixSuggestion({ ...item, dismissedAt: at });
+    return res.status(204).end();
   });
   router.post('/api/suggestions/mix/comments', json(), (req, res) => {
     if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });

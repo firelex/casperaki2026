@@ -35,6 +35,12 @@ export const suggestionsApi = {
     defaultBrainClient.post<{ comment: SuggestionComment }>('/api/suggestions/mix/comments', { genre, key, body }),
   /** Make the change's average the standard (rewrites the standard mix). */
   approveMix: (genre: string, key: string) => defaultBrainClient.post<{ summary: string }>('/api/suggestions/mix/approve', { genre, key }),
+  /** Approve several changes of a genre in order, in one commit (all or none). */
+  approveMixMany: (genre: string, keys: readonly string[]) =>
+    defaultBrainClient.post<{ summaries: string[] }>('/api/suggestions/mix/approve-many', { items: keys.map((key) => ({ genre, key })) }),
+  /** Hide several changes of a genre. */
+  dismissMixMany: (genre: string, keys: readonly string[]) =>
+    defaultBrainClient.post<void>('/api/suggestions/mix/dismiss-many', { items: keys.map((key) => ({ genre, key })) }),
   /** Hide one change (the songs keep their mixes; a later change shows it again). */
   dismissMix: (genre: string, key: string) => defaultBrainClient.delete(`/api/suggestions/mix?${new URLSearchParams({ genre, key }).toString()}`),
 };

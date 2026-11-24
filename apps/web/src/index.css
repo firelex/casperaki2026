@@ -61,6 +61,31 @@
     Menlo, Consolas, monospace;
 }
 
+/*
+ * @teamsuzie/ui components colour themselves with the platform's names (primary, card, border, input, background,
+ * ring). Inside `.ts-scope` those names are Casperaki's palette; elsewhere they stay unset, so the dialogs and menus
+ * that style themselves by class keep their look.
+ */
+@theme inline {
+  --color-primary: var(--ts-primary);
+  --color-primary-foreground: var(--ts-primary-foreground);
+  --color-card: var(--ts-card);
+  --color-border: var(--ts-border);
+  --color-input: var(--ts-input);
+  --color-background: var(--ts-background);
+  --color-ring: var(--ts-ring);
+}
+
+.ts-scope {
+  --ts-primary: var(--color-accent);
+  --ts-primary-foreground: #ffffff;
+  --ts-card: var(--color-panel);
+  --ts-border: var(--color-line);
+  --ts-input: var(--color-line-2);
+  --ts-background: var(--color-bg);
+  --ts-ring: #ffffff;
+}
+
 html,
 body,
 #root {

@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
+import { BulkActionBarItemBar, Checkbox } from '@teamsuzie/ui';
 
 import { suggestionsApi, type GenreMixSuggestions, type MixChange } from '../api/suggestions';
 import { CommentBox, CommentList } from '../components/SuggestionComments';
@@ -88,8 +89,36 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
   });
   /** The change whose comment box is open. */
   const [open, setOpen] = useState<string | undefined>(undefined);
+  // Bulk actions on the ticked changes (approve skips those that cannot be approved).
+  const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  const selected = g.changes.filter((c) => ticked.has(c.key));
+  const approvable = selected.filter((c) => !c.blocked);
+  const genreLabel = (GENRE_LABELS as Record<string, string>)[g.genre] ?? g.genre;
+  const done = () => {
+    setTicked(new Set());
+    void queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] });
+  };
+  const approveMany = useMutation({ mutationFn: (keys: string[]) => suggestionsApi.approveMixMany(g.genre, keys), onSuccess: done });
+  const dismissMany = useMutation({ mutationFn: (keys: string[]) => suggestionsApi.dismissMixMany(g.genre, keys), onSuccess: done });
+  const bulkBusy = approveMany.isPending || dismissMany.isPending;
+  const approveSelected = () => {
+    const all = approvable.some((c) => c.scope === 'all');
+    const skipped = selected.length - approvable.length;
+    const msg =
+      `Make the average the standard for ${approvable.length} ${approvable.length === 1 ? 'change' : 'changes'} (${genreLabel}${all ? '; some apply to every genre' : ''})?` +
+      (skipped ? ` ${skipped} selected ${skipped === 1 ? 'change cannot' : 'changes cannot'} be approved and ${skipped === 1 ? 'is' : 'are'} left out.` : '') +
+      ' New songs and songs without their own setting will use them.';
+    if (window.confirm(msg)) approveMany.mutate(approvable.map((c) => c.key));
+  };
+  const tick = (key: string, on: boolean) =>
+    setTicked((t) => {
+      const next = new Set(t);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   return (
-    <article className="rounded-[14px] border border-line/60 bg-panel p-5 sm:p-7">
+    <article className="ts-scope rounded-[14px] border border-line/60 bg-panel p-5 sm:p-7">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-[20px] font-semibold text-white">{(GENRE_LABELS as Record<string, string>)[g.genre] ?? g.genre}</h2>
         <span className="text-[13px] text-white/50">
@@ -99,10 +128,37 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
       {dismiss.isError ? <p className="mt-2 text-[13px] text-err">Not deleted: {dismiss.error.message}</p> : null}
       {approve.isError ? <p className="mt-2 text-[13px] text-err" role="alert">Not approved: {approve.error.message}</p> : null}
       {approve.isSuccess ? <p className="mt-2 text-[13px] text-emerald-300">Now the standard: {approve.data.summary}.</p> : null}
+      {approveMany.isError ? <p className="mt-2 text-[13px] text-err" role="alert">None approved: {approveMany.error.message}</p> : null}
+      {approveMany.isSuccess ? <p className="mt-2 text-[13px] text-emerald-300">Now the standard: {approveMany.data.summaries.join('; ')}.</p> : null}
+      {dismissMany.isError ? <p className="mt-2 text-[13px] text-err">Not deleted: {dismissMany.error.message}</p> : null}
+      <BulkActionBarItemBar
+        className="mt-4"
+        selectionCount={selected.length}
+        itemNoun="change"
+        onClear={() => setTicked(new Set())}
+        actions={[
+          { id: 'delete', label: 'Delete', variant: 'outline', disabled: bulkBusy, onClick: () => dismissMany.mutate(selected.map((c) => c.key)) },
+          {
+            id: 'approve',
+            label: approveMany.isPending ? 'Approving…' : approvable.length === selected.length ? 'Approve' : `Approve ${approvable.length}`,
+            variant: 'default',
+            disabled: bulkBusy || approvable.length === 0,
+            onClick: approveSelected,
+          },
+        ]}
+      />
       <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead className="text-[12px] text-white/45">
               <tr>
+                <th className="w-7 pb-2 font-normal">
+                  <Checkbox
+                    aria-label="Select all changes"
+                    checked={selected.length > 0}
+                    indeterminate={selected.length > 0 && selected.length < g.changes.length}
+                    onChange={(e) => setTicked(e.target.checked ? new Set(g.changes.map((c) => c.key)) : new Set())}
+                  />
+                </th>
                 <th className="pb-2 font-normal">What</th>
                 <th className="pb-2 font-normal">Standard</th>
                 <th className="pb-2 font-normal">Pro (average)</th>
@@ -116,6 +172,9 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                 return (
                   <Fragment key={c.key}>
                   <tr className="border-t border-line/40 align-top">
+                    <td className="py-2 pr-2">
+                      <Checkbox aria-label={`Select ${d.what}`} checked={ticked.has(c.key)} onChange={(e) => tick(c.key, e.target.checked)} />
+                    </td>
                     <td className="py-2 pr-4 text-white">
                       {d.what}
                       {c.scope === 'all' ? (
@@ -168,7 +227,7 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                   </tr>
                   {open === c.key ? (
                     <tr>
-                      <td colSpan={5} className="pb-3 pt-1">
+                      <td colSpan={6} className="pb-3 pt-1">
                         <CommentBox
                           comments={c.comments}
                           onComment={(body) => comment.mutateAsync({ key: c.key, body })}
@@ -179,7 +238,7 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                     </tr>
                   ) : c.comments.length ? (
                     <tr>
-                      <td colSpan={5} className="pb-3 pt-1">
+                      <td colSpan={6} className="pb-3 pt-1">
                         <CommentList comments={c.comments} />
                       </td>
                     </tr>

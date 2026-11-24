@@ -73,6 +73,9 @@ export const patternsApi = {
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
     defaultBrainClient.post<{ review: PatternReview | null; /** What the decision changed in the pattern library (committed to git); null when the brain does not publish it. */ library: string[] | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
   /** `soundId`: play the proposal's instrument with this sound (undefined: the song's own). */
+  /** The same decision for many proposals (one library export and commit). */
+  reviewMany: (ids: readonly string[], status: 'approved' | 'rejected' | 'pending') =>
+    defaultBrainClient.post<{ reviews: Record<string, PatternReview | null>; library: string[] | null }>('/api/patterns/review', { ids, status }),
   preview: (id: string, genre: Genre, variant: 'proposal' | 'current', take: number | undefined, soundId: string | undefined, signal?: AbortSignal) =>
     defaultBrainClient.post<
       PlaybackPayload & {
