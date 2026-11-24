@@ -12,7 +12,8 @@
 // The model gets the kept bars at sung pitch (bank + 12) and the entry's own chords. Of its ranked samples the first
 // that passes our checks is taken: every written bar has notes; whole span at most 19 semitones; no leap wider than a
 // sixth into or inside the written bars (a written bar may be silent only where the source had a silent bar); at least 60% chord tones on beats 1 and 3 of the written bars; written bars
-// not a near copy of the kept ones. If none passes, the entry is kept as it is and the reason recorded.
+// not a near copy of the kept ones; the phrase ends in bar 8 on a chord tone started by beat 3 and held to beat 4
+// (later notes dropped), leaving a breath. If none passes, the entry is kept as it is and the reason recorded.
 // properties.secondHalf records what was done. --write saves the bank (resumable: entries with secondHalf are skipped).
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -84,6 +85,25 @@ function check(notes, written, chords, emptyInSource) {
   return undefined;
 }
 
+// The 8-bar phrase lands in bar 8 and breathes: nothing starts after beat 3 of bar 8 (beat 30); notes the model wrote
+// later are dropped, and the last note is held to at least beat 4 of bar 8 (beat 31).
+const LAST_ONSET = 30;
+const HOLD_TO = 31;
+function endPhrase(notes) {
+  const kept = notes.filter((n) => n.beat <= LAST_ONSET + 1e-9);
+  const last = kept[kept.length - 1];
+  if (last && last.beat + last.duration < HOLD_TO) last.duration = HOLD_TO - last.beat;
+  if (last && last.beat + last.duration > 32) last.duration = 32 - last.beat;
+  return kept;
+}
+function endingProblem(notes, chords) {
+  const last = notes[notes.length - 1];
+  if (last.beat < 28) return `the last note starts in bar ${Math.floor(last.beat / 4) + 1}, not bar 8`;
+  const chord = chords.find((c) => c.beat <= last.beat && last.beat < c.beat + c.duration);
+  if (!chordNotes(chord.symbol).map(pc).includes(pc(last.midi))) return `ends on a note outside its chord (${chord.symbol})`;
+  return undefined;
+}
+
 async function complete(x) {
   const form = formOf(x.id);
   const keep = form === 'AB' ? [0, 1, 2, 3] : [0, 1, 2, 3, 4, 5];
@@ -105,12 +125,14 @@ async function complete(x) {
   const body = await res.json();
   // One known per-entry limit: a dense melody plus its chords can exceed the model's context. That entry is kept as it
   // is, with the reason recorded; any other service error stops the run.
-  if (res.status === 500 && /context window/u.test(String(body.error))) return { form: formOf(x.id), written: [], failed: [String(body.error)] };
+  // (The service's own length check misses some cases, which then fail inside the model as a 1024 vs 1025 tensor
+  // size mismatch: the same limit.)
+  if (res.status === 500 && /context window|tensor a \(1024\) must match the size of tensor b \(1025\)/u.test(String(body.error))) return { form: formOf(x.id), written: [], failed: [String(body.error)] };
   if (!res.ok) throw new Error(`complete-melody-sauce: entry ${x.id}: the service answered ${res.status}: ${JSON.stringify(body).slice(0, 300)}`);
   const reasons = [];
   for (const c of body.completions) {
-    const notes = c.notes.map((n) => ({ beat: n.beat, midi: n.midi - 12, duration: n.duration })).sort((a, b) => a.beat - b.beat);
-    const why = check(notes, written, chords, emptyInSource);
+    const notes = endPhrase(c.notes.map((n) => ({ beat: n.beat, midi: n.midi - 12, duration: n.duration })).sort((a, b) => a.beat - b.beat));
+    const why = notes.length === 0 ? 'no notes' : endingProblem(notes, chords) ?? check(notes, written, chords, emptyInSource);
     if (!why) return { form, written, notes, tookMs: body.tookMs };
     reasons.push(why);
   }
