@@ -1,0 +1,282 @@
+# K-pop (style brightPop, substyle k-pop): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Rap-like verses on repeated notes, soaring pre-choruses, chant and dance-break choruses, bridges lifted by Bb and Ab.
+
+hook: Neon Alibi
+type: Verse
+tempo: 100-114
+feel: swagger
+style: brightPop
+substyle: k-pop
+chords: Am | F | G | Em | Am | F | G | Em
+melody: a3:0.25 a3:0.25 a3:0.5 c4:0.25 a3:0.25 r:0.5 e4:0.5 e4:0.25 d4:0.25 c4:1 | r:0.5 c4:0.25 c4:0.25 c4:0.5 a3:0.5 f4:1 r:1 |
+        d4:0.25 d4:0.25 d4:0.25 b3:0.25 d4:0.5 g4:0.5 r:0.5 g4:0.25 f4:0.25 e4:0.5 d4:0.5 | e4:1.5 b3:0.5 r:2 |
+        r:0.25 a3:0.25 c4:0.25 e4:0.25 e4:0.5 c4:0.5 e4:0.5 g4:0.25 e4:0.25 d4:1 | c4:0.5 c4:0.5 r:0.5 a3:0.5 c4:0.5 f4:0.5 e4:0.5 c4:0.5 |
+        r:0.5 b3:0.25 b3:0.25 b3:0.5 d4:0.5 g4:1 f4:0.5 d4:0.5 | e4:3 r:1 |
+
+hook: Static Halo
+type: Verse
+tempo: 104-118
+feel: clipped
+style: brightPop
+substyle: k-pop
+chords: Am | Am | F | G | Am | Am | F | E
+melody: a3:0.25 a3:0.25 r:0.25 a3:0.25 a3:0.5 c4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | c4:0.5 d4:0.5 c4:0.5 a3:0.5 r:2 |
+        r:0.5 f4:0.25 f4:0.25 f4:0.5 e4:0.5 f4:0.5 g4:0.5 f4:0.25 e4:0.25 c4:0.5 | d4:1 b3:0.5 g3:0.5 r:2 |
+        e4:0.25 e4:0.25 e4:0.25 e4:0.25 r:0.5 c4:0.5 e4:0.5 g4:0.5 e4:1 | r:0.5 a3:0.5 c4:0.5 d4:0.5 e4:1 c4:1 |
+        r:0.25 c4:0.25 c4:0.25 c4:0.25 f4:0.5 e4:0.5 c4:1 a3:1 | b3:1 g#3:1 b3:2 |
+
+hook: Paper Crown Riot
+type: Verse
+tempo: 110-124
+feel: defiant
+style: brightPop
+substyle: k-pop
+leadin: yes
+chords: E | Am | F | C | G | Am | F | C | G
+melody: r:2.5 b3:0.25 b3:0.25 e4:0.5 b3:0.5 |
+        c4:0.5 c4:0.25 c4:0.25 r:0.5 c4:0.5 e4:0.5 d4:0.5 c4:0.5 a3:0.5 | f4:0.75 e4:0.25 c4:1 r:1 a3:0.5 c4:0.5 |
+        e4:0.25 e4:0.25 e4:0.25 d4:0.25 e4:0.5 g4:0.5 g4:1 r:1 | r:0.5 d4:0.5 d4:0.5 b3:0.5 d4:1 r:1 |
+        r:0.25 e4:0.25 e4:0.25 e4:0.25 e4:0.5 d4:0.5 c4:0.5 a3:0.5 c4:1 | r:0.5 a3:0.25 c4:0.25 f4:0.5 f4:0.5 f4:0.25 g4:0.25 f4:0.5 e4:1 |
+        g4:1 e4:0.5 c4:0.5 r:2 | r:0.5 b3:0.5 d4:3 |
+
+hook: Mirror Subway
+type: Verse
+tempo: 100-112
+feel: cool
+style: brightPop
+substyle: k-pop
+chords: Am | Em | F | G | Am | Em | F | G
+melody: e4:0.5 e4:0.5 e4:0.25 e4:0.25 c4:0.5 r:2 | r:0.5 b3:0.25 b3:0.25 b3:0.5 g3:0.5 b3:0.5 e4:0.5 d4:1 |
+        c4:0.5 c4:0.5 c4:0.25 c4:0.25 d4:0.5 f4:1 r:1 | g4:0.75 f4:0.25 d4:1 r:2 |
+        r:0.25 a3:0.25 c4:0.25 e4:0.25 g4:0.5 e4:0.5 r:0.5 e4:0.25 d4:0.25 c4:1 | b3:0.5 b3:0.5 r:0.5 g3:0.5 b3:0.5 d4:0.5 e4:1 |
+        a3:0.25 c4:0.25 f4:0.5 f4:0.5 e4:0.5 f4:0.5 d4:0.5 c4:1 | d4:1 b3:1 d4:2 |
+
+hook: Hazard Lights
+type: Verse
+tempo: 112-126
+feel: restless
+style: brightPop
+substyle: k-pop
+chords: Am | F | C | G | Am | F | C | Em
+melody: a3:0.75 a3:0.75 c4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:0.5 | c4:1 a3:0.5 r:2.5 |
+        e4:0.75 e4:0.75 g4:0.5 e4:0.5 d4:0.5 c4:0.5 d4:0.5 | d4:1.5 b3:0.5 r:2 |
+        r:0.5 c4:0.25 c4:0.25 c4:0.5 c4:0.5 e4:0.75 c4:0.75 a3:0.5 | f4:0.5 f4:0.5 e4:0.5 f4:0.5 a3:1 r:1 |
+        r:0.25 g3:0.25 c4:0.25 e4:0.25 g4:1 g4:0.5 f4:0.5 e4:1 | e4:0.5 d4:0.5 b3:3 |
+
+hook: Midnight Ticker
+type: Verse
+tempo: 106-120
+feel: tense
+style: brightPop
+substyle: k-pop
+chords: Am7 | Fmaj7 | G | Em7 | Am7 | Fmaj7 | G | G
+melody: g4:0.25 g4:0.25 g4:0.25 e4:0.25 g4:0.5 e4:0.5 r:0.5 c4:0.5 e4:0.5 d4:0.5 | e4:1.5 c4:0.5 r:2 |
+        r:0.25 d4:0.25 d4:0.25 d4:0.25 d4:0.5 b3:0.5 d4:0.5 f4:0.5 g4:1 | r:1 b3:0.5 d4:0.5 e4:1 d4:1 |
+        g4:0.25 g4:0.25 g4:0.25 e4:0.25 c4:0.5 e4:0.5 g4:0.5 e4:0.5 c4:1 | r:0.5 a3:0.5 c4:0.5 e4:0.5 f4:1 e4:1 |
+        d4:0.5 d4:0.5 r:0.5 b3:0.5 d4:0.5 g3:0.5 b3:1- | b3:3 r:1 |
+
+hook: Crosswalk Fever
+type: Verse
+tempo: 118-130
+feel: hyped
+style: brightPop
+substyle: k-pop
+leadin: yes
+chords: G | Am | Am | F | G | Em | Am | F | G
+melody: r:3 d4:0.25 d4:0.25 b3:0.5 |
+        c4:0.5 r:0.25 c4:0.25 c4:0.5 c4:0.5 e4:0.5 c4:0.5 a3:1 | r:0.5 e4:0.25 e4:0.25 e4:0.5 g4:0.5 e4:1 r:1 |
+        f4:0.25 f4:0.25 f4:0.25 e4:0.25 c4:0.5 a3:0.5 c4:1 r:1 | r:0.5 b3:0.5 d4:0.5 d4:0.5 g4:0.75 f4:0.25 d4:1 |
+        e4:0.5 e4:0.5 d4:0.5 e4:0.5 b3:1 r:1 | r:0.25 c4:0.25 c4:0.25 c4:0.25 e4:0.5 d4:0.5 c4:0.5 b3:0.5 a3:1 |
+        c4:0.5 f4:0.5 r:0.5 g4:0.5 f4:0.5 e4:0.5 c4:1 | d4:1.5 b3:0.5 g3:2 |
+
+hook: Concrete Whisper
+type: Verse
+tempo: 100-116
+feel: brooding
+style: brightPop
+substyle: k-pop
+chords: Am | G | F | E | Am | G | F | E
+melody: r:0.5 a3:0.25 a3:0.25 c4:0.5 a3:0.5 e4:1 d4:0.5 c4:0.5 | b3:0.5 b3:0.5 b3:0.25 a3:0.25 g3:0.5 r:2 |
+        r:0.5 c4:0.25 c4:0.25 c4:0.5 c4:0.5 f4:0.5 e4:0.5 c4:0.5 a3:0.5 | b3:1.5 g#3:0.5 r:2 |
+        e4:0.25 e4:0.25 e4:0.25 e4:0.25 r:0.5 g4:0.5 e4:1 c4:1 | d4:0.5 d4:0.5 b3:0.5 d4:0.5 g4:1 r:1 |
+        r:0.25 a3:0.25 c4:0.25 f4:0.25 f4:0.5 e4:0.5 f4:0.5 a3:0.5 c4:1 | b3:1 e4:3 |
+
+hook: Lantern Overdrive
+type: Pre-chorus
+tempo: 104-118
+feel: soaring
+style: brightPop
+substyle: k-pop
+chords: F | G | Em | Am | F | G | Dm | E
+melody: r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:1 | b4:1.5 g4:0.5 d5:1 b4:1 | r:0.5 b4:0.5 b4:0.5 c5:0.5 b4:1 g4:1 | a4:2 r:1 e4:0.5 a4:0.5 |
+        c5:0.5 c5:0.5 c5:0.5 d5:0.5 c5:1 a4:1 | d5:1.5 b4:0.5 g4:1 d5:1 | e5:1 d5:0.5 c5:0.5 a4:1 f4:1 | g#4:1 b4:3 |
+
+hook: Skyline Countdown
+type: Pre-chorus
+tempo: 110-126
+feel: rising
+style: brightPop
+substyle: k-pop
+leadin: yes
+chords: G | Am | Am | F | F | C | C | Dm | G
+melody: r:2.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:1 c5:0.5 b4:0.5 a4:1 e4:1 | r:0.5 e4:0.5 a4:0.5 b4:0.5 c5:2 | c5:0.5 c5:0.5 c5:0.5 d5:0.5 c5:0.5 a4:0.5 f4:1 |
+        r:1 a4:0.5 c5:0.5 a4:1 c5:1 | e5:1.5 d5:0.5 c5:1 g4:1 | r:0.5 g4:0.5 c5:0.5 d5:0.5 e5:2 |
+        d5:0.5 d5:0.5 c5:0.5 a4:0.5 f4:1 a4:1 | g4:1 b4:1 d5:2 |
+
+hook: Storm Ribbon
+type: Pre-chorus
+tempo: 100-114
+feel: urgent
+style: brightPop
+substyle: k-pop
+chords: Am | F | C | G | Am | F | Dm | Gsus4 G
+melody: a3:0.5 c4:0.5 e4:0.5 a4:0.5 a4:1 g4:0.5 e4:0.5 | f4:1.5 a4:0.5 c5:1 a4:1 | r:0.5 c4:0.5 e4:0.5 g4:0.5 c5:1 b4:0.5 g4:0.5 | d5:2 r:1 b4:0.5 c5:0.5 |
+        e5:0.75 d5:0.25 c5:0.5 a4:0.5 c5:1 e5:1 | d5:0.5 c5:0.5 a4:0.5 f4:0.5 a4:0.5 c5:0.5 d5:1 | d5:1.5 c5:0.5 a4:1 f4:1 | c5:2 b4:2 |
+
+hook: Velvet Siren
+type: Pre-chorus
+tempo: 112-128
+feel: breathless
+style: brightPop
+substyle: k-pop
+chords: F | G | Am | Em | F | G | Am | E7
+melody: r:0.5 c4:0.25 c4:0.25 f4:0.5 f4:0.5 a4:1 g4:0.5 f4:0.5 | g4:1 r:0.5 d4:0.5 b4:1 a4:0.5 g4:0.5 |
+        r:0.5 e4:0.25 e4:0.25 a4:0.5 a4:0.5 c5:1 b4:0.5 a4:0.5 | b4:1.5 g4:0.5 e4:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 c5:0.5 c5:0.5 d5:0.5 c5:1 | d5:1 b4:0.5 d5:0.5 d5:1 e5:0.5 d5:0.5 | c5:1 a4:1 e5:1 c5:1 | r:0.5 b4:0.5 d5:3 |
+
+hook: Ember Countdown
+type: Pre-chorus
+tempo: 104-120
+feel: building
+style: brightPop
+substyle: k-pop
+chords: Dm | Em | F | G | Dm | Em | F | G7
+melody: r:0.5 a3:0.5 d4:0.5 f4:0.5 a4:1 f4:1 | g4:0.75 e4:0.25 b4:1 r:0.5 e4:0.5 g4:1 | a4:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 d5:1 | d5:1.5 b4:0.5 g4:2 |
+        r:0.5 d5:0.25 d5:0.25 d5:0.5 c5:0.5 a4:1 d5:1 | e5:1 d5:0.5 b4:0.5 g4:1 b4:1 | c5:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 e5:1 | d5:4 |
+
+hook: Satellite Pulse
+type: Pre-chorus
+tempo: 116-130
+feel: tense
+style: brightPop
+substyle: k-pop
+chords: Am | Am | F | F | C | C | Dm | E
+melody: e4:0.5 e4:0.5 e4:0.5 e4:0.5 r:0.5 c4:0.5 e4:0.5 a4:0.5 | a4:1.5 g4:0.5 e4:1 r:1 | f4:0.5 f4:0.5 f4:0.5 f4:0.5 r:0.5 a4:0.5 c5:1 | c5:1.5 a4:0.5 f4:1 r:1 |
+        g4:0.5 g4:0.5 c5:0.5 c5:0.5 e5:1 d5:1 | c5:0.5 g4:0.5 e4:0.5 g4:0.5 c5:2 | d5:0.5 d5:0.5 d5:0.5 e5:0.5 d5:1 a4:1 | r:0.5 b4:0.5 g#4:0.5 b4:2.5 |
+
+hook: Laser Heartbeat
+type: Chorus
+tempo: 116-130
+feel: punchy
+style: brightPop
+substyle: k-pop
+chords: Am | F | G | Em | Am | F | G | Am
+melody: c5:0.5 c5:0.5 r:0.5 c5:0.5 a4:1 e4:1 | r:0.5 a4:0.5 c5:0.5 a4:0.5 f4:1 r:1 | d5:0.5 d5:0.5 r:0.5 d5:0.5 b4:1 g4:1 | r:0.5 g4:0.5 b4:0.5 g4:0.5 e4:2 |
+        c5:0.5 c5:0.5 e5:0.5 e5:0.5 e5:0.5 d5:0.5 c5:0.5 e5:0.5 | c5:1.5 a4:0.5 c5:1 d5:1 | e5:1 d5:0.5 b4:0.5 d5:2 | c5:0.5 b4:0.5 a4:3 |
+
+hook: Firecracker Code
+type: Chorus
+tempo: 120-130
+feel: chanty
+style: brightPop
+substyle: k-pop
+chords: F | G | Em | Am | F | G | E | Am
+melody: a4:0.5 a4:0.5 a4:0.5 g4:0.5 a4:0.5 r:0.5 c5:1 | b4:0.75 a4:0.25 g4:1 r:2 | g4:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.5 r:0.5 b4:1 | a4:1.5 e4:0.5 a4:2 |
+        c5:0.5 c5:0.5 c5:0.5 d5:0.5 c5:0.5 r:0.5 e5:1 | d5:1.5 b4:0.5 d5:1 e5:0.5 d5:0.5 | e5:1 d5:0.5 b4:0.5 g#4:1 b4:1 | c5:1 a4:3 |
+
+hook: Hologram Kiss
+type: Chorus
+tempo: 108-122
+feel: fierce
+style: brightPop
+substyle: k-pop
+leadin: yes
+chords: E | Am | Am G | F | E | Am | C G | F E | Am
+melody: r:2 b4:0.5 b4:0.5 g#4:0.5 b4:0.5 |
+        c5:1.5 b4:0.25 a4:0.25 e4:1 r:1 | r:0.5 a4:0.5 c5:0.5 b4:0.5 d5:1 b4:1 | a4:0.5 a4:0.5 a4:0.25 g4:0.25 a4:0.5 c5:2 | b4:2 r:2 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 c5:0.5 d5:0.5 e5:1 | e5:1.5 c5:0.5 d5:1 b4:1 | c5:1 a4:0.5 c5:0.5 b4:1 g#4:1 | a4:4 |
+
+hook: Dance Floor Alarm
+type: Chorus
+tempo: 120-130
+feel: explosive
+style: brightPop
+substyle: k-pop
+chords: Am | Am | F | G | Am | Am | F | E
+melody: a4:0.25 a4:0.25 r:0.5 a4:0.25 a4:0.25 r:0.5 c5:0.5 a4:0.5 r:1 | e4:0.5 g4:0.5 a4:0.5 r:0.5 e4:1 r:1 |
+        c5:0.25 c5:0.25 r:0.5 c5:0.25 c5:0.25 r:0.5 c5:0.5 d5:0.5 r:1 | b4:0.5 g4:0.5 d5:1 r:2 |
+        e5:0.5 e5:0.5 r:0.5 e5:0.5 c5:0.5 d5:0.5 e5:1 | r:0.5 c5:0.5 e5:0.5 c5:0.5 a4:1.5 r:0.5 | c5:1 a4:0.5 c5:0.5 a4:1 c5:1 | b4:1.5 g#4:0.5 e4:2 |
+
+hook: Midnight Monsoon
+type: Chorus
+tempo: 104-118
+feel: dramatic
+style: brightPop
+substyle: k-pop
+chords: Am | Em | F | C | Dm | Em | F G | Am
+melody: r:0.5 e4:0.25 a4:0.25 b4:0.5 c5:0.5 a4:1 e4:1 | g4:1.5 e4:0.5 b4:2 | r:0.25 a4:0.25 a4:0.25 a4:0.25 c5:0.5 a4:0.5 f4:1 g4:1 | e4:2 r:1 g4:0.5 c5:0.5 |
+        d5:1 d5:0.5 e5:0.5 d5:1 a4:1 | e5:1.5 d5:0.5 b4:1 g4:1 | a4:0.5 c5:0.5 e5:0.5 d5:0.5 d5:1 b4:1 | c5:3 r:1 |
+
+hook: Volt Parade
+type: Chorus
+tempo: 112-126
+feel: driving
+style: brightPop
+substyle: k-pop
+chords: F G | Em Am | F G | Am | F G | Em Am | Dm E | Am
+melody: c5:0.5 c5:0.5 a4:0.5 c5:0.5 d5:1 b4:1 | b4:0.5 g4:0.5 r:1 c5:0.5 a4:0.5 e4:1 | f4:0.5 a4:0.5 c5:0.5 a4:0.5 b4:0.5 d5:0.5 b4:1 | a4:2 r:2 |
+        c5:0.5 c5:0.5 c5:0.5 e5:0.5 d5:1 d5:0.5 e5:0.5 | e5:1 b4:1 c5:1 e5:1 | d5:0.5 c5:0.5 a4:0.5 f4:0.5 g#4:1 b4:1 | a4:0.5 e4:3.5 |
+
+hook: Gravity Chant
+type: Chorus
+tempo: 100-116
+feel: swaggering
+style: brightPop
+substyle: k-pop
+chords: Am | C | G | Dm7 | Am | C | G | Am
+melody: a4:1 r:0.25 a4:0.25 a4:0.25 g4:0.25 e4:1 r:1 | g4:1 r:0.25 g4:0.25 g4:0.25 a4:0.25 c5:1 r:1 | b4:0.75 b4:0.25 b4:0.5 a4:0.5 g4:1 d5:1 | d5:2 c5:1 a4:1 |
+        e5:1 r:0.25 e5:0.25 e5:0.25 d5:0.25 c5:1 r:1 | e5:0.5 d5:0.5 c5:0.5 d5:0.5 e5:1.5 g4:0.5 | d5:1.5 b4:0.5 g4:1 b4:1 | c5:1.5 b4:0.5 a4:2 |
+
+hook: Flatline Ascension
+type: Bridge
+tempo: 100-114
+feel: lifting
+style: brightPop
+substyle: k-pop
+leadin: yes
+chords: G | F | Bb | C | Am | F | Ab | Bb | G
+melody: r:3 d4:0.5 g4:0.5 |
+        a4:1.5 g4:0.5 f4:1 c5:1 | d5:1.5 bb4:0.5 f4:2 | r:0.5 e4:0.5 g4:0.5 c5:0.5 e5:2 | e5:0.5 d5:0.5 c5:1 a4:2 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 f4:1 | eb5:1.5 c5:0.5 ab4:2 | d5:1 bb4:1 f4:1 bb4:1 | b4:1 d5:3 |
+
+hook: Glass Cathedral
+type: Bridge
+tempo: 104-120
+feel: hushed
+style: brightPop
+substyle: k-pop
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Bb | Bb | Gsus4 | G
+melody: c5:2 a4:1 e4:1 | d5:2 b4:1 g4:1 | c5:1.5 a4:0.5 f4:2 | e4:1 g4:1 b4:2 |
+        r:0.5 f4:0.5 bb4:0.5 c5:0.5 d5:2 | d5:0.75 c5:0.25 bb4:1 f4:2 | g4:1 c5:1 d5:2 | b4:4 |
+
+hook: Afterglow Pivot
+type: Bridge
+tempo: 112-128
+feel: dramatic
+style: brightPop
+substyle: k-pop
+chords: Am | Am | F | F | Ab | Ab | Bb | G7
+melody: r:0.5 e4:0.25 e4:0.25 e4:0.5 a4:0.5 a4:0.5 g4:0.5 e4:1 | c5:1.5 b4:0.5 a4:1 r:1 |
+        r:0.5 f4:0.25 f4:0.25 f4:0.5 a4:0.5 c5:0.5 a4:0.5 f4:1 | a4:2 r:2 |
+        c5:1 eb5:1 c5:1 ab4:1 | eb5:2 c5:2 | d5:1.5 c5:0.5 bb4:1 f4:1 | g4:1 b4:1 d5:2 |
+
+hook: Quiet Detonation
+type: Bridge
+tempo: 108-122
+feel: suspended
+style: brightPop
+substyle: k-pop
+chords: Dm | Em | F | G | Dm | Em | Ab | E
+melody: f4:1 a4:1 d5:1.5 c5:0.5 | b4:2 r:1 g4:0.5 a4:0.5 | c5:1 a4:0.5 c5:0.5 e5:1.5 d5:0.5 | d5:3 r:1 |
+        r:0.5 a4:0.25 a4:0.25 a4:0.5 d5:0.5 a4:1 f4:1 | g4:1 b4:1 e5:2 | eb5:0.5 eb5:0.5 c5:0.5 eb5:0.5 ab4:2 | b4:2 g#4:2 |

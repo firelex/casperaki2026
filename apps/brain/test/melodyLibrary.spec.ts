@@ -116,12 +116,17 @@ describe('melody library: the committed banks', () => {
 
   it('filters hooks by style, or those written for no particular style', async () => {
     const edm = await get('/api/melody-library?kind=hooks&style=edm&limit=200');
-    expect(edm.body.total).toBe(25);
+    expect(edm.body.total).toBe(75);
     expect(edm.body.items.every((i: { style?: string }) => i.style === 'edm')).toBe(true);
     expect(edm.body.facets.styles).toEqual(['ballad', 'brightPop', 'edm', 'latin', 'organicVibes', 'rock', 'schlager', 'urban']);
     const none = await get('/api/melody-library?kind=hooks&style=none&limit=200');
     expect(none.body.total).toBe(106);
     expect((await get('/api/melody-library?kind=remix&style=edm')).status).toBe(400);
+    const house = await get('/api/melody-library?kind=hooks&substyle=house&limit=200');
+    expect(house.body.total).toBe(25);
+    expect(house.body.items.every((i: { style?: string; substyle?: string }) => i.style === 'edm' && i.substyle === 'house')).toBe(true);
+    expect(house.body.facets.substyles).toContain('afrobeats');
+    expect((await get('/api/melody-library?kind=hooks&q=afrobeats&limit=200')).body.total).toBe(25);
   });
 
   it('ranks chords for a half bar of any melody, 9 bars too', async () => {

@@ -63,6 +63,7 @@ export function MelodyLibraryPage() {
   const [range, setRange] = useState<MelodyFilters['range']>('');
   const [feel, setFeel] = useState('');
   const [style, setStyle] = useState('');
+  const [substyle, setSubstyle] = useState('');
   const [original, setOriginal] = useState<MelodyFilters['original']>('');
   const [remix, setRemix] = useState<MelodyFilters['remix']>('');
   const [tempoText, setTempoText] = useState('');
@@ -83,7 +84,7 @@ export function MelodyLibraryPage() {
 
   const tempo = /^\d{2,3}$/u.test(tempoText.trim()) ? Number(tempoText.trim()) : undefined;
   const tempoInvalid = tempoText.trim() !== '' && tempo === undefined;
-  const filters: MelodyFilters = { kind, type, source: kind === 'remix' ? source : '', range, feel: kind === 'hooks' ? feel : '', style: kind === 'hooks' ? style : '', tempo, q, original, remix };
+  const filters: MelodyFilters = { kind, type, source: kind === 'remix' ? source : '', range, feel: kind === 'hooks' ? feel : '', style: kind === 'hooks' ? style : '', substyle: kind === 'hooks' ? substyle : '', tempo, q, original, remix };
   const list = useInfiniteQuery({
     queryKey: ['melody-library', 'list', filters],
     queryFn: ({ pageParam, signal }) => melodiesApi.list(filters, pageParam, signal),
@@ -190,6 +191,16 @@ export function MelodyLibraryPage() {
               ))}
               <option value="none">No particular style</option>
             </select>
+            {(facets?.substyles ?? []).length ? (
+              <select value={substyle} onChange={(e) => setSubstyle(e.target.value)} aria-label="Sub-style" className={FIELD}>
+                <option value="">All sub-styles</option>
+                {(facets?.substyles ?? []).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            ) : null}
             <select value={feel} onChange={(e) => setFeel(e.target.value)} aria-label="Feel" className={FIELD}>
               <option value="">All feels</option>
               {(facets?.feels ?? []).map((f) => (
@@ -287,7 +298,7 @@ function MelodyRow({ item: i, active, onClick }: { item: MelodyListItem; active:
         <div className="truncate text-[11px] text-white/55">{sourceLabel(i.source)}{i.source.artist ? ` · ${i.source.artist}` : ''}</div>
         <div className="mt-0.5 flex items-center gap-1.5">
           <span className="min-w-0 truncate text-[11px] text-white/40">
-            {i.type} · {i.tempoMin !== undefined ? `${i.tempoMin}–${i.tempoMax} bpm` : `${i.tempo} bpm`} · {i.range} st{i.style ? ` · ${genreLabel(i.style)}` : ''}{i.feel ? ` · ${i.feel}` : ''}
+            {i.type} · {i.tempoMin !== undefined ? `${i.tempoMin}–${i.tempoMax} bpm` : `${i.tempo} bpm`} · {i.range} st{i.style ? ` · ${genreLabel(i.style)}${i.substyle ? ` / ${i.substyle}` : ''}` : ''}{i.feel ? ` · ${i.feel}` : ''}
             {i.bars === 9 ? ' · lead-in' : ''}
           </span>
           <span className="ml-auto flex shrink-0 gap-1">
@@ -441,7 +452,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
           <p className="text-[13px] text-white/70">{sourceLabel(e.source)}</p>
           <p className="text-[12px] text-white/50">
             {e.type} · {e.tempoMin !== undefined ? `${e.tempoMin}–${e.tempoMax} bpm (plays at ${e.tempo})` : `${e.tempo} bpm`}
-            {e.style ? ` · ${genreLabel(e.style)}` : ''}{e.feel ? ` · ${e.feel}` : ''} · {e.bars} bars{e.leadInBars ? ` (${e.leadInBars} lead-in)` : ''} ·{' '}
+            {e.style ? ` · ${genreLabel(e.style)}${e.substyle ? ` / ${e.substyle}` : ''}` : ''}{e.feel ? ` · ${e.feel}` : ''} · {e.bars} bars{e.leadInBars ? ` (${e.leadInBars} lead-in)` : ''} ·{' '}
             {cur.melody.length ? `${midiName(Math.min(...cur.melody.map((n) => n.midi)))}–${midiName(Math.max(...cur.melody.map((n) => n.midi)))}, ${range} semitones (${rangeBand(range)})` : 'no notes'} · key C
           </p>
           <p className="mt-0.5 font-mono text-[10px] text-white/30">

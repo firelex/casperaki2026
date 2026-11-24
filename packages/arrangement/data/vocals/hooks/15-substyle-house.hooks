@@ -1,0 +1,312 @@
+# House / deep house vocal (style edm, substyle house): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Key of C major / A minor, sung pitch (C4 = middle C). Minor-7th pads, off-beat entries, 2-bar loops that evolve.
+
+hook: Velvet Floorboards
+type: Verse
+tempo: 120-126
+feel: soulful
+style: edm
+substyle: house
+chords: Am7 | Dm7 | Am7 | Dm7 | Am7 | Dm7 | Fmaj7 | G7
+melody: r:0.5 e4:0.5 g4:1 e4:0.5 d4:0.5 c4:1 | d4:1.5 c4:0.5 a3:2 |
+        r:0.5 e4:0.5 g4:1 g4:0.5 e4:0.5 d4:0.5 c4:0.5 | f4:1 e4:0.5 d4:2.5 |
+        r:1 c4:0.5 e4:0.5 g4:1.5 e4:0.5 | f4:0.5 e4:0.5 d4:1 c4:2 |
+        r:0.5 c4:0.5 e4:0.5 f4:0.5 e4:1 c4:1 | d4:3 r:1 |
+
+hook: Lowlight Errand
+type: Verse
+tempo: 118-124
+feel: hushed
+style: edm
+substyle: house
+chords: Fmaj7 | G7 | Em7 | Am7 | Fmaj7 | G7 | Em7 | Am7
+melody: c4:0.75 a3:0.75 c4:0.5 e4:1 r:1 | r:0.5 d4:0.5 f4:0.5 d4:0.5 b3:2 |
+        r:0.5 e4:0.25 e4:0.25 g4:0.5 e4:0.5 d4:1 b3:1 | c4:2.5 r:1.5 |
+        c4:0.75 a3:0.75 c4:0.5 f4:1 e4:1 | r:0.5 g4:0.5 f4:0.5 d4:0.5 f4:1 d4:1 |
+        r:1 b3:0.5 d4:0.5 e4:1.5 g4:0.5 | e4:0.5 d4:0.5 c4:3 |
+
+hook: Afterhours Ledger
+type: Verse
+tempo: 120-128
+feel: smooth
+style: edm
+substyle: house
+leadin: yes
+chords: G7 | Dm7 | G7 | Cmaj7 | Am7 | Dm7 | G7 | Cmaj7 | Cmaj7
+melody: r:2.5 g3:0.5 b3:0.5 d4:0.5 |
+        f4:1.5 d4:0.5 r:0.5 c4:0.5 d4:1 | b3:0.5 d4:0.5 f4:1 d4:2 |
+        r:0.5 e4:0.5 g4:1.5 e4:0.5 d4:0.5 b3:0.5 | c4:3 r:1 |
+        r:0.5 a3:0.5 d4:0.5 e4:0.5 f4:1 d4:1 | r:0.5 d4:0.5 g4:0.5 f4:0.5 d4:1.5 b3:0.5 |
+        c4:0.5 e4:0.5 g4:2 e4:1 | d4:1 e4:3 |
+
+hook: Humid Stairwell
+type: Verse
+tempo: 118-126
+feel: brooding
+style: edm
+substyle: house
+chords: Am7 | Am7 | Dm7 | Dm7 | Fmaj7 | Fmaj7 | Em7 | Am7
+melody: r:0.75 a3:0.25 c4:0.5 e4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | e4:2 r:2 |
+        r:0.75 a3:0.25 d4:0.5 f4:0.5 r:0.5 f4:0.5 e4:0.5 d4:0.5 | c4:1.5 a3:0.5 d4:2 |
+        r:0.75 c4:0.25 f4:0.5 g4:0.5 r:0.5 g4:0.5 f4:0.5 e4:0.5 | e4:1 c4:1 a3:2 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 g4:1 e4:1 | e4:1.5 d4:0.5 c4:2 |
+
+hook: Neon Laundromat
+type: Verse
+tempo: 122-128
+feel: groovy
+style: edm
+substyle: house
+chords: Fmaj7 G7 | Em7 Am7 | Fmaj7 G7 | Am7 | Fmaj7 G7 | Em7 Am7 | Dm7 | G7
+melody: a3:0.5 c4:0.5 r:0.5 c4:0.5 d4:1 b3:1 | r:0.5 b3:0.5 e4:0.5 d4:0.5 c4:2 |
+        a3:0.5 c4:0.5 r:0.5 f4:0.5 g4:1 f4:1 | e4:2.5 r:1.5 |
+        c4:0.5 f4:0.5 r:0.5 f4:0.5 d4:1 g4:1 | g4:0.5 e4:0.5 r:0.5 d4:0.5 e4:2 |
+        r:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 c4:1 | d4:2 b3:2 |
+
+hook: Satin Static
+type: Verse
+tempo: 118-126
+feel: yearning
+style: edm
+substyle: house
+chords: Am7 | Fmaj7 | Cmaj7 | G7 | Am7 | Fmaj7 | Dm7 | E7
+melody: r:1.5 e4:0.5 g4:1 e4:1 | f4:0.5 e4:0.5 c4:1 a3:1.5 r:0.5 |
+        r:1.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | d4:3 r:1 |
+        r:1.5 c4:0.5 e4:1 g4:0.5 e4:0.5 | a3:0.5 c4:0.5 e4:1 f4:2 |
+        r:0.5 f4:0.5 e4:0.5 d4:0.5 c4:1 a3:1 | b3:1 g#3:3 |
+
+hook: Midnight Ferry Lights
+type: Verse
+tempo: 120-126
+feel: wistful
+style: edm
+substyle: house
+leadin: yes
+chords: Am7 | Fmaj7 | G7 | Am7 | Am7 | Fmaj7 | G7 | Em7 | Am7
+melody: r:3 c4:0.25 e4:0.25 g4:0.5 |
+        f4:1.5 e4:0.5 c4:1 r:1 | r:0.5 b3:0.5 d4:0.5 g4:0.5 f4:1.5 d4:0.5 |
+        e4:1 c4:0.5 a3:2.5 | r:2 c4:0.5 e4:0.5 g4:0.5 e4:0.5 |
+        f4:0.75 e4:0.75 c4:0.5 a3:2 | r:0.5 d4:0.5 g4:1 f4:0.5 e4:0.5 d4:1 |
+        e4:1.5 g4:0.5 b3:2 | c4:1 d4:0.5 e4:2.5 |
+
+hook: Sweat on Glass
+type: Verse
+tempo: 122-128
+feel: sultry
+style: edm
+substyle: house
+chords: Dm7 | Am7 | Dm7 | Am7 | Fmaj7 | Cmaj7 | Dm7 | G7
+melody: r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 d4:0.5 c4:0.5 | e4:2 r:0.5 c4:0.5 a3:1 |
+        r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:0.5 g4:0.5 f4:1 | e4:1 g4:1 e4:2 |
+        r:1 c4:0.5 e4:0.5 f4:1 e4:1 | g4:1.5 e4:0.5 c4:2 |
+        r:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 a3:1 | b3:1 d4:1 g4:2 |
+
+hook: Heatwave Stairs
+type: Pre-chorus
+tempo: 120-126
+feel: building
+style: edm
+substyle: house
+chords: Dm7 | Em7 | Fmaj7 | G7 | Dm7 | Em7 | Fmaj7 | Gsus4 G7
+melody: r:0.5 a4:0.5 a4:0.5 f4:0.5 d4:1 f4:1 | r:0.5 b4:0.5 b4:0.5 g4:0.5 e4:1 g4:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 f4:1 e4:1 | d4:1.5 g4:0.5 b4:2 |
+        r:0.5 a4:0.25 a4:0.25 c5:0.5 a4:0.5 f4:1 a4:1 | r:0.5 b4:0.25 b4:0.25 d5:0.5 b4:0.5 g4:1 b4:1 |
+        c5:1 d5:0.5 c5:0.5 a4:1 c5:1 | c5:2 b4:2 |
+
+hook: Velvet Pressure
+type: Pre-chorus
+tempo: 118-124
+feel: tense
+style: edm
+substyle: house
+chords: Am7 | Am7 | Fmaj7 | Fmaj7 | Dm7 | Dm7 | E7 | E7
+melody: e4:0.5 r:0.5 e4:0.5 g4:0.5 a4:1 r:1 | r:0.5 g4:0.5 a4:0.5 c5:0.5 a4:1 g4:1 |
+        f4:0.5 r:0.5 f4:0.5 a4:0.5 c5:1 r:1 | r:0.5 a4:0.5 c5:0.5 e5:0.5 c5:1 a4:1 |
+        d5:1.5 c5:0.5 a4:1 f4:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:1 c5:1 |
+        b4:1.5 g#4:0.5 e4:1 b4:1 | b4:4 |
+
+hook: Tidewater Hallway
+type: Pre-chorus
+tempo: 122-128
+feel: lifting
+style: edm
+substyle: house
+leadin: yes
+chords: Am7 | Fmaj7 | G7 | Em7 | Am7 | Dm7 | Em7 | Fmaj7 | G7
+melody: r:2 e4:0.5 g4:0.5 a4:0.5 c5:0.5 |
+        c5:2 r:0.5 a4:0.5 c5:0.5 a4:0.5 | b4:1 g4:1 d4:1 r:1 |
+        r:0.5 g4:0.5 b4:0.5 d5:0.5 b4:1 g4:1 | a4:2 e4:1 g4:1 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 c5:0.5 a4:0.5 f4:1 | r:0.5 b4:0.5 d5:0.5 e5:0.5 d5:0.5 b4:0.5 g4:1 |
+        a4:0.5 c5:0.5 e5:1.5 c5:0.5 a4:1 | b4:1 d5:3 |
+
+hook: Glitter Undertow
+type: Pre-chorus
+tempo: 120-128
+feel: restless
+style: edm
+substyle: house
+chords: Fmaj7 | G7 | Em7 | Am7 | Dm7 | Dm7 | Gsus4 | G7
+melody: c5:0.5 a4:0.5 r:1 c5:0.5 a4:0.5 r:1 | b4:0.5 g4:0.5 r:1 b4:0.5 d5:0.5 r:1 |
+        e5:1.5 d5:0.5 b4:1 g4:1 | a4:2 r:2 |
+        d5:0.5 a4:0.5 r:1 d5:0.5 a4:0.5 r:0.5 c5:0.5 | d5:0.5 c5:0.5 a4:0.5 f4:0.5 a4:1 c5:1 |
+        c5:2.5 r:0.5 d5:0.5 c5:0.5 | b4:1 r:0.5 g4:0.5 d5:2 |
+
+hook: Warehouse Murmur
+type: Pre-chorus
+tempo: 118-126
+feel: simmering
+style: edm
+substyle: house
+chords: Dm7 | Dm7 | Em7 | Em7 | Fmaj7 | Fmaj7 | G7 | G7
+melody: r:0.5 f4:0.5 a4:0.5 f4:0.5 a4:1 c5:1 | a4:3 r:1 |
+        r:0.5 g4:0.5 b4:0.5 g4:0.5 b4:1 d5:1 | b4:2.5 a4:0.5 g4:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 e5:1 | c5:1.5 d5:0.5 e5:1 c5:1 |
+        d5:1 b4:0.5 g4:0.5 f4:1 g4:1 | g4:0.5 b4:0.5 d5:3 |
+
+hook: Mirrorball Fever
+type: Pre-chorus
+tempo: 122-128
+feel: urgent
+style: edm
+substyle: house
+chords: Fmaj7 | Em7 | Dm7 | Am7 | Fmaj7 | Em7 | Dm7 | E7
+melody: r:0.75 a4:0.25 c5:0.5 a4:0.5 e5:1 c5:1 | b4:1.5 g4:0.5 e4:2 |
+        r:0.75 f4:0.25 a4:0.5 f4:0.5 c5:1 a4:1 | g4:1 e4:1 a4:2 |
+        r:0.75 a4:0.25 c5:0.5 e5:0.5 e5:1 d5:1 | b4:0.5 d5:0.5 e5:1 d5:1 b4:1 |
+        a4:0.5 c5:0.5 d5:1 c5:0.5 a4:0.5 f4:1 | g#4:1 b4:3 |
+
+hook: Honey in the Speakers
+type: Chorus
+tempo: 122-128
+feel: euphoric
+style: edm
+substyle: house
+chords: Am7 | Dm7 | Fmaj7 | G7 | Am7 | Dm7 | Fmaj7 G7 | Am7
+melody: e4:0.5 a4:0.5 r:0.5 a4:0.5 c5:1 a4:1 | r:0.5 a4:0.5 c5:0.5 d5:0.5 c5:1 a4:1 |
+        f4:0.5 a4:0.5 r:0.5 a4:0.5 c5:1 e5:1 | d5:3 r:1 |
+        e5:0.5 c5:0.5 r:0.5 e5:1.5 d5:0.5 c5:0.5 | d5:1.5 e5:0.5 d5:1 c5:1 |
+        e5:2 d5:1 b4:1 | c5:0.5 a4:0.5 g4:3 |
+
+hook: Shoulders of Neon
+type: Chorus
+tempo: 120-128
+feel: soaring
+style: edm
+substyle: house
+chords: Fmaj7 | G7 | Em7 | Am7 | Fmaj7 | G7 | Am7 | Am7
+melody: r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1.5 r:0.5 | b4:1 g4:0.5 d5:0.5 d5:2 |
+        r:0.5 b4:0.5 b4:0.5 g4:0.5 b4:1.5 r:0.5 | a4:1 c5:1 e5:2 |
+        r:0.5 e5:0.5 e5:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | d5:1.5 b4:0.5 d5:1 e5:1 |
+        e5:2.5 d5:0.5 c5:1 | a4:1 g4:1 a4:2 |
+
+hook: Turntable Halo
+type: Chorus
+tempo: 120-126
+feel: radiant
+style: edm
+substyle: house
+leadin: yes
+chords: G7 | Am7 | Dm7 | G7 | Cmaj7 | Am7 | Dm7 | Fmaj7 G7 | Cmaj7
+melody: r:2.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:1.5 a4:0.5 r:1 e4:0.5 g4:0.5 | a4:1 f4:1 a4:1 c5:1 |
+        b4:1.5 g4:0.5 d5:2 | c5:2 r:1 g4:0.5 c5:0.5 |
+        e5:1 c5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | d5:2 c5:1 a4:1 |
+        c5:1 e5:1 d5:1.5 b4:0.5 | b4:0.5 c5:3.5 |
+
+hook: Concrete Orchid
+type: Chorus
+tempo: 118-124
+feel: sensual
+style: edm
+substyle: house
+chords: Dm7 | G7 | Cmaj7 | Am7 | Dm7 | G7 | Em7 Am7 | Cmaj7
+melody: f4:0.75 a4:0.75 c5:0.5 r:0.5 c5:0.5 d5:0.5 c5:0.5 | b4:1.5 g4:0.5 r:0.5 g4:0.5 b4:0.5 d5:0.5 |
+        e5:0.75 d5:0.75 c5:0.5 b4:2 | a4:2 r:1 c5:0.5 d5:0.5 |
+        d5:0.75 e5:0.75 d5:0.5 c5:1 a4:1 | d5:0.75 e5:0.75 d5:0.5 b4:2 |
+        e5:1.5 d5:0.5 c5:1 a4:1 | b4:1 g4:3 |
+
+hook: Ultraviolet Sermon
+type: Chorus
+tempo: 122-128
+feel: defiant
+style: edm
+substyle: house
+chords: Am7 | Fmaj7 | Cmaj7 | G7 | Am7 | Fmaj7 | Dm7 G7 | Am7
+melody: a4:2 c5:0.5 a4:0.5 r:1 | r:0.5 a4:0.5 c5:0.5 a4:0.5 f4:2 |
+        g4:2 e5:0.5 d5:0.5 r:1 | r:0.5 d5:0.5 b4:0.5 g4:0.5 d5:2 |
+        e5:2.5 c5:0.5 e5:0.5 d5:0.5 | e5:1.5 c5:0.5 a4:1 c5:1 |
+        d5:1 c5:1 b4:1.5 d5:0.5 | c5:4 |
+
+hook: Brass Rain Ritual
+type: Chorus
+tempo: 118-126
+feel: hypnotic
+style: edm
+substyle: house
+chords: Fmaj7 | Fmaj7 | Am7 | Am7 | Dm7 | Dm7 | G7 | Cmaj7
+melody: r:0.5 c5:0.25 c5:0.25 a4:0.5 c5:0.5 r:0.5 e5:0.5 c5:1 | a4:2 g4:1 f4:1 |
+        r:0.5 c5:0.25 c5:0.25 a4:0.5 c5:0.5 r:0.5 e5:0.5 g4:1 | a4:2 r:2 |
+        r:0.5 d5:0.25 d5:0.25 c5:0.5 e5:0.5 d5:1 c5:1 | a4:1.5 c5:0.5 e5:2 |
+        d5:1 b4:1 g4:1 f4:1 | g4:1 e4:3 |
+
+hook: Afterglow Telegraph
+type: Chorus
+tempo: 120-128
+feel: joyful
+style: edm
+substyle: house
+leadin: yes
+chords: Am7 | Dm7 | G7 | Cmaj7 | Am7 | Dm7 | Em7 | Fmaj7 G7 | Am7
+melody: r:3 c5:0.5 d5:0.5 |
+        c5:0.5 a4:0.5 r:0.5 f4:0.5 a4:1 c5:1 | b4:0.5 g4:0.5 r:0.5 d4:0.5 g4:1 b4:1 |
+        c5:0.5 g4:0.5 r:0.5 e4:0.5 g4:1 b4:1 | a4:3 r:0.5 c5:0.25 d5:0.25 |
+        d5:0.5 e5:0.5 r:0.5 c5:0.5 d5:1 a4:1 | e5:1.5 d5:0.5 b4:1 g4:1 |
+        a4:0.5 c5:0.5 e5:1 d5:1.5 b4:0.5 | c5:1 b4:0.5 a4:2.5 |
+
+hook: Cathedral Subway
+type: Bridge
+tempo: 118-124
+feel: floating
+style: edm
+substyle: house
+chords: Fmaj7 | Fmaj7 | Em7 | Em7 | Dm7 | Dm7 | Gsus4 | G7
+melody: a4:4 | r:1 g4:0.5 a4:0.5 c5:2 |
+        b4:3 r:1 | r:1 e4:0.5 g4:0.5 b4:2 |
+        a4:2.5 c5:0.5 d5:1 | e5:2 d5:1 c5:1 |
+        c5:3 r:0.5 b4:0.5 | d5:4 |
+
+hook: Hush of Strobes
+type: Bridge
+tempo: 120-126
+feel: intimate
+style: edm
+substyle: house
+chords: Dm7 | Em7 | Fmaj7 | Gsus4 | Dm7 | Em7 | Fmaj7 | G7
+melody: r:1 f4:0.5 e4:0.5 d4:2 | r:1 g4:0.5 f4:0.5 e4:2 |
+        r:1 a4:0.5 g4:0.5 f4:1 c5:1 | d5:2 c5:2 |
+        r:0.5 d5:0.5 c5:0.5 a4:0.5 f4:1 a4:1 | g4:1.5 b4:0.5 e5:2 |
+        c5:1 a4:1 e5:1 c5:1 | b4:2 d5:2 |
+
+hook: Undertow Prayer
+type: Bridge
+tempo: 120-128
+feel: aching
+style: edm
+substyle: house
+chords: Am7 | Em7 | Fmaj7 | Cmaj7 | Dm7 | Am7 | Dm7 | E7
+melody: e5:2 c5:1 a4:1 | b4:2 g4:1 e4:1 |
+        a4:1.5 c5:0.5 e5:1 c5:1 | g4:3 r:1 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:1 c5:1 | e5:1 c5:0.5 a4:0.5 g4:2 |
+        f4:1 a4:1 d5:1 c5:1 | b4:1 g#4:3 |
+
+hook: Pulse Withdrawn
+type: Bridge
+tempo: 122-128
+feel: dreamy
+style: edm
+substyle: house
+chords: Cmaj7 | Cmaj7 | Am7 | Am7 | Fmaj7 | Fmaj7 | Dm7 | G7
+melody: r:0.5 g4:0.5 r:0.5 g4:0.5 r:0.5 e4:0.5 g4:1 | b4:2.5 a4:0.5 g4:1 |
+        r:0.5 a4:0.5 r:0.5 a4:0.5 r:0.5 e4:0.5 c5:1 | e5:2.5 d5:0.5 c5:1 |
+        r:0.5 c5:0.5 r:0.5 c5:0.5 r:0.5 a4:0.5 e5:1 | e5:1 d5:0.5 c5:0.5 a4:2 |
+        f4:1.5 a4:0.5 c5:1 d5:1 | b4:4 |

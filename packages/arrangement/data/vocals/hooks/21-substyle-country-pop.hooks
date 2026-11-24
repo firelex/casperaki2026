@@ -1,0 +1,263 @@
+# organicVibes / country-pop: 25 hooks for modern country-pop songs (8 verses, 6 pre-choruses, 7 choruses,
+# 4 bridges). Storytelling verses on repeated notes and speech rhythm, open pentatonic choruses with held peaks,
+# I-IV-I-V and I-V-vi-IV with the odd ii or secondary dominant (D7 to G, E7 to Am).
+
+hook: Cattle Guard Sermon
+type: Verse
+tempo: 84-98
+feel: storytelling
+style: organicVibes
+substyle: country-pop
+chords: C | F | C | G | C | F | Dm G | C
+melody: r:0.5 e4:0.5 e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 | c4:0.5 a3:0.5 a3:1 r:1 c4:0.5 d4:0.5 | e4:0.5 e4:0.5 e4:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | d4:2.5 r:1.5 |
+        r:0.5 g3:0.5 c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 | f4:1 e4:0.5 c4:0.5 a3:1 c4:1 | d4:1.5 f4:0.5 g4:1 b3:1 | r:0.5 d4:0.5 e4:3 |
+
+hook: Water Tower Names
+type: Verse
+tempo: 96-110
+feel: nostalgic
+style: organicVibes
+substyle: country-pop
+chords: C | G | Am | F | C | G | F | G
+melody: r:1 g3:0.5 c4:0.5 c4:0.5 c4:0.5 e4:0.5 c4:0.5 | d4:1 d4:0.5 b3:0.5 g3:2 | r:0.5 a3:0.5 c4:0.5 c4:0.5 c4:1 e4:0.5 d4:0.5 | c4:1.5 a3:0.5 a3:1 r:1 |
+        r:0.5 e4:0.5 g4:0.5 g4:0.5 g4:0.5 e4:0.5 d4:0.5 e4:0.5 | d4:2 r:1 b3:0.5 c4:0.5 | c4:0.5 c4:0.5 a3:1 f4:1 e4:1 | d4:3 r:1 |
+
+hook: Feed Store Calendar
+type: Verse
+tempo: 100-114
+feel: wry
+style: organicVibes
+substyle: country-pop
+chords: Am | F | C | G | Am | F | C G | C
+melody: r:0.5 c4:0.25 c4:0.25 c4:0.5 c4:0.5 e4:0.5 c4:0.5 a3:1 | c4:1.5 a3:0.5 c4:0.5 d4:1.5 | r:0.5 e4:0.25 e4:0.25 e4:0.5 e4:0.5 g4:0.5 e4:0.5 d4:1 | d4:1 b3:0.5 d4:2.5 |
+        r:0.5 a3:0.5 a3:0.5 c4:0.5 e4:1 e4:0.5 g4:0.5 | f4:1.5 e4:0.5 c4:2 | e4:1 d4:0.5 c4:0.5 b3:1 d4:1 | c4:0.5 e4:3.5 |
+
+hook: Screen Door Summer
+type: Verse
+tempo: 88-102
+feel: easygoing
+style: organicVibes
+substyle: country-pop
+leadin: yes
+chords: G | C | C | F | C | Am | F | G | C
+melody: r:2.5 g3:0.5 b3:0.5 d4:0.5 |
+        e4:1 e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 | g4:0.5 e4:1 d4:0.5 c4:2 | r:0.5 c4:0.5 c4:0.5 c4:0.5 f4:0.5 f4:0.5 e4:0.5 d4:0.5 | e4:2 r:1 g3:0.5 c4:0.5 |
+        c4:1 c4:0.5 b3:0.5 c4:1 e4:1 | c4:0.5 a3:1 f4:1.5 e4:1 | d4:1.5 b3:0.5 g3:2 | r:0.5 c4:0.5 d4:1 g3:2 |
+
+hook: Kitchen Table Truth
+type: Verse
+tempo: 76-90
+feel: candid
+style: organicVibes
+substyle: country-pop
+chords: C | F | D7 | G | C | F | G | C
+melody: r:0.5 g3:0.5 c4:0.5 c4:0.5 c4:0.5 c4:0.5 e4:0.5 d4:0.5 | c4:1 a3:0.5 c4:0.5 f4:2 | r:0.5 f#4:0.5 f#4:0.5 e4:0.5 f#4:1 d4:1 | g4:1.5 d4:0.5 d4:2 |
+        r:0.5 e4:0.5 e4:0.5 e4:0.5 g4:1 e4:0.5 c4:0.5 | a3:1.5 c4:0.5 c4:0.5 a3:0.5 c4:1 | d4:0.5 d4:0.5 b3:0.5 d4:0.5 g4:2 | e4:1 d4:0.5 e4:2.5 |
+
+hook: County Line Radio
+type: Verse
+tempo: 104-118
+feel: breezy
+style: organicVibes
+substyle: country-pop
+chords: C | F C | C | G | Am | F | C G | Am
+melody: e4:0.5 e4:0.5 r:0.5 e4:0.5 e4:0.5 g4:0.5 e4:1 | f4:1 e4:0.5 c4:0.5 c4:2 | r:0.5 c4:0.5 d4:0.5 e4:0.5 g4:1 g4:0.5 e4:0.5 | d4:3 r:1 |
+        r:0.5 a3:0.5 a3:0.5 a3:0.5 c4:0.5 a3:0.5 c4:0.5 e4:0.5 | f4:1.5 e4:0.5 c4:1 a3:1 | g3:1 c4:0.5 e4:0.5 d4:1 b3:1 | a3:0.5 c4:3.5 |
+
+hook: Diesel and Lilacs
+type: Verse
+tempo: 80-94
+feel: bittersweet
+style: organicVibes
+substyle: country-pop
+chords: Am | F | C | G | Dm | F | G | G7
+melody: r:1 e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:0.5 d4:0.5 | c4:1 r:0.5 a3:0.5 c4:0.5 f4:1.5 | e4:1 e4:0.5 d4:0.5 e4:1 g4:1 | g4:0.5 d4:3.5 |
+        r:0.5 d4:0.5 d4:0.5 d4:0.5 f4:1 d4:0.5 c4:0.5 | c4:1.5 a3:0.5 a3:2 | r:0.5 b3:0.5 b3:0.5 c4:0.5 d4:1 g4:1 | f4:1 d4:3 |
+
+hook: Hometown Static
+type: Verse
+tempo: 92-106
+feel: restless
+style: organicVibes
+substyle: country-pop
+chords: F | C | G | Am | F | C | Dm | G
+melody: r:0.5 c4:0.5 c4:0.5 c4:0.5 a3:0.5 c4:0.5 f4:1 | e4:2 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:1 b3:0.5 d4:0.5 d4:1 g4:1 | e4:1.5 c4:0.5 a3:2 |
+        r:0.5 a3:0.25 a3:0.25 c4:0.5 c4:0.5 c4:0.5 a3:0.5 c4:0.5 d4:0.5 | e4:1.5 d4:0.5 c4:1 g3:1 | a3:0.5 d4:1 f4:0.5 f4:1 e4:1 | d4:4 |
+
+hook: Porch Swing Prayer
+type: Pre-chorus
+tempo: 86-100
+feel: building
+style: organicVibes
+substyle: country-pop
+chords: F | G | Am | Am | F | G | F | G
+melody: r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:0.5 c5:0.5 c5:1 | d5:1.5 b4:0.5 g4:2 | r:0.5 c5:0.5 c5:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | c5:2 r:1 a4:0.5 b4:0.5 |
+        c5:1 c5:0.5 a4:0.5 c5:1 d5:1 | d5:1.5 b4:0.5 d5:2 | a4:1 c5:1 c5:1.5 d5:0.5 | d5:4 |
+
+hook: Neon Steeple
+type: Pre-chorus
+tempo: 98-112
+feel: climbing
+style: organicVibes
+substyle: country-pop
+chords: Dm | Em | F | G | Dm | Em | F | G7
+melody: r:0.5 d4:0.5 f4:0.5 f4:0.5 f4:1 e4:0.5 d4:0.5 | e4:1.5 g4:0.5 g4:2 | r:0.5 f4:0.5 a4:0.5 a4:0.5 a4:1 g4:0.5 f4:0.5 | g4:1.5 b4:0.5 b4:2 |
+        r:0.5 a4:0.5 a4:0.5 a4:0.5 d5:1 c5:0.5 a4:0.5 | b4:1.5 e5:0.5 e5:1 d5:0.5 b4:0.5 | c5:1 a4:1 c5:1 d5:1 | b4:1 d5:3 |
+
+hook: Backroad Hallelujah
+type: Pre-chorus
+tempo: 90-104
+feel: hopeful
+style: organicVibes
+substyle: country-pop
+leadin: yes
+chords: G | Am | F | C | G | Am | F | D7 | G
+melody: r:3 e4:0.5 g4:0.5 |
+        a4:1 a4:0.5 g4:0.5 a4:1 c5:1 | c5:1.5 a4:0.5 f4:2 | r:0.5 e4:0.5 g4:0.5 c5:0.5 c5:1 b4:0.5 c5:0.5 | d5:2 r:1 b4:0.5 c5:0.5 |
+        e5:1 e5:0.5 d5:0.5 c5:1 a4:1 | c5:1.5 a4:0.5 a4:0.5 c5:0.5 d5:1 | d5:1 c5:0.5 a4:0.5 f#4:1 a4:1 | b4:1 d5:3 |
+
+hook: Rusted Mailbox
+type: Pre-chorus
+tempo: 78-92
+feel: aching
+style: organicVibes
+substyle: country-pop
+chords: Am | F | C | G | Am | F | Dm | Gsus4 G
+melody: r:1 c4:0.5 c4:0.5 e4:0.5 e4:0.5 a4:1 | a4:0.5 g4:0.5 f4:1 c4:2 | r:1 e4:0.5 e4:0.5 g4:0.5 g4:0.5 c5:1 | b4:0.5 a4:0.5 g4:1 d4:2 |
+        r:0.5 a4:0.5 c5:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 | a4:1.5 c5:0.5 c5:1 d5:1 | d5:1 e5:1 d5:1 a4:1 | c5:2 b4:2 |
+
+hook: Tin Roof Echo
+type: Pre-chorus
+tempo: 106-120
+feel: urgent
+style: organicVibes
+substyle: country-pop
+chords: C | Em | F | G | C | Em | F | G
+melody: r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.5 c5:1 c5:0.5 | b4:1.5 g4:0.5 e4:1 r:1 | r:0.5 a4:0.5 a4:0.5 f4:0.5 a4:0.5 c5:1 c5:0.5 | d5:1.5 b4:0.5 g4:1 r:1 |
+        r:0.5 c5:0.5 c5:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | b4:1 g4:0.5 b4:0.5 e5:2 | c5:0.5 a4:0.5 f4:1 a4:1 c5:1 | b4:0.5 d5:3.5 |
+
+hook: Creek Bed Vows
+type: Pre-chorus
+tempo: 82-96
+feel: tender
+style: organicVibes
+substyle: country-pop
+chords: F | C | Dm | Am | F | C | Dm | G
+melody: f4:1 a4:0.5 c5:2.5 | r:0.5 c5:0.5 b4:0.5 a4:0.5 g4:1 e4:1 | d4:0.5 f4:0.5 a4:0.5 d5:2.5 | r:0.5 d5:0.5 c5:0.5 b4:0.5 c5:1 a4:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:0.5 d5:0.5 c5:1 | e5:1.5 d5:0.5 c5:2 | r:0.5 a4:0.5 d5:0.5 d5:0.5 d5:0.5 c5:0.5 d5:1 | r:0.5 b4:0.5 d5:3 |
+
+hook: Wildflower Highway
+type: Chorus
+tempo: 96-112
+feel: anthemic
+style: organicVibes
+substyle: country-pop
+chords: C | G | Am | F | C | G | F | C
+melody: r:0.5 g4:0.5 c5:0.5 c5:0.5 c5:1 g4:1 | b4:1.5 a4:0.5 g4:2 | r:0.5 a4:0.5 c5:0.5 c5:0.5 c5:1 a4:1 | c5:1 a4:0.5 g4:2.5 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 e5:2 | d5:1.5 b4:0.5 d5:1 e5:1 | c5:3 a4:0.5 g4:0.5 | g4:4 |
+
+hook: Headlights Home
+type: Chorus
+tempo: 88-102
+feel: homeward
+style: organicVibes
+substyle: country-pop
+leadin: yes
+chords: G | C | F | C | G | Am | F | G | C
+melody: r:2 g4:0.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:1.5 c5:0.5 c5:1 g4:1 | a4:0.5 c5:1 c5:0.5 f4:2 | r:0.5 e4:0.5 g4:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | d5:2.5 r:1 d5:0.5 |
+        e5:1.5 d5:0.5 c5:1 e5:1 | c5:0.5 d5:0.5 e5:3 | d5:1.5 b4:0.5 g4:1 d5:1 | c5:4 |
+
+hook: Sweet Tea Thunder
+type: Chorus
+tempo: 110-124
+feel: rowdy
+style: organicVibes
+substyle: country-pop
+chords: C | G | Am | F | C | G | F | G
+melody: e4:0.5 g4:0.5 r:0.5 g4:0.5 c5:1 c5:0.5 d5:0.5 | d5:1 b4:0.5 g4:2.5 | e4:0.5 a4:0.5 r:0.5 a4:0.5 c5:1 c5:0.5 d5:0.5 | c5:1 a4:0.5 f4:2.5 |
+        r:0.5 g4:0.5 c5:0.5 e5:0.5 e5:1.5 d5:0.5 | d5:1 b4:0.5 d5:0.5 d5:1 e5:0.5 d5:0.5 | c5:2.5 a4:0.5 c5:1 | d5:2 b4:2 |
+
+hook: Hay Bale Moon
+type: Chorus
+tempo: 78-92
+feel: soaring
+style: organicVibes
+substyle: country-pop
+chords: F | C | G | Am | F | C | G | C
+melody: r:1 c5:0.5 c5:0.5 c5:1 a4:1 | g4:3 e4:1 | r:1 b4:0.5 b4:0.5 d5:1 b4:1 | a4:3 r:1 |
+        r:0.5 c5:0.5 d5:0.5 e5:2.5 | e5:1 d5:0.5 c5:0.5 e5:2 | d5:2 b4:1 g4:1 | e4:4 |
+
+hook: Gas Station Roses
+type: Chorus
+tempo: 92-106
+feel: heartfelt
+style: organicVibes
+substyle: country-pop
+chords: Am | F | C | G | F | C | Dm G | C
+melody: a4:0.5 a4:0.5 g4:0.5 a4:0.5 c5:1 a4:1 | a4:1.5 f4:0.5 c5:2 | r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:1 c5:1 | b4:1.5 a4:0.5 g4:1 r:1 |
+        r:0.5 c5:0.5 c5:0.5 d5:0.5 c5:1 a4:1 | e5:2.5 d5:0.5 c5:1 | d5:1 a4:0.5 d5:0.5 b4:1 d5:1 | c5:1 e5:3 |
+
+hook: Barn Dance Halo
+type: Chorus
+tempo: 100-116
+feel: joyful
+style: organicVibes
+substyle: country-pop
+leadin: yes
+chords: G | C | F | C | D7 | C | F | D7 G | C
+melody: r:3 d4:0.5 e4:0.5 |
+        g4:1 g4:0.5 e4:0.5 g4:1 c5:1 | c5:0.5 a4:0.5 a4:1 f4:2 | r:0.5 e4:0.5 g4:0.5 a4:0.5 g4:1 e4:1 | f#4:1 a4:0.5 c5:2.5 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 e5:1 c5:1 | c5:1 d5:0.5 e5:2.5 | d5:1.5 c5:0.5 b4:1 d5:1 | c5:2 g4:2 |
+
+hook: Dashboard Saints
+type: Chorus
+tempo: 84-98
+feel: grateful
+style: organicVibes
+substyle: country-pop
+chords: C | Am | F | G | C | Am | Dm G | C
+melody: r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 g4:1 | a4:1 e4:0.5 a4:2.5 | r:0.5 a4:0.5 c5:0.5 d5:0.5 c5:1 a4:1 | b4:0.5 g4:3.5 |
+        r:0.5 g4:0.5 c5:0.5 e5:2.5 | e5:1 d5:0.5 c5:0.5 c5:1 a4:1 | a4:1 d5:1 d5:1 b4:1 | g4:1 c5:3 |
+
+hook: Lantern Hollow
+type: Bridge
+tempo: 76-90
+feel: hushed
+style: organicVibes
+substyle: country-pop
+chords: Am | Em | F | C | Dm | Am | F | G
+melody: r:1 e4:1 a4:1.5 g4:0.5 | g4:2 e4:2 | r:1 f4:1 c5:1.5 a4:0.5 | g4:3 r:1 |
+        r:0.5 a4:0.5 a4:0.5 g4:0.5 f4:1 a4:1 | c5:1.5 b4:0.5 a4:2 | f4:1 a4:1 c5:1.5 d5:0.5 | d5:4 |
+
+hook: Rodeo Sunset
+type: Bridge
+tempo: 94-108
+feel: reflective
+style: organicVibes
+substyle: country-pop
+leadin: yes
+chords: C | Em | Am | F | C | Em | Am | D7 | G
+melody: r:2.5 e4:0.5 g4:0.5 a4:0.5 |
+        b4:2 g4:1 e4:1 | r:0.5 a4:0.5 c5:0.5 b4:0.5 a4:1 e4:1 | f4:1.5 a4:0.5 c5:2 | r:0.5 c5:0.5 b4:0.5 a4:0.5 g4:2 |
+        r:0.5 g4:0.5 b4:0.5 e5:2.5 | e5:1.5 c5:0.5 a4:2 | r:0.5 a4:0.5 c5:0.5 a4:0.5 f#4:1 a4:1 | b4:1 a4:1 g4:2 |
+
+hook: Whiskey Barrel Rain
+type: Bridge
+tempo: 82-96
+feel: brooding
+style: organicVibes
+substyle: country-pop
+chords: Dm | G | Em | Am | F | G | Am | Gsus4 G
+melody: f4:1.5 e4:0.5 d4:2 | r:0.5 d4:0.5 g4:0.5 a4:0.5 b4:1 g4:1 | g4:1.5 e4:0.5 e4:2 | r:0.5 e4:0.5 a4:0.5 b4:0.5 c5:1 a4:1 |
+        a4:1 c5:0.5 d5:0.5 c5:2 | d5:1 b4:0.5 g4:0.5 d5:2 | c5:1.5 e5:0.5 e5:1 d5:1 | d5:2 b4:2 |
+
+hook: Two-Lane Promise
+type: Bridge
+tempo: 102-116
+feel: defiant
+style: organicVibes
+substyle: country-pop
+chords: Am | Dm | G | C | Am | E7 | F | G
+melody: e4:1 r:0.5 c4:0.5 e4:1 a4:1 | f4:1 r:0.5 d4:0.5 f4:1 a4:1 | g4:1 r:0.5 d4:0.5 g4:1 b4:1 | c5:2.5 r:1.5 |
+        r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 e5:1 | d5:1.5 b4:0.5 g#4:2 | a4:1 c5:0.5 a4:0.5 f4:1 a4:1 | g4:1 b4:1 d5:2 |

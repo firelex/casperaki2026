@@ -1,0 +1,320 @@
+# Jazz-pop / sophisti-pop (urban style): 8 verses, 6 pre-choruses, 7 choruses and 4 bridges.
+# ii-V-I movement, maj7/m7/9th colour, long notes resting on 9ths and 7ths, a lazy behind-the-beat lilt written straight.
+
+# ---- Verses ----
+
+hook: Martini Arithmetic
+type: Verse
+tempo: 78-92
+feel: wry
+style: urban
+substyle: jazz-pop
+chords: Dm9 | G9 | Cmaj7 | Am7 | Dm9 | G7 | Em7 A7 | Dm7 G7
+melody: r:0.5 a3:0.25 c4:0.25 e4:1.5 d4:0.5 c4:0.5 a3:0.5 | b3:1.5 a3:0.5 g3:1 r:1 |
+        r:0.75 g3:0.25 c4:0.5 e4:0.5 g4:1 f4:0.5 e4:0.5 | e4:1.5 d4:0.25 c4:0.25 a3:2 |
+        r:0.5 f4:0.25 e4:0.25 d4:0.5 c4:0.5 e4:2 | r:0.5 d4:0.25 f4:0.25 f4:0.5 e4:0.5 d4:1 b3:1 |
+        g4:0.75 e4:0.25 e4:1 c#4:0.75 e4:0.25 g4:1 | f4:1.5 e4:0.5 d4:2 |
+
+hook: Tuesday Concierge
+type: Verse
+tempo: 72-86
+feel: languid
+style: urban
+substyle: jazz-pop
+chords: Cmaj7 | Am7 | Dm9 | G7 | Em7 | A7 | Dm7 | G9
+melody: r:1 g3:0.25 a3:0.25 b3:0.5 e4:1.5 d4:0.5 | c4:1 r:0.5 e4:0.25 g4:0.25 g4:1 e4:1 |
+        d4:0.75 e4:0.25 e4:2 r:1 | r:0.5 f4:0.25 e4:0.25 d4:0.5 b3:0.5 g3:2 |
+        r:0.75 b3:0.25 d4:0.5 e4:0.5 g4:1 f4:0.5 e4:0.5 | e4:1.5 c#4:0.5 a3:1 r:1 |
+        r:0.5 a3:0.25 c4:0.25 e4:1 f4:0.5 e4:0.5 d4:1 | a3:1.5 b3:0.5 a3:2 |
+
+hook: Cufflink Rain
+type: Verse
+tempo: 80-94
+feel: urbane
+style: urban
+substyle: jazz-pop
+leadin: yes
+chords: G7 | Cmaj7 | Fmaj7 | Bm7b5 E7 | Am9 | Dm7 | G7 | Em7 A7 | Dm7 G7
+melody: r:2.5 d4:0.25 e4:0.25 f4:0.5 g4:0.5 |
+        e4:1.5 b3:0.5 c4:1 r:1 | r:0.5 c4:0.25 e4:0.25 g4:0.75 e4:0.25 e4:1 c4:1 |
+        d4:1 f4:1 e4:0.5 d4:0.5 b3:1 | b3:3 r:1 |
+        r:0.75 a3:0.25 c4:0.5 d4:0.5 f4:1.5 e4:0.5 | d4:1 b3:0.5 g3:0.5 r:2 |
+        r:0.5 g4:0.25 g4:0.25 e4:0.5 d4:0.5 c#4:1 e4:1 | f4:1 e4:0.5 d4:0.5 f4:2 |
+
+hook: Elevator Velvet
+type: Verse
+tempo: 84-98
+feel: sly
+style: urban
+substyle: jazz-pop
+chords: Am7 | D9 | Dm7 | G7 | Cmaj7 | Fmaj7 | Bm7b5 | E7
+melody: e4:0.75 c4:0.25 c4:0.5 a3:0.5 r:0.5 g3:0.25 a3:0.25 c4:1 | r:0.5 a3:0.25 c4:0.25 f#4:1 e4:1 d4:1 |
+        f4:1.5 e4:0.25 d4:0.25 c4:1 r:1 | r:0.5 b3:0.25 d4:0.25 f4:0.5 d4:0.5 b3:2 |
+        r:0.75 g3:0.25 c4:0.5 e4:0.5 g4:1.5 e4:0.5 | e4:2 c4:0.5 a3:0.5 c4:1 |
+        d4:0.75 f4:0.25 f4:1 a3:1 r:1 | r:0.5 b3:0.25 c4:0.25 b3:1 g#3:2 |
+
+hook: Overcoat Sunday
+type: Verse
+tempo: 70-84
+feel: wistful
+style: urban
+substyle: jazz-pop
+chords: Fmaj7 | Em7 | Dm7 | Cmaj9 | Fmaj9 | Em7 A7 | Dm9 | Gsus4 G7
+melody: r:1 c4:0.25 e4:0.25 g4:0.5 e4:2 | d4:1 b3:1 g3:1 r:1 |
+        r:0.5 d4:0.25 e4:0.25 f4:1 a3:0.5 c4:0.5 d4:1 | d4:3 r:1 |
+        r:0.5 c4:0.25 c4:0.25 a3:0.5 c4:0.5 g4:1.5 e4:0.5 | d4:1 e4:1 c#4:1.5 r:0.5 |
+        r:0.5 a3:0.25 c4:0.25 e4:2 f4:0.5 e4:0.5 | c4:2 b3:2 |
+
+hook: Copper Cocktail Hour
+type: Verse
+tempo: 86-100
+feel: crisp
+style: urban
+substyle: jazz-pop
+chords: Cmaj7 Am7 | Dm7 G7 | Em7 Am7 | Dm7 G7 | Cmaj7 C7 | Fmaj7 Fm | Em7 A7 | Dm7 G7
+melody: g4:0.5 e4:0.5 r:0.5 c4:0.25 d4:0.25 e4:1 c4:1 | d4:0.75 f4:0.25 f4:0.5 d4:0.5 b3:1.5 r:0.5 |
+        r:0.5 b3:0.25 d4:0.25 g4:0.5 e4:0.5 e4:1 c4:1 | a3:0.75 c4:0.25 d4:1 f4:1.5 r:0.5 |
+        e4:1 g4:0.5 e4:0.5 bb3:1 r:1 | a3:1.5 c4:0.5 ab3:2 |
+        r:0.5 g3:0.25 b3:0.25 e4:0.5 d4:0.5 e4:1 c#4:1 | d4:1 c4:0.5 a3:0.5 b3:2 |
+
+hook: Mezzanine Lights
+type: Verse
+tempo: 74-88
+feel: cool
+style: urban
+substyle: jazz-pop
+chords: Am9 | Dm9 | Bm7b5 | E7 | Am7 | Fmaj7 | Dm7 | E7
+melody: r:0.5 a3:0.25 c4:0.25 e4:0.5 c4:0.5 b3:2 | r:0.5 c4:0.25 d4:0.25 f4:0.5 d4:0.5 e4:2 |
+        d4:1 f4:0.5 d4:0.5 a3:1.5 r:0.5 | r:0.5 b3:0.25 d4:0.25 e4:0.5 d4:0.5 b3:2 |
+        r:0.75 e4:0.25 g4:0.5 e4:0.5 c4:1 a3:1 | c4:1.5 a3:0.5 e4:2 |
+        r:0.5 f4:0.25 e4:0.25 d4:0.5 c4:0.5 a3:1 c4:1 | b3:1.5 d4:0.5 e4:2 |
+
+hook: Last Tram Home
+type: Verse
+tempo: 90-104
+feel: easy
+style: urban
+substyle: jazz-pop
+leadin: yes
+chords: G7 | Cmaj9 | A7 | Dm7 | G7 | Em7 | A7 | Dm7 G7 | Cmaj7
+melody: r:3 g3:0.25 a3:0.25 b3:0.5 |
+        d4:1.5 c4:0.5 e4:1.5 r:0.5 | r:0.5 e4:0.25 g4:0.25 e4:0.5 c#4:0.5 a3:1 r:1 |
+        r:0.5 c4:0.25 d4:0.25 f4:1.5 e4:0.5 d4:1 | b3:1.5 g3:0.5 r:1 f4:0.5 e4:0.5 |
+        d4:0.75 e4:0.25 e4:1 g4:1.5 r:0.5 | r:0.5 g4:0.25 e4:0.25 c#4:1 e4:2 |
+        d4:1 f4:0.5 e4:0.5 d4:1 b3:1 | b3:3 r:1 |
+
+# ---- Pre-choruses ----
+
+hook: Velvet Escalator
+type: Pre-chorus
+tempo: 78-92
+feel: rising
+style: urban
+substyle: jazz-pop
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 A7 | Dm9 | Gsus4 G7
+melody: r:0.5 c4:0.25 e4:0.25 f4:0.5 a4:0.5 a4:1 g4:1 | e4:1.5 d4:0.5 b3:1 r:1 |
+        r:0.5 d4:0.25 f4:0.25 a4:0.5 c5:0.5 c5:1 a4:1 | b4:2 g4:1 r:1 |
+        r:0.5 e4:0.25 f4:0.25 a4:0.5 c5:0.5 e5:1 c5:1 | d5:1 b4:1 c#5:1.5 a4:0.5 |
+        e5:2 d5:0.5 c5:0.5 a4:1 | c5:1.5 d5:2.5 |
+
+hook: Staircase Overture
+type: Pre-chorus
+tempo: 84-98
+feel: building
+style: urban
+substyle: jazz-pop
+chords: Am7 | Dm7 | G7 | Cmaj7 | Fmaj7 | Dm7 | Em7 A7 | G9
+melody: r:0.75 e4:0.25 e4:0.5 g4:0.5 a4:1 e4:1 | r:0.75 f4:0.25 f4:0.5 a4:0.5 c5:1 a4:1 |
+        r:0.5 g4:0.25 a4:0.25 b4:1 d5:1.5 b4:0.5 | c5:1.5 b4:0.5 g4:1 r:1 |
+        r:0.5 a4:0.25 c5:0.25 e5:1.5 d5:0.5 c5:1 | d5:1 c5:0.5 a4:0.5 f4:1 a4:1 |
+        b4:1 g4:0.5 b4:0.5 c#5:1.5 d5:0.5 | d5:4 |
+
+hook: Glass Lift Rising
+type: Pre-chorus
+tempo: 70-84
+feel: simmering
+style: urban
+substyle: jazz-pop
+leadin: yes
+chords: G7 | Cmaj7 | Em7 | Fmaj7 | Dm7 | Em7 Am7 | Fmaj7 | Fm | Gsus4 G
+melody: r:2 b3:0.5 d4:0.5 f4:0.5 g4:0.5 |
+        e4:2 r:1 g4:0.5 e4:0.5 | d4:1.5 e4:0.5 g4:1 b4:1 |
+        a4:2 r:0.5 c5:0.25 a4:0.25 g4:1 | f4:1.5 a4:0.5 c5:2 |
+        b4:1 d5:1 c5:1 e5:1 | e5:2.5 c5:0.5 a4:1 |
+        ab4:1.5 g4:0.5 c5:2 | c5:1.5 d5:0.5 b4:2 |
+
+hook: Penthouse Weather
+type: Pre-chorus
+tempo: 88-102
+feel: urgent
+style: urban
+substyle: jazz-pop
+chords: Dm7 | Am7 | Dm7 | Am7 | Fmaj7 | Dm7 | Bm7b5 | E7
+melody: r:0.5 a3:0.25 c4:0.25 d4:0.5 f4:0.5 a4:1 f4:1 | e4:1.5 c4:0.5 a3:1 r:1 |
+        r:0.5 c4:0.25 d4:0.25 f4:0.5 a4:0.5 c5:1 a4:1 | g4:1.5 e4:0.5 a4:1 r:1 |
+        r:0.5 e4:0.25 f4:0.25 a4:0.5 c5:0.5 e5:2 | d5:1 c5:1 a4:1 c5:1 |
+        d5:1.5 b4:0.5 a4:1 b4:1 | g#4:1.5 b4:2.5 |
+
+hook: Lacquered Brass
+type: Pre-chorus
+tempo: 76-90
+feel: coy
+style: urban
+substyle: jazz-pop
+chords: Dm7 G7 | Em7 A7 | Dm7 G7 | Cmaj7 | Fmaj7 | Em7 A7 | Dm9 | G7
+melody: r:0.5 f4:0.25 e4:0.25 d4:0.5 f4:0.5 g4:1.5 r:0.5 | r:0.5 g4:0.25 f4:0.25 e4:0.5 g4:0.5 a4:1.5 r:0.5 |
+        r:0.5 a4:0.25 g4:0.25 f4:0.5 a4:0.5 b4:1.5 d5:0.5 | c5:1 b4:1 g4:1.5 r:0.5 |
+        r:0.5 c5:0.25 c5:0.25 a4:0.5 c5:0.5 e5:1.5 c5:0.5 | d5:1 b4:1 e5:1 c#5:1 |
+        e5:1.5 d5:0.5 c5:0.5 a4:0.5 f4:1 | g4:1 b4:1 d5:2 |
+
+hook: Tilted Chandelier
+type: Pre-chorus
+tempo: 72-86
+feel: tense
+style: urban
+substyle: jazz-pop
+leadin: yes
+chords: E7 | Am7 | Am7 | Fmaj7 | Fmaj9 | Dm7 | Dm9 | Bm7b5 | E7
+melody: r:2.5 b3:0.5 d4:0.5 e4:0.5 |
+        c4:2.5 r:0.5 e4:0.5 g4:0.5 | a4:1.5 g4:0.5 e4:2 |
+        r:0.5 f4:0.25 a4:0.25 c5:1 a4:0.5 g4:0.5 e4:1 | g4:2 a4:1 c5:1 |
+        d5:2.5 c5:0.5 a4:1 | e5:2 d5:1 a4:1 |
+        d5:1.5 b4:0.5 a4:1 f4:1 | e4:1 g#4:1 b4:2 |
+
+# ---- Choruses ----
+
+hook: Gilded Hour
+type: Chorus
+tempo: 80-94
+feel: lush
+style: urban
+substyle: jazz-pop
+chords: Cmaj9 | Am7 | Dm9 | G7 | Em7 | A7 | Dm7 G7 | Cmaj7
+melody: r:0.5 g4:0.25 a4:0.25 b4:0.5 d5:2 c5:0.5 | c5:1 a4:0.5 g4:0.5 e4:1.5 r:0.5 |
+        r:0.5 a4:0.25 c5:0.25 e5:1 d5:0.5 c5:0.5 a4:1 | b4:1.5 a4:0.25 g4:0.25 f4:1 r:1 |
+        r:0.5 e4:0.25 g4:0.25 b4:0.5 d5:0.5 e5:1.5 d5:0.5 | e5:1 c#5:1 a4:1.5 g4:0.5 |
+        d5:1.5 c5:0.5 b4:1 d5:1 | c5:1.5 b4:0.5 g4:2 |
+
+hook: Satin Downpour
+type: Chorus
+tempo: 74-88
+feel: swaying
+style: urban
+substyle: jazz-pop
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 A7 | Dm7 G7 | C
+melody: a4:1.5 c5:0.5 e5:1 c5:1 | d5:0.75 b4:0.25 b4:1 r:1 g4:0.5 a4:0.5 |
+        c5:1 a4:0.5 f4:0.5 a4:1.5 r:0.5 | b4:2 r:1 e4:0.25 g4:0.25 b4:0.5 |
+        c5:0.75 e5:0.25 e5:1.5 c5:0.5 a4:1 | g4:0.5 b4:0.5 d5:1 e5:2 |
+        d5:1 c5:0.5 a4:0.5 b4:1 d5:1 | c5:4 |
+
+hook: Midnight Monogram
+type: Chorus
+tempo: 86-100
+feel: swinging
+style: urban
+substyle: jazz-pop
+chords: Dm7 G7 | Cmaj7 Am7 | Dm7 G7 | Em7 A7 | Dm7 G7 | Em7 A7 | Dm9 G9 | Cmaj9
+melody: f4:0.5 a4:0.5 c5:0.5 a4:0.5 b4:1 g4:1 | r:0.5 g4:0.25 b4:0.25 b4:1 c5:1.5 r:0.5 |
+        r:0.5 d5:0.25 c5:0.25 a4:0.5 c5:0.5 d5:1 b4:1 | g4:1 e4:0.5 g4:0.5 a4:1.5 r:0.5 |
+        r:0.5 a4:0.25 c5:0.25 d5:1 d5:1 b4:1 | e5:1.5 d5:0.5 c#5:1 e5:1 |
+        e5:1 d5:0.5 c5:0.5 a4:2 | d5:4 |
+
+hook: Sapphire Overtime
+type: Chorus
+tempo: 70-84
+feel: tender
+style: urban
+substyle: jazz-pop
+chords: Am9 | Fmaj7 | Dm7 | E7 | Am7 | Fmaj9 | Bm7b5 E7 | Am9
+melody: e4:0.5 a4:0.5 b4:2 a4:0.5 g4:0.5 | a4:1.5 f4:0.5 e4:1 r:1 |
+        r:0.5 d4:0.25 f4:0.25 a4:0.5 c5:0.5 c5:1 a4:1 | b4:1.5 g#4:0.5 e4:2 |
+        r:0.5 a4:0.25 b4:0.25 c5:1 e5:1.5 d5:0.5 | e5:1.5 c5:0.5 g4:1.5 a4:0.5 |
+        d5:1 c5:0.5 b4:0.5 g#4:1 b4:1 | a4:1 b4:3 |
+
+hook: Cognac Skyline
+type: Chorus
+tempo: 90-106
+feel: bright
+style: urban
+substyle: jazz-pop
+leadin: yes
+chords: G7 | Cmaj7 | Em7 A7 | Dm7 | G9 | Cmaj7 | Am7 D9 | Dm7 G7 | Cmaj9
+melody: r:2 g4:0.5 a4:0.5 b4:0.5 d5:0.5 |
+        e5:1 c5:0.5 b4:0.5 g4:1.5 r:0.5 | r:0.5 g4:0.25 b4:0.25 d5:1 c#5:1 a4:1 |
+        c5:1.5 a4:0.5 f4:1.5 r:0.5 | r:0.5 g4:0.25 a4:0.25 b4:0.5 d5:0.5 a4:2 |
+        e5:1.5 d5:0.5 c5:0.5 b4:0.5 g4:1 | a4:0.5 c5:0.5 e5:1 d5:1 c5:1 |
+        c5:1 a4:1 b4:1 d5:1 | e5:4 |
+
+hook: Ivory Getaway
+type: Chorus
+tempo: 76-90
+feel: breezy
+style: urban
+substyle: jazz-pop
+chords: Fmaj9 | Em7 | Dm9 | Cmaj7 | Fmaj7 | E7 | Am7 D7 | Dm7 G7
+melody: g4:1.5 a4:0.5 c5:1 a4:1 | b4:1.5 g4:0.5 e4:1.5 r:0.5 |
+        f4:1 a4:0.5 c5:0.5 e5:1.5 d5:0.5 | b4:2.5 r:1 g4:0.5 |
+        a4:0.5 c5:0.5 e5:2 d5:0.5 c5:0.5 | d5:1 b4:0.5 g#4:0.5 b4:1.5 d5:0.5 |
+        c5:1 e5:1 d5:1 c5:1 | a4:1 c5:0.5 a4:0.5 f4:2 |
+
+hook: Champagne Logic
+type: Chorus
+tempo: 82-96
+feel: confident
+style: urban
+substyle: jazz-pop
+chords: Cmaj7 | Em7 A7 | Dm7 | G9 | Cmaj7 | Am9 | Dm9 G9 | Cmaj7
+melody: g4:0.75 c5:0.25 c5:0.5 b4:0.5 g4:1 e4:1 | r:0.5 e4:0.25 g4:0.25 b4:1 a4:1 g4:1 |
+        a4:1.5 f4:0.5 d4:1 r:1 | r:0.5 d4:0.25 f4:0.25 b4:1 a4:0.5 g4:0.5 f4:1 |
+        e5:1.5 d5:0.25 c5:0.25 b4:1 g4:1 | r:0.5 c5:0.25 d5:0.25 e5:1 b4:2 |
+        c5:0.5 d5:0.5 e5:1 d5:1 b4:1 | c5:0.5 g4:0.5 e4:3 |
+
+# ---- Bridges ----
+
+hook: Smoked Glass Detour
+type: Bridge
+tempo: 78-92
+feel: drifting
+style: urban
+substyle: jazz-pop
+chords: Fmaj7 | Fm | Em7 | A7 | Dm9 | G9 | Em7 A7 | Dm7 G7
+melody: r:1 c4:0.5 e4:0.5 a4:1.5 g4:0.5 | ab4:2 f4:1 c4:1 |
+        g4:1.5 e4:0.5 b4:2 | a4:1 g4:0.5 e4:0.5 c#4:2 |
+        r:0.5 d4:0.25 f4:0.25 a4:0.5 c5:0.5 e5:2 | d5:1 b4:1 a4:2 |
+        g4:1 b4:1 c#5:1 a4:1 | f4:1 a4:1 b4:1 d5:1 |
+
+hook: Rain On Brass
+type: Bridge
+tempo: 70-84
+feel: reflective
+style: urban
+substyle: jazz-pop
+chords: Am7 | D9 | Fmaj7 | E7 | Am7 | D9 | Fmaj7 | Gsus4 G7
+melody: r:1 e4:0.5 a4:0.5 c5:1.5 b4:0.5 | a4:2 f#4:1 e4:1 |
+        r:0.5 f4:0.25 a4:0.25 c5:1 e5:1 c5:1 | b4:2 g#4:2 |
+        r:0.5 c5:0.25 b4:0.25 a4:1 e4:1 g4:1 | f#4:1.5 a4:0.5 c5:1 d5:1 |
+        e5:2 c5:1 a4:1 | c5:1 d5:1 b4:2 |
+
+hook: Lantern Bluff
+type: Bridge
+tempo: 86-100
+feel: suspended
+style: urban
+substyle: jazz-pop
+chords: Fmaj7 | Bbmaj7 | Em7 | A7 | Dm7 | Bbmaj7 | Gsus4 | G7
+melody: c5:1.5 a4:0.5 f4:1 e4:1 | d5:2.5 c5:0.5 a4:1 |
+        g4:1 b4:1 d5:1.5 b4:0.5 | c#5:2 r:1 e4:0.5 a4:0.5 |
+        c5:1.5 a4:0.5 f4:1 a4:1 | a4:2 f4:1 d4:1 |
+        g4:1 c5:1 d5:2 | d5:1 b4:1 f4:2 |
+
+hook: Chrome Reverie
+type: Bridge
+tempo: 94-108
+feel: playful
+style: urban
+substyle: jazz-pop
+chords: Bm7b5 E7 | Am7 D7 | Dm7 G7 | Cmaj7 | Bm7b5 E7 | Am7 D9 | Dm9 | Gsus4 G7
+melody: d5:1 b4:0.5 a4:0.5 g#4:1.5 r:0.5 | r:0.5 a4:0.25 b4:0.25 c5:1 f#4:1.5 r:0.5 |
+        f4:1 a4:1 b4:1.5 g4:0.5 | c5:0.5 b4:2.5 r:1 |
+        r:0.5 f4:0.25 a4:0.25 d5:1 b4:1 d5:1 | c5:1.5 b4:0.5 e5:1 c5:1 |
+        e5:2 d5:0.5 c5:0.5 a4:1 | g4:1 c5:1 b4:0.5 d5:1.5 |

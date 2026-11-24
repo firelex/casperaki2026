@@ -1,0 +1,259 @@
+# organicVibes / indie-folk: 25 hooks for intimate indie-folk and chamber-pop songs (8 verses, 6 pre-choruses,
+# 7 choruses, 4 bridges). Dorian (Am-D) and Mixolydian (C-Bb) colour, sus2/sus4 chords, held drone notes over moving
+# chords, 3+5 bar phrasing, stepwise unison lines for gang-vocal choruses.
+
+hook: Lantern Moth Hour
+type: Verse
+tempo: 76-90
+feel: intimate
+style: organicVibes
+substyle: indie-folk
+chords: Am | D | Am | D | C | G | Am | Em
+melody: r:0.5 e4:0.5 e4:0.5 c4:1 d4:0.5 e4:1 | f#4:1.5 e4:0.5 d4:2 | r:0.5 c4:0.5 b3:0.5 a3:0.5 e4:2- | e4:1 r:1 a3:0.5 b3:0.5 c4:0.5 d4:0.5 |
+        e4:1.5 d4:0.5 c4:1 g3:1 | b3:0.5 d4:0.5 g4:2 f4:0.5 e4:0.5 | e4:1 c4:0.5 a3:2.5 | r:1 g3:0.5 a3:0.5 b3:2 |
+
+hook: Hollow Reed Psalm
+type: Verse
+tempo: 72-86
+feel: hymnal
+style: organicVibes
+substyle: indie-folk
+chords: C | Am7 | Fmaj7 | Em | C | Am7 | Fmaj7 | Gsus4
+melody: r:1 g3:0.5 c4:0.5 e4:2- | e4:2.5 d4:0.5 e4:1 | e4:2 r:0.5 c4:0.5 d4:0.5 e4:0.5 | e4:2 b3:2 |
+        r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:2- | e4:1 g4:1 e4:1 c4:1 | e4:1.5 d4:0.5 c4:1 a3:1 | c4:2 d4:2 |
+
+hook: Mending Boots
+type: Verse
+tempo: 92-106
+feel: wry
+style: organicVibes
+substyle: indie-folk
+chords: C | Bb | F | C | C | Bb | F | G
+melody: r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:1 e4:0.5 c4:0.5 | d4:1.5 bb3:0.5 f4:2 | r:0.5 f4:0.5 e4:0.5 c4:0.5 a3:1 c4:1 | e4:3 r:1 |
+        r:1 e4:0.5 g4:0.5 g4:1 e4:0.5 d4:0.5 | f4:1 d4:1 bb3:2 | c4:0.5 a3:0.5 c4:1 f4:1.5 e4:0.5 | d4:1 b3:1 d4:2 |
+
+hook: Kettle Smoke Morning
+type: Verse
+tempo: 84-98
+feel: hushed
+style: organicVibes
+substyle: indie-folk
+leadin: yes
+chords: G | Am | D | Em | Am | D | Am | F | G
+melody: r:2.5 e4:0.5 d4:0.5 c4:0.5 | a3:1.5 b3:0.5 c4:1 e4:1 | f#4:1 e4:0.5 f#4:0.5 d4:2 | e4:1 d4:0.5 b3:2.5 |
+        r:1 c4:0.5 c4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 a3:0.5 d4:1 f#4:1 | e4:1 g4:1 e4:1.5 d4:0.5 | c4:1 a3:0.5 c4:0.5 f4:1.5 e4:0.5 | d4:4 |
+
+hook: Attic Ladder Rain
+type: Verse
+tempo: 80-94
+feel: tender
+style: organicVibes
+substyle: indie-folk
+chords: Csus2 | C | Gsus4 | G | Am | Fmaj7 | Csus2 | Gsus4
+melody: r:0.5 d4:0.5 d4:0.5 c4:0.5 d4:1 g4:1 | e4:3 r:1 | r:0.5 c4:0.5 c4:0.5 d4:0.5 g4:1.5 d4:0.5 | d4:1.5 b3:0.5 g3:2 |
+        r:1 a3:0.5 c4:0.5 e4:1 g4:0.5 e4:0.5 | e4:2 c4:1 a3:1 | r:0.5 g3:0.5 c4:0.5 d4:0.5 d4:1 c4:1 | d4:2 c4:2 |
+
+hook: Paper Boat Census
+type: Verse
+tempo: 96-110
+feel: restless
+style: organicVibes
+substyle: indie-folk
+chords: Am | C | G | D | F | C | Esus4 | E
+melody: r:0.5 a3:0.5 c4:0.5 e4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | e4:1.5 g4:0.5 g4:1 e4:1 | d4:0.5 b3:1 d4:0.5 g4:1 r:0.5 g4:0.5 | f#4:1 e4:0.5 d4:0.5 a3:2 |
+        r:0.5 c4:0.5 f4:1 a3:2 | r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:1.5 e4:0.5 | e4:1 d4:0.5 b3:0.5 a3:2 | g#3:2 b3:2 |
+
+hook: Linen and Flint
+type: Verse
+tempo: 70-84
+feel: modal
+style: organicVibes
+substyle: indie-folk
+chords: Am7 | D | Am7 | D | Fmaj7 | C | Dm7 | E
+melody: r:1 e4:1 e4:0.5 d4:0.5 e4:1 | f#4:1 e4:1 d4:2 | r:0.5 c4:0.5 e4:1 g4:1 e4:1 | a3:3 r:1 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 e4:2 | e4:1 d4:0.5 c4:0.5 g4:2 | f4:1.5 e4:0.5 d4:1 c4:1 | b3:4 |
+
+hook: Granary Whistle
+type: Verse
+tempo: 100-114
+feel: lilting
+style: organicVibes
+substyle: indie-folk
+leadin: yes
+chords: C | C | Bb | C | F | Am | Bb | F | Gsus4
+melody: r:3 c4:0.5 d4:0.5 | e4:1 e4:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 f4:0.5 f4:1 d4:1 | c4:0.5 e4:1 c4:0.5 g3:2 |
+        r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 e4:0.5 c4:0.5 | e4:2 r:1 e4:0.5 g4:0.5 | f4:1 d4:0.5 bb3:0.5 d4:1 f4:1 | c4:1 a3:1 c4:1 f4:1 | g4:2 d4:2 |
+
+hook: Gable Wind Rising
+type: Pre-chorus
+tempo: 88-102
+feel: building
+style: organicVibes
+substyle: indie-folk
+chords: F | G | Am | Bb | F | G | Dm | Gsus4 G
+melody: r:0.5 a4:0.5 a4:0.5 g4:0.5 f4:1 a4:1 | b4:1.5 a4:0.5 g4:2 | r:0.5 c5:0.5 c5:0.5 b4:0.5 a4:1 c5:1 | d5:1.5 c5:0.5 bb4:2 |
+        r:0.5 c5:0.5 d5:0.5 c5:0.5 a4:1 c5:1 | d5:1 b4:0.5 d5:0.5 d5:2 | d5:1 e5:0.5 d5:0.5 a4:1 d5:1 | c5:2 b4:2 |
+
+hook: Stove Ember Glow
+type: Pre-chorus
+tempo: 78-92
+feel: aching
+style: organicVibes
+substyle: indie-folk
+chords: Dm | Am | Bb | F | Dm | Am | Fmaj7 | Esus4 E
+melody: r:1 d4:0.5 f4:0.5 a4:1.5 f4:0.5 | e4:2 r:0.5 c4:0.5 e4:0.5 a4:0.5 | bb4:1 a4:0.5 f4:0.5 d4:2 | f4:1 a4:1 c5:2 |
+        r:0.5 d5:0.5 d5:0.5 c5:0.5 a4:1 d5:1 | e5:1.5 c5:0.5 c5:1 a4:1 | r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 c5:1 | b4:2 g#4:2 |
+
+hook: Stairwell Choir
+type: Pre-chorus
+tempo: 90-104
+feel: swelling
+style: organicVibes
+substyle: indie-folk
+leadin: yes
+chords: G | F | Am7 | Csus2 | F | Dm7 | Am7 | Fmaj7 | Gsus4
+melody: r:2 g4:0.5 a4:0.5 c5:1- | c5:2 a4:1 c5:1 | c5:3 b4:0.5 a4:0.5 | c5:2 d5:1 c5:1 | c5:1 a4:1 f4:2 |
+        r:0.5 c5:0.5 c5:0.5 d5:0.5 c5:1.5 a4:0.5 | c5:1 e5:1 c5:1.5 b4:0.5 | c5:1 e5:1 e5:1 c5:1 | c5:4 |
+
+hook: Rising Barley
+type: Pre-chorus
+tempo: 96-110
+feel: stirring
+style: organicVibes
+substyle: indie-folk
+chords: Bb | F | C | Bb | F | Am | Bb | G7
+melody: r:0.5 d4:0.5 f4:0.5 d4:0.5 f4:1 bb4:1 | a4:2 r:1 f4:0.5 g4:0.5 | g4:1 e4:0.5 g4:0.5 c5:2 | bb4:1.5 a4:0.5 f4:2 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 a4:1 | c5:1.5 b4:0.5 c5:1 e5:1 | d5:1 bb4:0.5 d5:0.5 d5:1 c5:1 | b4:1 d5:3 |
+
+hook: Tin Roof Psalter
+type: Pre-chorus
+tempo: 74-88
+feel: yearning
+style: organicVibes
+substyle: indie-folk
+chords: Am | Em | F | C | G | Am | F | E7
+melody: r:0.5 e4:0.5 a4:0.5 b4:0.5 c5:2 | b4:1 g4:0.5 e4:2.5 | f4:1.5 a4:0.5 a4:2 |
+        r:1 g4:0.5 a4:0.5 c5:1 d5:1 | d5:1.5 b4:0.5 d5:2 | e5:1 c5:0.5 a4:0.5 c5:1 e5:1 | c5:1 d5:0.5 c5:0.5 a4:1.5 c5:0.5 | b4:1 d5:3 |
+
+hook: Nettle Path Rising
+type: Pre-chorus
+tempo: 102-115
+feel: urgent
+style: organicVibes
+substyle: indie-folk
+chords: Am | G | F | C | Dm | Em | F | Gsus4
+melody: r:0.5 c4:0.5 e4:0.5 a4:0.5 a4:1 g4:0.5 e4:0.5 | g4:1.5 d4:0.5 d4:2 | r:0.5 c4:0.5 f4:0.5 a4:0.5 a4:1 c5:0.5 a4:0.5 | g4:2 e4:1 g4:1 |
+        r:0.5 a4:0.5 a4:0.5 c5:0.5 d5:1 c5:0.5 a4:0.5 | b4:1.5 g4:0.5 e5:2 | c5:1 a4:1 c5:1 d5:1 | d5:4 |
+
+hook: Valley of Lanterns
+type: Chorus
+tempo: 90-104
+feel: singalong
+style: organicVibes
+substyle: indie-folk
+chords: C | G | Am | F | C | G | F | C
+melody: e4:1 e4:0.5 f4:0.5 g4:1 g4:1 | g4:1.5 f4:0.5 d4:2 | a4:1 g4:0.5 f4:0.5 e4:1 c4:1 | f4:1 a4:1 c5:2 |
+        c5:1 d5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | d5:1.5 c5:0.5 b4:1 g4:1 | a4:1 c5:0.5 d5:0.5 c5:1 a4:1 | g4:2 e4:2 |
+
+hook: Every Rafter Rings
+type: Chorus
+tempo: 96-110
+feel: rousing
+style: organicVibes
+substyle: indie-folk
+leadin: yes
+chords: G | C | Bb | F | C | Am | Bb | F | C
+melody: r:3 g4:0.5 a4:0.5 | c5:1.5 d5:0.5 c5:1 g4:1 | bb4:1 a4:0.5 bb4:0.5 d5:2 | c5:1 a4:1 f4:1 a4:1 | g4:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 e5:1.5 d5:0.5 | d5:1.5 c5:0.5 bb4:2 | a4:1 c5:1 c5:1.5 a4:0.5 | g4:4 |
+
+hook: Harbour Hymn
+type: Chorus
+tempo: 80-94
+feel: communal
+style: organicVibes
+substyle: indie-folk
+chords: Am | D | F | C | Am | D | Fmaj7 Gsus4 | Am
+melody: a4:1 a4:0.5 b4:0.5 c5:1 b4:0.5 a4:0.5 | a4:2 f#4:1 a4:1 | c5:1 c5:0.5 d5:0.5 c5:1 a4:1 | g4:3 r:1 |
+        r:0.5 c5:0.5 d5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | d5:1.5 c5:0.5 a4:2 | c5:1 a4:1 d5:1 c5:1 | a4:4 |
+
+hook: Hands Across Hollow
+type: Chorus
+tempo: 84-98
+feel: anthemic
+style: organicVibes
+substyle: indie-folk
+chords: C | Em | C | G | Am7 | Em | Fmaj7 | C
+melody: g4:1 a4:0.5 g4:0.5 g4:1.5 e4:0.5 | g4:2 b4:1 g4:1 | g4:1 a4:1 g4:1 e4:1 | d4:3 r:1 |
+        e5:1.5 d5:0.5 c5:1 e5:1 | e5:1 d5:0.5 b4:0.5 b4:1 g4:1 | a4:1 c5:1 e5:1 c5:1 | c5:0.5 b4:0.5 g4:3 |
+
+hook: Kingfisher Dawn
+type: Chorus
+tempo: 100-114
+feel: bright
+style: organicVibes
+substyle: indie-folk
+leadin: yes
+chords: G | F | C | G | Am | F | C | Gsus4 | C
+melody: r:2.5 e4:0.5 f4:0.5 g4:0.5 | a4:1.5 g4:0.5 a4:1 c5:1 | c5:1 g4:1 e4:2 | d4:1 g4:1 b4:2 |
+        r:0.5 a4:0.5 b4:0.5 c5:0.5 c5:1 b4:0.5 a4:0.5 | c5:1 d5:1 c5:1 a4:1 | e5:1.5 d5:0.5 c5:1 g4:1 | d5:1 c5:0.5 d5:0.5 d5:1 g4:1 | e4:4 |
+
+hook: Brambles and Bells
+type: Chorus
+tempo: 72-86
+feel: gentle
+style: organicVibes
+substyle: indie-folk
+chords: Csus2 | C | Fmaj7 | F | Am7 | Gsus4 | Fmaj7 | Csus2
+melody: c4:0.5 d4:0.5 d4:1 g4:1.5 d4:0.5 | e4:3 r:1 | r:0.5 e4:0.5 f4:0.5 g4:0.5 a4:1.5 g4:0.5 | f4:2 c4:2 |
+        r:0.5 g4:0.5 a4:0.5 c5:0.5 e5:1.5 d5:0.5 | d5:1 c5:1 d5:2 | e5:1.5 c5:0.5 a4:1 c5:1 | g4:2 d4:2 |
+
+hook: Oars in Unison
+type: Chorus
+tempo: 104-115
+feel: driving
+style: organicVibes
+substyle: indie-folk
+chords: Am7 | D | C | G | Am7 | D | F | G
+melody: r:0.5 e4:0.5 g4:0.5 a4:0.5 a4:1 g4:0.5 e4:0.5 | f#4:1.5 a4:0.5 a4:2 | r:0.5 g4:0.5 a4:0.5 b4:0.5 c5:1 b4:0.5 g4:0.5 | g4:3 r:1 |
+        r:1 c5:0.5 d5:0.5 e5:1.5 c5:0.5 | d5:1.5 e5:0.5 d5:1 a4:1 | c5:1 a4:0.5 c5:0.5 c5:1 a4:1 | b4:4 |
+
+hook: Slow Undertow
+type: Bridge
+tempo: 76-90
+feel: reflective
+style: organicVibes
+substyle: indie-folk
+chords: F | G | Em | Am | Dm7 | Em | F | G
+melody: r:1 a4:1 c5:1 a4:1 | b4:2 g4:2 | r:1 g4:1 b4:1 g4:1 | a4:2 e4:2 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:1.5 a4:0.5 | b4:1 g4:0.5 b4:0.5 e5:2 | c5:1.5 a4:0.5 f4:1 a4:1 | b4:2 d5:2 |
+
+hook: Cellar Door Minor
+type: Bridge
+tempo: 86-100
+feel: shadowed
+style: organicVibes
+substyle: indie-folk
+chords: Dm | Bb | F | C | Dm | Bb | Gsus4 | G
+melody: d4:1.5 e4:0.5 f4:1 a4:1 | bb4:2.5 a4:0.5 f4:1 | c5:1 a4:1 f4:2 | e4:3 r:1 |
+        r:0.5 a4:0.5 d5:0.5 c5:0.5 a4:1.5 f4:0.5 | d5:1 c5:0.5 bb4:0.5 bb4:1 f4:1 | g4:1 c5:1 d5:2 | b4:4 |
+
+hook: Ashgrove Interlude
+type: Bridge
+tempo: 70-84
+feel: suspended
+style: organicVibes
+substyle: indie-folk
+leadin: yes
+chords: E | Fmaj7 | D | Dm7 | Am | Fmaj7 | D | Bb | E
+melody: r:3 e4:0.5 g4:0.5 | a4:4- | a4:2 f#4:1 a4:1- | a4:3 c5:1 | a4:1.5 b4:0.5 c5:2 |
+        r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:2 | d5:1.5 a4:0.5 f#4:2 | f4:1 bb4:1 d5:2 | b4:2 g#4:2 |
+
+hook: Driftwood Reprise
+type: Bridge
+tempo: 94-108
+feel: airy
+style: organicVibes
+substyle: indie-folk
+chords: Bb | C | Bb | C | Am | Em | F | G7
+melody: r:1 f4:0.5 g4:0.5 bb4:1.5 a4:0.5 | g4:2 e4:1 c4:1 | r:1 bb4:0.5 c5:0.5 d5:1.5 c5:0.5 | c5:3 r:1 |
+        r:0.5 e5:0.5 d5:0.5 c5:0.5 c5:1 a4:1 | b4:1.5 g4:0.5 e4:2 | f4:1 a4:1 c5:1 a4:1 | b4:1.5 a4:0.5 g4:2 |

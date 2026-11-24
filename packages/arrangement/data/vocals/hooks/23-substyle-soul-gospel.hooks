@@ -1,0 +1,263 @@
+# Ballad / soul-gospel: 25 churchy soul-pop hooks (8 verses, 6 pre-choruses, 7 choruses, 4 bridges).
+# Plagal F-C and F-Fm-C moves, passing dominant sevenths (C7, E7, A7), held notes made for melisma.
+# Key of C major / A minor, sung pitch (C4 = middle C). Verses G3-G4, other sections G3-E5.
+
+hook: Porch Light Sermon
+type: Verse
+tempo: 68-82
+feel: weary
+style: ballad
+substyle: soul-gospel
+chords: C | F | C | C7 | F | Fm | C | G7
+melody: r:0.5 g3:0.5 c4:0.5 e4:0.5- e4:1 d4:0.5 c4:0.5 | c4:1.5 a3:0.5 c4:1 f4:1 | e4:2 r:1 g3:0.5 c4:0.5 | d4:0.5 eb4:0.5 e4:1 bb3:2 |
+        a3:1.5 c4:0.5 f4:1 e4:0.5 f4:0.5- | f4:2 ab3:1 c4:1 | e4:1.5 d4:0.5 c4:1 d4:1 | d4:1 b3:1 g3:2 |
+
+hook: Kitchen Table Hymn
+type: Verse
+tempo: 62-76
+feel: humble
+style: ballad
+substyle: soul-gospel
+leadin: yes
+chords: G | C | Am | F | C | E7 | Am | Dm7 | G7
+melody: r:2.5 g3:0.5 a3:0.5 c4:0.5 |
+        e4:1.5 d4:0.5 c4:0.5 d4:0.5 e4:1 | e4:0.5 g4:0.5- g4:1 e4:1 c4:1 | a3:2.5 r:0.5 c4:0.5 d4:0.5 | e4:1 g4:1 e4:0.5 d4:0.5 c4:1 |
+        b3:1.5 g#3:0.5 b3:1 d4:1 | c4:2 r:1 e4:0.5 d4:0.5 | f4:1.5 e4:0.5 d4:1 c4:1 | d4:1.5 b3:0.5 d4:2 |
+
+hook: Sunday Shoes
+type: Verse
+tempo: 70-84
+feel: wry
+style: ballad
+substyle: soul-gospel
+chords: Am | Am7 | Dm7 | Am | F | E7 | Am | E7
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.5- c4:1 a3:1 | c4:0.5 d4:0.5 e4:1 g4:1.5 e4:0.5 | d4:2 r:1 a3:0.5 c4:0.5 | e4:1.5 c4:0.5 a3:2 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5- f4:1 e4:0.5 c4:0.5 | d4:1.5 b3:0.5 g#3:2 | r:0.5 c4:0.5 e4:0.5 g4:0.5- g4:1 e4:0.5 c4:0.5 | b3:4 |
+
+hook: Gravel Road Grace
+type: Verse
+tempo: 64-78
+feel: patient
+style: ballad
+substyle: soul-gospel
+chords: C | C7 | F | Fm | C | Am7 | Dm7 | G7
+melody: c4:1 e4:0.5 g4:0.5- g4:1 e4:0.5 c4:0.5 | bb3:1.5 c4:0.5 d4:1 c4:1 | r:0.5 a3:0.5 c4:0.5 f4:0.5- f4:2 | ab3:1.5 g3:0.5 ab3:0.5 c4:0.5- c4:1 |
+        e4:1 d4:0.5 c4:0.5 g4:2 | e4:1.5 c4:0.5 a3:1 c4:1 | d4:1 f4:1 e4:1 d4:1 | d4:3 r:1 |
+
+hook: Low Choir Hum
+type: Verse
+tempo: 60-72
+feel: hushed
+style: ballad
+substyle: soul-gospel
+chords: F | C | F | C | Am | E7 | F | G
+melody: r:1 c4:0.5 a3:0.5 c4:1 f4:1 | e4:2.5 d4:0.5 c4:1 | r:0.5 c4:0.5 f4:0.5 g4:0.5- g4:1 f4:0.5 d4:0.5 | e4:3 r:1 |
+        r:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 a3:1 | b3:1.5 d4:0.5 e4:2 | c4:1 a3:1 c4:0.5 d4:0.5 f4:1 | d4:4 |
+
+hook: Borrowed Overcoat
+type: Verse
+tempo: 72-86
+feel: gritty
+style: ballad
+substyle: soul-gospel
+chords: Am | D7 | F | E7 | Am | D7 | F | E
+melody: a3:0.5 c4:0.5 e4:0.5 a3:0.5- a3:1 r:0.5 c4:0.5 | d4:1 f#4:0.5 e4:0.5 d4:1 c4:1 | r:0.5 c4:0.5 d4:0.5 f4:0.5- f4:1 e4:0.5 c4:0.5 | d4:1.5 b3:0.5 g#3:2 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.5- e4:1 c4:0.5 d4:0.5 | c4:1.5 a3:0.5 d4:1 f#4:1 | g4:1 f4:0.5 e4:0.5 c4:2 | b3:1.5 g#3:0.5 b3:2 |
+
+hook: Pew Number Nine
+type: Verse
+tempo: 66-80
+feel: churchy
+style: ballad
+substyle: soul-gospel
+chords: C F | C | F C | G | C F | C A7 | Dm7 G7 | C
+melody: g3:0.5 c4:0.5 e4:1 f4:1 c4:1 | e4:1.5 d4:0.5 c4:2 | r:0.5 a3:0.5 c4:0.5 f4:0.5- f4:1 e4:1 | d4:3 r:1 |
+        r:0.5 g3:0.5 c4:0.5 e4:1 f4:1.5 | e4:1.5 d4:0.5 c#4:1 e4:1 | f4:1 d4:1 f4:0.5 e4:0.5 d4:1 | c4:2 r:2 |
+
+hook: Stained Glass Ache
+type: Verse
+tempo: 60-74
+feel: aching
+style: ballad
+substyle: soul-gospel
+chords: Am7 | Fmaj7 | C | E7 | Am7 | Dm7 | Fm | C
+melody: r:1 e4:0.5 g4:0.5- g4:1 e4:0.5 d4:0.5 | c4:2 a3:1 c4:1 | r:0.5 g3:0.5 c4:0.5 e4:0.5- e4:1.5 d4:0.5 | d4:1 b3:1 g#3:2 |
+        r:0.5 c4:0.5 e4:0.5 g4:0.5- g4:1.5 e4:0.5 | f4:1.5 e4:0.5 d4:1 c4:1 | c4:1.5 ab3:0.5 c4:1 f4:1 | e4:4 |
+
+hook: Tabernacle Steps
+type: Pre-chorus
+tempo: 66-80
+feel: building
+style: ballad
+substyle: soul-gospel
+chords: F | G | Em7 | Am | Dm7 | Em7 | F | G
+melody: c4:0.5 d4:0.5 f4:1 a4:1 g4:1 | g4:1.5 f4:0.5 d4:2 | r:0.5 d4:0.5 e4:0.5 g4:0.5- g4:1 b4:1 | c5:1.5 b4:0.5 a4:2 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5- d5:1 c5:1 | b4:1 g4:1 b4:1 d5:1 | c5:1.5 d5:0.5 c5:1 a4:1 | b4:1 d5:3 |
+
+hook: Lantern Hill Climb
+type: Pre-chorus
+tempo: 70-84
+feel: yearning
+style: ballad
+substyle: soul-gospel
+chords: Am | F | C | G | Am | F | Dm7 | Gsus4 G
+melody: r:0.5 e4:0.5 a4:0.5 g4:0.5- g4:1 e4:1 | f4:1.5 e4:0.5 c4:2 | r:0.5 e4:0.5 g4:0.5 c5:0.5- c5:1 b4:0.5 a4:0.5 | b4:2 r:1 g4:0.5 a4:0.5 |
+        c5:1.5 b4:0.5 a4:1 c5:1 | c5:0.5 d5:0.5 c5:1 a4:1 f4:1 | r:0.5 f4:0.5 a4:0.5 d5:0.5- d5:1 c5:1 | c5:2 b4:2 |
+
+hook: Altar Call Rising
+type: Pre-chorus
+tempo: 60-74
+feel: fervent
+style: ballad
+substyle: soul-gospel
+leadin: yes
+chords: G7 | C | C7 | F | Fm | C | Am7 | Dm7 | G7
+melody: r:3 c4:0.5 d4:0.5 |
+        e4:1.5 g4:0.5- g4:1 e4:1 | bb4:1 a4:0.5 g4:0.5 e4:2 | f4:1 a4:1 c5:2 | c5:1.5 ab4:0.5 f4:2 |
+        r:0.5 e4:0.5 g4:0.5 c5:0.5- c5:1 d5:1 | e5:1.5 d5:0.5 c5:2 | r:0.5 a4:0.5 c5:0.5 d5:0.5- d5:1 c5:1 | b4:1.5 d5:2.5 |
+
+hook: Second Wind Coming
+type: Pre-chorus
+tempo: 74-88
+feel: urgent
+style: ballad
+substyle: soul-gospel
+chords: Dm7 | G | Em7 | A7 | Dm7 | G | F | G7
+melody: r:0.5 d4:0.5 f4:0.5 a4:0.5- a4:1 f4:1 | g4:1.5 a4:0.5 b4:1 g4:1 | r:0.5 e4:0.5 g4:0.5 b4:0.5- b4:1 a4:0.5 g4:0.5 | a4:1.5 g4:0.5 c#5:2 |
+        d5:2 c5:1 a4:1 | b4:1.5 d5:0.5 b4:1 g4:1 | r:0.5 a4:0.5 c5:0.5 d5:0.5- d5:1 c5:1 | d5:4 |
+
+hook: Rolled Up Sleeves
+type: Pre-chorus
+tempo: 64-78
+feel: lifting
+style: ballad
+substyle: soul-gospel
+chords: C | E7 | Am | C7 | F | Fm | C | Gsus4 G
+melody: c4:1 e4:0.5 g4:0.5- g4:1 e4:1 | g#4:1.5 e4:0.5 d4:2 | r:0.5 c4:0.5 e4:0.5 a4:0.5- a4:1.5 g4:0.5 | e4:1 g4:1 bb4:2 |
+        a4:1.5 c5:0.5- c5:1 a4:1 | ab4:1.5 g4:0.5 ab4:1 c5:1 | r:0.5 c5:0.5 d5:0.5 e5:0.5- e5:1 d5:1 | c5:1.5 b4:0.5 d5:2 |
+
+hook: Wading Deeper
+type: Pre-chorus
+tempo: 76-90
+feel: stirring
+style: ballad
+substyle: soul-gospel
+leadin: yes
+chords: E7 | Am | F | C | G | Am | F | Dm7 | E7
+melody: r:2 e4:0.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:1.5 b4:0.5 a4:2 | r:0.5 a4:0.5 c5:0.5 a4:0.5- a4:1 f4:1 | g4:2.5 e4:0.5 g4:1 | b4:1.5 a4:0.5 g4:2 |
+        r:0.5 e4:0.5 a4:0.5 c5:0.5- c5:1 b4:0.5 c5:0.5 | c5:1.5 d5:0.5 c5:1 a4:1 | d5:1.5 e5:0.5 d5:1 c5:1 | b4:4 |
+
+hook: Main Street Bells
+type: Chorus
+tempo: 68-82
+feel: jubilant
+style: ballad
+substyle: soul-gospel
+chords: C | F | C | G7 | Am | Fmaj7 | C G | C
+melody: e4:1 g4:1 g4:0.5 a4:0.5 g4:1 | a4:2 c5:1 a4:1 | g4:1.5 e4:0.5 g4:2 | r:0.5 f4:0.5 g4:0.5 a4:0.5 b4:1 d5:1 |
+        c5:2 c5:0.5 d5:0.5 e5:1 | e5:3 d5:0.5 c5:0.5 | c5:1.5 d5:0.5 d5:1 b4:1 | c5:4 |
+
+hook: Wide Open Door
+type: Chorus
+tempo: 62-76
+feel: soaring
+style: ballad
+substyle: soul-gospel
+chords: Am | F | C | G | F | C7 | F Fm | C
+melody: r:0.5 c4:0.5 e4:0.5 a4:0.5- a4:1.5 g4:0.5 | a4:1 c5:1 a4:1 f4:1 | g4:2 e4:1 g4:1 | r:0.5 b4:0.5 c5:0.5 d5:0.5- d5:2 |
+        c5:1 c5:0.5 d5:0.5- d5:1 c5:1 | e5:3 d5:0.5 c5:0.5 | c5:1.5 a4:0.5 ab4:2 | g4:4 |
+
+hook: Unbowed Heart
+type: Chorus
+tempo: 72-86
+feel: defiant
+style: ballad
+substyle: soul-gospel
+chords: Am | Dm7 | G | C | F | Dm7 | E7 | Am
+melody: a4:1.5 g4:0.5 e4:2 | r:0.5 d4:0.5 f4:0.5 a4:0.5- a4:1 c5:1 | b4:2 g4:1 a4:1 | g4:3 r:1 |
+        a4:1 c5:1 c5:0.5 d5:0.5 c5:1 | d5:1.5 e5:0.5- e5:2 | d5:1.5 b4:0.5 g#4:2 | a4:4 |
+
+hook: Tambourine Sunday
+type: Chorus
+tempo: 80-94
+feel: joyful
+style: ballad
+substyle: soul-gospel
+leadin: yes
+chords: G7 | C | C7 | F | Fm | C | A7 | Dm7 G7 | C
+melody: r:2 g4:0.5 a4:0.5 b4:0.5 g4:0.5 |
+        c5:1.5 g4:0.5- g4:1 e4:1 | bb4:1.5 g4:0.5 e4:1 g4:1 | a4:2 r:0.5 a4:0.5 c5:0.5 d5:0.5 | c5:2 ab4:1 c5:1 |
+        r:0.5 c5:0.5 d5:0.5 e5:0.5- e5:2 | e5:1.5 d5:0.5 c#5:2 | d5:1.5 c5:0.5 b4:1 d5:1 | c5:3 r:1 |
+
+hook: Mercy Like Rain
+type: Chorus
+tempo: 60-72
+feel: tender
+style: ballad
+substyle: soul-gospel
+chords: F | C | Dm7 | Am7 | Bb | C | Gsus4 G | C
+melody: c4:1 f4:1 a4:1.5 g4:0.5 | g4:2 e4:1 c4:1 | r:0.5 d4:0.5 f4:0.5 a4:0.5- a4:1 c5:1 | c5:1.5 b4:0.5 g4:2 |
+        r:0.5 bb4:0.5 c5:0.5 d5:0.5- d5:1.5 c5:0.5 | c5:0.5 d5:0.5 e5:3 | d5:1.5 c5:0.5 b4:1 d5:1 | c5:3 r:1 |
+
+hook: Homecoming Glory
+type: Chorus
+tempo: 70-84
+feel: triumphant
+style: ballad
+substyle: soul-gospel
+chords: C | Am7 | Dm7 | G7 | C | E7 | F Fm | C
+melody: r:1 e4:0.5 g4:0.5- g4:1 c5:1 | c5:1.5 b4:0.5 a4:1 g4:1 | f4:1 a4:0.5 c5:0.5- c5:1 a4:1 | b4:2.5 r:0.5 b4:0.5 c5:0.5 |
+        c5:1 d5:0.5 e5:0.5- e5:2 | e5:1.5 d5:0.5 b4:1 g#4:1 | a4:1.5 c5:0.5 ab4:2 | g4:1.5 e4:2.5 |
+
+hook: Sunrise Testimony
+type: Chorus
+tempo: 66-80
+feel: hopeful
+style: ballad
+substyle: soul-gospel
+chords: F | G | Em7 | Am | Dm7 | G | C | C
+melody: r:0.5 c5:0.5 a4:0.5 c5:0.5- c5:1 a4:0.5 f4:0.5 | g4:2 r:0.5 g4:0.5 a4:0.5 b4:0.5 | b4:1.5 a4:0.5 g4:1 e4:1 | a4:2 r:0.5 a4:0.5 b4:0.5 c5:0.5 |
+        d5:1.5 c5:0.5 d5:1 e5:1 | d5:0.5 e5:0.5- e5:3 | e5:1 d5:1 c5:1.5 g4:0.5 | g4:1.5 a4:0.5 g4:2 |
+
+hook: Willow Prayer
+type: Bridge
+tempo: 60-74
+feel: pleading
+style: ballad
+substyle: soul-gospel
+chords: Fm | C | Fm | C | Dm7 | Em7 | F | G7
+melody: c5:1.5 ab4:0.5 f4:2 | g4:1 e4:1 r:1 e4:0.5 f4:0.5 | ab4:1.5 bb4:0.5 c5:2 | c5:1 g4:1 e4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5- a4:1 c5:1 | b4:1.5 g4:0.5 b4:1 d5:1 | c5:2 a4:1 c5:1 | d5:4 |
+
+hook: Midweek Trouble
+type: Bridge
+tempo: 72-86
+feel: restless
+style: ballad
+substyle: soul-gospel
+chords: Dm7 | Am | Dm7 | Am | Bb | F | E7 | E7
+melody: r:0.5 a4:0.5 a4:0.5 f4:0.5- f4:1 d4:1 | e4:1.5 c4:0.5 e4:1 a4:1 | r:0.5 c5:0.5 c5:0.5 a4:0.5- a4:1 f4:0.5 a4:0.5 | c5:3 r:1 |
+        d5:1.5 c5:0.5 bb4:2 | a4:1.5 g4:0.5 f4:1 a4:1 | g#4:2 b4:1 d5:1 | e5:2.5 d5:0.5 b4:1 |
+
+hook: Candle Hour
+type: Bridge
+tempo: 64-78
+feel: hushed
+style: ballad
+substyle: soul-gospel
+chords: Am7 | Em7 | Fmaj7 | C | Am7 | Em7 | Fmaj7 | G
+melody: r:2 e4:1 g4:1 | g4:2 r:0.5 e4:0.5 d4:0.5 e4:0.5 | e4:3 r:1 | r:1 g4:0.5 e4:0.5 c4:2 |
+        r:2 e4:1 a4:1 | b4:2 r:0.5 a4:0.5 g4:0.5 b4:0.5 | c5:1.5 a4:0.5 c5:1 d5:1 | d5:2 b4:2 |
+
+hook: Turnaround Fire
+type: Bridge
+tempo: 78-92
+feel: rousing
+style: ballad
+substyle: soul-gospel
+leadin: yes
+chords: A7 | Dm7 | G7 | C | A7 | Dm7 | G7 | C E7 | F G
+melody: r:2 e4:0.5 g4:0.5 a4:0.5 c#5:0.5 |
+        d5:1.5 c5:0.5 a4:1 f4:1 | g4:1 b4:0.5 d5:0.5- d5:1 b4:1 | c5:3 r:1 | r:0.5 e4:0.5 a4:0.5 c#5:0.5- c#5:1 e5:1 |
+        d5:1.5 e5:0.5- e5:1 d5:1 | b4:1.5 a4:0.5 g4:1 f4:1 | e4:1.5 g4:0.5 g#4:1 b4:1 | c5:2 d5:2 |

@@ -1,0 +1,321 @@
+# Reggae-pop / island-pop hooks (style: latin, substyle: reggae-pop): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Laid-back phrases that start after the beat, offbeat (skank) accents, space on beat 1, singalong choruses built
+# on repeated notes and small steps over simple loops. Sung pitch, C4 = middle C.
+
+# ---- Verses ----
+
+hook: Tin Roof Morning
+type: Verse
+tempo: 76-90
+feel: lazy
+style: latin
+substyle: reggae-pop
+chords: C | F | G | F | C | F | G | C
+melody: r:1.5 e4:0.5 e4:0.5 g4:0.5 e4:0.5 d4:0.5 | c4:1 r:0.5 a3:0.5 c4:0.5 f4:0.5 e4:0.5 c4:0.5 |
+        r:1.5 d4:0.5 d4:0.5 b3:0.5 d4:1- | d4:0.5 c4:1.5 r:2 |
+        r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:0.75 e4:0.75 d4:0.5 | c4:0.5 a3:0.5 c4:0.5 f4:0.5- f4:1 r:1 |
+        r:1 b3:0.5 d4:0.5 g4:0.75 f4:0.75 d4:0.5 | r:0.5 e4:1 d4:0.5 e4:2 |
+
+hook: Driftwood Radio
+type: Verse
+tempo: 72-86
+feel: mellow
+style: latin
+substyle: reggae-pop
+chords: Am | G | F | G | Am | G | F | G
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1 d4:0.5 c4:0.5 | d4:0.75 b3:0.75 g3:0.5 r:2 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:0.5 a3:0.5 | b3:1.5 d4:0.5 g4:1 r:1 |
+        r:1 g4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:0.5 d4:0.5 | d4:1 b3:0.5 g3:0.5- g3:1 r:1 |
+        r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:0.75 d4:0.75 e4:0.5- | e4:0.5 d4:1.5 r:0.5 b3:0.5 d4:1 |
+
+hook: Sunburnt Postcard
+type: Verse
+tempo: 80-94
+feel: sunny
+style: latin
+substyle: reggae-pop
+leadin: yes
+chords: G | C | F | G | F | C | F | G7 | C
+melody: r:2.5 g3:0.5 b3:0.5 d4:0.5 |
+        r:0.5 e4:0.5 e4:0.5 g4:0.5 e4:1 r:1 | r:0.5 f4:0.5 f4:0.5 a3:0.5 c4:0.75 d4:0.75 c4:0.5 |
+        b3:1 r:0.5 g3:0.5 b3:0.5 d4:0.5 g4:1 | f4:1.5 e4:0.5 c4:1 r:1 |
+        r:1 g4:0.5 e4:0.5 e4:0.75 d4:0.75 c4:0.5 | d4:1 c4:0.5 a3:0.5 r:2 |
+        r:0.5 b3:0.5 d4:0.5 f4:0.5 f4:0.75 e4:0.75 d4:0.5 | r:0.5 e4:0.5 d4:1 c4:2 |
+
+hook: Hammock Theory
+type: Verse
+tempo: 84-98
+feel: easy
+style: latin
+substyle: reggae-pop
+chords: C | Am | F | G | C | Am | Dm G | C
+melody: r:0.5 c4:0.5 e4:0.5 g4:0.5- g4:0.5 e4:0.5 d4:0.5 c4:0.5 | c4:0.75 a3:0.75 c4:0.5 e4:1 r:1 |
+        r:1.5 c4:0.5 f4:0.5 f4:0.5 g4:0.5 f4:0.5 | d4:1.5 b3:0.5 r:2 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.5 e4:0.75 d4:0.75 c4:0.5 | a3:1 r:1 c4:0.5 a3:0.5 c4:0.5 e4:0.5 |
+        d4:0.75 f4:0.75 a3:0.5 b3:0.75 d4:0.75 g4:0.5- | g4:0.5 e4:1 d4:0.5 c4:0.5 d4:0.5 e4:1 |
+
+hook: Bus Stop Shade
+type: Verse
+tempo: 70-84
+feel: dreamy
+style: latin
+substyle: reggae-pop
+chords: Am | Am | G | G | F | F | G | G
+melody: r:1.5 a3:0.5 c4:0.5 e4:0.5 e4:0.5 d4:0.5 | c4:0.75 a3:0.75 g3:0.5- g3:1 r:1 |
+        r:1.5 b3:0.5 d4:0.5 d4:0.5 g4:0.5 f4:0.5 | d4:0.5 b3:1 r:2.5 |
+        r:0.5 a3:0.5 c4:0.5 f4:1 e4:0.5 f4:0.5 c4:0.5 | a3:1 c4:0.5 d4:0.5 c4:1 r:1 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 d4:0.75 b3:0.75 g3:0.5 | a3:1 b3:1 d4:2 |
+
+hook: Lime and Thunder
+type: Verse
+tempo: 86-100
+feel: cheeky
+style: latin
+substyle: reggae-pop
+chords: C | F | G | F | C | F | G | G
+melody: r:0.75 g3:0.25 c4:0.5 c4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | c4:1 a3:0.5 c4:0.5 r:2 |
+        r:0.75 g3:0.25 b3:0.5 d4:0.5 r:0.5 g4:0.5 f4:0.5 d4:0.5 | f4:1 c4:0.5 a3:0.5 r:2 |
+        r:0.5 e4:0.5 e4:0.5 g4:0.5 g4:0.75 e4:0.75 c4:0.5 | d4:0.5 c4:0.5 a3:1 c4:0.75 d4:0.75 f4:0.5 |
+        g4:1.5 f4:0.5 d4:1 b3:1 | r:0.5 c4:0.5 b3:0.5 a3:0.5 b3:2 |
+
+hook: Low Tide Gossip
+type: Verse
+tempo: 74-88
+feel: hushed
+style: latin
+substyle: reggae-pop
+leadin: yes
+chords: G | Am | Em | F | G | Am | Em | F | G
+melody: r:3 c4:0.5 d4:0.5 |
+        e4:1.5 c4:0.5 r:0.5 a3:0.5 c4:0.5 d4:0.5 | e4:0.75 d4:0.75 b3:0.5 g3:1 r:1 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5 f4:0.5 e4:0.5 f4:0.5 g4:0.5 | g4:0.5 d4:1.5 r:2 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.5 c4:0.75 d4:0.75 e4:0.5 | g4:1 e4:0.5 b3:0.5- b3:1 r:1 |
+        r:1 a3:0.5 c4:0.5 f4:0.75 e4:0.75 c4:0.5 | d4:0.5 b3:1 c4:0.5 d4:2 |
+
+hook: Shade Under Palms
+type: Verse
+tempo: 78-92
+feel: wistful
+style: latin
+substyle: reggae-pop
+chords: F | G | C | Am | F | G | Em | Am
+melody: r:1.5 c4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:0.5 | d4:1 b3:0.5 g3:0.5 r:2 |
+        r:0.5 e4:0.5 g4:0.5 g4:0.5 e4:0.75 d4:0.75 c4:0.5 | a3:2 r:1 c4:0.5 d4:0.5 |
+        e4:0.75 f4:0.75 c4:0.5 a3:1 r:1 | r:0.5 b3:0.5 d4:0.5 g4:0.5- g4:1 f4:0.5 d4:0.5 |
+        e4:1 r:0.5 b3:0.5 g4:0.75 e4:0.75 d4:0.5 | c4:1 d4:1 e4:2 |
+
+# ---- Pre-choruses ----
+
+hook: Kettle on the Boil
+type: Pre-chorus
+tempo: 80-94
+feel: building
+style: latin
+substyle: reggae-pop
+chords: F | G | Em | Am | F | G | Dm | Gsus4 G
+melody: r:0.5 c4:0.5 c4:0.5 c4:0.5 f4:1 e4:0.5 c4:0.5 | d4:1 r:0.5 b3:0.5 d4:0.5 g4:0.5- g4:1 |
+        r:0.5 e4:0.5 e4:0.5 e4:0.5 g4:1 f4:0.5 e4:0.5 | e4:1 c4:0.5 d4:0.5 e4:1 r:1 |
+        f4:0.75 a4:0.75 f4:0.5 a4:1 g4:0.5 f4:0.5 | g4:1 r:0.5 d4:0.5 g4:0.5 b4:0.5- b4:1 |
+        r:0.5 a4:0.5 a4:0.5 c5:0.5 d5:1 c5:0.5 a4:0.5 | c5:2 b4:2 |
+
+hook: Cloudbreak Steps
+type: Pre-chorus
+tempo: 72-86
+feel: tense
+style: latin
+substyle: reggae-pop
+chords: Am | G | F | G | Am | G | Dm | E7
+melody: r:1 a3:0.5 c4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 r:1.5 d4:0.5 |
+        r:0.5 c4:0.5 f4:0.5 f4:0.5 a4:1 g4:0.5 f4:0.5 | g4:1 r:0.5 d4:0.5 g4:0.5 a4:0.5 b4:1 |
+        c5:1.5 b4:0.5 a4:1 e4:1 | r:0.5 d5:0.5 d5:0.5 b4:0.5 d5:1 c5:0.5 b4:0.5 |
+        a4:1 f4:0.5 a4:0.5 d5:1 c5:0.5 b4:0.5 | r:0.5 g#4:0.5 b4:3 |
+
+hook: Harbour Lights Rising
+type: Pre-chorus
+tempo: 84-98
+feel: rising
+style: latin
+substyle: reggae-pop
+chords: C | Em | F | G | C | Em | F | G7
+melody: e4:0.5 g4:1 e4:0.5 r:0.5 c4:0.5 e4:0.5 g4:0.5 | g4:1.5 e4:0.5 b3:1 r:1 |
+        r:0.5 c4:0.5 f4:0.5 g4:0.5 a4:1 g4:0.5 f4:0.5 | g4:2 r:0.5 d4:0.5 g4:0.5 a4:0.5 |
+        c5:2 r:0.5 g4:0.5 c5:0.5 d5:0.5 | e5:1 d5:0.5 b4:0.5 g4:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 a4:0.5 c5:0.5 | r:0.5 b4:0.5 d5:3 |
+
+hook: Gathering Swell
+type: Pre-chorus
+tempo: 76-90
+feel: restless
+style: latin
+substyle: reggae-pop
+chords: F | C | G | Am | F | C | Dm | G
+melody: r:1.5 a3:0.5 c4:0.5 a3:0.5 c4:1 | e4:0.75 d4:0.75 c4:0.5 g3:1 r:1 |
+        r:1.5 b3:0.5 d4:0.5 b3:0.5 d4:1 | e4:1.5 g4:0.5 e4:1 r:1 |
+        r:0.5 f4:0.5 a4:0.5 a4:0.5 a4:0.75 g4:0.75 f4:0.5 | g4:1 e4:0.5 g4:0.5 c5:1 r:1 |
+        r:0.5 d5:0.5 d5:0.5 c5:0.5 a4:0.75 c5:0.75 d5:0.5 | d5:0.5 c5:0.5 b4:1 d5:2 |
+
+hook: Red Clay Heat
+type: Pre-chorus
+tempo: 70-84
+feel: smoldering
+style: latin
+substyle: reggae-pop
+chords: Am | F | Dm | E7 | Am | F | Dm | E7
+melody: r:0.5 e4:0.5 a4:0.5 e4:0.5 c4:1 r:1 | r:0.5 c4:0.5 f4:0.5 a4:0.5- a4:0.75 g4:0.75 f4:0.5 |
+        f4:1.5 e4:0.5 d4:1 r:1 | r:0.5 e4:0.5 g#4:0.5 b4:0.5 d5:1 b4:1 |
+        c5:1.5 b4:0.5 a4:0.5 e4:0.5 a4:0.5 b4:0.5 | c5:0.75 a4:0.75 f4:0.5 r:0.5 a4:0.5 c5:0.5 d5:0.5 |
+        d5:1 c5:0.5 a4:0.5 d5:1 e5:1 | e5:2 d5:0.5 b4:1.5 |
+
+hook: Sails Unfurling
+type: Pre-chorus
+tempo: 88-100
+feel: hopeful
+style: latin
+substyle: reggae-pop
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | Gsus4 G
+melody: r:2.5 c4:0.5 d4:0.5 e4:0.5- |
+        e4:1 d4:0.5 c4:0.5 c4:1 r:1 | r:0.5 b3:0.5 d4:0.5 g4:0.5 g4:0.75 f4:0.75 d4:0.5 |
+        e4:1.5 c4:0.5 r:0.5 e4:0.5 a4:0.5 g4:0.5 | a4:1 f4:0.5 c4:0.5 f4:1 g4:1 |
+        r:0.5 g4:0.5 c5:0.5 c5:0.5 c5:0.75 b4:0.75 g4:0.5 | b4:1 g4:0.5 d5:0.5- d5:1 b4:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 d5:0.5 e5:0.5 | c5:2 d5:2 |
+
+# ---- Choruses ----
+
+hook: Sing It Back
+type: Chorus
+tempo: 80-94
+feel: singalong
+style: latin
+substyle: reggae-pop
+chords: C | G | Am | F | C | G | F | C
+melody: r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.75 a4:0.75 g4:0.5 | g4:0.5 f4:0.5 d4:1 r:2 |
+        r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:0.75 c5:0.75 a4:0.5 | a4:1 g4:0.5 f4:0.5- f4:1 r:1 |
+        r:0.5 c5:0.5 c5:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | d5:1.5 b4:0.5 d5:1 g4:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:0.75 a4:0.75 g4:0.5 | g4:1.5 d4:0.5 e4:2 |
+
+hook: Rocking Chair Sun
+type: Chorus
+tempo: 74-88
+feel: swaying
+style: latin
+substyle: reggae-pop
+chords: Am | G | F | G | Am | G | F | G
+melody: r:1 e4:0.5 e4:0.5 e4:0.5 d4:0.5 e4:1 | d4:0.75 b3:0.75 g3:0.5 r:2 |
+        r:1 c4:0.5 c4:0.5 f4:0.5 e4:0.5 f4:1 | g4:1.5 r:0.5 d4:0.5 e4:0.5 g4:1 |
+        r:1 a4:0.5 a4:0.5 c5:0.5 b4:0.5 a4:1 | b4:0.75 g4:0.75 d5:0.5- d5:1 r:1 |
+        r:1 c5:0.5 c5:0.5 a4:0.5 g4:0.5 a4:1 | g4:1 d4:1 b3:2 |
+
+hook: Jump the Puddles
+type: Chorus
+tempo: 88-100
+feel: bouncy
+style: latin
+substyle: reggae-pop
+leadin: yes
+chords: G | C | F | G | F | C | F | G | C
+melody: r:2 d4:0.5 e4:0.5 g4:0.5 a4:0.5 |
+        g4:1 e4:0.5 g4:0.5 r:0.5 c5:0.5 c5:0.5 a4:0.5 | a4:1.5 f4:0.5 r:1 c4:0.5 f4:0.5 |
+        g4:1 d4:0.5 g4:0.5 r:0.5 b4:0.5 b4:0.5 a4:0.5 | a4:0.75 g4:0.75 f4:0.5 a4:1 r:1 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 c5:1 g4:0.5 c5:0.5 | d5:1 c5:0.5 a4:0.5 c5:1 r:1 |
+        r:0.5 b4:0.5 d5:0.5 d5:0.5 d5:0.75 b4:0.75 g4:0.5 | g4:1.5 f4:0.5 e4:2 |
+
+hook: Mango Afternoon
+type: Chorus
+tempo: 78-92
+feel: warm
+style: latin
+substyle: reggae-pop
+chords: C | Am | F | G | C | Am | F G | C
+melody: r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 g4:1 | a4:0.75 c5:0.75 a4:0.5 e4:1 r:1 |
+        r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:0.5 a4:0.5 | g4:2 r:1 g4:0.5 a4:0.5 |
+        b4:0.5 c5:1 d5:0.5 e5:1.5 d5:0.5 | c5:1 r:0.5 a4:0.5 e5:1 d5:0.5 c5:0.5 |
+        r:0.5 a4:0.5 c5:0.5 c5:0.5 d5:1 b4:0.5 g4:0.5 | e4:2 r:0.5 g4:1.5 |
+
+hook: Open Window Sky
+type: Chorus
+tempo: 84-98
+feel: uplifting
+style: latin
+substyle: reggae-pop
+chords: F | G | Am | Am | F | G | C | C
+melody: r:1 c5:0.5 a4:0.5 c5:1 a4:1 | b4:0.75 a4:0.75 g4:0.5 d4:1 r:1 |
+        r:1 c5:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | c5:1 b4:0.5 a4:0.5- a4:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 c5:0.75 a4:0.75 c5:0.5 | d5:1.5 b4:0.5 d5:1 e5:1 |
+        e5:1 d5:0.5 c5:0.5 g4:1 r:0.5 e4:0.5 | g4:0.5 e4:0.5 d4:1 e4:2 |
+
+hook: Lantern Choir
+type: Chorus
+tempo: 70-84
+feel: soulful
+style: latin
+substyle: reggae-pop
+leadin: yes
+chords: G | Am | F | C | G | Am | F | G | Am
+melody: r:2.5 e4:0.5 g4:0.5 a4:0.5- |
+        a4:1 g4:0.5 e4:0.5 e4:1 r:1 | r:0.5 f4:0.5 a4:0.5 g4:0.5 a4:0.75 g4:0.75 f4:0.5 |
+        e4:1.5 g4:0.5 r:1 g4:0.5 a4:0.5 | b4:1 a4:0.5 g4:0.5- g4:1 r:1 |
+        r:0.5 c5:0.5 c5:0.5 c5:0.5 e5:0.75 d5:0.75 c5:0.5 | c5:1 a4:0.5 c5:0.5- c5:0.5 d5:0.5 c5:1 |
+        b4:0.75 d5:0.75 b4:0.5 g4:1 r:0.5 b4:0.5 | c5:1 b4:0.5 a4:2.5 |
+
+hook: Sweet Easy Tide
+type: Chorus
+tempo: 90-100
+feel: jubilant
+style: latin
+substyle: reggae-pop
+chords: F | C | G | Am | F | C | G | C
+melody: r:0.5 a4:0.5 a4:0.5 a4:0.5 c5:1 a4:0.5 f4:0.5 | g4:1 e4:1 r:2 |
+        r:0.5 b4:0.5 b4:0.5 b4:0.5 d5:1 b4:0.5 g4:0.5 | a4:1.5 e4:0.5 r:2 |
+        r:0.5 c5:0.5 d5:0.5 c5:0.5 a4:0.75 c5:0.75 e5:0.5- | e5:1 d5:0.5 c5:0.5 g4:1 r:1 |
+        r:0.5 d5:0.5 d5:0.5 b4:0.5 d5:1 b4:0.5 a4:0.5 | g4:1 r:0.5 e4:0.5 g4:2 |
+
+# ---- Bridges ----
+
+hook: Rain on Tin
+type: Bridge
+tempo: 76-90
+feel: reflective
+style: latin
+substyle: reggae-pop
+chords: Dm | Em | F | G | Dm | Em | F | G
+melody: r:1 f4:1.5 e4:0.5 d4:1 | e4:2 r:0.5 b3:0.5 d4:0.5 e4:0.5 |
+        f4:1.5 g4:0.5 a4:2 | g4:1 r:1 b3:0.5 d4:0.5 f4:1 |
+        a4:2.5 g4:0.5 f4:1 | g4:1.5 a4:0.5 b4:2 |
+        c5:2 a4:1 f4:1 | g4:1.5 f4:0.5 d4:2 |
+
+hook: Mist on the Hills
+type: Bridge
+tempo: 70-84
+feel: hazy
+style: latin
+substyle: reggae-pop
+chords: Dm | Am | F | C | Dm | Am | F | G
+melody: r:1.5 a4:0.5 a4:0.5 f4:0.5 d4:1 | e4:1.5 c4:0.5 r:2 |
+        r:1.5 c5:0.5 c5:0.5 a4:0.5 f4:1 | g4:2 r:1 e4:0.5 g4:0.5 |
+        a4:0.75 c5:0.75 d5:0.5 d5:1 c5:1 | e5:2 c5:0.5 a4:0.5 e4:1 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 a4:1 g4:1 | d4:1 g4:1 b4:2 |
+
+hook: Hilltop Sound System
+type: Bridge
+tempo: 82-96
+feel: searching
+style: latin
+substyle: reggae-pop
+chords: Em | Am | Em | Am | F | C | Dm | G7
+melody: e4:1 r:0.5 g4:0.5 b4:1 a4:0.5 g4:0.5 | a4:1.5 e4:0.5 c4:1 r:1 |
+        r:0.5 b3:0.5 e4:0.5 g4:0.5 g4:0.75 a4:0.75 b4:0.5 | c5:2 b4:0.5 a4:1.5 |
+        r:1 a4:0.5 c5:0.5 c5:1 a4:1 | g4:1.5 e4:0.5 g4:1 c5:1 |
+        d5:1 c5:0.5 a4:0.5 f4:1 a4:1 | g4:1 f4:0.5 d4:0.5 b3:2 |
+
+hook: Echo Chamber Dub
+type: Bridge
+tempo: 86-100
+feel: dubby
+style: latin
+substyle: reggae-pop
+chords: C | Am | Dm | G | C | Am | Dm | E7
+melody: r:2 e4:0.5 g4:0.5 r:0.5 g4:0.5 | a4:1.5 g4:0.5 e4:1 r:1 |
+        r:2 f4:0.5 a4:0.5 r:0.5 a4:0.5 | d5:1.5 b4:0.5 g4:1 r:1 |
+        r:1 e5:0.5 d5:0.5 c5:1 g4:1 | a4:0.75 c5:0.75 e5:0.5- e5:1 r:1 |
+        r:0.5 d5:0.5 c5:0.5 a4:0.5 f4:1 a4:1 | b4:1 g#4:1 e4:2 |

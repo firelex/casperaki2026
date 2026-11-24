@@ -1,0 +1,321 @@
+# Funk-pop (urban / neo-funk): 8 verses, 6 pre-choruses, 7 choruses and 4 bridges.
+# Tight 16th-note bursts with rests, dominant-7th and minor-7th vamps (C7-F7, Am7-D7, Dm7-G7), blue thirds and
+# sevenths, swagger and call and response at 95-118 bpm.
+
+# ---- Verses ----
+
+hook: Velvet Switchblade
+type: Verse
+tempo: 98-110
+feel: strut
+style: urban
+substyle: funk-pop
+chords: C7 | F7 | C7 | F7 | Am7 | D7 | Dm7 G7 | C7
+melody: r:0.5 g4:0.25 g4:0.25 e4:0.5 r:0.25 c4:0.25 bb3:0.5 c4:0.5 r:1 | r:0.25 a3:0.25 c4:0.25 eb4:0.25 f4:1 r:0.5 eb4:0.25 c4:0.25 a3:1 |
+        g4:0.5 e4:0.25 g4:0.25 r:0.5 bb3:0.5 c4:0.75 d4:0.25 e4:1 | f4:0.5 r:0.5 eb4:0.25 f4:0.25 eb4:0.5 c4:2 |
+        r:0.5 e4:0.25 e4:0.25 g4:0.5 e4:0.5 c4:0.5 a3:0.5 r:1 | r:0.25 c4:0.25 d4:0.25 f#4:0.25 a3:1 c4:0.5 a3:0.5 r:1 |
+        f4:0.5 e4:0.25 d4:0.25 c4:0.5 a3:0.5 b3:1 d4:1 | r:0.5 g3:0.25 bb3:0.25 c4:3 |
+
+hook: Chrome Toothpick
+type: Verse
+tempo: 100-112
+feel: cocky
+style: urban
+substyle: funk-pop
+chords: Am7 D7 | Am7 D7 | Am7 D7 | Em7 Am7 | Am7 D7 | Am7 D7 | Fmaj7 Em7 | Dm7 E7
+melody: a3:0.5 c4:0.25 e4:0.25 r:0.5 e4:0.25 d4:0.25 f#4:0.5 d4:0.25 c4:0.25 a3:1 | r:0.75 g4:0.25 e4:0.5 c4:0.5 d4:0.5 c4:0.25 a3:0.25 r:1 |
+        a3:0.25 c4:0.25 e4:0.25 g4:0.25 e4:0.5 r:0.5 a3:0.5 f#4:0.5 d4:1 | e4:0.75 d4:0.25 b3:1 c4:0.5 a3:0.5 r:1 |
+        r:0.5 e4:0.25 g4:0.25 g4:0.5 e4:0.5 r:0.5 d4:0.25 c4:0.25 d4:1 | c4:0.5 a3:0.5 r:0.5 c4:0.25 d4:0.25 f#4:0.5 e4:0.5 d4:1 |
+        r:0.25 f4:0.25 e4:0.25 c4:0.25 a3:0.5 c4:0.5 b3:0.75 d4:0.25 e4:1 | d4:1 c4:0.5 a3:0.5 b3:2 |
+
+hook: Polished Shoes
+type: Verse
+tempo: 96-108
+feel: tight
+style: urban
+substyle: funk-pop
+leadin: yes
+chords: G7 | Dm7 G7 | Dm7 G7 | Em7 Am7 | Dm7 G7 | Dm7 G7 | Dm7 G7 | Em7 A7 | Dm7 G7
+melody: r:2.5 d4:0.25 f4:0.25 g4:0.5 f4:0.5 |
+        d4:0.5 r:0.25 f4:0.25 a3:0.5 c4:0.5 b3:0.5 r:0.5 d4:0.5 f4:0.5 | f4:0.75 d4:0.25 c4:0.5 a3:0.5 g3:1 r:1 |
+        r:0.5 e4:0.25 g4:0.25 e4:0.5 d4:0.5 c4:0.75 b3:0.25 a3:1 | r:0.25 a3:0.25 c4:0.25 d4:0.25 f4:0.5 e4:0.5 d4:1 r:1 |
+        f4:0.5 f4:0.25 e4:0.25 d4:0.5 c4:0.5 b3:0.5 d4:0.25 b3:0.25 g3:1 | r:0.5 d4:0.25 f4:0.25 a3:0.5 c4:0.5 d4:1 r:1 |
+        g4:0.5 e4:0.25 d4:0.25 b3:0.5 g3:0.5 e4:0.75 c#4:0.25 a3:1 | d4:1 f4:0.5 e4:0.5 d4:2 |
+
+hook: Brass Knuckle Grin
+type: Verse
+tempo: 102-114
+feel: punchy
+style: urban
+substyle: funk-pop
+chords: C7 | C7 | F7 | C7 | G7 | F7 | C7 | G7
+melody: c4:0.25 r:0.25 c4:0.25 eb4:0.25 e4:0.5 g4:0.5 r:0.5 bb3:0.5 c4:1 | r:0.75 g4:0.25 e4:0.5 c4:0.5 bb3:1 r:1 |
+        f4:0.5 eb4:0.25 c4:0.25 a3:0.5 c4:0.5 eb4:1 r:1 | r:0.5 g4:0.25 g4:0.25 e4:0.5 c4:0.5 r:0.5 e4:0.25 d4:0.25 c4:1 |
+        d4:0.5 r:0.25 b3:0.25 d4:0.5 f4:0.5 g4:1 r:1 | r:0.25 f4:0.25 eb4:0.25 c4:0.25 a3:1 c4:0.5 a3:0.5 r:1 |
+        e4:0.5 g4:0.5 r:0.5 g4:0.25 e4:0.25 bb3:1 c4:1 | r:0.5 b3:0.25 c4:0.25 d4:3 |
+
+hook: Coin-Op Cool
+type: Verse
+tempo: 95-107
+feel: wry
+style: urban
+substyle: funk-pop
+chords: Dm7 | G7 | Dm7 | G7 | Em7 | A7 | Dm7 | G7
+melody: r:0.5 a3:0.25 c4:0.25 d4:0.5 d4:0.25 f4:0.25 a3:1 r:1 | r:0.25 g4:0.25 f4:0.25 d4:0.25 b3:0.5 d4:0.5 g3:1 r:1 |
+        f4:0.5 e4:0.25 d4:0.25 c4:0.5 a3:0.5 r:0.5 d4:0.25 e4:0.25 f4:1 | g4:0.75 f4:0.25 d4:0.5 b3:0.5 r:2 |
+        r:0.5 b3:0.25 d4:0.25 e4:0.5 g4:0.5 e4:0.75 d4:0.25 b3:1 | r:0.25 c#4:0.25 e4:0.25 g4:0.25 e4:0.5 c#4:0.5 a3:1 r:1 |
+        r:0.5 f4:0.25 f4:0.25 e4:0.5 d4:0.5 c4:0.5 a3:0.5 c4:1 | d4:0.5 b3:0.5 r:0.5 b3:0.25 c4:0.25 f4:2 |
+
+hook: Low-Slung Sunday
+type: Verse
+tempo: 96-110
+feel: loose
+style: urban
+substyle: funk-pop
+leadin: yes
+chords: Am7 | Am7 D7 | Am7 D7 | Am7 D7 | Fmaj7 E7 | Am7 D7 | Am7 D7 | Fmaj7 G7 | Cmaj7
+melody: r:3 e4:0.25 g4:0.25 e4:0.25 c4:0.25 |
+        a3:1 r:0.5 c4:0.25 e4:0.25 f#4:0.5 e4:0.5 d4:1 | r:0.75 a3:0.25 c4:0.5 e4:0.5 a3:0.5 r:0.5 c4:0.5 d4:0.5 |
+        e4:0.5 r:0.25 g4:0.25 e4:0.5 d4:0.25 c4:0.25 c4:1 a3:1 | f4:0.5 e4:0.25 c4:0.25 a3:1 b3:0.75 d4:0.25 e4:1 |
+        r:0.5 c4:0.25 c4:0.25 e4:0.5 g4:0.5 f#4:1 d4:1 | r:0.25 e4:0.25 d4:0.25 c4:0.25 a3:0.5 c4:0.5 a3:1 r:1 |
+        a3:0.5 c4:0.5 f4:0.5 e4:0.5 d4:0.75 b3:0.25 g3:1 | r:0.5 g3:0.25 c4:0.25 e4:3 |
+
+hook: Pocket Change Prophet
+type: Verse
+tempo: 104-118
+feel: swagger
+style: urban
+substyle: funk-pop
+chords: C7 F7 | C7 F7 | C7 F7 | Am7 D7 | C7 F7 | C7 F7 | Dm7 G7 | C7
+melody: g4:0.25 r:0.25 g4:0.25 e4:0.25 c4:0.5 r:0.5 c4:0.25 eb4:0.25 f4:0.5 r:1 | r:0.5 bb3:0.5 c4:0.5 e4:0.5 eb4:0.5 c4:0.5 a3:1 |
+        e4:0.5 g4:0.25 e4:0.25 r:1 f4:0.5 eb4:0.25 c4:0.25 r:1 | r:0.5 a3:0.25 c4:0.25 e4:0.5 c4:0.5 d4:0.75 c4:0.25 a3:1 |
+        c4:0.25 c4:0.25 r:0.5 e4:0.5 g4:0.5 f4:0.5 eb4:0.25 c4:0.25 a3:1 | r:0.75 g4:0.25 g4:0.5 e4:0.5 c4:1 r:1 |
+        f4:0.5 d4:0.5 r:0.25 a3:0.25 c4:0.5 b3:0.5 d4:0.5 f4:1 | r:0.5 e4:0.25 d4:0.25 bb3:3 |
+
+hook: Glitter Overtime
+type: Verse
+tempo: 98-112
+feel: nervy
+style: urban
+substyle: funk-pop
+chords: Am7 | Dm7 | G7 | Cmaj7 | Am7 | Dm7 | E7 | Am7
+melody: r:0.25 e4:0.25 e4:0.25 c4:0.25 a3:0.5 r:0.5 c4:0.25 e4:0.25 g4:0.5 e4:1 | f4:0.75 e4:0.25 d4:0.5 a3:0.5 r:0.5 c4:0.25 d4:0.25 f4:1 |
+        g4:0.5 f4:0.25 d4:0.25 b3:0.5 g3:0.5 r:1 b3:0.25 c4:0.25 d4:0.5 | e4:1.5 d4:0.25 c4:0.25 b3:1 r:1 |
+        r:0.5 a3:0.25 c4:0.25 e4:0.25 r:0.25 e4:0.25 g4:0.25 e4:0.5 c4:0.5 a3:1 | d4:0.5 f4:0.5 a3:0.5 c4:0.5 d4:0.75 c4:0.25 a3:1 |
+        r:0.5 b3:0.25 d4:0.25 e4:0.5 g#3:0.5 b3:1 r:1 | r:0.5 c4:0.25 b3:0.25 a3:0.5 c4:0.5 e4:2 |
+
+# ---- Pre-choruses ----
+
+hook: Rising Hemline
+type: Pre-chorus
+tempo: 100-112
+feel: climbing
+style: urban
+substyle: funk-pop
+chords: Dm7 | Em7 | Fmaj7 | G7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:0.5 d4:0.25 f4:0.25 a4:0.5 f4:0.5 r:0.5 d4:0.25 f4:0.25 a4:1 | g4:0.5 e4:0.25 g4:0.25 b4:0.5 g4:0.5 r:0.5 e4:0.25 g4:0.25 b4:1 |
+        c5:0.5 a4:0.25 f4:0.25 a4:0.5 c5:0.5 r:0.5 c5:0.25 d5:0.25 e5:1 | d5:0.5 b4:0.5 g4:0.5 f4:0.5 g4:1 r:1 |
+        r:0.25 a4:0.25 a4:0.25 f4:0.25 d4:0.5 f4:0.5 a4:0.5 c5:0.5 a4:1 | b4:0.5 g4:0.25 b4:0.25 d5:0.5 b4:0.5 r:0.5 b4:0.25 d5:0.25 e5:1 |
+        c5:0.75 a4:0.25 c5:0.5 d5:0.5 e5:1 c5:1 | c5:2 b4:2 |
+
+hook: Satin Squeeze
+type: Pre-chorus
+tempo: 98-110
+feel: tense
+style: urban
+substyle: funk-pop
+chords: Fmaj7 | G7 | Em7 | Am7 | Dm7 | G7 | Fmaj7 | E7
+melody: r:0.5 a3:0.25 c4:0.25 f4:0.5 e4:0.25 f4:0.25 a4:1 r:1 | r:0.25 g4:0.25 b4:0.25 g4:0.25 d4:0.5 f4:0.5 g4:1 r:1 |
+        r:0.5 e4:0.25 g4:0.25 b4:0.5 g4:0.5 d5:0.75 b4:0.25 g4:1 | a4:0.5 c5:0.5 e5:0.5 c5:0.5 a4:1 r:1 |
+        d5:0.5 c5:0.25 a4:0.25 f4:0.5 a4:0.5 c5:1 r:1 | r:0.5 b4:0.25 d5:0.25 d5:0.5 b4:0.5 f4:1 g4:1 |
+        a4:0.5 c5:0.5 e5:0.5 c5:0.25 a4:0.25 c5:1 r:1 | r:0.5 g#4:0.25 a4:0.25 b4:3 |
+
+hook: Stairwell Strut
+type: Pre-chorus
+tempo: 104-116
+feel: stomping
+style: urban
+substyle: funk-pop
+leadin: yes
+chords: G7 | C7 | F7 | Am7 | D7 | C7 | F7 | Dm7 | G7
+melody: r:3 d4:0.25 f4:0.25 g4:0.5 |
+        e4:0.5 r:0.25 g4:0.25 bb4:0.5 g4:0.5 c5:0.75 bb4:0.25 g4:1 | a4:0.5 r:0.25 c5:0.25 eb5:0.5 c5:0.5 a4:1 r:1 |
+        r:0.5 e4:0.25 a4:0.25 c5:0.5 a4:0.5 g4:1 e4:1 | f#4:0.5 a4:0.5 c5:0.5 a4:0.25 f#4:0.25 d5:1 r:1 |
+        r:0.25 g4:0.25 bb4:0.25 c5:0.25 e5:0.5 c5:0.5 bb4:1 r:1 | r:0.25 a4:0.25 c5:0.25 eb5:0.25 c5:0.5 a4:0.5 eb5:1 c5:1 |
+        d5:0.5 c5:0.25 a4:0.25 f4:0.5 a4:0.5 c5:0.75 d5:0.25 e5:1 | d5:4 |
+
+hook: Short Fuse Satin
+type: Pre-chorus
+tempo: 100-114
+feel: coiled
+style: urban
+substyle: funk-pop
+chords: Am7 | D7 | Am7 | D7 | Fmaj7 | G7 | Fmaj7 | Gsus4 G
+melody: a3:0.25 r:0.25 a3:0.25 c4:0.25 e4:0.5 r:0.5 e4:0.25 g4:0.25 e4:0.5 c4:1 | d4:0.5 f#4:0.5 r:0.5 a4:0.25 f#4:0.25 d4:1 r:1 |
+        c4:0.25 r:0.25 c4:0.25 e4:0.25 g4:0.5 r:0.5 g4:0.25 a4:0.25 g4:0.5 e4:1 | f#4:0.5 a4:0.5 r:0.5 c5:0.25 a4:0.25 d5:1 r:1 |
+        c5:0.5 a4:0.25 c5:0.25 e5:0.5 c5:0.5 a4:1 c5:1 | d5:0.5 b4:0.25 g4:0.25 b4:0.5 d5:0.5 g4:1 b4:1 |
+        c5:0.25 c5:0.25 c5:0.25 a4:0.25 c5:0.5 d5:0.5 e5:1 c5:1 | d5:2 b4:2 |
+
+hook: Pressure Cooker Boogie
+type: Pre-chorus
+tempo: 106-118
+feel: buzzing
+style: urban
+substyle: funk-pop
+chords: Dm7 G7 | Dm7 G7 | Em7 A7 | Dm7 G7 | Fmaj7 G7 | Em7 Am7 | Dm7 Em7 | G7
+melody: f4:0.5 r:0.25 a4:0.25 c5:0.5 a4:0.5 b4:0.5 r:0.5 g4:1 | f4:0.5 r:0.25 a4:0.25 d5:0.5 c5:0.5 b4:0.5 r:0.5 d5:1 |
+        e4:0.5 r:0.25 g4:0.25 b4:0.5 g4:0.5 c#5:0.5 r:0.5 e5:1 | d5:0.75 c5:0.25 a4:0.5 f4:0.5 g4:1 r:1 |
+        r:0.5 a4:0.25 c5:0.25 e5:0.5 c5:0.5 d5:1 b4:1 | r:0.5 b4:0.25 d5:0.25 e5:0.5 d5:0.5 c5:1 a4:1 |
+        d5:0.5 c5:0.25 a4:0.25 f4:0.5 a4:0.5 b4:0.75 d5:0.25 e5:1 | r:0.5 d5:0.25 c5:0.25 b4:3 |
+
+hook: Hallway Mirrorball
+type: Pre-chorus
+tempo: 96-108
+feel: smouldering
+style: urban
+substyle: funk-pop
+chords: Dm7 | Am7 | Dm7 | Am7 | Fmaj7 | G7 | Dm7 | Esus4 E
+melody: r:0.75 a3:0.25 d4:0.5 f4:0.5 a4:0.5 f4:0.25 d4:0.25 c4:1 | e4:0.5 c4:0.5 a3:1 r:2 |
+        r:0.75 c4:0.25 f4:0.5 a4:0.5 c5:0.5 a4:0.25 f4:0.25 d4:1 | e4:0.5 g4:0.5 a4:1 r:2 |
+        r:0.5 c5:0.25 c5:0.25 a4:0.5 c5:0.5 e5:1 c5:1 | d5:0.5 b4:0.25 g4:0.25 d5:0.5 b4:0.5 g4:1 f4:1 |
+        a4:0.5 c5:0.25 d5:0.25 c5:0.5 a4:0.5 f4:1 a4:1 | a4:2 g#4:2 |
+
+# ---- Choruses ----
+
+hook: Gold Tooth Gospel
+type: Chorus
+tempo: 100-114
+feel: strut
+style: urban
+substyle: funk-pop
+chords: C7 | F7 | C7 | F7 | Am7 D7 | Dm7 G7 | C7 F7 | C7
+melody: g4:0.5 r:0.25 g4:0.25 e4:0.5 g4:0.5 bb4:0.75 g4:0.25 e4:1 | f4:0.5 r:0.25 a4:0.25 c5:0.5 a4:0.5 f4:1 r:1 |
+        e4:0.25 g4:0.25 r:0.5 c5:0.5 bb4:0.5 g4:0.75 e4:0.25 c4:1 | r:0.5 eb4:0.25 f4:0.25 a4:0.5 c5:0.5 a4:1 r:1 |
+        e5:0.5 r:0.25 e5:0.25 c5:0.5 a4:0.5 d5:0.75 c5:0.25 a4:1 | d5:0.5 r:0.25 d5:0.25 c5:0.5 a4:0.5 b4:1 d5:1 |
+        e5:0.5 d5:0.25 c5:0.25 bb4:0.5 g4:0.5 a4:0.75 c5:0.25 eb5:1 | r:0.5 c5:0.25 bb4:0.25 g4:3 |
+
+hook: Spotlight Tax
+type: Chorus
+tempo: 98-110
+feel: bold
+style: urban
+substyle: funk-pop
+chords: Am7 | Dm7 | G7 | Cmaj7 | Fmaj7 | Dm7 | E7 | Am7
+melody: c5:0.5 a4:0.25 c5:0.25 r:0.5 a4:0.25 g4:0.25 e4:1 g4:1 | a4:0.5 f4:0.25 a4:0.25 r:0.5 d5:0.25 c5:0.25 a4:1 f4:1 |
+        g4:0.5 b4:0.25 d5:0.25 r:0.5 b4:0.25 a4:0.25 g4:1 f4:1 | e4:1.5 g4:0.5 b4:1 r:1 |
+        r:0.25 c5:0.25 c5:0.25 e5:0.25 c5:0.5 a4:0.5 e5:1 c5:1 | d5:0.5 r:0.25 d5:0.25 c5:0.5 a4:0.5 d5:0.75 c5:0.25 a4:1 |
+        b4:0.5 r:0.25 d5:0.25 e5:1 d5:0.5 b4:0.5 g#4:1 | a4:0.5 c5:0.5 r:0.5 g4:0.5 a4:2 |
+
+hook: Hot Wire Hallelujah
+type: Chorus
+tempo: 104-118
+feel: explosive
+style: urban
+substyle: funk-pop
+leadin: yes
+chords: G7 | C7 | C7 | F7 | F7 | C7 | Am7 D7 | Dm7 G7 | C7
+melody: r:2 d4:0.25 f4:0.25 g4:0.5 b4:0.5 r:0.5 |
+        c5:0.5 r:0.25 c5:0.25 bb4:0.5 g4:0.5 e4:1 r:1 | r:0.5 g4:0.25 bb4:0.25 c5:0.5 bb4:0.25 g4:0.25 e4:0.5 g4:0.5 c4:1 |
+        f4:0.5 a4:0.5 c5:0.5 eb5:0.5 c5:1 a4:1 | r:0.5 eb5:0.25 c5:0.25 a4:0.5 f4:0.5 a4:2 |
+        e5:0.5 r:0.25 e5:0.25 e5:0.5 c5:0.5 bb4:1 g4:1 | e5:0.75 d5:0.25 c5:0.5 a4:0.5 d5:0.5 c5:0.5 a4:1 |
+        c5:0.5 a4:0.25 c5:0.25 d5:1 b4:0.5 g4:0.5 b4:1 | c5:4 |
+
+hook: Cadillac Confession
+type: Chorus
+tempo: 96-108
+feel: smooth
+style: urban
+substyle: funk-pop
+chords: Fmaj7 | Em7 | Dm7 | G7 | Fmaj7 | Em7 A7 | Dm7 G7 | C
+melody: r:0.5 c5:0.25 a4:0.25 c5:0.5 a4:0.5 f4:0.75 e4:0.25 f4:1 | g4:0.5 e4:0.25 g4:0.25 b4:1 r:0.5 b4:0.25 a4:0.25 g4:1 |
+        a4:0.5 f4:0.25 a4:0.25 c5:1 a4:0.5 g4:0.5 f4:1 | g4:1.5 f4:0.25 d4:0.25 d4:1 r:1 |
+        r:0.5 a4:0.25 c5:0.25 e5:1 c5:0.5 a4:0.5 c5:1 | e5:0.5 d5:0.25 b4:0.25 g4:0.5 b4:0.5 c#5:1 e5:1 |
+        d5:0.75 c5:0.25 a4:0.5 f4:0.5 b4:1 g4:1 | r:0.5 c5:0.25 g4:0.25 e4:3 |
+
+hook: Strutting Static
+type: Chorus
+tempo: 106-118
+feel: sassy
+style: urban
+substyle: funk-pop
+chords: C7 F7 | C7 F7 | Am7 D7 | Dm7 G7 | C7 F7 | Am7 D7 | Dm7 G7 | C7
+melody: e4:0.25 g4:0.25 c5:0.5 r:0.5 c5:0.25 bb4:0.25 a4:0.5 f4:0.5 a4:1 | g4:0.5 r:0.25 g4:0.25 bb4:0.5 g4:0.5 c5:0.5 eb5:0.5 c5:1 |
+        r:0.5 a4:0.25 c5:0.25 e5:0.5 c5:0.5 a4:0.5 f#4:0.5 a4:1 | f4:0.5 a4:0.5 d5:0.5 c5:0.5 b4:2 |
+        r:0.25 e5:0.25 e5:0.25 c5:0.25 bb4:0.5 c5:0.5 eb5:1 c5:1 | e5:0.5 r:0.25 e5:0.25 d5:0.5 c5:0.5 d5:0.75 c5:0.25 a4:1 |
+        c5:0.5 a4:0.25 f4:0.25 a4:0.5 c5:0.5 d5:1 b4:1 | r:0.5 bb4:0.25 g4:0.25 e4:3 |
+
+hook: Midnight Invoice
+type: Chorus
+tempo: 100-112
+feel: defiant
+style: urban
+substyle: funk-pop
+chords: Am7 | Am7 D7 | Fmaj7 | E7 | Am7 | Dm7 G7 | Fmaj7 E7 | Am7
+melody: a4:0.5 r:0.25 a4:0.25 c5:0.5 a4:0.5 g4:0.75 e4:0.25 g4:1 | a4:0.25 g4:0.25 e4:0.5 r:1 f#4:0.5 a4:0.5 c5:1 |
+        c5:0.5 a4:0.25 c5:0.25 d5:0.5 c5:0.5 a4:1 f4:1 | e4:0.5 g#4:0.5 b4:1 r:2 |
+        r:0.5 c5:0.25 e5:0.25 e5:0.5 d5:0.5 c5:0.5 a4:0.5 e5:1 | d5:0.5 r:0.25 d5:0.25 c5:0.5 a4:0.5 b4:0.5 d5:0.5 b4:1 |
+        c5:0.75 a4:0.25 c5:0.5 e5:0.5 d5:0.5 b4:0.5 g#4:1 | r:0.5 a4:0.25 b4:0.25 c5:3 |
+
+hook: Sequin Riot
+type: Chorus
+tempo: 108-118
+feel: shouty
+style: urban
+substyle: funk-pop
+chords: Dm7 G7 | Em7 Am7 | Dm7 G7 | C | Dm7 G7 | Em7 A7 | Dm7 G7 | C
+melody: f4:0.25 a4:0.25 r:0.25 a4:0.25 c5:0.5 a4:0.5 b4:0.5 r:0.5 g4:1 | g4:0.25 b4:0.25 r:0.25 b4:0.25 d5:0.5 b4:0.5 c5:0.5 r:0.5 a4:1 |
+        a4:0.5 c5:0.25 a4:0.25 f4:0.5 a4:0.5 g4:0.75 f4:0.25 d4:1 | e4:1 g4:0.5 c5:0.5 r:2 |
+        r:0.25 d5:0.25 d5:0.25 c5:0.25 a4:0.5 c5:0.5 d5:1 b4:1 | e5:0.5 r:0.25 e5:0.25 d5:0.5 b4:0.5 c#5:0.75 b4:0.25 a4:1 |
+        d5:0.5 c5:0.25 a4:0.25 c5:0.5 d5:0.5 b4:0.5 g4:0.5 d5:1 | r:0.5 c5:0.25 a4:0.25 g4:3 |
+
+# ---- Bridges ----
+
+hook: Basement Sermon
+type: Bridge
+tempo: 96-108
+feel: brooding
+style: urban
+substyle: funk-pop
+chords: Fmaj7 | Fmaj7 | Em7 | Am7 | Dm7 | Dm7 | Gsus4 | G7
+melody: r:1 a4:1.5 g4:0.5 f4:1 | e4:2 r:1 c4:0.5 e4:0.5 |
+        g4:1.5 b4:0.5 d5:1 b4:1 | c5:2 r:1 a4:0.25 b4:0.25 c5:0.5 |
+        d5:1.5 c5:0.5 a4:1 f4:1 | a4:2 r:1 g4:0.25 a4:0.25 c5:0.5 |
+        d5:1.5 c5:0.5 g4:1 c5:1 | b4:1.5 a4:0.5 g4:2 |
+
+hook: Ice Cube Reverie
+type: Bridge
+tempo: 100-112
+feel: floaty
+style: urban
+substyle: funk-pop
+chords: Dm7 | Em7 | Fmaj7 | Em7 | Dm7 | Em7 | Fmaj7 | E7
+melody: r:0.5 d4:0.5 f4:0.5 a4:0.5 c5:2 | b4:1.5 a4:0.5 g4:1 e4:1 |
+        r:0.5 c5:0.5 e5:1.5 c5:0.5 a4:1 | g4:2 r:1 e4:0.5 g4:0.5 |
+        a4:1 f4:0.5 a4:0.5 d5:1.5 c5:0.5 | b4:1.5 g4:0.5 e4:1 d4:1 |
+        c4:0.5 f4:0.5 a4:0.5 c5:0.5 e5:2 | d5:1 b4:1 g#4:2 |
+
+hook: Breakdown Bulletin
+type: Bridge
+tempo: 104-116
+feel: stuttering
+style: urban
+substyle: funk-pop
+chords: Am7 | Am7 | D7 | D7 | Fmaj7 | Fmaj7 | G7 | G7
+melody: a4:0.25 r:0.25 a4:0.25 r:0.25 g4:0.25 r:0.75 e4:0.5 g4:0.5 r:1 | r:2 c5:0.25 r:0.25 a4:0.25 g4:0.25 e4:1 |
+        d5:0.25 r:0.25 d5:0.25 r:0.25 c5:0.25 r:0.75 a4:0.5 c5:0.5 r:1 | r:2 f#4:0.25 r:0.25 a4:0.25 c5:0.25 d5:1 |
+        c5:0.25 r:0.25 c5:0.25 r:0.25 a4:0.25 r:0.75 f4:0.5 a4:0.5 r:1 | r:2 e5:0.25 r:0.25 c5:0.25 a4:0.25 c5:1 |
+        d5:0.5 b4:0.5 g4:0.5 b4:0.5 d5:1 b4:1 | r:0.5 a4:0.25 g4:0.25 f4:3 |
+
+hook: Mirrorball Truce
+type: Bridge
+tempo: 95-105
+feel: tender
+style: urban
+substyle: funk-pop
+leadin: yes
+chords: Am7 | Fmaj7 | Cmaj7 | Fmaj7 | Cmaj7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:2 e4:0.5 g4:0.5 a4:1 |
+        a4:2 r:0.5 c5:0.25 a4:0.25 g4:0.5 f4:0.5 | e4:1.5 g4:0.5 b4:2 |
+        a4:1 c5:0.5 a4:0.5 f4:1 r:1 | r:0.5 g4:0.25 b4:0.25 c5:1.5 b4:0.5 g4:1 |
+        a4:1 d5:1 c5:1.5 a4:0.5 | b4:1 e5:1 d5:1 b4:1 |
+        c5:1.5 a4:0.5 e5:2 | d5:1 c5:1 b4:2 |

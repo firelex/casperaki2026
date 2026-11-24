@@ -1,0 +1,258 @@
+# Nu-disco (style brightPop, substyle nu-disco): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Four-on-the-floor bounce, minor 7th and maj7 grooves, ii-V loops, 16th pushes, falsetto-friendly held peaks.
+
+hook: Velvet Turnstile
+type: Verse
+tempo: 112-124
+feel: strutting
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 | G | Cmaj7
+melody: r:0.5 e4:0.25 e4:0.25 g4:0.5 e4:0.5 r:0.5 c4:0.5 e4:1 | d4:1.5 c4:0.5 a3:2 | r:0.5 b3:0.5 d4:0.5 g4:0.5 r:0.5 f4:0.5 e4:0.5 d4:0.5 | e4:3 r:1 |
+        r:0.5 c4:0.25 c4:0.25 e4:0.5 g4:0.5 r:0.5 e4:0.5 g4:1 | f4:1.5 e4:0.5 d4:1 c4:1 | r:0.5 d4:0.5 d4:0.5 b3:0.5 d4:1 g4:1 | b3:4 |
+
+hook: Satin Elevator
+type: Verse
+tempo: 112-124
+feel: smooth
+style: brightPop
+substyle: nu-disco
+chords: Fmaj7 | Em7 | Dm7 | C | Fmaj7 | Em7 | Dm7 G | C
+melody: r:1 a3:0.5 c4:0.5 e4:0.75 c4:0.25 r:1 | r:0.25 d4:0.25 e4:0.5 g4:1 e4:0.5 d4:1.5 | r:1 f4:0.5 e4:0.5 d4:1 c4:1 | e4:2.5 r:1.5 |
+        r:0.5 c4:0.5 e4:0.5 f4:0.5 a3:1 r:1 | r:0.25 b3:0.25 d4:0.5 e4:0.75 g4:0.25 g4:1 r:1 | f4:1 e4:0.5 d4:0.5 d4:1 b3:1 | c4:1 d4:0.5 e4:2.5 |
+
+hook: Neon Stairwell
+type: Verse
+tempo: 114-126
+feel: nocturnal
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Am7 | Dm7 | Dm7 | Fmaj7 | Em7 | Dm7 | E7
+melody: r:0.5 a3:0.5 c4:0.5 e4:0.5 r:0.5 e4:0.25 d4:0.25 c4:1 | r:0.5 a3:0.5 c4:0.5 e4:0.5 g4:1.5 e4:0.5 | d4:1.5 c4:0.5 a3:1 r:1 | r:0.5 d4:0.5 f4:0.5 g4:0.5 f4:1 d4:1 |
+        c4:1.5 a3:0.5 r:0.5 c4:0.5 e4:1 | g4:1 e4:1 b3:1.5 r:0.5 | r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 e4:0.5 d4:0.5 | d4:1 b3:3 |
+
+hook: Glass Cabaret
+type: Verse
+tempo: 116-126
+feel: sly
+style: brightPop
+substyle: nu-disco
+leadin: yes
+chords: G | Cmaj7 | Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 | G
+melody: r:2.5 g3:0.5 b3:0.5 d4:0.5 | e4:0.75 e4:0.25 r:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | c4:1.5 a3:0.5 r:2 | r:0.5 a3:0.5 d4:0.5 f4:0.5 r:0.5 f4:0.5 e4:0.5 d4:0.5 | d4:2 b3:1 r:1 |
+        r:0.25 g3:0.25 c4:0.5 e4:0.75 g4:0.25 g4:1 e4:1 | a3:0.5 c4:0.5 e4:1 r:0.5 e4:0.5 g4:1 | f4:1.5 e4:0.5 d4:1 c4:1 | d4:1 b3:0.5 d4:2.5 |
+
+hook: Moonlit Escalator
+type: Verse
+tempo: 110-124
+feel: dreamy
+style: brightPop
+substyle: nu-disco
+chords: Cmaj7 | Fmaj7 | Cmaj7 | Fmaj7 | Em7 | Am7 | Dm7 | G
+melody: r:0.75 g3:0.25 c4:0.5 e4:0.5 g4:0.5 e4:0.5 r:1 | f4:0.5 e4:1.5 r:1 c4:0.5 a3:0.5 | r:0.75 b3:0.25 c4:0.5 e4:0.5 g4:1 b3:1 | c4:1 a3:1 r:2 |
+        r:0.5 e4:0.5 e4:0.5 d4:0.5 e4:1 g4:1 | e4:1.5 c4:0.5 a3:2 | r:0.5 f4:0.5 f4:0.5 e4:0.5 d4:1 c4:1 | r:0.5 b3:0.5 d4:1 g4:2 |
+
+hook: Sequin Rain
+type: Verse
+tempo: 112-124
+feel: wistful
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Em7 | Fmaj7 | E7 | Am7 | Em7 | Fmaj7 | E7
+melody: a3:0.5 a3:0.25 c4:0.25 e4:0.5 g4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:1 e4:1 r:2 | r:0.5 c4:0.5 f4:0.5 e4:0.5 c4:1 a3:1 | b3:1.5 g#3:0.5 b3:1 r:1 |
+        a3:0.5 c4:0.5 e4:0.5 g4:0.5 g4:1 e4:1 | r:0.5 g4:0.5 e4:0.5 d4:0.5 b3:1 d4:1 | c4:1.5 a3:0.5 r:0.5 a3:0.5 c4:0.5 e4:0.5 | d4:1 b3:3 |
+
+hook: Rollerdrome Static
+type: Verse
+tempo: 116-126
+feel: funky
+style: brightPop
+substyle: nu-disco
+chords: Dm7 | G | Cmaj7 | Am7 | Dm7 | G | Cmaj7 | Cmaj7
+melody: r:0.5 d4:0.25 d4:0.25 f4:0.5 d4:0.5 r:0.5 a3:0.5 c4:1 | b3:1 d4:0.5 g4:1.5 r:1 | r:0.5 e4:0.5 g4:0.5 e4:0.5 c4:1 b3:1 | c4:2 r:2 |
+        r:0.5 f4:0.25 f4:0.25 f4:0.5 d4:0.5 r:0.5 c4:0.5 d4:1 | d4:1 g4:1.5 f4:0.5 d4:1 | e4:3 r:1 | r:0.5 d4:0.5 e4:0.5 g4:0.5 b3:2 |
+
+hook: Lamplight Hustle
+type: Verse
+tempo: 110-122
+feel: cool
+style: brightPop
+substyle: nu-disco
+leadin: yes
+chords: E7 | Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Dm7 | Em7 | Am7
+melody: r:3 b3:0.5 d4:0.5 | c4:1 r:0.5 c4:0.5 e4:0.5 c4:0.5 a3:1 | r:0.5 d4:0.5 f4:0.75 d4:0.25 c4:2 | r:1 b3:0.5 d4:0.5 g4:1 d4:1 | e4:2.5 r:1.5 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5 e4:1 c4:1 | a3:1.5 c4:0.5 d4:1 f4:1 | g4:1.5 e4:0.5 d4:1 b3:1 | r:0.5 c4:0.5 e4:1 g4:2 |
+
+hook: Ultraviolet Ladder
+type: Pre-chorus
+tempo: 114-126
+feel: climbing
+style: brightPop
+substyle: nu-disco
+chords: Fmaj7 | Em7 | Dm7 | G | Fmaj7 | Em7 | Dm7 | Gsus4 G
+melody: r:0.5 a3:0.5 c4:0.5 e4:0.5 f4:1 e4:1 | r:0.5 b3:0.5 d4:0.5 e4:0.5 g4:2 | r:0.5 c4:0.5 d4:0.5 f4:0.5 a4:1 f4:1 | g4:1.5 d4:0.5 b4:2 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 e5:1 | d5:1.5 b4:0.5 g4:1 e4:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:1 c5:1 | c5:2 b4:2 |
+
+hook: Static Sunrise
+type: Pre-chorus
+tempo: 112-124
+feel: restless
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Dm7 | Am7 | Dm7 | Fmaj7 | G | Fmaj7 | E7
+melody: r:0.5 e4:0.25 e4:0.25 e4:0.5 c4:0.5 e4:1 g4:1 | f4:1 r:0.5 d4:0.25 d4:0.25 f4:0.5 a4:1.5 | r:0.5 g4:0.25 g4:0.25 g4:0.5 e4:0.5 g4:1 c5:1 | a4:2 r:0.5 a4:0.25 c5:0.25 d5:1 |
+        c5:1.5 a4:0.5 c5:1 a4:1 | b4:1 d5:1 b4:1 g4:1 | r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 e5:1 | d5:1 b4:3 |
+
+hook: Honeyed Voltage
+type: Pre-chorus
+tempo: 116-126
+feel: charged
+style: brightPop
+substyle: nu-disco
+leadin: yes
+chords: G | Dm7 | G | Em7 | Am7 | Dm7 | G | Fmaj7 | G7
+melody: r:2 d4:0.5 f4:0.5 g4:0.5 a4:0.5 | a4:1 r:0.5 a4:0.5 f4:0.5 d4:0.5 r:1 | r:0.5 b3:0.5 d4:0.5 g4:0.5 b4:2 | r:0.5 b4:0.25 b4:0.25 b4:0.5 g4:0.5 b4:1 d5:1 | c5:2 r:1 a4:0.5 c5:0.5 |
+        d5:1 c5:0.5 a4:0.5 f4:1 a4:1 | b4:0.5 b4:0.5 b4:0.5 c5:0.5 d5:2 | r:0.5 e5:0.5 d5:0.5 c5:0.5 a4:1 c5:1 | d5:4 |
+
+hook: Vinyl Undertow
+type: Pre-chorus
+tempo: 110-122
+feel: brooding
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Fmaj7 | Am7 | Fmaj7 | Dm7 | Em7 | Fmaj7 | E
+melody: a3:1.5 c4:0.5 e4:0.5 d4:0.5 c4:1 | r:0.5 c4:0.5 a3:0.5 c4:0.5 e4:2 | r:0.5 e4:0.5 g4:0.5 e4:0.5 a4:1.5 g4:0.5 | f4:1 e4:1 c4:2 |
+        r:0.5 d4:0.25 f4:0.25 a4:0.5 f4:0.5 a4:1 c5:1 | b4:1.5 g4:0.5 b4:0.5 d5:1.5 | c5:1 a4:1 c5:0.5 e5:1.5 | e5:1 b4:3 |
+
+hook: Mirrorline Fever
+type: Pre-chorus
+tempo: 118-126
+feel: urgent
+style: brightPop
+substyle: nu-disco
+chords: Dm7 | G | Em7 | Am7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:0.5 a3:0.25 a3:0.25 d4:0.5 f4:0.5 r:0.5 f4:0.5 a4:1 | g4:1.5 d4:0.5 r:2 | r:0.5 b3:0.25 b3:0.25 e4:0.5 g4:0.5 r:0.5 g4:0.5 b4:1 | a4:1.5 e4:0.5 r:2 |
+        r:0.5 d5:0.5 c5:0.5 a4:0.5 f4:1 a4:1 | g4:0.5 b4:0.5 d5:1 b4:1 g4:1 | r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1.5 c5:0.5 | d5:4 |
+
+hook: Spotlight Confession
+type: Pre-chorus
+tempo: 112-126
+feel: tense
+style: brightPop
+substyle: nu-disco
+chords: Cmaj7 | Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 | G7
+melody: e4:0.5 g4:0.5 r:0.5 g4:0.5 b4:1 g4:1 | a4:1.5 e4:0.5 r:1 c4:0.5 e4:0.5 | f4:0.5 a4:0.5 r:0.5 a4:0.5 c5:1 a4:1 | b4:1.5 g4:0.5 d4:2 |
+        r:0.5 e4:0.5 e5:1.5 d5:0.5 b4:1 | c5:1 a4:0.5 c5:0.5 e5:2 | d5:0.5 d5:0.5 r:0.5 c5:0.5 a4:1 c5:1 | b4:1 d5:3 |
+
+hook: Glitterbox Heartbeat
+type: Chorus
+tempo: 116-126
+feel: euphoric
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 | G | Cmaj7
+melody: r:0.5 e4:0.5 a4:0.5 c5:0.5 r:0.5 c5:0.5 b4:0.5 a4:0.5 | a4:1.5 f4:0.5 d4:2 | r:0.5 d4:0.5 g4:0.5 b4:0.5 r:0.5 b4:0.5 a4:0.5 g4:0.5 | g4:1.5 e4:0.5 r:2 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 c5:1 e5:1 | d5:1.5 c5:0.5 a4:1 c5:1 | b4:0.5 d5:0.5 r:0.5 d5:0.5 d5:1 b4:1 | c5:1 g4:3 |
+
+hook: Afterhours Halo
+type: Chorus
+tempo: 112-124
+feel: glowing
+style: brightPop
+substyle: nu-disco
+chords: Fmaj7 | Em7 | Dm7 | C | Fmaj7 | Em7 | Dm7 G | C
+melody: c5:1.5 a4:0.5 r:0.5 a4:0.5 c5:0.5 e5:0.5 | d5:1 b4:1 g4:1.5 r:0.5 | r:0.5 a4:0.5 a4:0.5 c5:0.5 a4:1 f4:1 | g4:2 e4:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 c5:1 | d5:0.5 e5:1 d5:0.5 b4:1 g4:1 | a4:1 c5:0.5 a4:0.5 b4:1 d5:1 | e5:1 c5:3 |
+
+hook: Polished Midnight
+type: Chorus
+tempo: 114-126
+feel: sultry
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Fmaj7 | Dm7 | E7 | Am7 | Fmaj7 | Dm7 E7 | Am7
+melody: a4:0.75 a4:0.25 r:0.5 g4:0.5 a4:1 c5:1 | c5:1.5 a4:0.5 r:0.5 f4:0.5 a4:1 | r:0.5 a4:0.5 d5:0.5 c5:0.5 a4:1 f4:1 | g#4:1.5 e4:0.5 b4:2 |
+        r:0.5 a4:0.25 c5:0.25 e5:1 e5:0.5 d5:0.5 c5:1 | e5:1.5 c5:0.5 a4:1 c5:1 | d5:1 c5:0.5 a4:0.5 b4:1 g#4:1 | a4:3 r:1 |
+
+hook: Cherry Falsetto
+type: Chorus
+tempo: 114-126
+feel: soaring
+style: brightPop
+substyle: nu-disco
+leadin: yes
+chords: G | Cmaj7 | Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 G | Cmaj7
+melody: r:2 g4:0.5 a4:0.5 b4:0.5 d5:0.5 | e5:1.5 c5:0.5 b4:1 g4:1 | r:0.5 a4:0.5 a4:0.5 g4:0.5 e4:1 g4:1 | f4:1.5 a4:0.5 c5:1 a4:1 | b4:1 g4:1 d4:2 |
+        r:0.5 g4:0.5 c5:0.5 e5:0.5 e5:1.5 d5:0.5 | c5:1 e5:1.5 c5:0.5 a4:1 | d5:1 c5:0.5 a4:0.5 b4:2 | c5:1 b4:3 |
+
+hook: Parquet Riot
+type: Chorus
+tempo: 116-126
+feel: groovy
+style: brightPop
+substyle: nu-disco
+chords: Dm7 G | Em7 Am7 | Dm7 G | Cmaj7 | Dm7 G | Em7 Am7 | Fmaj7 G | C
+melody: f4:0.5 a4:0.5 r:0.5 a4:0.5 b4:1 g4:1 | g4:0.5 b4:0.5 r:0.5 b4:0.5 c5:1 a4:1 | a4:1.5 f4:0.5 g4:1 d4:1 | e4:2.5 r:1.5 |
+        r:0.5 a4:0.5 d5:0.5 c5:0.5 d5:1 b4:1 | e5:1.5 d5:0.5 e5:1 c5:1 | c5:1 a4:0.5 c5:0.5 d5:1 b4:1 | c5:1.5 g4:2.5 |
+
+hook: Mirrorball Gospel
+type: Chorus
+tempo: 110-124
+feel: uplifting
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Em7 | Fmaj7 | G | Am7 | Em7 | Fmaj7 | G
+melody: e5:1 r:0.5 c5:0.25 c5:0.25 a4:0.5 g4:0.5 e4:1 | r:0.5 e4:0.5 g4:0.5 b4:0.5 b4:1 a4:0.5 g4:0.5 | a4:1.5 f4:0.5 c5:1 a4:1 | b4:2 r:1 g4:0.5 a4:0.5 |
+        c5:0.5 e5:0.5 r:0.5 e5:0.5 e5:1 c5:1 | d5:1.5 b4:0.5 g4:0.5 b4:0.5 d5:1 | c5:1 e5:1 c5:0.5 a4:1.5 | b4:1 g4:3 |
+
+hook: Ballroom Satellite
+type: Chorus
+tempo: 112-124
+feel: shimmering
+style: brightPop
+substyle: nu-disco
+leadin: yes
+chords: E7 | Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Dm7 | E7 | Am7
+melody: r:1.5 e4:0.5 g#4:0.5 b4:0.5 d5:1 | c5:2 r:0.5 a4:0.5 c5:0.5 e5:0.5 | d5:1 c5:0.5 a4:1.5 r:1 | r:0.5 g4:0.5 b4:0.5 d5:0.5 d5:1 c5:0.5 b4:0.5 | c5:1 b4:1 g4:2 |
+        r:0.5 c5:0.25 c5:0.25 e5:0.5 c5:0.5 e5:1.5 c5:0.5 | d5:1.5 a4:0.5 c5:1 d5:1 | e5:1 d5:0.5 b4:2.5 | c5:1 a4:3 |
+
+hook: Afterparty Silhouette
+type: Bridge
+tempo: 110-124
+feel: hushed
+style: brightPop
+substyle: nu-disco
+chords: Fmaj7 | Fmaj7 | Em7 | Em7 | Dm7 | Dm7 | Gsus4 | G
+melody: c4:2 r:0.5 a3:0.5 c4:0.5 e4:0.5 | f4:3 e4:1 | r:1 b3:0.5 e4:0.5 g4:2 | a4:1 g4:1 d4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 c5:2 | a4:1.5 f4:0.5 a4:1 d5:1 | c5:3 d5:1 | b4:2 d5:2 |
+
+hook: Disco Undercurrent
+type: Bridge
+tempo: 114-126
+feel: hypnotic
+style: brightPop
+substyle: nu-disco
+chords: Dm7 | Am7 | Dm7 | Am7 | Fmaj7 | G | Em7 | E7
+melody: f4:1.5 e4:0.5 d4:1 c4:1 | e4:3 r:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:1.5 c5:0.5 | a4:2 g4:1 e4:1 |
+        r:0.25 c4:0.25 f4:0.5 a4:0.5 c5:0.5 e5:2 | d5:1.5 b4:0.5 g4:2 | r:0.5 e4:0.5 g4:0.5 b4:0.5 d5:1 b4:1 | g#4:1 b4:3 |
+
+hook: Breathless Breakdown
+type: Bridge
+tempo: 116-126
+feel: sparse
+style: brightPop
+substyle: nu-disco
+chords: Am7 | Am7 | Fmaj7 | Fmaj7 | Dm7 | Em7 | Fmaj7 | G7
+melody: r:2 e4:0.5 e4:0.5 g4:1 | a4:0.5 g4:0.5 e4:1 r:2 | r:2 f4:0.5 f4:0.5 a4:1 | c5:0.5 a4:0.5 f4:1 r:2 |
+        r:1 d5:0.5 c5:0.5 a4:1 c5:1 | b4:1 d5:0.5 b4:0.5 g4:1 b4:1 | c5:1 e5:1 c5:1 a4:1 | b4:1.5 g4:0.5 d5:2 |
+
+hook: Lowlight Velour
+type: Bridge
+tempo: 110-122
+feel: tender
+style: brightPop
+substyle: nu-disco
+leadin: yes
+chords: G | Em7 | Am7 | Em7 | Am7 | Fmaj7 | Cmaj7 | Dm7 | Gsus4 G
+melody: r:3 d4:1 | e4:1 r:0.5 g4:0.5 b4:2 | a4:1.5 g4:0.5 e4:2 | r:0.5 d4:0.5 e4:0.5 g4:0.5 b4:1.5 d5:0.5 | c5:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 e5:2 | d5:1 c5:1 b4:2 | a4:1.5 f4:0.5 a4:1 c5:1 | d5:1 c5:1 b4:2 |

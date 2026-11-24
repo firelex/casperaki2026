@@ -1,0 +1,314 @@
+# Synthwave / 80s synth-pop revival (style edm, substyle synthwave): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Key of C major / A minor, sung pitch (C4 = middle C). Long held notes, rising sixths, bVI-bVII-I lifts.
+
+hook: Neon Rearview
+type: Verse
+tempo: 96-110
+feel: nostalgic
+style: edm
+substyle: synthwave
+chords: Am | F | C | G | Am | F | C | G
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1.5 d4:0.5 | c4:2.5 r:0.5 a3:0.5 c4:0.5 |
+        g4:1.5 e4:0.5 e4:1 d4:0.5 c4:0.5 | d4:3 r:1 |
+        r:0.5 c4:0.5 e4:0.5 g4:0.5 e4:1.5 c4:0.5 | f4:1 e4:0.5 c4:0.5 a3:2 |
+        r:0.5 g3:0.5 e4:1.5 d4:0.5 c4:1 | d4:1 b3:0.5 d4:2.5 |
+
+hook: Tape Deck Rain
+type: Verse
+tempo: 92-106
+feel: wistful
+style: edm
+substyle: synthwave
+chords: Am | G | F | G | Am | G | F | E
+melody: r:1 a3:0.5 c4:0.5 e4:1 c4:0.5 a3:0.5 | b3:1.5 d4:0.5 g3:2 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5 f4:1 e4:0.5 c4:0.5 | d4:3 r:1 |
+        r:1 e4:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1 b3:0.5 g3:0.5 b3:1 d4:1 |
+        c4:1.5 a3:0.5 f4:1 e4:0.5 c4:0.5 | b3:4 |
+
+hook: Chrome Horizon
+type: Verse
+tempo: 100-114
+feel: driving
+style: edm
+substyle: synthwave
+leadin: yes
+chords: G | Am | F | C | G | Am | F | C | G
+melody: r:2.5 e4:0.5 d4:0.5 c4:0.5 |
+        e4:1.5 c4:0.5 a3:1 c4:0.5 e4:0.5 | f4:0.5 e4:0.5 c4:1 r:1 a3:0.5 c4:0.5 |
+        g4:1.5 e4:0.5 g4:0.5 e4:0.5 c4:1 | d4:2.5 r:0.5 b3:0.5 c4:0.5 |
+        e4:1 e4:0.5 a3:0.5 c4:1 e4:1 | r:0.5 a3:0.5 f4:1.5 e4:0.5 c4:1 |
+        e4:1 g4:1 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:2 |
+
+hook: Pastel Overdrive
+type: Verse
+tempo: 104-118
+feel: restless
+style: edm
+substyle: synthwave
+chords: F | G | Em | Am | F | G | Em | Am
+melody: r:0.5 a3:0.25 c4:0.25 f4:0.5 f4:0.5 r:0.5 e4:0.5 c4:1 | d4:1.5 b3:0.5 d4:1 g4:1 |
+        e4:0.5 g4:0.5 e4:0.5 b3:1.5 r:1 | r:0.5 c4:0.5 d4:1 e4:1.5 c4:0.5 |
+        r:0.5 a3:0.25 c4:0.25 f4:0.5 g4:0.5 r:0.5 f4:0.5 e4:1 | d4:1 b3:0.5 d4:0.5 g4:2 |
+        g4:1 e4:0.5 d4:0.5 b3:1 g3:1 | a3:1 c4:1 e4:2 |
+
+hook: Coastline Static
+type: Verse
+tempo: 90-104
+feel: dreamy
+style: edm
+substyle: synthwave
+chords: C | Em | Am | F | C | Em | F | G
+melody: r:1 g3:0.5 e4:2.5 | e4:1 d4:0.5 b3:0.5 g4:2 |
+        e4:1.5 c4:0.5 a3:2 | r:1 a3:0.5 f4:2.5 |
+        e4:0.5 f4:0.5 g4:1 e4:1 c4:1 | b3:1.5 d4:0.5 e4:2 |
+        r:0.5 c4:0.5 f4:0.5 a3:0.5 c4:1 d4:1 | d4:1 g3:1 b3:2 |
+
+hook: Rental Cassette
+type: Verse
+tempo: 106-120
+feel: cool
+style: edm
+substyle: synthwave
+chords: Am | Am | F | G | Am | Am | F | E
+melody: e4:0.75 e4:0.75 c4:0.5 a3:1 r:1 | r:0.5 c4:0.5 e4:0.5 g4:1 e4:0.5 d4:0.5 c4:0.5 |
+        c4:0.75 c4:0.75 a3:0.5 f4:1 r:1 | r:0.5 d4:0.5 g4:0.5 f4:0.5 d4:2 |
+        e4:0.75 e4:0.75 g4:0.5 e4:1 r:1 | r:0.5 a3:0.5 c4:0.5 e4:1 d4:0.5 c4:1 |
+        f4:1 e4:0.5 c4:0.5 a3:1 c4:1 | b3:1.5 g#3:0.5 b3:2 |
+
+hook: Velvet Freeway
+type: Verse
+tempo: 94-108
+feel: longing
+style: edm
+substyle: synthwave
+leadin: yes
+chords: G | F | G | Em | Am | F | G | C | C
+melody: r:3 g3:0.5 c4:0.5 |
+        c4:1 a3:0.5 c4:0.5 f4:1.5 e4:0.5 | d4:2 r:1 b3:0.5 d4:0.5 |
+        e4:1 g4:0.5 e4:0.5 b3:1.5 g3:0.5 | a3:3 r:0.5 c4:0.5 |
+        f4:0.5 f4:0.5 e4:0.5 c4:0.5 a3:1 c4:1 | r:0.5 b3:0.5 d4:0.5 g4:2.5 |
+        e4:1 d4:0.5 c4:0.5 g3:1.5 a3:0.5 | e4:3 r:1 |
+
+hook: Sodium Glow
+type: Verse
+tempo: 104-118
+feel: pulsing
+style: edm
+substyle: synthwave
+chords: Am | G | F | G | Am | G | F | Gsus4 G
+melody: a3:0.5 a3:0.5 c4:0.5 e4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:1 b3:1 g3:1 r:1 |
+        a3:0.5 a3:0.5 c4:0.5 f4:0.5 r:0.5 f4:0.5 e4:0.5 c4:0.5 | d4:3 r:1 |
+        c4:0.5 c4:0.5 e4:0.5 g4:0.5 r:0.5 g4:0.5 e4:0.5 c4:0.5 | d4:1 g4:1 d4:1 b3:1 |
+        c4:0.5 a3:0.5 c4:0.5 f4:1 e4:0.5 c4:1 | c4:2 b3:2 |
+
+hook: Ultraviolet Climb
+type: Pre-chorus
+tempo: 96-110
+feel: rising
+style: edm
+substyle: synthwave
+chords: F | G | Am | Am | Ab | Bb | C | G
+melody: r:0.5 c4:0.5 f4:0.5 a4:1.5 g4:0.5 f4:0.5 | g4:1.5 d4:0.5 b3:1 d4:1 |
+        r:0.5 e4:0.5 c5:2.5 b4:0.5 | a4:3 r:1 |
+        r:0.5 c4:0.5 eb4:0.5 ab4:2.5 | bb4:1 f4:0.5 d4:0.5 f4:1 bb4:1 |
+        c5:1.5 g4:0.5 e4:1 g4:1 | d5:4 |
+
+hook: Satellite Promise
+type: Pre-chorus
+tempo: 100-114
+feel: hopeful
+style: edm
+substyle: synthwave
+chords: Dm | Em | F | G | Dm | Em | F | Gsus4 G
+melody: r:0.5 a3:0.5 d4:0.5 f4:0.5 a4:2 | g4:1 e4:0.5 b3:0.5 e4:2 |
+        r:0.5 c4:0.5 a4:2.5 g4:0.5 | g4:1 d4:1 b3:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 d5:2 | b4:1.5 g4:0.5 e4:1 g4:1 |
+        a4:0.5 c5:0.5 a4:0.5 f4:0.5 c5:2 | d5:4 |
+
+hook: Glass Skyline
+type: Pre-chorus
+tempo: 104-118
+feel: building
+style: edm
+substyle: synthwave
+leadin: yes
+chords: G | Am | F | C | G | Ab | Bb | C | G7
+melody: r:3 e4:0.5 g4:0.5 |
+        a4:1.5 e4:0.5 c4:1 e4:1 | f4:0.5 a4:0.5 f4:0.5 c4:0.5 f4:2 |
+        r:0.5 c4:0.5 e4:1.5 g4:1.5 | g4:0.5 b4:0.5 d5:1 b4:2 |
+        c5:1.5 ab4:0.5 eb4:1 ab4:1 | d5:1.5 bb4:0.5 f4:1 bb4:1 |
+        c5:0.5 d5:0.5 e5:1 c5:1 g4:1 | b4:4 |
+
+hook: Taillight Fever
+type: Pre-chorus
+tempo: 92-106
+feel: urgent
+style: edm
+substyle: synthwave
+chords: Am | F | Dm | E | Am | F | Dm | E7
+melody: r:0.5 a3:0.5 c4:0.5 e4:0.5 a4:2 | a4:1 g4:0.5 f4:0.5 c4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 d5:2 | b4:1.5 g#4:0.5 e4:2 |
+        r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 a4:1 | c5:1.5 a4:0.5 f4:1 a4:1 |
+        d5:1 c5:0.5 a4:0.5 f4:1 d5:1 | b4:4 |
+
+hook: Lilac Voltage
+type: Pre-chorus
+tempo: 106-120
+feel: shimmering
+style: edm
+substyle: synthwave
+chords: C | Em | Am | F | Ab | Bb | Ab Bb | Gsus4 G
+melody: e4:1 g4:0.5 e4:0.5 c5:2 | b4:1.5 g4:0.5 e4:2 |
+        r:0.5 e4:0.5 c5:1.5 a4:1.5 | a4:1 f4:1 c4:2 |
+        r:0.5 c4:0.5 eb4:0.5 ab4:0.5 c5:2 | d5:1 bb4:0.5 f4:0.5 d5:2 |
+        c5:1.5 ab4:0.5 bb4:1 d5:1 | d5:4 |
+
+hook: Mirrorball Tension
+type: Pre-chorus
+tempo: 106-120
+feel: tense
+style: edm
+substyle: synthwave
+chords: Am | G | F | E | Am | G | F | E7
+melody: c4:0.75 c4:0.75 e4:0.5 a4:1.5 r:0.5 | g4:0.5 f4:0.5 d4:1 b3:2 |
+        c4:0.75 c4:0.75 f4:0.5 c5:1.5 r:0.5 | b4:1 g#4:1 e4:2 |
+        e4:0.75 a4:0.75 c5:0.5 e5:1.5 r:0.5 | d5:1 b4:1 g4:2 |
+        a4:0.75 c5:0.75 a4:0.5 f4:1 a4:1 | b4:2 d5:2 |
+
+hook: Afterglow Engine
+type: Chorus
+tempo: 100-116
+feel: anthem
+style: edm
+substyle: synthwave
+chords: Am | F | C | G | Am | F | C | G
+melody: e4:1 a4:1.5 g4:0.5 e4:1 | f4:1 e4:0.5 c4:2.5 |
+        r:0.5 c4:0.5 e4:0.5 g4:0.5 c5:2 | b4:1.5 a4:0.5 g4:2 |
+        r:0.5 e4:0.5 c5:1 e5:2 | c5:0.5 d5:0.5 c5:1 a4:2 |
+        g4:1 e5:1.5 d5:0.5 c5:1 | d5:3 r:1 |
+
+hook: Heartbeat Polaroid
+type: Chorus
+tempo: 96-110
+feel: bittersweet
+style: edm
+substyle: synthwave
+chords: F | G | Em | Am | F | G | C | C
+melody: r:0.5 c4:0.5 a4:2 g4:0.5 f4:0.5 | g4:2 b4:2 |
+        r:0.5 b3:0.5 g4:2 e4:1 | e4:1 c4:0.5 a3:2.5 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 f4:1 | r:0.5 d5:0.5 d5:0.5 b4:0.5 d5:1 e5:1 |
+        e5:1.5 d5:0.5 c5:1 g4:1 | e4:4 |
+
+hook: Retrograde Heart
+type: Chorus
+tempo: 104-118
+feel: euphoric
+style: edm
+substyle: synthwave
+chords: C | G | Am | F | C | G | F | C
+melody: g4:0.5 g4:0.5 e4:0.5 g4:0.5 c5:1.5 r:0.5 | b4:1 a4:0.5 g4:0.5 d4:2 |
+        e4:0.5 e4:0.5 c4:0.5 e4:0.5 a4:1.5 r:0.5 | a4:1 g4:0.5 f4:0.5 c4:2 |
+        r:0.5 e4:0.5 c5:1 e5:1.5 d5:0.5 | d5:1 b4:0.5 g4:0.5 d5:2 |
+        c5:1.5 a4:0.5 c5:0.5 d5:0.5 c5:1 | g4:4 |
+
+hook: Electric Twilight
+type: Chorus
+tempo: 90-104
+feel: soaring
+style: edm
+substyle: synthwave
+leadin: yes
+chords: G | Am | G | F | C | Am | F | Ab Bb | C
+melody: r:3 d4:0.5 e4:0.5 |
+        c5:2.5 b4:0.5 a4:1 | g4:1.5 d4:0.5 b4:2 |
+        a4:1 c5:1 a4:1 f4:1 | g4:3 r:0.5 e4:0.5 |
+        r:0.5 a4:0.5 c5:0.5 e5:2.5 | c5:1 d5:0.5 c5:0.5 a4:2 |
+        c5:1.5 eb5:0.5 d5:2 | c5:4 |
+
+hook: Synthetic Sunset
+type: Chorus
+tempo: 104-118
+feel: wistful
+style: edm
+substyle: synthwave
+chords: F | G | Em | Am | F | G | Em | Am
+melody: c5:1.5 a4:0.5 f4:1 a4:1 | g4:1 d4:0.5 g4:2.5 |
+        r:0.5 g4:0.5 b4:0.5 g4:0.5 e4:2 | e4:1 c4:0.5 e4:0.5 a4:2 |
+        r:0.5 c5:0.5 d5:0.5 c5:0.5 a4:2 | r:0.5 d5:0.5 e5:0.5 d5:0.5 b4:2 |
+        e5:2.5 d5:0.5 b4:1 | c5:4 |
+
+hook: Magnetic Summer
+type: Chorus
+tempo: 106-120
+feel: driving
+style: edm
+substyle: synthwave
+chords: C | Am | F | G | C | Am | Fmaj7 | G C
+melody: r:0.5 e4:0.25 g4:0.25 c5:1 r:0.5 c5:0.5 b4:0.5 g4:0.5 | a4:1.5 e4:0.5 e4:1 c4:1 |
+        r:0.5 f4:0.25 a4:0.25 c5:1 r:0.5 c5:0.5 a4:0.5 f4:0.5 | g4:1.5 d4:0.5 b4:2 |
+        r:0.5 g4:0.5 e5:1.5 d5:0.5 c5:1 | e5:1 c5:0.5 a4:0.5 c5:2 |
+        e5:2 c5:1 a4:1 | d5:1 b4:1 c5:2 |
+
+hook: Holographic Rain
+type: Chorus
+tempo: 94-108
+feel: wide
+style: edm
+substyle: synthwave
+leadin: yes
+chords: G | Am | F | C | G | F | G | Em | Am
+melody: r:3 c4:0.5 e4:0.5 |
+        a4:2.5 g4:0.5 e4:1 | f4:1 a4:1 c5:2 |
+        r:0.5 c5:0.5 b4:0.5 g4:0.5 e4:2 | d4:1 g4:1 b4:2 |
+        c5:0.5 d5:0.5 c5:0.5 a4:0.5 c5:2 | d5:1 e5:1 d5:2 |
+        e5:1.5 d5:0.5 b4:1 g4:1 | a4:4 |
+
+hook: Cathode Daydream
+type: Bridge
+tempo: 96-110
+feel: floating
+style: edm
+substyle: synthwave
+chords: Ab | Bb | C | C | Ab | Bb | Gsus4 | G
+melody: r:1 c4:0.5 eb4:0.5 ab4:2 | bb4:1.5 f4:0.5 d4:2 |
+        r:0.5 e4:0.5 c5:3 | g4:2 e4:1 g4:1 |
+        r:0.5 ab4:0.5 c5:0.5 eb5:2.5 | d5:1.5 bb4:0.5 f4:2 |
+        g4:1 c5:1 d5:2 | b4:4 |
+
+hook: Quiet Mainframe
+type: Bridge
+tempo: 100-114
+feel: hushed
+style: edm
+substyle: synthwave
+chords: Dm | Am | Dm | Am | F | G | E | E
+melody: f4:1.5 e4:0.5 d4:2 | r:1 c4:0.5 e4:0.5 a4:2 |
+        r:0.5 f4:0.5 d5:2.5 c5:0.5 | a4:2.5 r:1.5 |
+        r:0.5 c4:0.5 a4:1.5 g4:0.5 f4:1 | g4:1 b4:1 d5:2 |
+        e5:1.5 b4:0.5 g#4:2 | b4:4 |
+
+hook: Static Cathedral
+type: Bridge
+tempo: 104-118
+feel: dramatic
+style: edm
+substyle: synthwave
+leadin: yes
+chords: Am | F | G | Em | Am | Ab | Bb | C | G
+melody: r:3 a3:0.5 c4:0.5 |
+        f4:1.5 e4:0.5 c4:1 a3:1 | b3:1 d4:1 g4:2 |
+        r:0.5 b3:0.5 g4:1.5 e4:1.5 | e4:1 c4:1 a3:2 |
+        r:0.5 eb4:0.5 c5:2.5 ab4:0.5 | bb4:1 d5:1 bb4:1 f4:1 |
+        c5:1.5 d5:0.5 e5:2 | d5:4 |
+
+hook: Afterimage Lane
+type: Bridge
+tempo: 106-120
+feel: contrasting
+style: edm
+substyle: synthwave
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 | Ab Bb | G
+melody: r:0.5 a4:0.5 g4:0.5 e4:2.5 | d4:1 e4:0.5 g4:0.5 b4:2 |
+        a4:1.5 c5:0.5 a4:1 f4:1 | g4:3 r:1 |
+        r:0.5 c5:0.5 a4:0.5 c5:0.5 e5:2 | d5:1.5 b4:0.5 g4:2 |
+        c5:1 eb5:1 d5:1.5 bb4:0.5 | d5:1 b4:3 |

@@ -1,0 +1,323 @@
+# Afrobeats / afropop hooks (style: latin, substyle: afrobeats): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Relaxed off-beat entries, 3-3-2 figures, pentatonic shapes, short chantable call-and-response phrases over gentle
+# major loops (Fmaj7-G-Em7-Am7, I-IV-vi-V). Sung pitch, C4 = middle C.
+
+# ---- Verses ----
+
+hook: Palm Wine Dusk
+type: Verse
+tempo: 98-110
+feel: easy
+style: latin
+substyle: afrobeats
+chords: Fmaj7 | G | Em7 | Am7 | Fmaj7 | G | Em7 | Am7
+melody: r:0.75 c4:0.25 e4:0.5 c4:0.5 r:0.5 a3:0.5 c4:1 | d4:0.75 d4:0.75 b3:0.5 r:0.5 g3:0.5 b3:0.5 d4:0.5 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.5 d4:0.75 b3:0.75 g3:0.5 | a3:1.5 g3:0.5 a3:1 r:1 |
+        r:0.75 c4:0.25 f4:0.5 e4:0.5 r:0.5 c4:0.5 a3:0.5 c4:0.5 | d4:0.75 g4:0.75 f4:0.5 d4:1 r:1 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 g4:0.75 e4:0.75 d4:0.5- | d4:1 c4:1 a3:2 |
+
+hook: Harmattan Haze
+type: Verse
+tempo: 95-107
+feel: hazy
+style: latin
+substyle: afrobeats
+chords: Am7 | Fmaj7 | C | G | Am7 | Fmaj7 | C | G
+melody: r:0.5 e4:0.5 e4:0.5 g4:0.5 e4:0.75 d4:0.75 c4:0.5 | c4:0.75 a3:0.75 g3:0.5 r:2 |
+        r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:1 r:1 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 g4:0.75 e4:0.75 d4:0.5 | e4:0.75 c4:0.75 a3:0.5 c4:1 r:1 |
+        r:0.5 c4:0.5 d4:0.5 e4:0.5 g4:0.75 f4:0.75 e4:0.5- | e4:1 d4:3 |
+
+hook: Danfo Window
+type: Verse
+tempo: 100-112
+feel: carefree
+style: latin
+substyle: afrobeats
+leadin: yes
+chords: G | C | Am | F | G | C | Am | Dm7 | G
+melody: r:2.5 g3:0.5 a3:0.5 c4:0.5 |
+        c4:0.5 c4:0.5 r:0.25 a3:0.25 c4:0.5 e4:0.75 d4:0.75 c4:0.5 | a3:1 r:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 |
+        r:0.5 f4:0.5 e4:0.5 c4:0.5 a3:0.75 c4:0.75 d4:0.5 | d4:2 r:1 b3:0.5 d4:0.5 |
+        e4:0.75 g4:0.75 e4:0.5 c4:0.5 d4:0.5 r:1 | r:0.5 a3:0.5 c4:0.5 e4:0.5 e4:0.75 d4:0.75 c4:0.5 |
+        d4:0.75 f4:0.75 a3:0.5 c4:1 r:0.5 b3:0.5- | b3:1 d4:1 g4:2 |
+
+hook: Market Day Gossip
+type: Verse
+tempo: 104-115
+feel: chatty
+style: latin
+substyle: afrobeats
+chords: C | Am | F | G | C | Am | F | G
+melody: r:0.5 g4:0.5 e4:0.5 g4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | a3:0.75 c4:0.75 a3:0.5 r:2 |
+        r:0.5 f4:0.5 e4:0.5 f4:0.5 r:0.5 c4:0.5 a3:0.5 c4:0.5 | d4:0.75 b3:0.75 g3:0.5 r:2 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.5 c4:0.75 d4:0.75 e4:0.5 | c4:1 a3:1 r:0.5 e4:0.5 d4:0.5 c4:0.5 |
+        a3:0.75 c4:0.75 f4:0.5- f4:1 e4:0.5 d4:0.5 | d4:1 b3:0.5 g3:0.5 b3:2 |
+
+hook: Gold Bangles
+type: Verse
+tempo: 96-108
+feel: sultry
+style: latin
+substyle: afrobeats
+chords: Am7 | Dm7 | G | Cmaj7 | Am7 | Dm7 | Em7 | Am7
+melody: a3:0.5 c4:0.5 r:0.5 d4:0.5 e4:0.75 c4:0.75 a3:0.5 | r:0.5 f4:0.5 f4:0.5 e4:0.5 d4:1 a3:1 |
+        r:0.75 d4:0.25 b3:0.5 g3:0.5 b3:0.75 d4:0.75 e4:0.5 | e4:1.5 d4:0.5 b3:1 r:1 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 g4:1 e4:0.5 d4:0.5 | c4:0.75 d4:0.75 f4:0.5 a3:1 r:1 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 g4:0.75 f4:0.25 e4:0.5 d4:0.5 | e4:1.5 d4:0.5 c4:2 |
+
+hook: Slow Generator Hum
+type: Verse
+tempo: 95-105
+feel: laidback
+style: latin
+substyle: afrobeats
+chords: F G | Em Am | F G | Am | Dm7 G | Em7 Am7 | Fmaj7 | G
+melody: r:0.5 c4:0.5 a3:0.5 c4:0.5 d4:1 b3:1 | r:0.5 g3:0.5 b3:0.5 g3:0.5 c4:1.5 r:0.5 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5 g4:0.75 f4:0.75 d4:0.5 | e4:2 r:1 c4:0.5 d4:0.5 |
+        f4:0.5 d4:0.5 r:0.5 a3:0.5 b3:0.75 d4:0.75 g4:0.5 | r:0.5 g4:0.5 e4:0.5 d4:0.5 c4:1 a3:1 |
+        r:0.75 a3:0.25 c4:0.5 f4:0.5 e4:1 c4:1 | d4:3 r:1 |
+
+hook: Indigo Wrapper
+type: Verse
+tempo: 102-114
+feel: swaying
+style: latin
+substyle: afrobeats
+leadin: yes
+chords: Em7 | Am7 | Fmaj7 | G | Em7 | Am7 | Dm7 | Fmaj7 | G
+melody: r:3 d4:0.5 e4:0.5 |
+        e4:0.75 c4:0.75 a3:0.5 r:0.5 c4:0.5 e4:0.5 g4:0.5 | f4:0.75 e4:0.75 c4:0.5 a3:1 r:1 |
+        r:0.5 b3:0.5 d4:0.5 b3:0.5 g3:1 a3:0.5 b3:0.5 | e4:1.5 d4:0.5 b3:1 r:1 |
+        r:0.5 e4:0.5 g4:0.5 d4:0.5 e4:0.5 c4:0.5 a3:1 | r:0.75 a3:0.25 d4:0.5 f4:0.5 f4:0.75 e4:0.75 d4:0.5 |
+        c4:1 a3:0.5 c4:0.5 e4:2 | r:0.5 d4:0.5 b3:0.5 a3:0.5 b3:2 |
+
+hook: Bonfire Sand
+type: Verse
+tempo: 98-110
+feel: warm
+style: latin
+substyle: afrobeats
+chords: C | G | Am | Em | F | C | Dm7 | G
+melody: r:0.5 e4:0.5 g4:0.5 e4:0.5 r:1 d4:0.5 c4:0.5 | d4:1 b3:0.5 g3:0.5 r:2 |
+        r:0.5 c4:0.5 e4:0.5 c4:0.5 r:1 b3:0.5 a3:0.5 | b3:1 g3:0.5 e4:0.5 r:2 |
+        r:0.5 f4:0.5 a3:0.5 c4:0.5 f4:0.75 e4:0.75 c4:0.5 | e4:1.5 c4:0.5 g3:1 r:1 |
+        r:0.5 d4:0.5 f4:0.5 a3:0.5 c4:0.75 d4:0.75 f4:0.5- | f4:0.5 d4:1.5 g4:2 |
+
+# ---- Pre-choruses ----
+
+hook: Rising Tide Drums
+type: Pre-chorus
+tempo: 100-112
+feel: building
+style: latin
+substyle: afrobeats
+chords: F | G | Em7 | Am7 | F | G | Am7 F | Gsus4 G
+melody: r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:0.75 f4:0.75 a4:0.5 | g4:1 d4:1 r:0.5 d4:0.5 e4:0.5 g4:0.5 |
+        r:0.5 e4:0.5 e4:0.5 g4:0.5 b4:0.75 a4:0.75 g4:0.5 | a4:1.5 e4:0.5 c5:1 r:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:0.75 a4:0.75 f4:0.5 | g4:1 b4:1 d5:1 r:1 |
+        r:0.5 c5:0.5 e5:0.5 c5:0.5 c5:1 a4:1 | c5:2 b4:2 |
+
+hook: Lagoon Breeze
+type: Pre-chorus
+tempo: 96-108
+feel: lifting
+style: latin
+substyle: afrobeats
+chords: Dm7 | Em7 | Fmaj7 | G | Dm7 | Em7 | Fmaj7 | G7
+melody: r:0.75 a3:0.25 d4:0.5 f4:0.5 a4:0.75 f4:0.75 d4:0.5 | r:0.5 b3:0.5 e4:0.5 g4:0.5 b4:1 g4:0.5 e4:0.5 |
+        r:0.75 c4:0.25 f4:0.5 a4:0.5 c5:0.75 a4:0.75 f4:0.5 | g4:1 r:0.5 d4:0.5 g4:0.5 a4:0.5 b4:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 d5:0.75 c5:0.75 a4:0.5 | r:0.5 b4:0.5 d5:0.5 b4:0.5 e5:0.75 d5:0.75 b4:0.5 |
+        c5:1 e5:1 c5:1 a4:0.5 c5:0.5- | c5:0.5 d5:3.5 |
+
+hook: Sunset Ferry Call
+type: Pre-chorus
+tempo: 104-115
+feel: hopeful
+style: latin
+substyle: afrobeats
+leadin: yes
+chords: G | Am | Em | F | C | Am | Em | F | G
+melody: r:2 c4:0.5 d4:0.5 e4:0.5 d4:0.5 |
+        e4:1 c4:0.5 e4:0.5 r:0.5 a4:0.5 g4:0.5 e4:0.5 | g4:1 e4:0.5 b3:0.5 r:1 d4:0.5 e4:0.5 |
+        f4:0.75 a4:0.75 c5:0.5 a4:1 g4:0.5 f4:0.5 | e4:1.5 g4:0.5 c5:1 r:1 |
+        r:0.5 e5:0.5 c5:0.5 a4:0.5 c5:0.75 e5:0.75 d5:0.5 | b4:1 r:0.5 g4:0.5 b4:0.5 d5:0.5 e5:1 |
+        c5:0.75 a4:0.75 f4:0.5 a4:0.5 g4:0.5 c5:1 | d5:4 |
+
+hook: Cowrie Shells
+type: Pre-chorus
+tempo: 98-110
+feel: rising
+style: latin
+substyle: afrobeats
+chords: Am7 | Fmaj7 | C | G | Am7 | Fmaj7 | Dm7 | Gsus4 G
+melody: r:0.5 a3:0.5 c4:0.5 e4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | c4:0.75 a3:0.75 c4:0.5 e4:1 r:1 |
+        r:0.5 c4:0.5 e4:0.5 g4:0.5 r:0.5 g4:0.5 f4:0.5 e4:0.5 | d4:0.75 g4:0.75 b4:0.5 d5:1 r:1 |
+        r:0.5 e5:0.5 d5:0.5 c5:0.5 a4:0.75 c5:0.75 e5:0.5 | c5:0.75 a4:0.75 f4:0.5 a4:1 c5:1 |
+        d5:0.5 c5:0.5 a4:0.5 f4:0.5 a4:0.75 c5:0.75 d5:0.5- | d5:0.5 c5:1.5 b4:2 |
+
+hook: Talking Drum Rise
+type: Pre-chorus
+tempo: 102-115
+feel: urgent
+style: latin
+substyle: afrobeats
+chords: C | Em7 | F | G | Am | Em7 | F | G7
+melody: e4:0.75 e4:0.75 g4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:0.75 d4:0.75 e4:0.5 g4:1 r:1 |
+        f4:0.75 f4:0.75 a4:0.5 r:0.5 a4:0.5 g4:0.5 f4:0.5 | g4:0.75 g4:0.75 b4:0.5 d5:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 e5:0.75 c5:0.75 a4:0.5 | b4:0.75 b4:0.75 d5:0.5 e5:1 r:1 |
+        c5:0.75 c5:0.75 a4:0.5 c5:0.75 d5:0.75 e5:0.5 | d5:4 |
+
+hook: Hibiscus Heat
+type: Pre-chorus
+tempo: 95-108
+feel: smouldering
+style: latin
+substyle: afrobeats
+chords: Dm7 | Am7 | Dm7 | Am7 | Fmaj7 | G | Fmaj7 | E7
+melody: r:0.5 f4:0.5 a4:0.5 f4:0.5 d4:0.75 f4:0.75 a4:0.5 | g4:1 e4:1 r:0.5 c4:0.5 e4:0.5 g4:0.5 |
+        a4:0.75 f4:0.75 a4:0.5 c5:1 r:0.5 a4:0.5 | g4:1.5 e4:0.5 a4:1 r:1 |
+        r:0.5 c5:0.5 a4:0.5 c5:0.5 e5:0.75 c5:0.75 a4:0.5 | b4:1 d5:1 r:0.5 b4:0.5 d5:0.5 e5:0.5 |
+        e5:0.75 c5:0.75 a4:0.5 f4:1 a4:0.5 c5:0.5 | b4:4 |
+
+# ---- Choruses ----
+
+hook: Calabash Moon
+type: Chorus
+tempo: 98-110
+feel: dreamy
+style: latin
+substyle: afrobeats
+chords: Fmaj7 | G | Em7 | Am7 | Fmaj7 | G | Em7 | Am7
+melody: r:0.5 a4:0.5 g4:0.5 e4:0.5 r:0.5 c5:0.5 a4:0.5 g4:0.5 | g4:0.75 d4:0.75 g4:0.5 b4:1 r:1 |
+        r:0.5 b4:0.5 g4:0.5 e4:0.5 r:0.5 d5:0.5 b4:0.5 g4:0.5 | a4:1.5 g4:0.5 e4:1 r:1 |
+        r:0.5 c5:0.5 e5:0.5 c5:0.5 a4:0.75 c5:0.75 e5:0.5 | d5:1.5 b4:0.5 d5:0.75 e5:0.75 d5:0.5 |
+        e5:1 d5:0.5 b4:0.5 g4:1 a4:0.5 b4:0.5- | b4:1 a4:3 |
+
+hook: Ginger Sunset
+type: Chorus
+tempo: 100-112
+feel: joyful
+style: latin
+substyle: afrobeats
+chords: C | F | Am | G | C | F | Dm7 G | C
+melody: e4:0.75 g4:0.75 c5:0.5 r:0.5 c5:0.5 b4:0.5 g4:0.5 | a4:1 f4:0.5 a4:0.5 c5:1 r:1 |
+        r:0.5 c5:0.5 a4:0.5 e4:0.5 a4:0.75 c5:0.75 b4:0.5 | b4:1.5 g4:0.5 d4:1 r:1 |
+        r:0.5 g4:0.5 c5:0.5 d5:0.5 e5:0.75 d5:0.75 c5:0.5 | c5:0.75 a4:0.75 c5:0.5 a4:1 r:0.5 c5:0.5 |
+        d5:0.75 e5:0.75 d5:0.5 b4:0.75 a4:0.75 g4:0.5 | g4:1 e4:3 |
+
+hook: Mango Rain
+type: Chorus
+tempo: 96-108
+feel: sunny
+style: latin
+substyle: afrobeats
+leadin: yes
+chords: G | Am7 | Fmaj7 | C | G | Am7 | Fmaj7 | G | C
+melody: r:2.5 d4:0.5 e4:0.5 g4:0.5 |
+        a4:0.5 a4:0.5 r:0.25 g4:0.25 a4:0.5 c5:1 a4:1 | r:0.5 a4:0.5 g4:0.5 f4:0.5 e4:1 c4:1 |
+        r:0.5 e4:0.5 g4:0.5 d5:0.5 c5:0.75 g4:0.75 e4:0.5 | d4:1 g4:0.5 b4:0.5- b4:1 r:1 |
+        r:0.5 c5:0.5 e5:0.5 c5:0.5 e5:0.75 d5:0.75 c5:0.5 | a4:0.5 c5:0.5 r:0.5 e5:0.5 c5:1 a4:1 |
+        b4:0.75 d5:0.75 b4:0.5 g4:1 a4:0.5 b4:0.5 | c5:1.5 g4:2.5 |
+
+hook: Shekere Shuffle
+type: Chorus
+tempo: 105-115
+feel: chant
+style: latin
+substyle: afrobeats
+chords: C | Am | F | G | C | Am | F | G
+melody: r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.75 a4:0.75 g4:0.5 | e4:1 r:1 c5:0.5 a4:0.5 e4:1 |
+        r:0.5 a4:0.5 a4:0.5 f4:0.5 a4:0.75 c5:0.75 a4:0.5 | g4:1 r:1 d5:0.5 b4:0.5 g4:1 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 c5:0.75 d5:0.75 e5:0.5 | e5:1 r:1 c5:0.5 e5:0.5 a4:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:0.75 a4:0.75 f4:0.5 | g4:1.5 b4:0.5 d5:2 |
+
+hook: Lagoon Lanterns
+type: Chorus
+tempo: 95-107
+feel: tender
+style: latin
+substyle: afrobeats
+chords: Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Dm7 | E7 | Am7
+melody: r:0.75 e4:0.25 a4:0.5 b4:0.5 c5:0.75 a4:0.75 e4:0.5 | f4:1.5 a4:0.5 c5:1 r:1 |
+        r:0.75 d4:0.25 g4:0.5 a4:0.5 b4:0.75 a4:0.75 g4:0.5 | e4:1.5 g4:0.5 b4:2 |
+        r:0.5 c5:0.5 e5:0.5 c5:0.5 a4:0.75 c5:0.75 e5:0.5- | e5:0.5 d5:1 c5:0.5 a4:1 f4:1 |
+        r:0.5 b4:0.5 d5:0.5 b4:0.5 g#4:0.75 b4:0.75 e5:0.5 | c5:1.5 a4:2.5 |
+
+hook: Palm Frond Sway
+type: Chorus
+tempo: 98-110
+feel: breezy
+style: latin
+substyle: afrobeats
+chords: F G | Em Am | F G | C | F G | Em Am | Dm7 G | C
+melody: r:0.5 c5:0.5 a4:0.5 f4:0.5 g4:1 b4:1 | b4:0.75 g4:0.75 e4:0.5 a4:1 c5:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 d5:1 b4:1 | c5:1.5 g4:0.5 e4:1 r:1 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:0.75 e5:0.75 d5:0.5 | e5:1 d5:0.5 b4:0.5 c5:1 e5:1 |
+        d5:0.75 c5:0.75 a4:0.5 b4:1 d5:1 | c5:4 |
+
+hook: Highlife Halo
+type: Chorus
+tempo: 104-115
+feel: bright
+style: latin
+substyle: afrobeats
+leadin: yes
+chords: G | C | G | Am | F | C | G | Am | F C
+melody: r:3 g4:0.5 a4:0.5 |
+        c5:0.75 g4:0.75 e4:0.5 r:0.5 g4:0.5 a4:0.5 c5:0.5 | b4:1 g4:0.5 d4:0.5 g4:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 e5:0.75 c5:0.75 a4:0.5 | c5:1.5 a4:0.5 f4:1 r:1 |
+        r:0.5 e5:0.5 d5:0.5 c5:0.5 e5:0.75 d5:0.75 c5:0.5 | d5:1 b4:0.5 d5:0.5 g4:1 r:0.5 b4:0.5 |
+        c5:0.75 e5:0.75 d5:0.5 c5:1 a4:1 | a4:2 g4:2 |
+
+# ---- Bridges ----
+
+hook: Distant Drumline
+type: Bridge
+tempo: 96-108
+feel: spacious
+style: latin
+substyle: afrobeats
+chords: Am7 | Em7 | Fmaj7 | C | Dm7 | Em7 | Fmaj7 | G
+melody: e4:2 r:0.5 g4:0.5 a4:0.5 c5:0.5 | b4:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 e5:2 | c5:1.5 g4:0.5 r:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 c5:2 | b4:1 g4:1 e4:2 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 e5:1.5 d5:0.5 | d5:4 |
+
+hook: Hushed Courtyard
+type: Bridge
+tempo: 95-105
+feel: hushed
+style: latin
+substyle: afrobeats
+chords: Dm7 | Am7 | Dm7 | Em7 | Fmaj7 | Em7 | Dm7 | Gsus4 G
+melody: r:1 a4:0.5 f4:0.5 d4:1 f4:1 | e4:1.5 c4:0.5 a3:2 |
+        r:1 c4:0.5 d4:0.5 f4:1 a4:1 | g4:2 e4:1 r:1 |
+        r:1 c5:0.5 a4:0.5 e5:1.5 c5:0.5 | b4:1.5 g4:0.5 e4:1 r:1 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 c5:1 a4:1 | c5:2 b4:2 |
+
+hook: Monsoon Pause
+type: Bridge
+tempo: 100-112
+feel: brooding
+style: latin
+substyle: afrobeats
+leadin: yes
+chords: E7 | Am | G | F | E7 | Am | G | Fmaj7 | G
+melody: r:3 b3:0.5 c4:0.5 |
+        e4:1 r:0.5 g4:0.5 a4:0.5 e4:0.5 c4:1 | d4:1.5 b3:0.5 d4:1 g4:1 |
+        a4:2 c5:1 a4:1 | g#4:1.5 e4:0.5 b4:2 |
+        r:0.5 c5:0.5 e5:0.5 c5:0.5 a4:2 | r:0.5 b4:0.5 d5:0.5 b4:0.5 g4:1.5 a4:0.5 |
+        c5:1 e5:1 c5:1.5 a4:0.5 | b4:1 d5:3 |
+
+hook: Sandbar Whisper
+type: Bridge
+tempo: 95-108
+feel: wistful
+style: latin
+substyle: afrobeats
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 | Dm7 | G7
+melody: r:0.5 a4:0.5 c5:0.5 e5:0.5 c5:2 | b4:1.5 g4:0.5 d5:2 |
+        a4:1.5 f4:0.5 c5:2 | g4:1.5 e4:0.5 b4:2 |
+        r:1 f4:0.5 a4:0.5 c5:1 e5:1 | d5:0.75 b4:0.75 g4:0.5 e4:1 g4:1 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 f4:1 a4:1 | b4:1 d5:3 |

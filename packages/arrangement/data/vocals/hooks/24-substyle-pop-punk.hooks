@@ -1,0 +1,317 @@
+# Pop-punk / power-pop: 8 verses, 6 pre-choruses, 7 choruses and 4 bridges, written for the song style "rock",
+# substyle "pop-punk". Fast eighth-note verses on repeated notes, stop-start bars and pickups, shout-along choruses
+# with held peaks, I-V-vi-IV and vi-IV-I-V at speed, half-time bridges that build back.
+
+# ---- Verses ----
+
+hook: Basement Static
+type: Verse
+tempo: 128-142
+feel: restless
+style: rock
+substyle: pop-punk
+leadin: yes
+chords: C | C | G | Am | F | C | G | Am | F G
+melody: r:3 g3:0.5 c4:0.5 |
+        e4:0.5 e4:0.5 e4:0.5 d4:0.5 e4:1 g4:0.5 e4:0.5 | d4:1.5 b3:0.5 r:1 g3:0.5 c4:0.5 |
+        c4:0.5 c4:0.5 c4:0.5 b3:0.5 c4:1 e4:0.5 c4:0.5 | a3:2 r:1 c4:0.5 d4:0.5 |
+        e4:0.5 e4:0.5 g4:0.5 e4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:1 d4:0.5 b3:0.5 d4:1 g4:1 |
+        e4:1.5 c4:0.5 r:1 a3:0.5 c4:0.5 | d4:2 b3:2 |
+
+hook: Curfew Sirens
+type: Verse
+tempo: 136-150
+feel: frantic
+style: rock
+substyle: pop-punk
+chords: Am | F | C | G | Am | F | C | G
+melody: r:0.5 a3:0.5 a3:0.5 a3:0.5 c4:0.5 a3:0.5 e4:1 | f4:1.5 e4:0.5 c4:2 |
+        r:0.5 g3:0.5 g3:0.5 g3:0.5 c4:0.5 g3:0.5 e4:1 | d4:2 r:2 |
+        r:0.5 c4:0.5 c4:0.5 c4:0.5 e4:0.5 c4:0.5 g4:1 | f4:1 e4:0.5 d4:0.5 c4:2 |
+        r:1 e4:0.5 g4:0.5 g4:1 e4:1 | d4:1.5 c4:0.5 d4:2 |
+
+hook: Skate Park Saints
+type: Verse
+tempo: 124-138
+feel: cocky
+style: rock
+substyle: pop-punk
+chords: C | G | Am | F | C | G | F | F
+melody: c4:0.5 c4:0.5 r:1 c4:0.5 d4:0.5 e4:0.5 r:0.5 | d4:0.5 d4:0.5 r:1 d4:0.5 e4:0.5 g4:0.5 r:0.5 |
+        e4:1 c4:0.5 a3:1.5 r:1 | r:0.5 a3:0.5 c4:0.5 d4:0.5 c4:2 |
+        e4:0.5 e4:0.5 r:1 e4:0.5 f4:0.5 g4:0.5 r:0.5 | g4:0.5 f4:0.5 r:1 d4:0.5 e4:0.5 d4:0.5 r:0.5 |
+        c4:1 a3:0.5 c4:1.5 d4:1 | c4:3 r:1 |
+
+hook: Detention Bells
+type: Verse
+tempo: 132-146
+feel: snotty
+style: rock
+substyle: pop-punk
+chords: Am | G | F | G | Am | G | F | E
+melody: a3:0.5 c4:0.5 e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 | b3:0.5 d4:0.5 d4:0.5 d4:0.5 r:2 |
+        a3:0.5 c4:0.5 f4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:1 | d4:1.5 g3:0.5 r:2 |
+        r:0.5 e4:0.5 e4:0.5 g4:0.5 e4:1 c4:1 | d4:0.5 d4:0.5 b3:0.5 d4:1 g4:0.5 r:1 |
+        f4:1 e4:0.5 d4:0.5 c4:1 a3:1 | b3:2 g#3:2 |
+
+hook: Parking Lot Prophets
+type: Verse
+tempo: 120-134
+feel: wry
+style: rock
+substyle: pop-punk
+leadin: yes
+chords: G | C | Em | F | C | Am | Em | F | G
+melody: r:3 g3:0.5 b3:0.5 |
+        c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1.5 c4:0.5 | b3:1 g3:0.5 b3:0.5 b3:2 |
+        r:0.5 a3:0.5 a3:0.5 c4:0.5 f4:1 e4:0.5 d4:0.5 | e4:3 r:0.5 g3:0.5 |
+        c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 g4:1 | g4:1.5 e4:0.5 b3:1 d4:1 |
+        c4:0.5 c4:0.5 a3:0.5 c4:1 d4:1.5 | b3:1 d4:3 |
+
+hook: Channel Nine Noise
+type: Verse
+tempo: 138-150
+feel: wired
+style: rock
+substyle: pop-punk
+chords: C | G | Am | F | C | G | Am | G
+melody: r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.5 g4:0.5 e4:1 | d4:0.5 d4:0.5 b3:0.5 d4:0.5 r:2 |
+        r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:0.5 e4:0.5 a3:1 | c4:1.5 a3:0.5 c4:1 r:1 |
+        r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.5 f4:0.5 e4:1 | d4:0.5 b3:0.5 d4:0.5 g4:0.5 g4:1 f4:1 |
+        e4:1.5 c4:0.5 a3:1 c4:0.5 d4:0.5 | d4:1.5 c4:0.5 b3:2 |
+
+hook: Paper Crown
+type: Verse
+tempo: 126-140
+feel: bratty
+style: rock
+substyle: pop-punk
+chords: Am | F | G | Em | Am | F | G | G
+melody: e4:0.5 e4:0.5 d4:0.5 c4:0.5 r:0.5 c4:0.5 d4:0.5 e4:0.5 | f4:1 e4:0.5 c4:1.5 r:1 |
+        d4:0.5 d4:0.5 b3:0.5 g3:0.5 r:0.5 g3:0.5 b3:0.5 d4:0.5 | e4:1 d4:0.5 b3:1.5 r:1 |
+        c4:0.5 e4:0.5 g4:0.5 e4:0.5 r:0.5 e4:0.5 g4:0.5 e4:0.5 | f4:1 a3:0.5 c4:1.5 r:1 |
+        r:0.5 b3:0.5 d4:0.5 g4:0.5 g4:1 f4:0.5 e4:0.5 | d4:3 r:1 |
+
+hook: Bleach Blond Monday
+type: Verse
+tempo: 130-144
+feel: sarcastic
+style: rock
+substyle: pop-punk
+chords: C | Bb | F | C | C | Bb | F | G
+melody: r:1 e4:0.5 e4:0.5 e4:0.5 g4:0.5 e4:1 | d4:1 bb3:0.5 d4:1.5 r:1 |
+        r:1 c4:0.5 c4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:0.5 | e4:1.5 d4:0.5 c4:2 |
+        r:1 g4:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.5 e4:0.5 | f4:1.5 d4:0.5 bb3:2 |
+        a3:0.5 c4:0.5 d4:0.5 e4:0.5 f4:1 d4:1 | d4:1 b3:1 g3:2 |
+
+# ---- Pre-choruses ----
+
+hook: Fuse Box Fever
+type: Pre-chorus
+tempo: 128-142
+feel: build
+style: rock
+substyle: pop-punk
+chords: F | G | Am | Em | F | G | Am G | Gsus4 G
+melody: r:0.5 c4:0.5 c4:0.5 c4:0.5 f4:1 c4:1 | d4:0.5 d4:0.5 d4:0.5 d4:0.5 g4:1 d4:1 |
+        e4:0.5 a4:0.5 r:0.5 a4:0.5 a4:1 g4:0.5 e4:0.5 | g4:1 b4:1 g4:1 e4:1 |
+        r:0.5 a4:0.5 a4:0.5 a4:0.5 c5:1 a4:1 | b4:0.5 b4:0.5 b4:0.5 b4:0.5 d5:1 b4:1 |
+        c5:1 e5:1 d5:1 b4:1 | c5:2 b4:2 |
+
+hook: Last Bell Rush
+type: Pre-chorus
+tempo: 134-148
+feel: tension
+style: rock
+substyle: pop-punk
+chords: F | G | Am | Am | F | G | E | E
+melody: a3:1 c4:1 f4:1.5 e4:0.5 | d4:2 r:1 b3:0.5 d4:0.5 |
+        c4:1 e4:1 a4:1.5 g4:0.5 | e4:2 r:1 e4:0.5 g4:0.5 |
+        a4:1 a4:0.5 a4:0.5 c5:1 a4:1 | b4:1 b4:0.5 b4:0.5 d5:1 g4:1 |
+        r:0.5 b4:0.5 b4:0.5 b4:0.5 e5:1 d5:1 | b4:4 |
+
+hook: Wire Tap Heart
+type: Pre-chorus
+tempo: 120-134
+feel: coiled
+style: rock
+substyle: pop-punk
+chords: Dm | Em | F | G | Dm | Em | F | G7
+melody: d4:0.5 d4:0.5 r:1 f4:0.5 a4:0.5 r:1 | e4:0.5 e4:0.5 r:1 g4:0.5 b4:0.5 r:1 |
+        f4:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 a4:1 | b4:1.5 g4:0.5 d4:2 |
+        r:0.5 a4:0.5 a4:0.5 a4:0.5 d5:1 a4:1 | r:0.5 b4:0.5 b4:0.5 b4:0.5 e5:1 b4:1 |
+        c5:1 c5:0.5 a4:0.5 c5:1 d5:1 | d5:4 |
+
+hook: Kerosene Lungs
+type: Pre-chorus
+tempo: 130-144
+feel: surging
+style: rock
+substyle: pop-punk
+chords: Am | F | C | G | Am | F | Dm | G7
+melody: r:1 c4:0.5 e4:0.5 e4:1 d4:0.5 c4:0.5 | c4:1.5 a3:0.5 f4:2 |
+        r:1 e4:0.5 g4:0.5 g4:1 f4:0.5 e4:0.5 | d4:1.5 b3:0.5 g4:2 |
+        r:1 a4:0.5 c5:0.5 c5:1 b4:0.5 a4:0.5 | a4:1.5 f4:0.5 c5:2 |
+        r:0.5 a4:0.5 d5:0.5 e5:0.5 d5:1 a4:1 | r:0.5 g4:0.5 b4:0.5 d5:2.5 |
+
+hook: Short Fuse Summer
+type: Pre-chorus
+tempo: 124-138
+feel: urgent
+style: rock
+substyle: pop-punk
+leadin: yes
+chords: G | F | G | Em | Am | F | G | Em | E7
+melody: r:2.5 d4:0.5 e4:0.5 g4:0.5 |
+        a4:1 a4:0.5 g4:0.5 f4:1 c4:1 | d4:1.5 g4:0.5 g4:2 |
+        r:0.5 e4:0.5 g4:0.5 b4:0.5 b4:1 a4:0.5 g4:0.5 | a4:2 r:1 a4:0.5 c5:0.5 |
+        c5:1 c5:0.5 a4:0.5 c5:1 f4:1 | d5:1.5 b4:0.5 g4:2 |
+        r:0.5 b4:0.5 b4:0.5 b4:0.5 e5:1.5 d5:0.5 | d5:2 b4:2 |
+
+hook: Holding Pattern
+type: Pre-chorus
+tempo: 136-150
+feel: breathless
+style: rock
+substyle: pop-punk
+chords: C | Em | F | G | Am | Em | F | G
+melody: e4:0.5 g4:0.5 g4:0.5 g4:0.5 r:0.5 g4:0.5 a4:0.5 g4:0.5 | b4:1.5 g4:0.5 e4:2 |
+        f4:0.5 a4:0.5 a4:0.5 a4:0.5 r:0.5 a4:0.5 c5:0.5 a4:0.5 | b4:1.5 d5:0.5 d5:2 |
+        c5:1 c5:1 e5:1 c5:1 | b4:1 b4:1 e5:1 b4:1 |
+        a4:1 c5:1 a4:1 f4:1 | g4:0.5 a4:0.5 b4:3 |
+
+# ---- Choruses ----
+
+hook: Loud Forever
+type: Chorus
+tempo: 128-142
+feel: anthemic
+style: rock
+substyle: pop-punk
+chords: C | G | Am | F | C | G | F G | C
+melody: r:0.5 e4:0.5 g4:0.5 c5:2.5 | b4:1 a4:0.5 g4:1.5 d4:1 |
+        r:0.5 e4:0.5 a4:0.5 c5:2.5 | c5:1 a4:0.5 g4:0.5 f4:2 |
+        r:0.5 g4:0.5 c5:0.5 e5:2.5 | d5:1 b4:0.5 d5:1.5 g4:1 |
+        c5:1 a4:1 b4:1 d5:1 | c5:3 r:1 |
+
+hook: Burn the Yearbook
+type: Chorus
+tempo: 132-146
+feel: defiant
+style: rock
+substyle: pop-punk
+chords: Am | F | C | G | Am | F | C G | C
+melody: a4:1 a4:0.5 c5:2.5 | a4:1 g4:0.5 f4:2.5 |
+        e4:0.5 g4:0.5 c5:1 c5:1 d5:1 | b4:3 r:1 |
+        r:0.5 c5:0.5 e5:3 | d5:1 c5:1 c5:1 a4:1 |
+        e5:1 d5:1 d5:1 b4:1 | c5:4 |
+
+hook: Neon Exit
+type: Chorus
+tempo: 120-134
+feel: euphoric
+style: rock
+substyle: pop-punk
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | F
+melody: r:2 g4:0.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:2.5 g4:0.5 e4:0.5 g4:0.5 | d5:1 b4:0.5 g4:1.5 r:1 |
+        r:0.5 e4:0.5 a4:0.5 b4:0.5 c5:1.5 b4:0.5 | a4:3 r:0.5 g4:0.5 |
+        e5:1.5 d5:0.5 e5:2 | d5:1 b4:0.5 d5:1.5 r:0.5 g4:0.5 |
+        c5:1 c5:0.5 a4:0.5 g4:2 | a4:4 |
+
+hook: Half Lit Highway
+type: Chorus
+tempo: 136-150
+feel: soaring
+style: rock
+substyle: pop-punk
+chords: F | C | G | Am | F | C | G | G
+melody: r:1 c5:1 c5:1 a4:1 | c5:1.5 g4:0.5 g4:2 |
+        r:1 b4:1 b4:1 g4:1 | a4:1.5 e4:0.5 e4:2 |
+        r:1 a4:0.5 c5:0.5 c5:1 d5:1 | e5:3 d5:0.5 c5:0.5 |
+        d5:1.5 b4:0.5 d5:1 e5:1 | d5:4 |
+
+hook: Cheap Fireworks
+type: Chorus
+tempo: 124-138
+feel: shout
+style: rock
+substyle: pop-punk
+chords: C | Em | Am | F | C | G | Am F | C
+melody: g4:1 r:1 g4:0.5 a4:0.5 g4:1 | b4:1 r:1 b4:0.5 c5:0.5 b4:1 |
+        c5:1 r:1 c5:0.5 e5:0.5 d5:0.5 c5:0.5 | a4:3 r:1 |
+        e5:2 d5:1 c5:1 | d5:2.5 b4:0.5 g4:1 |
+        e5:2 c5:2 | d5:1 c5:3 |
+
+hook: Undertow Choir
+type: Chorus
+tempo: 120-136
+feel: bittersweet
+style: rock
+substyle: pop-punk
+chords: Am | F | C | G | Am | F | G | Am
+melody: c5:1.5 b4:0.5 a4:2 | r:0.5 a4:0.5 c5:0.5 a4:0.5 f4:2 |
+        g4:1.5 e4:0.5 c5:2 | b4:1 a4:1 g4:2 |
+        r:0.5 c5:0.5 e5:2.5 d5:0.5 | c5:1.5 a4:0.5 d5:2 |
+        d5:1.5 b4:0.5 d5:1 c5:1 | c5:0.5 b4:0.5 a4:3 |
+
+hook: Rooftop Riot
+type: Chorus
+tempo: 132-146
+feel: rowdy
+style: rock
+substyle: pop-punk
+leadin: yes
+chords: G | Am | F | C | G | Am | F | C | G
+melody: r:3 e4:0.5 g4:0.5 |
+        a4:1.5 a4:0.5 c5:2 | a4:1 g4:0.5 f4:0.5 r:1 f4:0.5 g4:0.5 |
+        g4:1.5 e4:0.5 c5:2 | b4:2 r:1.5 b4:0.5 |
+        c5:1 e5:2 c5:1 | c5:1.5 a4:0.5 c5:1 d5:1 |
+        e5:3 d5:0.5 c5:0.5 | b4:1 d5:3 |
+
+# ---- Bridges ----
+
+hook: Slow Motion Wreck
+type: Bridge
+tempo: 120-134
+feel: suspended
+style: rock
+substyle: pop-punk
+chords: Am | Am | F | F | C | G | F | G
+melody: e4:4 | r:1 a3:1 c4:2 | c4:2 f4:2 | g4:4 |
+        e4:1 g4:1 c5:1.5 b4:0.5 | b4:0.5 b4:0.5 d5:0.5 b4:0.5 g4:0.5 b4:0.5 d5:1 |
+        a4:0.5 c5:0.5 c5:0.5 a4:0.5 c5:0.5 d5:0.5 e5:1 | d5:4 |
+
+hook: Ghost Town Tempo
+type: Bridge
+tempo: 128-142
+feel: hushed
+style: rock
+substyle: pop-punk
+chords: F | G | Em | Am | Dm | Em | F | G
+melody: a4:3 g4:1 | g4:2 d4:2 | b4:3 a4:1 | a4:2 e4:2 |
+        r:1 d4:0.5 f4:0.5 a4:1 f4:0.5 a4:0.5 | r:1 e4:0.5 g4:0.5 b4:1 g4:0.5 b4:0.5 |
+        c5:1 c5:0.5 c5:0.5 d5:1 e5:1 | b4:1 c5:1 d5:2 |
+
+hook: Breaking Formation
+type: Bridge
+tempo: 136-150
+feel: stark
+style: rock
+substyle: pop-punk
+chords: Am | Em | F | C | Dm | F | G | E
+melody: c5:2 b4:1 a4:1 | g4:4 | a4:2 c5:1 a4:1 | g4:2 e4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 d5:1 a4:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:1 e5:1 |
+        d5:1.5 b4:0.5 d5:1 b4:1 | b4:2 g#4:2 |
+
+hook: Quiet Before Feedback
+type: Bridge
+tempo: 124-138
+feel: brooding
+style: rock
+substyle: pop-punk
+chords: Fmaj7 | Fmaj7 | C | C | Dm | Em | F | Gsus4 G
+melody: e5:3 c5:1 | a4:4 | g4:3 e4:1 | d4:4 |
+        r:0.5 a3:0.5 d4:0.5 f4:0.5 a4:1 f4:1 | r:0.5 b3:0.5 e4:0.5 g4:0.5 b4:1 g4:1 |
+        r:0.5 c4:0.5 f4:0.5 a4:0.5 c5:1 d5:0.5 e5:0.5 | d5:2 b4:2 |
