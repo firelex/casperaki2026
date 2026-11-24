@@ -71,6 +71,14 @@ describe('parseHookText', () => {
     expect(parseHookText(high, 's').errors.join('\n')).toMatch(/F5 is above E5/);
   });
 
+  it('a substyle is kept and needs a style', () => {
+    const r = parseHookText(ok.replace('feel: anthem', 'feel: anthem\nstyle: brightPop\nsubstyle: nu-disco'), 's');
+    expect(r.errors).toEqual([]);
+    expect(r.hooks[0]!.properties.substyle).toBe('nu-disco');
+    expect(parseHookText(ok.replace('feel: anthem', 'feel: anthem\nsubstyle: disco'), 's').errors.join('\n')).toMatch(/needs a style/);
+    expect(parseHookText(ok.replace('feel: anthem', 'feel: anthem\nstyle: edm\nsubstyle: Big Room'), 's').errors.join('\n')).toMatch(/short lowercase/);
+  });
+
   it('refuses the same melody twice', () => {
     const r = parseHookText(ok + ok.replace('Test Anthem', 'Other'), 'd');
     expect(r.errors.join('\n')).toMatch(/same melody as/);

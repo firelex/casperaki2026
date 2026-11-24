@@ -12,6 +12,8 @@
 //                                          the range is tighter: verses top out at G4, other sections at E5 (so the
 //                                          generator can use every such hook whole). Hooks without one were written
 //                                          for no particular style.
+//   substyle: disco                        optional, with a style: the narrower style it was written in (a short
+//                                          lowercase name, e.g. disco, afrobeats, synthwave), for the library
 //   leadin: yes                            optional: a lead-in bar before the 8 bars (default no)
 //   chords: C | G | Am F | F G C G | ...   per bar: 1, 2 (half bars) or 4 (beats) symbols, in C (minor: A minor)
 //   melody: e4:1 g4:1 c5:2 | b4:4- |       sung pitch (C4 = middle C) : length in beats; r:<beats> is a rest;
@@ -43,6 +45,7 @@ export interface HookEntry {
     readonly tempoMax: number;
     readonly feel: string;
     readonly style?: HookStyle;
+    readonly substyle?: string;
     readonly useOriginal: true;
     readonly useRemix: true;
     readonly source: { readonly kind: 'casperaki' };
@@ -183,7 +186,7 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
     const line = raw.replace(/(^|\s)#.*$/u, '');
     if (!line.trim()) continue;
     const kv = /^(\w+):\s*(.*)$/u.exec(line.trim());
-    if (kv && /^\S/u.test(line) && ['hook', 'type', 'tempo', 'feel', 'style', 'leadin', 'chords', 'melody'].includes(kv[1]!)) {
+    if (kv && /^\S/u.test(line) && ['hook', 'type', 'tempo', 'feel', 'style', 'substyle', 'leadin', 'chords', 'melody'].includes(kv[1]!)) {
       if (kv[1] === 'hook') blocks.push((cur = {}));
       if (!cur) {
         errors.push(`"${line.trim()}" comes before the first "hook:" line`);
@@ -206,6 +209,9 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
     if (b['tempo'] && (!tm || Number(tm[1]) >= Number(tm[2]))) err(`tempo "${b['tempo']}" must be a range like 90-130`);
     const style = b['style']?.trim() as HookStyle | undefined;
     if (style !== undefined && !HOOK_STYLES.includes(style)) err(`style "${style}" is not one of ${HOOK_STYLES.join(', ')}`);
+    const substyle = b['substyle']?.trim();
+    if (substyle !== undefined && !/^[a-z][a-z0-9-]{1,23}$/u.test(substyle)) err(`substyle "${substyle}" must be a short lowercase name (letters, digits, hyphens)`);
+    if (substyle !== undefined && style === undefined) err('a substyle needs a style (the song style it belongs to)');
     const leadin = (b['leadin'] ?? 'no').trim();
     if (!['yes', 'no'].includes(leadin)) err(`leadin must be yes or no, not "${leadin}"`);
     if (!b['chords'] || !b['melody'] || !tm) return;
@@ -237,7 +243,7 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
         name, originalKey: 'C', key: 'C', tempo: String(Math.round((Number(tm[1]) + Number(tm[2])) / 2)),
         busyness: bank.length / 8, type, start: leadin === 'yes' ? 1 : 0, end: leadin === 'yes' ? 9 : 8,
         lowestNote: sorted[0]!, highestNote: sorted[sorted.length - 1]!, medianNote: sorted[Math.floor(sorted.length / 2)]!,
-        kind: 'hook', tempoMin: Number(tm[1]), tempoMax: Number(tm[2]), feel: b['feel']!.trim(), ...(style ? { style } : {}),
+        kind: 'hook', tempoMin: Number(tm[1]), tempoMax: Number(tm[2]), feel: b['feel']!.trim(), ...(style ? { style } : {}), ...(substyle ? { substyle } : {}),
         useOriginal: true, useRemix: true, source: { kind: 'casperaki' },
       },
       melody,
