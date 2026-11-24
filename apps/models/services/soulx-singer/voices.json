@@ -1,0 +1,13 @@
+{
+  "$description": "Voices the singing service offers (svc-soulx, adapters/soulx-singer.py). A voice is a short sung prompt clip with its SoulX metadata (prompt.json, prompt.audio; relative paths are under the SoulX repo, absolute ones as given). octave: semitones every sung note moves by (written vocal lines centre near D#4: female prompts, median about E4-G4, sing as written; male prompts, median about F3-A3, an octave down). low/high/median: the prompt's own note range (MIDI).",
+  "voices": [
+    { "id": "en_prompt",     "label": "Voice 1 (English, female)",   "prompt": { "json": "example/audio/en_prompt.json",  "audio": "example/audio/en_prompt.mp3" },  "octave": 0,   "low": 62, "high": 68, "median": 65 },
+    { "id": "en_target",     "label": "Voice 2 (English, female)",   "prompt": { "json": "example/audio/en_target.json",  "audio": "example/audio/en_target.mp3" },  "octave": 0,   "low": 58, "high": 70, "median": 65 },
+    { "id": "zh_prompt",     "label": "Voice 3 (female)",            "prompt": { "json": "example/audio/zh_prompt.json",  "audio": "example/audio/zh_prompt.mp3" },  "octave": 0,   "low": 60, "high": 69, "median": 67 },
+    { "id": "zh_target",     "label": "Voice 4 (male)",              "prompt": { "json": "example/audio/zh_target.json",  "audio": "example/audio/zh_target.mp3" },  "octave": -12, "low": 50, "high": 56, "median": 53 },
+    { "id": "yue_target",    "label": "Voice 5 (male)",              "prompt": { "json": "example/audio/yue_target.json", "audio": "example/audio/yue_target.mp3" }, "octave": -12, "low": 50, "high": 64, "median": 57 },
+    { "id": "en_prompt_m9",  "label": "Voice 1, lowered (male range)", "prompt": { "json": "/mnt/d/casperaki-data/hum-beats/soulx-prompts-low/en_prompt_m9.json",  "audio": "/mnt/d/casperaki-data/hum-beats/soulx-prompts-low/en_prompt_m9.wav" },  "octave": -12, "low": 53, "high": 59, "median": 56 },
+    { "id": "en_target_m9",  "label": "Voice 2, lowered (male range)", "prompt": { "json": "/mnt/d/casperaki-data/hum-beats/soulx-prompts-low/en_target_m9.json",  "audio": "/mnt/d/casperaki-data/hum-beats/soulx-prompts-low/en_target_m9.wav" },  "octave": -12, "low": 49, "high": 61, "median": 56 },
+    { "id": "zh_prompt_m10", "label": "Voice 3, lowered (male range)", "prompt": { "json": "/mnt/d/casperaki-data/hum-beats/soulx-prompts-low/zh_prompt_m10.json", "audio": "/mnt/d/casperaki-data/hum-beats/soulx-prompts-low/zh_prompt_m10.wav" }, "octave": -12, "low": 50, "high": 59, "median": 57 }
+  ]
+}
