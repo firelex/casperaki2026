@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { orchestrate, type GenerateParams } from '../src/index.js';
+import { addSection, editTrack, orchestrate, type GenerateParams } from '../src/index.js';
 import { familySoundPool } from '../src/selection/index.js';
 
 // "Sunlit Sidewalk" (song ba189d1762d0d253): verses with a one-note pad and a lead whose every other bar is almost
@@ -44,5 +44,32 @@ describe('thin sections in orchestrate', () => {
     expect(edited.arrangement.verse1!.instruments['Pad 2']).toBe(false);
     expect(roster(edited)).toContain('Pad 3');
     expect(edited.arrangement.verse1!.instruments['Pad 3']).toBe(true);
+  });
+});
+
+describe('partner tracks are recorded with the song and replayed', () => {
+  it('a new song records its partner tracks (none recorded as none) in the generator params', () => {
+    const params = orchestrate(SUNLIT).generator!.params as { params?: { thinPartners?: { lane: string }[] } };
+    expect(params.params?.thinPartners?.map((p) => p.lane).sort()).toEqual(['Pad 2', 'Synths 2']);
+  });
+
+  it('recorded partners are replayed, not measured again: recorded none adds none', () => {
+    const song = orchestrate({ ...SUNLIT, params: { thinPartners: [] } });
+    expect(roster(song)).not.toContain('Pad 2');
+    expect(roster(song)).not.toContain('Synths 2');
+  });
+
+  it('replaying the recorded partners reproduces the song', () => {
+    const song = orchestrate(SUNLIT);
+    const replayed = orchestrate({ ...SUNLIT, params: (song.generator!.params as { params: Record<string, unknown> }).params });
+    expect(replayed).toEqual(song);
+  });
+
+  it('adding a section keeps the partner tracks, even with an edit on one of them (latin stab-3, Keys 2)', () => {
+    const song = orchestrate({ genre: 'latin', key: 'C', bpm: 120, seed: 'stab-3' });
+    expect(roster(song)).toContain('Keys 2');
+    const edited = editTrack(song, { kind: 'newPattern', track: 'Keys 2' }).song;
+    const { song: grown } = addSection(edited, 'bridge', 1);
+    expect(roster(grown)).toContain('Keys 2');
   });
 });

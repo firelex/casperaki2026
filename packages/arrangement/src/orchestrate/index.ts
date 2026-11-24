@@ -41,7 +41,7 @@ import {
   type ArrangementTransitions,
 } from '../arrangement-polish/index.js';
 import { resolveArrangementClashes } from '../arrangement-polish/clashes.js';
-import { addThinPartners } from '../arrangement-polish/thin-sections.js';
+import { addThinPartners, recordedThinPartners, replayThinPartners, THIN_PARTNERS_PARAM, type AddedPartner } from '../arrangement-polish/thin-sections.js';
 import { applyArrangementOverrides, decideDrumOverrides } from '../arrangement-polish/overrides.js';
 import { generateChords } from '../chords/index.js';
 import { generatePatterns } from '../patterns/index.js';
@@ -156,13 +156,14 @@ export function orchestrate(params: GenerateParams): Song {
   // The vocals come first: sung sections take the chords of the melody they
   // borrow (in the song's key), and every other part is written over those.
   const { vocals, structure: structureWithChords } = writeVocals(ctx, generateChords(ctx, structure));
-  const { selection, patterns, drumDecisions } = arrangeParts(ctx, structureWithChords);
+  const { selection, patterns, drumDecisions, thinPartners } = arrangeParts(ctx, structureWithChords);
   const fills = generateFills(ctx, structureWithChords, selection);
   const mutes = generateMutes(ctx, structureWithChords, selection);
   const transitions = generateTransitions(ctx, structureWithChords, drumDecisions);
   const signalProcessors = generateSignalProcessors(ctx, structureWithChords, selection);
   return lowerToSong({
-    params,
+    // The song records its partner tracks, so regenerating it (edits, new sections) keeps them.
+    params: { ...params, params: { ...(params.params ?? {}), [THIN_PARTNERS_PARAM]: thinPartners } },
     structure: structureWithChords,
     selection,
     patterns,
@@ -182,7 +183,13 @@ export function orchestrate(params: GenerateParams): Song {
 export function arrangeParts(
   ctx: GeneratorContext,
   structureWithChords: SongStructure,
-): { selection: SelectionResult; patterns: PatternResult; drumDecisions: ReturnType<typeof decideDrumOverrides> } {
+): {
+  selection: SelectionResult;
+  patterns: PatternResult;
+  drumDecisions: ReturnType<typeof decideDrumOverrides>;
+  /** The song's partner tracks, to record in its generator params. */
+  thinPartners: AddedPartner[];
+} {
   const params = ctx.params;
   const baseSelection = selectInstruments(ctx, structureWithChords);
   const trackEdits = recordedTrackEdits(params.params);
@@ -206,13 +213,18 @@ export function arrangeParts(
   // Then thin sections get a partner track of the same kind as their thin part, and clashes and thinness are checked
   // again (arrangement-polish/thin-sections.ts). Both run on the song as generated without the track edits; the
   // partner tracks join the selection before the edits apply, and names the edits gave added tracks stay theirs.
-  const partners = addThinPartners({
-    ctx,
-    selection: baseSelection,
-    write: (sel, forks) => resolveArrangementClashes(written(sel, new Map(), forks)),
-    soundPool: (family) => familySoundPool(family, params.genre),
-    reservedNames: new Set(trackEdits.flatMap((e) => (e.kind === 'addTrack' ? [e.track] : []))),
-  });
+  // A song records its partner tracks; regenerating it replays them (thin-sections.ts).
+  const write = (sel: SelectionResult, forks: ReadonlyMap<string, string>) => resolveArrangementClashes(written(sel, new Map(), forks));
+  const recorded = recordedThinPartners(params.params);
+  const partners = recorded
+    ? replayThinPartners({ ctx, selection: baseSelection, write, recorded })
+    : addThinPartners({
+        ctx,
+        selection: baseSelection,
+        write,
+        soundPool: (family) => familySoundPool(family, params.genre),
+        reservedNames: new Set(trackEdits.flatMap((e) => (e.kind === 'addTrack' ? [e.track] : []))),
+      });
   // Sequencer track edits (generator params `trackEdits`): applied to the selection, so each edit only touches its
   // own lane's streams. Track edits only ever change their own track (they are spliced into the song as it was): the
   // edited tracks are laid in as written, every other lane as resolved without them. Every lane forks its own rng,
@@ -224,7 +236,7 @@ export function arrangeParts(
     editedTracks.size === 0
       ? partners.patterns
       : withEditedTracks(partners.patterns, written(selection, edited.laneVariants, partners.laneForks), editedTracks);
-  return { selection, patterns, drumDecisions };
+  return { selection, patterns, drumDecisions, thinPartners: partners.added };
 }
 
 /** The song's patterns: the edited tracks as written with their edits, every other lane as resolved without them. */

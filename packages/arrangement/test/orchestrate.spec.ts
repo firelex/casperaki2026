@@ -333,7 +333,7 @@ describe('lowerToSong (intermediate-projection)', () => {
     });
     const direct = canonicalStringifySong(
       lowerToSong({
-        params: p.params,
+        params: { ...p.params, params: { thinPartners: partners.added } },
         structure: p.structure,
         selection: partners.selection,
         patterns: partners.patterns,

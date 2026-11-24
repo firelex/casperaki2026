@@ -52555,7 +52555,10 @@
     "params": {
       "bpm": 120,
       "genre": "brightPop",
-      "key": "C"
+      "key": "C",
+      "params": {
+        "thinPartners": []
+      }
     },
     "seed": "brightPop-vertical-slice",
     "version": "0.1.0"

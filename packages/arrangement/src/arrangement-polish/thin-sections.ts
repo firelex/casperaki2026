@@ -19,15 +19,20 @@
 // their own named streams (thin/<lane>#<k>), each through the clash pass; the one that helps the thin section most is
 // kept, none if none helps. Then everything is measured again, up to THIN_RULES.maxAddedTracks added tracks.
 //
+// A song records the partners it got in its generator params (thinPartners; none recorded as none). Regenerating it
+// (track edits, a new section, a new melody) replays them instead of measuring again, so a song keeps its partner
+// tracks whatever its sections become, and tuning THIN_RULES never rewrites a saved song.
+//
 // Deterministic: measuring draws nothing; a partner's sound forks thin/<lane>/sound, its patterns thin/<lane>#<k>.
 
 import { chordNotes, parseBarBeat, parseChord } from '@casperaki/music-theory';
+import { z } from 'zod';
 
 import type { ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
 import type { GeneratorContext } from '../context.js';
 import type { FamilyPattern, PatternResult } from '../patterns/types.js';
-import { LANE_BASE_NAMES } from '../selection/index.js';
-import type { InstrumentFamily, SelectionResult } from '../selection/types.js';
+import { LANE_BASE_NAMES, userSoundFor } from '../selection/index.js';
+import { InstrumentFamilySchema, type InstrumentFamily, type SelectionResult } from '../selection/types.js';
 import { isSustained } from './clashes.js';
 import { segmentType } from './segment-type.js';
 
@@ -183,13 +188,25 @@ export function fillScore(before: SectionThinness, after: SectionThinness): read
   return [cleared, before.gapBars - after.gapBars, after.medianVoices - before.medianVoices];
 }
 
-export interface AddedPartner {
-  readonly lane: string;
-  readonly family: InstrumentFamily;
-  readonly soundId: string;
-  readonly sectionType: string;
-  readonly kind: ThinKind;
-  readonly fork: string;
+export const RecordedThinPartnerSchema = z
+  .object({
+    lane: z.string().min(1),
+    family: InstrumentFamilySchema,
+    soundId: z.string().min(1),
+    sectionType: z.string().min(1),
+    kind: z.enum(['harmony', 'rhythm']),
+    fork: z.string().min(1),
+  })
+  .strict();
+export type AddedPartner = z.infer<typeof RecordedThinPartnerSchema>;
+
+/** The generator params key holding a song's partner tracks. */
+export const THIN_PARTNERS_PARAM = 'thinPartners';
+
+/** The partner tracks a song recorded, or undefined for a song generated before they were recorded. */
+export function recordedThinPartners(params: Readonly<Record<string, unknown>> | undefined): AddedPartner[] | undefined {
+  const raw = params?.[THIN_PARTNERS_PARAM];
+  return raw === undefined ? undefined : z.array(RecordedThinPartnerSchema).parse(raw);
 }
 
 export interface ThinPartnerInput {
@@ -248,16 +265,11 @@ export function addThinPartners(input: ThinPartnerInput): ThinPartnerResult {
     const taken = new Set([...selection.instruments.map((i) => i.lane), ...reservedNames]);
     const lane = freeName(family, taken);
     const entry = ctx.rng.fork(`thin/${lane}/sound`).pick(tagged.length > 0 ? tagged : unused);
-    const candidate: SelectionResult = {
-      ...selection,
-      instruments: [
-        ...selection.instruments,
-        { lane, family, lowLevel: entry.lowLevel, entry, essential: false, perSegment: true, pickSource },
-      ],
-      segments: selection.segments.map((seg) =>
-        segmentType(seg.segmentName) === target.type ? { ...seg, activeLanes: [...seg.activeLanes, lane] } : seg,
-      ),
-    };
+    const candidate = withLane(
+      selection,
+      { lane, family, lowLevel: entry.lowLevel, entry, essential: false, perSegment: true, pickSource },
+      target.type,
+    );
 
     const before = measureSection(lanes);
     let best: { score: readonly number[]; forks: Map<string, string>; patterns: PatternResult; fork: string } | undefined;
@@ -276,6 +288,34 @@ export function addThinPartners(input: ThinPartnerInput): ThinPartnerResult {
     added.push({ lane, family, soundId: entry.id, sectionType: target.type, kind: target.kind, fork: best.fork });
   }
   return { selection, laneForks, patterns, added };
+}
+
+/** Adds the recorded partner tracks to the selection as they were chosen (same sound, sections of the same type,
+ *  same pattern stream), without measuring. */
+export function replayThinPartners(input: Omit<ThinPartnerInput, 'soundPool' | 'reservedNames'> & { recorded: readonly AddedPartner[] }): ThinPartnerResult {
+  const { ctx, write, recorded } = input;
+  const genre = ctx.params.genre;
+  let selection = input.selection;
+  const laneForks = new Map<string, string>();
+  for (const p of recorded) {
+    if (selection.instruments.some((i) => i.lane === p.lane)) throw new Error(`thin-sections: recorded partner "${p.lane}" is already a track of the song`);
+    const entry = userSoundFor(p.family, genre, p.soundId);
+    if (!entry) throw new Error(`thin-sections: recorded partner "${p.lane}": sound ${p.soundId} is not a ${p.family} sound for ${genre}`);
+    const tagged = entry.mainStyle === genre || (entry.addStyles as readonly string[]).includes(genre);
+    selection = withLane(selection, { lane: p.lane, family: p.family, lowLevel: entry.lowLevel, entry, essential: false, perSegment: true, pickSource: tagged ? 'genre' : 'fallback' }, p.sectionType);
+    laneForks.set(p.lane, p.fork);
+  }
+  return { selection, laneForks, patterns: write(selection, laneForks), added: [...recorded] };
+}
+
+function withLane(selection: SelectionResult, lane: SelectionResult['instruments'][number], sectionType: string): SelectionResult {
+  return {
+    ...selection,
+    instruments: [...selection.instruments, lane],
+    segments: selection.segments.map((seg) =>
+      segmentType(seg.segmentName) === sectionType ? { ...seg, activeLanes: [...seg.activeLanes, lane.lane] } : seg,
+    ),
+  };
 }
 
 /** The first thin section (song order; harmony before rhythm) whose type and kind were not tried yet. */

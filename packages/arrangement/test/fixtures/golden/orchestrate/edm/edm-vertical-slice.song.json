@@ -28192,7 +28192,10 @@
     "params": {
       "bpm": 128,
       "genre": "edm",
-      "key": "C"
+      "key": "C",
+      "params": {
+        "thinPartners": []
+      }
     },
     "seed": "edm-vertical-slice",
     "version": "0.1.0"
