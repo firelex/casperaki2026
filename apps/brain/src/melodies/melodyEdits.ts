@@ -36,6 +36,8 @@ export class MelodyEdits {
   constructor(
     readonly path: string,
     private readonly onChange: (edits: ReadonlyMap<string, StoredEdit>) => void = () => {},
+    /** Records each change in git (production: the file is in the repo, committed and pushed). */
+    private readonly commit?: (path: string, message: string) => void,
   ) {
     this.edits = new Map();
     if (existsSync(path)) {
@@ -60,20 +62,23 @@ export class MelodyEdits {
   set(bank: string, id: string, edit: StoredEdit): void {
     const next = new Map(this.edits);
     next.set(editKey(bank, id), edit);
-    this.write(next);
+    this.write(next, `melodies: ${edit.editedBy} edited ${editKey(bank, id)}`);
   }
 
   /** Back to the stored version. False when there was no edit. */
-  remove(bank: string, id: string): boolean {
+  remove(bank: string, id: string, by: string): boolean {
     if (!this.edits.has(editKey(bank, id))) return false;
     const next = new Map(this.edits);
     next.delete(editKey(bank, id));
-    this.write(next);
+    this.write(next, `melodies: ${by} reverted ${editKey(bank, id)} to the stored version`);
     return true;
   }
 
-  /** Hands the new set to `onChange` first (it may refuse it by throwing), then writes the file. */
-  private write(next: Map<string, StoredEdit>): void {
+  /**
+   * Hands the new set to `onChange` first (it may refuse it by throwing), then writes the file, then
+   * commits it. A failing commit throws after the edit is saved and in use; the next commit records it.
+   */
+  private write(next: Map<string, StoredEdit>, message: string): void {
     this.onChange(next);
     try {
       mkdirSync(dirname(this.path), { recursive: true });
@@ -86,5 +91,6 @@ export class MelodyEdits {
       throw err;
     }
     this.edits = next;
+    this.commit?.(this.path, message);
   }
 }

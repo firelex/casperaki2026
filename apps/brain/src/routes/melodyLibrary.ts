@@ -1,6 +1,6 @@
 // The melody library (Melodies page), for any signed-in user (permissions come later).
 //
-//   GET    /api/melody-library?kind=hooks|remix&source&range&type&tempo&feel&style&original&remix&q&offset&limit
+//   GET    /api/melody-library?kind=hooks|remix&source&range&type&tempo&feel&style&substyle&original&remix&q&offset&limit
 //          → { total, items, facets, noHooksYet? }   a page of entries (see melodies/melodyLibrary.ts)
 //   GET    /api/melody-library/:bank/:id            one entry as notes and half-bar chords in beats, at sung pitch
 //   PUT    /api/melody-library/:bank/:id            save the whole edited entry { melody, chords, artist, useOriginal,
@@ -26,6 +26,7 @@ const ListQuery = z
     tempo: z.coerce.number().positive().max(400).optional(),
     feel: z.string().min(1).max(40).optional(),
     style: z.string().min(1).max(40).optional(),
+    substyle: z.string().min(1).max(40).optional(),
     original: Flag.optional(),
     remix: Flag.optional(),
     q: z.string().max(200).optional(),
@@ -77,7 +78,7 @@ export function createMelodyLibraryRouter(deps: { library: MelodyLibrary }): Rou
     return run(res, () => library.save(req.params.bank, req.params.id, body.data, editorOf(req)));
   });
 
-  router.delete('/api/melody-library/:bank/:id/edit', (req, res) => run(res, () => library.revert(req.params.bank, req.params.id)));
+  router.delete('/api/melody-library/:bank/:id/edit', (req, res) => run(res, () => library.revert(req.params.bank, req.params.id, editorOf(req))));
 
   return router;
 }

@@ -1,7 +1,7 @@
 // Pattern lab (admins only): review Casperaki-written pattern proposals.
 //
 //   GET  /api/patterns                 proposals + review decision + whether exported
-//   POST /api/patterns/:id/review      { status: 'approved' | 'rejected' | 'pending', note? }
+//   POST /api/patterns/:id/review      { status: 'approved' | 'rejected' | 'pending', note? } -> { review, library }
 //   POST /api/patterns/:id/comments    { body } -> 201 the comment (author, time); the
 //                                      listing carries each proposal's comments
 //   GET  /api/patterns/:id/sounds?genre=  the sounds the proposal's instrument can use in
@@ -18,8 +18,9 @@
 //        is fixed per genre). The answer lists the sounds the instrument can
 //        use in that genre (`sounds`) and the one playing (`soundId`).
 //
-// Proposals are files in packages/arrangement/data/patterns/proposals/;
-// approved ones reach the library via scripts/export-approved-patterns.ts.
+// Proposals are files in packages/arrangement/data/patterns/proposals/. Every
+// review decision makes the library match the approved ones at once and commits
+// it (exportApprovedPatterns; the answer's `library` lists what changed).
 
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -61,6 +62,11 @@ export interface PatternsRouterDeps {
   readonly isAdminRequest: (req: Request) => boolean;
   /** Who the reviewer is, for the record. */
   readonly reviewerOf: (req: Request) => string;
+  /**
+   * Makes the pattern library match the approved proposals and records it in git; returns what
+   * changed. Without it (tests), decisions stay in the database only.
+   */
+  readonly publishLibrary?: (approved: ReadonlySet<string>, message: string) => string[];
 }
 
 const ReviewBody = z
@@ -178,7 +184,7 @@ function soundsFor(proposal: PatternProposal, genre: Parameters<typeof familySou
   return all.filter((x) => chosen.get(x.name) === x).map(({ id, name, inStyle }) => ({ id, name, inStyle }));
 }
 
-export function createPatternsRouter({ store, playback, isAdminRequest, reviewerOf }: PatternsRouterDeps): Router {
+export function createPatternsRouter({ store, playback, isAdminRequest, reviewerOf, publishLibrary }: PatternsRouterDeps): Router {
   const router = Router();
   router.use('/api/patterns', (req, res, next) => {
     if (!isAdminRequest(req)) {
@@ -216,6 +222,15 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
     if (!body.success) return res.status(400).json({ error: 'invalid_body' });
     const id = req.params.id;
     if (!loadPatternProposals().some((p) => p.id === id)) return res.status(404).json({ error: 'not_found', id });
+    // The library follows the decision (and is committed) before the decision is saved: a failed export saves nothing.
+    let library: string[] | null = null;
+    if (publishLibrary) {
+      const approved = new Set(store.listPatternReviews().filter((r) => r.status === 'approved').map((r) => r.proposalId));
+      if (body.data.status === 'approved') approved.add(id);
+      else approved.delete(id);
+      const verb = body.data.status === 'approved' ? 'approved' : body.data.status === 'rejected' ? 'rejected' : 'took back the decision on';
+      library = publishLibrary(approved, `patterns: ${reviewerOf(req).split('@')[0]} ${verb} ${id}`);
+    }
     if (body.data.status === 'pending') store.clearPatternReview(id);
     else
       store.setPatternReview({
@@ -226,7 +241,7 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
         decidedAt: new Date().toISOString(),
       });
     const review = store.listPatternReviews().find((r) => r.proposalId === id) ?? null;
-    return res.json({ review });
+    return res.json({ review, library });
   });
 
   router.get('/api/patterns/:id/sounds', (req, res) => {

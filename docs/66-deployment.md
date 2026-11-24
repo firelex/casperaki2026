@@ -108,6 +108,25 @@ many songs of a genre agree on is approved on the Suggestions page: the brain re
 in the body) and pushes it at once; a failing commit or push fails the approval. The copy in this repo
 (`apps/native-engine/config/mix-config.json`) is not updated by approvals.
 
+## What the app records in git, and the nightly backup
+
+Decisions people make in the app are committed and pushed by the brain at once (`apps/brain/src/git.ts`);
+a failing commit or push fails the request:
+- Mix approvals (Suggestions page): `casperaki_engine/config/mix-config.json`, message `mix: approve …`.
+- Pattern-lab decisions: the pattern library (`packages/arrangement/data/patterns/{drums,bass,authored}`)
+  is made to match the approved proposals (`exportApprovedPatterns`) and committed, `patterns: <who> approved <id>`.
+  The decisions themselves (and rejections, notes) stay in the songs database.
+- Melody library edits: `packages/arrangement/data/vocals/melody-edits.json` (`BRAIN_MELODY_EDITS_PATH`),
+  `melodies: <who> edited <bank>/<id>`.
+
+Everything else people make lives in `~/casperaki-data` and Postgres. `deploy/datigator/backup-data.sh`
+(cron, 03:30) copies the songs and brain auth databases (SQLite backup API, safe while the brain runs),
+dumps the auth service's Postgres database and mirrors the hum recordings into
+`/mnt/d/Scissero Dropbox/Mathias Strasser/casperaki-backups/` (14 daily folders; log `~/casperaki-data/backup.log`).
+Renders, playback files, exports, videos and the sample cache are made again by the app and not backed up.
+Restore: stop the brain, copy `songs.sqlite` / `auth.sqlite` back (remove the `-wal`/`-shm` files),
+`pg_restore --clean -d <POSTGRES_URI> casperaki_auth.pgdump`.
+
 ## Configuration (outside the repos)
 
 | File | What |

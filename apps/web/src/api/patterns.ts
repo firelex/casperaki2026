@@ -71,7 +71,7 @@ export const patternsApi = {
   comment: (id: string, body: string) =>
     defaultBrainClient.post<{ comment: SuggestionComment }>(`/api/patterns/${encodeURIComponent(id)}/comments`, { body }),
   review: (id: string, status: 'approved' | 'rejected' | 'pending', note: string) =>
-    defaultBrainClient.post<{ review: PatternReview | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
+    defaultBrainClient.post<{ review: PatternReview | null; /** What the decision changed in the pattern library (committed to git); null when the brain does not publish it. */ library: string[] | null }>(`/api/patterns/${encodeURIComponent(id)}/review`, { status, note }),
   /** `soundId`: play the proposal's instrument with this sound (undefined: the song's own). */
   preview: (id: string, genre: Genre, variant: 'proposal' | 'current', take: number | undefined, soundId: string | undefined, signal?: AbortSignal) =>
     defaultBrainClient.post<

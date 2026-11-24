@@ -88,6 +88,7 @@ export {
   type PatternProposal,
 } from './patterns/proposals.js';
 export { AUTHORED_DRUM_ALGOS } from './patterns/drums-authored.js';
+export { exportApprovedPatterns, PATTERN_LIBRARY_DIRS, type PatternLibraryDirs } from './patterns/export-approved.js';
 export { AUTHORED_BANK_DIR, authoredStyleNames } from './patterns/authored-bank.js';
 export {
   CHORD_TONE_FAMILIES,

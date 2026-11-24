@@ -187,7 +187,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
       if (err instanceof ApproveError) return res.status(409).json({ error: 'not_approvable', message: err.message });
       throw err;
     }
-    mixConfig.replaceMixConfig(approval.text, `mix: approve ${genre} ${change.kind} change (${authorOf(req)})\n\n${approval.summary}.`);
+    mixConfig.replaceMixConfig(approval.text, `mix: approve ${genre} ${change.kind} change (${authorOf(req).split('@')[0]})\n\n${approval.summary}.`);
     // Level trims are relative to the standard: lower them by what the standard rose.
     const shift = approval.trimShift;
     if (shift) {

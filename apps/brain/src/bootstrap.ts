@@ -28,7 +28,8 @@ import { createSoundsRouter } from './routes/sounds.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { MelodyEdits } from './melodies/melodyEdits.js';
-import { setPrecedentEdits } from '@casperaki/arrangement';
+import { exportApprovedPatterns, PATTERN_LIBRARY_DIRS, setPrecedentEdits, type PatternLibraryDirs } from '@casperaki/arrangement';
+import { commitAndPush, type Committer } from './git.js';
 import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
@@ -64,6 +65,14 @@ export interface CreateAppDeps {
   readonly songTitler?: SongTitler;
   /** The melody library's precedent bank directory (tests point it at fixtures). */
   readonly melodyLibraryDir?: string;
+  /**
+   * Records the data people change in the app in git: approved patterns (exported into the
+   * pattern library) and melody edits. The server passes commitAndPush; tests leave it out, and
+   * then pattern decisions stay in the database only and melody edits are not committed.
+   */
+  readonly commit?: Committer;
+  /** Where approved patterns are exported (tests point it at a copy). */
+  readonly patternLibraryDirs?: PatternLibraryDirs;
 }
 
 /** A stable dev session secret persisted next to the auth DB. Regenerating
@@ -237,7 +246,12 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   );
   app.use(createSoundsRouter({ playback }));
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
-  const melodyEdits = new MelodyEdits(config.melodyEditsPath, (edits) => setPrecedentEdits(Object.fromEntries(edits)));
+  const commit = deps.commit;
+  const melodyEdits = new MelodyEdits(
+    config.melodyEditsPath,
+    (edits) => setPrecedentEdits(Object.fromEntries(edits)),
+    commit ? (path, message) => commit([path], message) : undefined,
+  );
   app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(melodyEdits, deps.melodyLibraryDir) }));
   const assistantEp = assistantEndpoint(config);
   app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
@@ -248,6 +262,16 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       playback,
       isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
       reviewerOf: (req) => req.user?.email ?? 'local-dev',
+      ...(commit
+        ? {
+            publishLibrary: (approved: ReadonlySet<string>, message: string) => {
+              const dirs = deps.patternLibraryDirs ?? PATTERN_LIBRARY_DIRS;
+              const changes = exportApprovedPatterns(approved, { dirs });
+              commit([dirs.drums, dirs.bass, dirs.authored], changes.length ? `${message}\n\n${changes.join('\n')}` : message);
+              return changes;
+            },
+          }
+        : {}),
     }),
   );
   app.use(
@@ -312,7 +336,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
 
 export function startServer(): { stop: () => Promise<void> } {
   const config = loadConfig();
-  const app = createApp(config);
+  const app = createApp(config, { commit: commitAndPush });
   const server = app.listen(config.port, config.host, () => {
     console.log(`[brain] listening on http://${config.host}:${config.port}`);
   });
