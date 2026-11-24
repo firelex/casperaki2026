@@ -31,6 +31,7 @@ set(AIRWINDOWS_SOURCES
     src/audio/airwindows/Console8BussIn.aw.cpp
     src/audio/airwindows/Console8BussOut.aw.cpp
     src/audio/airwindows/Air2.aw.cpp
+    src/audio/airwindows/DeEss.aw.cpp
     src/audio/airwindows/Huge.aw.cpp
     src/audio/airwindows/StereoChorus.aw.cpp
     src/audio/airwindows/TexturizeMS.aw.cpp

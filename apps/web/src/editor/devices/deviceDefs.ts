@@ -66,6 +66,20 @@ export const DEVICES: Readonly<Record<string, DeviceDef>> = {
     role: 'Fast, clean compressor that evens out peaks.',
     params: [p('Input gain', (v) => signedDb(v * 24 - 12)), p('Release', amount), p('Output gain', (v) => signedDb(v * 24 - 12))],
   },
+  makeDeEss: {
+    title: 'DeEss',
+    maker: 'Airwindows',
+    kind: 'compressor',
+    role: 'De-esser: turns down harsh "s" and "t" sounds in the vocal.',
+    params: [p('Intense', amount), p('Max DS', (v) => signedDb((v - 1) * 48)), p('Frequency', amount)],
+  },
+  makeAir2: {
+    title: 'Air2',
+    maker: 'Airwindows',
+    kind: 'eq',
+    role: 'Adds air and sheen to the top of the vocal.',
+    params: [p('Hiss', (v) => (v * 2 - 1).toFixed(2)), p('Glitter', (v) => (v * 2 - 1).toFixed(2)), p('Air', (v) => (v * 2 - 1).toFixed(2)), p('Silk', amount), p('Dry/wet', amount)],
+  },
   makeTexturizeMS: {
     title: 'TexturizeMS',
     maker: 'Airwindows',

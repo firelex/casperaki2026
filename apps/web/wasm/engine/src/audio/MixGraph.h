@@ -44,6 +44,7 @@ inline std::unique_ptr<aw::Plugin> makeAwByFactory(const std::string& f, double 
     else if (f == "makeConsole8BussIn") p = makeConsole8BussIn();
     else if (f == "makeConsole8BussOut") p = makeConsole8BussOut();
     else if (f == "makeAir2") p = makeAir2();
+    else if (f == "makeDeEss") p = makeDeEss();
     else if (f == "makeHuge") p = makeHuge();
     else if (f == "makeStereoChorus") p = makeStereoChorus();
     else if (f == "makeTexturizeMS") p = makeTexturizeMS();
@@ -59,7 +60,7 @@ inline std::unique_ptr<aw::Plugin> makeAwByFactory(const std::string& f, double 
     else if (f == "makeSimpleSide") p = makeSimpleSide();
     else if (f == "makeFreqShiftEcho") p = makeFreqShiftEcho();
     else if (f == "makeValhallaFreqEcho") p = makeValhallaFreqEcho();
-    if (!p) return p;
+    if (!p) throw std::runtime_error("The mix config names an unknown plugin: " + f);
     p->setSampleRate(sr);
     for (int i = 0; i < (int)params.size() && i < p->numParams(); ++i) p->setParam(i, params[(size_t)i]);
     return p;

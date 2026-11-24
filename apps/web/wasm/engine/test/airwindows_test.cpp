@@ -162,6 +162,7 @@ int main() {
     fails += checkPlugin("Console8BussIn", makeConsole8BussIn());
     fails += checkPlugin("Console8BussOut",makeConsole8BussOut());
     fails += checkPlugin("Air2",           makeAir2());
+    fails += checkPlugin("DeEss",          makeDeEss());
     fails += checkPlugin("Huge",           makeHuge());
     fails += checkPlugin("StereoChorus",   makeStereoChorus());
     fails += checkPlugin("TexturizeMS",    makeTexturizeMS());

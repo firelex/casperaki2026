@@ -36,6 +36,7 @@ std::unique_ptr<Plugin> makeConsole8SubOut();   // 1: Fader
 std::unique_ptr<Plugin> makeConsole8BussIn();   // 0
 std::unique_ptr<Plugin> makeConsole8BussOut();  // 1: Fader
 std::unique_ptr<Plugin> makeAir2();             // 5
+std::unique_ptr<Plugin> makeDeEss();            // 3: Intense, Max DS, Freq
 std::unique_ptr<Plugin> makeHuge();             // 2
 std::unique_ptr<Plugin> makeStereoChorus();     // 2: Speed, Depth
 std::unique_ptr<Plugin> makeTexturizeMS();      // 6
