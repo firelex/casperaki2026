@@ -24,6 +24,7 @@
 #define MINIMP3_FLOAT_OUTPUT
 #include "../../vendor/minimp3.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <cstring>
@@ -156,10 +157,57 @@ inline std::string fileExtLower(const std::string& path) {
 
 // Decode any supported audio file by extension. Unknown extensions return an
 // un-ok DecodedAudio (the caller falls back to a stub).
+// Decode a PCM .wav (16- or 24-bit integer, any channel count) into planar float. Sung vocal takes are stored
+// as 16-bit WAV (docs/superpowers/specs/2026-11-24-sung-vocals-design.md). Any other WAV encoding -> un-ok.
+inline DecodedAudio decodeWavFile(const std::string& path) {
+    DecodedAudio out;
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return out;
+    std::stringstream ss;
+    ss << f.rdbuf();
+    const std::string bytes = ss.str();
+    const auto* b = reinterpret_cast<const uint8_t*>(bytes.data());
+    auto u16 = [&](size_t o) { return (uint32_t)b[o] | ((uint32_t)b[o + 1] << 8); };
+    auto u32 = [&](size_t o) { return u16(o) | (u16(o + 2) << 16); };
+    if (bytes.size() < 12 || std::memcmp(b, "RIFF", 4) != 0 || std::memcmp(b + 8, "WAVE", 4) != 0) return out;
+    int channels = 0, rate = 0, bits = 0, format = 0;
+    size_t off = 12;
+    while (off + 8 <= bytes.size()) {
+        const uint32_t size = u32(off + 4);
+        if (std::memcmp(b + off, "fmt ", 4) == 0 && off + 24 <= bytes.size()) {
+            format = (int)u16(off + 8);
+            channels = (int)u16(off + 10);
+            rate = (int)u32(off + 12);
+            bits = (int)u16(off + 22);
+        } else if (std::memcmp(b + off, "data", 4) == 0) {
+            if (format != 1 || channels < 1 || rate <= 0 || (bits != 16 && bits != 24)) return out;
+            const int bytesPer = bits / 8;
+            const size_t avail = std::min<size_t>(size, bytes.size() - off - 8);
+            const int frames = (int)(avail / (size_t)(bytesPer * channels));
+            out.buffer.setSize(channels, frames);
+            const uint8_t* d = b + off + 8;
+            for (int i = 0; i < frames; ++i) {
+                for (int c = 0; c < channels; ++c) {
+                    const uint8_t* p = d + ((size_t)i * channels + c) * bytesPer;
+                    int32_t v = bits == 16 ? (int32_t)(int16_t)(p[0] | (p[1] << 8))
+                                           : (int32_t)((uint32_t)p[0] << 8 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 24) >> 8;
+                    out.buffer.getWritePointer(c)[i] = (float)v / (bits == 16 ? 32768.0f : 8388608.0f);
+                }
+            }
+            out.sampleRate = rate;
+            out.ok = true;
+            return out;
+        }
+        off += 8 + size + (size % 2);
+    }
+    return out;
+}
+
 inline DecodedAudio decodeAudioFile(const std::string& path) {
     const std::string ext = fileExtLower(path);
     if (ext == "mp3") return decodeMp3File(path);
     if (ext == "ogg") return decodeOggFile(path);
+    if (ext == "wav" || ext == "wave") return decodeWavFile(path);
     return DecodedAudio{};
 }
 

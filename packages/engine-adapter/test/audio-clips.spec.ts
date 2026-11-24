@@ -29,7 +29,7 @@ describe('sung vocal takes lowered to an audioClips instrument', () => {
   it('vocals on: one clip per section take, keyed by the take, from the takes directory', () => {
     const on = { ...base(), vocals: { enabled: true, voice: 'en_prompt', takeNumbers: {} }, aiArtifacts: [take('verse1', FP('a')), take('chorus1', FP('b'))] } as Song;
     const inst = clipsInst(lower(on, '/data/takes'))!;
-    expect(inst).toMatchObject({ name: 'Vocal', type: 'audioClips', lowLevelType: 'vocal' });
+    expect(inst).toMatchObject({ name: 'Vocal', type: 'audioClips', lowLevelType: 'vocalsLaSinger' });
     expect(typeof inst.id).toBe('number');
     expect(inst.clips).toEqual([
       { segment: 'verse1', key: `take-${FP('a')}.wav`, sourcePath: `/data/takes/${FP('a')}.wav`, durationSec: 9.6 },

@@ -164,6 +164,19 @@ private:
             mixer.setSample(key, makeWaveWhole(*decoded));
             st.waveSources++;
         }
+        // audioClips (sung vocal takes): each clip's own file (an absolute sourcePath), keyed by the clip's key.
+        for (const auto& inst : instJsons) {
+            if (inst.value("type", std::string()) != "audioClips" || !inst.contains("clips")) continue;
+            for (const auto& c : inst["clips"]) {
+                const std::string key = c.value("key", std::string());
+                const std::string src = c.value("sourcePath", std::string());
+                if (key.empty() || src.empty()) { st.waveMissing++; continue; }
+                auto decoded = decodeCached(src, st);
+                if (!decoded || !decoded->ok) { st.waveMissing++; continue; }
+                mixer.setSample(key, makeWaveWhole(*decoded));
+                st.waveSources++;
+            }
+        }
     }
 
     // ---- guitar fret-noises: N equal slices of the Default FX sibling ------

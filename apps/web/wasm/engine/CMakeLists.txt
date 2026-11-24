@@ -95,6 +95,13 @@ target_compile_definitions(lanes_test PRIVATE
     LANES_GENRE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../engine-spike/out/all-genre-render-smoke/latin"
     LANES_MIX_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
 
+# audioClips instruments (sung vocal takes): resolution, sample registration, one-shot playback.
+add_executable(audio_clips_test test/audio_clips_test.cpp)
+target_link_libraries(audio_clips_test PRIVATE stb_vorbis minimp3 aw_fx)
+target_compile_definitions(audio_clips_test PRIVATE
+    AUDIO_CLIPS_GENRE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../../../engine-spike/out/all-genre-render-smoke/latin"
+    AUDIO_CLIPS_MIX_CONFIG="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
+
 # transitionPattern (EDM snare roll) resolution + its -12 dB lane trim.
 add_executable(transition_pattern_test test/transition_pattern_test.cpp)
 target_link_libraries(transition_pattern_test PRIVATE aw_fx)
@@ -110,6 +117,7 @@ add_test(NAME audio_test COMMAND audio_test)
 add_test(NAME sampler_test COMMAND sampler_test)
 add_test(NAME realsample_test COMMAND realsample_test)
 add_test(NAME airwindows_test COMMAND airwindows_test)
+add_test(NAME audio_clips_test COMMAND audio_clips_test)
 add_test(NAME noise_source_test COMMAND noise_source_test)
 add_test(NAME mixconfig_test COMMAND mixconfig_test)
 add_test(NAME lanes_test COMMAND lanes_test)

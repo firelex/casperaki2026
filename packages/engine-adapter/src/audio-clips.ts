@@ -40,6 +40,6 @@ export function buildVocalClipsInst(
   if (clips.length === 0) return undefined;
   return {
     filename: `inst-${o.filenameIndex}.json`,
-    json: { id: o.id, name: 'Vocal', type: AUDIO_CLIPS_TYPE, lowLevelType: 'vocal', clips },
+    json: { id: o.id, name: 'Vocal', type: AUDIO_CLIPS_TYPE, lowLevelType: 'vocalsLaSinger', clips },
   };
 }

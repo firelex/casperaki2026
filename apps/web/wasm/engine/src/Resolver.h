@@ -95,6 +95,7 @@ public:
             if      (inst.type == "drums")            resolveDrumInstrument(inst, out);
             else if (inst.type == "percussionLoops")  resolveLoopInstrument(inst, out);
             else if (inst.type == "transitionSample") { /* shared track, below */ }
+            else if (inst.type == "audioClips")       resolveAudioClips(inst, out);
             else if (inst.type == "transitionPattern") resolveTransitionPatternInstrument(inst, out);
             else if (inst.type == "electricGuitars" ||
                      inst.type == "acousticGuitars")  resolveGuitarInstrument(inst, out);
@@ -663,6 +664,28 @@ private:
             track.clips.push_back(std::move(c));
         }
         // te skips silent/empty tracks in the dump (harness.cpp:466) — so do we.
+        if (!track.clips.empty()) out.tracks.push_back(std::move(track));
+    }
+
+    // audioClips (sung vocal takes, later other audio tracks; docs/superpowers/specs/2026-11-24-sung-vocals-
+    // design.md): one track named after the instrument; each clip plays its own audio file once, from its
+    // section's start, for durationSec. The clip's `key` is the sample key its audio is registered under.
+    void resolveAudioClips(const Inst& inst, ResolvedEvents& out) {
+        Track track; track.name = inst.name;
+        if (!inst.data.contains("clips") || !inst.data.at("clips").is_array())
+            throw std::runtime_error("Resolver: audioClips '" + inst.name + "' has no clips array");
+        for (const auto& cj : inst.data.at("clips")) {
+            const std::string segName = cj.at("segment").get<std::string>();
+            const Segment* seg = nullptr;
+            for (const auto& s : segments_) if (s.name == segName) { seg = &s; break; }
+            if (!seg) throw std::runtime_error("Resolver: audioClips '" + inst.name + "' clip for unknown section '" + segName + "'");
+            Clip c; c.name = segName; c.type = "wave";
+            c.startSec = seg->startBeat * secPerBeat_;
+            c.endSec = c.startSec + cj.at("durationSec").get<double>();
+            c.source = cj.at("key").get<std::string>();
+            c.loop = false;
+            track.clips.push_back(std::move(c));
+        }
         if (!track.clips.empty()) out.tracks.push_back(std::move(track));
     }
 
