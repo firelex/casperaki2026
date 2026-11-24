@@ -15,6 +15,8 @@ export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffpro
   mkdirSync(join(lib, 'kicks'), { recursive: true });
   writeFileSync(join(lib, 'basses', 'bass.mp3'), 'mp3');
   writeFileSync(join(lib, 'kicks', 'kick.mp3'), 'mp3');
+  // The library's fx sheet, beside the instruments folder.
+  writeFileSync(join(dir, 'fxMetadata.json'), '{}');
   const stubs = join(dir, 'stubs');
   mkdirSync(stubs);
   for (const n of ['kick.ogg', 'snare.ogg', 'hat.ogg', 'tone.ogg', 'bass-c2.ogg']) writeFileSync(join(stubs, n), 'ogg');

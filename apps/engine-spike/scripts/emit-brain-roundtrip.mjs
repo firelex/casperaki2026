@@ -311,11 +311,36 @@ function probeDurationByPath(abs, label) {
   }
 }
 
-function getTransitionSampleDurationSeconds(entry) {
+// The sound library's fx sheet (fxMetadata.json, beside the instruments folder):
+// per file its duration and, for reverses, risers and some hits, its climax
+// (where it peaks, in seconds). Transitions take both from here, so a song uses
+// what the library records; an fx sample the file does not list is an error.
+const FX_METADATA_PATH = SAMPLE_LIBRARY_ROOT ? join(SAMPLE_LIBRARY_ROOT, '..', 'fxMetadata.json') : null;
+let _fxMetadata = null;
+function fxMetadata() {
+  if (_fxMetadata) return _fxMetadata;
+  if (!existsSync(FX_METADATA_PATH)) throw new Error(`The sound library has no fx sheet at ${FX_METADATA_PATH} (fxMetadata.json, beside the instruments folder).`);
+  const raw = JSON.parse(_readFileSync(FX_METADATA_PATH, 'utf8'));
+  _fxMetadata = new Map();
+  for (const rows of Object.values(raw)) for (const r of rows) _fxMetadata.set(r.file, r);
+  return _fxMetadata;
+}
+
+function getTransitionSampleDetails(entry) {
   if (!SAMPLE_LIBRARY_ROOT) return null;
   // Disk folder names can differ from the catalog's (e.g. the 8-bit arcade
   // rows live under fx/fxOther): translate like loops do.
-  return probeDurationByPath(join(SAMPLE_LIBRARY_ROOT, resolveDiskPath(entry.matchedPath)), 'transition');
+  const diskPath = resolveDiskPath(entry.matchedPath);
+  if (entry.family === 'fx') {
+    const file = diskPath.split('/').pop();
+    const row = fxMetadata().get(file);
+    if (!row) throw new Error(`The sound library's fx sheet (${FX_METADATA_PATH}) has no row for "${file}" (catalog ${entry.id}).`);
+    if (!(row.duration > 0)) throw new Error(`The sound library's fx sheet gives "${file}" no duration.`);
+    return { durationSeconds: row.duration, climaxSeconds: typeof row.climax === 'number' ? row.climax : null };
+  }
+  // Crash cymbals and percussion breaks are not in the fx sheet: their length is the file's.
+  const sec = probeDurationByPath(join(SAMPLE_LIBRARY_ROOT, diskPath), 'transition');
+  return sec === null ? null : { durationSeconds: sec, climaxSeconds: null };
 }
 
 // docs/54r — Catalog-vs-disk lowLevel alias resolver.
@@ -407,7 +432,7 @@ const fixture = toEngineFixture(song, {
   keysAssetResolution,
   padAssetResolution,
   transitionCatalog: catalog,
-  getTransitionSampleDurationSeconds,
+  getTransitionSampleDetails,
   loopSampleProbe,
   // Sung vocal takes (audioClips lane): where the brain keeps them.
   ...(process.env.CASPERAKI_VOCAL_TAKES_DIR ? { vocalTakesDir: process.env.CASPERAKI_VOCAL_TAKES_DIR } : {}),

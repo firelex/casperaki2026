@@ -1,5 +1,8 @@
 # 58e — fx taxonomy reclassification + per-lowLevel climax conventions
 
+> **Superseded 2026-11-24.** `transition-climax-overrides.json` is gone. Transitions take their duration and climax from the sound library's fx sheet (`fxMetadata.json`, beside the instruments folder), read by `apps/engine-spike/scripts/emit-brain-roundtrip.mjs`. The family-wide `fxTonalReverse = 1.1 s` was wrong for today's bigZ Reverses_3..10, which peak at 1.4–5.8 s, and made long reverses peak in the middle of the next section.
+
+
 Status: landed. Scope collapsed from "build a unified catalog merger" (the
 original plan, pre-investigation) to "apply two small legacy-curation
 conventions the xlsx authoring didn't preserve" — because the disk-path

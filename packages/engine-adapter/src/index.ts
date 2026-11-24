@@ -186,11 +186,13 @@ export interface ToEngineFixtureOptions {
    *  empty (back-compat with pre-54p callers). docs/54p. */
   transitionCatalog?: ValidatedCatalog;
   /** Required when `transitionCatalog` is provided: synchronously return the
-   *  duration (in seconds) of the resolved sample. Adapter is pure (no
-   *  child_process), so the caller passes a callback that wraps `ffprobe`
-   *  / file-stat / cache lookup. Returning `null` drops the transition
-   *  with a diagnostic. */
-  getTransitionSampleDurationSeconds?: (entry: ValidatedCatalogEntry) => number | null;
+   *  resolved sample's duration and climax (where it peaks), in seconds, as the
+   *  sound library records them (fxMetadata.json for fx; a null climax when the
+   *  library has none: the legacy default applies, 0 for hits, the whole sample
+   *  for reverses and risers). The adapter is pure (no FS / child_process), so
+   *  the caller reads them. Returning `null` drops the transition with a
+   *  diagnostic. */
+  getTransitionSampleDetails?: (entry: ValidatedCatalogEntry) => TransitionSampleDetails | null;
   /** Starting inst-N.json playsample id for transitionSample emissions.
    *  Defaults to 40000 — picked to sit above the Phase 2 fixture id
    *  ranges (Drums 26929-27770, Bass 945-960, Keys 2048-2064, Pad
@@ -322,29 +324,11 @@ function setResolvedLowLevelType(
   (instJson as { lowLevelType?: string }).lowLevelType = lowLevel;
 }
 
-// docs/58d + 58e — transition fx climax overrides, two-layered:
-//   1. byCatalogId — per-row hand-tuned values from legacy
-//      effectsMetadata.json that map cleanly to today's xlsx rows.
-//   2. byLowLevel — family-wide conventions Stefan applied uniformly
-//      across all rows of a lowLevel (e.g. fxTonalReverse = 1.1 sec).
-// Adapter lookup priority at the transition lowering call site:
-//   byCatalogId → byLowLevel → defaultClimaxForTag heuristic.
-const { TRANSITION_CLIMAX_BY_CATALOG_ID, TRANSITION_CLIMAX_BY_LOWLEVEL } = (() => {
-  const raw = JSON.parse(
-    readFileSync(
-      new URL('../data/transition-climax-overrides.json', import.meta.url),
-      'utf-8',
-    ),
-  ) as {
-    byCatalogId: Record<string, { climaxSec: number }>;
-    byLowLevel?: Record<string, { climaxSec: number }>;
-  };
-  const byId = new Map<string, number>();
-  for (const [id, entry] of Object.entries(raw.byCatalogId)) byId.set(id, entry.climaxSec);
-  const byLL = new Map<string, number>();
-  for (const [ll, entry] of Object.entries(raw.byLowLevel ?? {})) byLL.set(ll, entry.climaxSec);
-  return { TRANSITION_CLIMAX_BY_CATALOG_ID: byId, TRANSITION_CLIMAX_BY_LOWLEVEL: byLL };
-})();
+/** A transition sample's length and climax (seconds), as the sound library records them. */
+export interface TransitionSampleDetails {
+  readonly durationSeconds: number;
+  readonly climaxSeconds: number | null;
+}
 
 const DRUMS_DISPLAY_NAME = 'Drums';
 const BASS_DISPLAY_NAME = 'Bass';
@@ -1034,7 +1018,7 @@ function finishParametricLaneInst(
  *
  * transitions are lowered into per-segment `transitions.<inst-name>`
  * blocks + matching transitionSample inst-N.json files IFF the caller
- * provides `transitionCatalog` + `getTransitionSampleDurationSeconds`.
+ * provides `transitionCatalog` + `getTransitionSampleDetails`.
  * Without those options the adapter emits empty `transitions: {}`
  * (back-compat). See docs/54p.
  *
@@ -1345,9 +1329,9 @@ export function toEngineFixture(
   }> = [];
   const transitionsDropped: Array<{ segment: string; tag: string; reason: string }> = [];
 
-  if (options.transitionCatalog && options.getTransitionSampleDurationSeconds) {
+  if (options.transitionCatalog && options.getTransitionSampleDetails) {
     const cat = options.transitionCatalog;
-    const probe = options.getTransitionSampleDurationSeconds;
+    const probe = options.getTransitionSampleDetails;
     const genre = song.genre ?? 'brightPop';
     let nextId = options.transitionPlaysampleIdBase ?? 40000;
     let nextFilenameIdx = options.transitionInstFilenameStart ?? nextInstIndex();
@@ -1440,16 +1424,14 @@ export function toEngineFixture(
           transitionsDropped.push({ segment: seg.name, tag, reason: 'no catalog row for (family, lowLevel)' });
           continue;
         }
-        const durSec = probe(resolved.entry);
+        const details = probe(resolved.entry);
+        const durSec = details?.durationSeconds ?? null;
         if (durSec === null || !Number.isFinite(durSec) || durSec <= 0) {
-          transitionsDropped.push({ segment: seg.name, tag, reason: `duration probe failed (entry id=${resolved.entry.id})` });
+          transitionsDropped.push({ segment: seg.name, tag, reason: `no duration for the sample (entry id=${resolved.entry.id})` });
           continue;
         }
-        // docs/58d + 58e — three-tier lookup:
-        // per-catalog-row → per-lowLevel → attack-vs-tail heuristic.
-        const climaxSec = TRANSITION_CLIMAX_BY_CATALOG_ID.get(resolved.entry.id)
-          ?? TRANSITION_CLIMAX_BY_LOWLEVEL.get(resolved.entry.lowLevel)
-          ?? defaultClimaxForTag(tag, durSec);
+        // The library's climax; without one, the legacy default (climax || 0 for hits, || duration for reverses).
+        const climaxSec = details!.climaxSeconds ?? defaultClimaxForTag(tag, durSec);
         const placement = (entry.placement === 'beginningOfSegment' || entry.placement === 'midSegment' || entry.placement === 'endOfSegment')
           ? entry.placement : undefined;
         const timing = computeTransitionTiming({
@@ -1614,7 +1596,7 @@ export function toEngineFixture(
     message:
       'Per-segment arrangement blocks emitted with instruments + overrides. ' +
       'fills now pass through verbatim from brain 53aa (see docs/54o). ' +
-      'transitions are resolved when transitionCatalog + duration probe are ' +
+      'transitions are resolved when transitionCatalog + sample details are ' +
       'supplied (see docs/54p); otherwise emitted as empty `{}`. ' +
       'signalProcessors are lowered for supported tags (see docs/54q). ' +
       'mutes / TransitionNoise / TransitionPattern / Vocals remain empty ' +
@@ -1639,7 +1621,7 @@ export function toEngineFixture(
       action: 'normalized',
     });
   }
-  if (!options.transitionCatalog || !options.getTransitionSampleDurationSeconds) {
+  if (!options.transitionCatalog || !options.getTransitionSampleDetails) {
     // Count the brain-emitted transition tags we would have lowered, so the
     // diagnostic surfaces what was dropped at the boundary.
     let brainTransitionCount = 0;
@@ -1651,7 +1633,7 @@ export function toEngineFixture(
     if (brainTransitionCount > 0) {
       const missing = !options.transitionCatalog
         ? 'transitionCatalog'
-        : 'getTransitionSampleDurationSeconds';
+        : 'getTransitionSampleDetails';
       diagnostics.push({
         severity: 'info',
         path: 'arrangement.transitions',

@@ -157,11 +157,8 @@ describe('toEngineFixture — fills pass-through (docs/54o + 54p hardening)', ()
 
 describe('toEngineFixture — transitions wiring (docs/54p)', () => {
   const catalog = loadValidatedCatalog();
-  const probe = (entry: { id: string }) => {
-    // Deterministic per-row "duration". Real ffprobe values vary; for tests
-    // we just need a positive number so the resolver doesn't drop.
-    return 2.5;
-  };
+  // Every sample 2.5 s long, with no climax in the library (the legacy default applies).
+  const probe = () => ({ durationSeconds: 2.5, climaxSeconds: null });
 
   it('emits NO transition inst-N.json when transitionCatalog is omitted', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
@@ -176,11 +173,11 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     expect(env.arrangement.verse1.transitions).toEqual({});
   });
 
-  it('emits NO transition inst-N.json when getTransitionSampleDurationSeconds is omitted', () => {
+  it('emits NO transition inst-N.json when getTransitionSampleDetails is omitted', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      // intentionally NOT passing getTransitionSampleDurationSeconds
+      // intentionally NOT passing getTransitionSampleDetails
     });
     const transitionInsts = (fixture.instruments as EmittedInst[])
       .filter((i) => i.json.type === 'transitionSample');
@@ -197,14 +194,14 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     );
     expect(drop).toBeDefined();
     expect(drop!.message).toMatch(/3 transition tag\(s\)/);
-    expect(drop!.message).toMatch(/getTransitionSampleDurationSeconds/);
+    expect(drop!.message).toMatch(/getTransitionSampleDetails/);
   });
 
   it('emits unique inst names for the same tag across multiple segments', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      getTransitionSampleDurationSeconds: probe,
+      getTransitionSampleDetails: probe,
     });
     const transitionInsts = (fixture.instruments as EmittedInst[])
       .filter((i) => i.json.type === 'transitionSample');
@@ -225,7 +222,7 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      getTransitionSampleDurationSeconds: probe,
+      getTransitionSampleDetails: probe,
     });
     const env = fixture.songJson as EmittedEnvelope;
     const transitionInsts = (fixture.instruments as EmittedInst[])
@@ -250,7 +247,7 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      getTransitionSampleDurationSeconds: probe,
+      getTransitionSampleDetails: probe,
     });
     const env = fixture.songJson as EmittedEnvelope;
     expect(env.arrangement.intro.instruments['fxTonalReverse__intro']).toBe(true);
@@ -267,7 +264,7 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      getTransitionSampleDurationSeconds: probe,
+      getTransitionSampleDetails: probe,
     });
     const ok = fixture.diagnostics.find(
       (d) => d.path === 'arrangement.transitions' && d.action === 'normalized'
@@ -283,7 +280,7 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      getTransitionSampleDurationSeconds: probe,
+      getTransitionSampleDetails: probe,
     });
     const transitionInsts = (fixture.instruments as EmittedInst[])
       .filter((i) => i.json.type === 'transitionSample')
@@ -297,7 +294,7 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
     const fixture = toEngineFixture(makeSongWithRepeatedTransitionTag(), {
       brainHash: HASH, generatorParams: PARAMS,
       transitionCatalog: catalog,
-      getTransitionSampleDurationSeconds: probe,
+      getTransitionSampleDetails: probe,
       transitionPlaysampleIdBase: 99000,
     });
     const transitionInsts = (fixture.instruments as EmittedInst[])
@@ -309,7 +306,7 @@ describe('toEngineFixture — transitions wiring (docs/54p)', () => {
 
 describe('toEngineFixture — edmSnareDrumRoll TransitionPattern wiring (docs/54n)', () => {
   const catalog = loadValidatedCatalog();
-  const probe = () => 2.5;
+  const probe = () => ({ durationSeconds: 2.5, climaxSeconds: null });
 
   // Brain output: a bridge segment whose edmSnareDrumRoll entry carries the
   // generated grid + lengthInBars (see arrangement-polish/edm-snare-roll.ts).
@@ -346,7 +343,7 @@ describe('toEngineFixture — edmSnareDrumRoll TransitionPattern wiring (docs/54
   it('emits a transitionPattern inst with two snare samples', () => {
     const fixture = toEngineFixture(makeSongWithSnareRoll(), {
       brainHash: HASH, generatorParams: { ...PARAMS, genre: 'edm', bpm: 128 },
-      transitionCatalog: catalog, getTransitionSampleDurationSeconds: probe,
+      transitionCatalog: catalog, getTransitionSampleDetails: probe,
     });
     const patternInsts = (fixture.instruments as EmittedInst[])
       .filter((i) => i.json.type === 'transitionPattern');
@@ -365,7 +362,7 @@ describe('toEngineFixture — edmSnareDrumRoll TransitionPattern wiring (docs/54
   it('routes the pattern block by id (block.id === inst.id) and carries the grid', () => {
     const fixture = toEngineFixture(makeSongWithSnareRoll(), {
       brainHash: HASH, generatorParams: { ...PARAMS, genre: 'edm', bpm: 128 },
-      transitionCatalog: catalog, getTransitionSampleDurationSeconds: probe,
+      transitionCatalog: catalog, getTransitionSampleDetails: probe,
     });
     const inst = (fixture.instruments as EmittedInst[])
       .find((i) => i.json.type === 'transitionPattern')!.json;
@@ -383,5 +380,43 @@ describe('toEngineFixture — edmSnareDrumRoll TransitionPattern wiring (docs/54
     expect(block.sequenceStartPosition).toBe(96);
     // Engine isInstrumentInSegment requires the activation flag.
     expect(env.arrangement.bridge1!.instruments['edmSnareDrumRoll__bridge1']).toBe(true);
+  });
+});
+
+describe('toEngineFixture — transition climax from the sound library', () => {
+  const catalog = loadValidatedCatalog();
+  // A tonal reverse in a 4-bar intro at 110 bpm (8.727 s): it starts so that
+  // its climax (where it peaks) lands on the end of the segment.
+  function introWithTonalReverse(): Song {
+    return {
+      schemaVersion: '1.0.0',
+      key: 'C', bpm: 110, genre: 'brightPop',
+      songStructure: [{ name: 'intro', bars: FOUR_BAR_CHORDS.map((chords) => ({ chords })) }],
+      arrangement: {
+        intro: {
+          instruments: {}, overrides: {}, fills: {}, mutes: {}, signalProcessors: {},
+          transitions: { fxTonalReverse: { type: 'fxTonalReverse', placement: 'beginningOfSegment' } },
+        },
+      },
+      instrumentDefinitions: [],
+      aiArtifacts: [],
+    } as unknown as Song;
+  }
+  const blockOf = (climaxSeconds: number | null) => {
+    const fixture = toEngineFixture(introWithTonalReverse(), {
+      brainHash: HASH, generatorParams: { ...PARAMS, bpm: 110 },
+      transitionCatalog: catalog, getTransitionSampleDetails: () => ({ durationSeconds: 9.25, climaxSeconds }),
+    });
+    const env = fixture.songJson as EmittedEnvelope;
+    const [block] = Object.values(env.arrangement.intro!.transitions) as { sequenceStartPosition: number; sequenceStartPositionOffsetInSeconds: number }[];
+    return block!;
+  };
+  const startSec = (b: { sequenceStartPosition: number; sequenceStartPositionOffsetInSeconds: number }) => (b.sequenceStartPosition / 8) * (60 / 110) + b.sequenceStartPositionOffsetInSeconds;
+
+  it('starts the sample its climax before the end of the segment', () => {
+    expect(startSec(blockOf(5.316))).toBeCloseTo(4 * 4 * (60 / 110) - 5.316, 3);
+  });
+  it('uses the whole sample when the library has no climax (legacy default)', () => {
+    expect(startSec(blockOf(null))).toBeCloseTo(4 * 4 * (60 / 110) - 9.25, 3);
   });
 });

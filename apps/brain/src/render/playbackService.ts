@@ -121,7 +121,7 @@ export class PlaybackService {
     }
     mkdirSync(config.playbackDir, { recursive: true });
     mkdirSync(config.sampleCacheDir, { recursive: true });
-    this.loweringVersion = loweringFingerprint(config.emitScript);
+    this.loweringVersion = loweringFingerprint(config.emitScript, config.sampleLibraryRoot);
     this.libraryRoot = resolve(config.sampleLibraryRoot);
     this.mixText = readFileSync(config.mixConfigPath, 'utf8');
     JSON.parse(this.mixText); // fail at startup on a broken file
@@ -453,11 +453,15 @@ export class PlaybackService {
 }
 
 /**
- * Hash of the code that lowers a song: the emit script and the built
- * @casperaki packages it imports (their dist/*.js, as linked next to it).
+ * Hash of what lowering a song depends on: the emit script, the built
+ * @casperaki packages it imports (their dist/*.js, as linked next to it), and
+ * the sound library's fx sheet (fxMetadata.json, beside the instruments folder:
+ * the transitions' durations and climaxes).
  */
-function loweringFingerprint(emitScript: string): string {
-  const h = createHash('sha256').update(readFileSync(emitScript));
+function loweringFingerprint(emitScript: string, sampleLibraryRoot: string): string {
+  const fxSheet = join(sampleLibraryRoot, '..', 'fxMetadata.json');
+  if (!existsSync(fxSheet)) throw new Error(`PlaybackService: the sound library has no fx sheet at ${fxSheet}`);
+  const h = createHash('sha256').update(readFileSync(emitScript)).update(readFileSync(fxSheet));
   const scope = join(dirname(emitScript), '..', 'node_modules', '@casperaki');
   if (!existsSync(scope)) throw new Error(`PlaybackService: ${scope} not found (the emit script's @casperaki packages)`);
   for (const pkg of readdirSync(scope).sort()) {
