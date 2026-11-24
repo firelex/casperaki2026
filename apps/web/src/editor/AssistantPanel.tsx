@@ -258,10 +258,10 @@ function OpenPanel({ onClose }: { onClose(): void }) {
       <div className="flex items-center gap-2 border-b border-black/60 px-3 py-2">
         <span className="text-[14px] font-semibold">Assistant</span>
         <span className="text-[12px] text-white/45">{pro.pro ? (snapshot ? 'edits this song and its mix' : 'reading the mix…') : 'edits this song'}</span>
-        <button type="button" onClick={() => setChatKey((k) => k + 1)} className="ml-auto h-7 rounded-full px-2 text-[12px] text-white/60 hover:text-white" title="Start a new conversation">
+        <button type="button" onClick={() => setChatKey((k) => k + 1)} className="ml-auto h-7 rounded-full border border-white/20 px-3 text-[12px] text-white/70 hover:border-white/60 hover:text-white" title="Start a new conversation">
           New chat
         </button>
-        <button type="button" onClick={onClose} className="h-7 w-7 rounded-full text-white/60 hover:bg-white/10 hover:text-white" aria-label="Close the assistant">
+        <button type="button" onClick={onClose} className="h-7 w-7 rounded-full border border-white/20 text-[12px] text-white/70 hover:border-white/60 hover:text-white" aria-label="Close the assistant" title="Close the assistant">
           ✕
         </button>
       </div>
@@ -282,6 +282,7 @@ function OpenPanel({ onClose }: { onClose(): void }) {
           chatId={null}
           extraBody={{ songId, song: viewSong, title: viewSong?.title, ...(snapshot ? { mix: snapshot } : {}) }}
           onToolResult={onToolResult}
+          placeholder="Message the assistant"
           className="casperaki-chat h-full"
         />
       </div>
