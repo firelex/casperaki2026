@@ -169,3 +169,30 @@ export function mergeCompletion(hummed: readonly BeatNote[], hummedBars: number,
     .map((n) => ({ beat: n.beat, midi: n.midi, duration: Math.min(n.duration, PHRASE_BARS * 4 - n.beat) }));
   return [...hummed, ...added].sort((a, b) => a.beat - b.beat);
 }
+
+/** Chords for an edited 8-bar melody: the fitter's recommendation for all 8 bars (the "Re-fit chords" button). */
+export function refitChords(melody: readonly BeatNote[], key: Transcription['key']): { slots: string[]; chords: string[] } {
+  const model = hum.loadChordFitModel();
+  const tonic = majorTonicOf(key);
+  const best = hum.harmonize(melody, PHRASE_BARS, tonic, model.prior, model.known, model.params).alternatives[0]!;
+  return { slots: [...best.slots], chords: best.slots.map((id) => hum.chordSymbol(hum.chordFromId(id), tonic)) };
+}
+
+/** Every chord the fitter knows, as symbols in the song key, ranked by how well it fits the melody in one half bar. */
+export function chordOptions(melody: readonly BeatNote[], slot: number, key: Transcription['key']): { chord: string; fit: number }[] {
+  const slots = PHRASE_BARS * 2;
+  if (!Number.isInteger(slot) || slot < 0 || slot >= slots) throw new Error(`hum: the half bar must be 0..${slots - 1}, got ${slot}`);
+  const model = hum.loadChordFitModel();
+  const tonic = majorTonicOf(key);
+  const w = hum.slotWeights(melody, PHRASE_BARS, model.params.fit, 'empty')[slot]!;
+  return model.prior.vocab
+    .map((id, i) => ({ i, chord: hum.chordSymbol(hum.chordFromId(id), tonic), fit: hum.fitScore(w, hum.chordFromId(id), tonic, model.params.fit) }))
+    .sort((a, b) => b.fit - a.fit || a.i - b.i)
+    .map(({ chord, fit }) => ({ chord, fit }));
+}
+
+/** Chord symbols in the song key → the fitter's chord ids ("deg:quality"); throws on a chord it cannot read. */
+export function slotsOfChords(chords: readonly string[], key: Transcription['key']): string[] {
+  const tonic = majorTonicOf(key);
+  return chords.map((c) => hum.chordId(hum.parseChordSymbol(c, tonic)));
+}
