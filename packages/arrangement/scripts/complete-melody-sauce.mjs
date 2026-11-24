@@ -14,7 +14,8 @@
 // sixth into or inside the written bars (a written bar may be silent only where the source had a silent bar); at least 60% chord tones on beats 1 and 3 of the written bars; written bars
 // not a near copy of the kept ones; the phrase ends in bar 8 on a chord tone started by beat 3 and held to beat 4
 // (later notes dropped), leaving a breath. If none passes, the entry is kept as it is and the reason recorded.
-// properties.secondHalf records what was done. --write saves the bank (resumable: entries with secondHalf are skipped).
+// properties.secondHalf records what was done. --write saves the bank (resumable: entries with secondHalf are skipped);
+// --retry-kept tries the kept ones again; --repair cuts overlapping notes in earlier rewrites.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -27,6 +28,8 @@ if (!URL_) throw new Error('complete-melody-sauce: set AMT_SERVICE_URL (the melo
 const args = process.argv.slice(2);
 const pilot = args.includes('--pilot') ? Number(args[args.indexOf('--pilot') + 1]) : undefined;
 const write = args.includes('--write');
+const retryKept = args.includes('--retry-kept');
+const repair = args.includes('--repair');
 if (!pilot === !write) throw new Error('complete-melody-sauce: pass either --pilot <n> or --write');
 const SAMPLES = 16;
 
@@ -89,8 +92,22 @@ function check(notes, written, chords, emptyInSource) {
 // later are dropped, and the last note is held to at least beat 4 of bar 8 (beat 31).
 const LAST_ONSET = 30;
 const HOLD_TO = 31;
-function endPhrase(notes) {
-  const kept = notes.filter((n) => n.beat <= LAST_ONSET + 1e-9);
+// One voice: two notes on the same 16th keep the first; a note running into the next is cut where the next starts.
+function oneVoice(notes) {
+  const out = [];
+  for (const n of notes) {
+    const prev = out[out.length - 1];
+    if (prev && Math.abs(prev.beat - n.beat) < 1e-9) continue;
+    if (prev && prev.beat + prev.duration > n.beat) prev.duration = n.beat - prev.beat;
+    out.push({ ...n });
+  }
+  return out;
+}
+function endPhrase(notes, chords) {
+  const kept = oneVoice(notes).filter((n) => n.beat <= LAST_ONSET + 1e-9);
+  // Land on a chord tone: notes in bar 8 after the last chord tone starting in bar 8 are dropped.
+  const isChordTone = (n) => chordNotes(chords.find((c) => c.beat <= n.beat && n.beat < c.beat + c.duration).symbol).map(pc).includes(pc(n.midi));
+  while (kept.length > 1 && !isChordTone(kept[kept.length - 1]) && kept[kept.length - 2].beat >= 28) kept.pop();
   const last = kept[kept.length - 1];
   if (last && last.beat + last.duration < HOLD_TO) last.duration = HOLD_TO - last.beat;
   if (last && last.beat + last.duration > 32) last.duration = 32 - last.beat;
@@ -131,7 +148,7 @@ async function complete(x) {
   if (!res.ok) throw new Error(`complete-melody-sauce: entry ${x.id}: the service answered ${res.status}: ${JSON.stringify(body).slice(0, 300)}`);
   const reasons = [];
   for (const c of body.completions) {
-    const notes = endPhrase(c.notes.map((n) => ({ beat: n.beat, midi: n.midi - 12, duration: n.duration })).sort((a, b) => a.beat - b.beat));
+    const notes = endPhrase(c.notes.map((n) => ({ beat: n.beat, midi: n.midi - 12, duration: n.duration })).sort((a, b) => a.beat - b.beat), chords);
     const why = notes.length === 0 ? 'no notes' : endingProblem(notes, chords) ?? check(notes, written, chords, emptyInSource);
     if (!why) return { form, written, notes, tookMs: body.tookMs };
     reasons.push(why);
@@ -140,6 +157,21 @@ async function complete(x) {
 }
 
 const bank = JSON.parse(readFileSync(FILE, 'utf8'));
+// --repair: entries rewritten before oneVoice() existed get their overlaps cut (no model call).
+if (repair) {
+  let fixedCount = 0;
+  for (const x of bank.filter((e) => e.properties.secondHalf?.by)) {
+    const notes = Object.entries(x.melody).map(([b, v]) => ({ beat: Number(b), midi: v[0].midi, duration: v[0].duration })).sort((a, b) => a.beat - b.beat);
+    const clean = oneVoice(notes);
+    if (clean.length === notes.length && clean.every((n, i) => n.duration === notes[i].duration)) continue;
+    fixedCount++;
+    x.melody = {};
+    for (const n of clean) x.melody[beatKey(n.beat)] = [{ note: `${NAMES[pc(n.midi)]}${Math.floor(n.midi / 12)}`, midi: n.midi, duration: n.duration }];
+  }
+  console.log(`repair: ${fixedCount} entries had overlapping notes cut`);
+}
+// --retry-kept: entries kept in an earlier run are tried again.
+if (retryKept) for (const x of bank) if (x.properties.secondHalf?.form === 'kept') delete x.properties.secondHalf;
 const todo = bank.filter((x) => !x.properties.secondHalf).slice(0, pilot ?? bank.length);
 let done = 0, kept = 0;
 const t0 = Date.now();

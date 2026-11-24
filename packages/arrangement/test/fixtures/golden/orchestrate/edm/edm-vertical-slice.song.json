@@ -491,7 +491,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Still",
-                    "note": 55,
+                    "note": 50,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "s",
@@ -845,7 +845,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Still",
-                    "note": 62,
+                    "note": 59,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "s",
@@ -902,7 +902,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Ment",
-                    "note": 65,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -3301,7 +3301,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Mo-",
-                    "note": 55,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -3397,7 +3397,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Still",
-                    "note": 57,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "s",
@@ -3454,7 +3454,7 @@
                   {
                     "duration": 0.5,
                     "fullWord": "Ment",
-                    "note": 59,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -3469,7 +3469,7 @@
                     "duration": 0.5,
                     "endOfPhrase": true,
                     "fullWord": "Still",
-                    "note": 57,
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "s",
