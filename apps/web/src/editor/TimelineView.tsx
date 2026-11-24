@@ -13,6 +13,7 @@ import {
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
 import { unsungSections as unsungSectionsOf } from '../audio/singVocals';
 import { useVocalsStatus } from '../audio/useVocalsStatus';
+import { VocalsControl } from './VocalsControl';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
@@ -722,6 +723,7 @@ export function TimelineView() {
                     catalogId={catalogIdOf(defs.get(t.name)?.id)}
                     notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
                   />
+                  {t.name === 'Vocal' ? <VocalsControl /> : null}
                   <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
                 </div>
                 <div

@@ -1,14 +1,15 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
+import type { Song } from '@casperaki/song-schema';
 import { useCallback, useMemo } from 'react';
 
-import { playbackApi } from '../api/playback';
+import { playbackApi, type PlaybackPayload } from '../api/playback';
 import { BrainError } from '../api/client';
 import { vocalsApi } from '../api/vocals';
 import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
 import { fnv1a } from './fnv1a';
-import { singBeforePlay, singRun, takesToken } from './singVocals';
+import { sectionStarts, singOrder, singRun, takesToken } from './singVocals';
 import { useVocalsStatus, vocalsStatusKey } from './useVocalsStatus';
 import { vocalsProgress } from './vocalsProgress';
 import { useLivePosition, useLiveState } from './useLivePlayer';
@@ -46,31 +47,10 @@ export function useLiveTransport() {
 
   const startPlaying = useCallback(async () => {
     if (!liveKey || !viewSong) return;
-    // Vocals on: Play first sings the unsung sections (seconds each); the brain adds every stored take when the
-    // song loads. One run at a time: Play while singing cancels it. A failure is shown and nothing plays.
-    if (viewSong.vocals?.enabled) {
-      const run = singRun.toggle();
-      if (!run) {
-        vocalsProgress.set({});
-        return;
-      }
-      try {
-        vocalsProgress.set({ text: 'Checking the vocals…' });
-        const outcome = await singBeforePlay(viewSong, vocalsApi, (text) => vocalsProgress.set({ text }), run.signal);
-        if (outcome === 'cancelled') return vocalsProgress.set({});
-        const st = await queryClient.fetchQuery({ queryKey: vocalsStatusKey(viewSong), queryFn: () => vocalsApi.status(viewSong), staleTime: 0 });
-        vocalsProgress.set({});
-        if (!baseKey) return;
-        await livePlayer.play(`${baseKey}:v${fnv1a(takesToken(st.sections))}`, fetchPayload);
-        return;
-      } catch (err) {
-        vocalsProgress.set({ error: err instanceof BrainError ? (err.body?.message ?? err.message) : err instanceof Error ? err.message : String(err) });
-        return;
-      } finally {
-        singRun.done(run);
-      }
-    }
     await livePlayer.play(liveKey, fetchPayload);
+    // Vocals on: the song plays at once with the sections sung so far; the unsung ones are sung meanwhile, from the
+    // one being played on, and each joins the playing song as soon as it is ready.
+    if (viewSong.vocals?.enabled && baseKey) void singWhilePlaying(viewSong, baseKey, fetchPayload, queryClient);
   }, [liveKey, viewSong, fetchPayload, baseKey, queryClient]);
 
   const playPause = useCallback(() => {
@@ -108,6 +88,36 @@ export function useLiveTransport() {
   return {
     liveKey, live, isThisSong, playing, loading, currentSeconds, fetchPayload, playPause, seek, stop, toggleLoop, editorDirty,
   };
+}
+
+/**
+ * Sings the song's unsung sections one by one (from the section at the play position on); after each, the greyed
+ * track updates and, if this song is playing, the player switches seamlessly to the version with the new take.
+ * A new run (Play again) cancels this one; a failure is shown in the Vocals panel.
+ */
+async function singWhilePlaying(song: Song, baseKey: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>, queryClient: QueryClient): Promise<void> {
+  const run = singRun.start();
+  try {
+    const status = await vocalsApi.status(song, run.signal);
+    const unsung = status.sections.filter((s) => s.state === 'unsung').map((s) => s.segment);
+    const order = singOrder(unsung, sectionStarts(song), livePlayer.position());
+    for (const [i, segment] of order.entries()) {
+      vocalsProgress.set({ text: `Singing ${segment} (${i + 1} of ${order.length})` });
+      await vocalsApi.sing(song, segment, run.signal);
+      const now = await vocalsApi.status(song, run.signal);
+      const live = livePlayer.getState();
+      if (live.status === 'playing' && live.key?.startsWith(baseKey)) {
+        await livePlayer.play(`${baseKey}:v${fnv1a(takesToken(now.sections))}`, fetchPayload, { seamless: true });
+      }
+      queryClient.setQueryData(vocalsStatusKey(song), now);
+    }
+    vocalsProgress.set({});
+  } catch (err) {
+    if (run.signal.aborted) return;
+    vocalsProgress.set({ error: err instanceof BrainError ? (err.body?.message ?? err.message) : err instanceof Error ? err.message : String(err) });
+  } finally {
+    singRun.done(run);
+  }
 }
 
 export { fnv1a } from './fnv1a';
