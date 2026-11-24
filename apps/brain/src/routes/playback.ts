@@ -11,16 +11,19 @@ import { createHash } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSong, type MixOverrides } from '@casperaki/song-schema';
+import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
 import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
 import type { SongsStore } from '../store.js';
+import type { VocalsCheck } from './vocals.js';
 
 export interface PlaybackRouterDeps {
   readonly store: SongsStore;
   readonly playback: PlaybackService | undefined;
   /** The caller's owner id (signed-in user, or the dev owner with auth off). */
   readonly ownerOf: (req: Request) => string;
+  /** Refuses songs whose sung vocals are on but not sung for the song as it is (409), see routes/vocals.ts. */
+  readonly vocalsCheck?: VocalsCheck;
 }
 
 // mixOverrides: the editor's Pro-mode mix for a song not saved yet (a saved song's comes from its project).
@@ -48,7 +51,7 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
   };
 }
 
-export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRouterDeps): Router {
+export function createPlaybackRouter({ store, playback, ownerOf, vocalsCheck }: PlaybackRouterDeps): Router {
   const router = Router();
 
   const notConfigured = (res: Response) =>
@@ -68,6 +71,8 @@ export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRoute
     if (!project) return res.status(404).json({ error: 'not_found', id });
     const stored = store.get(id);
     if (!stored) return res.status(404).json({ error: 'not_found', id });
+    const problem = vocalsCheck?.(parseSong(JSON.parse(stored.canonical)), true);
+    if (problem) return res.status(problem.status).json(problem.body);
     try {
       await respond(res, playback, id, stored.canonical, project.mixOverrides);
     } catch (err) {
@@ -80,11 +85,15 @@ export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRoute
     const body = PlayBodySchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ error: 'invalid_body' });
     let canonical: string;
+    let song: Song;
     try {
-      canonical = canonicalStringifySong(parseSong(body.data.song), 2);
+      song = parseSong(body.data.song);
+      canonical = canonicalStringifySong(song, 2);
     } catch (err) {
       return res.status(400).json({ error: 'invalid_song', message: err instanceof Error ? err.message : String(err) });
     }
+    const problem = vocalsCheck?.(song, false);
+    if (problem) return res.status(problem.status).json(problem.body);
     const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
     try {
       await respond(res, playback, id, canonical, body.data.mixOverrides);

@@ -10,10 +10,10 @@
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
-import { SongSchema } from '@casperaki/song-schema';
+import { SongSchema, type Song } from '@casperaki/song-schema';
 
 import type { BrainConfig } from '../config.js';
-import { VocalTakes, VocalsError } from '../vocals/takes.js';
+import { sectionStates, VocalTakes, VocalsError } from '../vocals/takes.js';
 
 export interface VocalsRouterDeps {
   /** Undefined when not configured; `missing` names the environment variables to set. */
@@ -96,4 +96,28 @@ export function createVocalsRouterFor(config: Pick<BrainConfig, 'singingServiceU
       ? new VocalTakes({ takesDir: config.vocalTakesDir!, serviceUrl: config.singingServiceUrl!, ffmpegBin: config.ffmpegBin, ...(fetchImpl ? { fetchImpl } : {}) })
       : undefined;
   return createVocalsRouter({ takes, missing });
+}
+
+/** Why a song cannot be played (or rendered) yet: its vocals are on but a section's take is missing or stale, or
+ *  sung vocals are not set up. Undefined when it can (vocals off, or every take current). */
+export interface VocalsProblem {
+  readonly status: number;
+  readonly body: { readonly error: string; readonly message: string; readonly sections?: readonly string[] };
+}
+export type VocalsCheck = (song: Song, saved: boolean) => VocalsProblem | undefined;
+
+export function createVocalsCheck(config: Pick<BrainConfig, 'vocalTakesDir'>): VocalsCheck {
+  return (song, saved) => {
+    if (!song.vocals?.enabled) return undefined;
+    if (!config.vocalTakesDir) {
+      return { status: 503, body: { error: 'vocals_not_configured', message: 'The song has Vocals on, but sung vocals are not set up: set BRAIN_VOCAL_TAKES_DIR in brain.env.' } };
+    }
+    const sections = sectionStates(song, config.vocalTakesDir).filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment);
+    if (sections.length === 0) return undefined;
+    const what = `The vocals of ${sections.join(', ')} have not been sung for the song as it is now.`;
+    return {
+      status: 409,
+      body: { error: 'vocals_need_singing', sections, message: saved ? `${what} Open the song and play it to sing its vocals.` : `${what} Sing them first.` },
+    };
+  };
 }

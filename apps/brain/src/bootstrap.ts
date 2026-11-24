@@ -41,7 +41,7 @@ import { renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
-import { createVocalsRouterFor } from './routes/vocals.js';
+import { createVocalsCheck, createVocalsRouterFor } from './routes/vocals.js';
 import { DeepSeekPlanner } from './video/planner.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
@@ -184,6 +184,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           ffmpegBin: config.ffmpegBin,
           nodeBin: process.execPath,
           masteringBin: resolve(config.masteringBin),
+          ...(config.vocalTakesDir ? { vocalTakesDir: config.vocalTakesDir } : {}),
         })
       : undefined);
   // DAW exports (stems / REAPER / Logic) next to the renders: <rendersDir>/../daw-exports.
@@ -225,6 +226,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           ffmpegBin: config.ffmpegBin,
           stubSamplesDir: resolve(config.renderStubSamplesDir),
           mixConfigPath: requireMixConfig(config.mixConfigPath),
+          ...(config.vocalTakesDir ? { vocalTakesDir: config.vocalTakesDir } : {}),
         })
       : undefined);
 
@@ -233,9 +235,9 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const titleEp = assistantEndpoint(config);
   const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
   if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
-  app.use(createSongsRouter({ store, renders, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
+  app.use(createSongsRouter({ store, renders, vocalsCheck: createVocalsCheck(config), ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
-  app.use(createPlaybackRouter({ store, playback, ownerOf }));
+  app.use(createPlaybackRouter({ store, playback, ownerOf, vocalsCheck: createVocalsCheck(config) }));
   app.use(createTracksRouter());
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(

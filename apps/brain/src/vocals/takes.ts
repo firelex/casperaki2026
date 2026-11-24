@@ -86,16 +86,7 @@ export class VocalTakes {
 
   /** Each section's state for the song's vocals setting. */
   status(song: Song): SectionStatus[] {
-    const vocals = requireVocals(song);
-    return song.songStructure.map((seg) => {
-      const score = sectionScore(song, seg.name);
-      if (!score) return { segment: seg.name, state: 'none' };
-      const fp = takeFingerprint(score, vocals.voice, vocals.takeNumbers[seg.name] ?? 1);
-      const a = takeArtifact(song, seg.name);
-      if (!a) return { segment: seg.name, state: 'missing' };
-      if (artifactFingerprint(a) !== fp) return { segment: seg.name, state: 'stale' };
-      return { segment: seg.name, state: existsSync(this.takePath(fp)) ? 'current' : 'missing' };
-    });
+    return sectionStates(song, this.cfg.takesDir);
   }
 
   /** The voices the singing service offers. */
@@ -204,6 +195,20 @@ export class VocalTakes {
     }
     return body;
   }
+}
+
+/** Each section's take state (none | current | stale | missing) for the song's vocals setting. */
+export function sectionStates(song: Song, takesDir: string): SectionStatus[] {
+  const vocals = requireVocals(song);
+  return song.songStructure.map((seg): SectionStatus => {
+    const score = sectionScore(song, seg.name);
+    if (!score) return { segment: seg.name, state: 'none' };
+    const fp = takeFingerprint(score, vocals.voice, vocals.takeNumbers[seg.name] ?? 1);
+    const a = takeArtifact(song, seg.name);
+    if (!a) return { segment: seg.name, state: 'missing' };
+    if (artifactFingerprint(a) !== fp) return { segment: seg.name, state: 'stale' };
+    return { segment: seg.name, state: existsSync(join(takesDir, `${fp}.wav`)) ? 'current' : 'missing' };
+  });
 }
 
 function requireVocals(song: Song): NonNullable<Song['vocals']> {

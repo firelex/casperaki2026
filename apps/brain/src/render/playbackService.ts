@@ -39,6 +39,9 @@ export interface PlaybackServiceConfig {
   /** Shared mix tables (casperaki_engine/config/mix-config.json), handed to
    *  the browser engine so the live mix matches the server render. */
   readonly mixConfigPath: string;
+  /** Sung vocal takes (BRAIN_VOCAL_TAKES_DIR): handed to the lowering as CASPERAKI_VOCAL_TAKES_DIR; take files
+   *  are served only from inside it. */
+  readonly vocalTakesDir?: string;
 }
 
 export interface Envelope {
@@ -57,6 +60,11 @@ export interface PlanEntry {
   /** Fret noises: this entry is slice `index` of `count` equal slices of the file. */
   readonly index?: number;
   readonly count?: number;
+}
+
+/** A sung vocal take (an audioClips clip): the whole file, inside the takes directory. */
+interface TakeSpec {
+  readonly takePath: string;
 }
 
 /** What one sample OGG is cut from. Stored next to the OGG so ids stay valid
@@ -185,7 +193,7 @@ export class PlaybackService {
       .map((n) => JSON.parse(readFileSync(join(dir, n), 'utf8')) as Record<string, any>);
 
     const entries: PlanEntry[] = [];
-    const add = (key: string, kind: PlanKind, spec: SampleSpec, extra: { index?: number; count?: number } = {}) =>
+    const add = (key: string, kind: PlanKind, spec: SampleSpec | TakeSpec, extra: { index?: number; count?: number } = {}) =>
       entries.push({ key, kind, sampleId: this.register(spec), ...extra });
     const laneEntry = (name: string) => manifest.lanes?.[name] ?? manifest[name];
 
@@ -246,6 +254,15 @@ export class PlaybackService {
         waves.set(inst.id, inst.sourcePath);
     }
     for (const [id, src] of waves) add(`playsample-${id}.ogg`, 'wave', { relativePath: src });
+
+    // Sung vocal takes (audioClips): each clip's own file, keyed by the clip's key.
+    for (const inst of insts) {
+      if (inst.type !== 'audioClips') continue;
+      for (const c of inst.clips ?? []) {
+        if (typeof c?.key !== 'string' || typeof c?.sourcePath !== 'string') throw new Error(`audioClips ${String(inst.name)}: a clip without key or sourcePath`);
+        add(c.key, 'wave', { takePath: this.takeFile(c.sourcePath) });
+      }
+    }
 
     // Guitar fret noises (equal slices of one file, cut in the browser) and
     // strums (one whole pre-sliced chord/fx file per pool entry).
@@ -380,7 +397,12 @@ export class PlaybackService {
     await runLogged(
       this.config.nodeBin,
       [this.config.emitScript],
-      { ...process.env, BRAIN_SONG_FILE: join(tmp, 'song-in.json'), OUT_DIR: tmp },
+      {
+        ...process.env,
+        BRAIN_SONG_FILE: join(tmp, 'song-in.json'),
+        OUT_DIR: tmp,
+        ...(this.config.vocalTakesDir ? { CASPERAKI_VOCAL_TAKES_DIR: resolve(this.config.vocalTakesDir) } : {}),
+      },
       join(tmp, 'lower.log'),
       LOWER_TIMEOUT_MS,
     );
@@ -388,7 +410,17 @@ export class PlaybackService {
     renameSync(tmp, dir);
   }
 
-  private register(spec: SampleSpec): string {
+  /** A take file, which must be inside the vocal takes directory. */
+  private takeFile(path: string): string {
+    const dir = this.config.vocalTakesDir;
+    if (!dir) throw new Error('the song has sung vocal takes but BRAIN_VOCAL_TAKES_DIR is not set');
+    const root = resolve(dir);
+    const abs = resolve(root, path);
+    if (!abs.startsWith(root + '/')) throw new Error(`a vocal take points outside the vocal takes directory: ${path}`);
+    return abs;
+  }
+
+  private register(spec: SampleSpec | TakeSpec): string {
     const id = createHash('sha256').update(JSON.stringify(spec)).digest('hex').slice(0, 24);
     const specPath = join(this.config.sampleCacheDir, `${id}.json`);
     if (!existsSync(specPath)) writeFileSync(specPath, JSON.stringify(spec));
@@ -398,7 +430,22 @@ export class PlaybackService {
   private async transcode(sampleId: string, out: string): Promise<string> {
     const specPath = join(this.config.sampleCacheDir, `${sampleId}.json`);
     if (!existsSync(specPath)) throw new Error(`unknown sample id ${sampleId} (no song plan registered it)`);
-    const spec = JSON.parse(readFileSync(specPath, 'utf8')) as SampleSpec;
+    const anySpec = JSON.parse(readFileSync(specPath, 'utf8')) as SampleSpec | TakeSpec;
+    if ('takePath' in anySpec) {
+      const take = this.takeFile(anySpec.takePath);
+      if (!existsSync(take)) throw new Error(`sample ${sampleId}: vocal take missing: ${take}`);
+      const tmpTake = `${out}.tmp-${process.pid}`;
+      await runLogged(
+        this.config.ffmpegBin,
+        ['-y', '-hide_banner', '-loglevel', 'error', '-i', take, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', tmpTake],
+        process.env,
+        `${out}.log`,
+        TRANSCODE_TIMEOUT_MS,
+      );
+      renameSync(tmpTake, out);
+      return out;
+    }
+    const spec = anySpec;
     const src = resolve(this.libraryRoot, spec.relativePath);
     if (!src.startsWith(this.libraryRoot + '/')) throw new Error(`sample ${sampleId} points outside the library`);
     if (!existsSync(src)) throw new Error(`sample ${sampleId}: library file missing: ${spec.relativePath}`);

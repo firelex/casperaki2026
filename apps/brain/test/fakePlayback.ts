@@ -8,7 +8,7 @@ import { PlaybackService } from '../src/render/playbackService.js';
 /** Stand-in playback: the "emit" writes a one-lane envelope (a bass
  *  multisample with two slots, one drum lane), the "ffmpeg" writes its
  *  arguments into the output file so slicing can be checked. */
-export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffprobe reports (duration and sample rate). */ probe?: string } = {}): PlaybackService {
+export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffprobe reports (duration and sample rate). */ probe?: string; /** Sung vocal takes directory. */ vocalTakesDir?: string; /** The fake emit writes this sourcePath for every take instead of <takes dir>/<fp>.wav. */ takeSourceOverride?: string } = {}): PlaybackService {
   const dir = mkdtempSync(join(tmpdir(), 'casperaki-playback-test-'));
   const lib = join(dir, 'library');
   mkdirSync(join(lib, 'basses'), { recursive: true });
@@ -28,10 +28,21 @@ export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffpro
   const emit = join(dir, 'scripts', 'emit.mjs');
   writeFileSync(
     emit,
-    `import { writeFileSync } from 'node:fs';
+    `import { readFileSync, writeFileSync } from 'node:fs';
 const o = process.env.OUT_DIR;
 writeFileSync(o + '/song.json', JSON.stringify({ song: true }));
 writeFileSync(o + '/inst-1.json', JSON.stringify({ id: 1, name: 'Bass', type: 'basses', samples: [{ id: 900 }] }));
+// Sung vocal takes, as the adapter lowers them (an audioClips inst), when the song's vocals are on.
+const songIn = JSON.parse(readFileSync(process.env.BRAIN_SONG_FILE, 'utf8'));
+if (songIn.vocals && songIn.vocals.enabled) {
+  const dirTakes = process.env.CASPERAKI_VOCAL_TAKES_DIR;
+  if (!dirTakes) throw new Error('no CASPERAKI_VOCAL_TAKES_DIR');
+  const clips = songIn.aiArtifacts.filter((a) => a.kind === 'soulx-vocal').map((a) => {
+    const fp = a.output.uri.slice('vocal-take:'.length, -'.wav'.length);
+    return { segment: a.attachedTo.segment, key: 'take-' + fp + '.wav', sourcePath: ${JSON.stringify(opts.takeSourceOverride ?? '')} || dirTakes + '/' + fp + '.wav', durationSec: a.output.durationSeconds };
+  });
+  writeFileSync(o + '/inst-2.json', JSON.stringify({ id: 60000, name: 'Vocal', type: 'audioClips', lowLevelType: 'vocalsLaSinger', clips }));
+}
 writeFileSync(o + '/asset-manifest.json', JSON.stringify({
   Bass: { status: 'resolved', relativePath: 'basses/bass.mp3', multisample: { slots: [
     { status: 'resolved', slot: { id: 900, note: 'c2', type: 'longNote' }, sliceStart: 0.5, sliceEnd: 4.5 },
@@ -56,6 +67,7 @@ writeFileSync(o + '/asset-manifest.json', JSON.stringify({
     sampleLibraryRoot: lib,
     ffmpegBin: ffmpeg,
     stubSamplesDir: stubs,
+    ...(opts.vocalTakesDir ? { vocalTakesDir: opts.vocalTakesDir } : {}),
     // In a git repo with a remote, as the engine repo is: approvals commit and push it.
     mixConfigPath: (() => {
       const repo = join(dir, 'engine');

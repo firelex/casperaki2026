@@ -67,6 +67,8 @@ export interface RenderServiceConfig {
   readonly nodeBin: string;
   /** casperaki_master: <in.wav> <out.wav> <sergree|boost>. */
   readonly masteringBin: string;
+  /** Sung vocal takes (BRAIN_VOCAL_TAKES_DIR), handed to the lowering as CASPERAKI_VOCAL_TAKES_DIR. */
+  readonly vocalTakesDir?: string;
 }
 
 /** Which version of a render: matchering-mastered (the default) or unmastered. */
@@ -185,7 +187,12 @@ export class RenderService {
       await runLogged(
         c.nodeBin,
         [c.emitScript],
-        { ...env, BRAIN_SONG_FILE: join(dir, 'song-in.json'), OUT_DIR: dir },
+        {
+          ...env,
+          BRAIN_SONG_FILE: join(dir, 'song-in.json'),
+          OUT_DIR: dir,
+          ...(c.vocalTakesDir ? { CASPERAKI_VOCAL_TAKES_DIR: resolve(c.vocalTakesDir) } : {}),
+        },
         join(dir, 'lower.log'),
         LOWER_TIMEOUT_MS,
       );
