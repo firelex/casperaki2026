@@ -14,9 +14,9 @@ const STATE_LABEL: Record<Exclude<SectionState, 'none'>, string> = {
 };
 
 /**
- * Sung vocals, on the Vocal track's header (docs/superpowers/specs/2026-11-24-sung-vocals-design.md): the switch
- * (off by default: nothing is sung), the voice, each section's take and "Sing again". With it on, Play sings the
- * grey sections while the song plays; the progress, "Stop singing" and any error (with "Don't sing on Play") show here.
+ * The sing switch on a vocal track's header (a microphone; docs/superpowers/specs/2026-11-24-sung-vocals-design.md):
+ * on, the track is heard (sung sections light up; grey ones are sung while the song plays); off, it is silent and
+ * grey. Its panel: the switch, the voice, each section's take with "Sing again", the progress and "Stop singing".
  */
 export function VocalsControl({ track }: { track: string }) {
   const { viewSong, applyEdit } = useSession();
@@ -58,10 +58,10 @@ export function VocalsControl({ track }: { track: string }) {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={`Sing ${track}`}
-        title={singing ? progress.text : on ? `${track}: Play sings the grey sections` : `${track}: Play does not sing (sung sections play)`}
-        className={`flex h-6 items-center gap-1 rounded-[5px] border border-black/60 bg-[#33353b] px-1.5 text-[11px] hover:bg-[#3d3f46] ${on ? 'text-emerald-300' : 'text-white/70'}`}
+        title={singing ? progress.text : on ? `${track}: sung (click for voice and takes)` : `${track}: not sung (click to sing it)`}
+        className={`flex h-5 w-5 items-center justify-center rounded-[4px] hover:bg-white/10 ${on ? 'text-emerald-300' : 'text-white/35 hover:text-white/70'} ${singing ? 'animate-pulse' : ''}`}
       >
-        <span aria-hidden="true" className={singing ? 'animate-pulse' : ''}>{singing ? '◉' : on ? '●' : '○'}</span> Sing
+        <MicIcon />
       </button>
       {open && rect
         ? createPortal(
@@ -74,7 +74,7 @@ export function VocalsControl({ track }: { track: string }) {
         >
           <p className="mb-1.5 font-semibold">{track}</p>
           <label className="flex items-center justify-between gap-2">
-            <span>Sing grey sections while playing</span>
+            <span>Sing this track</span>
             <input
               type="checkbox"
               checked={on}
@@ -85,10 +85,10 @@ export function VocalsControl({ track }: { track: string }) {
                 replace(withVocals(viewSong, track, e.target.checked, voice));
               }}
               disabled={!on && !vocals?.voice && !voices.data?.length}
-              aria-label="Sing grey sections while playing"
+              aria-label="Sing this track"
             />
           </label>
-          <p className="mt-1 text-[11px] text-white/50">Sung sections always play. On: when you press Play, the grey sections are sung while the song plays, starting where you are; each one joins the song as soon as it is ready. Off: nothing new is sung.</p>
+          <p className="mt-1 text-[11px] text-white/50">On: the track is heard. Sections already sung light up and play; the grey ones are sung while the song plays, starting where you are, and join it as soon as they are ready. Off: the track is silent and grey (its takes are kept).</p>
           {voices.isError ? <p className="mt-2 text-err">The voices could not be loaded: {voices.error.message}</p> : null}
           {on || voices.data ? (
             <label className="mt-2 flex items-center justify-between gap-2">
@@ -144,7 +144,7 @@ export function VocalsControl({ track }: { track: string }) {
                   replace(withVocals(viewSong, track, false));
                 }}
               >
-                Don't sing on Play
+                Switch this track off
               </button>
             </div>
           ) : null}
@@ -158,5 +158,14 @@ export function VocalsControl({ track }: { track: string }) {
         )
       : null}
     </div>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <rect x="5.5" y="1.5" width="5" height="8" rx="2.5" />
+      <path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2" strokeLinecap="round" />
+    </svg>
   );
 }

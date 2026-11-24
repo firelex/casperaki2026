@@ -123,3 +123,10 @@ export function singOrder(unsung: readonly string[], starts: readonly { segment:
     return ra - rb;
   });
 }
+
+/** Indexes (in `sections`) of a vocal track's grey boxes: every section while its singing is off (it is silent)
+ *  or the status is not known yet; with singing on, the sections not sung yet. */
+export function greySections(sections: readonly { readonly name: string }[], setting: VocalsSetting | undefined, status: readonly SectionStatus[] | undefined): ReadonlySet<number> {
+  if (!setting?.enabled || !status) return new Set(sections.map((_, i) => i));
+  return unsungSections(sections, status);
+}

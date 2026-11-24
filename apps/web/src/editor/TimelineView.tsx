@@ -11,7 +11,7 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { unsungSections as unsungSectionsOf } from '../audio/singVocals';
+import { greySections, trackSetting } from '../audio/singVocals';
 import { useVocalsStatus } from '../audio/useVocalsStatus';
 import { VocalsControl } from './VocalsControl';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
@@ -91,11 +91,15 @@ export function TimelineView() {
   }, [activeSong]);
   // A song with a vocals setting: which sections of the lead vocal have no take (greyed out on its track).
   const vocalStatus = useVocalsStatus(viewSong);
-  /** Per sung vocal track (lead and backing tracks with a setting): its unsung sections, greyed on its track. */
-  const unsungByTrack = useMemo(
-    () => new Map(Object.entries(vocalStatus.data?.tracks ?? {}).map(([track, st]) => [track, model ? unsungSectionsOf(model.sections, st) : new Set<number>()])),
-    [model, vocalStatus.data],
-  );
+  /** Per vocal track: its grey boxes (all while its singing is off; with singing on, the sections not sung yet). */
+  const greyByTrack = useMemo(() => {
+    const out = new Map<string, ReadonlySet<number>>();
+    if (!model || !viewSong) return out;
+    for (const t of model.tracks) {
+      if (t.isVocal) out.set(t.name, greySections(model.sections, trackSetting(viewSong, t.name), vocalStatus.data?.tracks[t.name]));
+    }
+    return out;
+  }, [model, viewSong, vocalStatus.data]);
   useEffect(() => {
     setMix(undefined);
     setMixError(undefined);
@@ -724,8 +728,15 @@ export function TimelineView() {
                     catalogId={catalogIdOf(defs.get(t.name)?.id)}
                     notPlayed={Boolean(meters?.done && !meters.names.includes(t.name))}
                   />
-                  {t.isVocal ? <VocalsControl track={t.name} /> : null}
-                  <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
+                  {t.isVocal ? (
+                    // The sing switch sits right before mute/solo, so it lines up on every vocal track.
+                    <span className="ml-auto flex shrink-0 items-center gap-1">
+                      <VocalsControl track={t.name} />
+                      <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
+                    </span>
+                  ) : (
+                    <MuteSolo lane={t.name} muted={live.muted.includes(t.name)} solo={live.solo.includes(t.name)} anySolo={live.solo.length > 0} />
+                  )}
                 </div>
                 <div
                   data-lane
@@ -762,7 +773,9 @@ export function TimelineView() {
                     selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
                     rowH={rowH}
                     automation={automationByTrack.get(t.name)}
-                    {...(unsungByTrack.has(t.name) ? { unsungSections: unsungByTrack.get(t.name)! } : {})}
+                    {...(greyByTrack.has(t.name)
+                      ? { unsungSections: greyByTrack.get(t.name)!, greyNote: viewSong && trackSetting(viewSong, t.name)?.enabled ? 'not sung' : undefined }
+                      : {})}
                   />
                 </div>
                 </div>

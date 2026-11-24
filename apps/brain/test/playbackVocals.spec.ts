@@ -73,13 +73,13 @@ describe('playback with sung vocals', () => {
     await h.stop();
   });
 
-  it('takes play with the Vocals switch off too (it only decides whether Play sings)', async () => {
+  it('a vocal track with singing off is silent, even with stored takes', async () => {
     const h = await boot();
     const s = onlyVerse1(base());
     const fp = storeTake(s);
     const off = { ...s, vocals: { ...s.vocals!, enabled: false } };
     const r = await h.req('/api/playback', 'POST', { song: off });
-    expect(r.body.samples.some((x: { key: string }) => x.key === `take-${fp}.ogg`)).toBe(true);
+    expect(r.body.samples.some((x: { key: string }) => x.key === `take-${fp}.ogg`)).toBe(false);
     await h.stop();
   });
 
@@ -93,7 +93,7 @@ describe('playback with sung vocals', () => {
 
   it('a backing vocal track with a setting plays its stored takes too', async () => {
     const h = await boot();
-    const s = { ...base(), bpm: 137, backingVocals: { 'Backing vocals 1': { enabled: false, voice: 'en_target', takeNumbers: {} } } } as Song;
+    const s = { ...base(), bpm: 137, backingVocals: { 'Backing vocals 1': { enabled: true, voice: 'en_target', takeNumbers: {} } } } as Song;
     const fp = takeFingerprint(sectionScore(s, 'chorus1', 'Backing vocals 1')!, 'en_target', 1, 'backing');
     writeFileSync(join(takesDir, `${fp}.ogg`), 'ogg');
     writeFileSync(join(takesDir, `${fp}.json`), JSON.stringify({ lufs: -23, durationSeconds: 9.6, sha256: fp, voice: 'en_target' }));

@@ -27,6 +27,7 @@ export function TrackCanvas({
   rowH,
   automation,
   unsungSections,
+  greyNote,
 }: {
   track: SeqTrack;
   model: SequencerModel;
@@ -45,8 +46,10 @@ export function TrackCanvas({
   rowH: number;
   /** The engine's automation for this track: filter sweeps and volume fades. */
   automation: { readonly lowPass?: SampledAutomation; readonly volume?: SampledAutomation } | undefined;
-  /** Sung vocals on: sections of this (lead vocal) track not sung for the song as it is, drawn grey. */
+  /** Vocal tracks: sections drawn grey (not heard: singing off, or not sung yet). */
   unsungSections?: ReadonlySet<number>;
+  /** Shown after a grey section's name (e.g. "not sung"); none when undefined. */
+  greyNote?: string | undefined;
 }) {
   const ROW_H = rowH;
   const ref = useRef<HTMLCanvasElement>(null);
@@ -117,7 +120,7 @@ export function TrackCanvas({
         g.beginPath();
         g.rect(x + 4, top, w - 8, CLIP_HEADER_H);
         g.clip();
-        g.fillText(`${model.sections[clip.section]!.name}${unsung ? ' · not sung' : ''}`, x + 5, top + CLIP_HEADER_H / 2 + 0.5);
+        g.fillText(`${model.sections[clip.section]!.name}${unsung && greyNote ? ` · ${greyNote}` : ''}`, x + 5, top + CLIP_HEADER_H / 2 + 0.5);
         g.restore();
       }
     }
@@ -211,7 +214,7 @@ export function TrackCanvas({
     if (automation?.volume) {
       curve(automation.volume, (d) => innerTop + (Math.min(48, Math.max(0, -d)) / 48) * innerH, (d) => Math.abs(d) > 0.1, true, 'VOL');
     }
-  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation, unsungSections]);
+  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation, unsungSections, greyNote]);
 
   return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }

@@ -98,3 +98,20 @@ describe('singOrder', () => {
     expect(singOrder(['verse1', 'chorus1'], starts, 0)).toEqual(['verse1', 'chorus1']);
   });
 });
+
+import { greySections } from '../src/audio/singVocals';
+
+describe('greySections', () => {
+  const sections = [{ name: 'intro' }, { name: 'verse1' }, { name: 'chorus1' }];
+  const st = [{ segment: 'intro', state: 'none' as const }, { segment: 'verse1', state: 'sung' as const }, { segment: 'chorus1', state: 'unsung' as const }];
+  it('singing on: only the unsung sections are grey', () => {
+    expect([...greySections(sections, { enabled: true, voice: 'v', takeNumbers: {} }, st)]).toEqual([2]);
+  });
+  it('singing off or never set up: every section is grey', () => {
+    expect([...greySections(sections, { enabled: false, voice: 'v', takeNumbers: {} }, st)]).toEqual([0, 1, 2]);
+    expect([...greySections(sections, undefined, undefined)]).toEqual([0, 1, 2]);
+  });
+  it('singing on but the status not known yet: grey until known', () => {
+    expect([...greySections(sections, { enabled: true, voice: 'v', takeNumbers: {} }, undefined)]).toEqual([0, 1, 2]);
+  });
+});

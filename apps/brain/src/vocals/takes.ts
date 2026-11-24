@@ -226,10 +226,11 @@ export function songStates(song: Song, takesDir: string): Record<string, Section
 }
 
 /** The song as the engine gets it: its vocal takes (soulx-vocal artifacts) are the stored takes that match its
- *  sections now, on every sung vocal track; any take recorded on the song itself is ignored. */
+ *  sections now, on every vocal track whose singing is on; any take recorded on the song itself is ignored. */
 export function withStoredTakes(song: Song, takesDir: string): Song {
   const takes: AIArtifact[] = [];
-  for (const { track } of vocalTracks(song)) {
+  // A track whose singing is off is silent (its takes are kept, for when it is switched on again).
+  for (const { track } of vocalTracks(song).filter((t) => t.setting.enabled)) {
     for (const { segment, fp } of sectionFingerprints(song, track)) {
       if (!fp || !existsSync(join(takesDir, `${fp}.ogg`))) continue;
       const info = JSON.parse(readFileSync(join(takesDir, `${fp}.json`), 'utf8')) as { lufs: number; durationSeconds: number; sha256: string; voice: string };
