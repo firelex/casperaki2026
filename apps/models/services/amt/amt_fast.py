@@ -163,6 +163,13 @@ def generate_batch(model, rows: list[tuple]) -> list[list[int]]:
             new_mask[j, : len(f)] = 1
             pos[j] = len(rs[i].fed) + torch.arange(k, device=dev)
         full_mask = new_mask if mask is None else torch.cat([mask, new_mask], 1)
+        # The rows share one cache, padded to the longest feed at every step, so it can outgrow the model's positions
+        # even when every row is within 1017 tokens; past that the model fails with a tensor size mismatch.
+        if full_mask.shape[1] > model.config.n_positions:
+            raise RuntimeError(
+                f"the melody is too long for the model's context window (the batch needs {full_mask.shape[1]} positions,"
+                f" the model has {model.config.n_positions}); ask for fewer samples or a shorter melody"
+            )
         with torch.no_grad():
             out = model(ids, past_key_values=past, attention_mask=full_mask, position_ids=pos, use_cache=True)
         past, mask = out.past_key_values, full_mask
