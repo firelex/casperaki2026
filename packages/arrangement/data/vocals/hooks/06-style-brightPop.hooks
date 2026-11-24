@@ -1,0 +1,235 @@
+# Bright radio pop (style brightPop): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+
+hook: Sugar Wire Morning
+type: Verse
+tempo: 112-128
+feel: bouncy
+style: brightPop
+chords: C | G | Am | F | C | G | F | G
+melody: r:0.5 e4:0.5 e4:0.5 e4:0.5 r:0.5 d4:0.5 c4:1 | d4:1.5 b3:0.5 g3:2 | r:0.5 e4:0.5 e4:0.5 e4:0.5 r:0.5 g4:0.5 e4:1 | f4:0.5 e4:0.5 c4:1 r:2 |
+        r:0.5 g4:0.5 g4:0.5 g4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:1 b3:0.5 d4:2.5 | r:0.5 c4:0.5 f4:0.5 e4:0.5 f4:0.5 g4:1.5 | d4:3 r:1 |
+
+hook: Postcard Crush
+type: Verse
+tempo: 104-120
+feel: flirty
+style: brightPop
+chords: Am | F | C | G | Am | F | C | G
+melody: a3:0.5 c4:0.5 r:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 | c4:0.5 a3:1.5 r:2 | r:1 g4:0.5 g4:0.5 e4:0.5 g4:1.5 | d4:1 e4:0.5 d4:1.5 r:1 |
+        a3:0.5 c4:0.5 r:0.5 c4:0.5 e4:0.5 g4:0.5 e4:1 | f4:1.5 e4:0.5 c4:2 | r:0.5 e4:0.5 g4:1 e4:1 d4:1 | r:0.5 b3:0.5 d4:3 |
+
+hook: Glitter Commute
+type: Verse
+tempo: 116-130
+feel: sassy
+style: brightPop
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | G
+melody: r:2 g3:0.5 c4:0.5 d4:0.5 e4:0.5 | e4:0.5 e4:0.5 r:0.5 e4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:1 r:1 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 e4:1 g4:1 | f4:1.5 e4:0.5 c4:1 r:1 | r:0.5 g4:0.5 g4:0.5 g4:0.5 g4:1 e4:0.5 d4:0.5 |
+        d4:1 b3:1 d4:1.5 r:0.5 | r:0.5 c4:0.5 f4:0.5 f4:0.5 f4:0.5 g4:1.5 | g4:1 d4:3 |
+
+hook: Velcro Hearts
+type: Verse
+tempo: 100-116
+feel: playful
+style: brightPop
+chords: Cmaj7 | Fmaj7 | Cmaj7 | Fmaj7 | Am | G | Fmaj7 | G
+melody: r:0.5 g4:0.5 g4:0.5 e4:0.5 r:0.5 g4:0.5 e4:0.5 d4:0.5 | e4:2 r:1 c4:0.5 d4:0.5 | r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:1 e4:0.5 d4:0.5 | f4:1.5 e4:0.5 c4:2 |
+        r:0.5 c4:0.5 e4:0.5 e4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:2 | r:0.5 a3:0.5 c4:0.5 f4:0.5 e4:1.5 c4:0.5 | d4:3 r:1 |
+
+hook: Window Down Weather
+type: Verse
+tempo: 114-130
+feel: breezy
+style: brightPop
+chords: C | Em | F | G | C | Em | Dm | G
+melody: c4:0.5 c4:0.5 d4:0.5 e4:1 c4:0.5 g3:1 | b3:1.5 g3:0.5 r:2 | c4:0.5 c4:0.5 d4:0.5 f4:1 e4:0.5 c4:1 | d4:3 r:1 |
+        e4:0.5 e4:0.5 f4:0.5 g4:1 e4:0.5 c4:1 | g4:1.5 e4:0.5 b3:1 r:1 | r:0.5 a3:0.5 d4:0.5 f4:0.5 f4:1 e4:0.5 d4:0.5 | d4:1 b3:3 |
+
+hook: Mirror Ball Diary
+type: Verse
+tempo: 104-118
+feel: moody
+style: brightPop
+chords: Am | Fmaj7 | C | G | Am | Fmaj7 | C | Gsus4 G
+melody: r:0.25 a3:0.25 c4:0.5 e4:0.75 d4:0.25 c4:1 r:1 | r:0.25 a3:0.25 c4:0.5 e4:0.75 f4:0.25 e4:2 |
+        r:0.25 g3:0.25 c4:0.5 e4:0.75 d4:0.25 e4:0.5 g4:1.5 | g4:1 d4:2 r:1 |
+        r:0.25 a3:0.25 c4:0.5 e4:0.75 g4:0.25 e4:1 c4:1 | f4:0.75 e4:0.25 c4:1 a3:2 | r:0.5 e4:0.5 g4:0.5 g4:0.5 e4:1 d4:1 | c4:2 b3:2 |
+
+hook: Bubblegum Telegraph
+type: Verse
+tempo: 116-130
+feel: bouncy
+style: brightPop
+leadin: yes
+chords: G | C | Am | F | G | C | Am | F | G
+melody: r:3 g3:0.5 g3:0.5 | c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 r:1 | e4:0.5 d4:0.5 c4:0.5 a3:1.5 r:1 |
+        r:0.5 a3:0.5 a3:0.5 a3:0.5 c4:0.5 a3:0.5 f4:1 | d4:1.5 b3:0.5 r:2 | e4:0.5 e4:0.5 e4:0.5 f4:0.5 g4:1 r:1 |
+        e4:0.5 g4:0.5 e4:0.5 c4:1.5 r:1 | r:0.5 c4:0.5 c4:0.5 c4:0.5 f4:1 e4:0.5 d4:0.5 | d4:0.5 b3:0.5 d4:3 |
+
+hook: Sundial Gossip
+type: Verse
+tempo: 100-114
+feel: cool
+style: brightPop
+chords: Fmaj7 | C | Fmaj7 | G | Am7 | Em | Fmaj7 | G
+melody: r:1 c4:0.5 c4:0.5 c4:0.5 a3:0.5 c4:1- | c4:0.5 d4:0.5 e4:1 r:2 | r:1 e4:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1- | e4:0.5 d4:1.5 r:2 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 g4:1.5 e4:0.5 | g4:1 e4:1 b3:2 | r:0.5 c4:0.5 f4:0.5 e4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1 b3:0.5 d4:2.5 |
+
+hook: Countdown Confetti
+type: Pre-chorus
+tempo: 110-126
+feel: building
+style: brightPop
+leadin: yes
+chords: G | F | G | Em | Am | F | G | Dm7 | G
+melody: r:2.5 c4:0.5 d4:0.5 e4:0.5 | f4:0.5 f4:0.5 f4:0.5 e4:0.5 f4:1 a4:1 | g4:1.5 d4:0.5 r:2 |
+        g4:0.5 g4:0.5 g4:0.5 a4:0.5 b4:1 g4:1 | a4:1.5 e4:0.5 r:2 | a4:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:1 |
+        b4:0.5 b4:0.5 b4:0.5 c5:0.5 d5:2 | r:0.5 c5:0.5 d5:0.5 c5:0.5 a4:1 f4:1 | g4:0.5 b4:0.5 d5:3 |
+
+hook: Pressure Valve
+type: Pre-chorus
+tempo: 108-124
+feel: tense
+style: brightPop
+chords: Am | G | F | G | Am | G | F | Gsus4 G
+melody: r:0.5 e4:0.5 e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 | d4:0.5 d4:0.5 r:0.5 d4:0.5 g4:2 | r:0.5 f4:0.5 f4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:1 | d4:0.5 d4:0.5 r:0.5 g4:0.5 b4:2 |
+        r:0.5 a4:0.5 a4:0.5 a4:0.5 a4:0.5 g4:0.5 e4:1 | g4:0.5 g4:0.5 r:0.5 b4:0.5 d5:2 | r:0.5 c5:0.5 c5:0.5 c5:0.5 c5:0.5 a4:0.5 f4:1 | c5:2 b4:2 |
+
+hook: Satin Fuse
+type: Pre-chorus
+tempo: 112-128
+feel: lifting
+style: brightPop
+chords: Dm | Em | F | G | Dm | Em | F | G7
+melody: f4:1 a4:0.5 f4:0.5 d4:1 r:1 | g4:1 b4:0.5 g4:0.5 e4:1 r:1 | a4:1 c5:0.5 a4:0.5 f4:1 r:0.5 f4:0.5 | g4:1.5 a4:0.5 b4:2 |
+        r:0.5 a4:0.5 a4:0.5 a4:0.5 a4:0.5 f4:1.5 | r:0.5 b4:0.5 b4:0.5 b4:0.5 b4:0.5 g4:1.5 | r:0.5 c5:0.5 c5:0.5 c5:0.5 c5:0.5 d5:0.5 e5:1 | d5:4 |
+
+hook: Heartbeat Ladder
+type: Pre-chorus
+tempo: 104-120
+feel: pulsing
+style: brightPop
+chords: F G | Em Am | F G | Am | F G | Em Am | Dm | Gsus4 G
+melody: c5:0.5 c5:0.5 a4:1 b4:0.5 b4:0.5 g4:1 | g4:1 e4:1 a4:1.5 r:0.5 | c5:0.5 c5:0.5 a4:1 d5:0.5 d5:0.5 b4:1 | c5:3 r:1 |
+        a4:0.5 c5:0.5 c5:1 b4:0.5 d5:0.5 d5:1 | e5:1.5 b4:0.5 c5:1.5 r:0.5 | r:0.5 d5:0.5 d5:0.5 c5:0.5 a4:1 f4:1 | d5:1 c5:1 b4:2 |
+
+hook: Thin Ice Sunrise
+type: Pre-chorus
+tempo: 100-114
+feel: brooding
+style: brightPop
+chords: Am | F | Dm | E | Am | F | Dm | E7
+melody: e4:1 e4:0.5 c4:0.5 a3:1 r:1 | r:0.5 c4:0.5 c4:0.5 f4:0.5 a4:1.5 g4:0.5 | f4:1.5 e4:0.5 d4:1 r:1 | e4:1 g#4:1 b4:2 |
+        c5:1 c5:0.5 b4:0.5 a4:1 r:1 | r:0.5 a4:0.5 a4:0.5 c5:0.5 c5:1.5 a4:0.5 | d5:1.5 c5:0.5 a4:1 f4:1 | g#4:0.5 b4:0.5 e5:3 |
+
+hook: Sugar Rush Signal
+type: Pre-chorus
+tempo: 114-130
+feel: bright
+style: brightPop
+chords: Fmaj7 | Fmaj7 | Am | Am | Fmaj7 | G | Am | Gsus4 G
+melody: r:0.5 a4:0.5 c5:0.5 a4:0.5 e5:1.5 c5:0.5 | c5:2 a4:1 g4:1 | r:0.5 a4:0.5 c5:0.5 a4:0.5 e5:1.5 d5:0.5 | c5:1.5 b4:0.5 a4:2 |
+        r:0.5 c5:0.5 c5:0.5 c5:0.5 e5:1 c5:1 | d5:1 b4:0.5 d5:0.5 d5:1 b4:1 | r:0.5 e5:0.5 e5:0.5 d5:0.5 c5:1 e5:1 | d5:2 b4:1 d5:1 |
+
+hook: Lemonade Satellite
+type: Chorus
+tempo: 112-128
+feel: euphoric
+style: brightPop
+chords: C | G | Am | F | C | G | F | C
+melody: r:0.5 g4:0.5 c5:0.5 c5:0.5 r:0.5 c5:0.5 b4:0.5 c5:0.5- | c5:0.5 b4:1.5 r:2 | r:0.5 a4:0.5 c5:0.5 c5:0.5 r:0.5 c5:0.5 d5:0.5 c5:0.5- | c5:0.5 a4:1.5 r:1 g4:1 |
+        c5:0.5 e5:0.5 e5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | d5:1.5 b4:0.5 d5:2 | r:0.5 c5:0.5 e5:1 c5:1 a4:0.5 g4:0.5 | g4:0.5 a4:0.5 g4:3 |
+
+hook: Velvet Cannonball
+type: Chorus
+tempo: 104-120
+feel: anthem
+style: brightPop
+leadin: yes
+chords: G | Am | F | C | G | Am | Fmaj7 | C | G
+melody: r:2 e4:0.5 g4:0.5 a4:0.5 b4:0.5 | c5:1.5 a4:0.5 a4:1 e4:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:1 a4:1 | g4:1.5 e4:0.5 g4:0.5 a4:0.5 g4:1 |
+        d5:1 b4:2 r:1 | e5:1.5 c5:0.5 c5:1 a4:1 | r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 c5:1 | e5:0.5 d5:1 c5:1.5 d5:0.5 e5:0.5 | d5:4 |
+
+hook: Cartwheel Summer
+type: Chorus
+tempo: 116-130
+feel: bouncy
+style: brightPop
+chords: Cmaj7 | Em | Fmaj7 | G | Cmaj7 | Em | Fmaj7 | G C
+melody: b4:0.5 b4:0.5 r:0.5 b4:0.5 r:0.5 g4:0.5 e4:1 | g4:1.5 e4:0.5 b4:2 | a4:0.5 a4:0.5 r:0.5 a4:0.5 r:0.5 c5:0.5 a4:1 | b4:1.5 g4:0.5 d4:2 |
+        e5:0.5 e5:0.5 r:0.5 e5:0.5 r:0.5 d5:0.5 c5:1 | b4:1.5 g4:0.5 e5:2 | c5:0.5 c5:0.5 r:0.5 c5:0.5 e5:1 d5:1 | d5:1 b4:1 c5:2 |
+
+hook: Heartline Radio
+type: Chorus
+tempo: 100-116
+feel: anthem
+style: brightPop
+chords: Am | F | C | G | Am | F | C | G
+melody: r:1 c5:0.5 c5:0.5 c5:1 b4:0.5 a4:0.5 | a4:1.5 g4:0.5 f4:1 r:1 | r:1 e4:0.5 g4:0.5 c5:1 d5:0.5 c5:0.5 | b4:3 r:1 |
+        r:0.5 e5:0.5 e5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | c5:1 a4:1 c5:1 d5:1 | e5:1.5 d5:0.5 c5:1 g4:1 | b4:0.5 a4:0.5 b4:3 |
+
+hook: Carousel Voltage
+type: Chorus
+tempo: 114-130
+feel: driving
+style: brightPop
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | C
+melody: r:3 g4:0.5 a4:0.5 | c5:0.5 c5:0.5 r:0.5 g4:0.5 c5:1 d5:1 | b4:0.5 g4:1.5 r:1 g4:0.5 a4:0.5 | c5:0.5 c5:0.5 r:0.5 a4:0.5 c5:1 d5:0.5 c5:0.5 |
+        a4:3 r:0.5 g4:0.5 | e5:0.5 e5:0.5 r:0.5 d5:0.5 e5:1 c5:1 | d5:0.5 b4:1.5 r:1 b4:0.5 c5:0.5 | c5:1 a4:0.5 c5:1 e5:1.5- | e5:1 d5:0.5 c5:2.5 |
+
+hook: Twilight Arcade
+type: Chorus
+tempo: 106-122
+feel: wistful
+style: brightPop
+chords: Am | Fmaj7 | C | G | Am | Fmaj7 | Dm G | Cmaj9
+melody: r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:1 | a4:1.5 g4:0.5 e4:2 | r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:1 a4:0.5 g4:0.5 | d5:1.5 b4:0.5 g4:2 |
+        r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 e5:1 | e5:1.5 d5:0.5 c5:2 | d5:0.5 c5:0.5 a4:1 b4:1 d5:1 | d5:4 |
+
+hook: Sparkler Sidewalk
+type: Chorus
+tempo: 110-126
+feel: celebratory
+style: brightPop
+chords: F | G | Em | Am | F | G | C | C
+melody: r:0.5 c5:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1.5 | b4:0.5 g4:1.5 r:2 | r:0.5 b4:0.5 b4:0.5 b4:0.5 g4:0.5 b4:1.5 | c5:0.5 a4:1.5 r:1 e4:0.5 g4:0.5 |
+        a4:0.5 c5:0.5 r:0.5 c5:0.5 c5:1 d5:0.5 e5:0.5- | e5:0.5 d5:1.5 r:0.5 b4:0.5 d5:1 | e5:1.5 d5:0.5 c5:1 d5:0.5 e5:0.5 | e5:0.5 d5:0.5 c5:3 |
+
+hook: Afterglow Detour
+type: Bridge
+tempo: 108-124
+feel: dreamy
+style: brightPop
+chords: F | G | Em | Am | Dm | Em | F | G
+melody: a4:1 a4:0.5 c5:2.5 | b4:0.5 a4:0.5 g4:1 d4:2 | g4:1 g4:0.5 b4:2.5 | c5:0.5 b4:0.5 a4:1 e4:2 |
+        f4:1 a4:0.5 d5:2.5 | e5:0.5 d5:0.5 b4:1 g4:2 | a4:1 c5:0.5 d5:0.5 c5:1 a4:1 | b4:1 d5:3 |
+
+hook: Hush Frequency
+type: Bridge
+tempo: 100-116
+feel: tender
+style: brightPop
+chords: Ab | Bb | C | Am | Ab | Bb | Dm | G
+melody: r:0.5 c5:0.5 c5:0.5 eb5:0.5 c5:2 | d5:1.5 bb4:0.5 f4:2 | e4:0.5 g4:0.5 c5:1 g4:2 | a4:3 r:1 |
+        c5:0.5 eb5:0.5 eb5:1 c5:0.5 ab4:1.5 | bb4:0.5 d5:0.5 d5:1 bb4:0.5 f4:1.5 | r:0.5 a4:0.5 a4:0.5 f4:0.5 d4:1 f4:1 | g4:1 b4:1 d5:2 |
+
+hook: Underwater Fireworks
+type: Bridge
+tempo: 110-128
+feel: spacious
+style: brightPop
+chords: Am | Em | Fmaj7 | C | Am | Em | F | Gsus4 G
+melody: e4:2 a4:1.5 b4:0.5 | b4:3 r:1 | c5:2 a4:1.5 g4:0.5 | g4:2.5 r:1 e4:0.5 |
+        a4:1 c5:1 e5:2 | e5:1 d5:1 b4:2 | c5:1 a4:1 c5:1 d5:1 | d5:2 b4:2 |
+
+hook: Kaleidoscope Pause
+type: Bridge
+tempo: 116-130
+feel: playful
+style: brightPop
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 | Dm7 | G7
+melody: e5:1.5 c5:0.5 a4:1 c5:1 | d5:1.5 b4:0.5 g4:1 b4:1 | c5:1.5 a4:0.5 f4:1 a4:1 | b4:2 g4:1 r:1 |
+        r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 c5:1 | r:0.5 g4:0.5 b4:0.5 d5:0.5 d5:1 b4:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:1 a4:0.5 b4:0.5 | d5:1.5 b4:0.5 f4:2 |

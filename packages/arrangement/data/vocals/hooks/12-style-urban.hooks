@@ -1,0 +1,296 @@
+# Urban (R&B / urban pop): 8 verses, 6 pre-choruses, 7 choruses and 4 bridges written for the urban style.
+# Half-time feel at 70-100 bpm, 16th-note pickups, minor 7th and maj7 chords, ii-V turns, endings on the 9th or 3rd.
+
+# ---- Verses ----
+
+hook: Smoke Ring Hours
+type: Verse
+tempo: 72-88
+feel: smoky
+style: urban
+chords: Am7 | Dm7 | Fmaj7 | Em7 | Am7 | Dm7 | Fmaj7 | Gsus4 G
+melody: r:0.75 e4:0.25 e4:0.5 c4:0.25 d4:0.25 e4:1 c4:1 | r:0.5 c4:0.25 d4:0.25 f4:0.5 e4:0.5 d4:1.5 r:0.5 |
+        r:0.75 c4:0.25 e4:0.5 g4:0.5 e4:1 c4:1 | d4:0.5 e4:0.25 d4:0.25 b3:1 r:2 |
+        r:0.75 e4:0.25 e4:0.25 e4:0.25 g4:0.5 e4:0.5 d4:0.5 c4:1 | d4:0.75 c4:0.25 a3:1 r:1 f4:0.5 e4:0.5 |
+        e4:0.75 c4:0.25 c4:1 r:0.5 c4:0.25 d4:0.25 e4:0.5 g4:0.5 | d4:1.5 c4:0.5 b3:2 |
+
+hook: Late Checkout
+type: Verse
+tempo: 76-92
+feel: laidback
+style: urban
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 | Dm7 | G9
+melody: r:0.5 a3:0.25 c4:0.25 e4:0.5 e4:0.25 f4:0.25 e4:1 c4:1 | d4:0.5 b3:0.5 g3:1 r:2 |
+        r:0.5 a3:0.25 c4:0.25 f4:0.5 f4:0.25 g4:0.25 f4:1 d4:1 | e4:0.5 c4:0.5 b3:1 r:1.5 g3:0.5 |
+        c4:0.5 e4:0.25 g4:0.25 g4:0.5 f4:0.5 e4:0.75 c4:0.25 c4:1 | d4:0.75 e4:0.25 d4:0.5 b3:0.5 g3:2 |
+        r:0.25 f4:0.25 f4:0.25 e4:0.25 d4:0.5 c4:0.5 a3:1 c4:1 | d4:1.5 b3:0.5 a3:2 |
+
+hook: Paper Thin Walls
+type: Verse
+tempo: 70-86
+feel: hushed
+style: urban
+leadin: yes
+chords: G | Am7 | Em7 | Fmaj7 | Cmaj7 | Am7 | Em7 | Dm7 | Gsus4 G
+melody: r:2.5 e4:0.25 d4:0.25 c4:0.5 b3:0.5 |
+        a3:1 r:0.5 c4:0.25 e4:0.25 g4:0.5 e4:0.5 c4:1 | d4:0.75 b3:0.25 b3:1 r:2 |
+        r:0.5 c4:0.25 c4:0.25 a3:0.5 c4:0.5 e4:1 f4:1 | e4:1.5 d4:0.5 b3:1 r:1 |
+        r:0.75 e4:0.25 e4:0.25 g4:0.25 e4:0.5 c4:0.5 a3:0.5 c4:1 | b3:0.5 d4:0.5 e4:1 r:2 |
+        r:0.5 f4:0.25 e4:0.25 d4:0.5 c4:0.5 a3:1 c4:1 | c4:1.5 b3:0.5 d4:2 |
+
+hook: Window Fog
+type: Verse
+tempo: 80-96
+feel: syncopated
+style: urban
+chords: Am7 | Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Dm7 | E7
+melody: a3:0.25 c4:0.25 e4:0.5 r:0.25 e4:0.25 d4:0.25 c4:0.25 e4:1 r:1 | r:0.5 g4:0.25 e4:0.25 d4:0.5 c4:0.5 a3:2 |
+        a3:0.25 d4:0.25 f4:0.5 r:0.25 f4:0.25 e4:0.25 d4:0.25 f4:1 r:1 | r:0.5 g4:0.25 f4:0.25 d4:0.5 b3:0.5 g3:2 |
+        e4:0.75 d4:0.25 e4:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | c4:1.5 a3:0.5 r:1 e4:0.25 f4:0.25 e4:0.5 |
+        d4:0.75 c4:0.25 a3:0.5 c4:0.5 f4:1 e4:0.5 d4:0.5 | d4:1 b3:1 g#3:2 |
+
+hook: Corner Store Halo
+type: Verse
+tempo: 84-100
+feel: bounce
+style: urban
+chords: Dm7 G | Cmaj7 Am7 | Dm7 G | Cmaj7 | Dm7 G | Em7 Am7 | Dm7 Em7 | Fmaj7 G
+melody: f4:0.5 f4:0.25 e4:0.25 d4:0.5 c4:0.25 d4:0.25 b3:1 g3:1 | c4:0.75 e4:0.25 e4:1 r:0.5 c4:0.25 a3:0.25 c4:1 |
+        f4:0.5 g4:0.25 f4:0.25 d4:0.5 c4:0.25 d4:0.25 d4:1 r:1 | e4:0.5 d4:0.5 b3:1.5 r:1.5 |
+        r:0.5 a3:0.25 c4:0.25 f4:0.5 e4:0.5 d4:1 b3:1 | e4:0.75 d4:0.25 b3:0.5 g3:0.5 c4:1 a3:1 |
+        r:0.5 f4:0.25 e4:0.25 d4:0.5 c4:0.5 b3:1 d4:1 | c4:1 a3:1 b3:2 |
+
+hook: Rooftop Ledger
+type: Verse
+tempo: 70-84
+feel: confessional
+style: urban
+chords: Cmaj7 | Am7 | Fmaj7 | Gsus4 G | Cmaj7 | Am7 | Dm7 | Gsus4
+melody: r:1 g4:0.25 e4:0.25 d4:0.25 c4:0.25 e4:1 b3:1 | c4:0.75 a3:0.25 a3:1 r:2 |
+        r:1 a3:0.25 c4:0.25 e4:0.25 f4:0.25 e4:1 g4:0.5 f4:0.5 | d4:1.5 c4:0.5 b3:1 d4:1 |
+        r:0.75 e4:0.25 g4:0.5 e4:0.25 d4:0.25 c4:0.5 e4:0.5 d4:0.5 c4:0.5 | c4:0.5 a3:0.5 g3:1 r:2 |
+        r:0.5 d4:0.25 f4:0.25 f4:0.5 e4:0.5 d4:1 c4:1 | d4:1 c4:3 |
+
+hook: Low Battery
+type: Verse
+tempo: 88-100
+feel: restless
+style: urban
+chords: Am7 | Fmaj7 | Dm7 | E7 | Am7 | Fmaj7 | Dm7 | Esus4 E
+melody: e4:0.25 e4:0.25 e4:0.25 c4:0.25 e4:0.5 g4:0.5 e4:0.25 d4:0.25 c4:0.5 a3:1 |
+        r:0.5 c4:0.25 c4:0.25 c4:0.25 a3:0.25 c4:0.5 e4:1 c4:1 |
+        f4:0.25 f4:0.25 f4:0.25 d4:0.25 f4:0.5 g4:0.5 f4:0.25 e4:0.25 d4:0.5 a3:1 | b3:1 g#3:1 r:2 |
+        r:0.25 e4:0.25 e4:0.25 g4:0.25 e4:0.5 d4:0.5 c4:0.25 d4:0.25 e4:0.5 a3:1 | c4:0.5 a3:0.5 c4:0.5 f4:0.5 e4:1.5 r:0.5 |
+        d4:0.25 f4:0.25 d4:0.25 c4:0.25 a3:0.5 c4:0.5 d4:1 f4:1 | e4:1 a3:1 g#3:2 |
+
+hook: Second Thoughts Avenue
+type: Verse
+tempo: 74-90
+feel: smooth
+style: urban
+chords: Fmaj7 | G | Em7 | Am7 | Dm7 | G7 | Cmaj7 | Am9
+melody: r:0.5 c4:0.25 d4:0.25 e4:0.5 f4:0.25 e4:0.25 c4:1.5 a3:0.5 | b3:0.75 d4:0.25 d4:1 r:2 |
+        r:0.5 b3:0.25 d4:0.25 g4:0.5 f4:0.25 e4:0.25 e4:1 d4:1 | c4:0.5 a3:1.5 r:2 |
+        r:0.25 a3:0.25 c4:0.25 d4:0.25 f4:0.5 e4:0.5 d4:0.75 c4:0.25 a3:1 | b3:1 d4:0.5 g4:0.5 f4:1 d4:1 |
+        e4:1.5 g4:0.5 e4:0.5 d4:0.5 c4:1 | c4:1 b3:3 |
+
+# ---- Pre-choruses ----
+
+hook: Pressure Rising
+type: Pre-chorus
+tempo: 76-92
+feel: climbing
+style: urban
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 Am7 | Dm7 | Gsus4 G
+melody: r:0.5 a4:0.25 a4:0.25 a4:0.5 g4:0.5 f4:0.5 e4:0.5 c4:1 | r:0.5 g4:0.25 g4:0.25 g4:0.5 e4:0.5 b4:1 r:1 |
+        r:0.5 a4:0.25 c5:0.25 c5:0.5 a4:0.5 f4:0.5 a4:0.5 c5:1 | b4:1.5 g4:0.5 e4:1 r:1 |
+        r:0.25 c5:0.25 c5:0.25 c5:0.25 c5:0.5 a4:0.5 e5:1 c5:1 | d5:0.5 b4:0.5 g4:1 c5:1 a4:1 |
+        r:0.5 d5:0.25 c5:0.25 a4:0.5 c5:0.5 d5:1 e5:1 | c5:2 b4:2 |
+
+hook: Hold That Thought
+type: Pre-chorus
+tempo: 80-96
+feel: tension
+style: urban
+chords: Dm7 | Em7 | Fmaj7 | G | Dm7 | Em7 | Fmaj7 | G7
+melody: r:1 f4:0.25 a4:0.25 c5:0.5 a4:1 f4:0.5 a4:0.5 | g4:1.5 r:0.5 e4:0.25 g4:0.25 b4:0.5 d5:1 |
+        c5:1.5 a4:0.5 f4:1 a4:0.5 c5:0.5 | b4:2 r:1 b4:0.25 c5:0.25 d5:0.5 |
+        d5:0.5 c5:0.25 a4:0.25 f4:1 r:0.5 a4:0.5 c5:0.5 d5:0.5 | e5:0.75 d5:0.25 b4:1 g4:0.5 b4:0.5 d5:1 |
+        c5:0.5 e5:0.5 e5:0.5 c5:0.5 a4:0.5 c5:0.5 e5:1 | b4:0.5 d5:3.5 |
+
+hook: Penthouse Climb
+type: Pre-chorus
+tempo: 78-94
+feel: lifting
+style: urban
+leadin: yes
+chords: G | Am7 | Fmaj7 | Am7 | Fmaj7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:3 e4:0.25 g4:0.25 a4:0.5 |
+        a4:0.75 g4:0.25 e4:1 r:1 c5:0.5 a4:0.5 | a4:1 g4:0.5 f4:0.5 e4:1.5 r:0.5 |
+        r:0.5 e4:0.25 g4:0.25 a4:0.5 c5:0.5 e5:1 c5:1 | c5:1 a4:0.5 g4:0.5 a4:2 |
+        r:0.5 d5:0.25 d5:0.25 d5:0.5 c5:0.5 a4:1 c5:1 | d5:0.5 b4:0.5 g4:0.5 b4:0.5 e5:1 d5:1 |
+        c5:0.5 c5:0.25 c5:0.25 e5:0.5 c5:0.5 a4:1 c5:1 | c5:1 d5:3 |
+
+hook: Nervous Neon
+type: Pre-chorus
+tempo: 84-100
+feel: urgent
+style: urban
+chords: Fmaj7 | G | Em7 | Am7 | Fmaj7 | G | Dm7 | E7
+melody: c5:0.25 c5:0.25 c5:0.25 a4:0.25 c5:0.5 a4:0.5 f4:1 r:1 | d5:0.25 d5:0.25 d5:0.25 b4:0.25 d5:0.5 b4:0.5 g4:1 r:1 |
+        e5:0.25 e5:0.25 e5:0.25 d5:0.25 e5:0.5 d5:0.5 b4:0.5 g4:0.5 e4:1 | r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 r:1 |
+        c5:0.5 a4:0.5 c5:0.5 e5:0.5 e5:0.5 c5:0.5 a4:1 | d5:0.5 b4:0.5 d5:0.5 b4:0.5 g4:1 r:1 |
+        f4:0.5 a4:0.5 c5:0.5 d5:0.5 c5:1 a4:1 | b4:1 g#4:3 |
+
+hook: Almost Midnight
+type: Pre-chorus
+tempo: 72-88
+feel: slowburn
+style: urban
+chords: Am7 | Dm7 | Gsus4 G | Cmaj7 | Am7 | Dm7 | Fmaj7 | Gsus4
+melody: r:0.75 c4:0.25 e4:0.5 g4:0.5 a4:1 g4:1 | f4:0.75 e4:0.25 d4:1 r:1 a4:0.5 c5:0.5 |
+        c5:1 b4:0.5 a4:0.5 b4:1.5 r:0.5 | r:0.75 e4:0.25 g4:0.5 b4:0.5 c5:1 b4:1 |
+        r:0.5 c5:0.25 e5:0.25 e5:0.5 d5:0.5 c5:1 a4:1 | d5:0.75 c5:0.25 a4:0.5 c5:0.5 d5:1 c5:1 |
+        e5:1 c5:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 | d5:1 c5:3 |
+
+hook: Undertow Signal
+type: Pre-chorus
+tempo: 86-100
+feel: pulse
+style: urban
+chords: Dm7 G | Em7 Am7 | Dm7 G | Cmaj7 | Fmaj7 | Em7 | Dm7 | G7
+melody: a4:0.5 f4:0.25 a4:0.25 c5:0.5 a4:0.5 b4:1 g4:0.5 d5:0.5 | b4:0.5 g4:0.25 b4:0.25 d5:0.5 b4:0.5 c5:1 a4:1 |
+        a4:0.5 f4:0.25 a4:0.25 d5:0.5 c5:0.5 b4:0.5 d5:0.5 g4:1 | e4:0.5 g4:0.5 b4:0.5 c5:0.5 e5:1.5 r:0.5 |
+        c5:0.25 c5:0.25 c5:0.5 a4:0.5 c5:0.5 e5:1 c5:1 | b4:0.25 b4:0.25 b4:0.5 g4:0.5 b4:0.5 d5:1 b4:1 |
+        a4:0.25 a4:0.25 a4:0.5 f4:0.5 a4:0.5 c5:1 d5:1 | b4:0.5 d5:3.5 |
+
+# ---- Choruses ----
+
+hook: Honey Pressure
+type: Chorus
+tempo: 72-88
+feel: sultry
+style: urban
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 Am7 | Dm7 G | Cmaj9
+melody: r:0.5 c5:0.25 a4:0.25 c5:0.5 e5:1.5 c5:0.5 a4:0.5 | b4:1.5 g4:0.5 e4:1 r:1 |
+        r:0.5 a4:0.25 f4:0.25 a4:0.5 d5:1.5 c5:0.5 a4:0.5 | g4:1.5 e4:0.5 g4:1 r:1 |
+        r:0.5 c5:0.25 a4:0.25 c5:0.5 e5:0.5 e5:0.5 d5:0.25 c5:0.25 e5:1 | d5:0.75 b4:0.25 g4:1 c5:0.5 e5:1.5 |
+        d5:0.5 c5:0.5 a4:0.5 c5:0.5 b4:1 d5:1 | e5:1 d5:3 |
+
+hook: Cashmere Weather
+type: Chorus
+tempo: 76-92
+feel: smooth
+style: urban
+chords: Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Em7 | Dm7 Gsus4 | Cmaj7
+melody: e4:0.5 a4:0.5 c5:0.75 b4:0.25 a4:1 e4:1 | r:0.25 f4:0.25 a4:0.25 c5:0.25 d5:1 c5:0.5 a4:0.5 f4:1 |
+        g4:0.5 b4:0.5 d5:1.5 c5:0.25 b4:0.25 g4:1 | e4:1.5 r:0.5 e5:0.25 d5:0.25 c5:0.5 b4:1 |
+        a4:0.5 c5:0.5 e5:1.5 d5:0.25 c5:0.25 c5:1 | b4:0.5 d5:0.5 e5:2 d5:0.5 b4:0.5 |
+        c5:0.5 a4:0.5 f4:0.5 a4:0.5 c5:1 d5:1 | c5:0.5 d5:0.5 e5:3 |
+
+hook: Blue Hour Promise
+type: Chorus
+tempo: 70-86
+feel: yearning
+style: urban
+leadin: yes
+chords: G | Cmaj7 | Am7 | Dm7 | G | Cmaj7 | Am7 | Fmaj7 G | C
+melody: r:2 g4:0.25 a4:0.25 c5:0.5 d5:1 |
+        e5:1.5 d5:0.25 c5:0.25 b4:1 g4:1 | a4:0.75 c5:0.25 c5:1 r:1 e4:0.5 g4:0.5 |
+        a4:1 c5:0.5 a4:0.5 f4:1.5 r:0.5 | r:0.5 g4:0.25 a4:0.25 b4:0.5 d5:2.5 |
+        e5:0.5 e5:0.25 d5:0.25 e5:1 b4:0.5 c5:0.5 d5:1 | e5:1.5 c5:0.5 a4:1 c5:1 |
+        c5:0.5 a4:0.5 c5:0.5 e5:0.5 d5:1 b4:1 | c5:0.5 b4:0.5 g4:0.5 e4:2.5 |
+
+hook: Velvet Rope Line
+type: Chorus
+tempo: 80-96
+feel: swagger
+style: urban
+chords: Am7 | Fmaj7 | Cmaj7 | G | Am7 | Fmaj7 | Dm7 | Am9
+melody: r:0.5 e5:0.25 e5:0.25 e5:0.5 c5:0.5 a4:0.5 c5:0.25 a4:0.25 g4:1 | a4:0.75 g4:0.25 a4:1 r:1 c5:0.5 a4:0.5 |
+        r:0.5 e5:0.25 e5:0.25 e5:0.5 d5:0.5 c5:0.5 d5:0.25 c5:0.25 b4:1 | d5:1.5 b4:0.5 g4:1 r:1 |
+        r:0.25 c5:0.25 e5:0.25 e5:0.25 e5:0.5 d5:0.5 e5:1 c5:0.5 a4:0.5 | c5:0.5 e5:0.5 e5:1 c5:0.5 d5:0.5 a4:1 |
+        d5:0.75 c5:0.25 a4:0.5 f4:0.5 a4:1 c5:1 | c5:1 b4:3 |
+
+hook: Silk Alarm
+type: Chorus
+tempo: 84-100
+feel: bounce
+style: urban
+chords: Dm7 G | Cmaj7 Am7 | Dm7 G | Cmaj7 | Dm7 G | Em7 Am7 | Dm7 G | C
+melody: f4:0.5 a4:0.25 c5:0.25 a4:0.5 f4:0.5 g4:0.5 b4:0.5 d5:1 | e5:0.75 d5:0.25 b4:1 c5:0.5 a4:0.5 e4:1 |
+        f4:0.5 a4:0.25 c5:0.25 a4:0.5 f4:0.5 b4:0.5 d5:0.5 g4:1 | e4:0.5 g4:0.5 b4:0.5 c5:0.5 e5:2 |
+        d5:0.5 c5:0.25 a4:0.25 c5:0.5 d5:0.5 d5:0.5 b4:0.5 g4:1 | e5:1 d5:0.5 b4:0.5 c5:0.5 e5:1.5 |
+        d5:0.5 c5:0.5 a4:0.5 f4:0.5 g4:1 d5:1 | c5:1.5 g4:0.5 e4:2 |
+
+hook: Ceiling Fan Glow
+type: Chorus
+tempo: 70-84
+feel: tender
+style: urban
+chords: Fmaj7 | Fmaj7 | Em7 | Am7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: c5:0.75 a4:0.25 c5:1 r:0.5 a4:0.25 c5:0.25 e5:1 | e5:0.5 c5:0.5 a4:2 r:1 |
+        b4:0.75 g4:0.25 b4:1 r:0.5 g4:0.25 b4:0.25 d5:1 | c5:0.5 a4:0.5 e4:2 r:1 |
+        r:0.5 f4:0.25 a4:0.25 c5:0.5 e5:0.5 d5:1 c5:1 | e5:1.5 d5:0.5 b4:1 g4:1 |
+        a4:0.5 c5:0.5 e5:1 c5:0.5 a4:0.5 c5:1 | d5:2 b4:2 |
+
+hook: Satin Getaway
+type: Chorus
+tempo: 88-100
+feel: groove
+style: urban
+leadin: yes
+chords: Em7 | Am7 | Am7 | Fmaj7 | G | Am7 | Am7 | Fmaj7 | Am7
+melody: r:2.5 e4:0.5 g4:0.5 b4:0.5 |
+        a4:0.25 a4:0.25 c5:0.5 a4:0.5 g4:0.5 e4:1 r:1 | r:0.5 e4:0.25 g4:0.25 a4:0.5 d5:0.5 c5:1 a4:1 |
+        c5:0.25 c5:0.25 e5:0.5 c5:0.5 a4:0.5 f4:1 r:1 | r:0.5 g4:0.25 a4:0.25 b4:0.5 d5:0.5 d5:1 b4:1 |
+        e5:0.25 e5:0.25 e5:0.5 d5:0.5 c5:0.5 e5:1 c5:1 | c5:0.5 d5:0.5 c5:0.5 a4:0.5 e5:2 |
+        c5:0.75 a4:0.25 c5:0.5 e5:0.5 c5:1 a4:1 | a4:0.5 b4:0.5 c5:3 |
+
+# ---- Bridges ----
+
+hook: Borrowed Daylight
+type: Bridge
+tempo: 74-90
+feel: shift
+style: urban
+chords: Fmaj7 | Fm | Em7 | Am7 | Dm7 | Fm | Gsus4 | G7
+melody: a4:0.5 c5:0.5 e5:1.5 c5:0.5 a4:1 | ab4:0.5 c5:0.5 c5:1 ab4:1 f4:1 |
+        g4:0.75 b4:0.25 b4:1 r:1 e4:0.5 g4:0.5 | a4:1 c5:0.5 e5:0.5 e5:1 r:1 |
+        d5:0.5 c5:0.25 a4:0.25 c5:0.5 d5:0.5 a4:1 f4:1 | ab4:0.5 c5:0.5 ab4:0.5 f4:0.5 c5:2 |
+        d5:1.5 c5:0.5 c5:2 | b4:2 d5:2 |
+
+hook: Glass House Echo
+type: Bridge
+tempo: 70-86
+feel: suspended
+style: urban
+chords: Am7 | Em7 | Fmaj7 | Cmaj7 | Dm7 | Am7 | Bb | Gsus4 G
+melody: r:1 c5:0.5 e5:0.5 e5:1 c5:0.5 a4:0.5 | b4:1.5 g4:0.5 e4:2 |
+        r:1 a4:0.5 c5:0.5 e5:1 c5:1 | b4:2 g4:2 |
+        r:0.5 a4:0.25 c5:0.25 d5:0.5 c5:0.5 a4:1 f4:1 | e4:0.5 g4:0.5 a4:1 c5:2 |
+        d5:1 bb4:1 f4:2 | g4:1 c5:1 b4:2 |
+
+hook: Tidewater Glow
+type: Bridge
+tempo: 76-92
+feel: floating
+style: urban
+chords: Dm9 | G9 | Cmaj9 | Am9 | Dm9 | G9 | Em7 | E7
+melody: e5:1.5 d5:0.5 a4:1 c5:1 | a4:1.5 g4:0.5 f4:1 r:1 |
+        r:0.5 g4:0.25 b4:0.25 d5:1 b4:0.5 g4:0.5 e4:1 | b4:2 r:1 c5:0.5 d5:0.5 |
+        e5:0.75 d5:0.25 c5:0.5 a4:0.5 f4:1 a4:1 | a4:0.75 b4:0.25 d5:1 b4:1 g4:1 |
+        g4:0.5 b4:0.5 d5:1.5 b4:0.5 e5:1 | d5:1 b4:1 g#4:2 |
+
+hook: Rearview Hymn
+type: Bridge
+tempo: 80-96
+feel: lift
+style: urban
+leadin: yes
+chords: G | Fmaj7 | Am7 | Fmaj7 | Am7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:2.5 e4:0.5 g4:0.5 a4:0.5 |
+        c5:1.5 a4:0.5 f4:1 a4:1 | g4:0.75 e4:0.25 e4:1 r:1 a4:0.25 c5:0.25 e5:0.5 |
+        e5:1 c5:0.5 a4:0.5 c5:1.5 r:0.5 | r:0.5 c5:0.25 c5:0.25 e5:0.5 c5:0.5 g4:1 a4:1 |
+        f4:0.5 a4:0.5 c5:0.5 d5:0.5 d5:1 c5:1 | b4:0.5 d5:0.5 e5:1.5 d5:0.5 b4:1 |
+        c5:0.75 a4:0.25 c5:0.5 e5:0.5 e5:2 | d5:1 c5:1 b4:2 |

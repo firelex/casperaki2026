@@ -1,0 +1,295 @@
+# Latin pop / reggaeton hooks (style: latin): 8 verses, 6 pre-choruses, 7 choruses, 4 bridges.
+# Dembow and 3-3-2 rhythms (0.75 0.75 0.5), anticipations tied into beat 1, minor-key loops. Sung pitch, C4 = middle C.
+
+# ---- Verses ----
+
+hook: Salt on the Balcony
+type: Verse
+tempo: 90-106
+feel: sultry
+style: latin
+chords: Am | F | C | G | Am | F | C | E7
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.25 d4:0.25 e4:0.75 c4:0.75 a3:0.5 | r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:0.75 f4:0.75 e4:0.5 |
+        r:0.5 g4:0.5 g4:0.5 e4:0.5 g4:0.75 e4:0.75 d4:0.5- | d4:1 b3:1 r:2 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.25 d4:0.25 c4:0.75 d4:0.75 e4:0.5 | f4:0.75 e4:0.75 c4:0.5 a3:1 r:1 |
+        r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:0.75 f4:0.75 e4:0.5- | e4:1 d4:1 b3:2 |
+
+hook: Hammock Static
+type: Verse
+tempo: 92-108
+feel: moody
+style: latin
+chords: Am | Dm | E7 | Am | Am | Dm | E7 | Am
+melody: a3:0.75 c4:0.75 e4:0.5 e4:0.75 d4:0.75 c4:0.5 | d4:0.75 f4:0.75 e4:0.5 f4:0.75 d4:0.75 a3:0.5 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 d4:1 b3:1 | c4:1.5 b3:0.5 a3:1 r:1 |
+        r:0.5 e4:0.25 e4:0.25 e4:0.75 g4:0.75 e4:0.5 d4:0.5 c4:0.5 | d4:0.75 f4:0.75 a3:0.5 d4:1 r:1 |
+        r:0.5 g#3:0.5 b3:0.5 d4:0.5 e4:0.75 d4:0.75 b3:0.5- | b3:0.5 c4:1.5 a3:2 |
+
+hook: Midnight Ferry
+type: Verse
+tempo: 98-114
+feel: breezy
+style: latin
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | G
+melody: r:2.5 g3:0.5 c4:0.5 d4:0.5 |
+        e4:0.75 e4:0.75 d4:0.5 e4:0.75 g4:0.75 e4:0.5 | d4:1 r:0.5 b3:0.5 d4:0.5 b3:0.5 g3:1 |
+        r:0.5 c4:0.5 c4:0.5 b3:0.5 c4:0.75 e4:0.75 g4:0.5- | g4:1 f4:1 c4:2 |
+        r:0.5 g4:0.5 f4:0.5 g4:0.5 e4:0.75 d4:0.75 c4:0.5 | d4:2 r:1 b3:0.5 c4:0.5 |
+        d4:0.75 c4:0.75 a3:0.5 c4:0.75 d4:0.75 f4:0.5- | f4:1 e4:1 d4:2 |
+
+hook: Coconut Telegram
+type: Verse
+tempo: 95-112
+feel: playful
+style: latin
+chords: Am | G | F | E7 | Am | G | F | E7
+melody: r:0.75 a3:0.25 c4:0.5 e4:0.5 r:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:0.75 b3:0.75 g3:0.5 r:2 |
+        r:0.75 a3:0.25 c4:0.5 f4:0.5 r:0.5 f4:0.5 e4:0.5 d4:0.5 | e4:1.5 g#3:0.5 b3:1 r:1 |
+        r:0.75 e4:0.25 e4:0.5 g4:0.5 e4:0.25 d4:0.25 c4:0.5 d4:0.5 e4:0.5- | e4:1 d4:1 b3:0.5 d4:0.5 r:1 |
+        r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:0.75 f4:0.75 e4:0.5 | d4:1.5 b3:0.5 e4:2 |
+
+hook: Rooftop Murmur
+type: Verse
+tempo: 90-104
+feel: smoky
+style: latin
+chords: Dm | Am | Dm | E7 | Dm | Am | F | E7
+melody: r:0.5 a3:0.5 d4:0.5 f4:0.5 f4:0.75 e4:0.75 d4:0.5 | e4:0.75 c4:0.75 a3:0.5 r:2 |
+        r:0.5 a3:0.5 d4:0.5 e4:0.5 f4:0.75 g4:0.75 f4:0.5- | f4:0.5 e4:1.5 r:2 |
+        r:0.5 d4:0.25 d4:0.25 f4:0.5 d4:0.5 a3:0.75 d4:0.75 e4:0.5 | e4:0.75 c4:0.75 d4:0.5 e4:1 c4:1 |
+        r:0.5 c4:0.5 f4:0.5 g4:0.5 f4:0.75 e4:0.75 d4:0.5- | d4:1 b3:1 g#3:2 |
+
+hook: Paper Fans
+type: Verse
+tempo: 100-116
+feel: flirty
+style: latin
+chords: F | G | Em | Am | Dm | G | C | E7
+melody: r:1 c4:0.5 c4:0.5 a3:0.75 c4:0.75 f4:0.5 | g4:0.75 f4:0.75 d4:0.5 d4:1 r:1 |
+        r:1 b3:0.5 b3:0.5 g3:0.75 b3:0.75 e4:0.5 | e4:0.75 d4:0.75 c4:0.5 c4:1 r:1 |
+        r:0.5 a3:0.5 d4:0.5 e4:0.5 f4:0.75 e4:0.75 d4:0.5 | b3:0.5 d4:0.5 g4:1 g4:0.75 f4:0.75 d4:0.5 |
+        e4:1.5 c4:0.5 g3:1 r:0.5 b3:0.5- | b3:1 d4:1 e4:2 |
+
+hook: Velvet Detour
+type: Verse
+tempo: 88-104
+feel: hypnotic
+style: latin
+chords: Am | F | C | G | Am | F | C | G
+melody: a3:0.75 a3:0.25 c4:0.5 a3:0.5 e4:0.75 e4:0.25 d4:0.5 c4:0.5 | c4:0.75 c4:0.25 a3:0.5 c4:0.5 f4:1 r:1 |
+        g3:0.75 g3:0.25 c4:0.5 g3:0.5 e4:0.75 e4:0.25 g4:0.5 e4:0.5 | d4:2 r:1 b3:0.5 c4:0.5 |
+        e4:0.75 e4:0.25 g4:0.5 e4:0.5 c4:0.75 c4:0.25 b3:0.5 a3:0.5 | a3:0.75 c4:0.25 f4:0.5 e4:0.5 f4:1 g4:1 |
+        e4:0.75 d4:0.25 c4:0.5 e4:0.5 g4:0.75 e4:0.25 d4:0.5 c4:0.5 | d4:3 r:1 |
+
+hook: Shoreline Vow
+type: Verse
+tempo: 104-120
+feel: hopeful
+style: latin
+leadin: yes
+chords: E7 | Am | Dm | G | C | F | Dm | E7 | Am
+melody: r:2 b3:0.5 c4:0.5 d4:0.5 e4:0.5- |
+        e4:1 c4:1 a3:0.75 c4:0.75 e4:0.5- | e4:0.5 f4:1.5 d4:1 r:1 |
+        r:0.5 d4:0.5 d4:0.5 b3:0.5 d4:0.75 g4:0.75 f4:0.5- | f4:0.5 e4:1.5 r:2 |
+        r:0.5 a3:0.5 c4:0.5 f4:0.5 f4:0.75 e4:0.75 c4:0.5- | c4:0.5 d4:1.5 a3:1 r:1 |
+        r:0.5 b3:0.5 d4:0.5 e4:0.5 d4:0.75 b3:0.75 g#3:0.5 | a3:1 c4:1 e4:2 |
+
+# ---- Pre-choruses ----
+
+hook: Fever in the Hallway
+type: Pre-chorus
+tempo: 92-108
+feel: tension
+style: latin
+chords: Dm | Am | Dm | Am | F | G | E7 | E7
+melody: r:0.5 d4:0.5 f4:0.5 a4:0.5 a4:0.75 g4:0.75 f4:0.5 | e4:1.5 c4:0.5 e4:1 r:1 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:0.75 c5:0.75 a4:0.5 | c5:1.5 b4:0.5 a4:1 e4:1 |
+        r:0.5 a4:0.5 a4:0.5 a4:0.5 c5:0.5 a4:0.5 c5:0.5 d5:0.5 | d5:0.5 d5:0.5 d5:0.5 b4:0.5 d5:0.5 e5:0.5 d5:0.5 b4:0.5 |
+        e5:2 d5:1 b4:1 | b4:3 r:1 |
+
+hook: Lift the Shutters
+type: Pre-chorus
+tempo: 100-116
+feel: rising
+style: latin
+chords: F | G | Em | Am | F | G | F | G
+melody: r:1 a4:0.5 g4:0.5 a4:0.75 c5:0.75 a4:0.5 | g4:1.5 d4:0.5 d4:1 r:1 |
+        r:1 b4:0.5 a4:0.5 b4:0.75 e5:0.75 b4:0.5 | a4:1.5 e4:0.5 e4:1 r:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:0.75 d5:0.75 c5:0.5 | d5:0.5 b4:0.5 g4:1 r:0.5 d5:0.5 e5:0.5 d5:0.5 |
+        c5:0.75 c5:0.75 c5:0.5 a4:0.75 c5:0.75 b4:0.5 | d5:3 r:1 |
+
+hook: Ceiling Fan Drums
+type: Pre-chorus
+tempo: 94-108
+feel: urgent
+style: latin
+chords: Am | F | C | G | Am | F | Gsus4 | G
+melody: e4:0.75 e4:0.75 g4:0.5 a4:0.75 g4:0.75 e4:0.5 | f4:0.75 f4:0.75 a4:0.5 c5:0.75 a4:0.75 f4:0.5 |
+        g4:0.75 g4:0.75 c5:0.5 e5:0.75 d5:0.75 c5:0.5 | d5:2 r:1 b4:0.5 c5:0.5 |
+        e5:0.75 e5:0.75 d5:0.5 c5:0.75 b4:0.75 a4:0.5 | c5:0.75 c5:0.75 a4:0.5 f4:1 r:0.5 g4:0.5 |
+        c5:1 d5:1 c5:1 d5:1 | b4:1 d5:3 |
+
+hook: Two Steps Closer
+type: Pre-chorus
+tempo: 96-110
+feel: yearning
+style: latin
+chords: Dm | Em | F | G | Dm | Em | F | E7
+melody: r:0.5 a4:0.5 a4:0.5 f4:0.5 a4:1 d4:1 | r:0.5 b4:0.5 b4:0.5 g4:0.5 b4:1 e4:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:0.75 a4:0.75 f4:0.5 | g4:1.5 d5:2 r:0.5 |
+        r:0.5 d5:0.5 c5:0.5 a4:0.5 d5:0.75 c5:0.75 a4:0.5 | e5:0.75 d5:0.75 b4:0.5 g4:1 r:1 |
+        a4:0.5 c5:0.5 e5:1 c5:1 d5:0.5 e5:0.5- | e5:0.5 d5:0.5 b4:1 g#4:2 |
+
+hook: Streetlight Hum
+type: Pre-chorus
+tempo: 90-105
+feel: brooding
+style: latin
+leadin: yes
+chords: Am | F | G | Em | Am | F | G | Dm | E7
+melody: r:3 e4:0.5 g4:0.5 |
+        a4:0.75 a4:0.75 g4:0.5 a4:1 c5:1 | b4:0.75 a4:0.75 g4:0.5 d4:1 r:0.5 g4:0.5 |
+        b4:0.75 b4:0.75 a4:0.5 b4:1 e5:1 | c5:2 r:1 a4:0.5 c5:0.5 |
+        d5:0.75 c5:0.75 a4:0.5 c5:0.75 a4:0.75 f4:0.5 | d5:0.75 b4:0.75 g4:0.5 b4:0.75 d5:0.75 e5:0.5- |
+        e5:1 d5:1 a4:2 | b4:0.5 d5:0.5 e5:3 |
+
+hook: Pulse Before Dawn
+type: Pre-chorus
+tempo: 104-120
+feel: lifting
+style: latin
+chords: Am | G | F | G | Am | G | F | Gsus4 G
+melody: r:0.5 c5:0.5 b4:0.5 a4:0.5 e4:0.75 a4:0.75 c5:0.5 | b4:1.5 g4:0.5 d4:1 r:1 |
+        r:0.5 c5:0.5 b4:0.5 a4:0.5 f4:0.75 a4:0.75 c5:0.5- | c5:0.5 d5:1.5 b4:1 r:1 |
+        r:0.5 e5:0.5 d5:0.5 c5:0.5 a4:0.75 c5:0.75 e5:0.5 | d5:0.75 b4:0.75 g4:0.5 d5:0.75 b4:0.75 g4:0.5 |
+        a4:0.75 c5:0.75 d5:0.5 c5:1 a4:1 | c5:2 b4:2 |
+
+# ---- Choruses ----
+
+hook: Fire Under Linen
+type: Chorus
+tempo: 92-106
+feel: anthem
+style: latin
+chords: Am | F | C | G | Am | F | C | G
+melody: r:0.5 e5:0.5 e5:0.25 d5:0.25 c5:0.5 r:0.5 c5:0.5 d5:0.5 e5:0.5- | e5:1 c5:1 a4:2 |
+        r:0.5 e5:0.5 e5:0.25 d5:0.25 c5:0.5 r:0.5 c5:0.5 d5:0.5 g4:0.5- | g4:1 b4:1 d5:2 |
+        r:0.5 e5:0.5 e5:0.5 e5:0.5 e5:0.75 d5:0.75 c5:0.5 | c5:0.75 d5:0.75 e5:2.5 |
+        r:0.5 d5:0.5 e5:0.5 d5:0.5 c5:0.75 d5:0.75 b4:0.5- | b4:1 a4:1 g4:2 |
+
+hook: Golden Hour Bandit
+type: Chorus
+tempo: 100-118
+feel: sunny
+style: latin
+chords: F | G | C | Am | F | G | C | C
+melody: a4:0.75 c5:0.75 a4:0.5 f4:0.75 a4:0.75 c5:0.5- | c5:0.5 b4:1.5 r:1 g4:0.5 a4:0.5 |
+        c5:0.75 e5:0.75 c5:0.5 g4:0.75 c5:0.75 e5:0.5- | e5:0.5 d5:1.5 r:1 c5:0.5 d5:0.5 |
+        e5:0.75 c5:0.75 a4:0.5 c5:0.75 e5:0.75 d5:0.5- | d5:0.5 b4:0.5 d5:1 r:0.5 d5:0.5 e5:0.5 d5:0.5 |
+        e5:1.5 d5:0.5 c5:1 d5:1 | e5:3 r:1 |
+
+hook: Velvet Riot
+type: Chorus
+tempo: 94-108
+feel: fierce
+style: latin
+chords: Am | Dm | E7 | Am | F | Dm | E7 | Am
+melody: a4:0.75 c5:0.75 d5:0.5 e5:0.75 c5:0.75 a4:0.5- | a4:1 f4:1 d4:1 r:1 |
+        g#4:0.75 b4:0.75 d5:0.5 e5:0.75 d5:0.75 b4:0.5- | b4:0.5 c5:1.5 r:2 |
+        r:0.5 c5:0.5 e5:0.5 e5:0.5 c5:0.75 d5:0.75 e5:0.5- | e5:1 d5:1 a4:1.5 r:0.5 |
+        r:0.5 e5:0.5 d5:0.5 b4:0.5 d5:0.75 b4:0.75 g#4:0.5- | g#4:0.5 a4:3.5 |
+
+hook: Sugar and Smoke
+type: Chorus
+tempo: 96-112
+feel: sultry
+style: latin
+leadin: yes
+chords: G | Am | F | C | G | Am | F | C | G
+melody: r:2 e4:0.5 g4:0.5 a4:0.5 c5:0.5- |
+        c5:1 b4:0.5 a4:0.5 a4:0.75 g4:0.75 e4:0.5 | r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:0.75 a4:0.75 g4:0.5- |
+        g4:1 e4:1 r:1.5 e4:0.5 | g4:0.75 a4:0.75 b4:0.5 d5:1 b4:1 |
+        e5:0.75 e5:0.75 d5:0.5 c5:0.75 b4:0.75 a4:0.5 | c5:0.75 d5:0.75 e5:1.5 d5:1 |
+        e5:0.75 d5:0.75 c5:0.5 g4:0.75 a4:0.75 c5:0.5- | c5:0.5 b4:1.5 d5:2 |
+
+hook: Tidal Confession
+type: Chorus
+tempo: 98-114
+feel: dramatic
+style: latin
+chords: Am | G | F | E7 | Am | G | Dm E7 | Am
+melody: e5:0.75 e5:0.75 e5:0.5 d5:0.75 c5:0.75 b4:0.5 | b4:0.75 b4:0.75 a4:0.5 g4:0.75 a4:0.75 b4:0.5 |
+        c5:0.75 c5:0.75 c5:0.5 a4:0.75 c5:0.75 d5:0.5- | d5:1 b4:1 g#4:2 |
+        e5:0.75 e5:0.75 e5:0.5 a4:0.75 c5:0.75 e5:0.5- | e5:1 d5:1 b4:0.75 d5:0.75 e5:0.5- |
+        e5:0.5 d5:0.5 a4:1 b4:0.5 d5:0.5 e5:1 | c5:1 b4:0.5 a4:2.5 |
+
+hook: Harbor Heatwave
+type: Chorus
+tempo: 106-120
+feel: euphoric
+style: latin
+chords: C | G | Am | F | C | G | F G | C
+melody: r:0.5 g4:0.5 c5:0.5 c5:0.5 r:0.5 c5:0.5 d5:0.5 e5:0.5- | e5:0.5 d5:1 b4:0.5 g4:2 |
+        r:0.5 a4:0.5 c5:0.5 c5:0.5 r:0.5 c5:0.5 d5:0.5 e5:0.5- | e5:0.5 d5:1 c5:0.5 a4:2 |
+        r:0.5 g4:0.5 c5:0.5 e5:0.5 e5:0.75 d5:0.75 c5:0.5 | d5:1.5 b4:0.5 d5:1 e5:1 |
+        c5:0.5 e5:1 c5:0.5 d5:1.5 b4:0.5 | c5:3 r:1 |
+
+hook: Barefoot Midnight
+type: Chorus
+tempo: 90-104
+feel: groovy
+style: latin
+chords: Dm | Am | F | G | Dm | Am | F | E7
+melody: d5:0.5 d5:0.5 r:0.25 d5:0.25 c5:0.5 a4:0.75 f4:0.75 a4:0.5 | c5:2 r:1 e4:0.5 a4:0.5 |
+        c5:0.5 c5:0.5 r:0.25 c5:0.25 a4:0.5 f4:0.75 a4:0.75 c5:0.5 | b4:2 r:1 d5:0.5 e5:0.5 |
+        d5:0.5 e5:0.5 d5:0.5 a4:0.5 d5:0.75 e5:0.75 d5:0.5 | e5:2.5 c5:0.5 a4:1 |
+        r:0.5 a4:0.5 d5:0.5 e5:0.5 c5:0.75 a4:0.75 b4:0.5- | b4:1 d5:1 b4:2 |
+
+# ---- Bridges ----
+
+hook: Quiet Before Thunder
+type: Bridge
+tempo: 96-110
+feel: dreamy
+style: latin
+chords: F | Em | Dm | G | F | Em | Dm | E7
+melody: a4:1.5 g4:0.5 f4:1 c5:1 | b4:2 r:1 g4:0.5 a4:0.5 |
+        a4:1.5 f4:0.5 d4:1 a4:1 | g4:0.5 b4:0.5 d5:2 r:1 |
+        c5:1.5 a4:0.5 f4:1 e5:1 | e5:1.5 d5:0.5 b4:1 g4:1 |
+        a4:0.75 d5:0.75 c5:0.5 a4:0.75 f4:0.75 d4:0.5 | e4:1 g#4:1 b4:2 |
+
+hook: Borrowed Moonlight
+type: Bridge
+tempo: 100-116
+feel: wistful
+style: latin
+chords: F | Bb | C | Am | F | Bb | Dm | G
+melody: c5:0.75 a4:0.75 f4:0.5 a4:1 c5:1 | d5:1.5 bb4:0.5 f4:2 |
+        e5:0.75 c5:0.75 g4:0.5 c5:1 e5:1 | e5:0.5 d5:1.5 c5:1 r:1 |
+        r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:0.75 a4:0.75 c5:0.5- | c5:0.5 d5:1.5 bb4:1 r:1 |
+        a4:0.75 c5:0.75 d5:0.5 a4:1 f4:1 | g4:1 b4:1 d5:2 |
+
+hook: Ashes in Bloom
+type: Bridge
+tempo: 90-104
+feel: aching
+style: latin
+leadin: yes
+chords: Am | F | G | Em | Am | F | G | E7 | E7
+melody: r:3 c5:0.5 b4:0.5 |
+        a4:2 r:0.5 g4:0.5 a4:0.5 c5:0.5- | c5:0.5 b4:1.5 r:1 b4:0.5 a4:0.5 |
+        g4:2 r:0.5 e4:0.5 g4:0.5 b4:0.5- | b4:0.5 c5:1.5 r:1 c5:0.5 d5:0.5 |
+        e5:1.5 d5:0.5 c5:1 a4:1 | d5:1.5 c5:0.5 b4:1 g4:1 |
+        g#4:0.75 b4:0.75 d5:0.5 e5:2 | d5:1 b4:3 |
+
+hook: Glass Rooftops
+type: Bridge
+tempo: 92-108
+feel: haunted
+style: latin
+chords: Dm | Am | Bb | F | Dm | Am | Bb | E7
+melody: f4:2 a4:1 d5:1 | c5:3 r:0.5 b4:0.5 |
+        bb4:2 d5:1 c5:1 | a4:3 r:1 |
+        r:0.5 a4:0.5 d5:0.5 e5:0.5 d5:0.75 c5:0.75 a4:0.5 | c5:1.5 b4:0.5 a4:1 e4:1 |
+        r:0.5 f4:0.5 bb4:0.5 d5:0.5 d5:0.75 c5:0.75 bb4:0.5 | b4:2 g#4:2 |

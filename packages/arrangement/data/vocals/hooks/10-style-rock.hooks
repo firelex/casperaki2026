@@ -1,0 +1,283 @@
+# Rock / pop-rock: 8 verses, 6 pre-choruses, 7 choruses and 4 bridges, written for the song style "rock".
+# Riff-like repeated cells in the verses, bVII (Bb) and bVI (Ab) borrowings, held anthemic choruses.
+
+# ---- Verses ----
+
+hook: Rust Belt Radio
+type: Verse
+tempo: 112-128
+feel: gritty
+style: rock
+chords: C | C | Bb | F | C | C | Bb F | G
+melody: r:0.5 g3:0.5 c4:0.5 c4:0.5 r:0.5 c4:0.5 d4:0.5 e4:0.5 | e4:1.5 d4:0.5 c4:2 |
+        r:0.5 bb3:0.5 d4:0.5 d4:0.5 r:0.5 d4:0.5 f4:0.5 d4:0.5 | c4:3 r:1 |
+        r:0.5 g3:0.5 c4:0.5 c4:0.5 r:0.5 e4:0.5 g4:0.5 e4:0.5 | g4:1.5 f4:0.5 e4:1 c4:1 |
+        f4:1 d4:1 c4:1.5 a3:0.5 | d4:3 r:1 |
+
+hook: Hollow Stadium
+type: Verse
+tempo: 100-116
+feel: brooding
+style: rock
+chords: Am | Am | F | G | Am | Am | F | E
+melody: a3:0.5 a3:0.5 c4:0.5 a3:1 e4:0.5 d4:0.5 c4:0.5 | c4:1 b3:0.5 a3:2.5 |
+        a3:0.5 a3:0.5 c4:0.5 a3:1 f4:0.5 e4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:2 |
+        a3:0.5 a3:0.5 c4:0.5 e4:1 g4:0.5 e4:0.5 d4:0.5 | e4:1 d4:0.5 c4:2.5 |
+        r:0.5 c4:0.5 f4:0.5 e4:0.5 f4:1 c4:1 | b3:1.5 g#3:0.5 b3:2 |
+
+hook: Cracked Windshield
+type: Verse
+tempo: 124-140
+feel: driving
+style: rock
+chords: F | C | G | Am7 | F | C | G | G
+melody: r:1 a3:0.5 c4:0.5 c4:0.5 a3:0.5 c4:1 | e4:1.5 c4:0.5 r:2 |
+        r:1 b3:0.5 d4:0.5 d4:0.5 b3:0.5 d4:1 | g4:1.5 e4:0.5 r:2 |
+        r:1 a3:0.5 c4:0.5 f4:0.5 e4:0.5 f4:1 | g4:1 e4:1 c4:2 |
+        r:0.5 d4:0.5 d4:0.5 b3:0.5 d4:1 g4:1 | r:1 e4:0.5 d4:2.5 |
+
+hook: Barbed Porchlight
+type: Verse
+tempo: 104-120
+feel: moody
+style: rock
+chords: Am | Am G | F | Fmaj7 G | Am | Am G | F | E
+melody: e4:0.75 e4:0.75 d4:0.5 c4:1 a3:1 | c4:1 b3:1 d4:1 b3:1 |
+        c4:0.75 c4:0.75 a3:0.5 c4:1 f4:1 | e4:2 d4:2 |
+        e4:0.75 e4:0.75 g4:0.5 e4:1 c4:1 | c4:1.5 a3:0.5 b3:2 |
+        a3:0.5 c4:0.5 e4:1 f4:1 c4:1 | b3:3 r:1 |
+
+hook: Junkyard Strut
+type: Verse
+tempo: 120-136
+feel: swagger
+style: rock
+leadin: yes
+chords: C | C | C | Ab | Bb | C | C | Ab Bb | C
+melody: r:2.5 g3:0.5 c4:0.5 d4:0.5 |
+        e4:1 c4:0.5 e4:1 g4:0.5 e4:1 | c4:0.5 d4:0.5 c4:1 r:2 |
+        c4:1 eb4:0.5 c4:1 eb4:0.5 c4:1 | d4:1 bb3:1 f4:2 |
+        e4:1 c4:0.5 e4:1 g4:0.5 g4:1 | g4:1.5 e4:0.5 r:2 |
+        eb4:1 c4:1 d4:1 f4:1 | e4:3 r:1 |
+
+hook: Burnt Out Diner
+type: Verse
+tempo: 108-124
+feel: restless
+style: rock
+chords: Am | F | C | G | Am | F | C | G
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1.5 d4:0.5 | c4:2 r:2 |
+        r:0.5 e4:0.5 e4:0.5 g4:0.5 g4:1.5 e4:0.5 | d4:3 r:1 |
+        r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:1 e4:1 | f4:1.5 e4:0.5 c4:2 |
+        r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:1 g4:1 | d4:1.5 b3:2.5 |
+
+hook: Tin Roof Warning
+type: Verse
+tempo: 100-114
+feel: tense
+style: rock
+chords: Am | G | Am | G | F | G | Am | Am
+melody: a3:1.5 c4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:2 |
+        a3:1.5 c4:0.5 e4:1 g4:0.5 e4:0.5 | d4:3 r:1 |
+        c4:0.5 c4:0.5 a3:0.5 c4:0.5 f4:1 e4:1 | d4:0.5 d4:0.5 b3:0.5 d4:0.5 g4:1 f4:1 |
+        e4:2 c4:1 b3:1 | a3:3 r:1 |
+
+hook: Chalk Line Summer
+type: Verse
+tempo: 116-132
+feel: punchy
+style: rock
+leadin: yes
+chords: G | C | F | C | G | C | F | Am | G
+melody: r:3 g3:0.5 a3:0.5 |
+        c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 c4:1 | r:0.5 c4:0.5 f4:0.5 e4:0.5 c4:2 |
+        r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:0.5 g4:1 e4:0.5 | d4:2.5 r:1.5 |
+        c4:0.5 c4:0.5 c4:0.5 d4:0.5 e4:1 g4:1 | f4:1.5 e4:0.5 c4:1 a3:1 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5 e4:1 d4:1 | d4:1 b3:1 d4:2 |
+
+# ---- Pre-choruses ----
+
+hook: Short Fuse Climb
+type: Pre-chorus
+tempo: 112-128
+feel: build
+style: rock
+chords: F | G | Am | F | F | G | Bb | Gsus4 G
+melody: r:1 c4:0.5 f4:0.5 a4:1 f4:1 | g4:1.5 d4:0.5 r:2 |
+        r:1 c4:0.5 e4:0.5 a4:1 e4:1 | c5:1.5 a4:0.5 r:2 |
+        r:1 f4:0.5 a4:0.5 c5:1 a4:1 | d5:1.5 b4:0.5 r:2 |
+        d5:1 bb4:1 d5:1 c5:1 | c5:2 b4:2 |
+
+hook: Breaker Box
+type: Pre-chorus
+tempo: 100-116
+feel: tension
+style: rock
+chords: F | G | Em | Am | F | G | E7 | E
+melody: a4:0.5 a4:0.5 a4:0.5 g4:0.5 f4:1 c4:1 | d4:1.5 g4:0.5 g4:2 |
+        b4:0.5 b4:0.5 b4:0.5 a4:0.5 g4:1 e4:1 | e4:1.5 a4:0.5 a4:2 |
+        c5:0.5 c5:0.5 c5:0.5 b4:0.5 a4:1 f4:1 | g4:1 b4:1 d5:2 |
+        e5:2 d5:1 b4:1 | g#4:1 b4:3 |
+
+hook: Redline Ascent
+type: Pre-chorus
+tempo: 120-136
+feel: climbing
+style: rock
+leadin: yes
+chords: G | Am | G | F | G | Am | C | Ab Bb | G
+melody: r:2 e4:0.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:1.5 a4:0.5 e4:2 | r:0.5 d4:0.5 g4:0.5 a4:0.5 b4:1.5 g4:0.5 |
+        a4:1.5 f4:0.5 c4:2 | r:0.5 b4:0.5 b4:0.5 c5:0.5 d5:1.5 b4:0.5 |
+        e5:1.5 c5:0.5 a4:2 | r:0.5 g4:0.5 c5:0.5 d5:0.5 e5:1 d5:1 |
+        c5:1 eb5:1 d5:1 bb4:1 | d5:4 |
+
+hook: Pressure Front
+type: Pre-chorus
+tempo: 104-120
+feel: surge
+style: rock
+chords: Dm | Em | F | G | Dm | Em | F | G7
+melody: r:0.5 a4:0.5 a4:0.5 f4:0.5 d4:2 | r:0.5 b4:0.5 b4:0.5 g4:0.5 e4:2 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 f4:1 a4:1 | b4:3 r:1 |
+        r:0.5 d5:0.5 d5:0.5 c5:0.5 a4:1 f4:1 | r:0.5 e5:0.5 e5:0.5 d5:0.5 b4:1 g4:1 |
+        a4:1 c5:0.5 a4:0.5 c5:1.5 d5:0.5 | b4:1 d5:3 |
+
+hook: Sparks Off Steel
+type: Pre-chorus
+tempo: 124-140
+feel: urgent
+style: rock
+chords: F | C | G | Am | F | C | Dm | E
+melody: f4:0.5 f4:0.5 a4:1 c5:1 a4:1 | g4:2.5 e4:1.5 |
+        d4:0.5 g4:0.5 b4:1 d5:1 b4:1 | c5:2.5 a4:1.5 |
+        a4:0.5 c5:0.5 c5:1 c5:1 a4:1 | e5:1.5 d5:0.5 c5:1 g4:1 |
+        f4:0.5 a4:0.5 d5:1 d5:1 c5:1 | b4:4 |
+
+hook: Gathering Squall
+type: Pre-chorus
+tempo: 100-114
+feel: swell
+style: rock
+leadin: yes
+chords: G | Am | F | C | G | Am | F | Ab | Gsus4 G
+melody: r:3 e4:0.5 g4:0.5 |
+        a4:3 g4:1 | a4:0.5 c5:1.5 a4:2 | g4:3 e4:1 | d4:1.5 g4:0.5 b4:2 |
+        c5:3 b4:1 | a4:0.5 c5:1.5 a4:1 c5:1 | eb5:3 c5:1 | d5:1.5 c5:0.5 b4:2 |
+
+# ---- Choruses ----
+
+hook: Burn the Ceiling
+type: Chorus
+tempo: 120-136
+feel: anthem
+style: rock
+chords: C | Bb | F | C | Am | F | Bb G | C
+melody: r:0.5 g4:0.5 c5:1 c5:1 d5:1 | d5:1.5 c5:0.5 bb4:2 |
+        r:0.5 a4:0.5 c5:1 c5:1 d5:1 | e5:1.5 d5:0.5 c5:2 |
+        r:0.5 e5:0.5 e5:1 e5:1 d5:0.5 c5:0.5 | c5:2 a4:1 c5:1 |
+        d5:2 d5:1 b4:1 | c5:3 r:1 |
+
+hook: Last One Standing
+type: Chorus
+tempo: 108-124
+feel: huge
+style: rock
+chords: Am | F | C | G | Am | Fmaj7 | G | Am
+melody: c5:1.5 b4:0.5 a4:2 | r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:2 |
+        d5:1.5 c5:0.5 g4:2 | b4:3 r:1 |
+        r:0.5 c5:0.5 e5:1 e5:1 d5:0.5 c5:0.5 | e5:2 c5:1 a4:1 |
+        d5:1 e5:1 d5:1.5 b4:0.5 | c5:4 |
+
+hook: Floodlight Riot
+type: Chorus
+tempo: 126-140
+feel: shout
+style: rock
+leadin: yes
+chords: G | F | C | G | Am | F | C | Ab Bb | C
+melody: r:2 g4:0.5 g4:0.5 a4:0.5 b4:0.5 |
+        c5:3 a4:0.5 g4:0.5 | g4:2 e4:1 g4:1 | d5:2 b4:1 g4:1 | a4:2 r:1.5 g4:0.5 |
+        a4:0.5 c5:0.5 c5:1 c5:1 d5:1 | e5:3 d5:1 | eb5:2 d5:2 | c5:4 |
+
+hook: Boots on Asphalt
+type: Chorus
+tempo: 100-116
+feel: stomp
+style: rock
+chords: Am | G | F | C | Am | G | F G | Am
+melody: a4:1.5 g4:0.5 a4:1 c5:1 | b4:1.5 a4:0.5 g4:2 |
+        a4:1.5 g4:0.5 a4:1 c5:1 | c5:3 r:1 |
+        e5:1.5 d5:0.5 e5:1 c5:1 | d5:1.5 c5:0.5 d5:1 b4:1 |
+        c5:1.5 a4:0.5 b4:1 d5:1 | e5:3 r:1 |
+
+hook: Thunder in Pines
+type: Chorus
+tempo: 112-126
+feel: soaring
+style: rock
+chords: C | G | F | F | C | G | F Ab | C
+melody: g4:1 c5:1 d5:2 | b4:1.5 g4:0.5 r:2 |
+        a4:1 c5:1 c5:1.5 a4:0.5 | g4:3 r:1 |
+        r:0.5 g4:0.5 c5:1 e5:1 d5:1 | d5:2 b4:1 d5:1 |
+        c5:1.5 a4:0.5 c5:1 eb5:1 | e5:4 |
+
+hook: Arena Heartbeat
+type: Chorus
+tempo: 104-118
+feel: stadium
+style: rock
+chords: F | G | Am | C | Fmaj7 | G | Bb | C
+melody: r:0.5 c5:2.5 a4:1 | b4:1.5 d5:2.5 |
+        c5:3 a4:1 | g4:4 |
+        e5:3 c5:1 | d5:3 b4:1 |
+        d5:1.5 c5:0.5 bb4:2 | c5:2 g4:2 |
+
+hook: Amplifier Moon
+type: Chorus
+tempo: 124-140
+feel: pounding
+style: rock
+chords: Am | F | C | G | F | Bb | F G | C
+melody: r:1 e4:0.5 a4:0.5 c5:1 a4:1 | c5:0.5 a4:1.5 f4:2 |
+        r:1 e4:0.5 g4:0.5 c5:1 g4:1 | b4:0.5 d5:1.5 b4:2 |
+        r:0.5 c5:0.5 c5:0.5 c5:0.5 c5:1 a4:1 | d5:1.5 c5:0.5 d5:2 |
+        c5:1 e5:1 d5:2 | c5:1 g4:3 |
+
+# ---- Bridges ----
+
+hook: Cold Mile Marker
+type: Bridge
+tempo: 108-124
+feel: lift
+style: rock
+chords: Ab | Bb | F | C | Ab | Bb | Dm | G
+melody: c5:2 eb5:1 c5:1 | d5:3 r:1 | c5:1.5 a4:0.5 f4:2 | g4:3 r:1 |
+        ab4:1 c5:1 eb5:2 | d5:1.5 bb4:0.5 f4:2 | f4:1 a4:1 d5:2 | d5:1 b4:3 |
+
+hook: Smoldering Quiet
+type: Bridge
+tempo: 100-116
+feel: brooding
+style: rock
+chords: F | Em | Dm | Am | F | C | Dm | E
+melody: r:1 a4:1 c5:1.5 a4:0.5 | b4:2 g4:2 | r:1 f4:1 a4:1.5 f4:0.5 | e4:3 r:1 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 a4:1 | e5:1.5 d5:0.5 c5:2 | d5:1 c5:1 a4:2 | g#4:1 b4:3 |
+
+hook: Ashen Wire
+type: Bridge
+tempo: 116-132
+feel: stark
+style: rock
+chords: Am | G | F | E | Am | G | Bb | G
+melody: c5:2 e5:2 | d5:3 b4:1 | c5:2 a4:2 | b4:3 g#4:1 |
+        a4:1 c5:1 e5:2 | d5:1.5 b4:0.5 g4:2 | f4:1 bb4:1 d5:2 | d5:4 |
+
+hook: Breakwater Hymn
+type: Bridge
+tempo: 104-120
+feel: spacious
+style: rock
+chords: Fmaj7 | G | Em7 | Am | Fmaj7 | G | Ab | G
+melody: e5:2 c5:1 a4:1 | b4:2.5 a4:0.5 g4:1 | d5:2 b4:1 g4:1 | a4:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:2 | d5:1.5 b4:0.5 g4:2 | c5:1 eb5:1 c5:1 ab4:1 | b4:4 |

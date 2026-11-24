@@ -1,0 +1,233 @@
+# organicVibes: 25 hooks for acoustic singer-songwriter and folk-pop songs (8 verses, 6 pre-choruses, 7 choruses,
+# 4 bridges). Conversational phrasing, pentatonic shapes, sus2/sus4 and maj7 colour, gentle syncopation.
+
+hook: Porch Light Ledger
+type: Verse
+tempo: 88-104
+feel: conversational
+style: organicVibes
+chords: C | G | Am | F | C | G | F | Gsus4 G
+melody: r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:1 d4:0.5 c4:0.5 | d4:2.5 r:1.5 | r:0.5 a3:0.5 c4:0.5 d4:0.5 e4:1 g4:0.5 e4:0.5 | f4:1 e4:0.5 c4:2.5 |
+        r:0.5 e4:0.5 g4:0.5 e4:0.5 e4:1 c4:1 | d4:1 b3:0.5 g3:2.5 | r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:1 f4:1 | c4:2 b3:2 |
+
+hook: Riverbed Sundays
+type: Verse
+tempo: 85-100
+feel: wistful
+style: organicVibes
+chords: Am | F | C | G | Am | F | C | Gsus4
+melody: r:1 e4:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 | c4:1.5 a3:0.5 a3:2 | r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:1.5 g4:0.5 | g4:0.5 f4:0.5 d4:3 |
+        r:1 e4:0.5 g4:0.5 e4:0.5 d4:0.5 c4:1 | c4:0.5 a3:1 c4:0.5 f4:2 | e4:1.5 d4:0.5 c4:1 g3:1 | d4:3 r:1 |
+
+hook: Thrift Store Coat
+type: Verse
+tempo: 94-110
+feel: playful
+style: organicVibes
+chords: C | Csus2 C | F | C | Am | G | F | C
+melody: e4:0.5 g4:0.5 r:0.5 g4:0.5 e4:1 c4:0.5 r:0.5 | d4:1.5 c4:2.5 | r:0.5 a3:0.5 c4:0.5 f4:0.5 f4:1 e4:0.5 c4:0.5 | e4:2.5 r:1.5 |
+        r:0.5 c4:0.5 e4:0.5 g4:0.5 e4:1 c4:1 | d4:0.5 b3:1 d4:0.5 g4:2 | f4:1 e4:0.5 d4:0.5 c4:1 a3:1 | c4:0.5 e4:3.5 |
+
+hook: Borrowed Guitar
+type: Verse
+tempo: 90-106
+feel: nostalgic
+style: organicVibes
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | G
+melody: r:3 g3:0.5 c4:0.5 | e4:1 e4:0.5 d4:0.5 e4:1 g4:1 | d4:2 r:1 b3:0.5 c4:0.5 | c4:1.5 b3:0.5 a3:1 r:1 |
+        r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1.5 e4:0.5 | e4:2 r:1 e4:0.5 f4:0.5 | g4:1 f4:0.5 d4:1.5 b3:1 | c4:1 a3:1 c4:1 d4:1 | d4:4 |
+
+hook: Salt and Cedar
+type: Verse
+tempo: 85-98
+feel: hushed
+style: organicVibes
+chords: Am | Am | F | C | Am | G | F | Esus4 E
+melody: r:0.5 a3:0.5 c4:0.5 e4:1 d4:0.5 c4:1 | c4:1 b3:0.5 a3:2.5 | r:0.5 a3:0.5 c4:0.5 f4:1 e4:0.5 f4:1 | g4:1.5 e4:0.5 e4:2 |
+        r:1 e4:0.5 d4:0.5 c4:1 a3:1 | b3:0.5 d4:1 b3:0.5 g3:2 | a3:1 c4:1 f4:1.5 e4:0.5 | a3:2 g#3:2 |
+
+hook: Ferry Ticket Stub
+type: Verse
+tempo: 92-108
+feel: storytelling
+style: organicVibes
+chords: F | C | G | Am | F | C | G | C
+melody: r:0.5 c4:0.5 c4:0.5 c4:0.25 d4:0.25 f4:1 e4:0.5 c4:0.5 | e4:1.5 d4:0.5 c4:2 |
+        r:0.5 b3:0.5 b3:0.5 b3:0.25 c4:0.25 d4:1 g4:0.5 d4:0.5 | e4:2.5 r:1.5 |
+        r:0.5 c4:0.5 f4:0.5 f4:0.25 e4:0.25 f4:1 g4:0.5 f4:0.5 | g4:1 e4:1 c4:1 e4:1 | d4:0.5 b3:0.5 g3:1 b3:1 d4:1 | e4:3 r:1 |
+
+hook: Low Tide Letters
+type: Verse
+tempo: 85-99
+feel: drifting
+style: organicVibes
+chords: Csus2 | Fmaj7 | Csus2 | G | Am | Fmaj7 | C | Gsus4
+melody: r:1 d4:0.5 c4:0.5 d4:1 g4:1 | e4:2 c4:1 a3:1 | r:1 d4:0.5 c4:0.5 d4:0.5 e4:0.5 g4:1 | g4:0.5 f4:0.5 d4:3 |
+        r:0.5 c4:0.5 e4:0.5 e4:0.5 e4:1 d4:0.5 c4:0.5 | c4:1.5 a3:0.5 e4:2 | e4:1 d4:0.5 c4:0.5 g3:2 | c4:1.5 d4:2.5 |
+
+hook: Window Seat Weather
+type: Verse
+tempo: 96-110
+feel: easy
+style: organicVibes
+chords: Am | G | F | C | Am | G | F | C
+melody: c4:1.5 a3:0.5 a3:0.5 c4:0.5 e4:1 | d4:2 r:0.5 d4:0.5 e4:0.5 f4:0.5 | f4:1 e4:0.5 c4:2.5 | r:2 e4:0.5 g4:0.5 g4:0.5 e4:0.5 |
+        e4:1 g4:0.5 e4:0.5 c4:1 a3:1 | b3:1.5 d4:0.5 g4:2 | f4:1.5 e4:0.5 c4:1 d4:1 | e4:4 |
+
+hook: Kindling Hour
+type: Pre-chorus
+tempo: 90-106
+feel: building
+style: organicVibes
+chords: F | G | Am | Am | F | G | Am F | Gsus4 G
+melody: r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:1 | b4:1.5 g4:0.5 d4:2 | r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:1 e5:1 | e5:1.5 d5:0.5 c5:2 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 c5:1 d5:1 | d5:2 b4:1 g4:1 | e5:1 c5:1 c5:1 a4:1 | c5:2 b4:2 |
+
+hook: Sparks Off Gravel
+type: Pre-chorus
+tempo: 94-110
+feel: restless
+style: organicVibes
+chords: Dm | Am | Dm | Am | F | G | Esus4 | E
+melody: r:0.5 d4:0.5 f4:0.5 a4:0.5 a4:1 g4:0.5 f4:0.5 | e4:1.5 c4:0.5 e4:2 | r:0.5 f4:0.5 a4:0.5 c5:0.5 d5:1 c5:0.5 a4:0.5 | a4:2 r:1 a4:0.5 b4:0.5 |
+        c5:1 c5:0.5 a4:0.5 c5:1 d5:1 | d5:1 b4:0.5 d5:0.5 d5:2 | e5:2 b4:2 | g#4:4 |
+
+hook: Hayloft Ascent
+type: Pre-chorus
+tempo: 86-102
+feel: rising
+style: organicVibes
+leadin: yes
+chords: C | F | C | F | G | Am | Em | F | G
+melody: r:3 c4:0.5 d4:0.5 | f4:1 a4:1 f4:1.5 c4:0.5 | e4:2 r:1 e4:0.5 f4:0.5 | a4:1 c5:1 a4:1 f4:1 | g4:2 r:1 g4:0.5 a4:0.5 |
+        c5:1 c5:0.5 b4:0.5 c5:1 e5:1 | e5:1 d5:0.5 b4:0.5 b4:1 g4:1 | a4:1 c5:1 c5:1 d5:1 | d5:4 |
+
+hook: Orchard Gate Open
+type: Pre-chorus
+tempo: 98-110
+feel: hopeful
+style: organicVibes
+chords: Am | G | F | C | Am | G | F | Gsus4 G
+melody: r:1 c5:0.5 b4:0.5 a4:1 e4:1 | g4:1.5 a4:0.5 b4:2 | r:1 c5:0.5 b4:0.5 a4:1 f4:1 | e4:1 g4:1 c5:2 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 c5:1 a4:1 | b4:1 d5:1 d5:1.5 b4:0.5 | c5:1 a4:0.5 d5:0.5 c5:1 a4:1 | g4:1 c5:1 b4:2 |
+
+hook: Barefoot Climb
+type: Pre-chorus
+tempo: 88-104
+feel: lifting
+style: organicVibes
+chords: F | Am | F | Am | Dm | Em | F | G7
+melody: a4:0.5 a4:0.5 r:0.5 a4:0.5 c5:1 a4:1 | e4:2.5 r:1.5 | c5:0.5 c5:0.5 r:0.5 d5:0.5 c5:1 a4:1 | e5:2.5 r:1.5 |
+        d5:0.5 c5:0.5 a4:1 f4:1 a4:1 | g4:0.5 a4:0.5 b4:1 e5:1 d5:1 | c5:1 a4:0.5 c5:0.5 c5:1 d5:1 | d5:1.5 b4:2.5 |
+
+hook: Weathervane Turning
+type: Pre-chorus
+tempo: 92-110
+feel: urgent
+style: organicVibes
+leadin: yes
+chords: Am | F | G | Em | Am | F | G | Dm F | Gsus4 G
+melody: r:2 e4:0.5 a4:0.5 c5:0.5 b4:0.5 | a4:1.5 g4:0.5 f4:2 | r:0.5 g4:0.5 b4:0.5 d5:0.5 d5:1 c5:0.5 b4:0.5 | b4:1.5 g4:0.5 e4:2 |
+        r:0.5 e4:0.5 a4:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | c5:1.5 a4:0.5 f4:2 | r:0.5 b4:0.5 d5:0.5 e5:0.5 d5:1 b4:1 | a4:1 d5:1 c5:1 a4:1 | d5:2 b4:2 |
+
+hook: Open Field Hymn
+type: Chorus
+tempo: 92-108
+feel: anthemic
+style: organicVibes
+chords: F | C | G | Am | F | C | G | Csus2
+melody: r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 a4:0.5 g4:0.5 | g4:2.5 r:1 g4:0.5 | b4:0.5 d5:0.5 r:0.5 b4:0.5 d5:1 b4:0.5 a4:0.5 | a4:2.5 r:1 e4:0.5 |
+        a4:0.5 c5:1 d5:0.5 c5:1 d5:1 | e5:2.5 d5:0.5 c5:1 | d5:1 e5:0.5 d5:0.5 b4:1 g4:1 | c5:1 d5:3 |
+
+hook: Lean Into Morning
+type: Chorus
+tempo: 86-100
+feel: warm
+style: organicVibes
+chords: Am | F | C | G | Am | F | Gsus4 G | C
+melody: c5:1.5 b4:0.5 a4:1 e4:1 | f4:0.5 a4:1 c5:0.5 c5:2 | g4:1.5 e4:0.5 g4:1 c5:1 | b4:1.5 a4:0.5 g4:2 |
+        r:0.5 c5:0.5 e5:1 e5:0.5 d5:0.5 c5:1 | c5:1 d5:0.5 e5:2.5 | d5:1 c5:1 b4:1 a4:0.5 b4:0.5 | c5:3 r:1 |
+
+hook: Sunburnt Harmony
+type: Chorus
+tempo: 98-110
+feel: carefree
+style: organicVibes
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | C
+melody: r:2.5 g4:0.5 a4:0.5 b4:0.5 | c5:1 c5:0.5 a4:0.5 g4:2 | r:0.5 g4:0.5 a4:0.5 b4:0.5 d5:1 b4:1 | c5:1.5 b4:0.5 a4:2 | r:0.5 a4:0.5 c5:0.5 a4:0.5 f4:1 g4:1 |
+        r:0.5 e5:0.5 e5:0.5 d5:0.5 e5:1 c5:1 | d5:1.5 b4:0.5 d5:1 e5:1 | c5:1.5 a4:0.5 c5:1 d5:1 | e5:4 |
+
+hook: Cinder Ridge Calling
+type: Chorus
+tempo: 85-100
+feel: yearning
+style: organicVibes
+chords: Am | G | F | C | Dm | Am | F G | Am
+melody: r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | d5:1.5 b4:0.5 g4:2 | r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:1 a4:1 | g4:2.5 r:1 e4:0.5 |
+        f4:0.5 a4:1 d5:0.5 d5:1 e5:1 | e5:2.5 d5:0.5 c5:1 | c5:1 a4:1 b4:1 d5:1 | c5:4 |
+
+hook: Driftwood Fire
+type: Chorus
+tempo: 92-110
+feel: rootsy
+style: organicVibes
+chords: C | Csus2 | F | C | Am | Fmaj7 | Gsus4 G | C
+melody: g4:0.5 a4:0.5 c5:0.5 a4:0.5 g4:2 | r:0.5 e4:0.5 g4:0.5 a4:0.5 d5:1 c5:1 | c5:1.5 a4:0.5 f4:2 | r:0.5 g4:0.5 a4:0.5 c5:0.5 c5:1 g4:1 |
+        e5:1.5 d5:0.5 c5:1 e5:1 | e5:1.5 d5:0.5 c5:2 | d5:1 c5:1 b4:1 g4:1 | c5:1 g4:3 |
+
+hook: Rooftop Fiddle Tune
+type: Chorus
+tempo: 96-110
+feel: jaunty
+style: organicVibes
+chords: F | C | Dm | Gsus4 | F | C | F G | C
+melody: r:0.5 f4:0.5 a4:0.5 c5:1 a4:0.5 f4:1 | e4:1.5 g4:0.5 c5:2 | r:0.5 d5:0.5 c5:0.5 a4:0.5 a4:1 f4:1 | g4:2.5 r:1.5 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 c5:1 d5:1 | e5:1.5 d5:0.5 e5:1 c5:1 | c5:1 a4:1 d5:1.5 b4:0.5 | g4:3 r:1 |
+
+hook: Mason Jar Stars
+type: Chorus
+tempo: 88-104
+feel: glowing
+style: organicVibes
+chords: Am | F | C | G | F | Am | Gsus4 G | C
+melody: e4:0.5 a4:1 c5:0.5 c5:1 b4:0.5 a4:0.5 | a4:2.5 r:1 e4:0.5 | g4:0.5 c5:1 d5:0.5 e5:1 d5:0.5 c5:0.5 | d5:2.5 r:1.5 |
+        r:0.5 a4:0.5 c5:1 c5:0.5 d5:0.5 c5:1 | e5:3 d5:0.5 c5:0.5 | d5:1 c5:0.5 b4:0.5 b4:1 g4:1 | g4:1 e4:3 |
+
+hook: Under the Floorboards
+type: Bridge
+tempo: 85-100
+feel: introspective
+style: organicVibes
+chords: Bb | F | C | C | Bb | F | Dm | Gsus4 G
+melody: r:0.5 d5:0.5 d5:0.5 c5:0.5 bb4:1 f4:1 | a4:2.5 r:1.5 | r:0.5 e4:0.5 g4:0.5 c5:0.5 c5:1 d5:0.5 c5:0.5 | g4:3 r:1 |
+        r:0.5 f4:0.5 bb4:0.5 c5:0.5 d5:1.5 c5:0.5 | c5:2 a4:2 | a4:1 f4:0.5 a4:0.5 d5:1 c5:1 | c5:2 b4:2 |
+
+hook: Quiet Between Fences
+type: Bridge
+tempo: 88-104
+feel: suspended
+style: organicVibes
+chords: Fmaj7 | Em | Dm | Am | Fmaj7 | Em | Dm | G
+melody: e5:2 c5:1 a4:1 | b4:1.5 g4:0.5 e4:2 | f4:0.5 a4:0.5 d5:1.5 c5:0.5 a4:1 | c5:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 e5:2.5 | e5:1.5 d5:0.5 b4:1 g4:1 | a4:1 c5:1 d5:1.5 c5:0.5 | b4:4 |
+
+hook: Silver Creek Detour
+type: Bridge
+tempo: 90-106
+feel: wandering
+style: organicVibes
+leadin: yes
+chords: G | Am | Em | F | C | Am | Em | F | G
+melody: r:2 g4:0.5 a4:0.5 b4:0.5 c5:0.5 | e5:1.5 d5:0.5 c5:1 a4:1 | b4:2.5 r:0.5 g4:0.5 a4:0.5 | c5:1.5 a4:0.5 f4:1 a4:1 | g4:3 r:1 |
+        r:0.5 e4:0.5 a4:0.5 c5:0.5 e5:1.5 d5:0.5 | b4:1 g4:1 e4:1.5 g4:0.5 | a4:0.5 c5:1 a4:0.5 c5:1 d5:1 | d5:4 |
+
+hook: Borrowed Blue Hour
+type: Bridge
+tempo: 86-102
+feel: bittersweet
+style: organicVibes
+chords: F | Fm | C | Am | Dm | Fm | Gsus4 | G
+melody: a4:1 c5:1 c5:1.5 a4:0.5 | ab4:1.5 g4:0.5 f4:2 | e4:1 g4:1 c5:1.5 b4:0.5 | a4:2.5 r:1.5 |
+        r:0.5 d5:0.5 d5:0.5 c5:0.5 a4:1 d5:1 | c5:2 ab4:2 | c5:2 d5:2 | b4:4 |

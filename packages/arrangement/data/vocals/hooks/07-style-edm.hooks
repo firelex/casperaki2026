@@ -1,0 +1,285 @@
+# EDM / dance pop: 8 verses, 6 pre-choruses, 7 choruses, 4 bridges. Key of C major / A minor, sung pitch (C4 = middle C).
+
+hook: Strobe Confession
+type: Verse
+tempo: 116-132
+feel: hypnotic
+style: edm
+chords: Am | F | C | G | Am | F | C | G
+melody: r:0.5 a3:0.25 c4:0.25 e4:0.5 d4:0.5 c4:1.5 r:0.5 | r:0.5 a3:0.25 c4:0.25 f4:0.5 e4:0.5 c4:2 |
+        r:0.5 g3:0.25 c4:0.25 e4:0.5 g4:0.5 e4:1 d4:0.5 c4:0.5 | d4:1.5 b3:0.5 g3:2 |
+        r:0.5 a3:0.25 c4:0.25 e4:0.5 g4:0.5 e4:1 c4:1 | r:0.5 c4:0.25 c4:0.25 f4:0.5 g4:0.5 f4:1 e4:0.5 c4:0.5 |
+        r:0.5 e4:0.5 g4:1 e4:0.5 d4:0.5 c4:1 | d4:3 r:1 |
+
+hook: Basement Heartbeat
+type: Verse
+tempo: 118-134
+feel: moody
+style: edm
+chords: F | G | Am | Am | F | G | Em | Am
+melody: c4:0.75 c4:0.75 a3:0.5 c4:0.5 f4:1 r:0.5 | d4:0.75 d4:0.75 b3:0.5 d4:0.5 g4:1 r:0.5 |
+        e4:0.75 e4:0.75 c4:0.5 e4:1 d4:0.5 c4:0.5 | a3:3 r:1 |
+        r:0.5 c4:0.5 f4:0.5 g4:0.5 f4:0.5 e4:0.5 c4:1 | d4:1 b3:0.5 d4:0.5 g4:1.5 f4:0.5 |
+        e4:1.5 d4:0.5 b3:1 g3:1 | a3:2.5 r:1.5 |
+
+hook: Laser Dust
+type: Verse
+tempo: 120-134
+feel: pulsing
+style: edm
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | G
+melody: r:3 g3:0.25 a3:0.25 b3:0.25 d4:0.25 |
+        e4:0.5 e4:0.5 r:0.5 e4:0.5 g4:0.5 e4:0.5 d4:0.5 c4:0.5 | d4:2 r:1 b3:0.25 c4:0.25 d4:0.5 |
+        e4:0.5 c4:0.5 r:0.5 e4:0.5 a3:1 c4:1 | c4:3 r:0.5 a3:0.25 c4:0.25 |
+        g4:0.5 g4:0.5 r:0.5 g4:0.5 e4:0.5 d4:0.5 c4:1 | d4:1.5 b3:0.5 d4:1 r:0.5 d4:0.25 e4:0.25 |
+        f4:0.5 e4:0.5 c4:1 a3:1 c4:1 | b3:1 d4:2 r:1 |
+
+hook: Cloakroom Ticket
+type: Verse
+tempo: 115-130
+feel: cool
+style: edm
+chords: Am | C | F | G | Am | C | Dm | E
+melody: a3:0.5 r:0.25 a3:0.25 c4:0.5 e4:1 d4:0.5 c4:0.5 r:0.5 | e4:0.5 r:0.25 e4:0.25 g4:0.5 e4:1 d4:0.5 c4:1 |
+        r:0.5 f4:0.5 f4:0.5 e4:0.5 f4:1 c4:1 | d4:2 r:2 |
+        a3:0.5 r:0.25 a3:0.25 c4:0.5 e4:1 g4:0.5 e4:1 | g4:1.5 e4:0.5 c4:1 r:1 |
+        r:0.5 a3:0.5 d4:0.5 e4:0.5 f4:1 e4:0.5 d4:0.5 | e4:1.5 d4:0.5 b3:2 |
+
+hook: Taxi Glow
+type: Verse
+tempo: 118-132
+feel: breezy
+style: edm
+chords: F | C | G | Am | F | C | G | G
+melody: r:1 a3:0.5 c4:0.5 f4:0.5 f4:0.5 e4:0.5 c4:0.5 | e4:1.5 d4:0.5 c4:2 |
+        r:1 b3:0.5 d4:0.5 g4:0.5 g4:0.5 f4:0.5 d4:0.5 | e4:1 c4:0.5 a3:2.5 |
+        r:0.5 c4:0.5 f4:0.5 g4:0.5 f4:1 c4:1 | e4:0.5 g4:1 e4:1 d4:0.5 c4:1 |
+        d4:1 b3:1 g3:1 b3:1 | d4:4 |
+
+hook: Elevator Pulse
+type: Verse
+tempo: 120-136
+feel: tense
+style: edm
+chords: Am | Em | F | C | Am | Em | F | G
+melody: e4:0.25 e4:0.25 e4:0.5 c4:0.5 e4:0.75 a3:0.75 r:1 | r:0.5 g3:0.5 b3:0.5 d4:0.5 e4:1 b3:1 |
+        f4:0.25 f4:0.25 f4:0.5 c4:0.5 f4:0.75 a3:0.75 r:1 | r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:2 |
+        e4:0.25 e4:0.25 g4:0.5 e4:0.5 c4:0.75 e4:0.75 r:1 | r:0.5 b3:0.5 e4:0.5 g4:0.5 g4:1 e4:1 |
+        f4:0.75 e4:0.75 c4:0.5 c4:1 a3:1 | b3:2 d4:2 |
+
+hook: Coat Check Romance
+type: Verse
+tempo: 116-130
+feel: flirty
+style: edm
+leadin: yes
+chords: C | Am | F | C | G | Am | F | C | G
+melody: r:3.5 g3:0.25 a3:0.25 |
+        c4:0.5 c4:0.5 c4:0.5 e4:1 c4:0.5 a3:1 | r:0.5 a3:0.25 a3:0.25 c4:0.5 f4:1 e4:0.5 c4:1 |
+        g4:1.5 e4:1 d4:0.5 c4:0.5 r:0.5 | d4:2.5 r:1 g3:0.25 a3:0.25 |
+        c4:0.5 c4:0.5 e4:0.5 g4:1 e4:0.5 c4:1 | r:0.5 c4:0.25 c4:0.25 f4:0.5 g4:1 f4:0.5 e4:1 |
+        e4:0.5 d4:0.5 e4:1 g4:1.5 e4:0.5 | b3:3 r:1 |
+
+hook: Bassline Diary
+type: Verse
+tempo: 118-130
+feel: wistful
+style: edm
+chords: C | G | Am | F | C | G | F | F
+melody: r:0.5 e4:0.5 e4:0.25 d4:0.25 c4:0.5 g3:1 c4:1 | d4:1.5 b3:0.5 g3:1 r:1 |
+        r:0.5 e4:0.5 e4:0.25 d4:0.25 c4:0.5 e4:1 g4:1 | f4:1.5 e4:0.5 c4:2 |
+        r:0.5 g4:0.5 g4:0.25 f4:0.25 e4:0.5 c4:1 e4:1 | d4:1.5 g4:1 f4:0.5 d4:1 |
+        r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:1 f4:1 | f4:0.5 e4:0.5 c4:3 |
+
+hook: Tension Wire
+type: Pre-chorus
+tempo: 120-134
+feel: rising
+style: edm
+chords: F | G | Am | Am | F | G | Dm | Gsus4 G
+melody: r:0.5 c4:0.5 c4:0.5 a3:0.5 c4:1 f4:1 | r:0.5 d4:0.5 d4:0.5 b3:0.5 d4:1 g4:1 |
+        r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1 a4:1 | a4:1.5 g4:0.5 e4:2 |
+        r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:1 | r:0.5 b4:0.5 b4:0.5 a4:0.5 b4:1 d5:1 |
+        d5:0.25 d5:0.25 d5:0.5 c5:0.5 d5:0.5 a4:1 c5:1 | d5:4 |
+
+hook: Riser Heat
+type: Pre-chorus
+tempo: 122-136
+feel: building
+style: edm
+chords: Am | Am | F | F | C | C | G | Gsus4 G
+melody: r:0.5 c4:0.25 d4:0.25 e4:1 e4:0.5 d4:0.5 c4:1 | e4:3 r:1 |
+        r:0.5 c4:0.25 d4:0.25 f4:1 f4:0.5 e4:0.5 f4:1 | a4:3 r:1 |
+        r:0.5 e4:0.25 f4:0.25 g4:1 g4:0.5 a4:0.5 g4:1 | c5:3 r:1 |
+        r:0.5 g4:0.25 a4:0.25 b4:0.5 b4:0.5 b4:0.5 c5:0.5 d5:1 | c5:2 b4:2 |
+
+hook: Afterhours Lift
+type: Pre-chorus
+tempo: 118-132
+feel: urgent
+style: edm
+chords: Dm | Am | Dm | Am | F | G | E | E
+melody: r:0.5 a3:0.5 d4:0.5 e4:0.5 f4:1.5 e4:0.5 | e4:1 c4:0.5 a3:2.5 |
+        r:0.5 d4:0.5 f4:0.5 g4:0.5 a4:1.5 g4:0.5 | a4:1 e4:0.5 c4:2.5 |
+        r:0.5 c5:0.25 c5:0.25 c5:0.5 a4:0.5 c5:1 f4:1 | r:0.5 d5:0.25 d5:0.25 d5:0.5 b4:0.5 d5:1 g4:1 |
+        e5:2 d5:1 b4:1 | b4:4 |
+
+hook: Glitter Fuse
+type: Pre-chorus
+tempo: 120-136
+feel: bright
+style: edm
+leadin: yes
+chords: G | C | Em | F | G | Am | Em | F | G7
+melody: r:2 b3:0.25 c4:0.25 d4:0.5 g4:1 |
+        g4:1.5 e4:0.5 c4:1 e4:0.5 g4:0.5 | g4:1.5 e4:0.5 b3:1 r:0.5 b3:0.25 c4:0.25 |
+        a4:1.5 f4:0.5 c4:1 f4:0.5 a4:0.5 | b4:1.5 g4:0.5 d4:1 r:1 |
+        c5:0.5 c5:0.5 c5:0.5 b4:0.5 a4:1 e4:1 | b4:0.5 b4:0.5 b4:0.5 a4:0.5 g4:1 e4:1 |
+        a4:0.5 c5:0.5 d5:0.5 c5:0.5 a4:1 c5:1 | b4:1 d5:3 |
+
+hook: Pressure Gauge
+type: Pre-chorus
+tempo: 120-134
+feel: driving
+style: edm
+chords: Am | F | C | G | Am F | C G | F | G
+melody: e4:0.25 e4:0.25 e4:0.25 e4:0.25 c4:0.5 a3:0.5 r:1 e4:0.5 g4:0.5 | a4:1.5 f4:0.5 c4:1 r:1 |
+        e4:0.25 e4:0.25 e4:0.25 e4:0.25 c4:0.5 e4:0.5 r:1 g4:0.5 a4:0.5 | b4:1.5 g4:0.5 d4:1 r:1 |
+        c5:0.5 c5:0.5 a4:0.5 e4:0.5 f4:0.5 a4:0.5 c5:1 | e5:0.5 e5:0.5 c5:0.5 g4:0.5 b4:0.5 d5:0.5 g4:1 |
+        a4:0.25 a4:0.25 c5:0.25 c5:0.25 a4:0.25 a4:0.25 c5:0.25 c5:0.25 f4:0.5 a4:0.5 c5:1 | b4:4 |
+
+hook: Cordon Lights
+type: Pre-chorus
+tempo: 118-130
+feel: dreamy
+style: edm
+chords: Fmaj7 | Em7 | Dm7 | C | Fmaj7 | Em7 | Dm7 | Gsus4
+melody: r:0.5 e4:0.5 f4:0.5 a4:0.5 c5:2 | b4:1.5 a4:0.5 g4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 c5:1 a4:1 | g4:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:1.5 d5:0.5 | d5:1 b4:1 g4:1.5 a4:0.5 |
+        a4:1 c5:1 d5:1 c5:1 | c5:4 |
+
+hook: Gravity Off
+type: Chorus
+tempo: 120-136
+feel: euphoric
+style: edm
+chords: Am | F | C | G | Am | Fmaj7 | C | G
+melody: r:0.5 e4:0.25 g4:0.25 a4:1 a4:0.5 g4:0.5 a4:1 | c5:1.5 a4:0.5 r:2 |
+        r:0.5 e4:0.25 g4:0.25 c5:1 c5:0.5 b4:0.5 c5:1 | d5:1.5 b4:0.5 r:1 g4:0.5 a4:0.5 |
+        c5:0.5 e5:1.5 e5:0.5 d5:0.5 c5:1 | e5:3 d5:0.5 c5:0.5 |
+        r:0.5 g4:0.5 c5:0.5 d5:0.5 e5:1 d5:1 | d5:3 r:1 |
+
+hook: Heartbeat Overdrive
+type: Chorus
+tempo: 122-136
+feel: anthem
+style: edm
+leadin: yes
+chords: G | Am | F | C | G | Am | F | C G | C
+melody: r:2 e4:0.25 e4:0.25 g4:0.5 a4:0.5 b4:0.5 |
+        c5:1.5 a4:0.5 a4:0.5 g4:0.5 e4:1 | r:0.5 f4:0.5 a4:0.5 c5:0.5 c5:2 |
+        e5:1.5 c5:0.5 c5:0.5 b4:0.5 g4:1 | r:0.5 g4:0.5 b4:0.5 d5:0.5 b4:1 g4:1 |
+        e4:0.5 e4:0.5 e5:2 c5:1 | c5:0.5 a4:0.5 f4:0.5 a4:0.5 c5:2 |
+        e4:0.5 e4:0.5 e5:1 d5:1 b4:1 | c5:3 r:1 |
+
+hook: Ritual Lights
+type: Chorus
+tempo: 124-138
+feel: chant
+style: edm
+chords: F | G | Am | C | Fmaj7 | G | Am | Am
+melody: a4:0.5 a4:0.5 r:0.5 a4:0.25 g4:0.25 a4:1 c5:1 | b4:0.5 b4:0.5 r:0.5 b4:0.25 a4:0.25 b4:1 d5:1 |
+        c5:0.5 c5:0.5 r:0.5 c5:0.25 b4:0.25 c5:1 e5:1 | e5:2.5 d5:0.5 c5:1 |
+        c5:0.5 e5:1.5 r:0.5 e5:0.25 d5:0.25 c5:1 | b4:0.5 d5:1.5 r:0.5 d5:0.25 c5:0.25 b4:1 |
+        c5:0.5 e5:3.5 | c5:1 a4:3 |
+
+hook: Skyline Surrender
+type: Chorus
+tempo: 118-132
+feel: soaring
+style: edm
+chords: C | G | Am | F | C | G | Fmaj7 | F
+melody: r:0.5 g4:0.25 a4:0.25 c5:0.5 d5:2.5 | d5:0.5 c5:0.5 b4:0.5 g4:2.5 |
+        r:0.5 e4:0.25 g4:0.25 a4:0.5 b4:2.5 | c5:0.5 a4:3.5 |
+        r:0.5 c5:0.25 d5:0.25 e5:1 e5:0.5 d5:0.5 e5:1 | d5:3 r:0.5 b4:0.5 |
+        c5:0.5 d5:0.5 e5:2 d5:1 | c5:4 |
+
+hook: Floodlight Sermon
+type: Chorus
+tempo: 120-134
+feel: driving
+style: edm
+chords: Am | G | F | E | Am | G | F E | Am
+melody: e5:0.5 e5:0.5 d5:0.25 c5:0.25 a4:0.5 c5:1 a4:1 | d5:0.5 d5:0.5 c5:0.25 b4:0.25 g4:0.5 b4:1 g4:1 |
+        c5:0.5 c5:0.5 a4:0.25 g4:0.25 f4:0.5 a4:1 c5:1 | b4:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 e5:0.5 e5:2 | r:0.5 g4:0.5 b4:0.5 d5:0.5 d5:1 e5:1 |
+        c5:1 a4:1 b4:1.5 g#4:0.5 | a4:3 r:1 |
+
+hook: Arms Up Tonight
+type: Chorus
+tempo: 124-140
+feel: bouncy
+style: edm
+leadin: yes
+chords: G | C | Em | Am | F | C | Em7 | Fmaj7 G | C
+melody: r:3 g4:0.25 g4:0.25 a4:0.25 b4:0.25 |
+        c5:0.75 c5:0.75 g4:0.5 e4:1 g4:1 | b4:0.75 b4:0.75 g4:0.5 e4:2 |
+        c5:0.75 c5:0.75 a4:0.5 e4:1 a4:0.5 b4:0.5 | c5:3 r:0.5 c5:0.25 d5:0.25 |
+        e5:0.75 e5:0.75 c5:0.5 g4:1 c5:1 | d5:0.75 d5:0.75 b4:0.5 g4:0.5 b4:0.5 e5:1 |
+        e5:1 c5:1 d5:1 b4:1 | c5:4 |
+
+hook: Afterlight Anthem
+type: Chorus
+tempo: 120-132
+feel: anthem
+style: edm
+chords: F | C | G | Am | F | C | G | G
+melody: r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1.5 d5:0.5 | e5:1.5 d5:0.5 c5:2 |
+        r:0.5 b4:0.5 b4:0.5 g4:0.5 b4:1.5 c5:0.5 | c5:1 b4:0.5 a4:2.5 |
+        r:0.5 a4:0.25 c5:0.25 d5:0.5 e5:2.5 | e5:1 d5:0.5 c5:0.5 g4:2 |
+        r:0.5 g4:0.25 a4:0.25 b4:0.5 d5:2.5 | d5:1 c5:1 b4:2 |
+
+hook: Borrowed Horizon
+type: Bridge
+tempo: 118-132
+feel: epic
+style: edm
+chords: Ab | Bb | C | C | Ab | Bb | G | G
+melody: c5:1.5 eb5:0.5 c5:1 ab4:1 | d5:1.5 bb4:0.5 f4:2 |
+        e4:0.5 g4:0.5 c5:1 e5:2 | d5:1 c5:1 g4:2 |
+        r:0.5 ab4:0.5 c5:0.5 eb5:0.5 eb5:2 | d5:1 bb4:1 f4:2 |
+        g4:0.5 b4:0.5 d5:3 | b4:4 |
+
+hook: Lowlight Interlude
+type: Bridge
+tempo: 118-130
+feel: suspended
+style: edm
+chords: Bb | F | Bb | C | Bb | F | Dm | G
+melody: r:1 d4:0.5 f4:0.5 bb4:2 | a4:1.5 f4:0.5 c4:2 |
+        r:1 f4:0.5 bb4:0.5 d5:2 | c5:1.5 g4:0.5 e4:2 |
+        r:0.5 d5:0.5 d5:0.5 c5:0.5 bb4:1 f4:1 | a4:3 r:1 |
+        r:0.5 a4:0.5 d5:0.5 c5:0.5 a4:1 f4:1 | g4:1 b4:1 d5:2 |
+
+hook: Breakdown Halo
+type: Bridge
+tempo: 120-134
+feel: floating
+style: edm
+chords: Am | Em | F | C | Am | Em | F | G
+melody: e4:3 c4:1 | b3:3 r:1 | c4:0.5 f4:0.5 a4:2 g4:1 | e4:3 r:1 |
+        r:0.5 a4:0.5 c5:0.5 b4:0.5 a4:2 | g4:2 b4:2 | c5:1 a4:1 c5:1 d5:1 | d5:4 |
+
+hook: Mirrorball Drift
+type: Bridge
+tempo: 120-136
+feel: hypnotic
+style: edm
+leadin: yes
+chords: E | F | G | Em | Am | F | G | E7 | E
+melody: r:3 g#4:0.5 b4:0.5 |
+        c5:1.5 a4:0.5 f4:1 a4:1 | b4:1.5 g4:0.5 d4:1 g4:1 | g4:0.5 b4:0.5 e5:2 d5:1 | c5:3 r:0.5 e4:0.5 |
+        a4:0.5 a4:0.5 c5:0.5 a4:0.5 f4:1 a4:1 | b4:0.5 b4:0.5 d5:0.5 b4:0.5 g4:1 b4:1 |
+        d5:1 b4:1 g#4:1 b4:1 | e5:4 |

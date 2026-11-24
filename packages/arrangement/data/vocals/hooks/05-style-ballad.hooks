@@ -1,0 +1,239 @@
+# Ballad style: 25 piano/strings power-ballad hooks (8 verses, 6 pre-choruses, 7 choruses, 4 bridges).
+# Key of C major / A minor, sung pitch (C4 = middle C). Verses G3-G4, other sections G3-E5.
+
+hook: Winter Window
+type: Verse
+tempo: 66-80
+feel: tender
+style: ballad
+chords: C | Em | Am7 | Fmaj7 | C | Em | Dm7 | Gsus4 G
+melody: r:1 g3:0.5 c4:0.5 e4:1.5 d4:0.5 | b3:1.5 c4:0.5 e4:2 | r:0.5 e4:0.5 g4:0.5 e4:0.5 e4:1 d4:0.5 c4:0.5- | c4:3 r:1 |
+        r:1 g3:0.5 c4:0.5 e4:1.5 f4:0.5 | g4:1.5 f4:0.5 e4:1 d4:0.5 b3:0.5 | r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 e4:0.5 d4:0.5- | d4:1 c4:1 b3:2 |
+
+hook: Harbour Lights Fade
+type: Verse
+tempo: 70-84
+feel: longing
+style: ballad
+chords: Am | Fmaj7 | C | G | Am | Fmaj7 | Dm7 | E
+melody: r:0.5 a3:0.5 c4:0.5 e4:0.5- e4:1 d4:0.5 c4:0.5 | c4:2 r:1 a3:0.5 c4:0.5 | e4:1 g4:1 e4:1 d4:0.5 c4:0.5 | d4:3 r:1 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5- e4:1 g4:0.5 e4:0.5 | f4:1.5 e4:0.5 c4:2 | r:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 c4:1 | b3:1.5 g#3:2.5 |
+
+hook: Paper Boat Promise
+type: Verse
+tempo: 62-76
+feel: hopeful
+style: ballad
+chords: F | C | G | Am7 | F | C | Dm7 | G
+melody: r:1 c4:0.5 d4:0.5 f4:1 e4:0.5 f4:0.5- | f4:0.5 e4:1.5 c4:2 | r:0.5 b3:0.5 d4:0.5 g4:0.5- g4:1 f4:0.5 d4:0.5 | e4:2.5 r:1.5 |
+        r:1 c4:0.5 d4:0.5 f4:1 g4:1 | g4:2 e4:1 c4:1 | d4:1.5 e4:0.5 f4:1 e4:0.5 d4:0.5 | d4:4 |
+
+hook: Silent Staircase
+type: Verse
+tempo: 70-86
+feel: intimate
+style: ballad
+chords: Am7 | Dm7 | G | Cmaj7 | Fmaj7 | Dm7 | Esus4 | E
+melody: r:0.5 e4:0.5 e4:0.5 d4:0.5 c4:1 a3:1 | c4:1.5 d4:0.5 f4:2 | r:0.5 d4:0.5 d4:0.5 c4:0.5 b3:1 g3:1 | b3:1.5 c4:0.5 e4:2 |
+        r:0.5 a3:0.5 c4:0.5 e4:0.5- e4:1 f4:0.5 g4:0.5- | g4:1 f4:1 d4:1 c4:1 | b3:1 e4:1 a3:2 | g#3:4 |
+
+hook: Rainlit Avenue
+type: Verse
+tempo: 64-78
+feel: reflective
+style: ballad
+leadin: yes
+chords: G | C | Em7 | Am | Fmaj7 | C | Em7 | Dm7 | Gsus4
+melody: r:3 g3:0.5 a3:0.5 |
+        c4:1.5 e4:0.5- e4:1 d4:0.5 c4:0.5 | d4:2 r:1 b3:0.5 d4:0.5 | e4:1.5 g4:0.5- g4:1 e4:1 | f4:0.5 e4:0.5 c4:3 |
+        r:0.5 g3:0.5 c4:0.5 e4:0.5- e4:1 g4:1 | g4:1.5 e4:0.5 d4:1 b3:1 | c4:1 d4:1 f4:1.5 e4:0.5 | d4:2 c4:2 |
+
+hook: Midnight Kettle
+type: Verse
+tempo: 72-88
+feel: quiet
+style: ballad
+chords: C | Am7 | Fmaj7 | G | C | Am7 | Fmaj7 | G7
+melody: r:0.5 g3:0.25 g3:0.25 c4:0.5 d4:0.5 e4:1 d4:0.5 c4:0.5 | c4:2 r:1 a3:0.5 c4:0.5 | c4:0.5 c4:0.5 a3:0.5 c4:0.5 e4:1.5 d4:0.5 | d4:3 r:1 |
+        r:0.5 g3:0.25 g3:0.25 c4:0.5 d4:0.5 e4:1 g4:0.5 e4:0.5- | e4:1.5 d4:0.5 c4:1 a3:1 | r:0.5 a3:0.5 c4:0.5 f4:0.5- f4:1 e4:0.5 f4:0.5 | g4:2 f4:2 |
+
+hook: Quiet Undertow
+type: Verse
+tempo: 60-74
+feel: aching
+style: ballad
+chords: Am | Em | Fmaj7 | C | Dm7 | Am | F | E7
+melody: a3:1.5 b3:0.5 c4:1 e4:1 | e4:0.5 d4:0.5 b3:3 | r:1 a3:0.5 c4:0.5 e4:1.5 d4:0.5 | c4:3 r:1 |
+        r:0.5 d4:0.5 f4:0.5 g4:0.5- g4:1 f4:0.5 e4:0.5 | e4:2.5 c4:0.5 b3:0.5 a3:0.5 | a3:1 c4:1 f4:1.5 e4:0.5 | d4:1 b3:1 g#3:2 |
+
+hook: Tidewater Letters
+type: Verse
+tempo: 68-82
+feel: nostalgic
+style: ballad
+leadin: yes
+chords: G | C | Fmaj7 | Am7 | G | C | Fmaj7 | Fm | C
+melody: r:2 d4:0.5 e4:0.5 g4:0.5 e4:0.5- |
+        e4:1.5 d4:0.5 c4:1 d4:1 | e4:2 r:1 c4:0.5 d4:0.5 | e4:1 g4:1 e4:1.5 d4:0.5 | d4:1.5 b3:0.5 g3:2 |
+        r:0.5 c4:0.5 e4:0.5 g4:0.5- g4:1 e4:0.5 c4:0.5 | f4:1.5 e4:0.5 c4:1 a3:1 | c4:1.5 ab3:0.5 c4:1 f4:1 | e4:4 |
+
+hook: Slow Ascension
+type: Pre-chorus
+tempo: 66-80
+feel: building
+style: ballad
+chords: Fmaj7 | G | Em7 | Am7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:0.5 a4:0.5 a4:0.5 g4:0.5 a4:1 c5:1 | b4:1.5 a4:0.5 g4:2 | r:0.5 b4:0.5 b4:0.5 a4:0.5 b4:1 d5:1 | c5:1.5 b4:0.5 a4:2 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5- d5:1 c5:1 | d5:0.5 e5:0.5- e5:1 d5:1 b4:1 | c5:1 a4:1 c5:1 e5:1 | c5:1.5 b4:0.5 d5:2 |
+
+hook: Gathering Weather
+type: Pre-chorus
+tempo: 72-86
+feel: tense
+style: ballad
+chords: Dm7 | Am | Dm7 | Am | Fmaj7 | G | Fmaj7 | E
+melody: r:1 d4:0.5 f4:0.5 a4:1.5 g4:0.5 | e4:2 r:2 | r:1 f4:0.5 a4:0.5 c5:1.5 b4:0.5 | a4:2 r:1 e4:0.5 a4:0.5 |
+        c5:1 a4:0.5 c5:0.5 e5:2 | d5:1.5 c5:0.5 b4:1 g4:1 | a4:0.5 c5:0.5 a4:0.5 c5:0.5 e5:1 c5:1 | b4:4 |
+
+hook: Threshold Light
+type: Pre-chorus
+tempo: 64-78
+feel: swelling
+style: ballad
+leadin: yes
+chords: C | Am7 | Fmaj7 | C | G | Am7 | Fmaj7 | Dm7 | Gsus4
+melody: r:3 e4:0.5 g4:0.5 |
+        a4:1.5 g4:0.5 e4:2 | r:0.5 f4:0.5 a4:0.5 c5:0.5- c5:1 a4:0.5 g4:0.5 | g4:3 r:0.5 g4:0.5 | b4:1.5 a4:0.5 b4:1 d5:1 |
+        c5:1.5 b4:0.5 c5:1 e5:1- | e5:1.5 d5:0.5 c5:2 | d5:1.5 c5:0.5 a4:1 c5:1 | d5:4 |
+
+hook: Undertow Pull
+type: Pre-chorus
+tempo: 70-88
+feel: restless
+style: ballad
+chords: Am7 | Fmaj7 | C | G | Am7 | Fmaj7 | Dm7 | G7
+melody: r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:0.5 e5:1 c5:0.5 | a4:2 r:2 | r:0.5 c5:0.5 c5:0.5 b4:0.5 c5:0.5 e5:1 d5:0.5 | d5:2 r:1 b4:0.5 c5:0.5 |
+        e5:1 c5:0.5 e5:0.5- e5:1 d5:0.5 c5:0.5 | c5:1.5 a4:0.5 f4:1 a4:1 | d5:1 a4:1 c5:1 d5:1 | b4:1 d5:3 |
+
+hook: Glasshouse Climb
+type: Pre-chorus
+tempo: 60-74
+feel: yearning
+style: ballad
+chords: Fmaj7 | Em7 | Dm7 | Cmaj7 | Fmaj7 | Em7 | Dm7 | Gsus4 G
+melody: c5:1.5 a4:0.5 e5:2 | d5:2 r:1 b4:0.5 c5:0.5 | d5:1.5 c5:0.5 a4:2 | b4:2 r:1 g4:0.5 a4:0.5 |
+        c5:1 a4:0.5 c5:0.5 e5:1 c5:1 | d5:1 b4:0.5 d5:0.5 e5:2 | a4:1 c5:1 d5:1 e5:1 | c5:1.5 c5:0.5 b4:2 |
+
+hook: Ember Staircase
+type: Pre-chorus
+tempo: 76-90
+feel: insistent
+style: ballad
+chords: F | G | Em | Am | F | G | Em7 Am7 | Gsus4
+melody: r:0.5 f4:0.5 a4:0.5 c5:0.5- c5:1 a4:0.5 f4:0.5 | g4:1.5 b4:0.5 d5:2 | r:0.5 g4:0.5 b4:0.5 e5:0.5- e5:1 d5:0.5 b4:0.5 | c5:2 r:1 a4:0.5 c5:0.5 |
+        c5:1.5 d5:0.5 c5:1 a4:1 | b4:1.5 c5:0.5 d5:2 | e5:1 d5:1 e5:1 c5:1 | d5:1 c5:3 |
+
+hook: Lighthouse Vow
+type: Chorus
+tempo: 68-82
+feel: soaring
+style: ballad
+chords: C | Em7 | Am7 | Fmaj7 | C | G | Fmaj7 Gsus4 | C
+melody: e5:1.5 d5:0.5 c5:1 d5:0.5 e5:0.5- | e5:1 d5:1 b4:2 | r:0.5 a4:0.5 c5:0.5 e5:0.5- e5:1 d5:0.5 c5:0.5 | c5:3 r:1 |
+        r:0.5 g4:0.5 e5:2 d5:0.5 c5:0.5 | d5:2 b4:1 d5:1 | c5:1 e5:1 d5:1 c5:1 | c5:3 r:1 |
+
+hook: Open Hands
+type: Chorus
+tempo: 60-74
+feel: aching
+style: ballad
+chords: F | C | G | Am | F | C | Gsus4 G | Am
+melody: r:1 c5:0.5 c5:0.5 c5:1 a4:0.5 c5:0.5- | c5:1.5 e4:0.5 g4:2 | r:1 b4:0.5 b4:0.5 b4:1 a4:0.5 b4:0.5- | b4:1.5 a4:0.5 e4:2 |
+        f4:1 d5:2 c5:1 | e5:2.5 d5:0.5 c5:1 | d5:1 c5:1 b4:1 g4:1 | a4:3 r:1 |
+
+hook: Candle Overture
+type: Chorus
+tempo: 72-88
+feel: soaring
+style: ballad
+leadin: yes
+chords: G | C | G | Am7 | Fmaj7 | C | G | Fmaj7 Gsus4 | C
+melody: r:2 g4:0.5 a4:0.5 b4:1 |
+        c5:2 e5:1.5 d5:0.5 | d5:3 r:0.5 b4:0.5 | c5:1 e5:2.5 d5:0.5 | c5:2 a4:2 |
+        e4:1 c5:2.5 d5:0.5 | d5:1 b4:0.5 d5:0.5- d5:1 c5:0.5 b4:0.5 | a4:1 c5:1 d5:1 c5:1 | c5:1.5 g4:2.5 |
+
+hook: Saltwater Halo
+type: Chorus
+tempo: 64-78
+feel: bittersweet
+style: ballad
+chords: Am | Fmaj7 | C | G | Dm7 | Am7 | Fmaj7 Esus4 | Am
+melody: e5:1 c5:0.5 a4:0.5- a4:1 c5:0.5 b4:0.5 | c5:2 a4:1 r:1 | e5:1 c5:0.5 g4:0.5- g4:1 c5:0.5 b4:0.5 | d5:3 r:1 |
+        r:0.5 f4:0.5 d5:2 c5:1 | e5:2 d5:1 c5:1 | c5:1 a4:1 b4:1 a4:1 | c5:3 r:1 |
+
+hook: Weightless Hours
+type: Chorus
+tempo: 60-72
+feel: majestic
+style: ballad
+chords: Fmaj7 | G | Em7 | Am7 | Fmaj7 | G | Am7 Dm7 | Gsus4 G C C
+melody: a4:1.5 c5:0.5- c5:1 e5:1 | d5:2 b4:1 g4:1 | g4:1.5 b4:0.5- b4:1 d5:1 | c5:2 a4:1 r:1 |
+        r:0.5 g4:0.5 e5:2.5 c5:0.5 | d5:1 b4:0.5 d5:0.5- d5:2 | e5:1 c5:1 a4:1 c5:1 | c5:1 b4:1 c5:2 |
+
+hook: After the Thaw
+type: Chorus
+tempo: 70-84
+feel: tender
+style: ballad
+chords: C | Am7 | Dm7 | Gsus4 G | Em7 | Am7 | Fmaj7 Gsus4 | C
+melody: r:0.5 g4:0.5 c5:0.5 e5:0.5- e5:1 d5:0.5 c5:0.5 | c5:2 r:1 a4:0.5 c5:0.5 | d5:1.5 c5:0.5 a4:1 f4:1 | c5:2 b4:2 |
+        g4:1.5 e5:2.5 | e5:1.5 d5:0.5 c5:1 a4:1 | a4:1 c5:1 d5:2 | e5:3 r:1 |
+
+hook: Lowland Choir
+type: Chorus
+tempo: 76-90
+feel: uplifting
+style: ballad
+leadin: yes
+chords: Gsus4 | C | G | Am | Fmaj9 | C | G | Fmaj7 G | C
+melody: r:2.5 g4:0.5 c5:0.5 d5:0.5 |
+        e5:1.5 d5:0.5 c5:2 | d5:1.5 b4:0.5 g4:2 | r:0.5 a4:0.5 c5:0.5 e5:0.5- e5:1 d5:0.5 c5:0.5 | c5:1 a4:1 g4:2 |
+        r:0.5 g4:0.5 e5:2.5 d5:0.5 | d5:2 b4:1 c5:0.5 d5:0.5 | e5:1 c5:1 d5:1 b4:1 | c5:4 |
+
+hook: Quiet Turning
+type: Bridge
+tempo: 62-76
+feel: hushed
+style: ballad
+chords: Fmaj7 | Fmaj7 | Am7 | Am7 | Dm7 | Em7 | Fmaj7 | Gsus4 G
+melody: r:1 a4:0.5 c5:0.5 e5:2 | r:2 c5:0.5 a4:0.5 f4:1 | g4:1.5 a4:0.5 c5:2 | r:2 e4:0.5 a4:0.5 c5:1 |
+        d5:2.5 c5:0.5 a4:1 | b4:1 d5:1 e5:2 | e5:1 c5:1 a4:1 c5:1 | c5:2 b4:2 |
+
+hook: Borrowed Midnight
+type: Bridge
+tempo: 66-80
+feel: dramatic
+style: ballad
+chords: Ab | Bb | C | C | Ab | Bb | Gsus4 | G
+melody: c5:1.5 eb5:0.5 c5:1 ab4:1 | d5:3 r:1 | e5:2 c5:1 g4:1 | c5:2 r:1.5 c5:0.5 |
+        eb5:1.5 c5:0.5 ab4:2 | d5:1.5 bb4:0.5 f4:2 | g4:1 c5:1 d5:2 | b4:4 |
+
+hook: Ashen Interval
+type: Bridge
+tempo: 60-72
+feel: sombre
+style: ballad
+leadin: yes
+chords: E | Am | Em7 | Fmaj7 | Cmaj7 | Dm7 | Am7 | Bb | Gsus4 G
+melody: r:3 g#4:0.5 b4:0.5 |
+        c5:2.5 b4:0.5 a4:1 | g4:1.5 a4:0.5 b4:2 | r:0.5 a4:0.5 c5:0.5 e5:0.5- e5:1 d5:0.5 c5:0.5 | b4:3 r:1 |
+        r:0.5 f4:0.5 a4:0.5 d5:0.5- d5:1 c5:0.5 a4:0.5 | c5:1.5 b4:0.5 g4:2 | f4:1 bb4:1 d5:2 | d5:2 b4:2 |
+
+hook: Second Horizon
+type: Bridge
+tempo: 74-90
+feel: soaring
+style: ballad
+chords: F | G | Am | Em7 | Fmaj7 | G | Dm7 Em7 | Gsus4
+melody: r:0.5 f4:0.5 a4:0.5 c5:0.5- c5:2 | b4:1.5 a4:0.5 g4:2 | r:0.5 a4:0.5 c5:0.5 e5:0.5- e5:2 | d5:1.5 c5:0.5 b4:2 |
+        r:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 e5:1 | d5:3 r:0.5 b4:0.5 | a4:1 c5:1 b4:1 d5:1 | c5:2.5 d5:1.5 |

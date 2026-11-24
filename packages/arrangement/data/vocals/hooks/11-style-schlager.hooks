@@ -1,0 +1,240 @@
+# Schlager / Europop: 8 verses, 6 pre-choruses, 7 choruses and 4 bridges written for the "schlager" style.
+# Key of C major / A minor, sung pitch (C4 = middle C). Discofox tempos, 2-bar phrases, circle progressions.
+
+# ---- Verses (G3-G4) ----
+
+hook: Balcony Geraniums
+type: Verse
+tempo: 118-132
+feel: nostalgic
+style: schlager
+chords: C | G | Am | Em | F | C | Dm7 | G
+melody: r:0.5 g3:0.5 c4:0.5 d4:0.5 e4:1 e4:0.5 d4:0.5 | d4:1.5 b3:0.5 g3:2 | r:0.5 a3:0.5 c4:0.5 d4:0.5 e4:1 g4:0.5 e4:0.5 | e4:3 r:1 |
+        r:0.5 f4:0.5 f4:0.5 e4:0.5 f4:1 c4:0.5 d4:0.5 | e4:1.5 d4:0.5 c4:2 | r:0.5 d4:0.5 f4:0.5 e4:0.5 d4:1 c4:1 | d4:3 r:1 |
+
+hook: Postcard Weather
+type: Verse
+tempo: 112-126
+feel: wistful
+style: schlager
+chords: Am | E7 | Am | A7 | Dm | G | C E7 | Am
+melody: a3:1 c4:0.5 e4:1 e4:0.5 d4:0.5 c4:0.5 | b3:1.5 g#3:0.5 e4:2 | r:0.5 c4:0.5 b3:0.5 a3:0.5 c4:1 e4:1 | e4:1.5 c#4:0.5 e4:1 g4:1 |
+        f4:2 e4:0.5 d4:1.5 | d4:0.5 b3:0.5 d4:1 g4:2 | e4:1 c4:1 b3:1 g#3:1 | a3:3 r:1 |
+
+hook: Ferris Wheel Promises
+type: Verse
+tempo: 120-134
+feel: bouncy
+style: schlager
+leadin: yes
+chords: G | C | Am | F | G | C | E7 | Am F | G
+melody: r:3 g3:0.5 c4:0.5 | e4:1 e4:0.5 d4:0.5 e4:1 g4:1 | e4:0.5 c4:1 a3:0.5 a3:2 | r:0.5 a3:0.5 c4:0.5 d4:0.5 f4:1 e4:0.5 d4:0.5 | d4:3 r:1 |
+        r:0.5 e4:0.5 g4:0.5 g4:0.5 g4:1 e4:0.5 c4:0.5 | d4:1.5 b3:0.5 g#3:2 | a3:1 c4:1 c4:1 a3:1 | b3:2 d4:2 |
+
+hook: Accordion Sunday
+type: Verse
+tempo: 110-124
+feel: swaying
+style: schlager
+chords: C | A7 | Dm | G7 | C | A7 | Dm | G7
+melody: r:1 e4:0.5 f4:0.5 g4:1 e4:1 | e4:2 c#4:1 e4:1 | d4:1.5 f4:0.5 a3:2 | r:1 b3:0.5 c4:0.5 d4:1 f4:1 |
+        e4:1.5 g4:0.5 g4:1 e4:1 | c#4:1 e4:1 g4:2 | f4:0.5 e4:0.5 d4:1 a3:1 d4:1 | b3:3 r:1 |
+
+hook: Sugarloaf Morning
+type: Verse
+tempo: 116-130
+feel: yearning
+style: schlager
+chords: Am | Dm | G | C | F | Dm | E7 | E7
+melody: r:0.5 e4:0.5 e4:0.5 c4:0.5 e4:1 a3:1 | d4:1.5 f4:0.5 f4:1 d4:1 | g4:1.5 f4:0.5 d4:1 b3:1 | c4:0.5 e4:1 e4:2.5 |
+        r:0.5 f4:0.5 a3:0.5 c4:0.5 f4:1 e4:1 | d4:1.5 f4:0.5 a3:2 | r:0.5 b3:0.5 d4:0.5 e4:0.5 g#3:1 b3:1 | e4:3 r:1 |
+
+hook: Rowboat Daydream
+type: Verse
+tempo: 122-135
+feel: carefree
+style: schlager
+chords: F | C | G | Am | F | C | Dm | Gsus4 G
+melody: c4:0.5 c4:0.5 f4:1 f4:0.5 e4:0.5 f4:1 | g4:0.5 e4:1.5 r:1 c4:0.5 d4:0.5 | d4:1 e4:0.5 d4:0.5 b3:1 g3:1 | a3:3 r:1 |
+        c4:0.5 f4:0.5 f4:1 c4:1 a3:1 | g4:2 e4:1 c4:1 | f4:1.5 e4:0.5 d4:1 a3:1 | c4:2 b3:2 |
+
+hook: Silver Funfair
+type: Verse
+tempo: 120-135
+feel: glowing
+style: schlager
+chords: C | E7 | Am | C7 | F | G | Em Am | Dm G
+melody: r:0.5 g3:0.5 c4:0.5 e4:0.5 g4:1.5 e4:0.5 | e4:1 d4:0.5 b3:1 g#3:1.5 | a3:2 r:1 c4:0.5 c4:0.5 | e4:1 g4:1 g4:1 bb3:1 |
+        a3:1.5 c4:0.5 f4:2 | r:0.5 d4:0.5 e4:0.5 f4:0.5 g4:1 d4:1 | e4:1 g4:0.5 e4:0.5 e4:1 c4:1 | d4:1 f4:1 d4:2 |
+
+hook: Sparkler Parade
+type: Verse
+tempo: 115-130
+feel: dramatic
+style: schlager
+leadin: yes
+chords: E7 | Am | Dm | G | C | F | Dm | E7 | Am
+melody: r:2 e4:0.5 d4:0.5 c4:0.5 b3:0.5 | c4:1.5 a3:0.5 a3:1 r:0.5 a3:0.5 | d4:0.5 f4:1 e4:0.5 f4:1 d4:1 | b3:2 r:1 b3:0.5 c4:0.5 |
+        e4:1.5 d4:0.5 e4:1 g4:1 | f4:1.5 e4:0.5 c4:2 | r:0.5 a3:0.5 d4:0.5 e4:0.5 f4:1 a3:1 | g#3:1 b3:1 d4:1 b3:1 | a3:3 r:1 |
+
+# ---- Pre-choruses (end on the dominant) ----
+
+hook: Lantern Staircase
+type: Pre-chorus
+tempo: 118-132
+feel: lifting
+style: schlager
+chords: F | G | Em | Am | Dm7 | Em | Fmaj7 | G
+melody: r:0.5 c4:0.5 f4:0.5 g4:0.5 a4:1 a4:0.5 g4:0.5 | g4:1.5 d4:0.5 d4:2 | r:0.5 e4:0.5 g4:0.5 a4:0.5 b4:1 b4:0.5 a4:0.5 | a4:1.5 e4:0.5 e4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 c5:1 c5:0.5 a4:0.5 | b4:1.5 g4:0.5 g4:1 b4:1 | c5:1 c5:0.5 d5:0.5 e5:1 c5:1 | d5:4 |
+
+hook: Clocktower Countdown
+type: Pre-chorus
+tempo: 112-126
+feel: tense
+style: schlager
+chords: Dm | Am | Dm | E7 | F | C | Dm | E7
+melody: a3:0.5 d4:0.5 f4:1 f4:0.5 e4:0.5 f4:1 | e4:2 c4:1 r:1 | d4:0.5 f4:0.5 a4:1 a4:0.5 g4:0.5 a4:1 | g#4:2 e4:1 r:1 |
+        a4:0.5 c5:0.5 c5:1 c5:0.5 b4:0.5 c5:1 | e5:2 c5:1 g4:1 | f4:0.5 a4:0.5 d5:1 d5:0.5 c5:0.5 a4:1 | b4:4 |
+
+hook: Thousand Paper Stars
+type: Pre-chorus
+tempo: 124-135
+feel: building
+style: schlager
+leadin: yes
+chords: G | Am | F | C | G | Am | F | Dm7 | Gsus4 G
+melody: r:3 e4:0.5 g4:0.5 | a4:1.5 g4:0.5 a4:1 c5:1 | c5:2 a4:0.5 g4:0.5 f4:1 | e4:1 g4:1 g4:1 e4:0.5 g4:0.5 | b4:1.5 a4:0.5 b4:1 d5:1 |
+        c5:1 b4:0.5 a4:0.5 e5:2 | c5:1.5 a4:0.5 a4:1 c5:1 | d5:1 e5:0.5 d5:0.5 c5:1 d5:1 | c5:2 d5:2 |
+
+hook: Midsummer Fever
+type: Pre-chorus
+tempo: 120-134
+feel: urgent
+style: schlager
+chords: Am | Em | F | C | Dm | E7 | F | G7
+melody: r:0.5 c5:0.5 c5:0.5 b4:0.5 a4:1 e4:1 | g4:1.5 b4:0.5 b4:1 g4:1 | r:0.5 c5:0.5 c5:0.5 b4:0.5 a4:1 f4:1 | g4:1.5 e4:0.5 e4:2 |
+        r:0.5 d4:0.5 f4:0.5 a4:0.5 d5:1 c5:0.5 a4:0.5 | b4:1.5 g#4:0.5 e4:2 | a4:0.5 c5:1 d5:0.5 c5:1 e5:1 | d5:3 r:1 |
+
+hook: Chandelier Steps
+type: Pre-chorus
+tempo: 116-128
+feel: climbing
+style: schlager
+chords: F | G | Em | A7 | Dm | G | C | E7
+melody: c4:1 f4:0.5 a4:1 a4:0.5 g4:0.5 f4:0.5 | g4:1.5 d4:0.5 d4:1 r:1 | e4:1 g4:0.5 b4:1 b4:0.5 a4:0.5 g4:0.5 | a4:1.5 e4:0.5 c#5:1 a4:1 |
+        d5:1.5 a4:0.5 f4:1 a4:1 | b4:1.5 d5:0.5 d5:1 b4:1 | c5:1 e5:1 e5:1 c5:1 | d5:1 b4:1 g#4:2 |
+
+hook: Glitterball Promise
+type: Pre-chorus
+tempo: 122-135
+feel: euphoric
+style: schlager
+leadin: yes
+chords: C | F | G | Em | Am | Dm7 | G | Bb | G
+melody: r:2 g4:0.5 g4:0.5 a4:0.5 g4:0.5 | a4:1 c5:1 c5:1.5 a4:0.5 | b4:1 d5:0.5 b4:0.5 g4:2 | r:0.5 e4:0.5 g4:0.5 a4:0.5 b4:1 b4:0.5 a4:0.5 | c5:1.5 b4:0.5 a4:2 |
+        r:0.5 a4:0.5 c5:0.5 d5:0.5 c5:1 a4:1 | b4:1.5 d5:0.5 d5:2 | d5:1.5 bb4:0.5 f4:1 bb4:1 | b4:2 d5:2 |
+
+# ---- Choruses (peak in bars 5-7, land) ----
+
+hook: Riviera Gold
+type: Chorus
+tempo: 120-134
+feel: anthem
+style: schlager
+chords: C | G | Am | F | C | G | F G | C
+melody: c5:1.5 b4:0.5 c5:1 g4:1 | b4:0.5 d5:1 b4:0.5 g4:2 | c5:1.5 b4:0.5 a4:1 e4:1 | f4:0.5 a4:1 c5:2.5 |
+        r:0.5 c5:0.5 e5:0.5 e5:1 d5:0.5 e5:1 | d5:1.5 b4:0.5 b4:1 d5:1 | c5:1 a4:1 b4:1 d5:1 | c5:4 |
+
+hook: Rosewater Midnight
+type: Chorus
+tempo: 114-128
+feel: heartfelt
+style: schlager
+chords: C | E7 | Am | A7 | Dm | G7 | F G | C
+melody: r:1 g4:0.5 c5:0.5 e5:1 d5:0.5 c5:0.5 | b4:1.5 g#4:0.5 b4:1 d5:1 | c5:2 r:0.5 a4:0.5 c5:0.5 e5:0.5 | e5:1 c#5:1 a4:2 |
+        d5:1.5 e5:0.5 d5:1 a4:1 | b4:0.5 d5:1 e5:0.5 d5:1 b4:1 | c5:1.5 a4:0.5 b4:1 d5:1 | c5:4 |
+
+hook: Sequin Heartbeat
+type: Chorus
+tempo: 124-135
+feel: dramatic
+style: schlager
+leadin: yes
+chords: E7 | Am | F | C | G | Am | F | E7 | Am
+melody: r:2 b4:0.5 b4:0.5 c5:0.5 b4:0.5 | a4:1.5 e4:0.5 a4:1 c5:1 | c5:0.5 a4:1 f4:2.5 | r:0.5 g4:0.5 g4:0.5 a4:0.5 g4:1 c5:1 | b4:1.5 a4:0.5 g4:1 r:0.5 b4:0.5 |
+        c5:1 e5:1 e5:1.5 d5:0.5 | c5:1.5 a4:0.5 c5:1 d5:1 | e5:1 d5:0.5 b4:0.5 b4:1 g#4:1 | a4:4 |
+
+hook: Velvet Carousel
+type: Chorus
+tempo: 118-130
+feel: soaring
+style: schlager
+chords: F | G | Em | A7 | Dm | G7 | C | C
+melody: a4:1.5 c5:0.5 c5:1 a4:0.5 c5:0.5 | d5:1.5 b4:0.5 g4:2 | g4:1.5 b4:0.5 b4:1 g4:0.5 b4:0.5 | c#5:1.5 a4:0.5 e4:2 |
+        r:0.5 d5:0.5 d5:0.5 e5:0.5 d5:1 a4:1 | d5:1.5 e5:0.5 d5:1 b4:1 | c5:1 e5:2 d5:1 | c5:4 |
+
+hook: Moonlit Boulevard
+type: Chorus
+tempo: 110-124
+feel: swaying
+style: schlager
+chords: C | Am | D7 | G | C | Am | Dm7 G7 | C
+melody: r:0.5 g4:0.5 a4:0.5 c5:0.5 d5:2 | c5:1 a4:1 e4:2 | r:0.5 f#4:0.5 a4:0.5 c5:0.5 c5:1 a4:0.5 f#4:0.5 | g4:3 r:1 |
+        r:0.5 c5:0.5 d5:0.5 e5:0.5 e5:1 d5:0.5 c5:0.5 | e5:1.5 d5:0.5 c5:1 a4:1 | c5:1 d5:0.5 a4:0.5 b4:1 d5:1 | c5:4 |
+
+hook: Harbour Firework
+type: Chorus
+tempo: 122-135
+feel: driving
+style: schlager
+chords: Am | Dm | G | C | Fmaj7 | Dm7 | E7 | Am
+melody: r:0.5 a4:0.5 c5:0.5 a4:0.5 e4:1 a4:1 | f4:0.5 a4:1 d5:1 c5:0.5 a4:1 | b4:1.5 g4:0.5 b4:1 d5:1 | c5:2.5 r:0.5 c5:0.5 d5:0.5 |
+        e5:1.5 c5:0.5 c5:1 a4:1 | d5:1 e5:0.5 d5:0.5 c5:1 a4:1 | b4:1.5 d5:0.5 d5:1 g#4:1 | a4:3 r:1 |
+
+hook: Sunflower Rendezvous
+type: Chorus
+tempo: 123-135
+feel: celebratory
+style: schlager
+chords: C | F | Dm | G | Em | Am | F G | C
+melody: e4:0.5 g4:0.5 c5:1.5 c5:0.5 d5:0.5 c5:0.5- | c5:1 a4:1 f4:2 | r:0.5 d4:0.5 f4:0.5 a4:0.5 d5:1.5 c5:0.5 | b4:3 r:1 |
+        r:0.5 g4:0.5 b4:0.5 e5:1 e5:0.5 d5:0.5 b4:0.5 | c5:1.5 e5:0.5 e5:2 | c5:1.5 d5:0.5 d5:1 g4:1 | e5:4 |
+
+# ---- Bridges (contrast, lead back) ----
+
+hook: Last Ferry Home
+type: Bridge
+tempo: 114-128
+feel: reflective
+style: schlager
+chords: F | Fm | C | Am | Dm | Em | F | G
+melody: a4:1.5 g4:0.5 f4:1 c5:1 | c5:2 ab4:1 g4:1 | g4:1.5 e4:0.5 e4:2 | r:0.5 a4:0.5 c5:0.5 b4:0.5 a4:1 e4:1 |
+        f4:1.5 a4:0.5 d5:2 | e5:1.5 d5:0.5 b4:1 g4:1 | c5:1 a4:0.5 c5:0.5 c5:1 d5:1 | d5:2 b4:2 |
+
+hook: Promenade Rain
+type: Bridge
+tempo: 110-124
+feel: bittersweet
+style: schlager
+chords: Am | Em | F | C | Dm | Am | Bb | G
+melody: r:1 e4:0.5 a4:0.5 c5:1 b4:0.5 a4:0.5 | b4:2 g4:1 e4:1 | r:1 f4:0.5 a4:0.5 c5:1 d5:0.5 c5:0.5 | g4:2 r:1 g4:0.5 a4:0.5 |
+        a4:1.5 f4:0.5 d5:1 c5:0.5 a4:0.5 | c5:1.5 b4:0.5 a4:1 e4:1 | f4:1 bb4:1 d5:1.5 c5:0.5 | b4:4 |
+
+hook: Borrowed Sunrise
+type: Bridge
+tempo: 118-132
+feel: majestic
+style: schlager
+chords: Ab | Bb | C | Am | Ab | Bb | Dm | G
+melody: c5:1.5 eb5:0.5 c5:1 ab4:1 | bb4:1.5 d5:0.5 d5:2 | e5:1.5 d5:0.5 c5:1 g4:1 | a4:3 r:1 |
+        r:0.5 ab4:0.5 c5:0.5 eb5:0.5 eb5:1 c5:1 | d5:1.5 c5:0.5 bb4:1 f4:1 | a4:1.5 f4:0.5 d5:2 | d5:1 c5:1 b4:2 |
+
+hook: Stillness Before Dawn
+type: Bridge
+tempo: 120-134
+feel: tender
+style: schlager
+chords: Em | Am | Dm | G | Em | A7 | Dm | G7
+melody: r:0.5 b3:0.5 e4:0.5 g4:0.5 b4:1.5 a4:0.5 | a4:1.5 e4:0.5 e4:2 | r:0.5 d4:0.5 f4:0.5 a4:0.5 d5:1 c5:1 | b4:1.5 a4:0.5 g4:2 |
+        r:0.5 g4:0.5 b4:0.5 e5:1.5 d5:1 | c#5:1.5 e5:0.5 e5:1 g4:1 | f4:1 a4:1 d5:2 | b4:1 a4:1 g4:2 |
