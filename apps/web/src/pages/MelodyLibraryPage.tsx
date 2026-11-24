@@ -65,6 +65,7 @@ export function MelodyLibraryPage() {
   const [substyle, setSubstyle] = useState('');
   const [original, setOriginal] = useState<MelodyFilters['original']>('');
   const [remix, setRemix] = useState<MelodyFilters['remix']>('');
+  const [content, setContent] = useState<'melody' | 'rhythm'>('melody');
   const [tempoText, setTempoText] = useState('');
   const [query, setQuery] = useState('');
   const [q, setQ] = useState('');
@@ -83,7 +84,7 @@ export function MelodyLibraryPage() {
 
   const tempo = /^\d{2,3}$/u.test(tempoText.trim()) ? Number(tempoText.trim()) : undefined;
   const tempoInvalid = tempoText.trim() !== '' && tempo === undefined;
-  const filters: MelodyFilters = { kind, type, source: kind === 'remix' ? source : '', range, feel: kind === 'hooks' ? feel : '', style: kind === 'hooks' ? style : '', substyle: kind === 'hooks' ? substyle : '', tempo, q, original, remix };
+  const filters: MelodyFilters = { kind, type, source: kind === 'remix' ? source : '', range: kind === 'remix' && content === 'rhythm' ? '' : range, feel: kind === 'hooks' ? feel : '', style: kind === 'hooks' ? style : '', substyle: kind === 'hooks' ? substyle : '', tempo, q, original: kind === 'remix' && content === 'rhythm' ? '' : original, remix, content: kind === 'remix' ? content : '' };
   const list = useInfiniteQuery({
     queryKey: ['melody-library', 'list', filters],
     queryFn: ({ pageParam, signal }) => melodiesApi.list(filters, pageParam, signal),
@@ -162,6 +163,33 @@ export function MelodyLibraryPage() {
             </button>
           ))}
         </div>
+        {kind === 'remix' ? (
+          <div className="flex rounded-full border border-black/60 bg-[#2a2b30] p-0.5" role="radiogroup" aria-label="Melody or rhythm">
+            {(
+              [
+                ['melody', 'Melody and rhythm', 'Transcribed melodies with their chords'],
+                ['rhythm', 'Rhythm only', 'Only the rhythm was transcribed: one pitch, no chords. Songs take the rhythm and sing another precedent’s melody and chords on it.'],
+              ] as const
+            ).map(([v, label, hint]) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={content === v}
+                title={hint}
+                onClick={() => {
+                  if (v === content || !leaveOk()) return;
+                  dirty.current = false;
+                  setContent(v);
+                  setSelected(undefined);
+                }}
+                className={`h-6 rounded-full px-3 text-[12px] ${content === v ? 'bg-white text-black' : 'text-white/75 hover:text-white'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <select value={type} onChange={(e) => setType(e.target.value)} aria-label="Section" className={FIELD}>
           <option value="">All sections</option>
           {(facets?.types ?? []).map((t) => (
@@ -210,6 +238,7 @@ export function MelodyLibraryPage() {
             </select>
           </>
         )}
+        {kind === 'remix' && content === 'rhythm' ? null : (
         <select value={range} onChange={(e) => setRange(e.target.value as MelodyFilters['range'])} aria-label="Range" className={FIELD}>
           <option value="">Any range</option>
           {RANGES.map((r) => (
@@ -218,7 +247,8 @@ export function MelodyLibraryPage() {
             </option>
           ))}
         </select>
-        {flagSelect('Original', original, setOriginal)}
+        )}
+        {kind === 'remix' && content === 'rhythm' ? null : flagSelect('Original', original, setOriginal)}
         {flagSelect('Remix', remix, setRemix)}
         <input
           value={tempoText}
@@ -297,11 +327,15 @@ function MelodyRow({ item: i, active, onClick }: { item: MelodyListItem; active:
         <div className="truncate text-[11px] text-white/55">{sourceLabel(i.source)}{i.source.artist ? ` · ${i.source.artist}` : ''}</div>
         <div className="mt-0.5 flex items-center gap-1.5">
           <span className="min-w-0 truncate text-[11px] text-white/40">
-            {i.type} · {i.tempoMin !== undefined ? `${i.tempoMin}–${i.tempoMax} bpm` : `${i.tempo} bpm`} · {i.range} st{i.style ? ` · ${genreLabel(i.style)}${i.substyle ? ` / ${i.substyle}` : ''}` : ''}{i.feel ? ` · ${i.feel}` : ''}
+            {i.type} · {i.tempoMin !== undefined ? `${i.tempoMin}–${i.tempoMax} bpm` : `${i.tempo} bpm`}{i.rhythmOnly ? '' : ` · ${i.range} st`}{i.style ? ` · ${genreLabel(i.style)}${i.substyle ? ` / ${i.substyle}` : ''}` : ''}{i.feel ? ` · ${i.feel}` : ''}
             {i.bars === 9 ? ' · lead-in' : ''}
           </span>
           <span className="ml-auto flex shrink-0 gap-1">
-            <FlagBadge on={i.useOriginal}>Original</FlagBadge>
+            {i.rhythmOnly ? (
+              <span className="rounded-full bg-sky-300/85 px-1.5 py-px text-[10px] font-semibold text-black">Rhythm only</span>
+            ) : (
+              <FlagBadge on={i.useOriginal}>Original</FlagBadge>
+            )}
             <FlagBadge on={i.useRemix}>Remix</FlagBadge>
           </span>
         </div>
@@ -447,6 +481,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
           <h2 className="flex items-center gap-2 text-[18px] font-semibold text-white">
             <span className="truncate">{e.name}</span>
             {e.edited ? <span className="rounded-full bg-[#f5b942]/90 px-2 py-px text-[11px] font-semibold text-black">edited</span> : null}
+            {e.rhythmOnly ? <span className="rounded-full bg-sky-300/85 px-2 py-px text-[11px] font-semibold text-black">Rhythm only</span> : null}
           </h2>
           <p className="text-[13px] text-white/70">{sourceLabel(e.source)}</p>
           <p className="text-[12px] text-white/50">
@@ -494,7 +529,13 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
             className={`${FIELD} w-[200px]`}
           />
         </label>
-        <Switch label="Original" hint="Used whole, exactly as written" on={draft.useOriginal} onChange={(v) => setDraft({ ...draft, useOriginal: v })} />
+        <Switch
+          label="Original"
+          hint={e.rhythmOnly ? 'Rhythm only: one pitch and no chords, so it cannot be sung whole' : 'Used whole, exactly as written'}
+          on={draft.useOriginal}
+          disabled={e.rhythmOnly}
+          onChange={(v) => setDraft({ ...draft, useOriginal: v })}
+        />
         <Switch label="Remix" hint="Used in mixing: the rhythm of one melody with the shape and chords of another" on={draft.useRemix} onChange={(v) => setDraft({ ...draft, useRemix: v })} />
       </div>
       {songWarning ? (
@@ -556,7 +597,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
                 scrollable={scrollable}
                 />
               ) : (
-                <p className="py-1.5 pl-[44px] text-[12px] text-white/45">This rhythm pattern has no chords: it gives the rhythm only.</p>
+                <p className="py-1.5 pl-[44px] text-[12px] text-white/45">Rhythm only: one pitch and no chords. Songs take this rhythm and sing another precedent’s melody and chords on it.</p>
               )}
               <HumPianoRoll
                 melody={cur.melody}
@@ -600,9 +641,9 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
   );
 }
 
-function Switch({ label, hint, on, onChange }: { label: string; hint: string; on: boolean; onChange(on: boolean): void }) {
+function Switch({ label, hint, on, disabled = false, onChange }: { label: string; hint: string; on: boolean; disabled?: boolean; onChange(on: boolean): void }) {
   return (
-    <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)} title={hint} className="flex items-center gap-2">
+    <button type="button" role="switch" aria-checked={on} disabled={disabled} onClick={() => onChange(!on)} title={hint} className="flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40">
       <span className={`relative h-5 w-9 rounded-full transition-colors ${on ? 'bg-emerald-400' : 'bg-white/20'}`}>
         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${on ? 'left-[18px]' : 'left-0.5'}`} />
       </span>

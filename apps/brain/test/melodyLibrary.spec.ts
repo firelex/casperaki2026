@@ -146,6 +146,17 @@ describe('melody library: the committed banks', () => {
     expect((await get('/api/melody-library/chord-options', { method: 'POST', body: { melody, bars: 8, slot: 16 } })).status).toBe(400);
   });
 
+  it('marks the rhythm-only entries (no chords, one pitch) and filters melody or rhythm', async () => {
+    const rhythm = await get('/api/melody-library?kind=remix&content=rhythm&limit=200');
+    expect(rhythm.body.total).toBe(150);
+    expect(rhythm.body.items.every((i: { rhythmOnly: boolean; bank: string; range: number }) => i.rhythmOnly && i.bank.startsWith('rhythmic-') && i.range === 0)).toBe(true);
+    const melody = await get('/api/melody-library?kind=remix&content=melody&limit=200');
+    expect(melody.body.total).toBe(142);
+    expect(melody.body.items.some((i: { rhythmOnly: boolean }) => i.rhythmOnly)).toBe(false);
+    expect((await get('/api/melody-library?kind=hooks&content=rhythm')).body.total).toBe(0);
+    expect((await get('/api/melody-library?kind=remix&content=chords')).status).toBe(400);
+  });
+
   it('rejects bad queries and unknown banks or ids', async () => {
     expect((await get('/api/melody-library')).status).toBe(400);
     expect((await get('/api/melody-library?kind=remix&feel=anthem')).status).toBe(400);
@@ -225,6 +236,10 @@ describe('melody library: edits', () => {
     const r = await req('/api/melody-library/drLuke/18', { method: 'PUT', body: { melody: overlapping, chords: before.chords, artist: '', useOriginal: false, useRemix: true } });
     expect(r.status).toBe(422);
     expect(r.body.problems.join(' ')).toMatch(/overlaps/u);
+    const rhythm = (await req('/api/melody-library/rhythmic-latin/10')).body;
+    const sungWhole = await req('/api/melody-library/rhythmic-latin/10', { method: 'PUT', body: { melody: rhythm.melody, chords: [], artist: '', useOriginal: true, useRemix: true } });
+    expect(sungWhole.status).toBe(400);
+    expect(sungWhole.body.message ?? JSON.stringify(sungWhole.body)).toMatch(/rhythm only/);
     const empty = await req('/api/melody-library/drLuke/18', { method: 'PUT', body: { melody: [], chords: before.chords, artist: '', useOriginal: false, useRemix: true } });
     expect(empty.status).toBe(422);
     const wrongChords = await req('/api/melody-library/drLuke/18', { method: 'PUT', body: { melody: before.melody, chords: ['C', 'G'], artist: '', useOriginal: false, useRemix: true } });

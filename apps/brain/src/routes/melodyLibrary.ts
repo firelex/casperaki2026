@@ -1,6 +1,6 @@
 // The melody library (Melodies page), for any signed-in user (permissions come later).
 //
-//   GET    /api/melody-library?kind=hooks|remix&source&range&type&tempo&feel&style&substyle&original&remix&q&offset&limit
+//   GET    /api/melody-library?kind=hooks|remix&source&range&type&tempo&feel&style&substyle&original&remix&content&q&offset&limit
 //          → { total, items, facets, noHooksYet? }   a page of entries (see melodies/melodyLibrary.ts)
 //   GET    /api/melody-library/:bank/:id            one entry as notes and half-bar chords in beats, at sung pitch
 //   PUT    /api/melody-library/:bank/:id            save the whole edited entry { melody, chords, artist, useOriginal,
@@ -29,6 +29,7 @@ const ListQuery = z
     substyle: z.string().min(1).max(40).optional(),
     original: Flag.optional(),
     remix: Flag.optional(),
+    content: z.enum(['melody', 'rhythm']).optional(),
     q: z.string().max(200).optional(),
     offset: z.coerce.number().int().min(0).optional(),
     limit: z.coerce.number().int().min(1).max(200).optional(),

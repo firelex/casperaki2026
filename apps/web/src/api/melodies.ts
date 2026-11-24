@@ -29,6 +29,8 @@ export interface MelodyListItem {
   readonly useOriginal: boolean;
   /** Used in mixing (rhythm of one entry, shape and chords of another). */
   readonly useRemix: boolean;
+  /** Only the rhythm was transcribed (one pitch, no chords): never sung whole. */
+  readonly rhythmOnly: boolean;
   readonly edited: boolean;
   readonly editedAt?: string;
   readonly editedBy?: string;
@@ -73,6 +75,8 @@ export interface MelodyFilters {
   /** Only entries with the flag on / off ('' = either). */
   readonly original: 'on' | 'off' | '';
   readonly remix: 'on' | 'off' | '';
+  /** Precedents: entries with a melody, or rhythm-only entries ('' = both). */
+  readonly content: 'melody' | 'rhythm' | '';
 }
 
 /** What Save sends: the whole edited entry at sung pitch, one chord per half bar. */
@@ -98,6 +102,7 @@ export function melodyListQuery(f: MelodyFilters, offset: number, limit = MELODY
   if (f.tempo !== undefined) qs.set('tempo', String(f.tempo));
   if (f.original) qs.set('original', f.original === 'on' ? '1' : '0');
   if (f.remix) qs.set('remix', f.remix === 'on' ? '1' : '0');
+  if (f.content) qs.set('content', f.content);
   if (f.q) qs.set('q', f.q);
   return qs.toString();
 }

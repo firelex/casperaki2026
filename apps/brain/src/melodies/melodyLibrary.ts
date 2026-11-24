@@ -113,6 +113,8 @@ export interface MelodyListItem {
   readonly useOriginal: boolean;
   /** Used in mixing (rhythm of one entry, shape and chords of another). */
   readonly useRemix: boolean;
+  /** Only the rhythm was transcribed (the rhythmic banks: every note on one pitch, no chords). Never sung whole. */
+  readonly rhythmOnly: boolean;
   /** Shown as edited on the Melodies page (the stored version is kept). */
   readonly edited: boolean;
   readonly editedAt?: string;
@@ -158,6 +160,8 @@ export interface MelodyQuery {
   readonly original?: boolean | undefined;
   /** Only entries with useRemix on (true) or off (false). */
   readonly remix?: boolean | undefined;
+  /** Only entries with a melody (pitches and chords) or only rhythm-only entries. */
+  readonly content?: 'melody' | 'rhythm' | undefined;
   readonly offset: number;
   readonly limit: number;
 }
@@ -318,6 +322,7 @@ export class MelodyLibrary {
       source: p.source,
       useOriginal: p.useOriginal,
       useRemix: p.useRemix,
+      rhythmOnly: Object.keys(raw.chords).length === 0,
       edited: edit !== undefined,
       ...(edit ? { editedAt: edit.editedAt, editedBy: edit.editedBy } : {}),
     };
@@ -343,6 +348,7 @@ export class MelodyLibrary {
         (query.style === undefined || (query.style === 'none' ? i.style === undefined : i.style === query.style)) &&
         (query.original === undefined || i.useOriginal === query.original) &&
         (query.remix === undefined || i.useRemix === query.remix) &&
+        (query.content === undefined || i.rhythmOnly === (query.content === 'rhythm')) &&
         (query.tempo === undefined ||
           (kind === 'hooks' ? query.tempo >= i.tempoMin! && query.tempo <= i.tempoMax! : Math.abs(i.tempo - query.tempo) <= REMIX_TEMPO_WINDOW)) &&
         (!q || i.name.toLowerCase().includes(q) || i.id.toLowerCase() === q || (i.source.title ?? '').toLowerCase().includes(q) || (i.source.artist ?? '').toLowerCase().includes(q) || (i.feel ?? '').toLowerCase().includes(q) || (i.style ?? '').toLowerCase().includes(q) || (i.substyle ?? '').toLowerCase().includes(q)),
@@ -390,6 +396,9 @@ export class MelodyLibrary {
         'invalid_body',
         want === 0 ? `chords: ${bankId}/${id} has no chords, got ${input.chords.length}.` : `chords: ${bankId}/${id} has ${bars} bars, so ${want} half-bar chords are needed, got ${input.chords.length}.`,
       );
+    }
+    if (input.useOriginal && Object.keys(raw.chords).length === 0) {
+      throw new MelodyLibraryError(400, 'invalid_body', `useOriginal: ${bankId}/${id} is rhythm only (one pitch, no chords), so it cannot be sung whole.`);
     }
     if (input.melody.length === 0) throw new MelodyLibraryError(422, 'invalid_entry', 'The edit was not saved: the melody has no notes', ['the melody has no notes']);
     const notes = input.melody.map((n) => ({ beat: n.beat, midi: n.midi - SUNG_OCTAVE, duration: n.duration }));

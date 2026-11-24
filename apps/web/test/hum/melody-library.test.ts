@@ -27,10 +27,10 @@ describe('melody library helpers', () => {
   });
 
   it('leaves empty filters out of the list query', () => {
-    const none = { kind: 'hooks', source: '', range: '', type: '', feel: '', style: '', substyle: '', tempo: undefined, q: '', original: '', remix: '' } as const;
+    const none = { kind: 'hooks', source: '', range: '', type: '', feel: '', style: '', substyle: '', tempo: undefined, q: '', original: '', remix: '', content: '' } as const;
     expect(melodyListQuery(none, 0)).toBe('kind=hooks&offset=0&limit=100');
-    expect(melodyListQuery({ ...none, kind: 'remix', source: 'song', range: 'wide', type: 'Verse', tempo: 120, q: 'love', original: 'off', remix: 'on' }, 100, 50)).toBe(
-      'kind=remix&offset=100&limit=50&source=song&range=wide&type=Verse&tempo=120&original=0&remix=1&q=love',
+    expect(melodyListQuery({ ...none, kind: 'remix', source: 'song', range: 'wide', type: 'Verse', tempo: 120, q: 'love', original: 'off', remix: 'on', content: 'melody' }, 100, 50)).toBe(
+      'kind=remix&offset=100&limit=50&source=song&range=wide&type=Verse&tempo=120&original=0&remix=1&content=melody&q=love',
     );
     expect(melodyListQuery({ ...none, style: 'edm', feel: 'urgent', substyle: 'house' }, 0)).toBe('kind=hooks&offset=0&limit=100&feel=urgent&style=edm&substyle=house');
   });
