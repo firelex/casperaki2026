@@ -103,6 +103,9 @@ async function complete(x) {
     }),
   });
   const body = await res.json();
+  // One known per-entry limit: a dense melody plus its chords can exceed the model's context. That entry is kept as it
+  // is, with the reason recorded; any other service error stops the run.
+  if (res.status === 500 && /context window/u.test(String(body.error))) return { form: formOf(x.id), written: [], failed: [String(body.error)] };
   if (!res.ok) throw new Error(`complete-melody-sauce: entry ${x.id}: the service answered ${res.status}: ${JSON.stringify(body).slice(0, 300)}`);
   const reasons = [];
   for (const c of body.completions) {
