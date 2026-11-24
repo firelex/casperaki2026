@@ -76,24 +76,38 @@ function describe(lane: string, pattern: FamilyPattern): Part | undefined {
   const family = familyOf(lane);
   if (family === 'Drums' || /vocal/iu.test(lane)) return undefined;
   const onsets = new Set<number>();
-  let events = 0;
-  let totalLength = 0;
   let mouldable = true;
   pattern.bars.forEach((bar, b) => {
     for (const [beat, evs] of Object.entries(bar.notes)) {
       if (!evs?.length) continue;
       onsets.add(b * 16 + Math.round(parseBarBeat(beat) * 4));
       for (const e of evs) {
-        events++;
-        totalLength += (e as { duration?: number }).duration ?? 0;
         if (UNMOULDABLE.has((e as { type?: string }).type ?? '')) mouldable = false;
       }
     }
   });
   if (onsets.size === 0) return undefined;
   const perBar = onsets.size / pattern.bars.length;
-  const sustained = totalLength / Math.max(1, events) >= CLASH_RULES.sustainedMeanBeats && perBar < CLASH_RULES.sustainedMaxPerBar;
-  return { lane, family, band: BAND[family], onsets, perBar, sustained, mouldable };
+  return { lane, family, band: BAND[family], onsets, perBar, sustained: isSustained(pattern), mouldable };
+}
+
+/** A part that holds its notes (a pad holding chords): long notes on average, few onsets a bar. */
+export function isSustained(pattern: FamilyPattern): boolean {
+  let onsets = 0;
+  let events = 0;
+  let totalLength = 0;
+  for (const bar of pattern.bars) {
+    for (const evs of Object.values(bar.notes)) {
+      if (!evs?.length) continue;
+      onsets++;
+      for (const e of evs) {
+        events++;
+        totalLength += (e as { duration?: number }).duration ?? 0;
+      }
+    }
+  }
+  const perBar = onsets / Math.max(1, pattern.bars.length);
+  return totalLength / Math.max(1, events) >= CLASH_RULES.sustainedMeanBeats && perBar < CLASH_RULES.sustainedMaxPerBar;
 }
 
 /** Keeps a bar's events at the given beats, each kept event held until the next kept beat (or its own end if later,
