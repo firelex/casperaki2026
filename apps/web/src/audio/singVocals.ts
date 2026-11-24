@@ -130,3 +130,10 @@ export function greySections(sections: readonly { readonly name: string }[], set
   if (!setting?.enabled || !status) return new Set(sections.map((_, i) => i));
   return unsungSections(sections, status);
 }
+
+/** Whether swapping the playing song for the version with these newly sung sections is worth it now: only when
+ *  one of them starts ahead of the playhead (it will be heard this time through). Each swap rebuilds the engine on
+ *  the audio thread, which can crackle, so sections already passed wait for the next play. */
+export function worthSwapping(newlySung: readonly string[], starts: readonly { segment: string; start: number }[], positionSec: number): boolean {
+  return starts.some((s) => newlySung.includes(s.segment) && s.start > positionSec);
+}

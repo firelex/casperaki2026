@@ -115,3 +115,15 @@ describe('greySections', () => {
     expect([...greySections(sections, { enabled: true, voice: 'v', takeNumbers: {} }, undefined)]).toEqual([0, 1, 2]);
   });
 });
+
+import { worthSwapping } from '../src/audio/singVocals';
+
+describe('worthSwapping', () => {
+  const starts = [{ segment: 'verse1', start: 0 }, { segment: 'chorus1', start: 20 }, { segment: 'verse2', start: 40 }];
+  it('swaps only for takes of sections still ahead of the playhead (heard this time through)', () => {
+    expect(worthSwapping(['chorus1'], starts, 10)).toBe(true);
+    expect(worthSwapping(['verse1'], starts, 10)).toBe(false); // being played already: next time
+    expect(worthSwapping(['verse1', 'verse2'], starts, 25)).toBe(true);
+    expect(worthSwapping([], starts, 0)).toBe(false);
+  });
+});

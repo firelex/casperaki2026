@@ -4,12 +4,12 @@ import { useCallback, useMemo } from 'react';
 
 import { playbackApi, type PlaybackPayload } from '../api/playback';
 import { BrainError } from '../api/client';
-import { vocalsApi } from '../api/vocals';
+import { vocalsApi, type SectionStatus } from '../api/vocals';
 import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
 import { fnv1a } from './fnv1a';
-import { hasVocalSettings, LEAD_VOCAL, singingTracks, singQueue, singRun, takesToken } from './singVocals';
+import { hasVocalSettings, LEAD_VOCAL, sectionStarts, singingTracks, singQueue, singRun, takesToken, worthSwapping } from './singVocals';
 import { useVocalsStatus, vocalsStatusKey } from './useVocalsStatus';
 import { vocalsProgress } from './vocalsProgress';
 import { useLivePosition, useLiveState } from './useLivePlayer';
@@ -100,14 +100,28 @@ async function singWhilePlaying(song: Song, baseKey: string, fetchPayload: (sign
   try {
     const status = await vocalsApi.status(song, run.signal);
     const queue = singQueue(song, status.tracks, livePlayer.position());
+    const starts = sectionStarts(song);
+    // Sections sung since the last swap; one swap at a time (each rebuilds the engine on the audio thread).
+    let pending: string[] = [];
+    let swapping = false;
+    const maybeSwap = (tracks: Record<string, SectionStatus[]>) => {
+      const live = livePlayer.getState();
+      if (swapping || live.status !== 'playing' || !live.key?.startsWith(baseKey)) return;
+      if (!worthSwapping(pending, starts, livePlayer.position())) return;
+      pending = [];
+      swapping = true;
+      void livePlayer
+        .play(`${baseKey}:v${fnv1a(takesToken(tracks))}`, fetchPayload, { seamless: true, keepMastering: true })
+        .finally(() => {
+          swapping = false;
+        });
+    };
     for (const [i, { track, segment }] of queue.entries()) {
       vocalsProgress.set({ text: `Singing ${segment}${track === LEAD_VOCAL ? '' : ` (${track})`} (${i + 1} of ${queue.length})` });
       await vocalsApi.sing(song, segment, track, run.signal);
       const now = await vocalsApi.status(song, run.signal);
-      const live = livePlayer.getState();
-      if (live.status === 'playing' && live.key?.startsWith(baseKey)) {
-        await livePlayer.play(`${baseKey}:v${fnv1a(takesToken(now.tracks))}`, fetchPayload, { seamless: true });
-      }
+      pending.push(segment);
+      maybeSwap(now.tracks);
       queryClient.setQueryData(vocalsStatusKey(song), now);
     }
     vocalsProgress.set({});

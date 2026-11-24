@@ -356,8 +356,10 @@ export class LivePlayer {
     key: string,
     fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
     /** seamless: keep playing while the new version loads, then switch at the same position.
-     *  reload: build `key` again even when it is the one loaded (its mix changed). */
-    opts: { seamless?: boolean; reload?: boolean } = {},
+     *  reload: build `key` again even when it is the one loaded (its mix changed).
+     *  keepMastering (with seamless): the new version keeps the matched mastering profile of the one playing
+     *  instead of analysing the whole song again (a sung vocal section joining the song). */
+    opts: { seamless?: boolean; reload?: boolean; keepMastering?: boolean } = {},
   ): Promise<void> {
     const ctx = this.context();
     // Resume inside the gesture, before any await, so the browser allows audio.
@@ -455,8 +457,13 @@ export class LivePlayer {
       const swapAt = seamless ? Math.min(this.enginePosition(), durationSec) : undefined;
       this.teardown();
       this.node = node;
-      this.set({ key, laneNames, durationSec, mastering: this.opts.matchedMastering ? 'analysing' : 'stand-in', masteringError: undefined });
-      if (this.opts.matchedMastering) this.startMatchedMaster(key, node, fetchPayload);
+      const keepsProfile = seamless && opts.keepMastering && this.currentProfile !== undefined;
+      if (!keepsProfile) this.currentProfile = undefined;
+      this.set({ key, laneNames, durationSec, mastering: keepsProfile ? 'matched' : this.opts.matchedMastering ? 'analysing' : 'stand-in', masteringError: undefined });
+      const carried = seamless && opts.keepMastering ? this.currentProfile : undefined;
+      if (carried) {
+        node.port.postMessage({ type: 'profile', bytes: carried.slice() });
+      } else if (this.opts.matchedMastering) this.startMatchedMaster(key, node, fetchPayload);
       // A loop past the end of this (shorter) version can't play: drop it, visibly.
       const range = this.state.loopRange;
       if (range && range.end > durationSec) this.set({ loopRange: undefined, looping: false });
@@ -719,10 +726,14 @@ export class LivePlayer {
   }
 
   /** Compute (or reuse) the profile for the playing node and hand it over. */
+  /** The matched mastering profile of the version playing (carried over by keepMastering swaps). */
+  private currentProfile: Uint8Array | undefined;
+
   private startMatchedMaster(key: string, node: AudioWorkletNode, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): void {
     this.profileOf(key, fetchPayload).then(
       (bytes) => {
         if (node !== this.node) return;
+        this.currentProfile = bytes;
         node.port.postMessage({ type: 'profile', bytes: bytes.slice() });
       },
       (err: unknown) => {
