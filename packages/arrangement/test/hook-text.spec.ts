@@ -61,6 +61,16 @@ describe('parseHookText', () => {
     expect(Object.keys(r.hooks[0]!.chords)).toHaveLength(36);
   });
 
+  it('a style tag is kept, checked, and tightens the range', () => {
+    const styled = parseHookText(ok.replace('feel: anthem', 'feel: anthem\nstyle: edm'), 's');
+    expect(styled.errors).toEqual([]);
+    expect(styled.hooks[0]!.properties.style).toBe('edm');
+    expect(parseHookText(ok, 's').hooks[0]!.properties.style).toBeUndefined();
+    expect(parseHookText(ok.replace('feel: anthem', 'feel: anthem\nstyle: disco'), 's').errors.join('\n')).toMatch(/style "disco"/);
+    const high = ok.replace('feel: anthem', 'feel: anthem\nstyle: rock').replace('b4:1 g4:1 d5:2 | c5', 'b4:1 g4:1 f5:2 | c5');
+    expect(parseHookText(high, 's').errors.join('\n')).toMatch(/F5 is above E5/);
+  });
+
   it('refuses the same melody twice', () => {
     const r = parseHookText(ok + ok.replace('Test Anthem', 'Other'), 'd');
     expect(r.errors.join('\n')).toMatch(/same melody as/);

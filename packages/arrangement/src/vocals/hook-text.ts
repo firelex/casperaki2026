@@ -7,6 +7,11 @@
 //   type: Chorus                           Verse | Pre-chorus | Chorus | Bridge
 //   tempo: 90-130                          bpm range the hook suits
 //   feel: anthem                           a short tag for the library's filter
+//   style: edm                             optional: the song style it was written for (a genre id: ballad,
+//                                          brightPop, edm, latin, organicVibes, rock, schlager, urban); with a style
+//                                          the range is tighter: verses top out at G4, other sections at E5 (so the
+//                                          generator can use every such hook whole). Hooks without one were written
+//                                          for no particular style.
 //   leadin: yes                            optional: a lead-in bar before the 8 bars (default no)
 //   chords: C | G | Am F | F G C G | ...   per bar: 1, 2 (half bars) or 4 (beats) symbols, in C (minor: A minor)
 //   melody: e4:1 g4:1 c5:2 | b4:4- |       sung pitch (C4 = middle C) : length in beats; r:<beats> is a rest;
@@ -37,6 +42,7 @@ export interface HookEntry {
     readonly tempoMin: number;
     readonly tempoMax: number;
     readonly feel: string;
+    readonly style?: HookStyle;
     readonly useOriginal: true;
     readonly useRemix: true;
     readonly source: { readonly kind: 'casperaki' };
@@ -46,6 +52,10 @@ export interface HookEntry {
 }
 
 export type HookType = 'Verse' | 'Pre-chorus' | 'Chorus' | 'Bridge';
+export const HOOK_STYLES = ['ballad', 'brightPop', 'edm', 'latin', 'organicVibes', 'rock', 'schlager', 'urban'] as const;
+export type HookStyle = (typeof HOOK_STYLES)[number];
+/** Highest sung note for a styled hook: verses G4, other sections E5. */
+const STYLED_TOP: Readonly<Record<HookType, number>> = { Verse: 67, 'Pre-chorus': 76, Chorus: 76, Bridge: 76 };
 const TYPES: readonly HookType[] = ['Verse', 'Pre-chorus', 'Chorus', 'Bridge'];
 
 /** Sung range every hook stays inside, and its widest span (a 12th). */
@@ -173,7 +183,7 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
     const line = raw.replace(/(^|\s)#.*$/u, '');
     if (!line.trim()) continue;
     const kv = /^(\w+):\s*(.*)$/u.exec(line.trim());
-    if (kv && /^\S/u.test(line) && ['hook', 'type', 'tempo', 'feel', 'leadin', 'chords', 'melody'].includes(kv[1]!)) {
+    if (kv && /^\S/u.test(line) && ['hook', 'type', 'tempo', 'feel', 'style', 'leadin', 'chords', 'melody'].includes(kv[1]!)) {
       if (kv[1] === 'hook') blocks.push((cur = {}));
       if (!cur) {
         errors.push(`"${line.trim()}" comes before the first "hook:" line`);
@@ -194,6 +204,8 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
     if (b['type'] && !TYPES.includes(type)) err(`type "${b['type']}" is not one of ${TYPES.join(', ')}`);
     const tm = /^(\d+)\s*-\s*(\d+)$/u.exec(b['tempo']?.trim() ?? '');
     if (b['tempo'] && (!tm || Number(tm[1]) >= Number(tm[2]))) err(`tempo "${b['tempo']}" must be a range like 90-130`);
+    const style = b['style']?.trim() as HookStyle | undefined;
+    if (style !== undefined && !HOOK_STYLES.includes(style)) err(`style "${style}" is not one of ${HOOK_STYLES.join(', ')}`);
     const leadin = (b['leadin'] ?? 'no').trim();
     if (!['yes', 'no'].includes(leadin)) err(`leadin must be yes or no, not "${leadin}"`);
     if (!b['chords'] || !b['melody'] || !tm) return;
@@ -204,6 +216,10 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
     if (notes.length === 0) err('the melody has no notes');
     if (errors.length > before) return;
     for (const m of checkMusic(notes, chords, leadin === 'yes' ? 4 : 0)) err(m);
+    if (style && TYPES.includes(type)) {
+      const top = Math.max(...notes.map((n) => n.midi));
+      if (top > STYLED_TOP[type]) err(`${sungName(top)} is above ${sungName(STYLED_TOP[type])}, the highest note for a styled ${type.toLowerCase()}`);
+    }
     const sig = notes.map((n) => `${n.beat}:${n.midi}:${n.duration}`).join(' ');
     const twin = seen.get(sig);
     if (twin) err(`the same melody as "${twin}"`);
@@ -221,7 +237,7 @@ export function parseHookText(text: string, prefix: string): { hooks: HookEntry[
         name, originalKey: 'C', key: 'C', tempo: String(Math.round((Number(tm[1]) + Number(tm[2])) / 2)),
         busyness: bank.length / 8, type, start: leadin === 'yes' ? 1 : 0, end: leadin === 'yes' ? 9 : 8,
         lowestNote: sorted[0]!, highestNote: sorted[sorted.length - 1]!, medianNote: sorted[Math.floor(sorted.length / 2)]!,
-        kind: 'hook', tempoMin: Number(tm[1]), tempoMax: Number(tm[2]), feel: b['feel']!.trim(),
+        kind: 'hook', tempoMin: Number(tm[1]), tempoMax: Number(tm[2]), feel: b['feel']!.trim(), ...(style ? { style } : {}),
         useOriginal: true, useRemix: true, source: { kind: 'casperaki' },
       },
       melody,
