@@ -72,7 +72,7 @@ describe('melody library: the committed banks', () => {
     const wide = await get('/api/melody-library?kind=remix&range=wide&limit=200');
     expect(wide.body.items.every((i: { range: number }) => i.range >= 15)).toBe(true);
     expect((await get('/api/melody-library?kind=remix&remix=0')).body.total).toBe(0);
-    expect((await get('/api/melody-library?kind=hooks&original=1')).body.total).toBe(106);
+    expect((await get('/api/melody-library?kind=hooks&original=1')).body.total).toBe((await get('/api/melody-library?kind=hooks')).body.total);
     const t = await get('/api/melody-library?kind=remix&tempo=120&limit=200');
     expect(t.body.items.every((i: { tempo: number }) => Math.abs(i.tempo - 120) <= 10)).toBe(true);
     const chorus = await get('/api/melody-library?kind=hooks&type=Chorus&limit=200');
@@ -112,6 +112,16 @@ describe('melody library: the committed banks', () => {
       expect(e.status).toBe(200);
       expect(e.body.chords).toHaveLength(i.bars * 2);
     }
+  });
+
+  it('filters hooks by style, or those written for no particular style', async () => {
+    const edm = await get('/api/melody-library?kind=hooks&style=edm&limit=200');
+    expect(edm.body.total).toBe(25);
+    expect(edm.body.items.every((i: { style?: string }) => i.style === 'edm')).toBe(true);
+    expect(edm.body.facets.styles).toEqual(['ballad', 'brightPop', 'edm', 'latin', 'organicVibes', 'rock', 'schlager', 'urban']);
+    const none = await get('/api/melody-library?kind=hooks&style=none&limit=200');
+    expect(none.body.total).toBe(106);
+    expect((await get('/api/melody-library?kind=remix&style=edm')).status).toBe(400);
   });
 
   it('ranks chords for a half bar of any melody, 9 bars too', async () => {

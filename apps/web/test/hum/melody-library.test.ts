@@ -27,11 +27,12 @@ describe('melody library helpers', () => {
   });
 
   it('leaves empty filters out of the list query', () => {
-    const none = { kind: 'hooks', source: '', range: '', type: '', feel: '', tempo: undefined, q: '', original: '', remix: '' } as const;
+    const none = { kind: 'hooks', source: '', range: '', type: '', feel: '', style: '', tempo: undefined, q: '', original: '', remix: '' } as const;
     expect(melodyListQuery(none, 0)).toBe('kind=hooks&offset=0&limit=100');
     expect(melodyListQuery({ ...none, kind: 'remix', source: 'melodySauce', range: 'wide', type: 'Verse', tempo: 120, q: 'love', original: 'off', remix: 'on' }, 100, 50)).toBe(
       'kind=remix&offset=100&limit=50&source=melodySauce&range=wide&type=Verse&tempo=120&original=0&remix=1&q=love',
     );
+    expect(melodyListQuery({ ...none, style: 'edm', feel: 'urgent' }, 0)).toBe('kind=hooks&offset=0&limit=100&feel=urgent&style=edm');
   });
 
   it('names sources and range bands in words', () => {

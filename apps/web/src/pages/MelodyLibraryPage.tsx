@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { GENRE_LABELS } from '../types/genres';
 
 import { BrainError } from '../api/client';
 import {
@@ -48,12 +49,20 @@ const ZOOM_STEP = 1.4;
  * roll (or read as a score), with Play, its Original and Remix switches, Save and Discard. Pitches are shown, played
  * and saved at sung pitch (the brain stores them an octave lower, in the banks' register).
  */
+/** A style (genre id) as the app names it elsewhere. */
+const genreLabel = (id: string): string => {
+  const label = (GENRE_LABELS as Record<string, string>)[id];
+  if (!label) throw new Error(`melody library: unknown style "${id}"`);
+  return label;
+};
+
 export function MelodyLibraryPage() {
   const [kind, setKind] = useState<MelodyKind>('hooks');
   const [type, setType] = useState('');
   const [source, setSource] = useState<MelodyFilters['source']>('');
   const [range, setRange] = useState<MelodyFilters['range']>('');
   const [feel, setFeel] = useState('');
+  const [style, setStyle] = useState('');
   const [original, setOriginal] = useState<MelodyFilters['original']>('');
   const [remix, setRemix] = useState<MelodyFilters['remix']>('');
   const [tempoText, setTempoText] = useState('');
@@ -74,7 +83,7 @@ export function MelodyLibraryPage() {
 
   const tempo = /^\d{2,3}$/u.test(tempoText.trim()) ? Number(tempoText.trim()) : undefined;
   const tempoInvalid = tempoText.trim() !== '' && tempo === undefined;
-  const filters: MelodyFilters = { kind, type, source: kind === 'remix' ? source : '', range, feel: kind === 'hooks' ? feel : '', tempo, q, original, remix };
+  const filters: MelodyFilters = { kind, type, source: kind === 'remix' ? source : '', range, feel: kind === 'hooks' ? feel : '', style: kind === 'hooks' ? style : '', tempo, q, original, remix };
   const list = useInfiniteQuery({
     queryKey: ['melody-library', 'list', filters],
     queryFn: ({ pageParam, signal }) => melodiesApi.list(filters, pageParam, signal),
@@ -171,14 +180,25 @@ export function MelodyLibraryPage() {
             ))}
           </select>
         ) : (
-          <select value={feel} onChange={(e) => setFeel(e.target.value)} aria-label="Feel" className={FIELD}>
-            <option value="">All feels</option>
-            {(facets?.feels ?? []).map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
+          <>
+            <select value={style} onChange={(e) => setStyle(e.target.value)} aria-label="Style" className={FIELD}>
+              <option value="">All styles</option>
+              {(facets?.styles ?? []).map((s) => (
+                <option key={s} value={s}>
+                  {genreLabel(s)}
+                </option>
+              ))}
+              <option value="none">No particular style</option>
+            </select>
+            <select value={feel} onChange={(e) => setFeel(e.target.value)} aria-label="Feel" className={FIELD}>
+              <option value="">All feels</option>
+              {(facets?.feels ?? []).map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+          </>
         )}
         <select value={range} onChange={(e) => setRange(e.target.value as MelodyFilters['range'])} aria-label="Range" className={FIELD}>
           <option value="">Any range</option>
@@ -267,7 +287,7 @@ function MelodyRow({ item: i, active, onClick }: { item: MelodyListItem; active:
         <div className="truncate text-[11px] text-white/55">{sourceLabel(i.source)}{i.source.artist ? ` · ${i.source.artist}` : ''}</div>
         <div className="mt-0.5 flex items-center gap-1.5">
           <span className="min-w-0 truncate text-[11px] text-white/40">
-            {i.type} · {i.tempoMin !== undefined ? `${i.tempoMin}–${i.tempoMax} bpm` : `${i.tempo} bpm`} · {i.range} st{i.feel ? ` · ${i.feel}` : ''}
+            {i.type} · {i.tempoMin !== undefined ? `${i.tempoMin}–${i.tempoMax} bpm` : `${i.tempo} bpm`} · {i.range} st{i.style ? ` · ${genreLabel(i.style)}` : ''}{i.feel ? ` · ${i.feel}` : ''}
             {i.bars === 9 ? ' · lead-in' : ''}
           </span>
           <span className="ml-auto flex shrink-0 gap-1">
@@ -421,7 +441,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
           <p className="text-[13px] text-white/70">{sourceLabel(e.source)}</p>
           <p className="text-[12px] text-white/50">
             {e.type} · {e.tempoMin !== undefined ? `${e.tempoMin}–${e.tempoMax} bpm (plays at ${e.tempo})` : `${e.tempo} bpm`}
-            {e.feel ? ` · ${e.feel}` : ''} · {e.bars} bars{e.leadInBars ? ` (${e.leadInBars} lead-in)` : ''} ·{' '}
+            {e.style ? ` · ${genreLabel(e.style)}` : ''}{e.feel ? ` · ${e.feel}` : ''} · {e.bars} bars{e.leadInBars ? ` (${e.leadInBars} lead-in)` : ''} ·{' '}
             {cur.melody.length ? `${midiName(Math.min(...cur.melody.map((n) => n.midi)))}–${midiName(Math.max(...cur.melody.map((n) => n.midi)))}, ${range} semitones (${rangeBand(range)})` : 'no notes'} · key C
           </p>
           <p className="mt-0.5 font-mono text-[10px] text-white/30">

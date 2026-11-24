@@ -69,6 +69,7 @@ const EntrySchema = z
         tempoMin: z.number().positive().optional(),
         tempoMax: z.number().positive().optional(),
         feel: z.string().min(1).optional(),
+        style: z.string().min(1).optional(),
         source: SourceSchema,
         useOriginal: z.boolean(),
         useRemix: z.boolean(),
@@ -93,6 +94,8 @@ export interface MelodyListItem {
   readonly tempoMin?: number;
   readonly tempoMax?: number;
   readonly feel?: string;
+  /** Hooks: the song style it was written for (a genre id); absent for hooks written for no particular style. */
+  readonly style?: string;
   /** Bars including a lead-in bar (properties.end). */
   readonly bars: number;
   /** Sung pitch (bank pitch + 12). */
@@ -144,6 +147,8 @@ export interface MelodyQuery {
   readonly type?: string | undefined;
   readonly tempo?: number | undefined;
   readonly feel?: string | undefined;
+  /** Hooks: a style (genre id), or 'none' for hooks written for no particular style. */
+  readonly style?: string | undefined;
   readonly q?: string | undefined;
   /** Only entries with useOriginal on (true) or off (false). */
   readonly original?: boolean | undefined;
@@ -159,7 +164,7 @@ export interface MelodyListResult {
   /** Hooks only: the hooks bank file does not exist yet. */
   readonly noHooksYet?: true;
   /** The choices of this kind's filters (over the whole kind, not the filtered list). */
-  readonly facets: { readonly types: readonly string[]; readonly sources: readonly MelodySource['kind'][]; readonly feels: readonly string[] };
+  readonly facets: { readonly types: readonly string[]; readonly sources: readonly MelodySource['kind'][]; readonly feels: readonly string[]; readonly styles: readonly string[] };
 }
 
 /** The range filter: narrow up to 9 semitones, medium 10-14, wide 15 and more. */
@@ -300,7 +305,7 @@ export class MelodyLibrary {
       name: p.name,
       type: typeOf(p.type),
       tempo: tempoOf(bank, e),
-      ...(bank === HOOKS_BANK ? { tempoMin: p.tempoMin!, tempoMax: p.tempoMax!, feel: p.feel! } : {}),
+      ...(bank === HOOKS_BANK ? { tempoMin: p.tempoMin!, tempoMax: p.tempoMax!, feel: p.feel!, ...(p.style ? { style: p.style } : {}) } : {}),
       bars: p.end,
       lowestNote: p.lowestNote + SUNG_OCTAVE,
       highestNote: p.highestNote + SUNG_OCTAVE,
@@ -317,8 +322,9 @@ export class MelodyLibrary {
   list(query: MelodyQuery): MelodyListResult {
     const { kind } = query;
     if (kind === 'remix' && query.feel !== undefined) throw new MelodyLibraryError(400, 'invalid_query', 'feel: only hooks have a feel.');
+    if (kind === 'remix' && query.style !== undefined) throw new MelodyLibraryError(400, 'invalid_query', 'style: only hooks have a style.');
     const hooks = kind === 'hooks' ? this.hooksBank() : undefined;
-    if (kind === 'hooks' && !hooks) return { total: 0, items: [], noHooksYet: true, facets: { types: [], sources: [], feels: [] } };
+    if (kind === 'hooks' && !hooks) return { total: 0, items: [], noHooksYet: true, facets: { types: [], sources: [], feels: [], styles: [] } };
     const banks = kind === 'hooks' ? [hooks!] : this.remixBanks();
     const all = banks.flatMap((b) => [...b.entries.values()].map((e) => this.itemOf(b.id, e)));
     const q = query.q?.trim().toLowerCase();
@@ -328,11 +334,12 @@ export class MelodyLibrary {
         (query.range === undefined || rangeOf(i.range) === query.range) &&
         (query.type === undefined || i.type === query.type) &&
         (query.feel === undefined || i.feel === query.feel) &&
+        (query.style === undefined || (query.style === 'none' ? i.style === undefined : i.style === query.style)) &&
         (query.original === undefined || i.useOriginal === query.original) &&
         (query.remix === undefined || i.useRemix === query.remix) &&
         (query.tempo === undefined ||
           (kind === 'hooks' ? query.tempo >= i.tempoMin! && query.tempo <= i.tempoMax! : Math.abs(i.tempo - query.tempo) <= REMIX_TEMPO_WINDOW)) &&
-        (!q || i.name.toLowerCase().includes(q) || i.id.toLowerCase() === q || (i.source.title ?? '').toLowerCase().includes(q) || (i.source.artist ?? '').toLowerCase().includes(q) || (i.feel ?? '').toLowerCase().includes(q)),
+        (!q || i.name.toLowerCase().includes(q) || i.id.toLowerCase() === q || (i.source.title ?? '').toLowerCase().includes(q) || (i.source.artist ?? '').toLowerCase().includes(q) || (i.feel ?? '').toLowerCase().includes(q) || (i.style ?? '').toLowerCase().includes(q)),
     );
     return {
       total: hits.length,
@@ -341,6 +348,7 @@ export class MelodyLibrary {
         types: uniq(all.map((i) => i.type)).sort(),
         sources: uniq(all.map((i) => i.source.kind)).sort() as MelodySource['kind'][],
         feels: kind === 'hooks' ? uniq(all.map((i) => i.feel!)).sort() : [],
+        styles: kind === 'hooks' ? uniq(all.flatMap((i) => (i.style ? [i.style] : []))).sort() : [],
       },
     };
   }

@@ -13,6 +13,8 @@ export interface MelodyListItem {
   readonly tempoMin?: number;
   readonly tempoMax?: number;
   readonly feel?: string;
+  /** Hooks: the song style it was written for (a genre id). */
+  readonly style?: string;
   /** Bars including a lead-in bar. */
   readonly bars: number;
   readonly lowestNote: number;
@@ -43,7 +45,7 @@ export interface MelodyList {
   readonly items: readonly MelodyListItem[];
   /** Hooks: the hooks bank has not been written yet. */
   readonly noHooksYet?: true;
-  readonly facets: { readonly types: readonly string[]; readonly sources: readonly MelodySource['kind'][]; readonly feels: readonly string[] };
+  readonly facets: { readonly types: readonly string[]; readonly sources: readonly MelodySource['kind'][]; readonly feels: readonly string[]; readonly styles: readonly string[] };
 }
 
 /** One entry: notes in beats from the start, sung pitch; one chord per half bar. */
@@ -59,6 +61,8 @@ export interface MelodyFilters {
   readonly range: MelodyRange | '';
   readonly type: string;
   readonly feel: string;
+  /** Hooks: a style (genre id), 'none' for hooks without one, '' for any. */
+  readonly style: string;
   /** bpm, or undefined for any tempo. */
   readonly tempo: number | undefined;
   readonly q: string;
@@ -85,6 +89,7 @@ export function melodyListQuery(f: MelodyFilters, offset: number, limit = MELODY
   if (f.range) qs.set('range', f.range);
   if (f.type) qs.set('type', f.type);
   if (f.feel) qs.set('feel', f.feel);
+  if (f.style) qs.set('style', f.style);
   if (f.tempo !== undefined) qs.set('tempo', String(f.tempo));
   if (f.original) qs.set('original', f.original === 'on' ? '1' : '0');
   if (f.remix) qs.set('remix', f.remix === 'on' ? '1' : '0');
