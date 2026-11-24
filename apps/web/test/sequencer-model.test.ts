@@ -25,6 +25,23 @@ describe('sequencer model', () => {
     }
   });
 
+  it('shows an instrument switched on without a written part (a percussion loop) as empty clips in those sections', () => {
+    const { song } = makeFixtureSong();
+    const [first, second] = song.songStructure.map((s) => s.name);
+    const withLoop = {
+      ...song,
+      arrangement: Object.fromEntries(
+        Object.entries(song.arrangement).map(([name, p]) => [name, { ...p, instruments: { ...p.instruments, Loop: name === first } }]),
+      ),
+    };
+    const loop = buildSequencerModel(withLoop).tracks.find((t) => t.name === 'Loop');
+    expect(loop).toBeDefined();
+    const m = buildSequencerModel(withLoop);
+    expect(loop!.clips.map((c) => m.sections[c.section]!.name)).toEqual([first]);
+    expect(loop!.clips[0]!.notes).toEqual([]);
+    expect(second).toBeDefined();
+  });
+
   it('reads note names and MIDI numbers', () => {
     expect(noteToMidi(60)).toBe(60);
     expect(noteToMidi('C4')).toBe(60);

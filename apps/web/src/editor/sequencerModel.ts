@@ -242,6 +242,14 @@ export function buildSequencerModel(song: Song): SequencerModel {
       list.push({ section: si, startBar: sec.startBar, bars: sec.bars, notes });
       clipsByTrack.set(instrument, list);
     }
+    // Instruments switched on in the section with no written part: audio the engine plays from a file (percussion
+    // loops). Their clip has no notes; the track shows the render's waveform.
+    for (const [instrument, on] of Object.entries(payload.instruments ?? {})) {
+      if (!on || payload.overrides?.[instrument]) continue;
+      const list = clipsByTrack.get(instrument) ?? [];
+      list.push({ section: si, startBar: sec.startBar, bars: sec.bars, notes: [] });
+      clipsByTrack.set(instrument, list);
+    }
   });
 
   const tracks: SeqTrack[] = [...clipsByTrack.entries()]
