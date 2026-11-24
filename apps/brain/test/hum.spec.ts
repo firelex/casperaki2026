@@ -171,6 +171,80 @@ describe('POST /api/hum/*', () => {
     expect(chorus.bars[0]!.chords[0]).toBe(a.alternatives[0]!.chords[0]);
   });
 
+  describe('with edits', () => {
+    const post = (path: string, body: unknown) => fetch(`${url}${path}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    const analyse = async () => {
+      const res = await fetch(`${url}/api/hum/analyse?mode=free`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: new Uint8Array([1, 2, 3]) });
+      return (await res.json()) as { id: string; alternatives: { chords: string[]; melody: { beat: number; midi: number; duration: number }[] }[] };
+    };
+    const edited = [
+      { beat: 0, midi: 64, duration: 2 },
+      { beat: 2, midi: 67, duration: 2 },
+      { beat: 20, midi: 71, duration: 4 },
+    ];
+    const chords = Array.from({ length: 16 }, (_, i) => (i % 2 ? 'C' : 'Em'));
+
+    it('makes the song from the edited melody and chords', async () => {
+      const a = await analyse();
+      const res = await post('/api/hum/song', { analysisId: a.id, alternative: 1, genre: 'ballad', melody: edited, chords });
+      expect(res.status).toBe(201);
+      const { songId } = (await res.json()) as { songId: string };
+      const stored = store.get(songId)!;
+      const chorus = stored.song.songStructure.find((s) => s.name.startsWith('chorus'))!;
+      expect(chorus.bars[0]!.chords[0]).toBe('Em');
+    });
+
+    it('refuses half an edit, an unknown chord and an empty melody', async () => {
+      const a = await analyse();
+      expect((await post('/api/hum/song', { analysisId: a.id, alternative: 0, genre: 'ballad', melody: edited })).status).toBe(400);
+      const badChord = await post('/api/hum/song', { analysisId: a.id, alternative: 0, genre: 'ballad', melody: edited, chords: ['Cxyz', ...chords.slice(1)] });
+      expect(badChord.status).toBe(400);
+      const empty = await post('/api/hum/song', { analysisId: a.id, alternative: 0, genre: 'ballad', melody: [], chords });
+      expect(empty.status).toBe(400);
+      expect(((await empty.json()) as { error: string }).error).toBe('empty_melody');
+    });
+
+    it('completes only the bars that are not kept, over the chords sent', async () => {
+      const a = await analyse();
+      const res = await post('/api/hum/complete', { analysisId: a.id, alternative: 2, melody: edited, chords, keepBars: [0, 5] });
+      expect(res.status).toBe(200);
+      const call = calls.filter((c) => c.url.endsWith('/complete'))[0]!.body as { keepBars: number[]; prompt: unknown[]; chords: { midi: number[] }[] };
+      expect(call.keepBars).toEqual([0, 5]);
+      expect(call.prompt).toEqual(edited);
+      expect(call.chords[0]!.midi[0]! % 12).toBe(4); // Em: root E
+      const after = (await res.json()) as typeof a;
+      const mel = after.alternatives[2]!.melody;
+      expect(mel.filter((n) => n.beat < 4)).toEqual(edited.slice(0, 2));
+      expect(mel.filter((n) => n.beat >= 20 && n.beat < 24)).toEqual([edited[2]]);
+      expect(mel.some((n) => n.beat >= 4 && n.beat < 20)).toBe(true);
+      expect(after.alternatives[2]!.chords).toEqual(chords);
+      for (let i = 1; i < mel.length; i++) expect(mel[i - 1]!.beat + mel[i - 1]!.duration).toBeLessThanOrEqual(mel[i]!.beat);
+    });
+
+    it('refuses to complete when every bar is kept or no kept bar has a note', async () => {
+      const a = await analyse();
+      const all = await post('/api/hum/complete', { analysisId: a.id, alternative: 0, melody: edited, chords, keepBars: [0, 1, 2, 3, 4, 5, 6, 7] });
+      expect(all.status).toBe(400);
+      expect(((await all.json()) as { error: string }).error).toBe('nothing_to_complete');
+      const none = await post('/api/hum/complete', { analysisId: a.id, alternative: 0, melody: edited, chords, keepBars: [3] });
+      expect(none.status).toBe(400);
+      expect(((await none.json()) as { error: string }).error).toBe('empty_melody');
+    });
+
+    it('re-fits chords and ranks the chords for one half bar', async () => {
+      const a = await analyse();
+      const refit = await post('/api/hum/refit', { analysisId: a.id, melody: edited });
+      expect(refit.status).toBe(200);
+      expect(((await refit.json()) as { chords: string[] }).chords).toHaveLength(16);
+      const opts = await post('/api/hum/chord-options', { analysisId: a.id, melody: edited, slot: 3 });
+      expect(opts.status).toBe(200);
+      const { options } = (await opts.json()) as { options: { chord: string; fit: number }[] };
+      expect(options.length).toBeGreaterThan(20);
+      for (let i = 1; i < options.length; i++) expect(options[i - 1]!.fit).toBeGreaterThanOrEqual(options[i]!.fit);
+      expect((await post('/api/hum/chord-options', { analysisId: a.id, melody: edited, slot: 16 })).status).toBe(400);
+    });
+  });
+
   it('names the click-mode inputs and the missing settings', async () => {
     const bad = await fetch(`${url}/api/hum/analyse?mode=click&bpm=100`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: new Uint8Array([1]) });
     expect(bad.status).toBe(400);

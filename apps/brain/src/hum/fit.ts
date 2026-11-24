@@ -196,3 +196,21 @@ export function slotsOfChords(chords: readonly string[], key: Transcription['key
   const tonic = majorTonicOf(key);
   return chords.map((c) => hum.chordId(hum.parseChordSymbol(c, tonic)));
 }
+
+/**
+ * The notes of the kept bars from `prompt`, the other bars from the completion; a note running into the next note is
+ * cut where that note starts, and nothing runs past bar 8.
+ */
+export function mergeKept(prompt: readonly BeatNote[], keepBars: readonly number[], completion: readonly BeatNote[]): BeatNote[] {
+  const kept = new Set(keepBars);
+  const end = PHRASE_BARS * 4;
+  const barOf = (n: BeatNote) => Math.floor(n.beat / 4);
+  const notes = [
+    ...prompt.filter((n) => kept.has(barOf(n))),
+    ...completion.filter((n) => n.beat >= 0 && n.beat < end && !kept.has(barOf(n))),
+  ].sort((a, b) => a.beat - b.beat);
+  return notes.map((n, i) => {
+    const next = notes[i + 1];
+    return { beat: n.beat, midi: n.midi, duration: Math.min(n.duration, (next ? next.beat : end) - n.beat) };
+  }).filter((n) => n.duration > 0);
+}

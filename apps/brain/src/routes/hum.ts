@@ -6,7 +6,11 @@
 //   POST /api/hum/complete   { analysisId, alternative? }  → complete the melody of one alternative (or all) to 8
 //       bars; again for "a different way". The page calls it once per alternative, to show progress (each call
 //       takes several seconds: the model writes SAMPLES completions and the best is kept).
-//   POST /api/hum/song       { analysisId, alternative, genre, title? } → a new song with that melody as its chorus.
+//       With an edit ({ melody, chords, keepBars }), only the bars not in keepBars are rewritten, over those chords.
+//   POST /api/hum/song       { analysisId, alternative, genre, title?, melody?, chords? } → a new song with that melody
+//       (or the edited one) as its chorus.
+//   POST /api/hum/refit          { analysisId, melody }        → { chords }: the fitter's chords for an edited melody.
+//   POST /api/hum/chord-options  { analysisId, melody, slot }  → { options: [{ chord, fit }] }, best fit first.
 //
 // Services (apps/models/services): HUM_SERVICE_URL ("hum", POST /transcribe: beats, key, notes) and AMT_SERVICE_URL
 // ("amt", POST /complete: the Anticipatory Music Transformer). Not configured → 503 naming the setting; a service
@@ -19,13 +23,18 @@ import { join } from 'node:path';
 import express, { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
+import { hum } from '@casperaki/arrangement';
 import { GenreSchema, formatGenreTempoRange, isBpmInGenreTempoRange } from '@casperaki/song-schema';
 
 import {
   amtChords,
   chordAlternatives,
+  chordOptions,
   keptBars,
   mergeCompletion,
+  mergeKept,
+  refitChords,
+  slotsOfChords,
   PHRASE_BARS,
   quantizeHum,
   songKeyOf,
@@ -184,6 +193,40 @@ export function createHumRouter(deps: HumRouterDeps): Router {
     return out;
   }
 
+  /** One completion of an edited melody: the bars not in keepBars rewritten over the given chords. */
+  async function completeEdit(a: Pick<Analysis, 'bpm' | 'transcription'>, melody: readonly BeatNote[], slots: readonly string[], keepBars: readonly number[]): Promise<BeatNote[]> {
+    const url = `${deps.amtServiceUrl!.replace(/\/$/u, '')}/complete`;
+    const body = await callService('completing', url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ bpm: a.bpm, totalBars: PHRASE_BARS, prompt: melody, keepBars, chords: amtChords(slots, a.transcription.key), samples: SAMPLES }),
+    });
+    const parsed = CompletionSchema.safeParse(body);
+    if (!parsed.success) throw new StepError('completing', 502, `The melody completion service answered in an unexpected shape: ${parsed.error.message}`);
+    return mergeKept(melody, keepBars, parsed.data.completions[0]!.notes);
+  }
+
+  /** An edit sent by the page, checked: the melody and chords as a user chorus, the chords readable in the key. */
+  function readEdit(res: Response, a: Analysis, melody: unknown, chords: unknown): { melody: BeatNote[]; chords: string[]; slots: string[] } | undefined {
+    if (Array.isArray(melody) && melody.length === 0) {
+      res.status(400).json({ error: 'empty_melody', message: 'The melody has no notes. Add some notes, or go back to the original.' });
+      return undefined;
+    }
+    const parsed = hum.UserChorusSchema.safeParse({ melody, chords });
+    if (!parsed.success) {
+      res.status(400).json({ error: 'bad_edit', message: `The edited melody or chords are not valid: ${parsed.error.message}` });
+      return undefined;
+    }
+    let slots: string[];
+    try {
+      slots = slotsOfChords(parsed.data.chords, a.transcription.key);
+    } catch (err) {
+      res.status(400).json({ error: 'bad_edit', message: err instanceof Error ? err.message : String(err) });
+      return undefined;
+    }
+    return { melody: parsed.data.melody, chords: parsed.data.chords, slots };
+  }
+
   const fail = (res: Response, err: unknown) => {
     if (err instanceof StepError) return res.status(err.status).json({ error: 'hum_failed', step: err.step, message: err.message });
     return res.status(500).json({ error: 'hum_failed', step: 'unknown', message: err instanceof Error ? err.message : String(err) });
@@ -272,7 +315,18 @@ export function createHumRouter(deps: HumRouterDeps): Router {
     }
   });
 
-  const CompleteBody = z.object({ analysisId: z.string(), alternative: z.number().int().min(0).max(2).optional() }).strict();
+  const CompleteBody = z
+    .object({
+      analysisId: z.string(),
+      alternative: z.number().int().min(0).max(2).optional(),
+      melody: z.array(z.unknown()).optional(),
+      chords: z.array(z.string()).optional(),
+      keepBars: z.array(z.number().int().min(0).max(PHRASE_BARS - 1)).optional(),
+    })
+    .strict()
+    .refine((b) => [b.melody, b.chords, b.keepBars].every((x) => x === undefined) || ([b.melody, b.chords, b.keepBars].every((x) => x !== undefined) && b.alternative !== undefined), {
+      message: 'An edit needs melody, chords, keepBars and the alternative, all together.',
+    });
   router.post('/api/hum/complete', async (req, res) => {
     if (!need(res, 'dir') || !need(res, 'amt')) return;
     const body = CompleteBody.safeParse(req.body);
@@ -280,6 +334,22 @@ export function createHumRouter(deps: HumRouterDeps): Router {
     try {
       const a = await load(req, body.data.analysisId);
       if (!a) return res.status(404).json({ error: 'not_found', message: 'No such hum analysis.' });
+      if (body.data.keepBars !== undefined) {
+        const keepBars = [...new Set(body.data.keepBars)].sort((x, y) => x - y);
+        if (keepBars.length >= PHRASE_BARS) return res.status(400).json({ error: 'nothing_to_complete', message: 'Every bar is yours (hummed or edited); there is nothing to complete.' });
+        const edit = readEdit(res, a, body.data.melody, body.data.chords);
+        if (!edit) return;
+        if (!edit.melody.some((n) => keepBars.includes(Math.floor(n.beat / 4)))) {
+          return res.status(400).json({ error: 'empty_melody', message: 'None of the kept bars has a note, so there is nothing to continue from.' });
+        }
+        const i = body.data.alternative!;
+        const t0 = Date.now();
+        const melody = await completeEdit(a, edit.melody, edit.slots, keepBars);
+        a.alternatives[i] = { label: a.alternatives[i]!.label, slots: edit.slots, chords: edit.chords, melody, completed: true };
+        a.timings[`completeEditMs${i}`] = Date.now() - t0;
+        await writeFile(fileOf(a.id), JSON.stringify(a, null, 1));
+        return res.json(publicJson(a));
+      }
       if (a.hummedBars >= PHRASE_BARS) return res.status(400).json({ error: 'nothing_to_complete', message: 'The hum fills all 8 bars; there is nothing to complete.' });
       const which = body.data.alternative === undefined ? [0, 1, 2] : [body.data.alternative];
       const t0 = Date.now();
@@ -294,8 +364,16 @@ export function createHumRouter(deps: HumRouterDeps): Router {
   });
 
   const SongBody = z
-    .object({ analysisId: z.string(), alternative: z.number().int().min(0).max(2), genre: GenreSchema, title: z.string().trim().min(1).max(120).optional() })
-    .strict();
+    .object({
+      analysisId: z.string(),
+      alternative: z.number().int().min(0).max(2),
+      genre: GenreSchema,
+      title: z.string().trim().min(1).max(120).optional(),
+      melody: z.array(z.unknown()).optional(),
+      chords: z.array(z.string()).optional(),
+    })
+    .strict()
+    .refine((b) => (b.melody === undefined) === (b.chords === undefined), { message: 'An edited melody and its chords must be sent together.' });
   router.post('/api/hum/song', async (req, res) => {
     if (!need(res, 'dir')) return;
     const body = SongBody.safeParse(req.body);
@@ -311,19 +389,65 @@ export function createHumRouter(deps: HumRouterDeps): Router {
           message: `The hum is at ${a.bpm} bpm; ${genre} songs are ${formatGenreTempoRange(genre)}. Pick another style, or hum again with the click at a tempo in that range.`,
         });
       }
-      const alt = a.alternatives[alternative]!;
+      let chorus: { melody: readonly BeatNote[]; chords: readonly string[] } = a.alternatives[alternative]!;
+      if (body.data.melody !== undefined) {
+        const edit = readEdit(res, a, body.data.melody, body.data.chords);
+        if (!edit) return;
+        chorus = edit;
+      }
       let made;
       try {
         made = generateProject(
           { store: deps.store, clock, ...(deps.onPlaceholderTitle ? { onPlaceholderTitle: deps.onPlaceholderTitle } : {}) },
           ownerOf(req),
-          { genre, key: a.songKey, bpm: a.bpm, seed: `hum-${a.id}-${alternative}`, params: { userChorus: { melody: alt.melody, chords: alt.chords } } },
+          { genre, key: a.songKey, bpm: a.bpm, seed: `hum-${a.id}-${alternative}`, params: { userChorus: { melody: chorus.melody, chords: chorus.chords } } },
           body.data.title,
         );
       } catch (err) {
         throw new StepError('building the song', 500, err instanceof Error ? err.message : String(err));
       }
       return res.status(201).json({ songId: made.id });
+    } catch (err) {
+      return fail(res, err);
+    }
+  });
+
+  const MelodySchema = z.array(z.object({ beat: z.number().min(0).max(PHRASE_BARS * 4), midi: z.number().int().min(21).max(108), duration: z.number().positive() }).strict());
+  const RefitBody = z.object({ analysisId: z.string(), melody: MelodySchema.min(1, 'The melody has no notes.') }).strict();
+  router.post('/api/hum/refit', async (req, res) => {
+    if (!need(res, 'dir')) return;
+    const body = RefitBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.message });
+    try {
+      const a = await load(req, body.data.analysisId);
+      if (!a) return res.status(404).json({ error: 'not_found', message: 'No such hum analysis.' });
+      let chords: string[];
+      try {
+        chords = refitChords(body.data.melody, a.transcription.key).chords;
+      } catch (err) {
+        throw new StepError('chords', 500, err instanceof Error ? err.message : String(err));
+      }
+      return res.json({ chords });
+    } catch (err) {
+      return fail(res, err);
+    }
+  });
+
+  const OptionsBody = z.object({ analysisId: z.string(), melody: MelodySchema, slot: z.number().int().min(0).max(PHRASE_BARS * 2 - 1) }).strict();
+  router.post('/api/hum/chord-options', async (req, res) => {
+    if (!need(res, 'dir')) return;
+    const body = OptionsBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: body.error.message });
+    try {
+      const a = await load(req, body.data.analysisId);
+      if (!a) return res.status(404).json({ error: 'not_found', message: 'No such hum analysis.' });
+      let options: { chord: string; fit: number }[];
+      try {
+        options = chordOptions(body.data.melody, body.data.slot, a.transcription.key);
+      } catch (err) {
+        throw new StepError('chords', 500, err instanceof Error ? err.message : String(err));
+      }
+      return res.json({ options });
     } catch (err) {
       return fail(res, err);
     }
