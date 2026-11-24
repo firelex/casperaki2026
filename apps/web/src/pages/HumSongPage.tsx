@@ -8,7 +8,7 @@ import { Score } from '../editor/sequencer/Score';
 import { HumChordRow } from '../hum/HumChordRow';
 import { HumPianoRoll } from '../hum/HumPianoRoll';
 import { scoreChordsOf } from '../hum/halfBars';
-import { mtof, playPhrase } from '../hum/playPhrase';
+import { playPhrase, previewNote } from '../hum/playPhrase';
 import {
   addNote,
   deleteNote,
@@ -101,26 +101,6 @@ function click(ctx: AudioContext, at: number, accent: boolean) {
   osc.connect(g).connect(ctx.destination);
   osc.start(at);
   osc.stop(at + 0.08);
-}
-
-// ------------------------------------------------------------------ playback
-
-let previewCtx: AudioContext | undefined;
-/** A short tone for a note being edited. */
-function previewNote(midi: number) {
-  previewCtx ??= new AudioContext();
-  const ctx = previewCtx;
-  const at = ctx.currentTime + 0.01;
-  const osc = ctx.createOscillator();
-  const g = ctx.createGain();
-  osc.type = 'triangle';
-  osc.frequency.value = mtof(midi);
-  g.gain.setValueAtTime(0, at);
-  g.gain.linearRampToValueAtTime(0.2, at + 0.01);
-  g.gain.setTargetAtTime(0, at + 0.15, 0.05);
-  osc.connect(g).connect(ctx.destination);
-  osc.start(at);
-  osc.stop(at + 0.5);
 }
 
 // ------------------------------------------------------------------ page

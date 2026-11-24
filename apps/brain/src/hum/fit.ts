@@ -178,13 +178,20 @@ export function refitChords(melody: readonly BeatNote[], key: Transcription['key
   return { slots: [...best.slots], chords: best.slots.map((id) => hum.chordSymbol(hum.chordFromId(id), tonic)) };
 }
 
-/** Every chord the fitter knows, as symbols in the song key, ranked by how well it fits the melody in one half bar. */
-export function chordOptions(melody: readonly BeatNote[], slot: number, key: Transcription['key']): { chord: string; fit: number }[] {
-  const slots = PHRASE_BARS * 2;
+/**
+ * Every chord the fitter knows, as symbols in the song key, ranked by how well it fits the melody in one half bar.
+ * `bars`: the phrase length (the hum editor's 8; a melody library pattern with a lead-in bar has 9).
+ */
+export function chordOptions(melody: readonly BeatNote[], slot: number, key: Transcription['key'], bars: number = PHRASE_BARS): { chord: string; fit: number }[] {
+  const slots = bars * 2;
   if (!Number.isInteger(slot) || slot < 0 || slot >= slots) throw new Error(`hum: the half bar must be 0..${slots - 1}, got ${slot}`);
   const model = hum.loadChordFitModel();
   const tonic = majorTonicOf(key);
-  const w = hum.slotWeights(melody, PHRASE_BARS, model.params.fit, 'empty')[slot]!;
+  // The fitter weighs at most 8 bars: a longer phrase is seen through the 8 bars that end with the slot's bar (only
+  // the notes around a half bar weigh on it).
+  const shift = Math.max(0, Math.floor(slot / 2) - (PHRASE_BARS - 1));
+  const seen = shift === 0 ? melody : melody.filter((n) => n.beat >= shift * 4).map((n) => ({ ...n, beat: n.beat - shift * 4 }));
+  const w = hum.slotWeights(seen, Math.min(bars, PHRASE_BARS), model.params.fit, 'empty')[slot - shift * 2]!;
   return model.prior.vocab
     .map((id, i) => ({ i, chord: hum.chordSymbol(hum.chordFromId(id), tonic), fit: hum.fitScore(w, hum.chordFromId(id), tonic, model.params.fit) }))
     .sort((a, b) => b.fit - a.fit || a.i - b.i)

@@ -91,3 +91,18 @@ describe('melodyEdit', () => {
     expect([...e.editedBars].sort()).toEqual([0, 1]);
   });
 });
+
+describe('melodyEdit over a longer phrase', () => {
+  it('a 9-bar edit (lead-in bar) takes notes up to beat 36 and undo keeps the length', () => {
+    const e = startEdit([{ beat: 30, midi: 60, duration: 1 }], Array.from({ length: 18 }, () => 'C'), 36);
+    const added = addNote(e, 35.9, 64, 4);
+    expect(added.melody[1]).toEqual({ beat: 35.75, midi: 64, duration: 0.25 });
+    const grown = resizeNote(e, 0, 20);
+    expect(grown.melody[0]!.duration).toBe(6);
+    const moved = moveNote(e, 0, 40, 62);
+    expect(moved.melody[0]).toEqual({ beat: 35, midi: 62, duration: 1 });
+    expect(undo(moved).beats).toBe(36);
+    expect(startEdit([], [], 32).beats).toBe(TOTAL_BEATS);
+    expect(() => startEdit([], [], 30)).toThrow(/whole bars/u);
+  });
+});

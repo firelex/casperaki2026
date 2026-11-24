@@ -52,6 +52,8 @@ const ConfigSchema = z.object({
   // --- In-browser playback (docs/60) ---
   playbackDir: z.string().default('./data/playback'),
   sampleCacheDir: z.string().default('./data/sample-cache'),
+  /** Edits of the melody library's entries (Melodies page), a JSON file outside the repo; required in production. */
+  melodyEditsPath: z.string().default('./data/melody-edits.json'),
   /** casperaki_engine/config/mix-config.json; required for in-browser playback. */
   mixConfigPath: z.string().optional(),
   // --- Music videos (src/video/) ---
@@ -93,6 +95,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
   if (env.NODE_ENV === 'production' && !env.SESSION_SECRET) {
     throw new Error('SESSION_SECRET is required in production');
   }
+  if (env.NODE_ENV === 'production' && !env.BRAIN_MELODY_EDITS_PATH) {
+    throw new Error('BRAIN_MELODY_EDITS_PATH is required in production (edits of the melody library)');
+  }
   if (env.NODE_ENV === 'production' && !env.CASPERAKI_SAMPLE_LIBRARY_ROOT) {
     throw new Error('CASPERAKI_SAMPLE_LIBRARY_ROOT is required in production (per-song rendering)');
   }
@@ -122,6 +127,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     masteringBin: env.BRAIN_MASTERING_BIN,
     playbackDir: env.BRAIN_PLAYBACK_DIR,
     sampleCacheDir: env.BRAIN_SAMPLE_CACHE_DIR,
+    melodyEditsPath: env.BRAIN_MELODY_EDITS_PATH,
     mixConfigPath: env.CASPERAKI_MIX_CONFIG,
     webDistDir: env.BRAIN_WEB_DIST_DIR,
     beatThisPython: env.BEAT_THIS_PYTHON || undefined,

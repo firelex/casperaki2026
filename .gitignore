@@ -57,3 +57,4 @@ apps/models/services/matchering/*.wav
 
 # Brain dev session secret (persisted, per-machine — never commit)
 apps/brain/data/.dev-session-secret
+apps/brain/data/melody-edits.json*

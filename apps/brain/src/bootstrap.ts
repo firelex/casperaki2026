@@ -27,6 +27,8 @@ import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
+import { MelodyEdits } from './melodies/melodyEdits.js';
+import { setPrecedentEdits } from '@casperaki/arrangement';
 import { PlaybackService } from './render/playbackService.js';
 import { openSongsStore, type SongsStore } from './store.js';
 import { openAuthDb } from './auth/authDb.js';
@@ -234,7 +236,9 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     }),
   );
   app.use(createSoundsRouter({ playback }));
-  app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(deps.melodyLibraryDir) }));
+  // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
+  const melodyEdits = new MelodyEdits(config.melodyEditsPath, (edits) => setPrecedentEdits(Object.fromEntries(edits)));
+  app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(melodyEdits, deps.melodyLibraryDir) }));
   const assistantEp = assistantEndpoint(config);
   app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
   app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));

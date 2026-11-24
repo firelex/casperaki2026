@@ -36,7 +36,10 @@ export function AccountMenu() {
         <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">{user.email}</DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
         <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 sm:hidden" onSelect={() => navigate('/sounds')}>
-          Sound library
+          Sounds
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 sm:hidden" onSelect={() => navigate('/melodies')}>
+          Melodies
         </DropdownMenuItem>
         {user.isAdmin ? (
           <>

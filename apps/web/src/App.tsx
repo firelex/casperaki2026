@@ -23,7 +23,7 @@ const HumSongPage = lazy(() => import('./pages/HumSongPage').then((m) => ({ defa
  * Routes mirror rory-fe's three screens (LoginView, ProjectsView, Editor):
  *
  *   /                          → Projects   (home — listing + Create CTA)
- *   /sounds                    → Sound library
+ *   /sounds                    → Sounds (the sound library)
  *   /catalog                   → Sample catalog (admins: source names, audit)
  *   /editor                    → redirect to Projects
  *   /editor/:songId            → redirect to Timeline tab

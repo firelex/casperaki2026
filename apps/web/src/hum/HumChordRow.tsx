@@ -20,11 +20,18 @@ export function HumChordRow(
         loadOptions(slot: number): Promise<{ chord: string; fit: number }[]>;
         /** While a request runs. */
         disabled: boolean;
+        /** Above a piano roll that scrolls sideways: the key column's gap stays in view. */
+        scrollable?: boolean;
       }
-    | { readOnly: true; chords: readonly string[] },
+    | { readOnly: true; chords: readonly string[]; scrollable?: boolean },
 ) {
-  if (props.readOnly) return <ReadOnlyChordRow chords={props.chords} />;
+  if (props.readOnly) return <ReadOnlyChordRow chords={props.chords} scrollable={props.scrollable ?? false} />;
   return <EditableChordRow {...props} />;
+}
+
+/** The gap above the piano roll's key column. */
+function KeyGap({ scrollable }: { scrollable: boolean }) {
+  return <div className={`shrink-0 ${scrollable ? 'sticky left-0 z-30 bg-[#1b1c1f]' : ''}`} style={{ width: KEY_COL_W }} />;
 }
 
 const cellClass = (chords: readonly string[], s: number) =>
@@ -33,10 +40,10 @@ const cellClass = (chords: readonly string[], s: number) =>
   }`;
 const slotName = (s: number) => `bar ${Math.floor(s / 2) + 1}, ${s % 2 === 0 ? 'first' : 'second'} half`;
 
-function ReadOnlyChordRow({ chords }: { chords: readonly string[] }) {
+function ReadOnlyChordRow({ chords, scrollable }: { chords: readonly string[]; scrollable: boolean }) {
   return (
     <div className="flex" aria-label="Chords, two per bar">
-      <div className="shrink-0" style={{ width: KEY_COL_W }} />
+      <KeyGap scrollable={scrollable} />
       <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${chords.length}, minmax(0, 1fr))` }}>
         {chords.map((c, s) => (
           <span key={s} className={`${cellClass(chords, s)} leading-8`} title={`Chord in ${slotName(s)}: ${c}`}>
@@ -53,11 +60,13 @@ function EditableChordRow({
   onPick,
   loadOptions,
   disabled,
+  scrollable = false,
 }: {
   chords: readonly string[];
   onPick(slot: number, chord: string): void;
   loadOptions(slot: number): Promise<{ chord: string; fit: number }[]>;
   disabled: boolean;
+  scrollable?: boolean;
 }) {
   const [open, setOpen] = useState<number | undefined>(undefined);
   const [options, setOptions] = useState<Options>({ state: 'loading' });
@@ -73,7 +82,7 @@ function EditableChordRow({
 
   return (
     <div className="flex" aria-label="Chords, two per bar">
-      <div className="shrink-0" style={{ width: KEY_COL_W }} />
+      <KeyGap scrollable={scrollable} />
       <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${chords.length}, minmax(0, 1fr))` }}>
         {chords.map((c, s) => (
           <DropdownMenu key={s} open={open === s} onOpenChange={(o) => (o ? openSlot(s) : setOpen(undefined))}>

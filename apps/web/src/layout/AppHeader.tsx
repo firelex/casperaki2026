@@ -35,7 +35,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
               {`♪ ${activeSong.project.title}`}
             </HeaderLink>
           ) : null}
-          <HeaderLink to="/sounds">Sound library</HeaderLink>
+          <HeaderLink to="/sounds">Sounds</HeaderLink>
           <HeaderLink to="/melodies">Melodies</HeaderLink>
           {user?.isAdmin ? <HeaderLink to="/suggestions">Suggestions</HeaderLink> : null}
         </nav>

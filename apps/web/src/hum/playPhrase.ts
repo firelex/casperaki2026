@@ -25,13 +25,20 @@ export function chordMidis(symbol: string): number[] {
 }
 
 /**
- * Plays a melody over half-bar chords; the phrase lasts as long as the chords (2 beats each). `onBeat` follows the
- * position in beats; `onEnd` runs when it ends or is stopped. Returns a stop function.
+ * Plays a melody over half-bar chords; the phrase lasts `beats` (default: as long as the chords, 2 beats each; a
+ * melody without chords gives its length). `onBeat` follows the position in beats; `onEnd` runs when it ends or is
+ * stopped. Returns a stop function.
  */
-export function playPhrase(melody: readonly PhraseNote[], chords: readonly string[], bpm: number, onEnd: () => void, onBeat: (beat: number) => void): () => void {
-  if (chords.length === 0) throw new Error('playPhrase: no chords (one per half bar is needed)');
+export function playPhrase(
+  melody: readonly PhraseNote[],
+  chords: readonly string[],
+  bpm: number,
+  onEnd: () => void,
+  onBeat: (beat: number) => void,
+  beats: number = chords.length * 2,
+): () => void {
+  if (!(beats > 0)) throw new Error('playPhrase: nothing to play (no chords and no length given)');
   const voicings = chords.map(chordMidis);
-  const beats = chords.length * 2;
   const ctx = new AudioContext();
   const spb = 60 / bpm;
   const t0 = ctx.currentTime + 0.1;
@@ -72,4 +79,22 @@ export function playPhrase(melody: readonly PhraseNote[], chords: readonly strin
     void ctx.close();
     onEnd();
   };
+}
+
+let previewCtx: AudioContext | undefined;
+/** A short tone for a note being edited. */
+export function previewNote(midi: number) {
+  previewCtx ??= new AudioContext();
+  const ctx = previewCtx;
+  const at = ctx.currentTime + 0.01;
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.value = mtof(midi);
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(0.2, at + 0.01);
+  g.gain.setTargetAtTime(0, at + 0.15, 0.05);
+  osc.connect(g).connect(ctx.destination);
+  osc.start(at);
+  osc.stop(at + 0.5);
 }

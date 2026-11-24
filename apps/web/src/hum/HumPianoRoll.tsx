@@ -74,9 +74,11 @@ export function HumPianoRoll(
     playBeat: number | undefined;
     /** Length of the roll in beats (default 8 bars). */
     totalBeats?: number;
+    /** The roll scrolls sideways inside a box (zoomed): the key column stays in view. */
+    scrollable?: boolean;
   } & (EditableProps | ReadOnlyProps),
 ) {
-  const { melody, playBeat, totalBeats: total = DEFAULT_TOTAL_BEATS } = props;
+  const { melody, playBeat, totalBeats: total = DEFAULT_TOTAL_BEATS, scrollable = false } = props;
   const edit = props.readOnly ? undefined : props;
   const hummedBars = edit?.hummedBars ?? 0;
   const editedBars = edit?.editedBars ?? NO_BARS;
@@ -189,7 +191,7 @@ export function HumPianoRoll(
       className="flex select-none rounded-[8px] bg-black/30"
       aria-label={edit ? 'Melody: click to add a note, right click to delete, drag to move, long press and drag to change its length' : 'Melody'}
     >
-      <div className="shrink-0" style={{ width: KEY_COL_W }}>
+      <div className={`shrink-0 ${scrollable ? 'sticky left-0 z-30 bg-[#1b1c1f]' : ''}`} style={{ width: KEY_COL_W }}>
         {pitches.map((p) => (
           <div
             key={p}

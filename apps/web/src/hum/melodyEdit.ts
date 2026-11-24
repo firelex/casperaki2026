@@ -1,6 +1,7 @@
 /**
  * The hum editor's rules for one version's melody and chords (pure, so it can be tested):
- * 8 bars of 4 beats, a 16th-note grid, one voice (notes never overlap), everything inside the 8 bars.
+ * 8 bars of 4 beats (or the edit's `beats`, e.g. 36 for a pattern with a lead-in bar), a 16th-note grid, one voice
+ * (notes never overlap), everything inside the bars.
  * Each change returns a new edit with the previous state on `history` (for undo); a change that breaks a rule
  * returns the edit unchanged. Bars whose melody the user touched are in `editedBars` (0-based): a new completion
  * keeps them. Chord changes do not mark bars.
@@ -17,6 +18,8 @@ interface State {
 }
 
 export interface VersionEdit extends State {
+  /** Length in beats (the hum editor: 32). */
+  readonly beats: number;
   readonly history: readonly State[];
 }
 
@@ -32,8 +35,9 @@ const barsOf = (n: BeatNote): number[] => {
 const overlaps = (a: BeatNote, b: BeatNote) => a.beat < b.beat + b.duration - 1e-9 && b.beat < a.beat + a.duration - 1e-9;
 const byBeat = (a: BeatNote, b: BeatNote) => a.beat - b.beat;
 
-export function startEdit(melody: readonly BeatNote[], chords: readonly string[]): VersionEdit {
-  return { melody: [...melody].sort(byBeat), chords: [...chords], editedBars: new Set(), history: [] };
+export function startEdit(melody: readonly BeatNote[], chords: readonly string[], beats: number = TOTAL_BEATS): VersionEdit {
+  if (!Number.isInteger(beats / 4) || beats <= 0) throw new Error(`melodyEdit: ${beats} beats is not whole bars`);
+  return { melody: [...melody].sort(byBeat), chords: [...chords], editedBars: new Set(), beats, history: [] };
 }
 
 function commit(e: VersionEdit, next: Partial<State>, touched: readonly BeatNote[] = []): VersionEdit {
@@ -44,13 +48,14 @@ function commit(e: VersionEdit, next: Partial<State>, touched: readonly BeatNote
     melody: next.melody ? [...next.melody].sort(byBeat) : e.melody,
     chords: next.chords ?? e.chords,
     editedBars,
+    beats: e.beats,
     history: [...e.history, prev],
   };
 }
 
-/** Where the note starting at `beat` must end: the next note's start, or the end of bar 8. */
-function limitAfter(melody: readonly BeatNote[], beat: number, skip?: number): number {
-  let end = TOTAL_BEATS;
+/** Where the note starting at `beat` must end: the next note's start, or the end of the last bar. */
+function limitAfter(e: VersionEdit, melody: readonly BeatNote[], beat: number, skip?: number): number {
+  let end = e.beats;
   melody.forEach((n, i) => {
     if (i !== skip && n.beat > beat + 1e-9) end = Math.min(end, n.beat);
   });
@@ -62,7 +67,7 @@ function limitAfter(melody: readonly BeatNote[], beat: number, skip?: number): n
  * new note starts where it starts; clicking inside a note of the same pitch changes nothing.
  */
 export function addNote(e: VersionEdit, beat: number, midi: number, length: number): VersionEdit {
-  const start = Math.max(0, Math.min(TOTAL_BEATS - GRID, snapDown(beat)));
+  const start = Math.max(0, Math.min(e.beats - GRID, snapDown(beat)));
   const covering = e.melody.findIndex((n) => overlaps(n, { beat: start, midi, duration: GRID }));
   const hit = covering >= 0 ? e.melody[covering]! : undefined;
   if (hit && hit.midi === midi) return e;
@@ -71,7 +76,7 @@ export function addNote(e: VersionEdit, beat: number, midi: number, length: numb
       ? e.melody.filter((_, i) => i !== covering)
       : e.melody.map((n, i) => (i === covering ? { ...n, duration: start - n.beat } : n))
     : e.melody;
-  const duration = Math.min(Math.max(GRID, snap(length)), limitAfter(rest, start) - start);
+  const duration = Math.min(Math.max(GRID, snap(length)), limitAfter(e, rest, start) - start);
   const note = { beat: start, midi, duration };
   return commit(e, { melody: [...rest, note] }, hit ? [note, hit] : [note]);
 }
@@ -85,7 +90,7 @@ export function deleteNote(e: VersionEdit, index: number): VersionEdit {
 export function moveNote(e: VersionEdit, index: number, beat: number, midi: number): VersionEdit {
   const n = e.melody[index];
   if (!n) return e;
-  const start = Math.max(0, Math.min(TOTAL_BEATS - n.duration, snap(beat)));
+  const start = Math.max(0, Math.min(e.beats - n.duration, snap(beat)));
   const moved = { beat: start, midi, duration: n.duration };
   if (e.melody.some((m, i) => i !== index && overlaps(m, moved))) return e;
   if (moved.beat === n.beat && moved.midi === n.midi) return e;
@@ -95,7 +100,7 @@ export function moveNote(e: VersionEdit, index: number, beat: number, midi: numb
 export function resizeNote(e: VersionEdit, index: number, length: number): VersionEdit {
   const n = e.melody[index];
   if (!n) return e;
-  const duration = Math.min(Math.max(GRID, snap(length)), limitAfter(e.melody, n.beat, index) - n.beat);
+  const duration = Math.min(Math.max(GRID, snap(length)), limitAfter(e, e.melody, n.beat, index) - n.beat);
   if (duration === n.duration) return e;
   const sized = { ...n, duration };
   return commit(e, { melody: e.melody.map((m, i) => (i === index ? sized : m)) }, [n, sized]);
@@ -118,7 +123,7 @@ export function setMelody(e: VersionEdit, melody: readonly BeatNote[]): VersionE
 export function undo(e: VersionEdit): VersionEdit {
   const prev = e.history[e.history.length - 1];
   if (!prev) return e;
-  return { ...prev, history: e.history.slice(0, -1) };
+  return { ...prev, beats: e.beats, history: e.history.slice(0, -1) };
 }
 
 /** Bars a new completion must keep: the hummed bars and every bar the user edited, ascending. */
