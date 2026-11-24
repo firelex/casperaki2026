@@ -25,14 +25,12 @@ afterEach(() => {
 });
 
 describe('flags and source on every bank entry', () => {
-  it('are written into every bank: hooks both flags (casperaki), legacy remix only (song / melodySauce)', () => {
+  it('are written into every bank: hooks both flags (casperaki), legacy remix only (song)', () => {
     for (const bankId of Object.keys(loadBankIndex().banks)) {
       for (const e of loadPrecedentBank(bankId)) {
         const p = e.properties;
         if (bankId === 'hooks') {
           expect(p).toMatchObject({ useOriginal: true, useRemix: true, source: { kind: 'casperaki' } });
-        } else if (bankId === 'stefan') {
-          expect(p).toMatchObject({ useOriginal: false, useRemix: true, source: { kind: 'melodySauce' } });
         } else {
           expect(p).toMatchObject({ useOriginal: false, useRemix: true, source: { kind: 'song', title: p.name } });
         }

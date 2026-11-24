@@ -227,11 +227,11 @@
           "bars": [
             {
               "notes": {
-                "0.0": [
+                "1.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Hold",
-                    "note": 52,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -241,11 +241,11 @@
                     ]
                   }
                 ],
-                "0.5": [
+                "2.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "The",
-                    "note": 52,
+                    "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -253,7 +253,7 @@
                     ]
                   }
                 ],
-                "1.0": [
+                "3.0": [
                   {
                     "duration": 0.5,
                     "fullWord": "Mo-",
@@ -265,9 +265,10 @@
                     ]
                   }
                 ],
-                "1.5": [
+                "3.5": [
                   {
                     "duration": 0.5,
+                    "endOfPhrase": true,
                     "fullWord": "Ment",
                     "note": 57,
                     "type": "vocalNote",
@@ -276,59 +277,6 @@
                       "ah0",
                       "n",
                       "t"
-                    ]
-                  }
-                ],
-                "2.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "2.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Hold",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ],
-                "3.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Mo-",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
                     ]
                   }
                 ]
@@ -338,9 +286,62 @@
               "notes": {
                 "0.0": [
                   {
+                    "duration": 1,
+                    "fullWord": "Still",
+                    "note": 56,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "s",
+                      "t",
+                      "ih1",
+                      "l"
+                    ]
+                  }
+                ],
+                "1.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "Hold",
+                    "note": 56,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "hh",
+                      "ow1",
+                      "l",
+                      "d"
+                    ]
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "The",
+                    "note": 56,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "dh",
+                      "ah0"
+                    ]
+                  }
+                ],
+                "3.0": [
+                  {
                     "duration": 0.5,
+                    "fullWord": "Mo-",
+                    "note": 56,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ow1"
+                    ]
+                  }
+                ],
+                "3.5": [
+                  {
+                    "duration": 0.5,
+                    "endOfPhrase": true,
                     "fullWord": "Ment",
-                    "note": 55,
+                    "note": 56,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -349,10 +350,14 @@
                       "t"
                     ]
                   }
-                ],
-                "0.5": [
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Still",
                     "note": 55,
                     "type": "vocalNote",
@@ -366,7 +371,7 @@
                 ],
                 "1.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Hold",
                     "note": 55,
                     "type": "vocalNote",
@@ -378,202 +383,49 @@
                     ]
                   }
                 ],
-                "1.5": [
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "The",
+                    "note": 55,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "dh",
+                      "ah0"
+                    ]
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 0.5,
+                    "fullWord": "Mo-",
+                    "note": 60,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ow1"
+                    ]
+                  }
+                ],
+                "3.5": [
                   {
                     "duration": 1.5,
-                    "fullWord": "The",
-                    "note": 52,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "Mo-",
-                    "note": 52,
+                    "fullWord": "Ment",
+                    "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
-                      "ow1"
+                      "ah0",
+                      "n",
+                      "t"
                     ]
                   }
                 ]
               }
             },
             {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 50,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 50,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "1.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Hold",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ],
-                "1.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "2.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Mo-",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
-                    ]
-                  }
-                ],
-                "2.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "3.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 50,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Hold",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Mo-",
-                    "note": 53,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
-                    ]
-                  }
-                ],
-                "1.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 53,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "1.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Still",
-                    "note": 53,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ]
-              }
+              "notes": {}
             }
           ]
         },
@@ -581,11 +433,11 @@
           "bars": [
             {
               "notes": {
-                "0.0": [
+                "1.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Hold",
-                    "note": 60,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -595,11 +447,11 @@
                     ]
                   }
                 ],
-                "0.5": [
+                "2.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "The",
-                    "note": 60,
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -607,7 +459,7 @@
                     ]
                   }
                 ],
-                "1.0": [
+                "3.0": [
                   {
                     "duration": 0.5,
                     "fullWord": "Mo-",
@@ -619,9 +471,10 @@
                     ]
                   }
                 ],
-                "1.5": [
+                "3.5": [
                   {
                     "duration": 0.5,
+                    "endOfPhrase": true,
                     "fullWord": "Ment",
                     "note": 64,
                     "type": "vocalNote",
@@ -630,59 +483,6 @@
                       "ah0",
                       "n",
                       "t"
-                    ]
-                  }
-                ],
-                "2.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 64,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "2.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Hold",
-                    "note": 64,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ],
-                "3.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 64,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Mo-",
-                    "note": 64,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
                     ]
                   }
                 ]
@@ -692,9 +492,62 @@
               "notes": {
                 "0.0": [
                   {
+                    "duration": 1,
+                    "fullWord": "Still",
+                    "note": 62,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "s",
+                      "t",
+                      "ih1",
+                      "l"
+                    ]
+                  }
+                ],
+                "1.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "Hold",
+                    "note": 62,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "hh",
+                      "ow1",
+                      "l",
+                      "d"
+                    ]
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "The",
+                    "note": 62,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "dh",
+                      "ah0"
+                    ]
+                  }
+                ],
+                "3.0": [
+                  {
                     "duration": 0.5,
+                    "fullWord": "Mo-",
+                    "note": 62,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ow1"
+                    ]
+                  }
+                ],
+                "3.5": [
+                  {
+                    "duration": 0.5,
+                    "endOfPhrase": true,
                     "fullWord": "Ment",
-                    "note": 64,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -703,10 +556,14 @@
                       "t"
                     ]
                   }
-                ],
-                "0.5": [
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Still",
                     "note": 64,
                     "type": "vocalNote",
@@ -720,7 +577,7 @@
                 ],
                 "1.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Hold",
                     "note": 64,
                     "type": "vocalNote",
@@ -732,202 +589,49 @@
                     ]
                   }
                 ],
-                "1.5": [
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "The",
+                    "note": 64,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "dh",
+                      "ah0"
+                    ]
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 0.5,
+                    "fullWord": "Mo-",
+                    "note": 67,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ow1"
+                    ]
+                  }
+                ],
+                "3.5": [
                   {
                     "duration": 1.5,
-                    "fullWord": "The",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "Mo-",
-                    "note": 60,
+                    "fullWord": "Ment",
+                    "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
-                      "ow1"
+                      "ah0",
+                      "n",
+                      "t"
                     ]
                   }
                 ]
               }
             },
             {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "1.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Hold",
-                    "note": 62,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ],
-                "1.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 62,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "2.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Mo-",
-                    "note": 62,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
-                    ]
-                  }
-                ],
-                "2.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 62,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "3.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Hold",
-                    "note": 62,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 65,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Mo-",
-                    "note": 65,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
-                    ]
-                  }
-                ],
-                "1.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "1.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Still",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ]
-              }
+              "notes": {}
             }
           ]
         },
@@ -949,6 +653,17 @@
                 "0.0": [
                   {
                     "duration": 4,
+                    "note": 40,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
                     "note": 36,
                     "type": "note"
                   }
@@ -960,18 +675,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 31,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 41,
+                    "note": 38,
                     "type": "note"
                   }
                 ]
@@ -1369,6 +1073,17 @@
                 "0.0": [
                   {
                     "duration": 4,
+                    "note": 64,
+                    "type": "note"
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 4,
                     "note": 60,
                     "type": "note"
                   }
@@ -1380,18 +1095,7 @@
                 "0.0": [
                   {
                     "duration": 4,
-                    "note": 55,
-                    "type": "note"
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 4,
-                    "note": 65,
+                    "note": 62,
                     "type": "note"
                   }
                 ]
@@ -1623,25 +1327,25 @@
               "notes": {
                 "0.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1649,25 +1353,25 @@
                 ],
                 "0.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1675,25 +1379,25 @@
                 ],
                 "1.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1701,25 +1405,25 @@
                 ],
                 "1.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1727,25 +1431,25 @@
                 ],
                 "2.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1753,25 +1457,25 @@
                 ],
                 "2.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1779,25 +1483,25 @@
                 ],
                 "3.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1805,25 +1509,25 @@
                 ],
                 "3.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1835,31 +1539,31 @@
               "notes": {
                 "0.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -27,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1867,31 +1571,31 @@
                 ],
                 "0.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -27,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1899,31 +1603,31 @@
                 ],
                 "1.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -27,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1931,31 +1635,31 @@
                 ],
                 "1.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -27,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1963,31 +1667,31 @@
                 ],
                 "2.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -27,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -1995,31 +1699,31 @@
                 ],
                 "2.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -27,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2027,31 +1731,31 @@
                 ],
                 "3.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -3,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -8,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 13,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2059,31 +1763,31 @@
                 ],
                 "3.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -3,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -8,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 13,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2095,25 +1799,25 @@
               "notes": {
                 "0.0": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2121,25 +1825,25 @@
                 ],
                 "0.5": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2147,25 +1851,25 @@
                 ],
                 "1.0": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2173,25 +1877,25 @@
                 ],
                 "1.5": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2199,25 +1903,25 @@
                 ],
                 "2.0": [
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2225,25 +1929,25 @@
                 ],
                 "2.5": [
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2251,25 +1955,25 @@
                 ],
                 "3.0": [
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2277,25 +1981,25 @@
                 ],
                 "3.5": [
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2535,25 +2239,25 @@
               "notes": {
                 "0.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2561,25 +2265,25 @@
                 ],
                 "1.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2587,25 +2291,25 @@
                 ],
                 "1.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2613,25 +2317,25 @@
                 ],
                 "2.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2639,25 +2343,25 @@
                 ],
                 "2.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2665,25 +2369,25 @@
                 ],
                 "3.0": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2691,25 +2395,25 @@
                 ],
                 "3.5": [
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "C",
+                    "chord": "E7",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2721,25 +2425,25 @@
               "notes": {
                 "0.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2747,25 +2451,25 @@
                 ],
                 "0.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2773,25 +2477,25 @@
                 ],
                 "1.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2799,25 +2503,25 @@
                 ],
                 "1.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2825,25 +2529,25 @@
                 ],
                 "2.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2851,25 +2555,25 @@
                 ],
                 "2.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2877,31 +2581,31 @@
                 ],
                 "3.0": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -3,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -8,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 13,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2909,31 +2613,31 @@
                 ],
                 "3.5": [
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -3,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -8,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "G",
+                    "chord": "C",
                     "distanceFromMiddleC": 13,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2945,25 +2649,25 @@
               "notes": {
                 "0.5": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2971,25 +2675,25 @@
                 ],
                 "1.0": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -2997,25 +2701,25 @@
                 ],
                 "1.5": [
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "Dm",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -3023,25 +2727,25 @@
                 ],
                 "2.0": [
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -3049,25 +2753,25 @@
                 ],
                 "2.5": [
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "E",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -3075,25 +2779,25 @@
                 ],
                 "3.0": [
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -3101,25 +2805,25 @@
                 ],
                 "3.5": [
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": -15,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 9,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 4,
                     "duration": 0.25,
                     "type": "noteRelative"
                   },
                   {
-                    "chord": "F",
+                    "chord": "A",
                     "distanceFromMiddleC": 1,
                     "duration": 0.25,
                     "type": "noteRelative"
@@ -3133,11 +2837,11 @@
           "bars": [
             {
               "notes": {
-                "0.0": [
+                "1.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Hold",
-                    "note": 57,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "hh",
@@ -3147,11 +2851,11 @@
                     ]
                   }
                 ],
-                "0.5": [
+                "2.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "The",
-                    "note": 57,
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "dh",
@@ -3159,11 +2863,11 @@
                     ]
                   }
                 ],
-                "1.0": [
+                "3.0": [
                   {
                     "duration": 0.5,
                     "fullWord": "Mo-",
-                    "note": 59,
+                    "note": 62,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
@@ -3171,9 +2875,10 @@
                     ]
                   }
                 ],
-                "1.5": [
+                "3.5": [
                   {
                     "duration": 0.5,
+                    "endOfPhrase": true,
                     "fullWord": "Ment",
                     "note": 60,
                     "type": "vocalNote",
@@ -3182,59 +2887,6 @@
                       "ah0",
                       "n",
                       "t"
-                    ]
-                  }
-                ],
-                "2.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "2.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Hold",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ],
-                "3.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Mo-",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
                     ]
                   }
                 ]
@@ -3244,21 +2896,7 @@
               "notes": {
                 "0.0": [
                   {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Still",
                     "note": 59,
                     "type": "vocalNote",
@@ -3272,7 +2910,7 @@
                 ],
                 "1.0": [
                   {
-                    "duration": 0.5,
+                    "duration": 1,
                     "fullWord": "Hold",
                     "note": 59,
                     "type": "vocalNote",
@@ -3284,202 +2922,120 @@
                     ]
                   }
                 ],
-                "1.5": [
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "The",
+                    "note": 59,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "dh",
+                      "ah0"
+                    ]
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 0.5,
+                    "fullWord": "Mo-",
+                    "note": 59,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ow1"
+                    ]
+                  }
+                ],
+                "3.5": [
+                  {
+                    "duration": 0.5,
+                    "endOfPhrase": true,
+                    "fullWord": "Ment",
+                    "note": 59,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ah0",
+                      "n",
+                      "t"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "notes": {
+                "0.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "Still",
+                    "note": 60,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "s",
+                      "t",
+                      "ih1",
+                      "l"
+                    ]
+                  }
+                ],
+                "1.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "Hold",
+                    "note": 60,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "hh",
+                      "ow1",
+                      "l",
+                      "d"
+                    ]
+                  }
+                ],
+                "2.0": [
+                  {
+                    "duration": 1,
+                    "fullWord": "The",
+                    "note": 60,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "dh",
+                      "ah0"
+                    ]
+                  }
+                ],
+                "3.0": [
+                  {
+                    "duration": 0.5,
+                    "fullWord": "Mo-",
+                    "note": 62,
+                    "type": "vocalNote",
+                    "vocaloidPhonemes": [
+                      "m",
+                      "ow1"
+                    ]
+                  }
+                ],
+                "3.5": [
                   {
                     "duration": 1.5,
-                    "fullWord": "The",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "Mo-",
-                    "note": 57,
+                    "fullWord": "Ment",
+                    "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "m",
-                      "ow1"
+                      "ah0",
+                      "n",
+                      "t"
                     ]
                   }
                 ]
               }
             },
             {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "1.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Hold",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ],
-                "1.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "2.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Mo-",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
-                    ]
-                  }
-                ],
-                "2.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "3.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Still",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ],
-                "3.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Hold",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "hh",
-                      "ow1",
-                      "l",
-                      "d"
-                    ]
-                  }
-                ]
-              }
-            },
-            {
-              "notes": {
-                "0.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "The",
-                    "note": 60,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "dh",
-                      "ah0"
-                    ]
-                  }
-                ],
-                "0.5": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Mo-",
-                    "note": 59,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ow1"
-                    ]
-                  }
-                ],
-                "1.0": [
-                  {
-                    "duration": 0.5,
-                    "fullWord": "Ment",
-                    "note": 57,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "m",
-                      "ah0",
-                      "n",
-                      "t"
-                    ]
-                  }
-                ],
-                "1.5": [
-                  {
-                    "duration": 0.5,
-                    "endOfPhrase": true,
-                    "fullWord": "Still",
-                    "note": 55,
-                    "type": "vocalNote",
-                    "vocaloidPhonemes": [
-                      "s",
-                      "t",
-                      "ih1",
-                      "l"
-                    ]
-                  }
-                ]
-              }
+              "notes": {}
             }
           ]
         }
@@ -3746,24 +3302,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -3771,14 +3327,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -3787,12 +3342,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -3803,37 +3358,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -3841,14 +3396,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -3857,12 +3411,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -3873,37 +3427,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -3911,14 +3465,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -3927,12 +3480,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -4150,24 +3703,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -4175,14 +3728,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -4191,12 +3743,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -4207,37 +3759,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -4245,14 +3797,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -4261,12 +3812,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -4277,37 +3828,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -4315,14 +3866,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -4331,12 +3881,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -8242,24 +7792,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -8267,14 +7817,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -8283,12 +7832,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -8299,37 +7848,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -8337,14 +7886,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -8353,12 +7901,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -8369,37 +7917,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -8407,14 +7955,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -8423,12 +7970,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -8695,24 +8242,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -8720,14 +8267,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -8736,12 +8282,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -8752,37 +8298,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -8790,14 +8336,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -8806,12 +8351,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -8822,37 +8367,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -8860,14 +8405,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -8876,12 +8420,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -9099,24 +8643,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -9124,14 +8668,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -9140,12 +8683,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -9156,37 +8699,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -9194,14 +8737,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -9210,12 +8752,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -9226,37 +8768,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -9264,14 +8806,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -9280,12 +8821,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -13191,24 +12732,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -13216,14 +12757,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -13232,12 +12772,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -13248,37 +12788,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -13286,14 +12826,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -13302,12 +12841,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -13318,37 +12857,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -13356,14 +12895,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -13372,12 +12910,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -13644,24 +13182,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -13669,14 +13207,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -13685,12 +13222,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 53,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -13701,37 +13238,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -13739,14 +13276,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -13755,12 +13291,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -13771,37 +13307,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -13809,14 +13345,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -13825,12 +13360,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 52,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -14048,24 +13583,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -14073,14 +13608,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -14089,12 +13623,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -14105,37 +13639,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -14143,14 +13677,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -14159,12 +13692,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -14175,37 +13708,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 64,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -14213,14 +13746,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -14229,12 +13761,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -18140,24 +17672,24 @@
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -18165,14 +17697,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -18181,12 +17712,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -18197,37 +17728,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 58,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -18235,14 +17766,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -18251,12 +17781,12 @@
                   {
                     "duration": 0.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -18267,37 +17797,37 @@
                 "0.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Night",
+                    "fullWord": "Fall",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "n",
-                      "ay1",
-                      "t"
+                      "f",
+                      "ao1",
+                      "l"
                     ]
                   }
                 ],
                 "1.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Lose",
+                    "fullWord": "Dance",
                     "note": 60,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "l",
-                      "uw1",
-                      "z"
+                      "d",
+                      "ae1",
+                      "n",
+                      "s"
                     ]
                   }
                 ],
                 "2.0": [
                   {
                     "duration": 1,
-                    "fullWord": "Cont-",
+                    "fullWord": "Un-",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "k",
                       "ah0"
                     ]
                   }
@@ -18305,14 +17835,13 @@
                 "3.0": [
                   {
                     "duration": 0.5,
-                    "fullWord": "Rol",
+                    "fullWord": "Til",
                     "note": 57,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
                       "n",
                       "t",
-                      "r",
-                      "ow1",
+                      "ih1",
                       "l"
                     ]
                   }
@@ -18321,12 +17850,12 @@
                   {
                     "duration": 1.5,
                     "endOfPhrase": true,
-                    "fullWord": "To-",
+                    "fullWord": "We",
                     "note": 55,
                     "type": "vocalNote",
                     "vocaloidPhonemes": [
-                      "t",
-                      "ah0"
+                      "w",
+                      "iy1"
                     ]
                   }
                 ]
@@ -31660,6 +31189,14 @@
         },
         {
           "chords": [
+            "E7",
+            "E7",
+            "E7",
+            "E7"
+          ]
+        },
+        {
+          "chords": [
             "C",
             "C",
             "C",
@@ -31668,18 +31205,10 @@
         },
         {
           "chords": [
-            "G",
-            "G",
-            "G",
-            "G"
-          ]
-        },
-        {
-          "chords": [
-            "F",
-            "F",
-            "F",
-            "F"
+            "Dm",
+            "Dm",
+            "E",
+            "A"
           ]
         }
       ],

@@ -44,15 +44,15 @@ describe('melody library: the committed banks', () => {
   afterAll(async () => { await h.stop(); });
   const get = call(() => h);
 
-  it('pages the remix patterns (1201 Melody Sauce imports among them)', async () => {
-    const a = await get('/api/melody-library?kind=remix&source=melodySauce&limit=50');
+  it('pages the remix patterns: transcriptions of real songs only (Melody Sauce was retired)', async () => {
+    const a = await get('/api/melody-library?kind=remix&limit=50');
     expect(a.status).toBe(200);
-    expect(a.body.total).toBe(1201);
+    expect(a.body.total).toBe(292);
     expect(a.body.items).toHaveLength(50);
-    const last = await get('/api/melody-library?kind=remix&source=melodySauce&limit=50&offset=1200');
+    const last = await get('/api/melody-library?kind=remix&limit=50&offset=291');
     expect(last.body.items).toHaveLength(1);
-    expect(a.body.facets.sources).toEqual(['melodySauce', 'song']);
-    expect((await get('/api/melody-library?kind=remix&limit=1')).body.total).toBe(1493);
+    expect(a.body.facets.sources).toEqual(['song']);
+    expect((await get('/api/melody-library?kind=remix&source=melodySauce')).status).toBe(400);
   });
 
   it('gives each entry its source, flags, range in semitones; one pre-chorus spelling', async () => {
@@ -66,7 +66,7 @@ describe('melody library: the committed banks', () => {
 
   it('filters by source, range band, flags, type, tempo and text (name, song, feel)', async () => {
     const songs = await get('/api/melody-library?kind=remix&source=song&limit=200');
-    expect(songs.body.total).toBe(1493 - 1201);
+    expect(songs.body.total).toBe(292);
     const narrow = await get('/api/melody-library?kind=remix&range=narrow&limit=200');
     expect(narrow.body.items.every((i: { range: number }) => i.range <= 9)).toBe(true);
     const wide = await get('/api/melody-library?kind=remix&range=wide&limit=200');

@@ -29,7 +29,6 @@ const KINDS: readonly { kind: MelodyKind; label: string }[] = [
 ];
 const SOURCES: readonly { kind: MelodySource['kind']; label: string }[] = [
   { kind: 'song', label: 'Curated songs' },
-  { kind: 'melodySauce', label: 'Melody Sauce imports' },
   { kind: 'casperaki', label: 'Casperaki originals' },
 ];
 const RANGES: readonly { range: MelodyRange; label: string }[] = [

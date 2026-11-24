@@ -20,7 +20,7 @@ const Flag = z.enum(['1', '0']).transform((v) => v === '1');
 const ListQuery = z
   .object({
     kind: z.enum(['hooks', 'remix']),
-    source: z.enum(['song', 'melodySauce', 'casperaki']).optional(),
+    source: z.enum(['song', 'casperaki']).optional(),
     range: z.enum(['narrow', 'medium', 'wide']).optional(),
     type: z.string().min(1).max(40).optional(),
     tempo: z.coerce.number().positive().max(400).optional(),

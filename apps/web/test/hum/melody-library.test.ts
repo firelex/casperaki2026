@@ -29,15 +29,14 @@ describe('melody library helpers', () => {
   it('leaves empty filters out of the list query', () => {
     const none = { kind: 'hooks', source: '', range: '', type: '', feel: '', style: '', substyle: '', tempo: undefined, q: '', original: '', remix: '' } as const;
     expect(melodyListQuery(none, 0)).toBe('kind=hooks&offset=0&limit=100');
-    expect(melodyListQuery({ ...none, kind: 'remix', source: 'melodySauce', range: 'wide', type: 'Verse', tempo: 120, q: 'love', original: 'off', remix: 'on' }, 100, 50)).toBe(
-      'kind=remix&offset=100&limit=50&source=melodySauce&range=wide&type=Verse&tempo=120&original=0&remix=1&q=love',
+    expect(melodyListQuery({ ...none, kind: 'remix', source: 'song', range: 'wide', type: 'Verse', tempo: 120, q: 'love', original: 'off', remix: 'on' }, 100, 50)).toBe(
+      'kind=remix&offset=100&limit=50&source=song&range=wide&type=Verse&tempo=120&original=0&remix=1&q=love',
     );
     expect(melodyListQuery({ ...none, style: 'edm', feel: 'urgent', substyle: 'house' }, 0)).toBe('kind=hooks&offset=0&limit=100&feel=urgent&style=edm&substyle=house');
   });
 
   it('names sources and range bands in words', () => {
     expect(sourceLabel({ kind: 'song', title: 'Titanium', artist: 'David Guetta' })).toBe('Song section · Titanium');
-    expect(sourceLabel({ kind: 'melodySauce' })).toBe('Melody Sauce');
     expect(sourceLabel({ kind: 'casperaki' })).toBe('Casperaki original');
     expect([9, 10, 14, 15].map(rangeBand)).toEqual(['narrow', 'medium', 'medium', 'wide']);
   });
@@ -64,6 +63,6 @@ describe('every precedent bank entry engraves as a score', () => {
         n++;
       }
     }
-    expect(n).toBeGreaterThan(1500);
+    expect(n).toBeGreaterThan(850);
   });
 });

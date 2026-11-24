@@ -35,7 +35,7 @@ export interface MelodyListItem {
 }
 
 export interface MelodySource {
-  readonly kind: 'song' | 'melodySauce' | 'casperaki';
+  readonly kind: 'song' | 'casperaki';
   readonly title?: string;
   readonly artist?: string;
 }
@@ -118,10 +118,9 @@ export const melodiesApi = {
 
 const entryPath = (bank: string, id: string) => `/api/melody-library/${encodeURIComponent(bank)}/${encodeURIComponent(id)}`;
 
-/** Where an entry comes from, in words: "Song section · Titanium", "Melody Sauce", "Casperaki original". */
+/** Where an entry comes from, in words: "Song section · Titanium", "Casperaki original". */
 export function sourceLabel(s: MelodySource): string {
   if (s.kind === 'casperaki') return 'Casperaki original';
-  if (s.kind === 'melodySauce') return 'Melody Sauce';
   return s.title ? `Song section · ${s.title}` : 'Song section';
 }
 

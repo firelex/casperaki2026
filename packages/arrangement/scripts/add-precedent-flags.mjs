@@ -6,10 +6,9 @@
 //
 // useOriginal: the entry may be sung whole, exactly as written (moved by octaves only).
 // useRemix:    the entry may take part in the mixing merge (rhythm of one entry, pitch shape and chords of another).
-// source:      where the melody comes from: { kind: 'song' | 'melodySauce' | 'casperaki', title?, artist? }.
+// source:      where the melody comes from: { kind: 'song' | 'casperaki', title?, artist? }.
 //
-// Hooks (our own): both flags, source casperaki. Legacy banks: remix only. stefan holds imported Melody Sauce .mid
-// files (names "Melody <k> melodysauceimported<n>.mid"); drLuke, schlager, limitedRange and rhythmic-* hold
+// Hooks (our own): both flags, source casperaki. Legacy banks: remix only. drLuke, schlager, limitedRange and rhythmic-* hold
 // transcriptions of real songs (title = the entry's name). No artist: the admin fills it in later. Rerunning gives
 // the same files (the values are set, not toggled). The file layout is kept (legacy minified, hooks indented).
 
@@ -27,12 +26,6 @@ const SONG_BANKS = new Set([
 
 function flagsFor(bankId, entry) {
   if (bankId === 'hooks') return { useOriginal: true, useRemix: true, source: { kind: 'casperaki' } };
-  if (bankId === 'stefan') {
-    if (!/^Melody \d+ melodysauceimported\d+\.mid$/u.test(entry.properties.name)) {
-      throw new Error(`stefan entry ${entry.id}: name "${entry.properties.name}" is not a Melody Sauce import`);
-    }
-    return { useOriginal: false, useRemix: true, source: { kind: 'melodySauce' } };
-  }
   if (SONG_BANKS.has(bankId)) {
     const title = entry.properties.name;
     if (typeof title !== 'string' || !title.trim()) throw new Error(`${bankId} entry ${entry.id} has no name to use as title`);

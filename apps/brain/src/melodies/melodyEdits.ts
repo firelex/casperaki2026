@@ -18,7 +18,7 @@ export const StoredEditSchema = z
     chords: z.record(z.object({ chord: z.string().min(1) }).strict()),
     useOriginal: z.boolean(),
     useRemix: z.boolean(),
-    source: z.object({ kind: z.enum(['song', 'melodySauce', 'casperaki']), title: z.string().optional(), artist: z.string().optional() }).strict(),
+    source: z.object({ kind: z.enum(['song', 'casperaki']), title: z.string().optional(), artist: z.string().optional() }).strict(),
     editedAt: z.string().min(1),
     editedBy: z.string().min(1),
   })

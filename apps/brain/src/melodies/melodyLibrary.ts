@@ -2,7 +2,7 @@
 //
 // Two kinds (docs/superpowers/specs/2026-11-24-hook-library-design.md, "Melody library page"):
 //   - hooks: the bank file mlDataRaw-hooks.json, our own melodies (properties.kind "hook", tempoMin, tempoMax, feel).
-//     It is not listed in bank-index.json until the owner has auditioned the hooks, so it is read by its file name.
+//     It is read by its file name.
 //     A missing file is an expected state ("no hooks yet"), not an error.
 //   - remix: every other bank listed in bank-index.json "banks" (the legacy banks, transcriptions of real songs).
 //
@@ -51,7 +51,7 @@ export class MelodyLibraryError extends Error {
 }
 
 const BeatKey = z.string().regex(/^-?\d+(?:\.\d+)?$/u);
-const SourceSchema = z.object({ kind: z.enum(['song', 'melodySauce', 'casperaki']), title: z.string().optional(), artist: z.string().optional() }).strict();
+const SourceSchema = z.object({ kind: z.enum(['song', 'casperaki']), title: z.string().optional(), artist: z.string().optional() }).strict();
 const EntrySchema = z
   .object({
     id: z.union([z.string(), z.number()]),
@@ -107,7 +107,7 @@ export interface MelodyListItem {
   readonly busyness: number;
   /** Highest minus lowest note, in semitones. */
   readonly range: number;
-  /** Where the melody comes from (a real song, Melody Sauce, or our own). */
+  /** Where the melody comes from (a real song or our own). */
   readonly source: MelodySource;
   /** Used whole, exactly as written. */
   readonly useOriginal: boolean;

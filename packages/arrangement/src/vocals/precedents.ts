@@ -103,7 +103,7 @@ const ChordEntrySchema = z
 
 const PrecedentSourceSchema = z
   .object({
-    kind: z.enum(['song', 'melodySauce', 'casperaki']),
+    kind: z.enum(['song', 'casperaki']),
     title: z.string().min(1).optional(),
     artist: z.string().min(1).optional(),
   })
@@ -803,7 +803,7 @@ function mergeLegacy(dispatch: DispatchResult, inputs: MergeInputs): MergedPrece
 // A rule names one melodic bank or a list. With a list, a bank is picked
 // first, every usable listed bank equally likely, then an entry of it:
 // picking per bank keeps a small bank (about 100 hooks) from being drowned by
-// a large one (stefan has 1201 entries). A single-bank rule draws no bank pick.
+// a large one. A single-bank rule draws no bank pick.
 //
 // Within the bank:
 //   - Whole candidates: entries flagged useOriginal, written for this section
