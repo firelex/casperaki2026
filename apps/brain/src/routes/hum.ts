@@ -44,7 +44,7 @@ import {
   type Transcription,
 } from '../hum/fit.js';
 import type { SongsStore } from '../store.js';
-import { generateProject, ownerOf, type SongsRouterDeps } from './songs.js';
+import { generateProject, LyricsNotConfiguredError, ownerOf, type SongsRouterDeps } from './songs.js';
 
 export interface HumRouterDeps {
   readonly humServiceUrl: string | undefined;
@@ -53,6 +53,8 @@ export interface HumRouterDeps {
   readonly store: SongsStore;
   readonly now?: () => string;
   readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle'];
+  /** Writes the new song's words (see routes/songs.ts generateProject). */
+  readonly lyricModel?: SongsRouterDeps['lyricModel'];
   /** For tests: the services' fetch. */
   readonly fetchImpl?: typeof fetch;
 }
@@ -397,14 +399,14 @@ export function createHumRouter(deps: HumRouterDeps): Router {
       }
       let made;
       try {
-        made = generateProject(
-          { store: deps.store, clock, ...(deps.onPlaceholderTitle ? { onPlaceholderTitle: deps.onPlaceholderTitle } : {}) },
+        made = await generateProject(
+          { store: deps.store, clock, ...(deps.onPlaceholderTitle ? { onPlaceholderTitle: deps.onPlaceholderTitle } : {}), ...(deps.lyricModel ? { lyricModel: deps.lyricModel } : {}) },
           ownerOf(req),
           { genre, key: a.songKey, bpm: a.bpm, seed: `hum-${a.id}-${alternative}`, params: { userChorus: { melody: chorus.melody, chords: chorus.chords } } },
           body.data.title,
         );
       } catch (err) {
-        throw new StepError('building the song', 500, err instanceof Error ? err.message : String(err));
+        throw new StepError('building the song', err instanceof LyricsNotConfiguredError ? 503 : 500, err instanceof Error ? err.message : String(err));
       }
       return res.status(201).json({ songId: made.id });
     } catch (err) {

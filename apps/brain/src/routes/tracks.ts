@@ -8,9 +8,14 @@
 //       | { kind: 'newPattern', track }
 //       | { kind: 'addTrack', family, segments, soundId? }
 //       | { kind: 'setDrumSound', role, soundId | null }   (null: genre default)
+//       | { kind: 'newLyrics', section }   new words for every section of that type
+//       | { kind: 'newMelody', section }   a new melody (its chords and every part
+//                                          under it, new words) for every section of that type
 //     The edit is recorded in the song's generator block and only the edited
-//     track changes in the posted (working) song. Removing a track is a
-//     client-side edit.
+//     track changes in the posted (working) song (for a new melody: every track
+//     of the sections of that type). Removing a track is a client-side edit.
+//     The vocal edits need the lyricist (language model); without it they
+//     answer 503 lyrics_not_configured.
 //
 //   POST /api/tracks/drum-kit { song }     -> { kit: [{ role, label, family,
 //     soundId, name, overridden }] }: the drums the engine plays for the song,
@@ -40,10 +45,23 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
+import { applyWrittenLyrics, lyricsTargets, newMelody, segmentType } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
+import { addSectionWithWords, SectionWordsUnavailableError } from '../lyrics/addSection.js';
+import { writeLyrics, type LyricModel } from '../lyrics/lyricist.js';
+
 const OptionsBody = z.object({ song: z.unknown() }).strict();
-const EditBody = z.object({ song: z.unknown(), op: TrackEditRequestSchema }).strict();
+const VocalEditSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('newLyrics'), section: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal('newMelody'), section: z.string().min(1) }).strict(),
+]);
+const EditBody = z.object({ song: z.unknown(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
+
+export interface TracksRouterDeps {
+  /** Writes words for the vocal edits (the language model). */
+  readonly lyricModel?: LyricModel;
+}
 
 const VocalPianoBody = z.object({ song: z.unknown(), track: z.string().min(1) }).strict();
 
@@ -63,7 +81,7 @@ const AddSectionBody = z
   .object({ song: z.unknown(), type: z.string().min(1), index: z.number().int().min(0), bars: z.number().int().min(1).max(64).optional() })
   .strict();
 
-export function createTracksRouter(): Router {
+export function createTracksRouter({ lyricModel }: TracksRouterDeps = {}): Router {
   const router = Router();
 
   router.post('/api/tracks/options', (req, res) => {
@@ -74,7 +92,7 @@ export function createTracksRouter(): Router {
     return run(res, () => trackOptions(song));
   });
 
-  router.post('/api/tracks/edit', (req, res) => {
+  router.post('/api/tracks/edit', async (req, res) => {
     const body = EditBody.safeParse(req.body);
     if (!body.success) {
       const issue = body.error.issues[0];
@@ -82,7 +100,26 @@ export function createTracksRouter(): Router {
     }
     const song = songOf(body.data.song, res);
     if (!song) return;
-    return run(res, () => editTrack(song, body.data.op));
+    const op = body.data.op;
+    if (op.kind === 'newLyrics' || op.kind === 'newMelody') {
+      if (!lyricModel) {
+        return res.status(503).json({ error: 'lyrics_not_configured', message: 'The lyrics model is not configured (set ASSISTANT_LLM_URL and ASSISTANT_LLM_MODEL).' });
+      }
+      try {
+        if (op.kind === 'newLyrics') {
+          const { generated, sections } = lyricsTargets(song, op.section);
+          const lyrics = await writeLyrics(generated, lyricModel, { sections });
+          return res.json({ song: applyWrittenLyrics(song, lyrics), track: 'Vocal' });
+        }
+        const made = newMelody(song, segmentType(op.section));
+        const lyrics = await writeLyrics(made.generated, lyricModel, { sections: made.sections });
+        return res.json({ song: applyWrittenLyrics(made.song, lyrics), track: 'Vocal' });
+      } catch (err) {
+        if (err instanceof TrackEditError) return res.status(err.status).json({ error: err.code, message: err.message });
+        return res.status(500).json({ error: 'track_edit_failed', message: err instanceof Error ? err.message : String(err) });
+      }
+    }
+    return run(res, () => editTrack(song, op));
   });
 
   router.post('/api/tracks/drum-kit', (req, res) => {
@@ -94,7 +131,7 @@ export function createTracksRouter(): Router {
   });
 
   // Add a section written by the generator: { song, type, index, bars? } -> { song, name }.
-  router.post('/api/sections/add', (req, res) => {
+  router.post('/api/sections/add', async (req, res) => {
     const body = AddSectionBody.safeParse(req.body);
     if (!body.success) {
       const issue = body.error.issues[0];
@@ -102,7 +139,13 @@ export function createTracksRouter(): Router {
     }
     const song = songOf(body.data.song, res);
     if (!song) return;
-    return run(res, () => addSection(song, body.data.type, body.data.index, body.data.bars));
+    try {
+      return res.json(await addSectionWithWords(song, body.data.type, body.data.index, body.data.bars, lyricModel));
+    } catch (err) {
+      if (err instanceof SectionWordsUnavailableError) return res.status(503).json({ error: 'lyrics_not_configured', message: err.message });
+      if (err instanceof TrackEditError) return res.status(err.status).json({ error: err.code, message: err.message });
+      return res.status(500).json({ error: 'track_edit_failed', message: err instanceof Error ? err.message : String(err) });
+    }
   });
 
   // Every section's transitions with their sounds (public names only), and the types there are.

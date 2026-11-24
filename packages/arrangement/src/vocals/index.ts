@@ -42,6 +42,8 @@ import { buildContour } from './contour.js';
 import { LEGACY_INDEX_TO_MIDI, MAX_NOTE, MIN_NOTE } from './range.js';
 import { fitRange, keyOffsetFromC, mergedChordBars, refitNonChorus, sectionTransposition, transposeChordSymbol } from './fit.js';
 import { applyLyricsToSegments } from './syllabify.js';
+import { attachWrittenLyrics, writtenLyricsOf } from './written-lyrics.js';
+import { melodyVariantsOf } from './melody-variants.js';
 import type { VocalBar, VocalResult, VocalSegment } from './types.js';
 import { formatBarBeat } from '@casperaki/music-theory';
 import { BarBeatSchema, MidiNoteSchema, type Segment, type VocalNoteEvent } from '@casperaki/song-schema';
@@ -94,6 +96,7 @@ export function writeVocals(
   // (hum to song: params.params.userChorus) takes the chorus's place.
   const cachedBySegmentType = new Map<string, MergedPrecedent | undefined>();
   const userChorus = userChorusOf(ctx.params.params);
+  const melodyVariants = melodyVariantsOf(ctx.params.params);
   if (userChorus) cachedBySegmentType.set('chorus', userChorusPrecedent(userChorus, ctx.params.key));
   const skeleton: VocalSegment[] = [];
   const sung = new Map<string, { merged: MergedPrecedent; type: string }>();
@@ -102,13 +105,19 @@ export function writeVocals(
     const segmentType = baseType(segment.name);
     let merged = cachedBySegmentType.get(segmentType);
     if (!cachedBySegmentType.has(segmentType)) {
-      merged = selectMergedPrecedent({
-        desiredPatternLength: segment.bars.length,
-        segmentType,
-        genre: ctx.params.genre,
-        tempo: ctx.params.bpm,
-        rng,
-      });
+      const select = (from: typeof rng) =>
+        selectMergedPrecedent({
+          desiredPatternLength: segment.bars.length,
+          segmentType,
+          genre: ctx.params.genre,
+          tempo: ctx.params.bpm,
+          rng: from,
+        });
+      merged = select(rng);
+      // A new melody (Change melody): the type's own stream picks it; the shared draw above still happens, so no
+      // other section's melody moves.
+      const variant = melodyVariants[segmentType];
+      if (variant !== undefined) merged = select(ctx.rng.fork(`vocals/melody/${segmentType}#v${variant}`));
       cachedBySegmentType.set(segmentType, merged);
     }
     if (!merged) continue;
@@ -138,7 +147,16 @@ export function writeVocals(
     genre: ctx.params.genre,
     rng,
   });
-  const { result: leadResult } = applyLyricsToSegments(skeletonResult, scaffolding, plan);
+  const { result: bankResult } = applyLyricsToSegments(skeletonResult, scaffolding, plan);
+  // Written lyrics (generator params `lyrics`, see written-lyrics.ts) replace the phrase bank's words in their
+  // sections; the phrase bank's words are only the first pass the brain hands to the lyricist.
+  const written = writtenLyricsOf(ctx.params.params);
+  for (const name of Object.keys(written)) {
+    if (!bankResult.segments.some((s) => s.segmentName === name)) throw new Error(`written lyrics: the song has no sung section "${name}"`);
+  }
+  const leadResult: VocalResult = {
+    segments: bankResult.segments.map((s) => (written[s.segmentName] ? attachWrittenLyrics(s, written[s.segmentName]!) : s)),
+  };
 
   // Phase 3 — deterministic backing vocal generator (Step 17d).
   // Two lanes: -4 (Backing vocals 1) and +4 (Backing vocals 2). The

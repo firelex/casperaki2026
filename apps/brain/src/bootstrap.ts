@@ -16,8 +16,10 @@ import express, { type Express } from 'express';
 import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
+import { createJobs } from './jobs.js';
 import { createSongsRouter, ownerOf } from './routes/songs.js';
 import { SongTitler } from './titles/songTitler.js';
+import { OpenAiLyricModel, type LyricModel } from './lyrics/lyricist.js';
 import { createDawExportRouter } from './routes/dawExport.js';
 import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
@@ -66,6 +68,8 @@ export interface CreateAppDeps {
   readonly assistantLlm?: AssistantLlm;
   /** Names new songs (tests inject a fake; production uses the assistant model). */
   readonly songTitler?: SongTitler;
+  /** The lyricist's language model (tests inject a fake). */
+  readonly lyricModel?: LyricModel;
   /** The melody library's precedent bank directory (tests point it at fixtures). */
   readonly melodyLibraryDir?: string;
   /** Tests: the fetch the sung-vocals take store calls the singing service with. */
@@ -238,12 +242,20 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const titleEp = assistantEndpoint(config);
   const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
   if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
+  // The lyricist writes every new song's words (and the vocal edits'); without it generating answers 503.
+  const lyricModel = deps.lyricModel ?? (titleEp ? new OpenAiLyricModel(titleEp) : undefined);
+  if (!lyricModel) console.warn('[brain] ASSISTANT_LLM_URL not set — songs cannot be generated (no lyrics model).');
   // Sung vocals: stored takes added to songs for the engine; takes only an old song version used are cleaned up.
   const vocalsHooks = createVocalsHooks(config, store);
-  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
+  // Routes that wait for the lyricist (minutes) answer as jobs when asked to (Prefer: respond-async), so they outlast
+  // the Cloudflare tunnel's 100-second limit (src/jobs.ts).
+  const jobs = createJobs(ownerOf);
+  app.post(['/api/songs/generate', '/api/hum/song', '/api/tracks/edit', '/api/sections/add'], jobs.asJob);
+  app.use(jobs.router);
+  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(lyricModel ? { lyricModel } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, withTakes: vocalsHooks.withTakes }));
   app.use(createPlaybackRouter({ store, playback, ownerOf, withTakes: vocalsHooks.withTakes }));
-  app.use(createTracksRouter());
+  app.use(createTracksRouter(lyricModel ? { lyricModel } : {}));
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(
     createHumRouter({
@@ -252,6 +264,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       humLabDir: config.humLabDir,
       store,
       ...(titler ? { onPlaceholderTitle: (u: Parameters<SongTitler['name']>[0]) => titler.name(u) } : {}),
+      ...(lyricModel ? { lyricModel } : {}),
     }),
   );
   // Sung vocals (section takes): answers 503 naming the settings when not set up.
@@ -266,7 +279,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   );
   app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(melodyEdits, deps.melodyLibraryDir) }));
   const assistantEp = assistantEndpoint(config);
-  app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
+  app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined), ...(lyricModel ? { lyricModel } : {}) }));
   app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));
   app.use(
     createPatternsRouter({

@@ -1,7 +1,8 @@
 // Vertical-slice songs router.
 //
-// Three endpoints lifted directly off @casperaki/arrangement.orchestrate;
-// no AI calls, no engine calls, no sample-library downloads. The
+// Endpoints lifted directly off @casperaki/arrangement.orchestrate; the one
+// model call is the lyricist (generation writes the song's words, see
+// src/lyrics), no engine calls, no sample-library downloads. The
 // `params` payload validates with Zod before the orchestrator sees it,
 // and the storage layer holds the same canonical bytes the replay
 // endpoint hashes against — see `apps/brain/src/store.ts`.
@@ -10,7 +11,7 @@ import { createHash } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { orchestrate, type GenerateParams } from '@casperaki/arrangement';
+import { orchestrate, paramsWithLyrics, sungSections, writtenLyricsOf, type GenerateParams } from '@casperaki/arrangement';
 import {
   canonicalStringifySong,
   formatGenreTempoRange,
@@ -26,6 +27,7 @@ import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
 import type { ProjectRow, SongsStore } from '../store.js';
+import { writeLyrics, type LyricModel } from '../lyrics/lyricist.js';
 import { readRenderPeaks } from './renders.js';
 
 // `genre` is validated against the canonical brain vocabulary (8 styles,
@@ -90,6 +92,16 @@ export interface SongsRouterDeps {
   readonly takesOf?: (song: Song) => string;
   /** A saved song was saved again (new version) or deleted: clean up what only its old version used. */
   readonly onSongReplaced?: (oldSongId: string) => void;
+  /** Writes the words of new songs (the language model). Absent: generating answers 503 lyrics_not_configured. */
+  readonly lyricModel?: LyricModel;
+}
+
+/** Generating needs the lyricist and it is not set up. */
+export class LyricsNotConfiguredError extends Error {
+  constructor() {
+    super('Songs cannot be generated: the lyrics model is not configured (set ASSISTANT_LLM_URL and ASSISTANT_LLM_MODEL).');
+    this.name = 'LyricsNotConfiguredError';
+  }
 }
 
 /** The id that owns projects. Every /api route sits behind the session gate
@@ -108,16 +120,23 @@ export interface GeneratedProject {
 
 /**
  * Generate a song and keep it as one of the owner's projects (POST /api/songs/generate; hum to song uses it too).
- * Untitled songs get the style-and-key placeholder and are named afterwards. Generator errors are thrown.
+ * The melody comes first; then the lyricist writes words for every sung section that has none recorded, and the
+ * song is generated again with them (recorded in its generator block, so replay rebuilds it).
+ * Untitled songs get the style-and-key placeholder and are named afterwards. Generator and lyricist errors are thrown.
  */
-export function generateProject(
-  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle'] },
+export async function generateProject(
+  deps: { readonly store: SongsStore; readonly clock: () => string; readonly onPlaceholderTitle?: SongsRouterDeps['onPlaceholderTitle']; readonly lyricModel?: LyricModel },
   owner: string,
   params: GenerateParams,
   title: string | undefined,
-): GeneratedProject {
-  const { store, clock, onPlaceholderTitle } = deps;
-  const song = orchestrate(params);
+): Promise<GeneratedProject> {
+  const { store, clock, onPlaceholderTitle, lyricModel } = deps;
+  if (!lyricModel) throw new LyricsNotConfiguredError();
+  const draft = orchestrate(params);
+  const recorded = writtenLyricsOf(params.params);
+  const unwritten = sungSections(draft).map((s) => s.name).filter((name) => !recorded[name]);
+  const lyrics = unwritten.length > 0 ? await writeLyrics(draft, lyricModel, { sections: unwritten, ...(title ? { title } : {}) }) : {};
+  const song = Object.keys(lyrics).length > 0 ? orchestrate(paramsWithLyrics(params, lyrics)) : draft;
   const canonical = canonicalStringifySong(song, 2);
   const hash = hashCanonical(canonical);
   const id = hash.slice(0, 16);
@@ -136,7 +155,7 @@ export function generateProject(
   return { id, song, hash };
 }
 
-export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced, lyricModel }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -146,7 +165,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     res.json({ projects });
   });
 
-  router.post('/api/songs/generate', (req, res) => {
+  router.post('/api/songs/generate', async (req, res) => {
     // `title` is project metadata, not a generator input: split it off
     // before the strict generator-params schema sees the body.
     const { title: rawTitle, ...generatorBody } = (req.body ?? {}) as Record<string, unknown>;
@@ -161,7 +180,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     }
     let made: GeneratedProject;
     try {
-      made = generateProject({ store, clock, onPlaceholderTitle }, ownerOf(req), parsed.data, title.data);
+      made = await generateProject({ store, clock, onPlaceholderTitle, ...(lyricModel ? { lyricModel } : {}) }, ownerOf(req), parsed.data, title.data);
     } catch (err) {
       return generateError(res, err);
     }
@@ -444,6 +463,7 @@ function hashCanonical(canonical: string): string {
 
 function generateError(res: Response, err: unknown): Response {
   const message = err instanceof Error ? err.message : String(err);
+  if (err instanceof LyricsNotConfiguredError) return res.status(503).json({ error: 'lyrics_not_configured', message });
   // Generator-level rejections (unsupported genre, missing precedent
   // entry, chord-vocab miss) surface here; treat them as 400s (bad input)
   // rather than 500s. The Zod body schema already catches non-canonical

@@ -313,7 +313,14 @@ const SIDE_BLOCKS = ['fills', 'mutes', 'signalProcessors'] as const;
  * `activation` (addTrack) says which sections the track plays in; otherwise
  * the working song's own on/off flags stay.
  */
-export function spliceTrack(working: Song, regenerated: Song, track: string, activation?: ReadonlySet<string>): Song {
+export function spliceTrack(
+  working: Song,
+  regenerated: Song,
+  track: string,
+  activation?: ReadonlySet<string>,
+  /** Only these working sections take the regenerated track (all when absent). */
+  only?: (section: string) => boolean,
+): Song {
   const regenDef = regenerated.instrumentDefinitions.find((d) => d.name === track);
   if (!regenDef) throw new Error(`spliceTrack: the regenerated song has no track "${track}"`);
   const hasDef = working.instrumentDefinitions.some((d) => d.name === track);
@@ -331,6 +338,10 @@ export function spliceTrack(working: Song, regenerated: Song, track: string, act
   for (const seg of working.songStructure) {
     const wa = working.arrangement[seg.name];
     if (!wa) throw new Error(`spliceTrack: working song has no arrangement for section "${seg.name}"`);
+    if (only && !only(seg.name)) {
+      arrangement[seg.name] = wa;
+      continue;
+    }
     const next: SegmentPayload = structuredClone(wa);
     const active = activation ? activation.has(seg.name) : wa.instruments[track] === true || wa.overrides[track] !== undefined;
     if (activation) next.instruments[track] = active;

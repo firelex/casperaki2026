@@ -8,6 +8,7 @@ import { orchestrate } from '../orchestrate/index.js';
 import { SECTION_TYPES } from '../structure/index.js';
 import { parseSong, type Song } from '@casperaki/song-schema';
 
+import { WRITTEN_LYRICS_PARAM } from '../vocals/written-lyrics.js';
 import { generatorParams, TrackEditError } from './track-edits.js';
 
 /** Default length per section type, in bars. */
@@ -29,7 +30,12 @@ export function nextSectionName(type: string, taken: ReadonlySet<string>): strin
   for (let n = 1; ; n++) if (!taken.has(`${type}${n}`)) return `${type}${n}`;
 }
 
-export function addSection(working: Song, type: string, index: number, bars?: number): { song: Song; name: string } {
+/**
+ * `words`: the new section's written lyrics, one string per lyric line of its melody (vocals/written-lyrics.ts);
+ * without them a sung section gets the phrase bank's words (the brain writes words for it and adds it again with
+ * them). Other sections' recorded words are left out of the regeneration: only the new section is kept from it.
+ */
+export function addSection(working: Song, type: string, index: number, bars?: number, words?: readonly string[]): { song: Song; name: string } {
   if (!(SECTION_TYPES as readonly string[]).includes(type)) {
     throw new TrackEditError(400, 'unknown_section_type', `Unknown section type "${type}" (one of ${SECTION_TYPES.join(', ')}).`);
   }
@@ -50,7 +56,8 @@ export function addSection(working: Song, type: string, index: number, bars?: nu
   });
   structure.splice(index, 0, { name, bars: sectionBars });
 
-  const regenerated = orchestrate({ ...params, params: { ...(params.params ?? {}), structure } });
+  const { [WRITTEN_LYRICS_PARAM]: _recorded, ...inner } = params.params ?? {};
+  const regenerated = orchestrate({ ...params, params: { ...inner, structure, ...(words ? { [WRITTEN_LYRICS_PARAM]: { [name]: [...words] } } : {}) } });
   const seg = regenerated.songStructure.find((s) => s.name === name);
   const payload = regenerated.arrangement[name];
   if (!seg || !payload) throw new Error(`addSection: the generator wrote no section "${name}"`);

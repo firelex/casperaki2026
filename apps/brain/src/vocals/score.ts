@@ -7,11 +7,12 @@
 // Phrases: one SoulX call per lyric line (the lyric bank writes one line per 4 bars), split earlier at a rest of a
 // beat or more, so legato lines are sung whole. (`endOfPhrase` marks every bar's last note, a legacy invariant, so
 // it is not used.) A phrase may start with a short rest (up to LEAD_REST_SEC, within the gap before it) so the
-// singer can breathe in. Every note is sung as a note (SoulX note type 2): the lyric bank gives every note a
-// syllable.
+// singer can breathe in. Every note is sung as a note (SoulX note type 2), except a held note (written lyrics:
+// `fullWord` "-", one syllable over two notes), which is a slur (type 3) carrying the syllable before it.
 
 import { createHash } from 'node:crypto';
 
+import { HELD_SYLLABLE } from '@casperaki/arrangement';
 import { stableStringify, type Song } from '@casperaki/song-schema';
 
 export const LEAD_VOCAL = 'Vocal';
@@ -57,6 +58,8 @@ interface SungNote {
   readonly endBeat: number;
   readonly note: number;
   readonly phones: string;
+  /** Carries on the syllable before it (a slur). */
+  readonly held: boolean;
 }
 
 /** A vocal track's score for the section (the lead "Vocal" unless a backing track is named), or undefined when
@@ -72,7 +75,7 @@ export function sectionScore(song: Song, segment: string, track: string = LEAD_V
   (song.arrangement[segment]?.overrides?.[track]?.bars ?? []).slice(0, bars).forEach((bar, barIdx) => {
     for (const [beat, evs] of Object.entries(bar.notes ?? {})) {
       for (const raw of evs ?? []) {
-        const e = raw as { type?: string; note?: unknown; duration?: unknown; vocaloidPhonemes?: unknown };
+        const e = raw as { type?: string; note?: unknown; duration?: unknown; vocaloidPhonemes?: unknown; fullWord?: unknown };
         if (e.type !== 'vocalNote') continue;
         if (typeof e.note !== 'number' || typeof e.duration !== 'number' || !(e.duration > 0)) {
           throw new Error(`sectionScore: ${segment} bar ${barIdx + 1} beat ${beat}: a vocal note needs a MIDI note and a positive duration`);
@@ -81,7 +84,7 @@ export function sectionScore(song: Song, segment: string, track: string = LEAD_V
           throw new Error(`sectionScore: ${segment} bar ${barIdx + 1} beat ${beat}: the sung note has no phonemes (vocaloidPhonemes)`);
         }
         const startBeat = barIdx * BEATS_PER_BAR + Number.parseFloat(beat);
-        notes.push({ bar: barIdx, startBeat, endBeat: startBeat + e.duration, note: e.note, phones: soulxPhones(e.vocaloidPhonemes as string[]) });
+        notes.push({ bar: barIdx, startBeat, endBeat: startBeat + e.duration, note: e.note, phones: soulxPhones(e.vocaloidPhonemes as string[]), held: e.fullWord === HELD_SYLLABLE });
       }
     }
   });
@@ -126,7 +129,8 @@ export function sectionScore(song: Song, segment: string, track: string = LEAD_V
       // A note lasts until the next note at most, and never past the section's end.
       const limitBeat = Math.min(next ? next.startBeat : Infinity, sectionBeats, groups[gi + 1]?.[0]?.startBeat ?? Infinity);
       const endBeat = Math.min(n.endBeat, limitBeat);
-      push(n.phones, (endBeat - n.startBeat) * secPerBeat, n.note, 2);
+      // A held note opening a phrase has nothing to carry on: it is sung as a note.
+      push(n.phones, (endBeat - n.startBeat) * secPerBeat, n.note, n.held && i > 0 ? 3 : 2);
       endSec = endBeat * secPerBeat;
     });
     const startSec = firstSec - (lead >= MIN_REST_SEC ? lead : 0);

@@ -25,7 +25,11 @@ export type TrackEdit =
   | { readonly kind: 'newPattern'; readonly track: string }
   | { readonly kind: 'addTrack'; readonly family: InstrumentFamily; readonly segments: readonly string[]; readonly soundId?: string }
   /** Replace one drum of the kit (null: back to the style's own). */
-  | { readonly kind: 'setDrumSound'; readonly role: string; readonly soundId: string | null };
+  | { readonly kind: 'setDrumSound'; readonly role: string; readonly soundId: string | null }
+  /** New words for every section of this section's type (the lyricist writes them). */
+  | { readonly kind: 'newLyrics'; readonly section: string }
+  /** A new melody (with its chords, the parts under it and new words) for every section of this section's type. */
+  | { readonly kind: 'newMelody'; readonly section: string };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 

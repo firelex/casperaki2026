@@ -16,6 +16,7 @@ import type { RenderService } from '../src/render/renderService.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { lyricLines, sectionDisplayName, songToVideoInput } from '../src/video/videoInput.js';
 import { VideoService } from '../src/video/videoService.js';
+import { fakeLyricModel } from './fakeLyricModel.js';
 
 describe('songToVideoInput', () => {
   const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'video-input-1' });
@@ -67,7 +68,7 @@ async function boot(): Promise<Harness> {
     },
     probeSeconds: async () => 200,
   });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, videos });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, videos });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

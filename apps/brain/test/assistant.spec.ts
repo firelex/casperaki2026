@@ -11,6 +11,7 @@ import { runTool, toolSpecs, ToolError } from '../src/assistant/tools.js';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
+import { fakeLyricModel } from './fakeLyricModel.js';
 
 type Script = (messages: readonly ChatMessage[], round: number) => ModelTurn;
 
@@ -31,7 +32,7 @@ const call = (id: string, name: string, args: unknown) => ({ id, type: 'function
 interface Harness { url: string; stop: () => Promise<void> }
 async function boot(llm: AssistantLlm | undefined): Promise<Harness> {
   const store: SongsStore = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, ...(llm ? { assistantLlm: llm } : {}) });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, ...(llm ? { assistantLlm: llm } : {}) });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -181,7 +182,7 @@ describe('assistant tools', () => {
     expect(() => runTool('new_song', { genre: 'ballad', key: 'E', bpm: 200 }, ctx)).toThrow(/ballad songs are/u);
   });
 
-  it('changes a drum sound, edits sections and drum hits, and validates arguments', () => {
+  it('changes a drum sound, edits sections and drum hits, and validates arguments', async () => {
     const ctx = { song, title: 't' };
     const kit = runTool('get_drum_kit', {}, ctx).summary;
     expect(kit).toMatch(/snareDrum1/u);
@@ -201,7 +202,7 @@ describe('assistant tools', () => {
     runTool('set_drum_hits', { sections: ['opening'], drum: 'clap', steps: [8, 24], on: true }, ctx);
 
     expect(() => runTool('set_section_bars', { name: 'opening', bars: 'many' }, ctx)).toThrow(ToolError);
-    expect(() => runTool('add_section', { type: 'bridge' }, ctx)).toThrow(/exactly one of after, before or index/u);
+    await expect(Promise.resolve().then(() => runTool('add_section', { type: 'bridge' }, ctx))).rejects.toThrow(/exactly one of after, before or index/u);
     expect(() => runTool('no_such_tool', {}, ctx)).toThrow(ToolError);
   });
 });

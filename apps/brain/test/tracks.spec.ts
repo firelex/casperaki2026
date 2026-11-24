@@ -9,12 +9,13 @@ import type { Song } from '@casperaki/song-schema';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
+import { fakeLyricModel } from './fakeLyricModel.js';
 
 interface Harness { url: string; stop: () => Promise<void> }
 
 async function boot(): Promise<Harness> {
   const store: SongsStore = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

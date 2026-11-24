@@ -7,6 +7,7 @@
 // A failed call leaves the placeholder in place and is logged as an error: the
 // song is fully usable either way, and the user can rename it by hand.
 
+import { writtenLyricsOf } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 import type { SongsStore } from '../store.js';
 
@@ -103,16 +104,20 @@ export function songPrompt(song: Song, takenTitles: readonly string[]): string {
   const genre = song.genre ? humanGenre(song.genre) : 'pop';
   const sections = song.songStructure.map((s) => s.name.replace(/\d+$/u, '')).filter((n, i, all) => all.indexOf(n) === i);
   const instruments = song.instrumentDefinitions.map((d) => d.name).filter((n, i, all) => all.indexOf(n) === i);
+  const lyrics = writtenLyricsOf((song.generator?.params as { params?: Record<string, unknown> } | undefined)?.params);
+  const chorus = song.songStructure.map((s) => s.name).find((n) => n.startsWith('chorus') && lyrics[n]);
   const lines = [
-    'You name songs. Write one original title for the instrumental song described below.',
+    `You name songs. Write one original title for the ${chorus ? '' : 'instrumental '}song described below.`,
     '',
     `Style: ${genre}`,
     `Key: ${song.key}`,
     `Tempo: ${song.bpm} beats per minute`,
     `Sections: ${sections.join(', ')}`,
     `Instruments: ${instruments.join(', ')}`,
+    ...(chorus ? ['', 'The words of its chorus:', ...lyrics[chorus]!.map((l) => `  ${l}`)] : []),
     '',
     'Rules:',
+    ...(chorus ? ['- Take the title from the chorus words where a phrase in them makes a good title, as songs usually do.'] : []),
     '- One to four words, in English, the way a real song in this style might be called.',
     '- Evocative and specific: an image, a place, a feeling or a short phrase.',
     '- Do not mention the style, the key, the tempo or any instrument.',

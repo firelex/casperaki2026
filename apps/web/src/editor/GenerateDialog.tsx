@@ -228,6 +228,9 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
           </details>
 
           {mutation.isError ? <ErrorLine error={mutation.error} /> : null}
+          {mutation.isPending ? (
+            <p className="text-[14px] text-white/60">Writing the melody and the lyrics. This takes a minute or two.</p>
+          ) : null}
 
           <div className="flex items-center justify-end gap-3 border-t border-line pt-5">
             <button type="button" onClick={onClose} className="h-11 rounded-full px-5 text-[15px] text-white/75 hover:text-white">

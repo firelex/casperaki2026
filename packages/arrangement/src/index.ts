@@ -370,3 +370,20 @@ export {
   type DrumKitSlot,
   type DrumRole,
 } from './drums/kit.js';
+
+// Written lyrics (language-model words checked against the melody) and vocal edits (Change lyrics / Change melody).
+export {
+  WRITTEN_LYRICS_PARAM,
+  WrittenLyricsSchema,
+  writtenLyricsOf,
+  checkSectionLyrics,
+  wordsRhyme,
+  HELD_SYLLABLE,
+  pronounce,
+  wordsOf,
+  type WrittenLyrics,
+  type LineProblem,
+} from './vocals/written-lyrics.js';
+export { lyricLines, lyricSlots, rhymeScheme, type LyricLine, type LyricSlot } from './vocals/lyric-lines.js';
+export { MELODY_VARIANTS_PARAM, melodyVariantsOf } from './vocals/melody-variants.js';
+export { applyWrittenLyrics, lyricsTargets, newMelody, paramsWithLyrics, sungSections, type NewMelody, type SungSection } from './edits/vocal-edits.js';

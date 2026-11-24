@@ -27,7 +27,7 @@ import { encodeWav24 } from '../export/wav';
 import { drumBarNotes, patternSong, trackSong } from './sequencer/preview';
 import { TrackOverview } from './sequencer/TrackOverview';
 import { drumBarPattern } from './sequencer/ClipDetail';
-import { indexInstrumentDefinitions } from '../types/song';
+import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -524,6 +524,9 @@ export function TimelineView() {
   const detailClip = detail && detailTrack ? detailTrack.clips.find((c) => c.section === detail.section) : undefined;
 
   const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
+  /** Vocal edits act on every section of the clicked section's type ("chorus2" → all choruses). */
+  const newLyrics = (section: string) => void edits.run({ kind: 'newLyrics', section }, `Writing new lyrics for all ${plural(section)}`);
+  const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody and lyrics for all ${plural(section)}`);
 
   return (
     <div ref={rootRef} className="flex h-full flex-col text-white">
@@ -692,6 +695,11 @@ export function TimelineView() {
               onLoop={(s) => loopSection(model.sections[s]!)}
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
+              onVocalEdit={
+                t.name === LEAD_VOCAL_NAME
+                  ? (s, kind) => (kind === 'lyrics' ? newLyrics(model.sections[s]!.name) : newMelody(model.sections[s]!.name))
+                  : undefined
+              }
               onRemove={() => edits.removeTrack(t.name)}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
@@ -1046,6 +1054,7 @@ function TrackMenu({
   onLoop,
   onChangeSound,
   onNewPattern,
+  onVocalEdit,
   onRemove,
   onAdd,
   onOverview,
@@ -1063,6 +1072,8 @@ function TrackMenu({
   onLoop(section: number): void;
   onChangeSound(): void;
   onNewPattern(): void;
+  /** The lead vocal: new lyrics or a new melody for every section of the clicked section's type. */
+  onVocalEdit: ((section: number, kind: 'lyrics' | 'melody') => void) | undefined;
   onRemove(): void;
   onAdd(section: number | undefined): void;
   /** Whole-track piano roll / score (pitched tracks). */
@@ -1092,6 +1103,17 @@ function TrackMenu({
               Loop {sections[section]!.name}
             </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
+            {onVocalEdit ? (
+              <>
+                <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onVocalEdit(section, 'lyrics')}>
+                  Change lyrics <span className="ml-auto pl-6 text-[12px] text-white/40">all {plural(sections[section]!.name)}</span>
+                </ContextMenuItem>
+                <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onVocalEdit(section, 'melody')}>
+                  Change melody <span className="ml-auto pl-6 text-[12px] text-white/40">all {plural(sections[section]!.name)}</span>
+                </ContextMenuItem>
+                <ContextMenuSeparator className="my-1 h-px bg-line" />
+              </>
+            ) : null}
           </>
         ) : null}
         <ContextMenuItem className={ITEM} disabled={!onOverview} onSelect={() => onOverview?.()}>
@@ -1115,6 +1137,17 @@ function TrackMenu({
       </ContextMenuContent>
     </ContextMenu>
   );
+}
+
+/** A section's kind in words: "chorus2" → "chorus", "preChorus1" → "pre-chorus". */
+function sectionKind(section: string): string {
+  return (/^[A-Za-z]+/u.exec(section)?.[0] ?? section).replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase();
+}
+
+/** "chorus2" → "choruses", "preChorus1" → "pre-choruses", "verse3" → "verses". */
+function plural(section: string): string {
+  const kind = sectionKind(section);
+  return /(s|sh|ch|x)$/u.test(kind) ? `${kind}es` : `${kind}s`;
 }
 
 interface SelectionActions {

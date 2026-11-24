@@ -16,6 +16,7 @@ import type { SongsStore } from '../store.js';
 import type { AssistantLlm, ChatMessage } from './llm.js';
 import { songSummary } from './summary.js';
 import { MixSnapshotSchema } from './mixTools.js';
+import type { LyricModel } from '../lyrics/lyricist.js';
 import { runTool, toolSpecs, ToolError, type ToolContext } from './tools.js';
 
 const MAX_ROUNDS = 10;
@@ -41,7 +42,7 @@ function systemPrompt(song: Song, title: string, pro: boolean): string {
     '- To change a sound, first find one with search_sounds and use the id it gives you. For a track, search with useAs set to the track kind; for a drum part, search with the family of that part (see get_drum_kit). Prefer sounds in the song\'s style. Never make up an id.',
     '- If a tool refuses, read why, fix the arguments and try again, or tell the user plainly what is not possible.',
     '- If the request is unclear, ask one short question instead of guessing.',
-    '- You cannot sing, write lyrics or make the music video here; say so if asked.',
+    '- You cannot sing or make the music video here, and you cannot change the lyrics (the user right-clicks the Vocal track for new lyrics or a new melody); say so if asked.',
     pro
       ? '- Pro mode is on: you can read the mix (get_mix, get_bus) and change it (set_track_mix, set_bus_setting, reset_mix). Levels, sends and buses are set per instrument type, so tracks of the same type change together; say so when it happens. Read the mix before changing it.'
       : '- Pro mode is off, so you cannot read or change the mix (levels, sends, buses, plugins). If asked, tell the user to press the Pro button above the mixer first.',
@@ -51,7 +52,7 @@ function systemPrompt(song: Song, title: string, pro: boolean): string {
   ].join('\n');
 }
 
-export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: Request) => string; llm: AssistantLlm | undefined }): Router {
+export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: Request) => string; llm: AssistantLlm | undefined; lyricModel?: LyricModel }): Router {
   const router = Router();
   const toolsFor = { pro: toolSpecs(true), plain: toolSpecs(false) };
 
@@ -77,7 +78,7 @@ export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: 
     const abort = new AbortController();
     res.on('close', () => abort.abort());
 
-    const ctx: ToolContext = { song, title: body.data.title, ...(body.data.mix ? { mix: body.data.mix } : {}) };
+    const ctx: ToolContext = { song, title: body.data.title, ...(body.data.mix ? { mix: body.data.mix } : {}), ...(deps.lyricModel ? { lyricModel: deps.lyricModel } : {}) };
     const pro = Boolean(ctx.mix);
     const tools = pro ? toolsFor.pro : toolsFor.plain;
     const messages: ChatMessage[] = [
@@ -107,7 +108,7 @@ export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: 
           }
           send({ type: 'tool_call', id, name: fn.name, args });
           try {
-            const result = runTool(fn.name, args, ctx);
+            const result = await runTool(fn.name, args, ctx);
             if (result.song) changed = true;
             send({ type: 'tool_result', id, name: fn.name, result });
             messages.push({ role: 'tool', tool_call_id: id, content: result.summary });

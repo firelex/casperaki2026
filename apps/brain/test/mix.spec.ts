@@ -12,6 +12,7 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { fakePlayback } from './fakePlayback.js';
+import { fakeLyricModel } from './fakeLyricModel.js';
 
 // Every sound type routes to a bus (as in the real config); the rest is small.
 const REAL_ROUTES = (JSON.parse(readFileSync(fileURLToPath(new URL('../../../../casperaki_engine/config/mix-config.json', import.meta.url)), 'utf8')) as { typeToFxGroup: Record<string, string> }).typeToFxGroup;
@@ -29,7 +30,7 @@ interface Harness { url: string; store: SongsStore; mixPath: string; stop: () =>
 async function boot(): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
   const playback = fakePlayback({ mixConfig: MIX_CONFIG });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { lyricModel: fakeLyricModel(), store, playback });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

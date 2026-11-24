@@ -5,12 +5,14 @@
 // Playback and page actions (play, mute, save, undo …) come back as a
 // ClientAction the page carries out.
 
-import { addSection, editTrack, InstrumentFamilySchema, SECTION_TYPES, setTransition, trackOptions, TRANSITION_TYPES } from '@casperaki/arrangement';
+import { editTrack, InstrumentFamilySchema, SECTION_TYPES, setTransition, TrackEditError, trackOptions, TRANSITION_TYPES } from '@casperaki/arrangement';
 import { applyCommand, initEditState, type EditCommand } from '@casperaki/song-edit';
 import { GENRE_TEMPO_RANGES, GenreSchema, isBpmInGenreTempoRange, type Song } from '@casperaki/song-schema';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
+import { addSectionWithWords } from '../lyrics/addSection.js';
+import type { LyricModel } from '../lyrics/lyricist.js';
 import { drumKitView, transitionState } from '../routes/tracks.js';
 import { searchSounds, soundCatalog } from '../sounds/soundCatalog.js';
 import { busDetail, busSettingAction, MixToolError, mixOverview, SetBusSettingParams, SetTrackMixParams, trackMixAction, type MixSnapshot } from './mixTools.js';
@@ -48,6 +50,8 @@ export class ToolError extends Error {}
 
 interface ToolContext {
   song: Song;
+  /** Writes the words of a sung section the assistant adds. */
+  readonly lyricModel?: LyricModel;
   readonly title: string;
   /** Pro mode is on: the open song's mix (the mix tools read and update it). */
   readonly mix?: MixSnapshot;
@@ -59,7 +63,7 @@ interface ToolDef<S extends z.ZodTypeAny> {
   readonly params: S;
   /** Offered only while Pro mode is on. */
   readonly pro?: true;
-  run(args: z.infer<S>, ctx: ToolContext): ToolResult;
+  run(args: z.infer<S>, ctx: ToolContext): ToolResult | Promise<ToolResult>;
 }
 
 const tool = <S extends z.ZodTypeAny>(def: ToolDef<S>) => def;
@@ -244,7 +248,7 @@ export const TOOLS = [
         bars: z.number().int().min(1).max(64).optional(),
       })
       .strict(),
-    run: (a, ctx) => {
+    run: async (a, ctx) => {
       const names = sectionNames(ctx.song);
       const given = [a.after, a.before, a.index].filter((x) => x !== undefined).length;
       if (given !== 1) throw new ToolError('Give exactly one of after, before or index.');
@@ -256,7 +260,14 @@ export const TOOLS = [
         requireSection(ctx.song, a.before);
         index = names.indexOf(a.before);
       } else index = a.index!;
-      const { song, name } = arrangementEdit(() => addSection(ctx.song, a.type, index, a.bars));
+      let added: { song: Song; name: string };
+      try {
+        added = await addSectionWithWords(ctx.song, a.type, index, a.bars, ctx.lyricModel);
+      } catch (err) {
+        if (err instanceof TrackEditError) throw new ToolError(err.message);
+        throw err;
+      }
+      const { song, name } = added;
       return edited(ctx, song, `Added ${name} at position ${index + 1}.`);
     },
   }),
@@ -473,7 +484,7 @@ export function toolSpecs(pro: boolean) {
 }
 
 /** Run one tool call on the working song: validated args, a ToolResult, or a ToolError for the model. */
-export function runTool(name: string, rawArgs: unknown, ctx: ToolContext): ToolResult {
+export function runTool(name: string, rawArgs: unknown, ctx: ToolContext): ToolResult | Promise<ToolResult> {
   const def = TOOLS.find((t) => t.name === name);
   if (!def) throw new ToolError(`There is no tool "${name}".`);
   if ('pro' in def && def.pro && !ctx.mix) throw new ToolError('Pro mode is off: the mix can be changed only after the user presses Pro.');
