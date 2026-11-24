@@ -103,7 +103,10 @@ chorus sends and every bus plugin's settings (in its device window) editable; ch
 are applied to the standard `mix-config.json` by one rule (`applyMixOverrides`, song-schema): track
 trims and sends as the config's `laneOverrides`, plugin settings in its `rackChains`. Live playback, the
 browser export and server renders (`CASPERAKI_MIX_CONFIG` = the song's own config) all use it. A change
-many songs of a genre agree on can be copied into `casperaki_engine/config/mix-config.json` by hand.
+many songs of a genre agree on is approved on the Suggestions page: the brain rewrites
+`casperaki_engine/config/mix-config.json`, commits it in that repo (message `mix: approve …`, the summary
+in the body) and pushes it at once; a failing commit or push fails the approval. The copy in this repo
+(`apps/native-engine/config/mix-config.json`) is not updated by approvals.
 
 ## Configuration (outside the repos)
 

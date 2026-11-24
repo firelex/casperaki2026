@@ -138,12 +138,22 @@ export class PlaybackService {
    * (whole file, via a temporary file and a rename) and uses it from now on.
    * Native renders read the same file.
    */
-  replaceMixConfig(text: string): void {
+  replaceMixConfig(text: string, message: string): void {
     JSON.parse(text);
-    const tmp = `${this.config.mixConfigPath}.${process.pid}.tmp`;
+    const path = this.config.mixConfigPath;
+    const git = (...args: string[]) => {
+      const r = spawnSync('git', args, { cwd: dirname(path), encoding: 'utf8' });
+      if (r.status !== 0) throw new Error(`git ${args[0]} failed for the mix config (${path}): ${(r.stderr || r.stdout || r.error?.message || '').trim()}`);
+      return r.stdout.trim();
+    };
+    // The standard mix lives in git (the engine repo): every approval is a commit, pushed at once.
+    git('rev-parse', '--show-toplevel');
+    const tmp = `${path}.${process.pid}.tmp`;
     writeFileSync(tmp, text);
-    renameSync(tmp, this.config.mixConfigPath);
+    renameSync(tmp, path);
     this.mixText = text;
+    git('commit', '--only', '-m', message, '--', path);
+    git('push');
   }
 
   /** Fingerprint of the lowering code: cached envelopes are kept per version,

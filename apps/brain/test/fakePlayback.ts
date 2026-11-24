@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -53,7 +54,24 @@ writeFileSync(o + '/asset-manifest.json', JSON.stringify({
     sampleLibraryRoot: lib,
     ffmpegBin: ffmpeg,
     stubSamplesDir: stubs,
-    mixConfigPath: (() => { const f = join(dir, 'mix-config.json'); writeFileSync(f, opts.mixConfig ?? '{}'); return f; })(),
+    // In a git repo with a remote, as the engine repo is: approvals commit and push it.
+    mixConfigPath: (() => {
+      const repo = join(dir, 'engine');
+      const remote = join(dir, 'engine-remote.git');
+      const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, stdio: 'pipe' });
+      mkdirSync(repo);
+      git(dir, 'init', '-q', '--bare', remote);
+      git(repo, 'init', '-q', '-b', 'main');
+      git(repo, 'config', 'user.email', 'test@example.com');
+      git(repo, 'config', 'user.name', 'Test');
+      const f = join(repo, 'mix-config.json');
+      writeFileSync(f, opts.mixConfig ?? '{}');
+      git(repo, 'add', '.');
+      git(repo, 'commit', '-q', '-m', 'init');
+      git(repo, 'remote', 'add', 'origin', remote);
+      git(repo, 'push', '-q', '-u', 'origin', 'main');
+      return f;
+    })(),
   });
 }
 

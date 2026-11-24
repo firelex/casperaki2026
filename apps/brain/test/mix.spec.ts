@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+import { dirname } from 'node:path';
 // Pro-mode mix: saving a song's mix changes, playback with them, edits that
 // remove a track, and the suggestions page's per-genre summary.
 
@@ -22,17 +24,19 @@ const MIX_CONFIG = JSON.stringify({
   rackChains: [{ bus: 'bass', plugins: [{ factory: 'makeConsole8SubIn', params: [] }, { factory: 'makeLogical4', params: [0.1, 0.2, 0.3, 0.4, 1] }] }],
 });
 
-interface Harness { url: string; store: SongsStore; stop: () => Promise<void> }
+interface Harness { url: string; store: SongsStore; mixPath: string; stop: () => Promise<void> }
 
 async function boot(): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback({ mixConfig: MIX_CONFIG }) });
+  const playback = fakePlayback({ mixConfig: MIX_CONFIG });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
   return {
     url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     store,
+    mixPath: (playback as unknown as { config: { mixConfigPath: string } }).config.mixConfigPath,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
   };
 }
@@ -157,6 +161,17 @@ describe('Pro-mode mix', () => {
     // Approved rows are gone (the songs now match the standard), with a note in the comments.
     const body = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as { genres: { changes: { key: string; scope: string }[] }[] };
     expect(body.genres[0]!.changes.map((c) => c.key).sort()).toEqual([`volume|${type}`, 'send|fxTransitions|delay', 'send|drumKit|reverb'].sort());
+    // Every approval is a commit in the mix config's repo, pushed to its remote.
+    const log = execFileSync('git', ['log', '--format=%s', 'origin/main'], { cwd: dirname(h.mixPath), encoding: 'utf8' }).trim().split('\n');
+    expect(log).toEqual([
+      'mix: approve brightPop volume change (local-dev)',
+      'mix: approve brightPop plugin change (local-dev)',
+      'mix: approve brightPop send change (local-dev)',
+      'mix: approve brightPop route change (local-dev)',
+      'mix: approve brightPop volume change (local-dev)',
+      'init',
+    ]);
+    expect(execFileSync('git', ['status', '--porcelain'], { cwd: dirname(h.mixPath), encoding: 'utf8' })).toBe('');
   });
 
   it('summarises every song\'s changes per genre for the suggestions page', async () => {

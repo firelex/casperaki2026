@@ -9,8 +9,8 @@
 //          on the page). The songs keep their mixes; a value saved after the
 //          deletion shows the change again.
 //   POST   /api/suggestions/mix/approve { genre, key } -> { summary }: the change's
-//          average becomes the standard (mix-config.json is rewritten; see
-//          sounds/approveMixChange.ts). Songs keep sounding as they did: their
+//          average becomes the standard (mix-config.json is rewritten, committed
+//          in its repo and pushed; see sounds/approveMixChange.ts). Songs keep sounding as they did: their
 //          level trims on that type are lowered by the same amount.
 //
 // A change is one of
@@ -32,7 +32,7 @@ import type { SongsStore, SuggestionComment } from '../store.js';
 export interface SuggestionsRouterDeps {
   readonly store: SongsStore;
   /** The standard mix config (text), replaced when a change is approved; without it the mix suggestions answer 503. */
-  readonly mixConfig: { readonly mixConfig: string; replaceMixConfig(text: string): void } | undefined;
+  readonly mixConfig: { readonly mixConfig: string; replaceMixConfig(text: string, message: string): void } | undefined;
   readonly isAdminRequest: (req: Request) => boolean;
   /** Who leaves a comment (the signed-in email). */
   readonly authorOf: (req: Request) => string;
@@ -187,7 +187,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
       if (err instanceof ApproveError) return res.status(409).json({ error: 'not_approvable', message: err.message });
       throw err;
     }
-    mixConfig.replaceMixConfig(approval.text);
+    mixConfig.replaceMixConfig(approval.text, `mix: approve ${genre} ${change.kind} change (${authorOf(req)})\n\n${approval.summary}.`);
     // Level trims are relative to the standard: lower them by what the standard rose.
     const shift = approval.trimShift;
     if (shift) {

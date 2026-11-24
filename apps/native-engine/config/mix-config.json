@@ -93,6 +93,8 @@
     "electricGuitarsStratDriveStereo": "electricGuitars",
     "electricGuitarsWarmCrunchMono": "electricGuitars",
     "electricGuitarsWarmCrunchStereo": "electricGuitars",
+    "electricGuitarsTCRectifierMono": "electricGuitars",
+    "electricGuitarsTCRectifierStereo": "electricGuitars",
     "orchestralBassLegato": "orchestral",
     "orchestralBassSolo": "orchestral",
     "orchestralCelloLegato": "orchestral",
@@ -451,6 +453,14 @@
     },
     {
       "type": "electricGuitarsWarmCrunchStereo",
+      "db": -5
+    },
+    {
+      "type": "electricGuitarsTCRectifierMono",
+      "db": -5
+    },
+    {
+      "type": "electricGuitarsTCRectifierStereo",
       "db": -5
     },
     {
