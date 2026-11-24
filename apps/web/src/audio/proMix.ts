@@ -94,23 +94,33 @@ export async function changeLaneRoute(
   if (live.key === liveKey && live.status === 'playing') await livePlayer.play(liveKey, fetchPayload, { seamless: true, reload: true });
 }
 
-/** Change a track's fader trim (dB, 0 = standard) or one send (dB). `liveKey`: what the player plays. */
-export function changeLane(liveKey: string | undefined, lane: string, patch: Partial<Record<Exclude<keyof LaneMixOverride, 'fxGroup'>, number | undefined>>): void {
-  const prev: Record<string, number | string | undefined> = { ...(state.mix.lanes[lane] ?? {}) };
-  for (const [k, v] of Object.entries(patch)) {
-    if (v === undefined || (k === 'volumeDb' && v === 0)) delete prev[k];
-    else prev[k] = v;
+/**
+ * Change a fader trim (dB, 0 = standard) or one send (dB) on `lanes`: the tracks
+ * of one instrument type, which share one setting (the standard mix has one level
+ * and one set of sends per type and genre, and Pro mode edits those). `liveKey`:
+ * what the player plays.
+ */
+export function changeLane(liveKey: string | undefined, lanes: readonly string[], patch: Partial<Record<Exclude<keyof LaneMixOverride, 'fxGroup'>, number | undefined>>): void {
+  if (!lanes.length) throw new Error('changeLane: no tracks to change');
+  const next = { ...state.mix.lanes };
+  for (const lane of lanes) {
+    const prev: Record<string, number | string | undefined> = { ...(next[lane] ?? {}) };
+    for (const [k, v] of Object.entries(patch)) {
+      if (v === undefined || (k === 'volumeDb' && v === 0)) delete prev[k];
+      else prev[k] = v;
+    }
+    const cleaned = Object.fromEntries(Object.entries(prev).filter(([, v]) => v !== undefined)) as LaneMixOverride;
+    if (Object.keys(cleaned).length) next[lane] = cleaned;
+    else delete next[lane];
   }
-  const lanes = { ...state.mix.lanes };
-  const cleaned = Object.fromEntries(Object.entries(prev).filter(([, v]) => v !== undefined)) as LaneMixOverride;
-  if (Object.keys(cleaned).length) lanes[lane] = cleaned;
-  else delete lanes[lane];
-  set({ mix: { ...state.mix, lanes } });
+  set({ mix: { ...state.mix, lanes: next } });
   if (liveKey) {
-    if ('volumeDb' in patch) livePlayer.proMix(liveKey, { laneTrim: { lane, db: patch.volumeDb ?? 0 } });
-    for (const k of ['reverb', 'delay', 'chorus'] as const) {
-      const v = patch[k];
-      if (v !== undefined) livePlayer.proMix(liveKey, { laneSend: { lane, bus: SENDS[k], db: v } });
+    for (const lane of lanes) {
+      if ('volumeDb' in patch) livePlayer.proMix(liveKey, { laneTrim: { lane, db: patch.volumeDb ?? 0 } });
+      for (const k of ['reverb', 'delay', 'chorus'] as const) {
+        const v = patch[k];
+        if (v !== undefined) livePlayer.proMix(liveKey, { laneSend: { lane, bus: SENDS[k], db: v } });
+      }
     }
   }
   scheduleSave();

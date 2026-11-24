@@ -86,6 +86,21 @@ describe('Pro-mode mix', () => {
     expect(moved.project.mixOverrides.lanes).toEqual({ [first!.name]: { volumeDb: -2 } });
   });
 
+  it('counts tracks of the same type in one song as one value (their average)', async () => {
+    const { id, song } = await generate(h);
+    const typeOf = (d: { lowLevelType?: string; type?: string }) => d.lowLevelType ?? d.type;
+    const a = song.instrumentDefinitions.find((d) => song.instrumentDefinitions.some((o) => o !== d && typeOf(o) === typeOf(d)))!;
+    expect(a, 'the test song has two tracks of one type').toBeDefined();
+    const b = song.instrumentDefinitions.find((o) => o !== a && typeOf(o) === typeOf(a))!;
+    await fetch(`${h.url}/api/songs/${id}/mix`, json('PUT', { mixOverrides: { lanes: { [a.name]: { volumeDb: -2 }, [b.name]: { volumeDb: -4 } } } }));
+    const body = (await (await fetch(`${h.url}/api/suggestions/mix`)).json()) as {
+      genres: { changes: { kind: string; target: string; average: number; values: { value: number; lane?: string }[] }[] }[];
+    };
+    const vol = body.genres[0]!.changes.find((c) => c.kind === 'volume' && c.target === typeOf(a))!;
+    expect(vol.values).toEqual([expect.objectContaining({ value: -3, lane: `${a.name}, ${b.name}` })]);
+    expect(vol.average).toBe(-3);
+  });
+
   it('summarises every song\'s changes per genre for the suggestions page', async () => {
     const { id, song } = await generate(h);
     const def = song.instrumentDefinitions[0]!;

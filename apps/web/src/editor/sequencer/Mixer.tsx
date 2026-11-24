@@ -141,6 +141,13 @@ export function Mixer({
       feeders.get(bus)!.push(lane);
     }
   }
+  // Tracks of the same instrument type(s) share one fader and one set of sends in Pro
+  // mode: the standard mix has one setting per type and genre, and Pro mode edits it.
+  const typeKey = (lane: string) => [...new Set(byLane.get(lane)!.map((p) => p.lowLevelType).filter(Boolean))].sort().join('+');
+  const linkedLanes = (lane: string) => {
+    const k = typeKey(lane);
+    return k ? trackOrder.filter((l) => typeKey(l) === k) : [lane];
+  };
   const busColor = (bus: string) => BUS_COLORS[groupBuses.indexOf(bus) % BUS_COLORS.length]!;
   // Every group bus of the mix (what a track can be routed to in Pro mode), in rack order.
   const routable = mix.config.rackChains.map((c) => c.bus).filter((b) => b !== 'master' && !RETURNS.some((r) => r.bus === b));
@@ -180,7 +187,8 @@ export function Mixer({
           anySolo={solo.length > 0}
           pro={pro.pro}
           override={pro.mix.lanes[lane]}
-          onChange={(patch) => changeLane(liveKey, lane, patch)}
+          linkedWith={linkedLanes(lane).filter((l) => l !== lane)}
+          onChange={(patch) => changeLane(liveKey, linkedLanes(lane), patch)}
           routable={routable}
           onRoute={(bus) => {
             setRouteError(undefined);
@@ -300,6 +308,7 @@ function ChannelStrip({
   anySolo,
   pro,
   override,
+  linkedWith,
   onChange,
   routable,
   onRoute,
@@ -322,6 +331,8 @@ function ChannelStrip({
   pro: boolean;
   /** This track's Pro-mode changes. */
   override: LaneMixOverride | undefined;
+  /** Other tracks of the same instrument type: Pro-mode fader and sends move them too. */
+  linkedWith: readonly string[];
   onChange: (patch: { volumeDb?: number; reverb?: number; delay?: number; chorus?: number }) => void;
   /** The group buses the track can be routed to (Pro mode). */
   routable: readonly string[];
@@ -350,6 +361,14 @@ function ChannelStrip({
       title={`${soundName ? `Sound: ${soundName}\n` : ''}${tip}`}
       bottom={
         <>
+          {linkedWith.length ? (
+            <div
+              className="mb-1 truncate rounded-[3px] bg-[#6fa8e8]/15 px-1 text-center text-[9px] text-[#9cc3f0]"
+              title={`Same instrument type as ${linkedWith.join(', ')}. In Pro mode the fader and sends set the level for the type, so they move all of these tracks together.`}
+            >
+              ⛓ {linkedWith.join(', ')}
+            </div>
+          ) : null}
           <Section label="Sends">
             {RETURNS.map((r) => (
               <SendRow

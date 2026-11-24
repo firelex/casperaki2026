@@ -64,7 +64,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
     const comments = new Map<string, SuggestionComment[]>();
     for (const c of store.listSuggestionComments('mix')) comments.set(c.target, [...(comments.get(c.target) ?? []), c]);
     const dismissed = new Map(store.listMixDismissals().map((d) => [`${d.genre}|${d.key}`, d.dismissedAt]));
-    const byGenre = new Map<string, { changes: Map<string, Omit<MixChange, 'average' | 'values' | 'comments'> & { values: (MixChange['values'][number] & { owner: string })[] }> }>();
+    const byGenre = new Map<string, { changes: Map<string, Omit<MixChange, 'average' | 'values' | 'comments'> & { values: (MixChange['values'][number] & { owner: string; tracks?: number })[] }> }>();
     for (const row of store.listProjectMixes()) {
       const genre = row.genre ?? 'unknown';
       const g = byGenre.get(genre) ?? { changes: new Map() };
@@ -83,7 +83,14 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
         const gone = dismissed.get(`${genre}|${key}`);
         if (gone !== undefined && value.updatedAt <= gone) return;
         const c = g.changes.get(key) ?? { key, ...base, values: [] };
-        c.values.push({ ...value, owner: row.ownerId });
+        // Several tracks of one type in a song count as one value (their average), so a
+        // song weighs the same however many tracks of the type it has.
+        const i = c.values.findIndex((v) => v.owner === row.ownerId && v.songId === value.songId);
+        const prev = c.values[i];
+        if (prev) {
+          const n = (prev.tracks ?? 1) + 1;
+          c.values[i] = { ...prev, value: (prev.value * (n - 1) + value.value) / n, lane: [prev.lane, value.lane].filter(Boolean).join(', '), tracks: n };
+        } else c.values.push({ ...value, owner: row.ownerId });
         g.changes.set(key, c);
       };
       const meta = { songId: row.songId, title: row.title, updatedAt: row.mixUpdatedAt };
@@ -125,7 +132,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
         genre,
         songs: new Set([...g.changes.values()].flatMap((c) => c.values.map((v) => `${v.owner}/${v.songId}`))).size,
         changes: [...g.changes.values()]
-          .map((c) => ({ ...c, comments: comments.get(`${genre}|${c.key}`) ?? [], values: c.values.map(({ owner: _owner, ...v }) => v), average: c.values.reduce((s, v) => s + v.value, 0) / c.values.length }))
+          .map((c) => ({ ...c, comments: comments.get(`${genre}|${c.key}`) ?? [], values: c.values.map(({ owner: _owner, tracks: _tracks, ...v }) => v), average: c.values.reduce((s, v) => s + v.value, 0) / c.values.length }))
           .sort((a, b) => b.values.length - a.values.length || order[a.kind] - order[b.kind] || a.target.localeCompare(b.target)),
       }))
       .sort((a, b) => a.genre.localeCompare(b.genre));
