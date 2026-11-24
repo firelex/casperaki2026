@@ -52,6 +52,17 @@ git clone https://github.com/Soul-AILab/SoulX-Singer.git soulx-singer/repo
 ```
 Weights per the SoulX-Singer README (HuggingFace).
 
+Sung vocals (docs/superpowers/specs/2026-11-24-sung-vocals-design.md) run it as **svc-soulx** on datigator, with the
+synchronous routes `/voices` and `/sing` (adapter `_serving/adapters/soulx-singer.py`, voice catalogue
+`soulx-singer/voices.json`, smoke check `soulx-singer/sing_check.py`):
+
+```bash
+tmux new -d -s svc-soulx 'cd ~/apps/casperaki/apps/models/services/_serving && python3 harness.py --adapter soulx-singer --port 16512 --models-dir /mnt/d/casperaki-models 2>&1 | tee -a run/svc-soulx.log'
+```
+
+The brain reaches it through `SOULX_SERVICE_URL` and keeps the section takes in `BRAIN_VOCAL_TAKES_DIR` (both in
+`~/.config/casperaki/brain.env`). Like svc-hum and svc-amt it is not in start-services.sh: after a reboot, start it by hand.
+
 ### liveact  → `liveact/`
 ```
 git clone https://github.com/Soul-AILab/SoulX-LiveAct.git liveact

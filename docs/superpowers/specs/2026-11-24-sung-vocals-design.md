@@ -1,6 +1,6 @@
 # Sung vocals (SoulX-Singer on the Vocal track) — design
 
-Date: 2026-11-24. Status: draft for the owner's approval (builder check done; calls marked "my call").
+Date: 2026-11-24. Status: built and live 2026-11-24 (plan docs/superpowers/plans/2026-11-24-sung-vocals.md). Calls marked "my call"; deviations found while building are in the plan's ledger rulings (voice octaves by prompt range: female voices sing as written, male an octave down; takes at -17 LUFS, about 3 dB under the band).
 
 ## Intent
 
