@@ -68,7 +68,11 @@ def load(ctx):
     pipe = StableDiffusionPipeline.from_pretrained(
         str(model), torch_dtype=torch.float16, safety_checker=None, requires_safety_checker=False
     )
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+    # The checkpoint ships a DEIS scheduler config; its algorithm_type/solver_type ("deis"/"logrho") would carry over
+    # and DPM-Solver refuses them, so DPM-Solver++ is set explicitly.
+    pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+        pipe.scheduler.config, algorithm_type="dpmsolver++", solver_type="midpoint"
+    )
     pipe.enable_attention_slicing()
     pipe.vae.enable_slicing()
     pipe.enable_model_cpu_offload()
