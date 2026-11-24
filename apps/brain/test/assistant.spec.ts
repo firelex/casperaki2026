@@ -128,10 +128,53 @@ describe('assistant tools', () => {
   });
 
   it('every tool has a JSON schema the model can read', () => {
-    for (const t of toolSpecs()) {
+    for (const t of toolSpecs(true)) {
       expect(t.function.parameters).toMatchObject({ type: 'object' });
       expect(t.function.description.length).toBeGreaterThan(5);
     }
+  });
+
+  it('offers the mix tools only in Pro mode', () => {
+    const names = (pro: boolean) => toolSpecs(pro).map((t) => t.function.name);
+    expect(names(false)).not.toContain('set_track_mix');
+    expect(names(true)).toEqual(expect.arrayContaining(['get_mix', 'get_bus', 'set_track_mix', 'set_bus_setting', 'reset_mix']));
+    expect(() => runTool('get_mix', {}, { song, title: 't' })).toThrow(/Pro mode is off/u);
+  });
+
+  it('changes the mix per instrument type, checked against the mix', () => {
+    const mix = {
+      tracks: [
+        { track: 'Synths', types: ['leadSynthsSoft'], bus: 'leadSynths', standardBus: 'leadSynths', levelDb: -3, trimDb: 0, sends: { reverb: -10, delay: 0, chorus: null }, linkedWith: ['Synths 2'] },
+        { track: 'Synths 2', types: ['leadSynthsSoft'], bus: 'leadSynths', standardBus: 'leadSynths', levelDb: -3, trimDb: 0, sends: { reverb: -10, delay: 0, chorus: null }, linkedWith: ['Synths'] },
+      ],
+      buses: [
+        { bus: 'leadSynths', kind: 'group' as const, plugins: [{ slot: 1, name: 'Logical4', params: [{ index: 0, name: 'Threshold', value: 0.3, shown: '-18 dB', standard: 0.3 }] }] },
+        { bus: 'synths', kind: 'group' as const, plugins: [] },
+        { bus: 'fxPlateReverb', kind: 'return' as const, plugins: [] },
+      ],
+    };
+    const ctx = { song, title: 't', mix };
+    expect(runTool('get_mix', {}, ctx).summary).toMatch(/Synths \(leadSynthsSoft\) → leadSynths bus; level −3 dB;.*same type as Synths 2/u);
+    const r = runTool('set_track_mix', { track: 'Synths', levelDb: -2, reverb: 'off', bus: 'synths' }, ctx);
+    expect(r.action).toEqual({ kind: 'mixTrack', track: 'Synths', levelDb: -2, reverb: -100, bus: 'synths' });
+    expect(r.summary).toMatch(/Synths, Synths 2 \(same type\)/u);
+    // The snapshot follows, on both tracks of the type.
+    expect(runTool('get_mix', {}, ctx).summary).toMatch(/Synths 2 \(leadSynthsSoft\) → synths bus \(standard leadSynths\); level −5 dB \(standard −3 dB, Pro −2 dB\); sends reverb off/u);
+    expect(() => runTool('set_track_mix', { track: 'Synths', bus: 'fxPlateReverb' }, ctx)).toThrow(ToolError);
+    expect(() => runTool('set_track_mix', { track: 'Nope', levelDb: 1 }, ctx)).toThrow(/no track "Nope"/u);
+    expect(() => runTool('set_track_mix', { track: 'Synths' }, ctx)).toThrow(/Say what to change/u);
+    expect(runTool('set_bus_setting', { bus: 'leadSynths', slot: 1, param: 0, value: 0.5 }, ctx).action).toEqual({ kind: 'busSetting', bus: 'leadSynths', slot: 1, param: 0, value: 0.5 });
+    expect(() => runTool('set_bus_setting', { bus: 'leadSynths', slot: 2, param: 0, value: 0.5 }, ctx)).toThrow(/no plugin in slot 2/u);
+    expect(runTool('reset_mix', {}, ctx).action).toEqual({ kind: 'resetMix' });
+  });
+
+  it('moves the playhead, reverts, and writes a new song within the style\'s tempo range', () => {
+    const ctx = { song, title: 't' };
+    expect(runTool('go_to', { bar: 9 }, ctx).action).toEqual({ kind: 'goTo', bar: 9 });
+    expect(() => runTool('go_to', {}, ctx)).toThrow(/either a section or a bar/u);
+    expect(runTool('revert_to_original', {}, ctx).action).toEqual({ kind: 'revert' });
+    expect(runTool('new_song', { genre: 'rock', key: 'E', bpm: 120 }, ctx).action).toEqual({ kind: 'newSong', genre: 'rock', key: 'E', bpm: 120 });
+    expect(() => runTool('new_song', { genre: 'ballad', key: 'E', bpm: 200 }, ctx)).toThrow(/ballad songs are/u);
   });
 
   it('changes a drum sound, edits sections and drum hits, and validates arguments', () => {

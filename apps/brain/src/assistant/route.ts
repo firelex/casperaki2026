@@ -15,6 +15,7 @@ import { z } from 'zod';
 import type { SongsStore } from '../store.js';
 import type { AssistantLlm, ChatMessage } from './llm.js';
 import { songSummary } from './summary.js';
+import { MixSnapshotSchema } from './mixTools.js';
 import { runTool, toolSpecs, ToolError, type ToolContext } from './tools.js';
 
 const MAX_ROUNDS = 10;
@@ -26,9 +27,11 @@ const Body = z.object({
   songId: z.string().min(1),
   song: z.unknown(),
   title: z.string().default(''),
+  /** Pro mode is on: the mix as the page shows it (the mix tools are offered only then). */
+  mix: MixSnapshotSchema.optional(),
 });
 
-function systemPrompt(song: Song, title: string): string {
+function systemPrompt(song: Song, title: string, pro: boolean): string {
   return [
     'You are the assistant inside Casperaki, an app that writes songs. The user has one song open in the song editor, and you help them change and play it.',
     'You change the song only through the tools you are given. Each tool does exactly one thing the user could also do by hand in the editor. Every change you make can be undone by the user.',
@@ -39,6 +42,9 @@ function systemPrompt(song: Song, title: string): string {
     '- If a tool refuses, read why, fix the arguments and try again, or tell the user plainly what is not possible.',
     '- If the request is unclear, ask one short question instead of guessing.',
     '- You cannot sing, write lyrics or make the music video here; say so if asked.',
+    pro
+      ? '- Pro mode is on: you can read the mix (get_mix, get_bus) and change it (set_track_mix, set_bus_setting, reset_mix). Levels, sends and buses are set per instrument type, so tracks of the same type change together; say so when it happens. Read the mix before changing it.'
+      : '- Pro mode is off, so you cannot read or change the mix (levels, sends, buses, plugins). If asked, tell the user to press the Pro button above the mixer first.',
     '',
     'The song as it is right now:',
     songSummary(song, title),
@@ -47,7 +53,7 @@ function systemPrompt(song: Song, title: string): string {
 
 export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: Request) => string; llm: AssistantLlm | undefined }): Router {
   const router = Router();
-  const tools = toolSpecs();
+  const toolsFor = { pro: toolSpecs(true), plain: toolSpecs(false) };
 
   router.post('/api/assistant/chat', async (req, res) => {
     if (!deps.llm) {
@@ -71,9 +77,11 @@ export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: 
     const abort = new AbortController();
     res.on('close', () => abort.abort());
 
-    const ctx: ToolContext = { song, title: body.data.title };
+    const ctx: ToolContext = { song, title: body.data.title, ...(body.data.mix ? { mix: body.data.mix } : {}) };
+    const pro = Boolean(ctx.mix);
+    const tools = pro ? toolsFor.pro : toolsFor.plain;
     const messages: ChatMessage[] = [
-      { role: 'system', content: systemPrompt(ctx.song, ctx.title) },
+      { role: 'system', content: systemPrompt(ctx.song, ctx.title, pro) },
       ...body.data.history.map((m) => ({ role: m.role, content: m.content })),
       { role: 'user', content: body.data.message },
     ];
@@ -110,7 +118,7 @@ export function createAssistantRouter(deps: { store: SongsStore; ownerOf: (req: 
           }
         }
         // The model always sees the song as it is now.
-        if (changed) messages[0] = { role: 'system', content: systemPrompt(ctx.song, ctx.title) };
+        if (changed) messages[0] = { role: 'system', content: systemPrompt(ctx.song, ctx.title, pro) };
       }
       send({ type: 'error', message: `The assistant stopped after ${MAX_ROUNDS} rounds of tool calls without finishing. The edits made so far are kept.` });
       res.end();

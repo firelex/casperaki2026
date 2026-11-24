@@ -11,7 +11,7 @@ import type { LaneMixOverride, MixOverrides } from '@casperaki/song-schema/schem
 import type { PlaybackPayload } from '../api/playback';
 
 import { songsApi } from '../api/songs';
-import { livePlayer } from './livePlayer';
+import { livePlayer, type ResolvedMix } from './livePlayer';
 
 export interface ProMixState {
   /** The project (saved song) the changes belong to. */
@@ -51,6 +51,24 @@ export function useProMix(): ProMixState {
 /** The open song's Pro-mode changes, for playing a working copy with unsaved edits. */
 export function currentProMix(): MixOverrides | undefined {
   return state.songId && (Object.keys(state.mix.lanes).length || Object.keys(state.mix.buses).length) ? state.mix : undefined;
+}
+
+/**
+ * The tracks that share `lane`'s Pro-mode level, sends and bus: those of the same
+ * instrument type(s) (the standard mix has one setting per type and genre, and
+ * Pro mode edits it). A track without a type stands alone.
+ */
+export function linkedLanes(mix: ResolvedMix, lane: string): string[] {
+  const byLane = new Map<string, Set<string>>();
+  for (const p of mix.lanes) {
+    const set = byLane.get(p.lane) ?? new Set<string>();
+    if (p.lowLevelType) set.add(p.lowLevelType);
+    byLane.set(p.lane, set);
+  }
+  const keyOf = (l: string) => [...(byLane.get(l) ?? [])].sort().join('+');
+  if (!byLane.has(lane)) throw new Error(`The mix has no track "${lane}".`);
+  const k = keyOf(lane);
+  return k ? [...byLane.keys()].filter((l) => keyOf(l) === k) : [lane];
 }
 
 /** A song was opened (or saved under a new id): take its saved mix. */

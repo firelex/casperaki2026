@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { automationAt, livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
-import { changeLane, changeLaneRoute, setPro, type ProMixState } from '../../audio/proMix';
+import { changeLane, changeLaneRoute, linkedLanes, setPro, type ProMixState } from '../../audio/proMix';
 import type { LaneMixOverride } from '@casperaki/song-schema/schemas';
 
 import type { PlaybackPayload } from '../../api/playback';
@@ -141,13 +141,8 @@ export function Mixer({
       feeders.get(bus)!.push(lane);
     }
   }
-  // Tracks of the same instrument type(s) share one fader and one set of sends in Pro
-  // mode: the standard mix has one setting per type and genre, and Pro mode edits it.
-  const typeKey = (lane: string) => [...new Set(byLane.get(lane)!.map((p) => p.lowLevelType).filter(Boolean))].sort().join('+');
-  const linkedLanes = (lane: string) => {
-    const k = typeKey(lane);
-    return k ? trackOrder.filter((l) => typeKey(l) === k) : [lane];
-  };
+  // Tracks of the same instrument type(s) share one fader, one set of sends and one bus in Pro mode.
+  const linked = (lane: string) => linkedLanes(mix, lane);
   const busColor = (bus: string) => BUS_COLORS[groupBuses.indexOf(bus) % BUS_COLORS.length]!;
   // Every group bus of the mix (what a track can be routed to in Pro mode), in rack order.
   const routable = mix.config.rackChains.map((c) => c.bus).filter((b) => b !== 'master' && !RETURNS.some((r) => r.bus === b));
@@ -187,12 +182,12 @@ export function Mixer({
           anySolo={solo.length > 0}
           pro={pro.pro}
           override={pro.mix.lanes[lane]}
-          linkedWith={linkedLanes(lane).filter((l) => l !== lane)}
-          onChange={(patch) => changeLane(liveKey, linkedLanes(lane), patch)}
+          linkedWith={linked(lane).filter((l) => l !== lane)}
+          onChange={(patch) => changeLane(liveKey, linked(lane), patch)}
           routable={routable}
           onRoute={(bus) => {
             setRouteError(undefined);
-            changeLaneRoute(liveKey, fetchPayload, linkedLanes(lane), bus).catch((err: unknown) =>
+            changeLaneRoute(liveKey, fetchPayload, linked(lane), bus).catch((err: unknown) =>
               setRouteError(`Routing ${lane} failed: ${err instanceof Error ? err.message : String(err)}`),
             );
           }}

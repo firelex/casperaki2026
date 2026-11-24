@@ -7,12 +7,13 @@
 
 import { addSection, editTrack, InstrumentFamilySchema, SECTION_TYPES, setTransition, trackOptions, TRANSITION_TYPES } from '@casperaki/arrangement';
 import { applyCommand, initEditState, type EditCommand } from '@casperaki/song-edit';
-import type { Song } from '@casperaki/song-schema';
+import { GENRE_TEMPO_RANGES, GenreSchema, isBpmInGenreTempoRange, type Song } from '@casperaki/song-schema';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 import { drumKitView, transitionState } from '../routes/tracks.js';
 import { searchSounds, soundCatalog } from '../sounds/soundCatalog.js';
+import { busDetail, busSettingAction, MixToolError, mixOverview, SetBusSettingParams, SetTrackMixParams, trackMixAction, type MixSnapshot } from './mixTools.js';
 import { songSummary } from './summary.js';
 
 /** What the page does for a tool that is not a song edit. */
@@ -26,7 +27,14 @@ export type ClientAction =
   | { kind: 'save' }
   | { kind: 'renameSong'; title: string }
   | { kind: 'export' }
-  | { kind: 'openTab'; tab: 'timeline' | 'video' };
+  | { kind: 'openTab'; tab: 'timeline' | 'video' }
+  | { kind: 'goTo'; section?: string; bar?: number }
+  | { kind: 'revert' }
+  | { kind: 'newSong'; genre: string; key: string; bpm: number }
+  // Pro mode (the mixer's own code applies them; tracks of one type move together)
+  | { kind: 'mixTrack'; track: string; levelDb?: number; reverb?: number; delay?: number; chorus?: number; bus?: string | null }
+  | { kind: 'busSetting'; bus: string; slot: number; param: number; value: number }
+  | { kind: 'resetMix' };
 
 /** Every tool result: what happened in plain words, the full new song when it changed, or a page action. */
 export interface ToolResult {
@@ -41,12 +49,16 @@ export class ToolError extends Error {}
 interface ToolContext {
   song: Song;
   readonly title: string;
+  /** Pro mode is on: the open song's mix (the mix tools read and update it). */
+  readonly mix?: MixSnapshot;
 }
 
 interface ToolDef<S extends z.ZodTypeAny> {
   readonly name: string;
   readonly description: string;
   readonly params: S;
+  /** Offered only while Pro mode is on. */
+  readonly pro?: true;
   run(args: z.infer<S>, ctx: ToolContext): ToolResult;
 }
 
@@ -377,6 +389,74 @@ export const TOOLS = [
   }),
   tool({ name: 'export_audio', description: 'Open the export window (WAV, MP3, stems, MIDI, DAW projects).', params: z.object({}).strict(), run: () => ({ summary: 'Opened the export window.', action: { kind: 'export' } }) }),
   tool({
+    name: 'go_to',
+    description: 'Move the playhead to the start of a section or to a bar (1 = the first), without starting playback.',
+    params: z.object({ section: z.string().optional(), bar: z.number().int().min(1).optional() }).strict(),
+    run: (a, ctx) => {
+      if ((a.section === undefined) === (a.bar === undefined)) throw new ToolError('Give either a section or a bar.');
+      if (a.section !== undefined) requireSection(ctx.song, a.section);
+      return { summary: `Moved to ${a.section ?? `bar ${a.bar}`}.`, action: { kind: 'goTo', ...(a.section !== undefined ? { section: a.section } : { bar: a.bar! }) } };
+    },
+  }),
+  tool({
+    name: 'revert_to_original',
+    description: 'Put the song back as it was generated, dropping every edit (the user can undo this).',
+    params: z.object({}).strict(),
+    run: () => ({ summary: 'Put the song back as it was generated.', action: { kind: 'revert' } }),
+  }),
+  tool({
+    name: 'new_song',
+    description: `Write a new song and open it (this song stays in the song list). Styles and their tempo ranges: ${Object.entries(GENRE_TEMPO_RANGES)
+      .map(([g, r]) => `${g} ${r.min}-${r.max}`)
+      .join(', ')}.`,
+    params: z.object({ genre: GenreSchema, key: z.string().regex(/^[A-G][#b]?m?$/u).describe('e.g. C, F#, Bbm'), bpm: z.number().int() }).strict(),
+    run: (a) => {
+      if (!isBpmInGenreTempoRange(a.genre, a.bpm)) {
+        const r = GENRE_TEMPO_RANGES[a.genre];
+        throw new ToolError(`${a.genre} songs are ${r.min}-${r.max} bpm.`);
+      }
+      return { summary: `Writing a new ${a.genre} song in ${a.key} at ${a.bpm} bpm and opening it.`, action: { kind: 'newSong', genre: a.genre, key: a.key, bpm: a.bpm } };
+    },
+  }),
+
+  // ---- Pro mode: the mix ----
+  tool({
+    name: 'get_mix',
+    pro: true,
+    description: 'The mix: each track\'s level, sends and output bus (against the standard), and the buses with their plugins.',
+    params: z.object({}).strict(),
+    run: (_a, ctx) => ({ summary: mixOverview(ctx.mix!) }),
+  }),
+  tool({
+    name: 'get_bus',
+    pro: true,
+    description: 'One bus\'s plugins and their settings (index, name, value shown and raw 0-1).',
+    params: z.object({ bus: z.string() }).strict(),
+    run: (a, ctx) => ({ summary: busDetail(ctx.mix!, a.bus) }),
+  }),
+  tool({
+    name: 'set_track_mix',
+    pro: true,
+    description:
+      'Change a track\'s level (against the standard), its reverb / delay / chorus sends, or the group bus it plays through. The standard mix sets these per instrument type, so tracks of the same type change together.',
+    params: SetTrackMixParams,
+    run: (a, ctx) => trackMixAction(ctx.mix!, a),
+  }),
+  tool({
+    name: 'set_bus_setting',
+    pro: true,
+    description: 'Change one setting of a plugin on a bus (raw value 0-1; see get_bus). It affects every track on that bus.',
+    params: SetBusSettingParams,
+    run: (a, ctx) => busSettingAction(ctx.mix!, a),
+  }),
+  tool({
+    name: 'reset_mix',
+    pro: true,
+    description: 'Put the whole mix back to the standard mix (drops every Pro change of this song).',
+    params: z.object({}).strict(),
+    run: () => ({ summary: 'Reset the mix to the standard mix.', action: { kind: 'resetMix' } }),
+  }),
+  tool({
     name: 'open_tab',
     description: 'Open another tab of the editor: timeline (the song\'s tracks) or video (the music video).',
     params: z.object({ tab: z.enum(['timeline', 'video']) }).strict(),
@@ -385,8 +465,8 @@ export const TOOLS = [
 ] as const;
 
 /** The tools as OpenAI-style function definitions for the model. */
-export function toolSpecs() {
-  return TOOLS.map((t) => {
+export function toolSpecs(pro: boolean) {
+  return TOOLS.filter((t) => pro || !('pro' in t && t.pro)).map((t) => {
     const { $schema: _s, ...parameters } = zodToJsonSchema(t.params, { target: 'openApi3' }) as Record<string, unknown>;
     return { type: 'function' as const, function: { name: t.name, description: t.description, parameters } };
   });
@@ -396,11 +476,17 @@ export function toolSpecs() {
 export function runTool(name: string, rawArgs: unknown, ctx: ToolContext): ToolResult {
   const def = TOOLS.find((t) => t.name === name);
   if (!def) throw new ToolError(`There is no tool "${name}".`);
+  if ('pro' in def && def.pro && !ctx.mix) throw new ToolError('Pro mode is off: the mix can be changed only after the user presses Pro.');
   const parsed = (def.params as z.ZodTypeAny).safeParse(rawArgs ?? {});
   if (!parsed.success) {
     throw new ToolError(`The arguments for ${name} are not valid: ${parsed.error.issues.map((i) => `${i.path.join('.') || 'arguments'}: ${i.message}`).join('; ')}`);
   }
-  return (def as unknown as ToolDef<z.ZodTypeAny>).run(parsed.data, ctx);
+  try {
+    return (def as unknown as ToolDef<z.ZodTypeAny>).run(parsed.data, ctx);
+  } catch (err) {
+    if (err instanceof MixToolError) throw new ToolError(err.message);
+    throw err;
+  }
 }
 
 export type { ToolContext };
