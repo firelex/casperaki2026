@@ -38,8 +38,11 @@ import {
 import { createRng } from '@casperaki/music-theory';
 
 import {
+  arrangeParts,
+  generateChords,
   generateSongStructure,
   orchestrate,
+  writeVocals,
   selectInstruments,
   type GenerateParams,
 } from '../src/index.js';
@@ -162,8 +165,10 @@ describe('all-canonical-genre orchestrate coverage (docs/56c)', () => {
       const song = orchestrate(paramsFor(genre));
       // Build a map id → pickSource from the deterministic selection
       // result so we can distinguish silent vs explicit fallbacks.
+      // The final selection orchestrate lowers (partner tracks for thin sections included).
       const ctx = { rng: createRng(paramsFor(genre).seed), params: paramsFor(genre) };
-      const sel = selectInstruments(ctx, generateSongStructure(ctx));
+      const { structure } = writeVocals(ctx, generateChords(ctx, generateSongStructure(ctx)));
+      const sel = arrangeParts(ctx, structure).selection;
       const pickSourceById = new Map<string, 'genre' | 'fallback'>();
       for (const s of sel.instruments) {
         pickSourceById.set(s.entry.id, s.pickSource);

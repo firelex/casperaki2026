@@ -12,12 +12,24 @@
 // An event sounds for its duration; one without a duration (strums, guitar patterns) rings until its part's next
 // onset in the bar.
 //
-// Deterministic: measuring draws nothing.
+// The loop (addThinPartners): the first thin section (song order; harmony before rhythm; intros, outros and breaks are
+// sparse on purpose and never paired) whose section type and kind were not tried yet gets a partner for its thin
+// part: a new lane of the part's family (Pad 2, …), a sound the song does not use yet, playing in every section of
+// that type. THIN_RULES.variants pattern options are written for it on
+// their own named streams (thin/<lane>#<k>), each through the clash pass; the one that helps the thin section most is
+// kept, none if none helps. Then everything is measured again, up to THIN_RULES.maxAddedTracks added tracks.
+//
+// Deterministic: measuring draws nothing; a partner's sound forks thin/<lane>/sound, its patterns thin/<lane>#<k>.
 
 import { chordNotes, parseBarBeat, parseChord } from '@casperaki/music-theory';
 
-import type { FamilyPattern } from '../patterns/types.js';
+import type { ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
+import type { GeneratorContext } from '../context.js';
+import type { FamilyPattern, PatternResult } from '../patterns/types.js';
+import { LANE_BASE_NAMES } from '../selection/index.js';
+import type { InstrumentFamily, SelectionResult } from '../selection/types.js';
 import { isSustained } from './clashes.js';
+import { segmentType } from './segment-type.js';
 
 /** The thresholds, in one place to tune by ear. */
 export const THIN_RULES = {
@@ -169,4 +181,122 @@ export function partnerLane(lanes: Readonly<Record<string, FamilyPattern>>, kind
 export function fillScore(before: SectionThinness, after: SectionThinness): readonly [number, number, number] {
   const cleared = (before.harmony && !after.harmony ? 1 : 0) + (before.rhythm && !after.rhythm ? 1 : 0);
   return [cleared, before.gapBars - after.gapBars, after.medianVoices - before.medianVoices];
+}
+
+export interface AddedPartner {
+  readonly lane: string;
+  readonly family: InstrumentFamily;
+  readonly soundId: string;
+  readonly sectionType: string;
+  readonly kind: ThinKind;
+  readonly fork: string;
+}
+
+export interface ThinPartnerInput {
+  readonly ctx: GeneratorContext;
+  readonly selection: SelectionResult;
+  /** Writes and clash-resolves the whole song for a selection and its named lane streams. */
+  readonly write: (selection: SelectionResult, laneForks: ReadonlyMap<string, string>) => PatternResult;
+  /** The sounds a lane of the family may use in the song's genre. */
+  readonly soundPool: (family: InstrumentFamily) => readonly ValidatedCatalogEntry[];
+  /** Lane names a partner may not take (tracks the user added by edits). */
+  readonly reservedNames: ReadonlySet<string>;
+}
+
+export interface ThinPartnerResult {
+  readonly selection: SelectionResult;
+  readonly laneForks: Map<string, string>;
+  readonly patterns: PatternResult;
+  readonly added: AddedPartner[];
+}
+
+const better = (a: readonly number[], b: readonly number[]) => {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i]! > b[i]!;
+  return false;
+};
+const NOTHING = [0, 0, 0] as const;
+/** Section types that are sparse on purpose (they build up or drop out): never paired. */
+const SPARSE_ON_PURPOSE = new Set(['intro', 'outro', 'break']);
+
+export function addThinPartners(input: ThinPartnerInput): ThinPartnerResult {
+  const { ctx, write, soundPool, reservedNames } = input;
+  let selection = input.selection;
+  let laneForks = new Map<string, string>();
+  let patterns = write(selection, laneForks);
+  const added: AddedPartner[] = [];
+  const tried = new Set<string>();
+
+  while (added.length < THIN_RULES.maxAddedTracks) {
+    const target = firstThin(patterns, tried);
+    if (!target) break;
+    tried.add(`${target.type}:${target.kind}`);
+    const lanes = patterns.segments[target.index]!.lanes;
+    const partner = partnerLane(lanes, target.kind);
+    if (!partner) continue;
+    const partnerInst = selection.instruments.find((i) => i.lane === partner);
+    if (!partnerInst) throw new Error(`thin-sections: lane "${partner}" plays in "${target.segmentName}" but is not in the selection`);
+    const family = partnerInst.family;
+    const used = new Set(selection.instruments.map((i) => i.entry.id));
+    const unused = soundPool(family).filter((e) => !used.has(e.id));
+    if (unused.length === 0) continue;
+    // Sounds tagged with the song's genre first. Several families have none for some genres (urban keys): then the
+    // family's any-genre pool, recorded as a fallback pick exactly as selection records its own.
+    const genre = ctx.params.genre;
+    const tagged = unused.filter((e) => e.mainStyle === genre || (e.addStyles as readonly string[]).includes(genre));
+    const pickSource = tagged.length > 0 ? ('genre' as const) : ('fallback' as const);
+
+    const taken = new Set([...selection.instruments.map((i) => i.lane), ...reservedNames]);
+    const lane = freeName(family, taken);
+    const entry = ctx.rng.fork(`thin/${lane}/sound`).pick(tagged.length > 0 ? tagged : unused);
+    const candidate: SelectionResult = {
+      ...selection,
+      instruments: [
+        ...selection.instruments,
+        { lane, family, lowLevel: entry.lowLevel, entry, essential: false, perSegment: true, pickSource },
+      ],
+      segments: selection.segments.map((seg) =>
+        segmentType(seg.segmentName) === target.type ? { ...seg, activeLanes: [...seg.activeLanes, lane] } : seg,
+      ),
+    };
+
+    const before = measureSection(lanes);
+    let best: { score: readonly number[]; forks: Map<string, string>; patterns: PatternResult; fork: string } | undefined;
+    for (let k = 1; k <= THIN_RULES.variants; k++) {
+      const fork = `thin/${lane}#${k}`;
+      const forks = new Map(laneForks).set(lane, fork);
+      const written = write(candidate, forks);
+      const score = fillScore(before, measureSection(written.segments[target.index]!.lanes));
+      if (!best || better(score, best.score)) best = { score, forks, patterns: written, fork };
+    }
+    if (!best || !better(best.score, NOTHING)) continue;
+
+    selection = candidate;
+    laneForks = best.forks;
+    patterns = best.patterns;
+    added.push({ lane, family, soundId: entry.id, sectionType: target.type, kind: target.kind, fork: best.fork });
+  }
+  return { selection, laneForks, patterns, added };
+}
+
+/** The first thin section (song order; harmony before rhythm) whose type and kind were not tried yet. */
+function firstThin(
+  patterns: PatternResult,
+  tried: ReadonlySet<string>,
+): { index: number; segmentName: string; type: string; kind: ThinKind } | undefined {
+  for (let index = 0; index < patterns.segments.length; index++) {
+    const seg = patterns.segments[index]!;
+    const type = segmentType(seg.segmentName);
+    if (SPARSE_ON_PURPOSE.has(type)) continue;
+    const m = measureSection(seg.lanes);
+    for (const kind of ['harmony', 'rhythm'] as const) {
+      if (m[kind] && !tried.has(`${type}:${kind}`)) return { index, segmentName: seg.segmentName, type, kind };
+    }
+  }
+  return undefined;
+}
+
+function freeName(family: InstrumentFamily, taken: ReadonlySet<string>): string {
+  const base = LANE_BASE_NAMES[family];
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n++) if (!taken.has(`${base} ${n}`)) return `${base} ${n}`;
 }

@@ -284,6 +284,7 @@ export {
   DISPLAY_NAMES,
   ORCHESTRATOR_NAME,
   ORCHESTRATOR_VERSION,
+  arrangeParts,
   lowerToSong,
   orchestrate,
   type LowerInputs,

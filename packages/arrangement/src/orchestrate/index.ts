@@ -29,7 +29,7 @@ import {
   type TransitionEntry,
 } from '@casperaki/song-schema';
 
-import type { GenerateParams } from '../context.js';
+import type { GenerateParams, GeneratorContext } from '../context.js';
 import {
   generateFills,
   generateMutes,
@@ -41,6 +41,7 @@ import {
   type ArrangementTransitions,
 } from '../arrangement-polish/index.js';
 import { resolveArrangementClashes } from '../arrangement-polish/clashes.js';
+import { addThinPartners } from '../arrangement-polish/thin-sections.js';
 import { applyArrangementOverrides, decideDrumOverrides } from '../arrangement-polish/overrides.js';
 import { generateChords } from '../chords/index.js';
 import { generatePatterns } from '../patterns/index.js';
@@ -51,7 +52,7 @@ import { applyTrackEditsToSelection, recordedDrumSounds, recordedTrackEdits } fr
 import { drumKit, DRUM_SOUNDS_DETAIL } from '../drums/kit.js';
 
 import type { ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
-import { LOOP_DISPLAY_NAME } from '../selection/index.js';
+import { familySoundPool, LOOP_DISPLAY_NAME } from '../selection/index.js';
 import type { InstrumentFamily, SelectionResult } from '../selection/types.js';
 import type { FamilyPattern, PatternResult } from '../patterns/types.js';
 import type { VocalBar, VocalResult } from '../vocals/types.js';
@@ -155,37 +156,7 @@ export function orchestrate(params: GenerateParams): Song {
   // The vocals come first: sung sections take the chords of the melody they
   // borrow (in the song's key), and every other part is written over those.
   const { vocals, structure: structureWithChords } = writeVocals(ctx, generateChords(ctx, structure));
-  // Sequencer track edits (generator params `trackEdits`): applied to the
-  // selection, so each edit only touches its own lane's streams.
-  const baseSelection = selectInstruments(ctx, structureWithChords);
-  const trackEdits = recordedTrackEdits(params.params);
-  const edited = applyTrackEditsToSelection(baseSelection, trackEdits, params.genre);
-  const selection = edited.selection;
-  // to-do #1 Phase B — bake the per-segment drum + bass override system into
-  // the freshly-generated patterns (the engine reset path bypasses its own
-  // mask branch, so masks bake into the emitted pattern). Forks the root rng,
-  // so only the Drums / Bass override bars change.
-  // docs/62 B13 — the per-segment Drums override gates the EDM fill/buildup
-  // transition. Compute the decisions ONCE (fork is name-keyed + order-
-  // independent, so this is identical to applyArrangementOverrides' own fork)
-  // and thread them into both the override baker and the transition generator.
-  const drumDecisions = decideDrumOverrides(
-    ctx.rng.fork('arrangement-polish/drum-overrides'),
-    structureWithChords,
-    ctx.params.genre,
-  );
-  const written = (sel: typeof selection, variants: Map<string, number>) =>
-    applyArrangementOverrides(ctx, structureWithChords, sel, generatePatterns(ctx, structureWithChords, sel, variants), drumDecisions);
-  // Parts that get in each other's way are adjusted after they are written (arrangement-polish/clashes.ts): a
-  // second busy part calms down, a part in rhythmic unison with another in its register is moulded around it.
-  // Track edits only ever change their own track (they are spliced into the song as it was): clashes are resolved on
-  // the song as generated without the edits, and the edited tracks are then laid in as written. Every lane forks its
-  // own rng, so writing the patterns twice draws the same notes.
-  const editedTracks = new Set(trackEdits.flatMap((e) => ('track' in e ? [e.track] : [])));
-  const patterns =
-    editedTracks.size === 0
-      ? resolveArrangementClashes(written(selection, edited.laneVariants))
-      : withEditedTracks(resolveArrangementClashes(written(baseSelection, new Map())), written(selection, edited.laneVariants), editedTracks);
+  const { selection, patterns, drumDecisions } = arrangeParts(ctx, structureWithChords);
   const fills = generateFills(ctx, structureWithChords, selection);
   const mutes = generateMutes(ctx, structureWithChords, selection);
   const transitions = generateTransitions(ctx, structureWithChords, drumDecisions);
@@ -201,6 +172,59 @@ export function orchestrate(params: GenerateParams): Song {
     transitions,
     signalProcessors,
   });
+}
+
+/**
+ * The song's parts: instruments selected, patterns written (drum and bass overrides baked in), clashes resolved, thin
+ * sections given partner tracks, and the recorded track edits applied. Returns the final selection (partner tracks
+ * and added tracks included) and patterns, and the drum override decisions the transitions follow.
+ */
+export function arrangeParts(
+  ctx: GeneratorContext,
+  structureWithChords: SongStructure,
+): { selection: SelectionResult; patterns: PatternResult; drumDecisions: ReturnType<typeof decideDrumOverrides> } {
+  const params = ctx.params;
+  const baseSelection = selectInstruments(ctx, structureWithChords);
+  const trackEdits = recordedTrackEdits(params.params);
+  // to-do #1 Phase B — bake the per-segment drum + bass override system into
+  // the freshly-generated patterns (the engine reset path bypasses its own
+  // mask branch, so masks bake into the emitted pattern). Forks the root rng,
+  // so only the Drums / Bass override bars change.
+  // docs/62 B13 — the per-segment Drums override gates the EDM fill/buildup
+  // transition. Compute the decisions ONCE (fork is name-keyed + order-
+  // independent, so this is identical to applyArrangementOverrides' own fork)
+  // and thread them into both the override baker and the transition generator.
+  const drumDecisions = decideDrumOverrides(
+    ctx.rng.fork('arrangement-polish/drum-overrides'),
+    structureWithChords,
+    ctx.params.genre,
+  );
+  const written = (sel: SelectionResult, variants: ReadonlyMap<string, number>, forks: ReadonlyMap<string, string>) =>
+    applyArrangementOverrides(ctx, structureWithChords, sel, generatePatterns(ctx, structureWithChords, sel, variants, forks), drumDecisions);
+  // Parts that get in each other's way are adjusted after they are written (arrangement-polish/clashes.ts): a
+  // second busy part calms down, a part in rhythmic unison with another in its register is moulded around it.
+  // Then thin sections get a partner track of the same kind as their thin part, and clashes and thinness are checked
+  // again (arrangement-polish/thin-sections.ts). Both run on the song as generated without the track edits; the
+  // partner tracks join the selection before the edits apply, and names the edits gave added tracks stay theirs.
+  const partners = addThinPartners({
+    ctx,
+    selection: baseSelection,
+    write: (sel, forks) => resolveArrangementClashes(written(sel, new Map(), forks)),
+    soundPool: (family) => familySoundPool(family, params.genre),
+    reservedNames: new Set(trackEdits.flatMap((e) => (e.kind === 'addTrack' ? [e.track] : []))),
+  });
+  // Sequencer track edits (generator params `trackEdits`): applied to the selection, so each edit only touches its
+  // own lane's streams. Track edits only ever change their own track (they are spliced into the song as it was): the
+  // edited tracks are laid in as written, every other lane as resolved without them. Every lane forks its own rng,
+  // so writing the patterns twice draws the same notes.
+  const edited = applyTrackEditsToSelection(partners.selection, trackEdits, params.genre);
+  const selection = edited.selection;
+  const editedTracks = new Set(trackEdits.flatMap((e) => ('track' in e ? [e.track] : [])));
+  const patterns =
+    editedTracks.size === 0
+      ? partners.patterns
+      : withEditedTracks(partners.patterns, written(selection, edited.laneVariants, partners.laneForks), editedTracks);
+  return { selection, patterns, drumDecisions };
 }
 
 /** The song's patterns: the edited tracks as written with their edits, every other lane as resolved without them. */

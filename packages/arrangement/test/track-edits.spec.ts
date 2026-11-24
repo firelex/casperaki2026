@@ -183,3 +183,27 @@ describe('brass in every style', () => {
     expect(Object.values(added.arrangement).some((seg) => (seg.overrides[lane!.name]?.bars ?? []).some((b) => Object.keys(b.notes ?? {}).length > 0))).toBe(true);
   });
 });
+
+describe('track edits on a song with thin-section partner tracks', () => {
+  // Sunlit Sidewalk's seed: its verses get Pad 2 and Synths 2 (thin-sections.ts).
+  const sunlit = (): Song => orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'seed-19ptbn' });
+
+  it('an added track takes the next free name after the partner tracks', () => {
+    const song = sunlit();
+    expect(tracks(song)).toContain('Synths 2');
+    const { song: edited, track } = editTrack(song, { kind: 'addTrack', family: 'synths', segments: ['chorus1'] });
+    expect(track).toBe('Synths 3');
+    otherTracksSame(song, edited, track);
+  });
+
+  it('a partner track can change its sound and get a new pattern, leaving every other track as it was', () => {
+    const song = sunlit();
+    const current = song.instrumentDefinitions.find((d) => d.name === 'Synths 2')!.id;
+    const other = familySoundPool('synths', 'brightPop').find((e) => e.id !== current)!;
+    const swapped = editTrack(song, { kind: 'changeSound', track: 'Synths 2', soundId: other.id }).song;
+    otherTracksSame(song, swapped, 'Synths 2');
+    const renewed = editTrack(song, { kind: 'newPattern', track: 'Synths 2' }).song;
+    expect(trackSlice(renewed, 'Synths 2')).not.toBe(trackSlice(song, 'Synths 2'));
+    otherTracksSame(song, renewed, 'Synths 2');
+  });
+});

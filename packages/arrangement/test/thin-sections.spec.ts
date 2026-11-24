@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { fillScore, measureSection, partnerLane, THIN_RULES } from '../src/arrangement-polish/thin-sections.js';
+import { createRng } from '@casperaki/music-theory';
+
+import { addThinPartners, fillScore, measureSection, partnerLane, THIN_RULES } from '../src/arrangement-polish/thin-sections.js';
+import type { ValidatedCatalogEntry } from '../src/catalog/validated-catalog.js';
+import type { GeneratorContext } from '../src/context.js';
+import type { PatternResult } from '../src/patterns/types.js';
+import type { InstrumentFamily, SelectionResult } from '../src/selection/types.js';
 import type { FamilyPattern } from '../src/patterns/types.js';
 
 type Ev = Record<string, unknown>;
@@ -79,4 +85,108 @@ describe('fillScore', () => {
 
 it('the thresholds live in one place', () => {
   expect(THIN_RULES).toMatchObject({ minVoices: 3, gapBeats: 2, maxGapBarShare: 0.25, variants: 4, maxAddedTracks: 2 });
+});
+
+// ---- the partner loop, with a stand-in pattern writer ----------------------------------------------------------
+
+const ctx = { rng: createRng('thin-unit'), params: { genre: 'brightPop', key: 'C', bpm: 120, seed: 'thin-unit' } } as GeneratorContext;
+const entry = (id: string, family: InstrumentFamily) => ({ id, family, lowLevel: `${family}Test`, mainStyle: 'brightPop', addStyles: [] }) as unknown as ValidatedCatalogEntry;
+const inst = (laneName: string, family: InstrumentFamily, id: string) =>
+  ({ lane: laneName, family, lowLevel: `${family}Test`, entry: entry(id, family), essential: false, perSegment: false, pickSource: 'genre' }) as SelectionResult['instruments'][number];
+const sel = (instruments: SelectionResult['instruments'], active: Record<string, string[]>): SelectionResult => ({
+  instruments,
+  segments: Object.entries(active).map(([segmentName, activeLanes]) => ({ segmentName, activeLanes, loopActive: false })),
+});
+/** Writes each active lane from a table: base patterns by lane name; a partner lane plays chords whatever its fork. */
+const writer =
+  (table: Record<string, FamilyPattern>, calls: string[] = []) =>
+  (s: SelectionResult, forks: ReadonlyMap<string, string>): PatternResult => {
+    calls.push([...forks.entries()].map(([l, f]) => `${l}=${f}`).join(','));
+    return {
+      segments: s.segments.map((seg) => ({
+        segmentName: seg.segmentName,
+        lanes: Object.fromEntries(seg.activeLanes.map((l) => [l, table[l] ?? lane([0], 4, chord('Am'))])),
+      })),
+    };
+  };
+const pool = (ids: Record<string, string[]>) => (family: InstrumentFamily) => (ids[family] ?? []).map((id) => entry(id, family));
+
+describe('addThinPartners', () => {
+  const thinTable = { Pad: lane([0], 4, padNote(69)), Keys: lane(EIGHTHS, 4, chord('C')) };
+
+  it('a section that is not thin anywhere: nothing added, the patterns as written', () => {
+    const s = sel([inst('Keys', 'keys', 'k1')], { verse1: ['Keys'] });
+    const write = writer(thinTable);
+    const r = addThinPartners({ ctx, selection: s, write, soundPool: pool({ keys: ['k1', 'k2'] }), reservedNames: new Set() });
+    expect(r.added).toEqual([]);
+    expect(r.patterns).toEqual(write(s, new Map()));
+    expect(r.selection).toEqual(s);
+  });
+
+  it('a one-note pad gets a Pad 2 with an unused sound, in every section of that type and nowhere else', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'], chorus1: ['Pad'], verse2: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set() });
+    expect(r.added).toHaveLength(1);
+    expect(r.added[0]).toMatchObject({ lane: 'Pad 2', family: 'pad', soundId: 'p2', sectionType: 'verse', kind: 'harmony' });
+    expect(r.selection.segments.map((x) => x.activeLanes.includes('Pad 2'))).toEqual([true, false, true]);
+    expect(r.laneForks.get('Pad 2')).toMatch(/^thin\/Pad 2#[1-4]$/u);
+  });
+
+  it('never takes a name a recorded track edit uses', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set(['Pad 2']) });
+    expect(r.added[0]!.lane).toBe('Pad 3');
+  });
+
+  it('no unused sound for the family: nothing added, no error', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1'] }), reservedNames: new Set() });
+    expect(r.added).toEqual([]);
+  });
+
+  it('a sound tagged with the song\'s genre is preferred; without one, an untagged sound is a tracked fallback pick', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'] });
+    const rock = (id: string, family: InstrumentFamily) => ({ ...entry(id, family), mainStyle: 'rock', addStyles: [] }) as ValidatedCatalogEntry;
+    const mixed = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: (f) => [entry('p1', f), rock('p2', f), entry('p3', f)], reservedNames: new Set() });
+    expect(mixed.added[0]!.soundId).toBe('p3');
+    expect(mixed.selection.instruments.at(-1)!.pickSource).toBe('genre');
+    const untagged = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: (f) => [entry('p1', f), rock('p2', f)], reservedNames: new Set() });
+    expect(untagged.added[0]!.soundId).toBe('p2');
+    expect(untagged.selection.instruments.at(-1)!.pickSource).toBe('fallback');
+  });
+
+  it('a partner that does not help is not kept', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'] });
+    // Every pattern option of the partner is the same one note: nothing gained.
+    const write = writer({ Pad: lane([0], 4, padNote(69)), 'Pad 2': lane([0], 4, padNote(69)) });
+    const r = addThinPartners({ ctx, selection: s, write, soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set() });
+    expect(r.added).toEqual([]);
+    expect(r.selection).toEqual(s);
+  });
+
+  it('tries THIN_RULES.variants pattern options for a partner', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'] });
+    const calls: string[] = [];
+    addThinPartners({ ctx, selection: s, write: writer(thinTable, calls), soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set() });
+    for (let k = 1; k <= THIN_RULES.variants; k++) expect(calls).toContain(`Pad 2=thin/Pad 2#${k}`);
+  });
+
+  it('adds at most THIN_RULES.maxAddedTracks tracks', () => {
+    // Three section types, each harmony-thin; every partner helps.
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'], preChorus1: ['Pad'], bridge1: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2', 'p3', 'p4'] }), reservedNames: new Set() });
+    expect(r.added).toHaveLength(THIN_RULES.maxAddedTracks);
+  });
+
+  it('intros, outros and breaks are sparse on purpose: never paired', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { intro: ['Pad'], break1: ['Pad'], outro: ['Pad'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2'] }), reservedNames: new Set() });
+    expect(r.added).toEqual([]);
+  });
+
+  it('is deterministic', () => {
+    const s = sel([inst('Pad', 'pad', 'p1')], { verse1: ['Pad'] });
+    const run = () => addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2', 'p3', 'p4'] }), reservedNames: new Set() });
+    expect(run()).toEqual(run());
+  });
 });

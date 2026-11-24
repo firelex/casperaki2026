@@ -30,6 +30,9 @@ import {
   type GenerateParams,
 } from '../src/index.js';
 import { createRng } from '@casperaki/music-theory';
+import { resolveArrangementClashes } from '../src/arrangement-polish/clashes.js';
+import { addThinPartners } from '../src/arrangement-polish/thin-sections.js';
+import { familySoundPool } from '../src/selection/index.js';
 import { orchestrateGoldenPath } from './fixtures.js';
 
 const POP_PARAMS: GenerateParams = {
@@ -318,24 +321,27 @@ describe('lowerToSong (intermediate-projection)', () => {
   it('produces the same Song as orchestrate() when fed the same intermediates', () => {
     const p = pipeline('same-as-orchestrate');
     // Mirror orchestrate(): the drum + bass per-segment override pass runs over
-    // the base patterns before lowering (to-do #1 Phase B).
-    const overriddenPatterns = applyArrangementOverrides(
-      p.ctx,
-      p.structure,
-      p.selection,
-      p.patterns,
-    );
+    // the base patterns (to-do #1 Phase B), clashes are resolved, and thin
+    // sections get partner tracks, before lowering.
+    const partners = addThinPartners({
+      ctx: p.ctx,
+      selection: p.selection,
+      write: (sel, forks) =>
+        resolveArrangementClashes(applyArrangementOverrides(p.ctx, p.structure, sel, generatePatterns(p.ctx, p.structure, sel, new Map(), forks))),
+      soundPool: (family) => familySoundPool(family, p.params.genre),
+      reservedNames: new Set(),
+    });
     const direct = canonicalStringifySong(
       lowerToSong({
         params: p.params,
         structure: p.structure,
-        selection: p.selection,
-        patterns: overriddenPatterns,
+        selection: partners.selection,
+        patterns: partners.patterns,
         vocals: p.vocals,
-        fills: p.fills,
-        mutes: p.mutes,
+        fills: generateFills(p.ctx, p.structure, partners.selection),
+        mutes: generateMutes(p.ctx, p.structure, partners.selection),
         transitions: p.transitions,
-        signalProcessors: p.signalProcessors,
+        signalProcessors: generateSignalProcessors(p.ctx, p.structure, partners.selection),
       }),
       2,
     );
