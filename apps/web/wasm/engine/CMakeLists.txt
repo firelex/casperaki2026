@@ -83,10 +83,13 @@ target_link_libraries(airwindows_test PRIVATE aw_fx)
 add_executable(noise_source_test test/noise_source_test.cpp)
 target_link_libraries(noise_source_test PRIVATE aw_fx)
 
-# Shared mix-config.json parity gate (docs/64) — JSON-loaded MixConfig must match
-# the compiled-in MixTables.h / RackData.h exactly. Header-only (no codec/aw).
+# Shared mix config (docs/64): reading a config reproduces the compiled-in
+# MixTables.h / RackData.h exactly (on a frozen fixture), and the live
+# casperaki_engine config is complete (every rack plugin builds).
 add_executable(mixconfig_test test/mixconfig_test.cpp)
+target_link_libraries(mixconfig_test PRIVATE aw_fx)
 target_compile_definitions(mixconfig_test PRIVATE
+    MIXCONFIG_TABLES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/test/fixtures/mix-config-tables.json"
     MIXCONFIG_JSON_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
 
 # Instrument lanes: names, per-lane meters, live lane gain (mute/solo).

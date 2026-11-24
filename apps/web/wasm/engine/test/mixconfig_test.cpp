@@ -1,14 +1,22 @@
-// Parity gate for the shared mix-config.json (docs/64). Loads the JSON into
-// MixConfig and asserts it reproduces the compiled-in MixTables.h functions +
-// RackData.h rackChains() EXACTLY, over every (type, genre) and every rack — so
-// switching the engine to the runtime config cannot change any render.
+// The shared mix config (docs/64), in two parts:
 //
-// MIXCONFIG_JSON_PATH is injected by CMake (casperaki_engine/config/mix-config.json).
+// 1. Reading a config: test/fixtures/mix-config-tables.json is the config as it was
+//    generated from the compiled-in tables (casperaki_engine c45f53b). MixConfig must
+//    reproduce MixTables.h + RackData.h from it EXACTLY, over every (type, genre) and
+//    every rack, so the lookups (first-match rules, sends, racks) are known to be right.
+//    (MIXCONFIG_TABLES_PATH)
+// 2. The live config (casperaki_engine/config/mix-config.json, MIXCONFIG_JSON_PATH):
+//    it changes on purpose (Pro-mode approvals, new routing, new racks), so it is not
+//    compared with the tables; it must load and be complete: every group bus a type
+//    plays through has a rack and sends, the master and the three returns have racks,
+//    and every rack plugin is one the engine builds, with as many settings as it has.
 
 #include "../src/audio/MixConfig.h"
 #include "../src/audio/MixTables.h"
+#include "../src/audio/MixGraph.h"
 
 #include <cstdio>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -23,9 +31,9 @@ int main() {
     using namespace casperaki;
     mix::MixConfig cfg;
     try {
-        cfg = mix::MixConfig::fromFile(MIXCONFIG_JSON_PATH);
+        cfg = mix::MixConfig::fromFile(MIXCONFIG_TABLES_PATH);
     } catch (const std::exception& e) {
-        std::printf("FAIL: cannot load %s: %s\n", MIXCONFIG_JSON_PATH, e.what());
+        std::printf("FAIL: cannot load %s: %s\n", MIXCONFIG_TABLES_PATH, e.what());
         return 1;
     }
 
@@ -34,7 +42,7 @@ int main() {
                                         "organicVibes", "rock", "schlager", "urban" };
     // Read the type list straight from the JSON (typeToFxGroup keys + every tv rule type).
     nlohmann::json j = nlohmann::json::parse([] {
-        std::ifstream f(MIXCONFIG_JSON_PATH); std::stringstream ss; ss << f.rdbuf(); return ss.str();
+        std::ifstream f(MIXCONFIG_TABLES_PATH); std::stringstream ss; ss << f.rdbuf(); return ss.str();
     }());
     std::vector<std::string> types;
     for (auto it = j["typeToFxGroup"].begin(); it != j["typeToFxGroup"].end(); ++it)
@@ -130,11 +138,49 @@ int main() {
         }
     }
 
+    // ---- 2. The live config: loads and is complete ----
+    int liveRacks = 0;
+    {
+        mix::MixConfig live;
+        bool loaded = true;
+        try { live = mix::MixConfig::fromFile(MIXCONFIG_JSON_PATH); }
+        catch (const std::exception& e) { std::printf("FAIL: cannot load %s: %s\n", MIXCONFIG_JSON_PATH, e.what()); ++failures; loaded = false; }
+        if (loaded) {
+            nlohmann::json lj = nlohmann::json::parse([] {
+                std::ifstream f(MIXCONFIG_JSON_PATH); std::stringstream ss; ss << f.rdbuf(); return ss.str();
+            }());
+            std::set<std::string> rackBuses;
+            for (const auto& r : live.rackChains()) rackBuses.insert(r.bus);
+            for (const std::string bus : { "master", "fxPlateReverb", "fxStereoDelay", "fxChorus" })
+                check(rackBuses.count(bus) == 1, "live config: no rack for the " + bus + " bus");
+            std::set<std::string> groups;
+            for (auto it = lj["typeToFxGroup"].begin(); it != lj["typeToFxGroup"].end(); ++it)
+                groups.insert(it.value().get<std::string>());
+            for (const auto& g : groups) {
+                check(rackBuses.count(g) == 1, "live config: types play through the " + g + " bus, which has no rack");
+                check(lj["instrumentFxSends"].contains(g), "live config: the " + g + " bus has no sends (instrumentFxSends)");
+            }
+            for (const auto& r : live.rackChains()) {
+                ++liveRacks;
+                for (const auto& pd : r.plugins) {
+                    try {
+                        auto p = makeAwByFactory(pd.factory, 48000.0, pd.params);
+                        check((int)pd.params.size() <= p->numParams(),
+                              "live config: " + r.bus + "/" + pd.factory + " has " + std::to_string(pd.params.size()) +
+                              " settings; the plugin has " + std::to_string(p->numParams()));
+                    } catch (const std::exception& e) {
+                        check(false, "live config: " + r.bus + "/" + pd.factory + ": " + e.what());
+                    }
+                }
+            }
+        }
+    }
+
     std::printf("mixconfig_test: unmapped types (throw): ");
     for (const auto& t : unmapped) std::printf("'%s' ", t.c_str());
     std::printf("\n");
-    std::printf("mixconfig_test: %d targetVolume, %d fxGroup, %d laneSends checks; %zu racks\n",
-                tvChecks, fgChecks, lsChecks, cc.size());
+    std::printf("mixconfig_test: tables fixture: %d targetVolume, %d fxGroup, %d laneSends checks; %zu racks; live config: %d racks checked\n",
+                tvChecks, fgChecks, lsChecks, cc.size(), liveRacks);
     if (failures) { std::printf("mixconfig_test: %d FAILURES\n", failures); return 1; }
     std::printf("mixconfig_test: OK\n");
     return 0;
