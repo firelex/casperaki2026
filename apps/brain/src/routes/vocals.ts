@@ -1,19 +1,21 @@
 // Sung vocals (docs/superpowers/specs/2026-11-24-sung-vocals-design.md):
 //
 //   GET  /api/vocals/voices                  -> {voices}            the singing service's voices
-//   POST /api/vocals/status {song}           -> {sections: [{segment, state: none|current|stale|missing}]}
-//   POST /api/vocals/sing   {song, segment}  -> {artifact}          sings one section (or reuses its stored take)
+//   POST /api/vocals/status {song}           -> {sections: [{segment, state: none|sung|unsung}]}
+//   POST /api/vocals/sing   {song, segment}  -> {section}           sings one section (nothing to do if its take is stored)
 //
-// The song is sent whole (the editor's working copy); the caller records the returned artifact on its song.
+// The song is sent whole (the editor's working copy). Takes are found by fingerprint when a song is loaded
+// (createVocalsHooks().withTakes); nothing is recorded on the song.
 // Not configured (SOULX_SERVICE_URL or BRAIN_VOCAL_TAKES_DIR unset) -> 503 naming what is missing.
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
-import { SongSchema, type Song } from '@casperaki/song-schema';
+import { parseSong, SongSchema, type Song } from '@casperaki/song-schema';
 
 import type { BrainConfig } from '../config.js';
-import { sectionStates, VocalTakes, VocalsError } from '../vocals/takes.js';
+import type { SongsStore } from '../store.js';
+import { deleteUnusedTakes, songTakeFingerprints, VocalTakes, VocalsError, withStoredTakes } from '../vocals/takes.js';
 
 export interface VocalsRouterDeps {
   /** Undefined when not configured; `missing` names the environment variables to set. */
@@ -79,7 +81,7 @@ export function createVocalsRouter(deps: VocalsRouterDeps): Router {
     const song = parseSong(res, body.data.song);
     if (!song) return;
     try {
-      res.json({ artifact: await t.sing(song, body.data.segment) });
+      res.json({ section: await t.sing(song, body.data.segment) });
     } catch (err) {
       fail(res, err);
     }
@@ -98,26 +100,43 @@ export function createVocalsRouterFor(config: Pick<BrainConfig, 'singingServiceU
   return createVocalsRouter({ takes, missing });
 }
 
-/** Why a song cannot be played (or rendered) yet: its vocals are on but a section's take is missing or stale, or
- *  sung vocals are not set up. Undefined when it can (vocals off, or every take current). */
-export interface VocalsProblem {
-  readonly status: number;
-  readonly body: { readonly error: string; readonly message: string; readonly sections?: readonly string[] };
+/**
+ * What the rest of the brain needs from sung vocals:
+ *   - withTakes(song): the song as the engine gets it, its sections' stored takes added (play, export, render);
+ *   - onSongReplaced(songId): a saved song was saved again or deleted: the takes its old version used that no saved
+ *     song uses any more are deleted (no grace period: the owner wants the space back).
+ * Without BRAIN_VOCAL_TAKES_DIR there are no takes: songs are lowered as they are and nothing is cleaned.
+ */
+export interface VocalsHooks {
+  readonly withTakes: (song: Song) => Song;
+  /** The fingerprints of the takes on a song from withTakes (for the render cache key). */
+  readonly takesOf: (song: Song) => string;
+  readonly onSongReplaced: (oldSongId: string) => void;
 }
-export type VocalsCheck = (song: Song, saved: boolean) => VocalsProblem | undefined;
 
-export function createVocalsCheck(config: Pick<BrainConfig, 'vocalTakesDir'>): VocalsCheck {
-  return (song, saved) => {
-    if (!song.vocals?.enabled) return undefined;
-    if (!config.vocalTakesDir) {
-      return { status: 503, body: { error: 'vocals_not_configured', message: 'The song has Vocals on, but sung vocals are not set up: set BRAIN_VOCAL_TAKES_DIR in brain.env.' } };
-    }
-    const sections = sectionStates(song, config.vocalTakesDir).filter((s) => s.state !== 'none' && s.state !== 'current').map((s) => s.segment);
-    if (sections.length === 0) return undefined;
-    const what = `The vocals of ${sections.join(', ')} have not been sung for the song as it is now.`;
-    return {
-      status: 409,
-      body: { error: 'vocals_need_singing', sections, message: saved ? `${what} Open the song and play it to sing its vocals.` : `${what} Sing them first.` },
-    };
+const takesOf = (song: Song) =>
+  song.aiArtifacts.filter((a) => a.kind === 'soulx-vocal').map((a) => a.conditioning?.hashes?.[0] ?? '').join(',');
+
+export function createVocalsHooks(config: Pick<BrainConfig, 'vocalTakesDir'>, store: SongsStore): VocalsHooks {
+  const dir = config.vocalTakesDir;
+  if (!dir) return { withTakes: (song) => song, takesOf, onSongReplaced: () => undefined };
+  const fingerprintsOf = (canonical: string): Set<string> =>
+    canonical.includes('"vocals"') ? songTakeFingerprints(parseSong(JSON.parse(canonical))) : new Set();
+  return {
+    withTakes: (song) => withStoredTakes(song, dir),
+    takesOf,
+    onSongReplaced: (oldSongId) => {
+      const old = store.get(oldSongId);
+      if (!old) return;
+      const candidates = fingerprintsOf(old.canonical);
+      if (candidates.size === 0) return;
+      const used = new Set<string>();
+      for (const id of store.listProjectSongIds()) {
+        const s = store.get(id);
+        if (s) for (const fp of fingerprintsOf(s.canonical)) used.add(fp);
+      }
+      const deleted = deleteUnusedTakes(dir, candidates, used);
+      if (deleted.length) console.log(`[vocals] deleted ${deleted.length} take(s) no saved song uses any more (song ${oldSongId} replaced)`);
+    },
   };
 }

@@ -41,7 +41,7 @@ import { renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
-import { createVocalsCheck, createVocalsRouterFor } from './routes/vocals.js';
+import { createVocalsHooks, createVocalsRouterFor } from './routes/vocals.js';
 import { DeepSeekPlanner } from './video/planner.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
@@ -238,9 +238,11 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const titleEp = assistantEndpoint(config);
   const titler = deps.songTitler ?? (titleEp ? new SongTitler(titleEp, store) : undefined);
   if (!titler) console.warn('[brain] ASSISTANT_LLM_URL not set — new songs keep their placeholder titles.');
-  app.use(createSongsRouter({ store, renders, vocalsCheck: createVocalsCheck(config), ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
-  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, vocalsCheck: createVocalsCheck(config) }));
-  app.use(createPlaybackRouter({ store, playback, ownerOf, vocalsCheck: createVocalsCheck(config) }));
+  // Sung vocals: stored takes added to songs for the engine; takes only an old song version used are cleaned up.
+  const vocalsHooks = createVocalsHooks(config, store);
+  app.use(createSongsRouter({ store, renders, withTakes: vocalsHooks.withTakes, takesOf: vocalsHooks.takesOf, onSongReplaced: vocalsHooks.onSongReplaced, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}) }));
+  app.use(createDawExportRouter({ store, exports: dawExports, ownerOf, withTakes: vocalsHooks.withTakes }));
+  app.use(createPlaybackRouter({ store, playback, ownerOf, withTakes: vocalsHooks.withTakes }));
   app.use(createTracksRouter());
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(

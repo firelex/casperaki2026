@@ -90,6 +90,8 @@ export interface SongsStore {
   upsertProject(input: { ownerId: string; songId: string; title: string; createdAt: string; updatedAt: string }): void;
   getProject(ownerId: string, songId: string): ProjectRow | undefined;
   listProjects(ownerId: string): ProjectRow[];
+  /** The song ids every project (of every owner) points at: the saved songs. */
+  listProjectSongIds(): string[];
   /** Replace the song a project points at (an edit saved under a new
    *  content id), keeping its title and created date. Returns false if
    *  the owner has no project for `fromSongId`. */
@@ -276,6 +278,9 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     setProjectMix({ ownerId, songId, mixOverrides, updatedAt }) {
       const json = mixOverrides === null ? null : JSON.stringify(MixOverridesSchema.parse(mixOverrides));
       return setMixStmt.run(json, mixOverrides === null ? null : updatedAt, ownerId, songId).changes > 0;
+    },
+    listProjectSongIds() {
+      return (db.prepare('SELECT DISTINCT song_id FROM projects').all() as { song_id: string }[]).map((r) => r.song_id);
     },
     listProjectMixes() {
       return (listMixesStmt.all() as Array<{

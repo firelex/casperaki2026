@@ -32,14 +32,14 @@ export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffpro
 const o = process.env.OUT_DIR;
 writeFileSync(o + '/song.json', JSON.stringify({ song: true }));
 writeFileSync(o + '/inst-1.json', JSON.stringify({ id: 1, name: 'Bass', type: 'basses', samples: [{ id: 900 }] }));
-// Sung vocal takes, as the adapter lowers them (an audioClips inst), when the song's vocals are on.
+// Sung vocal takes, as the adapter lowers them (an audioClips inst), when the song has any.
 const songIn = JSON.parse(readFileSync(process.env.BRAIN_SONG_FILE, 'utf8'));
-if (songIn.vocals && songIn.vocals.enabled) {
+if (songIn.aiArtifacts.some((a) => a.kind === 'soulx-vocal')) {
   const dirTakes = process.env.CASPERAKI_VOCAL_TAKES_DIR;
   if (!dirTakes) throw new Error('no CASPERAKI_VOCAL_TAKES_DIR');
   const clips = songIn.aiArtifacts.filter((a) => a.kind === 'soulx-vocal').map((a) => {
-    const fp = a.output.uri.slice('vocal-take:'.length, -'.wav'.length);
-    return { segment: a.attachedTo.segment, key: 'take-' + fp + '.wav', sourcePath: ${JSON.stringify(opts.takeSourceOverride ?? '')} || dirTakes + '/' + fp + '.wav', durationSec: a.output.durationSeconds };
+    const fp = a.output.uri.slice('vocal-take:'.length, -'.ogg'.length);
+    return { segment: a.attachedTo.segment, key: 'take-' + fp + '.ogg', sourcePath: ${JSON.stringify(opts.takeSourceOverride ?? '')} || dirTakes + '/' + fp + '.ogg', durationSec: a.output.durationSeconds };
   });
   writeFileSync(o + '/inst-2.json', JSON.stringify({ id: 60000, name: 'Vocal', type: 'audioClips', lowLevelType: 'vocalsLaSinger', clips }));
 }

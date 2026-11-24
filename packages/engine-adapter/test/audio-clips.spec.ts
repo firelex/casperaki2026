@@ -12,7 +12,7 @@ const base = (): Song => SongSchema.parse(JSON.parse(readFileSync(GOLDEN, 'utf8'
 const FP = (c: string) => c.repeat(64);
 const take = (segment: string, fp: string) => ({
   id: `vocal-${segment}`, kind: 'soulx-vocal' as const, modelId: 'soulx-singer', modelVersion: 'steps-32', seed: 1, prompt: 'en_prompt',
-  conditioning: { hashes: [fp] }, output: { uri: `vocal-take:${fp}.wav`, sha256: fp, lufs: -24, durationSeconds: 9.6 },
+  conditioning: { hashes: [fp] }, output: { uri: `vocal-take:${fp}.ogg`, sha256: fp, lufs: -24, durationSeconds: 9.6 },
   attachedTo: { scope: 'segment' as const, segment, instrument: 'Vocal' },
 });
 const lower = (song: Song, vocalTakesDir?: string) =>
@@ -20,10 +20,13 @@ const lower = (song: Song, vocalTakesDir?: string) =>
 const clipsInst = (f: ReturnType<typeof lower>) => f.instruments.map((i) => i.json as Record<string, any>).find((j) => j.type === 'audioClips');
 
 describe('sung vocal takes lowered to an audioClips instrument', () => {
-  it('vocals off or absent: no audioClips instrument (Vocal stays silent)', () => {
+  it('no takes: no audioClips instrument (Vocal stays silent)', () => {
     expect(clipsInst(lower(base()))).toBeUndefined();
+  });
+
+  it('takes play whether or not Play sings missing sections (the switch only controls singing)', () => {
     const off = { ...base(), vocals: { enabled: false, voice: 'en_prompt', takeNumbers: {} }, aiArtifacts: [take('verse1', FP('a'))] } as Song;
-    expect(clipsInst(lower(off, '/takes'))).toBeUndefined();
+    expect(clipsInst(lower(off, '/takes'))!.clips).toHaveLength(1);
   });
 
   it('vocals on: one clip per section take, keyed by the take, from the takes directory', () => {
@@ -32,8 +35,8 @@ describe('sung vocal takes lowered to an audioClips instrument', () => {
     expect(inst).toMatchObject({ name: 'Vocal', type: 'audioClips', lowLevelType: 'vocalsLaSinger' });
     expect(typeof inst.id).toBe('number');
     expect(inst.clips).toEqual([
-      { segment: 'verse1', key: `take-${FP('a')}.wav`, sourcePath: `/data/takes/${FP('a')}.wav`, durationSec: 9.6 },
-      { segment: 'chorus1', key: `take-${FP('b')}.wav`, sourcePath: `/data/takes/${FP('b')}.wav`, durationSec: 9.6 },
+      { segment: 'verse1', key: `take-${FP('a')}.ogg`, sourcePath: `/data/takes/${FP('a')}.ogg`, durationSec: 9.6 },
+      { segment: 'chorus1', key: `take-${FP('b')}.ogg`, sourcePath: `/data/takes/${FP('b')}.ogg`, durationSec: 9.6 },
     ]);
   });
 

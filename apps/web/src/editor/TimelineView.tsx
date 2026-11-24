@@ -11,9 +11,8 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { unsungSections as unsungSectionsOf, viewSource, withVocals } from '../audio/singVocals';
-import { currentProMix } from '../audio/proMix';
-import { vocalsApi } from '../api/vocals';
+import { unsungSections as unsungSectionsOf } from '../audio/singVocals';
+import { useVocalsStatus } from '../audio/useVocalsStatus';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
@@ -89,37 +88,23 @@ export function TimelineView() {
   useEffect(() => {
     if (activeSong) openProMix(activeSong.id, activeSong.project.mixOverrides);
   }, [activeSong]);
-  // Sung vocals on: which sections of the lead vocal have no current take (greyed out on its track).
-  const vocalsOn = viewSong?.vocals?.enabled === true;
-  const vocalStatus = useQuery({
-    queryKey: ['vocals', 'status', viewSong ? fnv1a(JSON.stringify(viewSong)) : ''],
-    queryFn: ({ signal }) => vocalsApi.status(viewSong!, signal),
-    enabled: vocalsOn && Boolean(viewSong),
-    staleTime: 10_000,
-  });
+  // A song with a vocals setting: which sections of the lead vocal have no take (greyed out on its track).
+  const vocalStatus = useVocalsStatus(viewSong);
   const unsungSections = useMemo(
-    () => (vocalsOn && model ? unsungSectionsOf(model.sections, vocalStatus.data?.sections) : new Set<number>()),
-    [vocalsOn, model, vocalStatus.data],
-  );
-  // What the mixer and waveforms load: the song as it plays, or, while vocals are on but not all sung, the song
-  // without its vocal under its own key (never what Play plays), so they never wait on or fail for singing.
-  const source = viewSong ? viewSource(viewSong, vocalStatus.data?.sections) : 'wait';
-  const viewKey = !liveKey || source === 'wait' ? undefined : source === 'instrumental' ? `${liveKey}:instrumental` : liveKey;
-  const viewFetch = useMemo(
-    () => (source === 'instrumental' && viewSong ? (signal: AbortSignal) => playbackApi.forSong(withVocals(viewSong, false), signal, currentProMix()) : fetchPayload),
-    [source, viewSong, fetchPayload],
+    () => (viewSong?.vocals && model ? unsungSectionsOf(model.sections, vocalStatus.data?.sections) : new Set<number>()),
+    [viewSong?.vocals, model, vocalStatus.data],
   );
   useEffect(() => {
     setMix(undefined);
     setMixError(undefined);
-    if (!viewKey) return;
+    if (!liveKey) return;
     let cancelled = false;
     const t = setTimeout(() => {
-      livePlayer.mixOf(viewKey, viewFetch).then(
+      livePlayer.mixOf(liveKey, fetchPayload).then(
         (m) => !cancelled && setMix(m),
         (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
       );
-      livePlayer.payloadOf(viewKey, viewFetch).then(
+      livePlayer.payloadOf(liveKey, fetchPayload).then(
         (p) => !cancelled && setStandardChains(p.standardRackChains),
         (err: unknown) => !cancelled && setMixError(err instanceof Error ? err.message : String(err)),
       );
@@ -128,7 +113,7 @@ export function TimelineView() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [viewKey, viewFetch, editorDirty, pro.version]);
+  }, [liveKey, fetchPayload, editorDirty, pro.version]);
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   /** The section dialogs (from the ruler's right-click menu). */
   const [sectionDialog, setSectionDialog] = useState<
@@ -182,16 +167,16 @@ export function TimelineView() {
   useEffect(() => {
     setMeters(undefined);
     setMetersError(undefined);
-    if (!viewKey) return;
+    if (!liveKey) return;
     let cancel: (() => void) | undefined;
     const t = setTimeout(() => {
-      cancel = livePlayer.meters(viewKey, viewFetch, setMeters, setMetersError);
+      cancel = livePlayer.meters(liveKey, fetchPayload, setMeters, setMetersError);
     }, editorDirty ? 1500 : 0);
     return () => {
       clearTimeout(t);
       cancel?.();
     };
-  }, [viewKey, viewFetch, editorDirty]);
+  }, [liveKey, fetchPayload, editorDirty]);
   const meterMax = useMemo(() => {
     let m = 0;
     for (const arr of meters?.peaks ?? []) for (const v of arr) if (v > m) m = v;

@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -11,6 +12,7 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore } from '../src/store.js';
 import { TAKE_LUFS, wav16Mono } from '../src/vocals/takes.js';
+import { sectionScore, takeFingerprint } from '../src/vocals/score.js';
 
 const GOLDEN = resolve(dirname(fileURLToPath(import.meta.url)), '../../../packages/arrangement/test/fixtures/golden/orchestrate/brightPop/brightPop-vertical-slice.song.json');
 const song = (): Song => ({ ...SongSchema.parse(JSON.parse(readFileSync(GOLDEN, 'utf8'))), vocals: { enabled: true, voice: 'en_prompt', takeNumbers: {} } });
@@ -69,74 +71,52 @@ describe('sung vocals routes', () => {
     expect((await h.call('/api/vocals/voices')).body.voices[0].id).toBe('en_prompt');
   });
 
-  it('a fresh song: sections with vocal notes are missing, the others none', async () => {
+  it('a fresh song: sections with vocal notes are unsung, the others none', async () => {
     const s = song();
     const { body } = await h.call('/api/vocals/status', { song: s });
     const states = Object.fromEntries(body.sections.map((x: { segment: string; state: string }) => [x.segment, x.state]));
-    expect(states['verse1']).toBe('missing');
+    expect(states['verse1']).toBe('unsung');
     for (const seg of s.songStructure) {
       const hasVocal = (s.arrangement[seg.name]?.overrides?.['Vocal']?.bars ?? []).some((b) => Object.values(b.notes ?? {}).some((evs) => (evs as { type: string }[]).some((e) => e.type === 'vocalNote')));
-      expect(states[seg.name]).toBe(hasVocal ? 'missing' : 'none');
+      expect(states[seg.name]).toBe(hasVocal ? 'unsung' : 'none');
     }
   });
 
-  it('sings a section into a take as long as the section, normalised, recorded as an artifact', async () => {
+  it('sings a section into a stored take found by fingerprint: an OGG exactly as long as the section', async () => {
     const s = song();
     const r = await h.call('/api/vocals/sing', { song: s, segment: 'verse1' });
     expect(r.status).toBe(200);
-    const a = r.body.artifact;
-    const fp = a.conditioning.hashes[0];
-    expect(a).toMatchObject({ kind: 'soulx-vocal', modelId: 'soulx-singer', seed: 1, prompt: 'en_prompt', attachedTo: { scope: 'segment', segment: 'verse1', instrument: 'Vocal' }, output: { uri: `vocal-take:${fp}.wav` } });
-    const bars = s.songStructure.find((x) => x.name === 'verse1')!.bars.length;
-    expect(a.output.durationSeconds).toBeCloseTo((bars * 4 * 60) / s.bpm, 3);
-    // TAKE_LUFS, or quieter when the peak cap holds the gain back.
-    expect(a.output.lufs).toBeGreaterThan(TAKE_LUFS - 8);
-    expect(a.output.lufs).toBeLessThan(TAKE_LUFS + 1);
-    const file = join(takesDir, `${fp}.wav`);
+    expect(r.body.section).toEqual({ segment: 'verse1', state: 'sung' });
+    const fp = takeFingerprint(sectionScore(s, 'verse1')!, 'en_prompt', 1);
+    const file = join(takesDir, `${fp}.ogg`);
     expect(existsSync(file)).toBe(true);
-    // 44.1 kHz stereo 16-bit, exactly the section's length.
-    const wav = readFileSync(file);
-    expect([wav.readUInt16LE(22), wav.readUInt32LE(24), wav.readUInt16LE(34)]).toEqual([2, 44100, 16]);
-    // Exactly the section's length (to the sample), so phrases stay on the beat.
-    const dataAt = wav.indexOf('data');
-    const frames = wav.readUInt32LE(dataAt + 4) / 4;
-    expect(Math.abs(frames - Math.round(((bars * 4 * 60) / s.bpm) * 44100))).toBeLessThanOrEqual(1);
-
-    // Recorded on the song, the section is current.
-    const sung = { ...s, aiArtifacts: [a] };
-    const st = (await h.call('/api/vocals/status', { song: sung })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
-    expect(st.state).toBe('current');
-  });
-
-  it('a take already stored but not recorded on this copy of the song (e.g. the page was refreshed unsaved) is "stored", and playback still asks for it', async () => {
-    const s = song();
-    await h.call('/api/vocals/sing', { song: s, segment: 'verse1' });
+    const probe = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-count_packets', '-show_entries', 'stream=sample_rate,channels,duration_ts,codec_name', '-of', 'json', file], { encoding: 'utf8' })).streams[0];
+    expect([probe.codec_name, probe.sample_rate, probe.channels]).toEqual(['vorbis', '44100', 2]);
+    const bars = s.songStructure.find((x) => x.name === 'verse1')!.bars.length;
+    expect(Math.abs(probe.duration_ts - Math.round(((bars * 4 * 60) / s.bpm) * 44100))).toBeLessThanOrEqual(1);
+    const info = JSON.parse(readFileSync(join(takesDir, `${fp}.json`), 'utf8'));
+    expect(info.lufs).toBeGreaterThan(TAKE_LUFS - 8);
+    expect(info.lufs).toBeLessThan(TAKE_LUFS + 1);
+    // Nothing recorded on the song: the same song (even reloaded unsaved) now finds the take.
     const st = (await h.call('/api/vocals/status', { song: s })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
-    expect(st.state).toBe('stored');
+    expect(st.state).toBe('sung');
   });
 
-  it('a section sung alike (verse2 = verse1) reuses the take without singing again', async () => {
+  it('a section sung alike (verse2 = verse1) is sung already, without another service call', async () => {
     const before = svc.state.sings;
-    const r = await h.call('/api/vocals/sing', { song: song(), segment: 'verse2' });
-    expect(r.status).toBe(200);
+    const st = (await h.call('/api/vocals/status', { song: song() })).body.sections.find((x: { segment: string }) => x.segment === 'verse2');
+    expect(st.state).toBe('sung');
+    expect((await h.call('/api/vocals/sing', { song: song(), segment: 'verse2' })).status).toBe(200);
     expect(svc.state.sings).toBe(before);
   });
 
-  it('after a tempo change the take is stale', async () => {
+  it('after a tempo change, a new take number or another voice the section is unsung again', async () => {
     const s = song();
-    const a = (await h.call('/api/vocals/sing', { song: s, segment: 'verse1' })).body.artifact;
-    const faster = { ...s, bpm: s.bpm + 4, aiArtifacts: [a] };
-    const st = (await h.call('/api/vocals/status', { song: faster })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
-    expect(st.state).toBe('stale');
-  });
-
-  it('a take whose section no longer has vocal notes is unused (and playback must drop it)', async () => {
-    const s = song();
-    const a = (await h.call('/api/vocals/sing', { song: s, segment: 'verse1' })).body.artifact;
-    const cleared = structuredClone({ ...s, aiArtifacts: [a] });
-    delete cleared.arrangement['verse1']!.overrides!['Vocal'];
-    const st = (await h.call('/api/vocals/status', { song: cleared })).body.sections.find((x: { segment: string }) => x.segment === 'verse1');
-    expect(st.state).toBe('unused');
+    await h.call('/api/vocals/sing', { song: s, segment: 'verse1' });
+    const stateOf = async (x: Song) => (await h.call('/api/vocals/status', { song: x })).body.sections.find((y: { segment: string }) => y.segment === 'verse1').state;
+    expect(await stateOf({ ...s, bpm: s.bpm + 4 })).toBe('unsung');
+    expect(await stateOf({ ...s, vocals: { ...s.vocals!, takeNumbers: { verse1: 2 } } })).toBe('unsung');
+    expect(await stateOf({ ...s, vocals: { ...s.vocals!, voice: 'zh_target' } })).toBe('unsung');
   });
 
   it('a refusal by the service is a 422 with its message; a service that is down is a 502', async () => {

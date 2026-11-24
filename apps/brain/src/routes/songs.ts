@@ -27,7 +27,6 @@ import type { Song } from '@casperaki/song-schema';
 import type { RenderService, RenderStatus } from '../render/renderService.js';
 import type { ProjectRow, SongsStore } from '../store.js';
 import { readRenderPeaks } from './renders.js';
-import type { VocalsCheck } from './vocals.js';
 
 // `genre` is validated against the canonical brain vocabulary (8 styles,
 // see GenreSchema). Legacy strings — notably the Phase-3-slice placeholder
@@ -85,8 +84,12 @@ export interface SongsRouterDeps {
   /** Told about every newly generated song that got the placeholder title
    *  (no title given); the brain names it afterwards, outside this router. */
   readonly onPlaceholderTitle?: (song: { ownerId: string; songId: string; song: Song; placeholderTitle: string }) => void;
-  /** Refuses rendering a song whose sung vocals are on but not sung for it as it is (see routes/vocals.ts). */
-  readonly vocalsCheck?: VocalsCheck;
+  /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
+  readonly withTakes?: (song: Song) => Song;
+  /** The vocal takes a song for the engine plays (their fingerprints, for the render cache key). */
+  readonly takesOf?: (song: Song) => string;
+  /** A saved song was saved again (new version) or deleted: clean up what only its old version used. */
+  readonly onSongReplaced?: (oldSongId: string) => void;
 }
 
 /** The id that owns projects. Every /api route sits behind the session gate
@@ -133,7 +136,7 @@ export function generateProject(
   return { id, song, hash };
 }
 
-export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, vocalsCheck }: SongsRouterDeps): Router {
+export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholderTitle, withTakes, takesOf, onSongReplaced }: SongsRouterDeps): Router {
   const router = Router();
   const clock = now ?? (() => new Date().toISOString());
 
@@ -201,6 +204,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     const at = clock();
     store.put({ id, song, canonical, hash, createdAt: at });
     store.moveProject({ ownerId: owner, fromSongId: req.params.id, toSongId: id, updatedAt: at });
+    if (req.params.id !== id) onSongReplaced?.(req.params.id);
     // A Pro-mode change for a track the edit removed no longer applies.
     const moved = store.getProject(owner, id)!;
     if (moved.mixOverrides) {
@@ -228,6 +232,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
   router.delete('/api/songs/:id', (req, res) => {
     const ok = store.deleteProject(ownerOf(req), req.params.id);
     if (!ok) return res.status(404).json({ error: 'not_found', id: req.params.id });
+    onSongReplaced?.(req.params.id);
     return res.status(204).end();
   });
 
@@ -291,15 +296,14 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     const stored = store.getProject(ownerOf(req), req.params.id) ? store.get(req.params.id) : undefined;
     if (!stored) return res.status(404).json({ error: 'not_found', id: req.params.id });
     const project = store.getProject(ownerOf(req), req.params.id)!;
-    const vocalsProblem = vocalsCheck?.(parseSong(JSON.parse(stored.canonical)), true);
-    if (vocalsProblem) return res.status(vocalsProblem.status).json(vocalsProblem.body);
     let songMix: string | undefined;
     if (project.mixOverrides) {
       if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'This song has a Pro-mode mix, but the brain has no mix config (CASPERAKI_MIX_CONFIG).' });
       songMix = applyMixOverrides(mixConfig(), project.mixOverrides);
     }
     try {
-      renders.enqueue(stored.id, stored.canonical, songMix);
+      const forEngine = withTakes ? withTakes(parseSong(JSON.parse(stored.canonical))) : undefined;
+      renders.enqueue(stored.id, forEngine ? canonicalStringifySong(forEngine, 2) : stored.canonical, songMix, forEngine && takesOf ? takesOf(forEngine) : undefined);
     } catch (err) {
       return res.status(409).json({ error: 'render_busy', message: err instanceof Error ? err.message : String(err) });
     }

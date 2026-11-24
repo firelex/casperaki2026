@@ -15,15 +15,14 @@ import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSon
 
 import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
 import type { SongsStore } from '../store.js';
-import type { VocalsCheck } from './vocals.js';
 
 export interface PlaybackRouterDeps {
   readonly store: SongsStore;
   readonly playback: PlaybackService | undefined;
   /** The caller's owner id (signed-in user, or the dev owner with auth off). */
   readonly ownerOf: (req: Request) => string;
-  /** Refuses songs whose sung vocals are on but not sung for the song as it is (409), see routes/vocals.ts. */
-  readonly vocalsCheck?: VocalsCheck;
+  /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
+  readonly withTakes?: (song: Song) => Song;
 }
 
 // mixOverrides: the editor's Pro-mode mix for a song not saved yet (a saved song's comes from its project).
@@ -51,7 +50,13 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
   };
 }
 
-export function createPlaybackRouter({ store, playback, ownerOf, vocalsCheck }: PlaybackRouterDeps): Router {
+export function createPlaybackRouter({ store, playback, ownerOf, withTakes }: PlaybackRouterDeps): Router {
+  /** The engine's input for a song: its stored vocal takes added; the playback id is that input's hash (so a take
+   *  sung later gives a new id, and a new lowering). */
+  const forEngine = (song: Song) => {
+    const canonical = canonicalStringifySong(withTakes ? withTakes(song) : song, 2);
+    return { id: createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16), canonical };
+  };
   const router = Router();
 
   const notConfigured = (res: Response) =>
@@ -71,10 +76,9 @@ export function createPlaybackRouter({ store, playback, ownerOf, vocalsCheck }: 
     if (!project) return res.status(404).json({ error: 'not_found', id });
     const stored = store.get(id);
     if (!stored) return res.status(404).json({ error: 'not_found', id });
-    const problem = vocalsCheck?.(parseSong(JSON.parse(stored.canonical)), true);
-    if (problem) return res.status(problem.status).json(problem.body);
+    const engine = withTakes ? forEngine(parseSong(JSON.parse(stored.canonical))) : { id, canonical: stored.canonical };
     try {
-      await respond(res, playback, id, stored.canonical, project.mixOverrides);
+      await respond(res, playback, engine.id, engine.canonical, project.mixOverrides);
     } catch (err) {
       res.status(500).json({ error: 'playback_failed', message: err instanceof Error ? err.message : String(err) });
     }
@@ -85,16 +89,12 @@ export function createPlaybackRouter({ store, playback, ownerOf, vocalsCheck }: 
     const body = PlayBodySchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ error: 'invalid_body' });
     let canonical: string;
-    let song: Song;
+    let id: string;
     try {
-      song = parseSong(body.data.song);
-      canonical = canonicalStringifySong(song, 2);
+      ({ id, canonical } = forEngine(parseSong(body.data.song)));
     } catch (err) {
       return res.status(400).json({ error: 'invalid_song', message: err instanceof Error ? err.message : String(err) });
     }
-    const problem = vocalsCheck?.(song, false);
-    if (problem) return res.status(problem.status).json(problem.body);
-    const id = createHash('sha256').update(canonical, 'utf8').digest('hex').slice(0, 16);
     try {
       await respond(res, playback, id, canonical, body.data.mixOverrides);
     } catch (err) {

@@ -40,8 +40,6 @@ export function Transport() {
   // once: right away for the saved song, a moment after editing stops.
   useEffect(() => {
     if (!liveKey || !viewSong) return;
-    // With sung vocals on, Play sings what is missing first; preparing would ask for takes not sung yet.
-    if (viewSong.vocals?.enabled) return;
     const t = setTimeout(() => livePlayer.prepare(liveKey, fetchPayload), editorDirty ? 1200 : 0);
     return () => clearTimeout(t);
   }, [liveKey, viewSong, editorDirty, fetchPayload]);

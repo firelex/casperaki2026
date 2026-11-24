@@ -43,7 +43,7 @@ export interface SectionScore {
 }
 
 /** Model and settings a take is sung with; part of every take's fingerprint (`level`: how the take's loudness is set). */
-export const TAKE_SETTINGS = { model: 'soulx-singer', steps: 32, level: 'gain-17lufs' } as const;
+export const TAKE_SETTINGS = { model: 'soulx-singer', steps: 32, level: 'gain-17lufs', format: 'ogg' } as const;
 
 /** ARPAbet phonemes of one syllable (`['k', 'ih0', 'ng']`) as a SoulX English syllable (`en_K-IH0-NG`). */
 export function soulxPhones(arpabet: readonly string[]): string {

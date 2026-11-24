@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 
 import { playbackApi } from '../api/playback';
 import { BrainError } from '../api/client';
@@ -6,7 +7,9 @@ import { vocalsApi } from '../api/vocals';
 import { useSession } from '../state/session';
 import { livePlayer } from './livePlayer';
 import { currentProMix } from './proMix';
-import { singBeforePlay, singRun } from './singVocals';
+import { fnv1a } from './fnv1a';
+import { singBeforePlay, singRun, takesToken } from './singVocals';
+import { useVocalsStatus, vocalsStatusKey } from './useVocalsStatus';
 import { vocalsProgress } from './vocalsProgress';
 import { useLivePosition, useLiveState } from './useLivePlayer';
 
@@ -17,15 +20,15 @@ import { useLivePosition, useLiveState } from './useLivePlayer';
  * play / pause / seek.
  */
 export function useLiveTransport() {
-  const { activeSong, viewSong, editorDirty, applyEdit } = useSession();
+  const { activeSong, viewSong, editorDirty } = useSession();
   const songId = activeSong?.id;
-  /** The song on screen now (singing checks it is still the one it started from before applying takes). */
-  const latestSong = useRef(viewSong);
-  latestSong.current = viewSong;
-  const liveKey = useMemo(
-    () => (viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId),
-    [viewSong, editorDirty, songId],
-  );
+  const queryClient = useQueryClient();
+  // A song with a vocals setting plays the takes the brain has for it: which sections have one is part of the
+  // key, so a section sung since the song was loaded makes a new version to play (undefined while not known).
+  const vocalStatus = useVocalsStatus(viewSong);
+  const vocalsPart = !viewSong?.vocals ? '' : vocalStatus.data ? `:v${fnv1a(takesToken(vocalStatus.data.sections))}` : undefined;
+  const baseKey = viewSong && editorDirty ? `edit:${fnv1a(JSON.stringify(viewSong))}` : songId;
+  const liveKey = useMemo(() => (baseKey && vocalsPart !== undefined ? baseKey + vocalsPart : undefined), [baseKey, vocalsPart]);
   const live = useLiveState();
   const isThisSong = live.key !== undefined && live.key === liveKey;
   const playing = isThisSong && live.status === 'playing';
@@ -43,39 +46,32 @@ export function useLiveTransport() {
 
   const startPlaying = useCallback(async () => {
     if (!liveKey || !viewSong) return;
-    // Sung vocals on: first sing the sections whose take is missing or stale (seconds each), then play the sung
-    // song. One run at a time: Play while singing cancels it. If the song on screen changed meanwhile (edited, or
-    // another song opened), the takes are not applied to it (they stay stored: Play again reuses them).
-    // A failure is shown and nothing plays (no silent vocal-less playback).
+    // Vocals on: Play first sings the unsung sections (seconds each); the brain adds every stored take when the
+    // song loads. One run at a time: Play while singing cancels it. A failure is shown and nothing plays.
     if (viewSong.vocals?.enabled) {
       const run = singRun.toggle();
       if (!run) {
         vocalsProgress.set({});
         return;
       }
-      const started = viewSong;
-      let outcome;
       try {
         vocalsProgress.set({ text: 'Checking the vocals…' });
-        outcome = await singBeforePlay(started, vocalsApi, (s) => latestSong.current === s, (text) => vocalsProgress.set({ text }), run.signal);
+        const outcome = await singBeforePlay(viewSong, vocalsApi, (text) => vocalsProgress.set({ text }), run.signal);
+        if (outcome === 'cancelled') return vocalsProgress.set({});
+        const st = await queryClient.fetchQuery({ queryKey: vocalsStatusKey(viewSong), queryFn: () => vocalsApi.status(viewSong), staleTime: 0 });
+        vocalsProgress.set({});
+        if (!baseKey) return;
+        await livePlayer.play(`${baseKey}:v${fnv1a(takesToken(st.sections))}`, fetchPayload);
+        return;
       } catch (err) {
         vocalsProgress.set({ error: err instanceof BrainError ? (err.body?.message ?? err.message) : err instanceof Error ? err.message : String(err) });
         return;
       } finally {
         singRun.done(run);
       }
-      if (outcome.kind === 'cancelled') return vocalsProgress.set({});
-      if (outcome.kind === 'changed') return vocalsProgress.set({ text: 'The song changed while singing; press Play again (sung sections are kept).' });
-      vocalsProgress.set({});
-      const sung = outcome.song;
-      if (sung !== started) {
-        applyEdit({ kind: 'replaceSong', song: sung });
-        await livePlayer.play(`edit:${fnv1a(JSON.stringify(sung))}`, (signal) => playbackApi.forSong(sung, signal, currentProMix()));
-        return;
-      }
     }
     await livePlayer.play(liveKey, fetchPayload);
-  }, [liveKey, viewSong, fetchPayload, applyEdit]);
+  }, [liveKey, viewSong, fetchPayload, baseKey, queryClient]);
 
   const playPause = useCallback(() => {
     if (playing) void livePlayer.pause();
@@ -114,12 +110,4 @@ export function useLiveTransport() {
   };
 }
 
-/** 32-bit FNV-1a of a string, as hex: a cheap key for the working copy. */
-export function fnv1a(text: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return (h >>> 0).toString(16);
-}
+export { fnv1a } from './fnv1a';

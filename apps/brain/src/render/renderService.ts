@@ -46,7 +46,7 @@ export interface RenderStatus {
   readonly finishedAt?: string;
   readonly error?: string;
   readonly durationSec?: number;
-  /** Fingerprint of the song's Pro-mode mix config ("" = the standard mix). */
+  /** Fingerprint of the song's Pro-mode mix config and the vocal takes it plays ("" = the standard mix, no takes). */
   readonly mixHash?: string;
 }
 
@@ -135,8 +135,11 @@ export class RenderService {
   /** Render a song. `mixConfig`: the song's own mix config (its Pro-mode changes
    *  applied), or undefined for the standard one. A song already rendered (or on
    *  its way) with the same mix is not rendered again; a changed mix is. */
-  enqueue(songId: string, canonical: string, mixConfig?: string): RenderStatus {
-    const mixHash = mixConfig === undefined ? '' : createHash('sha256').update(mixConfig).digest('hex').slice(0, 16);
+  /** `takes`: the vocal takes the render plays (their fingerprints), so a render made before a section was sung is
+   *  not reused once it is. */
+  enqueue(songId: string, canonical: string, mixConfig?: string, takes?: string): RenderStatus {
+    const key = [mixConfig ?? '', takes ?? ''].join('\u0000');
+    const mixHash = mixConfig === undefined && !takes ? '' : createHash('sha256').update(key).digest('hex').slice(0, 16);
     const current = this.status(songId);
     if (current && current.state !== 'failed' && (current.mixHash ?? '') === mixHash) return current;
     if (current && (current.state === 'queued' || current.state === 'running')) {

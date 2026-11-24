@@ -10,10 +10,10 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 
 import type { DawExportService } from '../export/dawExportService.js';
-import { parseSong } from '@casperaki/song-schema';
+import { parseSong, type Song } from '@casperaki/song-schema';
 
 import type { SongsStore } from '../store.js';
-import type { VocalsCheck } from './vocals.js';
+import { canonicalStringifySong } from '@casperaki/song-schema';
 
 const Body = z
   .object({
@@ -34,10 +34,10 @@ export function createDawExportRouter(deps: {
   store: SongsStore;
   exports: DawExportService | undefined;
   ownerOf: (req: Request) => string;
-  /** Refuses a song whose sung vocals are on but not sung for it as it is (see routes/vocals.ts). */
-  vocalsCheck?: VocalsCheck;
+  /** The song as the engine gets it, its stored vocal takes added (see routes/vocals.ts). */
+  withTakes?: (song: Song) => Song;
 }): Router {
-  const { store, exports, ownerOf, vocalsCheck } = deps;
+  const { store, exports, ownerOf, withTakes } = deps;
   const router = Router();
   const notConfigured = { error: 'export_not_configured', message: 'CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.' };
 
@@ -52,13 +52,12 @@ export function createDawExportRouter(deps: {
     const project = store.getProject(owner, req.params.id);
     const stored = project ? store.get(req.params.id) : undefined;
     if (!project || !stored) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    const vocalsProblem = vocalsCheck?.(parseSong(JSON.parse(stored.canonical)), true);
-    if (vocalsProblem) return res.status(vocalsProblem.status).json(vocalsProblem.body);
+    const canonical = withTakes ? canonicalStringifySong(withTakes(parseSong(JSON.parse(stored.canonical))), 2) : stored.canonical;
     const status = exports.start(
       owner,
       {
         songId: stored.id,
-        canonical: stored.canonical,
+        canonical,
         title: project.title,
         bpm: stored.song.bpm,
         sections: stored.song.songStructure.map((s) => ({ name: s.name, bars: s.lengthInBars ?? s.bars.length })),

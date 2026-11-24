@@ -3,22 +3,19 @@ import { useEffect, useRef, useState } from 'react';
 
 import { vocalsApi, type SectionState } from '../api/vocals';
 import { singAgain, withVocals, withVoice } from '../audio/singVocals';
-import { fnv1a } from '../audio/useLiveTransport';
+import { useVocalsStatus } from '../audio/useVocalsStatus';
 import { useVocalsProgress, vocalsProgress } from '../audio/vocalsProgress';
 import { useSession } from '../state/session';
 
 const STATE_LABEL: Record<Exclude<SectionState, 'none'>, string> = {
-  current: 'Sung',
-  stored: 'Sung (added to the song on the next play)',
-  missing: 'Sung on the next play',
-  stale: 'Changed: sung again on the next play',
-  unused: 'No vocal notes now: its take is dropped on the next play',
+  sung: 'Sung',
+  unsung: 'Not sung yet',
 };
 
 /**
  * Sung vocals in the control bar (docs/superpowers/specs/2026-11-24-sung-vocals-design.md): the Vocals switch
  * (off by default: nothing is sung), the voice, each section's take and "Sing again". Play sings what is missing
- * first; its progress and any error show here, with "Play without vocals" (switches Vocals off) after an error.
+ * first; its progress and any error show here, with "Play without singing" (switches Vocals off) after an error.
  */
 export function VocalsControl() {
   const { viewSong, applyEdit } = useSession();
@@ -42,13 +39,7 @@ export function VocalsControl() {
   }, [open]);
 
   const voices = useQuery({ queryKey: ['vocals', 'voices'], queryFn: ({ signal }) => vocalsApi.voices(signal), staleTime: Infinity, enabled: open });
-  const songKey = viewSong ? fnv1a(JSON.stringify(viewSong)) : '';
-  const status = useQuery({
-    queryKey: ['vocals', 'status', songKey],
-    queryFn: ({ signal }) => vocalsApi.status(viewSong!, signal),
-    enabled: open && on && Boolean(viewSong),
-    staleTime: 10_000,
-  });
+  const status = useVocalsStatus(viewSong);
   if (!viewSong) return null;
 
   const replace = (song: typeof viewSong) => applyEdit({ kind: 'replaceSong', song });
@@ -63,8 +54,8 @@ export function VocalsControl() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        aria-label={on ? 'Vocals on' : 'Vocals off'}
-        title={on ? 'Sung vocals are on' : 'Sung vocals are off (switch on to hear the lead vocal sung)'}
+        aria-label={on ? 'Vocals: Play sings grey sections' : 'Vocals: Play does not sing'}
+        title={on ? 'Play sings the grey vocal sections first' : 'Sung vocals: Play does not sing (sung sections still play)'}
         className={`${btn} ${on ? 'text-emerald-300' : ''}`}
       >
         <span aria-hidden="true">{on ? '●' : '○'}</span> Vocals
@@ -73,7 +64,7 @@ export function VocalsControl() {
       {open ? (
         <div className="absolute left-0 top-full z-50 mt-1 w-[320px] rounded-[8px] border border-black/70 bg-[#232428] p-3 text-[12px] text-white shadow-xl" role="dialog" aria-label="Sung vocals">
           <label className="flex items-center justify-between gap-2">
-            <span>Sing the lead vocal</span>
+            <span>Sing grey sections when I press Play</span>
             <input
               type="checkbox"
               checked={on}
@@ -84,10 +75,10 @@ export function VocalsControl() {
                 replace(withVocals(viewSong, e.target.checked, voice));
               }}
               disabled={!on && !vocals?.voice && !voices.data?.length}
-              aria-label="Sing the lead vocal"
+              aria-label="Sing grey sections when I press Play"
             />
           </label>
-          <p className="mt-1 text-[11px] text-white/50">Off: nothing is sung and Play starts at once. On: Play first sings the sections that need it (a few seconds each).</p>
+          <p className="mt-1 text-[11px] text-white/50">Sung sections always play. On: Play first sings the grey (unsung) sections, a few seconds each. Off: Play starts at once and nothing new is sung.</p>
           {voices.isError ? <p className="mt-2 text-err">The voices could not be loaded: {voices.error.message}</p> : null}
           {on || voices.data ? (
             <label className="mt-2 flex items-center justify-between gap-2">
@@ -107,7 +98,7 @@ export function VocalsControl() {
               </select>
             </label>
           ) : null}
-          {on ? (
+          {vocals ? (
             <div className="mt-3 border-t border-white/10 pt-2">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-white/70">Sections</span>
@@ -121,9 +112,9 @@ export function VocalsControl() {
                 {sections.map((s) => (
                   <li key={s.segment} className="flex items-center justify-between gap-2 py-0.5">
                     <span className="min-w-0 truncate">
-                      {s.segment} <span className={s.state === 'current' || s.state === 'stored' ? 'text-emerald-300/80' : 'text-[#f5b942]'}>· {STATE_LABEL[s.state as Exclude<SectionState, 'none'>]}</span>
+                      {s.segment} <span className={s.state === 'sung' ? 'text-emerald-300/80' : 'text-[#f5b942]'}>· {STATE_LABEL[s.state as Exclude<SectionState, 'none'>]}</span>
                     </span>
-                    <button type="button" className={small} onClick={() => replace(singAgain(viewSong, s.segment))} title="A fresh take of this section on the next play">
+                    <button type="button" className={small} onClick={() => replace(singAgain(viewSong, s.segment))} title="A fresh take of this section (sung on the next Play)">
                       Sing again
                     </button>
                   </li>
@@ -143,7 +134,7 @@ export function VocalsControl() {
                   replace(withVocals(viewSong, false));
                 }}
               >
-                Play without vocals
+                Play without singing
               </button>
             </div>
           ) : null}

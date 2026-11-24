@@ -2,6 +2,17 @@
 
 Date: 2026-11-24. Status: built and live 2026-11-24 (plan docs/superpowers/plans/2026-11-24-sung-vocals.md). Calls marked "my call"; deviations found while building are in the plan's ledger rulings (voice octaves by prompt range: female voices sing as written, male an octave down; takes at -17 LUFS, about 3 dB under the band).
 
+## Revision (2026-11-24, owner's decision after first use)
+
+Takes are no longer recorded on the song. The brain finds a section's take by its fingerprint whenever the song goes
+to the engine (play, mixer, export, render), so takes survive a refresh without saving and are never refused: a
+section without a take plays no vocal and is greyed on the Vocal track. The song's vocals setting keeps the voice and
+take numbers; `enabled` now means "Play first sings the grey sections" (existing takes play either way). Takes are
+stored as Ogg Vorbis (about 0.25 MB a section). Clean-up, no grace period: when a saved song is saved again or
+deleted, the takes its old version used that no saved song plays any more are deleted
+(`apps/brain/scripts/list-vocal-takes.ts --delete-unused` clears takes of songs never saved). Sections below that
+mention recording takes in `aiArtifacts` and refusing playback (409) describe the first version.
+
 ## Intent
 
 Today a song's Vocal track has notes and lyrics but makes no sound: the engine does not play it. The owner wants to
