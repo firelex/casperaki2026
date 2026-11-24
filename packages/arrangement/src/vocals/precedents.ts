@@ -36,6 +36,9 @@
 //     scoped — selection consumes 2-3 `rng.pick` draws per call (rhythmic
 //     bank pick + melodic bank pick + optional retries; see RNG contract
 //     in docs/53ae).
+//   - A rule may list several melodic banks, among them the hooks bank
+//     (our own complete melodies); see "several melodic banks, hooks"
+//     below. Single-bank rules keep the legacy path and draws.
 //
 // Determinism: every randomness draw goes through `Rng.pick` (legacy
 // `Tools.selectRandomly`). `_buildTree` itself is deterministic given its
@@ -130,7 +133,9 @@ export type PrecedentMelodyNote = z.infer<typeof MelodyNoteSchema>;
 
 const GenreSegmentRuleSchema = z
   .object({
-    melodic: z.string().min(1),
+    // A single bank id (every legacy rule) or a list of bank ids whose union is the melodic pool (see
+    // `selectFromMelodicList`). The two forms take different code paths: a single id is the legacy port, untouched.
+    melodic: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
     rhythmic: z.string().min(1).optional(),
     rhythmicTempoSplit: z.number().positive().optional(),
     maxNote: z.number().int().positive().optional(),
@@ -144,6 +149,12 @@ const BankIndexSchema = z
     $legacySource: z.record(z.string()).optional(),
     $dispatcherNotes: z.record(z.string()).optional(),
     banks: z.record(z.string(), z.object({ file: z.string().min(1) }).strict()),
+    // The hooks bank (our own complete melodies, docs/superpowers/specs/2026-11-24-hook-library-design.md) and the
+    // share of hook picks used whole (the rest are mixed with a second hook).
+    hooks: z
+      .object({ bank: z.string().min(1), wholeShare: z.number().min(0).max(1) })
+      .strict()
+      .optional(),
     genres: z.record(
       z.string(),
       z.record(z.string(), GenreSegmentRuleSchema),
@@ -152,6 +163,38 @@ const BankIndexSchema = z
   .strict();
 
 export type BankIndex = z.infer<typeof BankIndexSchema>;
+export type GenreSegmentRule = z.infer<typeof GenreSegmentRuleSchema>;
+
+/** Rules the schema cannot express: the hooks bank exists, is only ever named in a `melodic` list (so a
+ *  single-string rule always means the legacy path), never as a rhythmic bank, and lists name known banks once. */
+function checkBankIndex(index: BankIndex): string[] {
+  const problems: string[] = [];
+  const hooksBank = index.hooks?.bank;
+  if (hooksBank !== undefined && !index.banks[hooksBank]) {
+    problems.push(`hooks.bank "${hooksBank}" is not listed under banks`);
+  }
+  for (const [genre, rules] of Object.entries(index.genres)) {
+    for (const [segmentType, rule] of Object.entries(rules)) {
+      const where = `genres.${genre}.${segmentType}`;
+      if (typeof rule.melodic === 'string') {
+        if (rule.melodic === hooksBank) {
+          problems.push(`${where}: the hooks bank must be given in a list ("melodic": ["${hooksBank}", ...])`);
+        }
+      } else {
+        if (new Set(rule.melodic).size !== rule.melodic.length) {
+          problems.push(`${where}: melodic lists a bank twice`);
+        }
+        for (const id of rule.melodic) {
+          if (!index.banks[id]) problems.push(`${where}: melodic bank "${id}" is not listed under banks`);
+        }
+      }
+      if (hooksBank !== undefined && rule.rhythmic === hooksBank) {
+        problems.push(`${where}: the hooks bank cannot be a rhythmic bank (a hook brings its own rhythm)`);
+      }
+    }
+  }
+  return problems;
+}
 
 // ---- cached loaders ----
 
@@ -165,18 +208,44 @@ const BANK_INDEX_META: DataAssetMeta = {
 let cachedIndex: BankIndex | undefined;
 const cachedBanks = new Map<string, readonly Precedent[]>();
 
+/** Test-only replacement for the files under data/vocals/precedents: `index` stands for bank-index.json and
+ *  `files` maps a bank file name (as the index's `banks.<id>.file` gives it) to its parsed JSON. Both go through
+ *  the same validation as the real files. Production code never calls this; `undefined` restores the real files. */
+export interface PrecedentTestData {
+  readonly index: unknown;
+  readonly files: Readonly<Record<string, unknown>>;
+}
+let testData: PrecedentTestData | undefined;
+
+export function setPrecedentDataForTests(data: PrecedentTestData | undefined): void {
+  testData = data;
+  cachedIndex = undefined;
+  cachedBanks.clear();
+}
+
+function readPrecedentJson(filename: string): unknown {
+  if (testData) {
+    if (!(filename in testData.files)) throw new Error(`test data has no file "${filename}"`);
+    return testData.files[filename];
+  }
+  return JSON.parse(readFileSync(resolve(DATA_DIR, filename), 'utf8'));
+}
+
 export function loadBankIndex(): BankIndex {
   if (cachedIndex) return cachedIndex;
-  const path = resolve(DATA_DIR, BANK_INDEX_META.filename);
   let raw: unknown;
   try {
-    raw = JSON.parse(readFileSync(path, 'utf8'));
+    raw = testData ? testData.index : readPrecedentJson(BANK_INDEX_META.filename);
   } catch (err) {
     throw new DataAssetError(BANK_INDEX_META, `failed to load: ${(err as Error).message}`, err);
   }
   const parsed = BankIndexSchema.safeParse(raw);
   if (!parsed.success) {
     throw new DataAssetError(BANK_INDEX_META, `invalid bank index: ${parsed.error.message}`);
+  }
+  const problems = checkBankIndex(parsed.data);
+  if (problems.length > 0) {
+    throw new DataAssetError(BANK_INDEX_META, `invalid bank index: ${problems.join('; ')}`);
   }
   cachedIndex = parsed.data;
   return cachedIndex;
@@ -197,7 +266,7 @@ export function loadPrecedentBank(bankId: string): readonly Precedent[] {
   };
   let raw: unknown;
   try {
-    raw = JSON.parse(readFileSync(resolve(DATA_DIR, entry.file), 'utf8'));
+    raw = readPrecedentJson(entry.file);
   } catch (err) {
     throw new DataAssetError(meta, `failed to load: ${(err as Error).message}`, err);
   }
@@ -241,23 +310,23 @@ function sliceByTempo(
   return tempo >= threshold ? bank.slice(0, bank.length - 5) : bank.slice(5);
 }
 
-/** Returns `undefined` when the dispatcher has no precedent for the given
- *  segment (e.g. "intro" / "outro" / "break"); the caller skips those. */
-export function dispatchPrecedent(inputs: DispatchInputs): DispatchResult | undefined {
+function lookupRule(inputs: DispatchInputs): GenreSegmentRule | undefined {
   const index = loadBankIndex();
   const genreRules = index.genres[inputs.genre];
   if (!genreRules) {
     throw new DataAssetError(BANK_INDEX_META, `no dispatcher entry for genre "${inputs.genre}"`);
   }
-  const rule = genreRules[inputs.segmentType];
-  if (!rule) return undefined;
+  return genreRules[inputs.segmentType];
+}
 
-  const melodicBank = loadPrecedentBank(rule.melodic);
+/** The legacy dispatch of one rule with one melodic bank. */
+function dispatchRule(rule: GenreSegmentRule, melodicBankId: string, tempo: number): DispatchResult {
+  const melodicBank = loadPrecedentBank(melodicBankId);
   let rhythmicBank: readonly Precedent[] | undefined;
   if (rule.rhythmic) {
     rhythmicBank = loadPrecedentBank(rule.rhythmic);
     if (rule.rhythmicTempoSplit !== undefined) {
-      rhythmicBank = sliceByTempo(rhythmicBank, inputs.tempo, rule.rhythmicTempoSplit);
+      rhythmicBank = sliceByTempo(rhythmicBank, tempo, rule.rhythmicTempoSplit);
     }
   }
   const mixPrecedents = rhythmicBank !== undefined;
@@ -269,6 +338,21 @@ export function dispatchPrecedent(inputs: DispatchInputs): DispatchResult | unde
     mixPrecedents,
     maxNote: rule.maxNote,
   };
+}
+
+/** Returns `undefined` when the dispatcher has no precedent for the given
+ *  segment (e.g. "intro" / "outro" / "break"); the caller skips those.
+ *  Serves single-bank rules only; a rule listing several melodic banks is
+ *  resolved inside `selectMergedPrecedent` (its bank choice draws from the rng). */
+export function dispatchPrecedent(inputs: DispatchInputs): DispatchResult | undefined {
+  const rule = lookupRule(inputs);
+  if (!rule) return undefined;
+  if (typeof rule.melodic !== 'string') {
+    throw new Error(
+      `vocals/precedents: ${inputs.genre}/${inputs.segmentType} lists several melodic banks (${rule.melodic.join(', ')}); dispatchPrecedent serves single-bank rules only — use selectMergedPrecedent`,
+    );
+  }
+  return dispatchRule(rule, rule.melodic, inputs.tempo);
 }
 
 // ---- helper: pick + double + normalize ----
@@ -521,14 +605,19 @@ export interface MergedPrecedent {
 const MAX_MERGE_RETRIES = 6; // legacy: `if (safety++ > 5) throw`
 
 /** Faithful port of `_getMergedRhythmicAndMelodicPrecedent`. Returns
- *  `undefined` for segment types the dispatcher has no entry for. */
+ *  `undefined` for segment types the dispatcher has no entry for. A rule
+ *  whose `melodic` is a list of banks goes through `selectFromMelodicList`;
+ *  a rule with a single melodic bank (every legacy rule) takes the legacy
+ *  path below, with the same rng draws as before lists existed. */
 export function selectMergedPrecedent(inputs: MergeInputs): MergedPrecedent | undefined {
-  const dispatch = dispatchPrecedent({
-    genre: inputs.genre,
-    segmentType: inputs.segmentType,
-    tempo: inputs.tempo,
-  });
-  if (!dispatch) return undefined;
+  const rule = lookupRule(inputs);
+  if (!rule) return undefined;
+  if (typeof rule.melodic !== 'string') return selectFromMelodicList(rule, rule.melodic, inputs);
+  return mergeLegacy(dispatchRule(rule, rule.melodic, inputs.tempo), inputs);
+}
+
+/** The legacy selection + merge for one dispatched melodic bank. */
+function mergeLegacy(dispatch: DispatchResult, inputs: MergeInputs): MergedPrecedent {
   const maxNote = dispatch.maxNote ?? DEFAULT_MAX_NOTE;
 
   const rng = inputs.rng;
@@ -565,86 +654,225 @@ export function selectMergedPrecedent(inputs: MergeInputs): MergedPrecedent | un
       melodicPrecedent = rhythmicPrecedent;
     }
 
-    const merged: {
-      melody: Record<string, { midi: number; duration: number }[]>;
-      chords: Record<string, { chord: string }>;
-    } = { melody: {}, chords: {} };
-
-    // Drape melody of melodic precedent over rhythm of rhythmic precedent.
-    const melodicBeats = Object.keys(melodicPrecedent.melody);
-    const firstMelodicEntry = melodicPrecedent.melody[melodicBeats[0]!];
-    let lastMidi = firstMelodicEntry?.[0]?.midi ?? 50;
-
-    const rhythmicBeatStrings = Object.keys(rhythmicPrecedent.melody);
-    for (let i = 0; i < rhythmicBeatStrings.length; i++) {
-      const rhythmicBeatString = rhythmicBeatStrings[i]!;
-      const notes = rhythmicPrecedent.melody[rhythmicBeatString]!;
-      const rhythmicBeat = parseFloat(rhythmicBeatString);
-      if (rhythmicBeat >= rhythmicPrecedent.properties.end * 4) break;
-      if (rhythmicBeat < rhythmicPrecedent.properties.start * 4) continue;
-
-      const close = getClosestNoteForBeat(
-        rhythmicBeat,
-        rhythmicBeat,
-        rhythmicPrecedent,
-        melodicPrecedent,
-        lastMidi,
+    const draped = drapeAndContour(rhythmicPrecedent, melodicPrecedent, maxNote);
+    if (draped.ok) return draped.merged;
+    // Retry — bank pick may have produced an empty merge under
+    // segment-type / chord-grid drift, or a melody the contour cannot place.
+    if (safety++ > MAX_MERGE_RETRIES) {
+      throw new Error(
+        `vocals/precedents: ${draped.failure} after ${safety} retries (${inputs.genre}/${inputs.segmentType})`,
       );
-      if (!close) continue;
-      merged.melody[getBeatString(rhythmicBeat)] = [
-        { midi: close.midi, duration: notes[0]!.duration },
-      ];
-      lastMidi = close.midi;
     }
+  }
+}
 
-    // Lift chords from melodic precedent (verbatim: only chord beats with
-    // `beat >= 0` and `< end * 4`).
-    for (const beatString of Object.keys(melodicPrecedent.chords)) {
-      const beat = parseFloat(beatString);
-      if (beat < 0) continue;
-      if (beat >= melodicPrecedent.properties.end * 4) break;
-      merged.chords[getBeatString(beat)] = { chord: melodicPrecedent.chords[beatString]!.chord };
-    }
+// ---- several melodic banks, hooks ----
+//
+// A rule may list several melodic banks (`"melodic": ["hooks", "schlager"]`).
+// The candidate pool is their union, picked in two steps: first a bank, all
+// listed banks equally likely, then an entry of that bank. Picking per bank
+// keeps a small bank (about 100 hooks) from being drowned by a large one
+// (stefan has 1201 entries): with a flat union, hooks would come up for under
+// one section in ten.
+//
+// The hooks bank (bank-index `hooks.bank`) only offers hooks whose
+// `tempoMin <= song tempo <= tempoMax`. When none suits the tempo, the hooks
+// bank drops out of the bank choice; if the rule lists no other bank, that is
+// an error naming the section and tempo (no silent switch to a bank the rule
+// does not list).
+//
+// A legacy bank picked from the list behaves exactly as a single-bank rule
+// naming it (the rule's rhythmic bank, tempo split and maxNote apply).
+//
+// A picked hook is a complete melody. With probability `hooks.wholeShare` it
+// is used whole: the same hook is both the rhythmic and the melodic
+// precedent, so its rhythm, notes and chords come out together. Otherwise it
+// is mixed the legacy way with a second, different hook from the same
+// tempo-filtered pool: the picked hook gives the pitch shape and chords, the
+// second hook gives the rhythm. The rule's rhythmic bank is not used for
+// hooks. Hooks go through the same length helper as legacy entries, so a
+// lead-in bar (`start 1, end 9`) is cut off exactly as for the legacy
+// start-1 entries.
+//
+// Rng draws per call: bank pick (always, even with one candidate bank), then
+// for hooks: hook pick, whole-or-mix draw, and (mix) one partner pick per
+// attempt.
 
-    // Build a single contour run over the entire draped melody.
-    const beatStrings = Object.keys(merged.melody);
-    if (beatStrings.length === 0) {
-      // Retry — bank pick may have produced an empty merge under
-      // segment-type / chord-grid drift.
-      if (safety++ > MAX_MERGE_RETRIES) {
-        throw new Error(
-          `vocals/precedents: empty merged melody after ${safety} retries (${inputs.genre}/${inputs.segmentType})`,
-        );
-      }
-      continue;
-    }
-    const midiSequence = beatStrings.map((bs) => merged.melody[bs]![0]!.midi);
-    let optimalSequence: number[] | undefined;
-    try {
-      optimalSequence = buildContour(midiSequence, { maxNote });
-    } catch {
-      if (safety++ > MAX_MERGE_RETRIES) {
-        throw new Error(
-          `vocals/precedents: contour build failed after ${safety} retries (${inputs.genre}/${inputs.segmentType})`,
-        );
-      }
-      continue;
-    }
+const HookPropertiesSchema = z
+  .object({
+    kind: z.literal('hook'),
+    tempoMin: z.number().positive(),
+    tempoMax: z.number().positive(),
+  })
+  .passthrough();
 
-    let melodyFirstNote = optimalSequence[0]!;
-    let melodyLastNote = optimalSequence[optimalSequence.length - 1]!;
-    let melodyMinNote = Infinity;
-    let melodyMaxNote = -Infinity;
-    for (let i = 0; i < beatStrings.length; i++) {
-      const newMidi = optimalSequence[i]!;
-      merged.melody[beatStrings[i]!] = [
-        { midi: newMidi, duration: merged.melody[beatStrings[i]!]![0]!.duration },
-      ];
-      if (newMidi < melodyMinNote) melodyMinNote = newMidi;
-      if (newMidi > melodyMaxNote) melodyMaxNote = newMidi;
+function hooksForTempo(bankId: string, tempo: number): readonly Precedent[] {
+  const bank = loadPrecedentBank(bankId);
+  for (const entry of bank) {
+    const parsed = HookPropertiesSchema.safeParse(entry.properties);
+    if (!parsed.success) {
+      throw new Error(
+        `vocals/precedents: entry "${entry.id}" of the hooks bank "${bankId}" is not a hook (needs properties kind "hook", tempoMin, tempoMax): ${parsed.error.message}`,
+      );
     }
+  }
+  return bank.filter((e) => {
+    const p = e.properties as unknown as { tempoMin: number; tempoMax: number };
+    return p.tempoMin <= tempo && tempo <= p.tempoMax;
+  });
+}
 
-    return {
+type MelodicChoice =
+  | { readonly kind: 'legacy'; readonly bankId: string }
+  | { readonly kind: 'hooks'; readonly bankId: string; readonly pool: readonly Precedent[]; readonly wholeShare: number };
+
+function selectFromMelodicList(
+  rule: GenreSegmentRule,
+  bankIds: readonly string[],
+  inputs: MergeInputs,
+): MergedPrecedent {
+  const hooks = loadBankIndex().hooks;
+  const choices: MelodicChoice[] = [];
+  let emptyHooksBank: string | undefined;
+  for (const bankId of bankIds) {
+    if (hooks !== undefined && bankId === hooks.bank) {
+      const pool = hooksForTempo(bankId, inputs.tempo);
+      if (pool.length === 0) emptyHooksBank = bankId;
+      else choices.push({ kind: 'hooks', bankId, pool, wholeShare: hooks.wholeShare });
+    } else {
+      choices.push({ kind: 'legacy', bankId });
+    }
+  }
+  if (choices.length === 0) {
+    throw new Error(
+      `vocals/precedents: no melody for ${inputs.genre}/${inputs.segmentType} at ${inputs.tempo} bpm: no hook in the hooks bank "${emptyHooksBank}" has tempoMin <= ${inputs.tempo} <= tempoMax, and the rule lists no other melodic bank`,
+    );
+  }
+  const choice = inputs.rng.pick(choices);
+  if (choice.kind === 'legacy') return mergeLegacy(dispatchRule(rule, choice.bankId, inputs.tempo), inputs);
+  return mergeHooks(choice.pool, choice.wholeShare, rule.maxNote ?? DEFAULT_MAX_NOTE, inputs);
+}
+
+function mergeHooks(
+  pool: readonly Precedent[],
+  wholeShare: number,
+  maxNote: number,
+  inputs: MergeInputs,
+): MergedPrecedent {
+  const rng = inputs.rng;
+  const params = { desiredPatternLength: inputs.desiredPatternLength };
+  const where = `${inputs.genre}/${inputs.segmentType} at ${inputs.tempo} bpm`;
+  const hook = pickHelperPrecedent(pool, params, rng);
+
+  if (rng.bool(wholeShare)) {
+    const draped = drapeAndContour(hook, hook, maxNote);
+    if (!draped.ok) {
+      throw new Error(`vocals/precedents: hook "${hook.id}" used whole: ${draped.failure} (${where})`);
+    }
+    return draped.merged;
+  }
+
+  const partners = pool.filter((e) => e.id !== hook.id);
+  if (partners.length === 0) {
+    throw new Error(
+      `vocals/precedents: hook "${hook.id}" is to be mixed with a second hook, but it is the only hook for ${where}`,
+    );
+  }
+  let safety = 0;
+  while (true) {
+    const rhythmHook = pickHelperPrecedent(partners, params, rng);
+    const draped = drapeAndContour(rhythmHook, hook, maxNote);
+    if (draped.ok) return draped.merged;
+    if (safety++ > MAX_MERGE_RETRIES) {
+      throw new Error(
+        `vocals/precedents: hook "${hook.id}" mixed with other hooks: ${draped.failure} after ${safety} retries (${where})`,
+      );
+    }
+  }
+}
+
+// ---- drape + contour (shared by every path) ----
+
+type DrapeResult =
+  | { readonly ok: true; readonly merged: MergedPrecedent }
+  | { readonly ok: false; readonly failure: 'empty merged melody' | 'contour build failed' };
+
+/** Drapes the melodic precedent's pitches over the rhythmic precedent's
+ *  rhythm, lifts the melodic precedent's chords and places the melody with
+ *  `buildContour`. Deterministic; no rng. */
+function drapeAndContour(
+  rhythmicPrecedent: Precedent,
+  melodicPrecedent: Precedent,
+  maxNote: number,
+): DrapeResult {
+  const merged: {
+    melody: Record<string, { midi: number; duration: number }[]>;
+    chords: Record<string, { chord: string }>;
+  } = { melody: {}, chords: {} };
+
+  // Drape melody of melodic precedent over rhythm of rhythmic precedent.
+  const melodicBeats = Object.keys(melodicPrecedent.melody);
+  const firstMelodicEntry = melodicPrecedent.melody[melodicBeats[0]!];
+  let lastMidi = firstMelodicEntry?.[0]?.midi ?? 50;
+
+  const rhythmicBeatStrings = Object.keys(rhythmicPrecedent.melody);
+  for (let i = 0; i < rhythmicBeatStrings.length; i++) {
+    const rhythmicBeatString = rhythmicBeatStrings[i]!;
+    const notes = rhythmicPrecedent.melody[rhythmicBeatString]!;
+    const rhythmicBeat = parseFloat(rhythmicBeatString);
+    if (rhythmicBeat >= rhythmicPrecedent.properties.end * 4) break;
+    if (rhythmicBeat < rhythmicPrecedent.properties.start * 4) continue;
+
+    const close = getClosestNoteForBeat(
+      rhythmicBeat,
+      rhythmicBeat,
+      rhythmicPrecedent,
+      melodicPrecedent,
+      lastMidi,
+    );
+    if (!close) continue;
+    merged.melody[getBeatString(rhythmicBeat)] = [
+      { midi: close.midi, duration: notes[0]!.duration },
+    ];
+    lastMidi = close.midi;
+  }
+
+  // Lift chords from melodic precedent (verbatim: only chord beats with
+  // `beat >= 0` and `< end * 4`).
+  for (const beatString of Object.keys(melodicPrecedent.chords)) {
+    const beat = parseFloat(beatString);
+    if (beat < 0) continue;
+    if (beat >= melodicPrecedent.properties.end * 4) break;
+    merged.chords[getBeatString(beat)] = { chord: melodicPrecedent.chords[beatString]!.chord };
+  }
+
+  // Build a single contour run over the entire draped melody.
+  const beatStrings = Object.keys(merged.melody);
+  if (beatStrings.length === 0) return { ok: false, failure: 'empty merged melody' };
+  const midiSequence = beatStrings.map((bs) => merged.melody[bs]![0]!.midi);
+  let optimalSequence: number[];
+  try {
+    optimalSequence = buildContour(midiSequence, { maxNote });
+  } catch {
+    return { ok: false, failure: 'contour build failed' };
+  }
+
+  const melodyFirstNote = optimalSequence[0]!;
+  const melodyLastNote = optimalSequence[optimalSequence.length - 1]!;
+  let melodyMinNote = Infinity;
+  let melodyMaxNote = -Infinity;
+  for (let i = 0; i < beatStrings.length; i++) {
+    const newMidi = optimalSequence[i]!;
+    merged.melody[beatStrings[i]!] = [
+      { midi: newMidi, duration: merged.melody[beatStrings[i]!]![0]!.duration },
+    ];
+    if (newMidi < melodyMinNote) melodyMinNote = newMidi;
+    if (newMidi > melodyMaxNote) melodyMaxNote = newMidi;
+  }
+
+  return {
+    ok: true,
+    merged: {
       rhythmicPrecedentId: rhythmicPrecedent.id,
       rhythmicPrecedentName: rhythmicPrecedent.properties.name,
       melodicPrecedentId: melodicPrecedent.id,
@@ -660,8 +888,8 @@ export function selectMergedPrecedent(inputs: MergeInputs): MergedPrecedent | un
       },
       melody: merged.melody,
       chords: merged.chords,
-    };
-  }
+    },
+  };
 }
 
 // ---- segment-grid emit ----
