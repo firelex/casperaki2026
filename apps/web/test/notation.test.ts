@@ -45,16 +45,31 @@ describe('notesToAbc', () => {
     expect(body(abc, 1)).toBe('E4 =E4 E4 B4 |]');
   });
 
+  it('names a note outside the key after the chord sounding with it', () => {
+    // Borrowed chords in C: Eb, Ab, Bb over Ab and Bb chords are flats, not D#, G#, A#.
+    const borrowed = notesToAbc([n(68, 0, 2), n(72, 2, 2), n(70, 4, 2), n(74, 6, 2)], { beats: 8, key: 'C', chords: new Map([[0, 'Ab'], [16, 'Bb']]) });
+    expect(body(borrowed, 1)).toBe('"Ab"_A8 c8 | "Bb"_B8 d8 |]');
+    // The leading tone of A minor over E7 is G#; over Fm the same key is Ab.
+    const minor = notesToAbc([n(68, 0, 4), n(68, 4, 4)], { beats: 8, key: 'Am', chords: new Map([[0, 'E7'], [16, 'Fm']]) });
+    expect(body(minor, 1)).toBe('"E7"^G16 | "Fm"_A16 |]');
+  });
+
+  it('without a chord: flats for b3, b6, b7, a sharp for #4, the raised 7th in minor, naturals when they fit', () => {
+    expect(body(notesToAbc([n(63, 0, 1), n(66, 1, 1), n(68, 2, 1), n(70, 3, 1)], { beats: 4, key: 'C' }), 1)).toBe('_E4 ^F4 _A4 _B4 |]');
+    expect(body(notesToAbc([n(68, 0, 4)], { beats: 4, key: 'Am' }), 1)).toBe('^G16 |]');
+    expect(body(notesToAbc([n(65, 0, 4)], { beats: 4, key: 'G' }), 1)).toBe('=F16 |]');
+  });
+
   it('resets accidentals at the barline', () => {
     const abc = notesToAbc([n(66, 0, 4), n(66, 4, 4)], { beats: 8, key: 'C' });
     expect(body(abc, 1)).toBe('^F16 | ^F16 |]');
   });
 
   it('reads minor and long-form keys', () => {
-    expect(parseKey('Am')).toEqual({ abc: 'Am', fifths: 0 });
+    expect(parseKey('Am')).toEqual({ abc: 'Am', fifths: 0, minor: true });
     expect(parseKey('F#m').fifths).toBe(3);
-    expect(parseKey('Bb major')).toEqual({ abc: 'Bb', fifths: -2 });
-    expect(parseKey('C minor')).toEqual({ abc: 'Cm', fifths: -3 });
+    expect(parseKey('Bb major')).toEqual({ abc: 'Bb', fifths: -2, minor: false });
+    expect(parseKey('C minor')).toEqual({ abc: 'Cm', fifths: -3, minor: true });
     expect(() => parseKey('H')).toThrow();
   });
 });

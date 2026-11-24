@@ -11,9 +11,13 @@
  *     onset on that staff or the chord's earliest end; gaps become rests;
  *   - splits durations into written values (whole, dotted half, half, …) and
  *     ties them, including across barlines;
- *   - spells pitches for the key (flats in flat keys) and writes accidentals
- *     only where they differ from the key signature or from an earlier
- *     accidental in the same bar.
+ *   - spells pitches for the key (flats in flat keys); a note outside the key
+ *     is named after the chord sounding with it when it belongs to that chord
+ *     (Ab over Ab, G# over E7), otherwise as a natural when one fits (E in Eb),
+ *     else by the usual rule (#4 and, in minor, the raised 6th and 7th as
+ *     sharps; b2, b3, b6, b7 as flats); accidentals
+ *     are written only where they differ from the key signature or from an
+ *     earlier accidental in the same bar.
  */
 
 export interface ScoreNote {
@@ -45,6 +49,8 @@ export interface KeySig {
   readonly abc: string;
   /** Sharps (> 0) or flats (< 0). */
   readonly fifths: number;
+  /** A minor key (the signature is its relative major's). */
+  readonly minor: boolean;
 }
 
 /** Read a song key ("C", "Am", "F#m", "Bb", "A minor", "Eb major"). */
@@ -56,7 +62,7 @@ export function parseKey(key: string): KeySig {
   const fifths = (minor ? MINOR_FIFTHS : MAJOR_FIFTHS)[tonic];
   if (fifths === undefined) throw new Error(`No key signature for "${key}"`);
   // ABC has no A#/D#/G# major or Db/Gb minor key: name them by their enharmonic signature.
-  return { abc: `${tonic}${minor ? 'm' : ''}`, fifths };
+  return { abc: `${tonic}${minor ? 'm' : ''}`, fifths, minor };
 }
 
 /** The accidental (-1, 0, 1) the key signature gives each letter. */
@@ -70,11 +76,80 @@ function keyAccidentals(fifths: number): Record<string, number> {
 const SHARP_NAMES: [string, number][] = [['C', 0], ['C', 1], ['D', 0], ['D', 1], ['E', 0], ['F', 0], ['F', 1], ['G', 0], ['G', 1], ['A', 0], ['A', 1], ['B', 0]];
 const FLAT_NAMES: [string, number][] = [['C', 0], ['D', -1], ['D', 0], ['E', -1], ['E', 0], ['F', 0], ['G', -1], ['G', 0], ['A', -1], ['A', 0], ['B', -1], ['B', 0]];
 
-/** Letter, accidental and octave (C4 = 60 → octave 4) of a MIDI pitch, spelled for the key. */
-function spell(pitch: number, fifths: number): { letter: string; acc: number; octave: number } {
+interface Spelled {
+  readonly letter: string;
+  readonly acc: number;
+  readonly octave: number;
+}
+
+/** Letter, accidental and octave (C4 = 60 → octave 4) of a MIDI pitch by the key's side (sharps or flats). */
+function keySpell(pitch: number, fifths: number): Spelled {
   const pc = ((pitch % 12) + 12) % 12;
   const [letter, acc] = (fifths < 0 ? FLAT_NAMES : SHARP_NAMES)[pc]!;
   return { letter, acc, octave: Math.floor(pitch / 12) - 1 };
+}
+
+const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const NATURAL_PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const MAJOR_DEGREES = new Set([0, 2, 4, 5, 7, 9, 11]);
+
+/** A letter with the accidental that makes it `pitch`, or undefined beyond one sharp or flat. */
+function asLetter(pitch: number, letter: string): Spelled | undefined {
+  const pc = ((pitch % 12) + 12) % 12;
+  const acc = ((pc - NATURAL_PC[letter]! + 18) % 12) - 6;
+  if (Math.abs(acc) > 1) return undefined;
+  return { letter, acc, octave: Math.floor((pitch - acc) / 12) - 1 };
+}
+
+/** Semitones above the root → letters above the root, for the intervals a chord symbol can hold. */
+const INTERVAL_STEPS: Record<number, number> = { 0: 0, 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 4, 9: 5, 10: 6, 11: 6 };
+
+/** The tones of a chord symbol ("Ab", "E7", "Bm7b5", "Gsus4", "Cmaj9", "D/F#") as semitones above its root. */
+function chordIntervals(suffix: string): Set<number> {
+  const q = suffix.replace(/\/.*$/u, '');
+  const minor = /^m(?!aj)/u.test(q);
+  const dim = /dim|^o|m7b5|ø/u.test(q);
+  const out = new Set([0]);
+  if (/sus2/u.test(q)) out.add(2);
+  else if (/sus/u.test(q)) out.add(5);
+  else out.add(minor || dim ? 3 : 4);
+  out.add(dim || /b5/u.test(q) ? 6 : /aug|\+|#5/u.test(q) ? 8 : 7);
+  if (/maj7|maj9|maj13|M7/u.test(q)) out.add(11);
+  else if (/dim7|o7/u.test(q)) out.add(9);
+  else if (/7|9|11|13/u.test(q)) out.add(10);
+  if (/6|13/u.test(q)) out.add(9);
+  if (/9/u.test(q)) out.add(/b9/u.test(q) ? 1 : 2);
+  if (/11/u.test(q)) out.add(5);
+  return out;
+}
+
+/** A pitch outside the key named as a tone of the chord sounding with it, when it is one. */
+function chordSpell(pitch: number, chord: string): Spelled | undefined {
+  const m = /^([A-G])([#b]?)(.*)$/u.exec(chord.trim());
+  if (!m) return undefined;
+  const rootPc = (NATURAL_PC[m[1]!]! + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0) + 12) % 12;
+  const interval = (((pitch - rootPc) % 12) + 12) % 12;
+  if (!chordIntervals(m[3]!).has(interval)) return undefined;
+  const steps = interval === 8 ? 4 : INTERVAL_STEPS[interval];
+  if (steps === undefined) return undefined;
+  return asLetter(pitch, LETTERS[(LETTERS.indexOf(m[1]!) + steps) % 7]!);
+}
+
+/** Letter, accidental and octave of a MIDI pitch, spelled for the key and the chord sounding with it (see top). */
+function spell(pitch: number, key: KeySig, chord?: string): Spelled {
+  const majorTonic = (((key.fifths * 7) % 12) + 12) % 12;
+  const degree = (((pitch - majorTonic) % 12) + 12) % 12;
+  if (MAJOR_DEGREES.has(degree)) return keySpell(pitch, key.fifths);
+  const byChord = chord === undefined ? undefined : chordSpell(pitch, chord);
+  if (byChord) return byChord;
+  // Raised from the key note below, or lowered from the one above. A natural wins (E in Eb, F in G); otherwise #4
+  // and, in minor, the raised 6th and 7th (degrees 6 and 8 of the relative major) are sharps, the rest flats.
+  const raised = asLetter(pitch, keySpell(pitch - 1, key.fifths).letter);
+  const lowered = asLetter(pitch, keySpell(pitch + 1, key.fifths).letter);
+  if (raised?.acc === 0) return raised;
+  if (lowered?.acc === 0) return lowered;
+  const sharp = degree === 6 || (key.minor && degree === 8);
+  return (sharp ? raised : lowered) ?? keySpell(pitch, key.fifths);
 }
 
 /** ABC pitch letters and octave marks: C4 = "C", C5 = "c", C6 = "c'", C3 = "C,". */
@@ -156,17 +231,29 @@ function staffEvents(notes: readonly ScoreNote[], total: number): Event[] {
  *  With `mergeRests`, runs of empty bars become one multi-bar rest measure (Z<n>). */
 function staffMeasures(
   events: readonly Event[],
-  fifths: number,
+  key: KeySig,
   marks: ReadonlyMap<number, string>,
   mergeRests: boolean,
   chords: ReadonlyMap<number, string> = new Map(),
+  spellBy: ReadonlyMap<number, string> = chords,
 ): string[] {
-  const keyAcc = keyAccidentals(fifths);
+  const keyAcc = keyAccidentals(key.fifths);
+  const chordPositions = [...spellBy.keys()].sort((a, b) => a - b);
+  /** The chord sounding at a 16th position (the last one at or before it). */
+  const soundingAt = (at: number) => {
+    let found: string | undefined;
+    for (const p of chordPositions) {
+      if (p > at) break;
+      found = spellBy.get(p);
+    }
+    return found;
+  };
+  let sounding: string | undefined;
   let barAcc = new Map<string, number>();
   let out = '';
   let pos = 0;
   const pitchText = (p: number) => {
-    const { letter, acc, octave } = spell(p, fifths);
+    const { letter, acc, octave } = spell(p, key, sounding);
     const slot = `${letter}${octave}`;
     const current = barAcc.get(slot) ?? keyAcc[letter]!;
     const mark = acc === current ? '' : acc === 1 ? '^' : acc === -1 ? '_' : '=';
@@ -235,6 +322,7 @@ function staffMeasures(
       if (mark) out += `"^${mark.replace(/"/gu, "'")}"`;
       const chord = chords.get(pos);
       if (chord) out += `"${chord.replace(/"/gu, "'")}"`;
+      sounding = soundingAt(pos);
       if (ev.pitches.length === 0) out += `z${dur} `;
       else {
         const body = ev.pitches.map(pitchText).join('');
@@ -302,14 +390,14 @@ export function notesToAbc(
     const clef = treble.length === 0 && bass.length > 0 ? 'bass' : 'treble';
     const chords = opts.chords ?? new Map<number, string>();
     const events = chords.size ? splitAt(staffEvents(notes, total), new Set(chords.keys())) : staffEvents(notes, total);
-    const lines = abcLines(staffMeasures(events, key.fifths, marks, chords.size === 0, chords));
+    const lines = abcLines(staffMeasures(events, key, marks, chords.size === 0, chords));
     return [...head, `V:1 clef=${clef}`, `K:${key.abc}`, ...lines.map((l) => `[V:1] ${l}`)].join('\n');
   }
   // Grand staff: bar by bar on both staves (no multi-bar rests), so their lines align.
   const chords = opts.chords ?? new Map<number, string>();
   const upEvents = chords.size ? splitAt(staffEvents(treble, total), new Set(chords.keys())) : staffEvents(treble, total);
-  const up = abcLines(staffMeasures(upEvents, key.fifths, marks, false, chords));
-  const down = abcLines(staffMeasures(staffEvents(bass, total), key.fifths, new Map(), false));
+  const up = abcLines(staffMeasures(upEvents, key, marks, false, chords));
+  const down = abcLines(staffMeasures(staffEvents(bass, total), key, new Map(), false, new Map(), chords));
   return [
     ...head,
     '%%score {1 2}',
