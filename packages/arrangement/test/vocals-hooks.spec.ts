@@ -302,17 +302,14 @@ describe('bank index checks', () => {
     expect(() => loadBankIndex()).toThrow(/melodic bank "nope" is not listed under banks/);
   });
 
-  it('the real bank index: pre-choruses and bridges use the hooks and drLuke (Melody Sauce retired)', () => {
+  it('the real bank index: every section uses every melodic bank (Melody Sauce retired)', () => {
     setPrecedentDataForTests(undefined);
     const index = loadBankIndex();
     expect(index.wholeShare).toBe(0.5);
     expect(index.hooks).toEqual({ bank: 'hooks', maxNote: { verse: 55, preChorus: 64, chorus: 64, bridge: 64 } });
     expect(Object.keys(index.banks)).not.toContain('stefan');
     for (const rules of Object.values(index.genres)) {
-      for (const [section, rule] of Object.entries(rules)) {
-        if (section === 'preChorus' || section === 'bridge') expect(rule.melodic).toEqual(['hooks', 'drLuke']);
-        else expect(typeof rule.melodic).toBe('string');
-      }
+      for (const rule of Object.values(rules)) expect(rule.melodic).toEqual(['hooks', 'drLuke', 'schlager', 'limitedRange']);
     }
   });
 });
