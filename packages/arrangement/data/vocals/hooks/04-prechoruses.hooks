@@ -1,0 +1,213 @@
+# Pre-choruses (20) and chant choruses (4). Key of C major / A minor, sung pitch (C4 = middle C).
+
+hook: Stairway Lanterns
+type: Pre-chorus
+tempo: 96-120
+feel: rising
+chords: Am | F | G | Em | F | G | Am G | Gsus4 G
+melody: e4:1 d4:0.5 e4:0.5 c4:2 | f4:1 e4:0.5 f4:0.5 a4:2 | g4:1 f4:0.5 g4:0.5 b4:2 | g4:2 r:2 |
+        a4:1 g4:0.5 a4:0.5 c5:2 | b4:1 a4:0.5 b4:0.5 d5:2 | c5:2 b4:2 | c5:2 b4:2 |
+
+hook: Held Breath Ascent
+type: Pre-chorus
+tempo: 100-124
+feel: suspense
+chords: F | F | G | G | Am | F | Gsus4 | G
+melody: a4:3 g4:1 | a4:3 c5:1 | b4:2 b4:1 b4:1 | d5:2 r:2 |
+        c5:1 c5:1 c5:1 c5:1 | a4:1 a4:1 c5:1 c5:1 | c5:4 | b4:2 d5:2 |
+
+hook: Copper Pulse
+type: Pre-chorus
+tempo: 108-126
+feel: groove
+chords: Dm | Em | F | G | Dm | Em | F | G
+melody: d4:0.75 f4:0.75 a4:0.5 r:0.5 f4:0.5 a4:1 | e4:0.75 g4:0.75 b4:0.5 r:0.5 g4:0.5 b4:1 |
+        f4:0.75 a4:0.75 c5:0.5 r:0.5 a4:0.5 c5:1 | d5:2 b4:1 g4:1 |
+        a4:0.75 f4:0.75 a4:0.5 r:0.5 d5:0.5 c5:1 | b4:0.75 g4:0.75 b4:0.5 r:0.5 e5:0.5 d5:1 |
+        c5:0.75 a4:0.75 c5:0.5 r:0.5 f5:0.5 e5:1 | d5:4 |
+
+hook: Paper Moonlight
+type: Pre-chorus
+tempo: 66-80
+feel: tender
+chords: F | G | Em | Am | F | G | Am F | Gsus4 G
+melody: a4:1.5 g4:0.5 f4:1 a4:1 | g4:1.5 f4:0.5 d4:2 | e4:1.5 g4:0.5 b4:1 a4:1 | a4:3 r:1 |
+        c5:1.5 a4:0.5 f4:1 c5:1 | b4:1.5 a4:0.5 g4:1 d5:1 | c5:2 a4:2 | c5:2 b4:2 |
+
+hook: Undertow Rising
+type: Pre-chorus
+tempo: 132-150
+feel: driving
+chords: Am | F | G | Am | F | G | E | E
+melody: a4:0.5 a4:0.5 c5:0.5 a4:0.5 e4:0.5 e4:0.5 a4:1 | a4:0.5 a4:0.5 c5:0.5 a4:0.5 f4:0.5 f4:0.5 a4:1 |
+        b4:0.5 b4:0.5 d5:0.5 b4:0.5 g4:0.5 g4:0.5 b4:1 | c5:2 r:2 |
+        c5:0.5 c5:0.5 c5:0.5 a4:0.5 c5:1 c5:1 | d5:0.5 d5:0.5 d5:0.5 b4:0.5 d5:1 d5:1 |
+        e5:1 e5:1 b4:1 g#4:1 | e5:4 |
+
+hook: Velvet Countdown
+type: Pre-chorus
+tempo: 84-100
+feel: suspense
+leadin: yes
+chords: C | F | Am | G | G | F | Am | Dm | G7
+melody: r:2 e4:1 f4:1 |
+        a4:1 a4:1 a4:1 g4:1 | a4:2 e4:2 | b4:1 b4:1 b4:1 a4:1 | b4:2 g4:2 |
+        c5:1 c5:1 c5:1 b4:1 | c5:2 a4:2 | d5:1 d5:1 f5:1 d5:1 | d5:2 f5:2 |
+
+hook: Second Wind
+type: Pre-chorus
+tempo: 120-140
+feel: driving
+chords: Am | F | G | G | Am | F | G | G
+melody: e4:2 a4:2 | c5:3 a4:1 | b4:1 g4:1 d4:1 g4:1 | b4:2 r:2 |
+        c5:1 c5:0.5 b4:0.5 a4:1 e5:1 | c5:1 c5:0.5 a4:0.5 f4:1 a4:1 |
+        b4:0.5 b4:0.5 d5:0.5 d5:0.5 g4:0.5 b4:0.5 d5:1 | g5:4 |
+
+hook: Lantern Hands
+type: Pre-chorus
+tempo: 70-88
+feel: tender
+chords: F | Dm | Em | Am | F | Dm | G | G
+melody: r:1 a4:1 f4:1 g4:1 | a4:3 r:1 | r:1 b4:1 g4:1 a4:1 | c5:3 r:1 |
+        r:1 c5:1 a4:1 b4:1 | d5:3 r:1 | r:1 d5:1 b4:1 c5:1 | d5:4 |
+
+hook: Neon Undercurrent
+type: Pre-chorus
+tempo: 92-108
+feel: groove
+chords: Am | Am | Dm | Dm | F | G | E7 | E
+melody: a4:0.5 c5:1 a4:0.5 e4:1 g4:1 | a4:1.5 c5:0.5 r:2 | a4:0.5 d5:1 a4:0.5 f4:1 a4:1 | d5:1.5 c5:0.5 r:2 |
+        c5:0.5 f5:1 c5:0.5 a4:1 c5:1 | d5:0.5 g5:1 d5:0.5 b4:1 d5:1 | e5:1.5 d5:0.5 b4:1 g#4:1 | b4:4 |
+
+hook: Tightrope Hours
+type: Pre-chorus
+tempo: 76-92
+feel: suspense
+chords: Am | Am | F | F | Dm | Dm | Gsus4 | G
+melody: e4:1 e4:1 e4:1 a4:1 | c5:4 | f4:1 f4:1 f4:1 c5:1 | c5:2 a4:2 |
+        a4:1 a4:1 a4:1 d5:1 | f5:2 d5:2 | c5:4- | c5:2 b4:2 |
+
+hook: Iron Bloom
+type: Pre-chorus
+tempo: 136-150
+feel: driving
+chords: F | G | Am | Am | F | G | Am G | G
+melody: f4:0.5 a4:0.5 c5:1 a4:0.5 f4:0.5 c5:1 | g4:0.5 b4:0.5 d5:1 b4:0.5 g4:0.5 d5:1 | e5:2 c5:2 | a4:2 r:2 |
+        a4:0.5 c5:0.5 f5:1 c5:0.5 a4:0.5 f5:1 | b4:0.5 d5:0.5 g5:1 d5:0.5 b4:0.5 g5:1 | e5:2 d5:2 | d5:4 |
+
+hook: Harbor Lights Up
+type: Pre-chorus
+tempo: 88-104
+feel: rising
+leadin: yes
+chords: G | Dm | Em | F | G | Am | Em | F | G
+melody: r:2.5 d4:0.5 e4:0.5 f4:0.5 |
+        f4:2 a4:1 f4:1 | g4:2 b4:1 g4:1 | a4:2 c5:1 a4:1 | b4:2 d5:1 r:1 |
+        c5:2 e5:1 c5:1 | b4:2 e5:1 b4:1 | c5:1 c5:1 a4:1 c5:1 | d5:4 |
+
+hook: Hush Before Thunder
+type: Pre-chorus
+tempo: 65-78
+feel: rising
+leadin: yes
+chords: E | Am | G | F | E | Am | G | F | E
+melody: r:3 e4:1 |
+        a4:2 c5:1 b4:1 | b4:2 d5:1 c5:1 | c5:2 a4:1 c5:1 | b4:3 r:1 |
+        c5:1.5 c5:0.5 e5:1 d5:1 | d5:1.5 d5:0.5 b4:1 d5:1 | c5:1.5 c5:0.5 a4:1 f5:1 | e5:4 |
+
+hook: Fever Ladder
+type: Pre-chorus
+tempo: 100-116
+feel: groove
+chords: Dm G | Em Am | F G | Am | Dm G | Em Am | F G | Gsus4 G
+melody: d4:1 f4:0.5 a4:0.5 g4:1 b4:1 | e4:1 g4:0.5 b4:0.5 a4:1 c5:1 | f4:1 a4:0.5 c5:0.5 b4:1 d5:1 | c5:2 r:2 |
+        a4:1 f4:0.5 a4:0.5 b4:1 d5:1 | b4:1 g4:0.5 b4:0.5 c5:1 e5:1 | c5:1 a4:0.5 c5:0.5 d5:1 g5:1 | d5:4 |
+
+hook: Midnight Engine
+type: Pre-chorus
+tempo: 126-144
+feel: driving
+chords: Am | Am | F | F | G | G | E | E
+melody: e4:0.5 e4:0.5 a4:0.5 e4:0.5 c5:0.5 a4:0.5 e4:1 | r:0.5 a4:0.5 c5:0.5 a4:0.5 e5:1 r:1 |
+        f4:0.5 f4:0.5 a4:0.5 f4:0.5 c5:0.5 a4:0.5 f4:1 | r:0.5 a4:0.5 c5:0.5 a4:0.5 f5:1 r:1 |
+        g4:0.5 g4:0.5 b4:0.5 g4:0.5 d5:0.5 b4:0.5 g4:1 | r:0.5 b4:0.5 d5:0.5 b4:0.5 g5:1 r:1 |
+        e5:1 b4:1 g#4:1 b4:1 | b4:4 |
+
+hook: Feather Staircase
+type: Pre-chorus
+tempo: 68-84
+feel: tender
+leadin: yes
+chords: Am | F | Em | Dm | G | F | Em | Dm | G
+melody: r:2 e4:1 g4:1 |
+        a4:3 g4:1 | g4:2 e4:1 g4:1 | f4:2 a4:1 d5:1 | d5:3 r:1 |
+        c5:3 a4:1 | b4:2 g4:1 b4:1 | a4:2 d5:1 e5:1 | d5:4 |
+
+hook: Low Tide Shuffle
+type: Pre-chorus
+tempo: 112-124
+feel: groove
+chords: Am | Am | F | F | Am | Am | Dm Em | F G
+melody: r:0.5 e4:0.5 a4:0.5 e4:0.5 c5:1 b4:0.5 a4:0.5 | a4:1 r:1 e4:0.5 g4:0.5 a4:1 |
+        r:0.5 f4:0.5 a4:0.5 f4:0.5 c5:1 b4:0.5 a4:0.5 | a4:1 r:1 f4:0.5 g4:0.5 a4:1 |
+        r:0.5 a4:0.5 c5:0.5 a4:0.5 e5:1 d5:0.5 c5:0.5 | c5:1 r:1 a4:0.5 b4:0.5 c5:1 |
+        d5:1 f5:1 e5:1 d5:1 | c5:2 d5:2 |
+
+hook: Signal Fire
+type: Pre-chorus
+tempo: 116-132
+feel: rising
+chords: F | G | Am | Em | F | G | Gsus4 | G
+melody: r:1 c4:1 f4:1 a4:1 | g4:3 r:1 | r:1 e4:1 a4:1 c5:1 | b4:3 r:1 |
+        r:1 a4:1 c5:1 f5:1 | d5:3 d5:0.5 e5:0.5 | c5:1 d5:1 g5:2 | b4:1 c5:1 d5:2 |
+
+hook: Pocket Thunder
+type: Pre-chorus
+tempo: 90-104
+feel: groove
+leadin: yes
+chords: E | Am | Dm | F | G | Am | Dm | F | E7
+melody: r:2.5 b4:0.5 c5:0.5 b4:0.5 |
+        a4:1.5 a4:0.5 c5:1 a4:1 | a4:1.5 a4:0.5 d5:1 a4:1 | c5:1.5 c5:0.5 f5:1 c5:1 | d5:2 r:2 |
+        e5:1.5 e5:0.5 c5:1 a4:1 | f5:1.5 f5:0.5 d5:1 a4:1 | a4:1 c5:1 f5:1 e5:1 | e5:1 d5:1 b4:2 |
+
+hook: Sky Rope
+type: Pre-chorus
+tempo: 124-140
+feel: driving
+chords: Dm | F | G | G | Dm | F | G | G7
+melody: d4:1 f4:1 a4:1 f4:1 | f4:1 a4:1 c5:1 a4:1 | g4:1 b4:1 d5:1 b4:1 | d5:2 r:2 |
+        a4:0.5 a4:0.5 d5:0.5 d5:0.5 f5:1 d5:1 | c5:0.5 c5:0.5 f5:0.5 f5:0.5 a4:1 c5:1 |
+        d5:0.5 d5:0.5 g5:0.5 g5:0.5 b4:1 d5:1 | f5:2 g5:2 |
+
+hook: Stomp Parade
+type: Chorus
+tempo: 96-112
+feel: chant
+chords: C | C | F | G | C | C | F | G C
+melody: e4:0.5 e4:0.5 g4:1 e4:1 r:1 | e4:0.5 e4:0.5 g4:1 c5:1 r:1 | f4:0.5 f4:0.5 a4:1 f4:1 r:1 | g4:0.5 g4:0.5 b4:1 g4:1 r:1 |
+        e4:0.5 e4:0.5 g4:1 e4:1 r:1 | e4:0.5 e4:0.5 g4:1 c5:1 r:1 | f4:0.5 f4:0.5 a4:1 c5:1 r:1 | g4:0.5 g4:0.5 b4:1 c5:2 |
+
+hook: Clap the Wall
+type: Chorus
+tempo: 120-136
+feel: chant
+chords: Am | Am | G | G | F | F | G | Am
+melody: a4:1 r:0.5 a4:0.5 c5:1 r:1 | a4:1 r:0.5 a4:0.5 e4:1 r:1 | b4:1 r:0.5 b4:0.5 d5:1 r:1 | b4:1 r:0.5 b4:0.5 g4:1 r:1 |
+        c5:1 r:0.5 c5:0.5 a4:1 r:1 | c5:1 r:0.5 a4:0.5 c5:1 r:1 | b4:1 r:0.5 b4:0.5 d5:1 r:1 | c5:1 r:0.5 b4:0.5 a4:2 |
+
+hook: Bootheel Anthem
+type: Chorus
+tempo: 80-96
+feel: chant
+chords: Am | F | C | G | Am | F | C | G
+melody: a4:0.75 a4:0.75 a4:0.5 e4:2 | a4:0.75 a4:0.75 a4:0.5 f4:2 | g4:0.75 g4:0.75 g4:0.5 c5:2 | b4:0.75 b4:0.75 b4:0.5 g4:2 |
+        c5:0.75 c5:0.75 c5:0.5 a4:2 | c5:0.75 c5:0.75 c5:0.5 f4:2 | c5:0.75 c5:0.75 c5:0.5 g4:2 | d5:0.75 d5:0.75 b4:0.5 g4:2 |
+
+hook: Thunder Roll Call
+type: Chorus
+tempo: 136-150
+feel: chant
+chords: C | G | Am | F | C | G | F G | C
+melody: c5:0.5 c5:0.5 r:0.5 c5:0.5 g4:1 r:1 | d5:0.5 d5:0.5 r:0.5 d5:0.5 b4:1 r:1 | c5:0.5 c5:0.5 r:0.5 c5:0.5 a4:1 r:1 | c5:0.5 c5:0.5 r:0.5 a4:0.5 f4:1 r:1 |
+        g4:0.5 g4:0.5 r:0.5 g4:0.5 c5:1 r:1 | g4:0.5 g4:0.5 r:0.5 g4:0.5 d5:1 r:1 | a4:0.5 a4:0.5 r:0.5 a4:0.5 b4:1 r:1 | c5:3 r:1 |
