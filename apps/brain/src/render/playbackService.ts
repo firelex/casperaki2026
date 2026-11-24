@@ -122,12 +122,29 @@ export class PlaybackService {
     mkdirSync(config.sampleCacheDir, { recursive: true });
     this.loweringVersion = loweringFingerprint(config.emitScript);
     this.libraryRoot = resolve(config.sampleLibraryRoot);
-    this.mixConfig = readFileSync(config.mixConfigPath, 'utf8');
-    JSON.parse(this.mixConfig); // fail at startup on a broken file
+    this.mixText = readFileSync(config.mixConfigPath, 'utf8');
+    JSON.parse(this.mixText); // fail at startup on a broken file
   }
 
-  /** mix-config.json text, for the browser engine. */
-  readonly mixConfig: string;
+  private mixText: string;
+
+  /** mix-config.json text (the standard mix), for the browser engine. */
+  get mixConfig(): string {
+    return this.mixText;
+  }
+
+  /**
+   * Replace the standard mix (an approved suggestion): writes mix-config.json
+   * (whole file, via a temporary file and a rename) and uses it from now on.
+   * Native renders read the same file.
+   */
+  replaceMixConfig(text: string): void {
+    JSON.parse(text);
+    const tmp = `${this.config.mixConfigPath}.${process.pid}.tmp`;
+    writeFileSync(tmp, text);
+    renameSync(tmp, this.config.mixConfigPath);
+    this.mixText = text;
+  }
 
   /** Fingerprint of the lowering code: cached envelopes are kept per version,
    *  so a fix to the lowering (adapter, emit script) reaches songs already lowered. */

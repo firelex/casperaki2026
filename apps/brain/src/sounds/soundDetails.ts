@@ -14,7 +14,7 @@ import type { ValidatedCatalogEntry } from '@casperaki/arrangement';
 
 import type { SamplePlan } from './enginePreview.js';
 
-interface MixConfigJson {
+export interface MixConfigJson {
   constants: { transitionsTrimDb: number };
   typeToFxGroup: Record<string, string>;
   /** Rules without `genres` apply in every style. */
@@ -78,8 +78,11 @@ export class MixLookup {
     return this.cfg.instrumentTargetVolume.some((r) => r.type === type && (r.genres ?? []).length > 0);
   }
 
+  /** The group bus a type plays through. A type the mix config does not route is an error (as in the engines). */
   fxGroup(type: string): string {
-    return this.cfg.typeToFxGroup[type] ?? 'drums';
+    const bus = this.cfg.typeToFxGroup[type];
+    if (bus === undefined) throw new Error(`The mix config (typeToFxGroup) has no group bus for the sound type "${type}".`);
+    return bus;
   }
 
   laneSends(group: string, type: string, genre: string | null): Sends {

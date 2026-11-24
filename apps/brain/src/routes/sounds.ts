@@ -48,7 +48,7 @@ const FAMILY_PART: Readonly<Record<InstrumentFamily, string>> = {
 };
 
 /** One mix lookup for the brain's mix config (loaded on first use). */
-let mix: MixLookup | undefined;
+let mix: { text: string; lookup: MixLookup } | undefined;
 
 /** Pattern preview options: a style (genre) and which generated pattern (0, 1, 2, …). */
 // `prefer`: a style to start in when it can write this sound's part (e.g. the
@@ -175,7 +175,8 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
       // The style the values are for: the one asked for (the song's), else the sound's own.
       const own = item.styles[0];
       const genre = q.data.genre ?? (own && (GenreSchema.options as readonly string[]).includes(own) ? own : null);
-      mix ??= new MixLookup(playback.mixConfig);
+      // The standard mix can change at runtime (an approved suggestion).
+      if (mix?.text !== playback.mixConfig) mix = { text: playback.mixConfig, lookup: new MixLookup(playback.mixConfig) };
       const pattern = cat.patternOf.get(item.id);
       const drum = cat.drumOf.get(item.id);
       const sample = cat.sampleOf.get(item.id);
@@ -186,7 +187,7 @@ export function createSoundsRouter(deps: { playback: PlaybackService | undefined
           : sample
             ? { kind: 'sample', plan: sample.plan }
             : { kind: 'none', reason: cat.noPreview.get(item.id) ?? 'no engine lane plays it' };
-      return soundDetails(mix, entry, kind, genre, { bpm: item.bpm, key: item.key });
+      return soundDetails(mix.lookup, entry, kind, genre, { bpm: item.bpm, key: item.key });
     });
   });
 

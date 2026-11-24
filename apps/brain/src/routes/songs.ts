@@ -78,7 +78,7 @@ export interface SongsRouterDeps {
   readonly renders?: RenderService;
   /** The standard mix config (mix-config.json text), to check and apply Pro-mode
    *  mixes. Absent without in-browser playback; saving a mix then answers 503. */
-  readonly mixConfig?: string;
+  readonly mixConfig?: () => string;
   /** Hook for tests to inject a deterministic timestamp. */
   readonly now?: () => string;
   /** Told about every newly generated song that got the placeholder title
@@ -274,7 +274,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
       const unknown = Object.keys(mix.lanes).filter((l) => !lanes.has(l));
       if (unknown.length) return res.status(400).json({ error: 'unknown_lanes', message: `This song has no track ${unknown.map((l) => `"${l}"`).join(', ')}.` });
       try {
-        applyMixOverrides(mixConfig, mix);
+        applyMixOverrides(mixConfig(), mix);
       } catch (err) {
         return res.status(400).json({ error: 'invalid_mix', message: err instanceof Error ? err.message : String(err) });
       }
@@ -291,7 +291,7 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     let songMix: string | undefined;
     if (project.mixOverrides) {
       if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'This song has a Pro-mode mix, but the brain has no mix config (CASPERAKI_MIX_CONFIG).' });
-      songMix = applyMixOverrides(mixConfig, project.mixOverrides);
+      songMix = applyMixOverrides(mixConfig(), project.mixOverrides);
     }
     try {
       renders.enqueue(stored.id, stored.canonical, songMix);

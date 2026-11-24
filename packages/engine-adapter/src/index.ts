@@ -2333,4 +2333,13 @@ export function drumRoleLowLevelType(role: string): string {
   return t;
 }
 
+/** The drum kit lane's name (one lane in the mixer; the engine splits it into -kicks/-snares/-toms/-rest tracks). */
+export const DRUM_KIT_LANE = DRUMS_DISPLAY_NAME;
+
+/** Every kit position's sound type (each sets its own level in the mix config), without repeats. */
+export function drumKitLowLevelTypes(): string[] {
+  const kit = JSON.parse(BASE_DRUMS_INST) as { subInstruments?: Record<string, { lowLevelType?: unknown }> };
+  return [...new Set(Object.keys(kit.subInstruments ?? {}).map(drumRoleLowLevelType))];
+}
+
 export { normalizeLoopLowLevelType } from './loops.js';

@@ -8,10 +8,15 @@
 //   DELETE /api/suggestions/mix?genre=&key= -> 204: hide that change (Delete
 //          on the page). The songs keep their mixes; a value saved after the
 //          deletion shows the change again.
+//   POST   /api/suggestions/mix/approve { genre, key } -> { summary }: the change's
+//          average becomes the standard (mix-config.json is rewritten; see
+//          sounds/approveMixChange.ts). Songs keep sounding as they did: their
+//          level trims on that type are lowered by the same amount.
 //
 // A change is one of
 //   volume: an instrument type's fader trim (dB, standard 0)
 //   send:   an instrument type's reverb / delay / chorus send (dB)
+//   route:  the group bus an instrument type plays through
 //   plugin: one parameter (raw 0..1) of a plugin on an FX bus
 // with every song's value (newest first) and their average.
 
@@ -20,13 +25,14 @@ import { z } from 'zod';
 
 import { parseSong } from '@casperaki/song-schema';
 
+import { ApproveError, DRUM_KIT_TYPE, TRANSITIONS_TYPE, approveMixChange, laneMixType } from '../sounds/approveMixChange.js';
 import { MixLookup } from '../sounds/soundDetails.js';
 import type { SongsStore, SuggestionComment } from '../store.js';
 
 export interface SuggestionsRouterDeps {
   readonly store: SongsStore;
-  /** The standard mix config text; without it the mix suggestions answer 503. */
-  readonly mixConfig: string | undefined;
+  /** The standard mix config (text), replaced when a change is approved; without it the mix suggestions answer 503. */
+  readonly mixConfig: { readonly mixConfig: string; replaceMixConfig(text: string): void } | undefined;
   readonly isAdminRequest: (req: Request) => boolean;
   /** Who leaves a comment (the signed-in email). */
   readonly authorOf: (req: Request) => string;
@@ -42,7 +48,12 @@ export interface MixChange {
   readonly target: string;
   /** send: reverb | delay | chorus; route: the group bus the type was sent to and its standard bus (values are 1); plugin: the plugin's factory and parameter index. */
   readonly detail?: { readonly send?: 'reverb' | 'delay' | 'chorus'; readonly bus?: string; readonly standardBus?: string; readonly plugin?: string; readonly slot?: number; readonly param?: number };
-  readonly standard: number;
+  /** The standard value; null where there is no single one (the transitions track's sends and bus). */
+  readonly standard: number | null;
+  /** What approving changes: this genre only, or every genre (the mix config sets it once for all). */
+  readonly scope: 'genre' | 'all';
+  /** Why it cannot be approved, if it cannot. */
+  readonly blocked?: string;
   readonly average: number;
   readonly values: readonly { readonly value: number; readonly songId: string; readonly title: string; readonly lane?: string; readonly updatedAt: string }[];
   /** Comments left on this change (oldest first). */
@@ -52,37 +63,38 @@ export interface MixChange {
 const SENDS = ['reverb', 'delay', 'chorus'] as const;
 const CommentBody = z.object({ genre: z.string().min(1), key: z.string().min(1), body: z.string().trim().min(1).max(2000) }).strict();
 const DismissQuery = z.object({ genre: z.string().min(1), key: z.string().min(1) }).strict();
+const ApproveBody = DismissQuery;
+const TRANSITIONS_BLOCKED = 'The transitions track plays each transition through its own type’s bus and sends: there is no one standard to change.';
+const KIT_BLOCKED = 'The engine routes a drum kit by position (kicks to the kicks bus, the rest to the drums bus) with the drums group’s sends: not a setting of the standard mix.';
 
 export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, authorOf }: SuggestionsRouterDeps): Router {
   const router = Router();
-  router.get('/api/suggestions/mix', (req, res) => {
-    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
-    if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
-    const lookup = new MixLookup(mixConfig);
-    const chains = (JSON.parse(mixConfig) as { rackChains: { bus: string; plugins: { factory: string; params: number[] }[] }[] }).rackChains;
+  const summarise = (configText: string): { genre: string; songs: number; changes: MixChange[] }[] => {
+    const lookup = new MixLookup(configText);
+    const chains = (JSON.parse(configText) as { rackChains: { bus: string; plugins: { factory: string; params: number[] }[] }[] }).rackChains;
 
     const comments = new Map<string, SuggestionComment[]>();
     for (const c of store.listSuggestionComments('mix')) comments.set(c.target, [...(comments.get(c.target) ?? []), c]);
     const dismissed = new Map(store.listMixDismissals().map((d) => [`${d.genre}|${d.key}`, d.dismissedAt]));
-    const byGenre = new Map<string, { changes: Map<string, Omit<MixChange, 'average' | 'values' | 'comments'> & { values: (MixChange['values'][number] & { owner: string; tracks?: number })[] }> }>();
+    type Pending = Omit<MixChange, 'average' | 'values' | 'comments'> & { values: (MixChange['values'][number] & { owner: string; tracks?: number })[] };
+    const byGenre = new Map<string, { changes: Map<string, Pending> }>();
     for (const row of store.listProjectMixes()) {
       const genre = row.genre ?? 'unknown';
       const g = byGenre.get(genre) ?? { changes: new Map() };
       byGenre.set(genre, g);
       const song = parseSong(JSON.parse(row.canonical));
       const typeOf = (lane: string) => {
-        if (lane === 'Sample Transitions FX') return 'fxTransitions';
-        const def = song.instrumentDefinitions.find((d) => d.name === lane);
-        if (!def) throw new Error(`song ${row.songId} has no instrument "${lane}" for its saved mix`);
-        const t = def.lowLevelType ?? def.type;
-        if (!t) throw new Error(`song ${row.songId}: instrument "${lane}" has no type`);
-        return t;
+        try {
+          return laneMixType(song, lane);
+        } catch (err) {
+          throw new Error(`song ${row.songId}: ${err instanceof Error ? err.message : String(err)}`);
+        }
       };
       const add = (key: string, base: Omit<MixChange, 'key' | 'average' | 'values' | 'comments'>, value: MixChange['values'][number]) => {
         // Deleted on the page: only values saved since then count.
         const gone = dismissed.get(`${genre}|${key}`);
         if (gone !== undefined && value.updatedAt <= gone) return;
-        const c = g.changes.get(key) ?? { key, ...base, values: [] };
+        const c: Pending = g.changes.get(key) ?? { key, ...base, values: [] };
         // Several tracks of one type in a song count as one value (their average), so a
         // song weighs the same however many tracks of the type it has.
         const i = c.values.findIndex((v) => v.owner === row.ownerId && v.songId === value.songId);
@@ -96,10 +108,22 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
       const meta = { songId: row.songId, title: row.title, updatedAt: row.mixUpdatedAt };
       for (const [lane, o] of Object.entries(row.mixOverrides.lanes)) {
         const type = typeOf(lane);
-        if (o.volumeDb !== undefined && o.volumeDb !== 0) add(`volume|${type}`, { kind: 'volume', target: type, standard: 0 }, { ...meta, lane, value: o.volumeDb });
+        if (o.volumeDb !== undefined && o.volumeDb !== 0) {
+          // The transitions track's level is one constant for every genre.
+          add(`volume|${type}`, { kind: 'volume', target: type, standard: 0, scope: type === TRANSITIONS_TYPE ? 'all' : 'genre' }, { ...meta, lane, value: o.volumeDb });
+        }
+        if (type === TRANSITIONS_TYPE || type === DRUM_KIT_TYPE) {
+          const blocked = type === TRANSITIONS_TYPE ? TRANSITIONS_BLOCKED : KIT_BLOCKED;
+          if (o.fxGroup !== undefined) add(`route|${type}|${o.fxGroup}`, { kind: 'route', target: type, detail: { bus: o.fxGroup }, standard: null, scope: 'all', blocked }, { ...meta, lane, value: 1 });
+          for (const k of SENDS) {
+            const v = o[k];
+            if (v !== undefined) add(`send|${type}|${k}`, { kind: 'send', target: type, detail: { send: k }, standard: null, scope: 'all', blocked }, { ...meta, lane, value: v });
+          }
+          continue;
+        }
         const standardBus = lookup.fxGroup(type);
         if (o.fxGroup !== undefined && o.fxGroup !== standardBus) {
-          add(`route|${type}|${o.fxGroup}`, { kind: 'route', target: type, detail: { bus: o.fxGroup, standardBus }, standard: 0 }, { ...meta, lane, value: 1 });
+          add(`route|${type}|${o.fxGroup}`, { kind: 'route', target: type, detail: { bus: o.fxGroup, standardBus }, standard: 0, scope: 'all' }, { ...meta, lane, value: 1 });
         }
         const standard = lookup.laneSends(standardBus, type, row.genre);
         for (const k of SENDS) {
@@ -107,7 +131,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
           // The standard config spells "no send" as -100 (null after the lookup).
           const std = standard[k] ?? -100;
           if (v === undefined || v === std) continue;
-          add(`send|${type}|${k}`, { kind: 'send', target: type, detail: { send: k }, standard: std }, { ...meta, lane, value: v });
+          add(`send|${type}|${k}`, { kind: 'send', target: type, detail: { send: k }, standard: std, scope: 'all' }, { ...meta, lane, value: v });
         }
       }
       for (const [bus, slots] of Object.entries(row.mixOverrides.buses)) {
@@ -121,7 +145,7 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
             if (Math.abs(v - standard) < 1e-6) return;
             add(
               `plugin|${bus}|${slotKey}|${i}`,
-              { kind: 'plugin', target: bus, detail: { plugin: plugin.factory, slot: Number(slotKey), param: i }, standard },
+              { kind: 'plugin', target: bus, detail: { plugin: plugin.factory, slot: Number(slotKey), param: i }, standard, scope: 'all' },
               { ...meta, value: v },
             );
           });
@@ -140,7 +164,56 @@ export function createSuggestionsRouter({ store, mixConfig, isAdminRequest, auth
           .sort((a, b) => b.values.length - a.values.length || order[a.kind] - order[b.kind] || a.target.localeCompare(b.target)),
       }))
       .sort((a, b) => a.genre.localeCompare(b.genre));
-    return res.json({ genres });
+    return genres;
+  };
+  router.get('/api/suggestions/mix', (req, res) => {
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
+    if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
+    return res.json({ genres: summarise(mixConfig.mixConfig) });
+  });
+  router.post('/api/suggestions/mix/approve', json(), (req, res) => {
+    if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });
+    if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'The brain has no mix config (CASPERAKI_MIX_CONFIG).' });
+    const body = ApproveBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'bad_request', message: body.error.message });
+    const { genre, key } = body.data;
+    const change = summarise(mixConfig.mixConfig).find((g) => g.genre === genre)?.changes.find((c) => c.key === key);
+    if (!change) return res.status(404).json({ error: 'not_found', message: `No ${key} change in ${genre}.` });
+    if (change.blocked) return res.status(409).json({ error: 'not_approvable', message: change.blocked });
+    let approval;
+    try {
+      approval = approveMixChange(mixConfig.mixConfig, change, genre);
+    } catch (err) {
+      if (err instanceof ApproveError) return res.status(409).json({ error: 'not_approvable', message: err.message });
+      throw err;
+    }
+    mixConfig.replaceMixConfig(approval.text);
+    // Level trims are relative to the standard: lower them by what the standard rose.
+    const shift = approval.trimShift;
+    if (shift) {
+      for (const row of store.listProjectMixes()) {
+        if (shift.genre !== null && row.genre !== shift.genre) continue;
+        const song = parseSong(JSON.parse(row.canonical));
+        let changed = false;
+        const lanes = Object.fromEntries(
+          Object.entries(row.mixOverrides.lanes).flatMap(([lane, o]) => {
+            const type = laneMixType(song, lane);
+            if (type !== shift.type || o.volumeDb === undefined) return [[lane, o]];
+            changed = true;
+            const { volumeDb, ...rest } = o;
+            const v = Math.round((volumeDb - shift.db) * 10) / 10;
+            const next = v === 0 ? rest : { ...rest, volumeDb: v };
+            return Object.keys(next).length ? [[lane, next]] : [];
+          }),
+        );
+        if (!changed) continue;
+        const mix = { ...row.mixOverrides, lanes };
+        const empty = !Object.keys(mix.lanes).length && !Object.keys(mix.buses).length;
+        store.setProjectMix({ ownerId: row.ownerId, songId: row.songId, mixOverrides: empty ? null : mix, updatedAt: row.mixUpdatedAt });
+      }
+    }
+    store.addSuggestionComment({ kind: 'mix', target: `${genre}|${key}`, author: authorOf(req), body: `Approved: ${approval.summary}.`, createdAt: new Date().toISOString() });
+    return res.json({ summary: approval.summary });
   });
   router.post('/api/suggestions/mix/comments', json(), (req, res) => {
     if (!isAdminRequest(req)) return res.status(403).json({ error: 'admin_only', message: 'Suggestions are limited to admins.' });

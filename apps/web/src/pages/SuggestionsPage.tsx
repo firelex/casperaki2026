@@ -78,6 +78,10 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
     mutationFn: (key: string) => suggestionsApi.dismissMix(g.genre, key),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] }),
   });
+  const approve = useMutation({
+    mutationFn: (key: string) => suggestionsApi.approveMix(g.genre, key),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] }),
+  });
   const comment = useMutation({
     mutationFn: ({ key, body }: { key: string; body: string }) => suggestionsApi.commentMix(g.genre, key, body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['suggestions', 'mix'] }),
@@ -93,6 +97,8 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
         </span>
       </div>
       {dismiss.isError ? <p className="mt-2 text-[13px] text-err">Not deleted: {dismiss.error.message}</p> : null}
+      {approve.isError ? <p className="mt-2 text-[13px] text-err" role="alert">Not approved: {approve.error.message}</p> : null}
+      {approve.isSuccess ? <p className="mt-2 text-[13px] text-emerald-300">Now the standard: {approve.data.summary}.</p> : null}
       <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px]">
             <thead className="text-[12px] text-white/45">
@@ -110,8 +116,15 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                 return (
                   <Fragment key={c.key}>
                   <tr className="border-t border-line/40 align-top">
-                    <td className="py-2 pr-4 text-white">{d.what}</td>
-                    <td className="py-2 pr-4 font-mono text-white/60">{d.show(c.standard)}</td>
+                    <td className="py-2 pr-4 text-white">
+                      {d.what}
+                      {c.scope === 'all' ? (
+                        <span className="ml-2 rounded-full bg-white/10 px-2 py-[1px] text-[11px] text-white/60" title="The standard mix sets this once for every genre: approving it changes it in all of them.">
+                          all genres
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="py-2 pr-4 font-mono text-white/60">{c.standard === null ? 'per sound' : d.show(c.standard)}</td>
                     <td className="py-2 pr-4 font-mono text-[#ffb347]">{d.show(c.average)}</td>
                     <td className="py-2 text-white/70">
                       {c.values.length}
@@ -129,6 +142,18 @@ function GenreCard({ g }: { g: GenreMixSuggestions }) {
                         className="mr-2 h-7 rounded-full border border-white/20 px-3 text-[12px] text-white/70 hover:border-white/60 hover:text-white"
                       >
                         Comment{c.comments.length ? ` (${c.comments.length})` : ''}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const where = c.scope === 'all' ? 'every genre' : `${(GENRE_LABELS as Record<string, string>)[g.genre] ?? g.genre} only`;
+                          if (window.confirm(`Make ${d.show(c.average)} the standard for “${d.what}” (${where})? New songs and songs without their own setting will use it.`)) approve.mutate(c.key);
+                        }}
+                        disabled={approve.isPending || Boolean(c.blocked)}
+                        title={c.blocked ?? `Make the average the standard mix (${c.scope === 'all' ? 'every genre' : 'this genre'}). Songs with their own setting keep sounding the same.`}
+                        className="mr-2 h-7 rounded-full border border-emerald-400/50 px-3 text-[12px] text-emerald-300 hover:border-emerald-300 hover:text-emerald-200 disabled:cursor-not-allowed disabled:opacity-35"
+                      >
+                        Approve
                       </button>
                       <button
                         type="button"
