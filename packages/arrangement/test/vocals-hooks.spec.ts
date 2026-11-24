@@ -14,7 +14,7 @@ import {
   loadBankIndex,
   selectMergedPrecedent,
   setPrecedentDataForTests,
-  wholeHookOctaveShift,
+  wholeOctaveShift,
   type MergedPrecedent,
   type Precedent,
 } from '../src/vocals/precedents.js';
@@ -71,7 +71,8 @@ function useIndex(rules: Record<string, Rule>, wholeShare = 0.5, hookMaxNote: Re
     index: {
       $schemaVersion: 1,
       banks: { hooks: { file: 'hooks.json' }, schlager: { file: 'mlDataRaw-schlager.json' } },
-      hooks: { bank: 'hooks', wholeShare, maxNote: hookMaxNote },
+      wholeShare,
+      hooks: { bank: 'hooks', maxNote: hookMaxNote },
       genres: { testGenre: rules },
     },
     files: { 'hooks.json': HOOKS, 'mlDataRaw-schlager.json': schlager },
@@ -133,27 +134,35 @@ describe('hooks: used whole', () => {
     for (const m of sample(30, 110)) expectWholeHook(m, hookById(m.melodicPrecedentId), 12);
     // A has steps of a fifth (g -> d): they stay a fifth (buildContour would have folded them).
     const a = hookById(A) as unknown as Precedent;
-    expect(wholeHookOctaveShift(a, 76)).toBe(12);
-    expect(wholeHookOctaveShift(a, 64)).toBe(0);
-    expect(wholeHookOctaveShift(a, 59)).toBeUndefined(); // 52..62 down an octave is 40..50, below 43
+    expect(wholeOctaveShift(a, 76)).toBe(12);
+    expect(wholeOctaveShift(a, 64)).toBe(0);
+    expect(wholeOctaveShift(a, 59)).toBeUndefined(); // 52..62 down an octave is 40..50, below 43
   });
 
-  it('a hook that fits no octave shift is not a candidate for whole use', () => {
-    // maxNote 59: only D (43..57) fits; A and B would need to go below 43.
+  it('a hook that fits no octave shift is never sung whole: picked, it is remixed', () => {
+    // maxNote 59: only D (43..57) fits; A and B would need to go below 43. wholeShare 1: every pick of D is whole.
     useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 59 });
-    const picks = sample(20, 110);
-    expect(ids(picks)).toEqual(new Set([D]));
-    for (const m of picks) expectWholeHook(m, hookById(D), 0);
+    const picks = sample(40, 110);
+    const whole = picks.filter((m) => m.rhythmicPrecedentId === m.melodicPrecedentId);
+    expect(ids(whole)).toEqual(new Set([D]));
+    for (const m of whole) expectWholeHook(m, hookById(D), 0);
+    expect(picks.length - whole.length).toBeGreaterThan(10); // A or B picked: the remix merge ran
   });
 
-  it('no hook fits whole: an error naming section, tempo and range, or only the other listed banks', () => {
-    useIndex({ chorus: { melodic: ['hooks'] } }, 1, { chorus: 55 });
-    expect(() => select('s', 110)).toThrow(
-      /no melody for testGenre\/chorus at 110 bpm: no hook in the hooks bank "hooks" is written for chorus, has tempoMin <= 110 <= tempoMax and fits the range up to maxNote 55 by octave shifts, for use whole, and the rule lists no other melodic bank/,
+  it('no candidate of either kind: an error naming section, tempo and the reason; with a legacy bank listed, only it', () => {
+    // C is the only verse hook at 70 bpm; under maxNote 50 it fits no octave shift, and mixing needs two.
+    useIndex({ verse: { melodic: ['hooks'] } }, 1, { verse: 50 });
+    expect(() => select('s', 70, 'verse')).toThrow(
+      /no melody for testGenre\/verse at 70 bpm: hooks bank "hooks": 1 hook\(s\) written for verse with tempoMin <= 70 <= tempoMax, 0 of them may be sung whole and fit the range up to maxNote 50, 1 may be remixed \(mixing needs two\)/,
     );
-    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager' } }, 1, { chorus: 55 });
+    useIndex({ chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'schlager' } }, 1);
     const hookIds = new Set(HOOKS.map((h) => h.id));
-    for (const m of sample(20, 110)) expect(hookIds.has(String(m.melodicPrecedentId))).toBe(false);
+    for (const m of sample(20, 200)) expect(hookIds.has(String(m.melodicPrecedentId))).toBe(false);
+  });
+
+  it('a hook alone for its section and tempo is sung whole even with wholeShare 0 (it has no partner to mix with)', () => {
+    useIndex({ verse: { melodic: ['hooks'] } }, 0);
+    for (const m of sample(10, 70, 'verse')) expectWholeHook(m, hookById(C), 0);
   });
 
   it('cuts a lead-in bar (start 1, end 9) off like the legacy start-1 entries (8-bar section)', () => {
@@ -193,7 +202,7 @@ describe('hooks: their own maxNote', () => {
 
   it('a section type missing from hooks.maxNote is an error when its rule lists the hooks bank', () => {
     useIndex({ bridge: { melodic: ['hooks'] } }, 1, { chorus: 64 });
-    expect(() => select('s', 110, 'bridge')).toThrow(/testGenre\/bridge lists the hooks bank but bank-index hooks.maxNote has no entry for "bridge"/);
+    expect(() => select('s', 110, 'bridge')).toThrow(/testGenre\/bridge uses the hooks bank but bank-index hooks.maxNote has no entry for "bridge"/);
   });
 });
 
@@ -225,12 +234,6 @@ describe('hooks: mixed with a second hook', () => {
     expect(whole).toBeLessThan(130);
   });
 
-  it('mixing needs two hooks for the section: a clear error', () => {
-    useIndex({ verse: { melodic: ['hooks'] } }, 0);
-    expect(() => select('s', 70, 'verse')).toThrow(
-      /no melody for testGenre\/verse at 70 bpm: the hooks bank "hooks" has 1 hook\(s\) written for verse with tempoMin <= 70 <= tempoMax; mixing needs two/,
-    );
-  });
 });
 
 describe('hooks: section type and tempo filters', () => {
@@ -245,13 +248,13 @@ describe('hooks: section type and tempo filters', () => {
   it('offers only hooks written for the section type', () => {
     useIndex({ verse: { melodic: ['hooks'] }, chorus: { melodic: ['hooks'] } }, 1, { verse: 64, chorus: 64 });
     expect(ids(sample(20, 70, 'verse'))).toEqual(new Set([C])); // C is the only Verse hook
-    expect(() => select('s', 70, 'chorus')).toThrow(/is written for chorus/); // C suits 70 bpm but is a Verse
-    expect(() => select('s', 110, 'verse')).toThrow(/is written for verse/); // D suits 110 bpm but is a Chorus
+    expect(() => select('s', 70, 'chorus')).toThrow(/0 hook\(s\) written for chorus/); // C suits 70 bpm but is a Verse
+    expect(() => select('s', 110, 'verse')).toThrow(/0 hook\(s\) written for verse/); // D suits 110 bpm but is a Chorus
   });
 });
 
 describe('several melodic banks', () => {
-  it('a legacy bank picked from the list behaves exactly as a single-bank rule (after the mode and bank draws)', () => {
+  it('a legacy bank picked from the list behaves exactly as a single-bank rule (after the bank draw)', () => {
     const listRule = { melodic: ['hooks', 'schlager'], rhythmic: 'schlager', maxNote: 64 };
     const stringRule = { melodic: 'schlager', rhythmic: 'schlager', maxNote: 64 };
     let legacyPicks = 0;
@@ -262,7 +265,6 @@ describe('several melodic banks', () => {
       legacyPicks++;
       useIndex({ chorus: stringRule });
       const rng2 = createRng(`seed-${i}`);
-      rng2.next(); // whole-or-mixed
       rng2.next(); // the bank draw
       const fromString = selectMergedPrecedent({ desiredPatternLength: 8, segmentType: 'chorus', genre: 'testGenre', tempo: 110, rng: rng2 });
       expect(fromList).toEqual(fromString);
@@ -283,7 +285,7 @@ describe('several melodic banks', () => {
     useIndex({ chorus: { melodic: 'schlager', rhythmic: 'schlager' } });
     const withHooksSetting = select('same', 110);
     setPrecedentDataForTests({
-      index: { $schemaVersion: 1, banks: { schlager: { file: 'mlDataRaw-schlager.json' } }, genres: { testGenre: { chorus: { melodic: 'schlager', rhythmic: 'schlager' } } } },
+      index: { $schemaVersion: 1, wholeShare: 0.5, banks: { schlager: { file: 'mlDataRaw-schlager.json' } }, genres: { testGenre: { chorus: { melodic: 'schlager', rhythmic: 'schlager' } } } },
       files: { 'mlDataRaw-schlager.json': schlager },
     });
     expect(select('same', 110)).toEqual(withHooksSetting);
@@ -291,9 +293,9 @@ describe('several melodic banks', () => {
 });
 
 describe('bank index checks', () => {
-  it('the hooks bank only inside a melodic list, never alone or as rhythmic bank', () => {
-    useIndex({ chorus: { melodic: 'hooks' } });
-    expect(() => loadBankIndex()).toThrow(/genres.testGenre.chorus: the hooks bank must be given in a list/);
+  it('the hooks bank may be a single melodic bank, never a rhythmic bank; lists name known banks', () => {
+    useIndex({ chorus: { melodic: 'hooks' } }, 1);
+    for (const m of sample(10, 110)) expect([A, B, D]).toContain(m.melodicPrecedentId);
     useIndex({ chorus: { melodic: ['schlager'], rhythmic: 'hooks' } });
     expect(() => loadBankIndex()).toThrow(/cannot be a rhythmic bank/);
     useIndex({ chorus: { melodic: ['schlager', 'nope'] } });
@@ -303,7 +305,8 @@ describe('bank index checks', () => {
   it('the real bank index names the hooks bank but no rule uses it yet', () => {
     setPrecedentDataForTests(undefined);
     const index = loadBankIndex();
-    expect(index.hooks).toEqual({ bank: 'hooks', wholeShare: 0.5, maxNote: { verse: 55, preChorus: 64, chorus: 64, bridge: 64 } });
+    expect(index.wholeShare).toBe(0.5);
+    expect(index.hooks).toEqual({ bank: 'hooks', maxNote: { verse: 55, preChorus: 64, chorus: 64, bridge: 64 } });
     for (const rules of Object.values(index.genres)) {
       for (const rule of Object.values(rules)) expect(typeof rule.melodic).toBe('string');
     }
@@ -318,7 +321,8 @@ describe('the real hooks bank (smoke)', () => {
       index: {
         $schemaVersion: 1,
         banks: { hooks: { file: 'mlDataRaw-hooks.json' } },
-        hooks: { bank: 'hooks', wholeShare, maxNote: Object.fromEntries(Object.values(SECTION).map((s) => [s, maxNote])) },
+        wholeShare,
+        hooks: { bank: 'hooks', maxNote: Object.fromEntries(Object.values(SECTION).map((s) => [s, maxNote])) },
         genres: { testGenre: Object.fromEntries(Object.values(SECTION).map((s) => [s, { melodic: ['hooks'] }])) },
       },
       files: { 'mlDataRaw-hooks.json': hooks },
@@ -345,7 +349,7 @@ describe('the real hooks bank (smoke)', () => {
         try {
           ms = sample(10, tempo, section);
         } catch (err) {
-          expect((err as Error).message).toMatch(/mixing needs two/);
+          expect((err as Error).message).toMatch(/no melody for testGenre\/\w+ at \d+ bpm/);
           continue;
         }
         for (const m of ms) expect(m.rhythmicPrecedentId).not.toBe(m.melodicPrecedentId);

@@ -218,7 +218,7 @@ export function setPrecedentEdits(edits: Readonly<Record<string, PrecedentEdit>>
 const GenreSegmentRuleSchema = z
   .object({
     // A single bank id (every legacy rule) or a list of bank ids whose union is the melodic pool (see
-    // `selectFromMelodicList`). The two forms take different code paths: a single id is the legacy port, untouched.
+    // "selection: flags, several banks, hooks" below).
     melodic: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
     rhythmic: z.string().min(1).optional(),
     rhythmicTempoSplit: z.number().positive().optional(),
@@ -233,14 +233,14 @@ const BankIndexSchema = z
     $legacySource: z.record(z.string()).optional(),
     $dispatcherNotes: z.record(z.string()).optional(),
     banks: z.record(z.string(), z.object({ file: z.string().min(1) }).strict()),
-    // The hooks bank (our own complete melodies, docs/superpowers/specs/2026-11-24-hook-library-design.md) and the
-    // share of hook picks used whole (the rest are mixed with a second hook).
+    // For an entry with both useOriginal and useRemix: the probability it is used whole when picked.
+    wholeShare: z.number().min(0).max(1),
+    // The hooks bank (our own complete melodies, docs/superpowers/specs/2026-11-24-hook-library-design.md).
     hooks: z
       .object({
         bank: z.string().min(1),
-        wholeShare: z.number().min(0).max(1),
         // Highest note (legacy register) for placing hooks, per section type. Used for hooks only, whole and
-        // mixed, in place of the rule's maxNote (which keeps applying to legacy picks).
+        // mixed, in place of the rule's maxNote (which keeps applying to legacy entries).
         maxNote: z.record(z.string(), z.number().int().positive()),
       })
       .strict()
@@ -255,8 +255,8 @@ const BankIndexSchema = z
 export type BankIndex = z.infer<typeof BankIndexSchema>;
 export type GenreSegmentRule = z.infer<typeof GenreSegmentRuleSchema>;
 
-/** Rules the schema cannot express: the hooks bank exists, is only ever named in a `melodic` list (so a
- *  single-string rule always means the legacy path), never as a rhythmic bank, and lists name known banks once. */
+/** Rules the schema cannot express: the hooks bank exists and is never a rhythmic bank, and melodic lists name
+ *  known banks once. */
 function checkBankIndex(index: BankIndex): string[] {
   const problems: string[] = [];
   const hooksBank = index.hooks?.bank;
@@ -266,11 +266,7 @@ function checkBankIndex(index: BankIndex): string[] {
   for (const [genre, rules] of Object.entries(index.genres)) {
     for (const [segmentType, rule] of Object.entries(rules)) {
       const where = `genres.${genre}.${segmentType}`;
-      if (typeof rule.melodic === 'string') {
-        if (rule.melodic === hooksBank) {
-          problems.push(`${where}: the hooks bank must be given in a list ("melodic": ["${hooksBank}", ...])`);
-        }
-      } else {
+      if (typeof rule.melodic !== 'string') {
         if (new Set(rule.melodic).size !== rule.melodic.length) {
           problems.push(`${where}: melodic lists a bank twice`);
         }
@@ -434,15 +430,22 @@ function lookupRule(inputs: DispatchInputs): GenreSegmentRule | undefined {
   return genreRules[inputs.segmentType];
 }
 
-/** The legacy dispatch of one rule with one melodic bank. */
+const remixable = (bank: readonly Precedent[]) => bank.filter((e) => e.properties.useRemix);
+
+/** The legacy dispatch of one rule with one melodic bank, over the entries flagged `useRemix` (in the bank's
+ *  order, so with every entry flagged the picks are exactly the legacy ones). The rhythmic bank's tempo split
+ *  slices the bank as in the file, before the flag filter. */
 function dispatchRule(rule: GenreSegmentRule, melodicBankId: string, tempo: number): DispatchResult {
-  const melodicBank = loadPrecedentBank(melodicBankId);
+  const melodicBank = remixable(loadPrecedentBank(melodicBankId));
+  if (melodicBank.length === 0) throw new Error(`vocals/precedents: bank "${melodicBankId}" has no entry flagged useRemix`);
   let rhythmicBank: readonly Precedent[] | undefined;
   if (rule.rhythmic) {
     rhythmicBank = loadPrecedentBank(rule.rhythmic);
     if (rule.rhythmicTempoSplit !== undefined) {
       rhythmicBank = sliceByTempo(rhythmicBank, tempo, rule.rhythmicTempoSplit);
     }
+    rhythmicBank = remixable(rhythmicBank);
+    if (rhythmicBank.length === 0) throw new Error(`vocals/precedents: rhythmic bank "${rule.rhythmic}" has no entry flagged useRemix at ${tempo} bpm`);
   }
   const mixPrecedents = rhythmicBank !== undefined;
   // Legacy fallback (line 1404): `rhythmicPrecedents = rhythmicStructurePrecedents ? rhythmicStructurePrecedents : localPrecedents;`
@@ -719,16 +722,24 @@ export interface MergedPrecedent {
 
 const MAX_MERGE_RETRIES = 6; // legacy: `if (safety++ > 5) throw`
 
-/** Faithful port of `_getMergedRhythmicAndMelodicPrecedent`. Returns
- *  `undefined` for segment types the dispatcher has no entry for. A rule
- *  whose `melodic` is a list of banks goes through `selectFromMelodicList`;
- *  a rule with a single melodic bank (every legacy rule) takes the legacy
- *  path below, with the same rng draws as before lists existed. */
+/** The melody of one section: a precedent used whole, or the merge of two
+ *  (faithful port of `_getMergedRhythmicAndMelodicPrecedent`). Returns
+ *  `undefined` for segment types the dispatcher has no entry for. See
+ *  "selection: flags, several banks, hooks" below. */
 export function selectMergedPrecedent(inputs: MergeInputs): MergedPrecedent | undefined {
   const rule = lookupRule(inputs);
   if (!rule) return undefined;
-  if (typeof rule.melodic !== 'string') return selectFromMelodicList(rule, rule.melodic, inputs);
-  return mergeLegacy(dispatchRule(rule, rule.melodic, inputs.tempo), inputs);
+  const bankIds = typeof rule.melodic === 'string' ? [rule.melodic] : rule.melodic;
+  const plans = bankIds.map((bankId) => planBank(rule, bankId, inputs));
+  const usable = plans.filter((p) => p.whole.length > 0 || p.remix !== undefined);
+  if (usable.length === 0) {
+    throw new Error(
+      `vocals/precedents: no melody for ${inputs.genre}/${inputs.segmentType} at ${inputs.tempo} bpm: ${plans.map((p) => p.why).join('; ')}`,
+    );
+  }
+  // A single-bank rule draws no bank pick (the legacy draws); a list always draws one, even with one usable bank.
+  const plan = typeof rule.melodic === 'string' ? usable[0]! : inputs.rng.pick(usable);
+  return selectInBank(plan, inputs);
 }
 
 /** The legacy selection + merge for one dispatched melodic bank. */
@@ -781,55 +792,59 @@ function mergeLegacy(dispatch: DispatchResult, inputs: MergeInputs): MergedPrece
   }
 }
 
-// ---- several melodic banks, hooks ----
+// ---- selection: flags, several banks, hooks ----
 //
-// A rule may list several melodic banks (`"melodic": ["hooks", "schlager"]`).
-// The candidate pool is their union, picked in two steps: first a bank, all
-// listed banks equally likely, then an entry of that bank. Picking per bank
-// keeps a small bank (about 100 hooks) from being drowned by a large one
-// (stefan has 1201 entries): with a flat union, hooks would come up for under
-// one section in ten.
+// Every bank entry carries two flags: `useOriginal` (it may be sung whole,
+// exactly as written, moved by whole octaves only) and `useRemix` (it may
+// take part in the mixing merge). Hooks have both; the legacy banks are
+// remix-only (scripts/add-precedent-flags.mjs; the admin can change the flags
+// through the edits overlay).
 //
-// A legacy bank picked from the list behaves exactly as a single-bank rule
-// naming it (the rule's rhythmic bank, tempo split and maxNote apply).
+// A rule names one melodic bank or a list. With a list, a bank is picked
+// first, every usable listed bank equally likely, then an entry of it:
+// picking per bank keeps a small bank (about 100 hooks) from being drowned by
+// a large one (stefan has 1201 entries). A single-bank rule draws no bank pick.
 //
-// The hooks bank (bank-index `hooks.bank`) holds complete melodies. When a
-// list names it, the call first decides whether a hook would be used whole
-// (probability `hooks.wholeShare`) or mixed, then builds the hooks pool for
-// that use:
-//   - section type: only hooks written for this section (`properties.type`
-//     Verse / Pre-chorus / Chorus / Bridge for the sections verse /
-//     preChorus / chorus / bridge);
-//   - tempo: only hooks with `tempoMin <= song tempo <= tempoMax`;
-// Hooks are placed under `hooks.maxNote[<section type>]`, not the rule's
-// maxNote (which keeps applying to legacy picks).
-//   - whole use only: the hook must fit the section's range by moving it by
-//     whole octaves (see `wholeHookOctaveShift`); mixing needs at least two
-//     hooks.
-// An empty pool drops the hooks bank out of the bank choice; if the rule lists
-// no other bank, that is an error naming the section, tempo and use (no silent
-// switch to a bank the rule does not list).
+// Within the bank:
+//   - Whole candidates: entries flagged useOriginal, written for this section
+//     type (properties.type Verse / Pre-chorus (or Prechorus) / Chorus /
+//     Bridge for verse / preChorus / chorus / bridge), suiting the tempo
+//     (hooks: tempoMin <= tempo <= tempoMax; legacy entries have one tempo,
+//     accepted within ±10 bpm of the song tempo) and fitting the section's
+//     range [43..maxNote] by an octave shift (`wholeOctaveShift`). maxNote is
+//     `hooks.maxNote[<section type>]` for hooks, the rule's maxNote (default
+//     59) for legacy entries.
+//   - Remix candidates: for a legacy bank, its entries flagged useRemix,
+//     merged exactly as the legacy port (rhythm from the rule's rhythmic bank
+//     (its useRemix entries); no type or tempo filter). For the hooks bank,
+//     hooks flagged useRemix, of the section type and tempo; mixing takes the
+//     pitch shape and chords of one and the rhythm of another, so it needs two.
+//   - No whole candidate: the remix merge runs directly, with the legacy rng
+//     draws. So a single-bank rule over remix-only entries (every legacy rule
+//     today) draws and sings exactly as before the flags existed.
+//   - Otherwise one entry is drawn from the union of both candidate sets. A
+//     whole-only candidate is sung whole; a remix-only candidate means the
+//     remix merge runs (which picks its own pair, as always); a candidate in
+//     both is sung whole with probability `wholeShare` (bank index), else the
+//     remix merge runs.
+// A bank with no candidate of either kind is not usable; when no listed bank
+// is usable, the error names the section, tempo and each bank's reason.
 //
-// Used whole, the hook is both the rhythmic and the melodic precedent and is
-// placed by the octave shift only: its rhythm, notes (intervals exact) and
-// chords come out together. Mixed, the picked hook gives the pitch shape and
-// chords and a second, different hook from the same pool gives the rhythm;
-// the merged melody gets the usual buildContour placement (which may fold
-// wide leaps). The rule's rhythmic bank is not used for hooks. Hooks go
-// through the same length helper as legacy entries, so a lead-in bar
-// (`start 1, end 9`) is cut off exactly as for the legacy start-1 entries.
-//
-// Rng draws per call of a list rule naming the hooks bank: whole-or-mixed,
-// bank pick (always, even with one candidate bank); then, for a legacy bank,
-// the legacy draws; for hooks: hook pick and (mixed) one partner pick per
-// attempt. A list rule without the hooks bank draws only the bank pick.
+// Sung whole, the entry is both the rhythmic and the melodic precedent and
+// is placed by the octave shift only: rhythm, notes (intervals exact) and
+// chords come out as written. Lead-in bars (start 1, end 9) are cut off by the
+// same length helper as in the merge (dropped in an 8-bar section).
 
-const HOOK_TYPE_TO_SEGMENT: Readonly<Record<string, string>> = {
+const TYPE_TO_SEGMENT: Readonly<Record<string, string>> = {
   Verse: 'verse',
   'Pre-chorus': 'preChorus',
+  Prechorus: 'preChorus',
   Chorus: 'chorus',
   Bridge: 'bridge',
 };
+
+/** Legacy entries carry one tempo; used whole they suit songs within this many bpm of it. */
+const LEGACY_WHOLE_TEMPO_WINDOW = 10;
 
 const HookPropertiesSchema = z
   .object({
@@ -840,32 +855,15 @@ const HookPropertiesSchema = z
   })
   .passthrough();
 
-/** Hooks of the bank written for this section type and suiting the tempo. */
-function hooksFor(bankId: string, segmentType: string, tempo: number): readonly Precedent[] {
-  const bank = loadPrecedentBank(bankId);
-  const out: Precedent[] = [];
-  for (const entry of bank) {
-    const parsed = HookPropertiesSchema.safeParse(entry.properties);
-    if (!parsed.success) {
-      throw new Error(
-        `vocals/precedents: entry "${entry.id}" of the hooks bank "${bankId}" is not a hook (needs properties kind "hook", type, tempoMin, tempoMax): ${parsed.error.message}`,
-      );
-    }
-    const p = parsed.data;
-    if (HOOK_TYPE_TO_SEGMENT[p.type] === segmentType && p.tempoMin <= tempo && tempo <= p.tempoMax) out.push(entry);
-  }
-  return out;
-}
-
-/** The octave shift (a multiple of 12) that places a whole hook in the singing range [MIN_NOTE, maxNote], or
- *  `undefined` when no shift fits. Every note of the entry counts, the lead-in bar's too (a 16-bar section
- *  repeats the hook and sings the lead-in again). Among the shifts that fit, the highest is taken: moving a whole
+/** The octave shift (a multiple of 12) that places a whole entry in the singing range [MIN_NOTE, maxNote], or
+ *  `undefined` when no shift fits. Every note of the entry counts, a lead-in bar's too (a 16-bar section repeats
+ *  the entry and sings the lead-in again). Among the shifts that fit, the highest is taken: moving a whole
  *  melody by octaves leaves every step the same, and on equal steps the usual placement (buildContour, priority
  *  "highNotes") prefers the higher peak, so this is the shift it would choose if it could only shift. */
-export function wholeHookOctaveShift(hook: Precedent, maxNote: number): number | undefined {
+export function wholeOctaveShift(entry: Precedent, maxNote: number): number | undefined {
   let lo = Infinity;
   let hi = -Infinity;
-  for (const notes of Object.values(hook.melody)) {
+  for (const notes of Object.values(entry.melody)) {
     for (const n of notes) {
       if (n.midi < lo) lo = n.midi;
       if (n.midi > hi) hi = n.midi;
@@ -875,86 +873,136 @@ export function wholeHookOctaveShift(hook: Precedent, maxNote: number): number |
   return lo + shift >= MIN_NOTE ? shift : undefined;
 }
 
-type MelodicChoice =
-  | { readonly kind: 'legacy'; readonly bankId: string }
-  | { readonly kind: 'hooks'; readonly pool: readonly Precedent[] };
-
-function selectFromMelodicList(
-  rule: GenreSegmentRule,
-  bankIds: readonly string[],
-  inputs: MergeInputs,
-): MergedPrecedent {
-  const hooks = loadBankIndex().hooks;
-  const listsHooks = hooks !== undefined && bankIds.includes(hooks.bank);
-  // Hooks are placed under the hooks setting's maxNote for this section type, not the rule's (legacy picks keep
-  // the rule's maxNote through dispatchRule).
-  const maxNote = listsHooks ? hooks.maxNote[inputs.segmentType] : undefined;
-  if (listsHooks && maxNote === undefined) {
-    throw new Error(
-      `vocals/precedents: ${inputs.genre}/${inputs.segmentType} lists the hooks bank but bank-index hooks.maxNote has no entry for "${inputs.segmentType}"`,
-    );
-  }
-  const whole = listsHooks ? inputs.rng.bool(hooks.wholeShare) : false;
-  const choices: MelodicChoice[] = [];
-  let hooksDroppedBecause: string | undefined;
-  for (const bankId of bankIds) {
-    if (!listsHooks || bankId !== hooks.bank) {
-      choices.push({ kind: 'legacy', bankId });
-      continue;
-    }
-    const suiting = hooksFor(bankId, inputs.segmentType, inputs.tempo);
-    if (whole) {
-      const pool = suiting.filter((h) => wholeHookOctaveShift(h, maxNote!) !== undefined);
-      if (pool.length > 0) choices.push({ kind: 'hooks', pool });
-      else {
-        hooksDroppedBecause = `no hook in the hooks bank "${bankId}" is written for ${inputs.segmentType}, has tempoMin <= ${inputs.tempo} <= tempoMax and fits the range up to maxNote ${maxNote} by octave shifts, for use whole`;
-      }
-    } else if (suiting.length >= 2) {
-      choices.push({ kind: 'hooks', pool: suiting });
-    } else {
-      hooksDroppedBecause = `the hooks bank "${bankId}" has ${suiting.length} hook(s) written for ${inputs.segmentType} with tempoMin <= ${inputs.tempo} <= tempoMax; mixing needs two`;
-    }
-  }
-  if (choices.length === 0) {
-    throw new Error(
-      `vocals/precedents: no melody for ${inputs.genre}/${inputs.segmentType} at ${inputs.tempo} bpm: ${hooksDroppedBecause}, and the rule lists no other melodic bank`,
-    );
-  }
-  const choice = inputs.rng.pick(choices);
-  if (choice.kind === 'legacy') return mergeLegacy(dispatchRule(rule, choice.bankId, inputs.tempo), inputs);
-  return whole ? mergeWholeHook(choice.pool, maxNote!, inputs) : mergeMixedHooks(choice.pool, maxNote!, inputs);
+interface WholeCandidate {
+  readonly entry: Precedent;
+  readonly shift: number;
 }
 
-function hookWhere(inputs: MergeInputs): string {
+interface BankPlan {
+  readonly bankId: string;
+  readonly rule: GenreSegmentRule;
+  /** Entries that may be sung whole here, with their octave shift. */
+  readonly whole: readonly WholeCandidate[];
+  /** How to remix, when the bank can: the legacy merge, or mixing among hooks. */
+  readonly remix:
+    | { readonly kind: 'legacy'; readonly entries: readonly Precedent[] }
+    | { readonly kind: 'hooks'; readonly entries: readonly Precedent[]; readonly maxNote: number }
+    | undefined;
+  readonly wholeMaxNote: number;
+  /** Why the bank is not usable, in words (for the error when no bank is). */
+  readonly why: string;
+}
+
+function planBank(rule: GenreSegmentRule, bankId: string, inputs: MergeInputs): BankPlan {
+  const index = loadBankIndex();
+  const bank = loadPrecedentBank(bankId);
+  const isHooks = index.hooks !== undefined && bankId === index.hooks.bank;
+  const ofSection = (e: Precedent) => e.properties.type !== undefined && TYPE_TO_SEGMENT[e.properties.type] === inputs.segmentType;
+
+  if (isHooks) {
+    const maxNote = index.hooks!.maxNote[inputs.segmentType];
+    if (maxNote === undefined) {
+      throw new Error(
+        `vocals/precedents: ${inputs.genre}/${inputs.segmentType} uses the hooks bank but bank-index hooks.maxNote has no entry for "${inputs.segmentType}"`,
+      );
+    }
+    for (const e of bank) {
+      const r = HookPropertiesSchema.safeParse(e.properties);
+      if (!r.success) {
+        throw new Error(
+          `vocals/precedents: entry "${e.id}" of the hooks bank "${bankId}" is not a hook (needs properties kind "hook", type, tempoMin, tempoMax): ${r.error.message}`,
+        );
+      }
+    }
+    const suiting = bank.filter((e) => {
+      const p = e.properties as unknown as { tempoMin: number; tempoMax: number };
+      return ofSection(e) && p.tempoMin <= inputs.tempo && inputs.tempo <= p.tempoMax;
+    });
+    const whole = wholeCandidates(suiting, maxNote);
+    const mixable = suiting.filter((e) => e.properties.useRemix);
+    return {
+      bankId,
+      rule,
+      whole,
+      remix: mixable.length >= 2 ? { kind: 'hooks', entries: mixable, maxNote } : undefined,
+      wholeMaxNote: maxNote,
+      why: `hooks bank "${bankId}": ${suiting.length} hook(s) written for ${inputs.segmentType} with tempoMin <= ${inputs.tempo} <= tempoMax, ${whole.length} of them may be sung whole and fit the range up to maxNote ${maxNote}, ${mixable.length} may be remixed (mixing needs two)`,
+    };
+  }
+
+  const maxNote = rule.maxNote ?? DEFAULT_MAX_NOTE;
+  const suiting = bank.filter((e) => {
+    if (!e.properties.useOriginal || !ofSection(e)) return false;
+    if (e.properties.tempo === undefined) {
+      throw new Error(`vocals/precedents: entry "${bankId}/${e.id}" may be sung whole but has no tempo`);
+    }
+    return Math.abs(Number(e.properties.tempo) - inputs.tempo) <= LEGACY_WHOLE_TEMPO_WINDOW;
+  });
+  const whole = wholeCandidates(suiting, maxNote);
+  const remix = bank.some((e) => e.properties.useRemix) ? { kind: 'legacy' as const, entries: remixable(bank) } : undefined;
+  return {
+    bankId,
+    rule,
+    whole,
+    remix,
+    wholeMaxNote: maxNote,
+    why: `bank "${bankId}": ${whole.length} entries may be sung whole here (useOriginal, written for ${inputs.segmentType}, tempo within ${LEGACY_WHOLE_TEMPO_WINDOW} bpm, fits up to maxNote ${maxNote}) and ${remix ? 'some' : 'none'} may be remixed`,
+  };
+}
+
+function wholeCandidates(entries: readonly Precedent[], maxNote: number): WholeCandidate[] {
+  const out: WholeCandidate[] = [];
+  for (const entry of entries) {
+    if (!entry.properties.useOriginal) continue;
+    const shift = wholeOctaveShift(entry, maxNote);
+    if (shift !== undefined) out.push({ entry, shift });
+  }
+  return out;
+}
+
+function selectInBank(plan: BankPlan, inputs: MergeInputs): MergedPrecedent {
+  if (plan.whole.length === 0) return remixInBank(plan, inputs);
+  const remixIds = new Set((plan.remix?.entries ?? []).map((e) => e.id));
+  const wholeIds = new Set(plan.whole.map((w) => w.entry.id));
+  const union = [...plan.whole.map((w) => w.entry), ...(plan.remix?.entries ?? []).filter((e) => !wholeIds.has(e.id))];
+  const picked = inputs.rng.pick(union);
+  const asWhole = plan.whole.find((w) => w.entry.id === picked.id);
+  const sungWhole = asWhole !== undefined && (!remixIds.has(picked.id) || inputs.rng.bool(loadBankIndex().wholeShare));
+  return sungWhole ? mergeWhole(asWhole, plan, inputs) : remixInBank(plan, inputs);
+}
+
+function remixInBank(plan: BankPlan, inputs: MergeInputs): MergedPrecedent {
+  const remix = plan.remix;
+  if (!remix) throw new Error(`vocals/precedents: ${plan.why}`); // unreachable: planBank made the bank usable
+  if (remix.kind === 'legacy') return mergeLegacy(dispatchRule(plan.rule, plan.bankId, inputs.tempo), inputs);
+  return mergeMixedHooks(remix.entries, remix.maxNote, inputs);
+}
+
+function where(inputs: MergeInputs): string {
   return `${inputs.genre}/${inputs.segmentType} at ${inputs.tempo} bpm`;
 }
 
-function mergeWholeHook(pool: readonly Precedent[], maxNote: number, inputs: MergeInputs): MergedPrecedent {
-  const picked = rngPickHook(pool, inputs);
-  const original = pool.find((h) => h.id === picked.id)!;
-  const shift = wholeHookOctaveShift(original, maxNote)!;
-  const draped = drapeAndPlace(picked, picked, maxNote, shift);
+function mergeWhole(candidate: WholeCandidate, plan: BankPlan, inputs: MergeInputs): MergedPrecedent {
+  const shaped = pickHelperPrecedent([candidate.entry], { desiredPatternLength: inputs.desiredPatternLength }, inputs.rng);
+  const draped = drapeAndPlace(shaped, shaped, plan.wholeMaxNote, candidate.shift);
   if (!draped.ok) {
-    throw new Error(`vocals/precedents: hook "${picked.id}" used whole: ${draped.failure} (${hookWhere(inputs)})`);
+    throw new Error(`vocals/precedents: "${plan.bankId}/${candidate.entry.id}" sung whole: ${draped.failure} (${where(inputs)})`);
   }
   return draped.merged;
 }
 
-function rngPickHook(pool: readonly Precedent[], inputs: MergeInputs): Precedent {
-  return pickHelperPrecedent(pool, { desiredPatternLength: inputs.desiredPatternLength }, inputs.rng);
-}
-
 function mergeMixedHooks(pool: readonly Precedent[], maxNote: number, inputs: MergeInputs): MergedPrecedent {
-  const hook = rngPickHook(pool, inputs);
+  const params = { desiredPatternLength: inputs.desiredPatternLength };
+  const hook = pickHelperPrecedent(pool, params, inputs.rng);
   const partners = pool.filter((e) => e.id !== hook.id);
   let safety = 0;
   while (true) {
-    const rhythmHook = rngPickHook(partners, inputs);
+    const rhythmHook = pickHelperPrecedent(partners, params, inputs.rng);
     const draped = drapeAndPlace(rhythmHook, hook, maxNote, undefined);
     if (draped.ok) return draped.merged;
     if (safety++ > MAX_MERGE_RETRIES) {
       throw new Error(
-        `vocals/precedents: hook "${hook.id}" mixed with other hooks: ${draped.failure} after ${safety} retries (${hookWhere(inputs)})`,
+        `vocals/precedents: hook "${hook.id}" mixed with other hooks: ${draped.failure} after ${safety} retries (${where(inputs)})`,
       );
     }
   }

@@ -20,8 +20,8 @@ import { setPrecedentDataForTests } from '../src/vocals/precedents.js';
 const PRECEDENTS = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'vocals', 'precedents');
 
 afterEach(() => {
-  setPrecedentEdits({});
   setPrecedentDataForTests(undefined);
+  setPrecedentEdits({});
 });
 
 describe('flags and source on every bank entry', () => {
@@ -48,7 +48,7 @@ describe('flags and source on every bank entry', () => {
       return { ...e, properties };
     });
     setPrecedentDataForTests({
-      index: { $schemaVersion: 1, banks: { schlager: { file: 's.json' } }, genres: {} },
+      index: { $schemaVersion: 1, wholeShare: 0.5, banks: { schlager: { file: 's.json' } }, genres: {} },
       files: { 's.json': without },
     });
     expect(() => loadPrecedentBank('schlager')).toThrow(/useRemix/);
