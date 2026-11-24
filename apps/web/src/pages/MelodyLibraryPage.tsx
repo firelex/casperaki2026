@@ -330,7 +330,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
   const entryKey = ['melody-library', 'entry', bank, id];
   const entry = useQuery({ queryKey: entryKey, queryFn: ({ signal }) => melodiesApi.entry(bank, id, signal), staleTime: Infinity });
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
-  const [view, setView] = useState<'roll' | 'score'>('roll');
+  const [view, setView] = useState<'roll' | 'score'>('score');
   const [playBeat, setPlayBeat] = useState<number | undefined>(undefined);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
@@ -460,6 +460,25 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
             {e.edited ? ` · edited by ${e.editedBy} on ${e.editedAt?.slice(0, 16).replace('T', ' ')}` : ''}
           </p>
         </div>
+        <div className="flex gap-1 rounded-full border border-line p-0.5" role="tablist" aria-label="View">
+          {(
+            [
+              ['score', 'Score'],
+              ['roll', 'Piano roll'],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => setView(v)}
+              className={`h-8 rounded-full px-3 text-[13px] ${view === v ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <button type="button" onClick={togglePlay} className="h-9 rounded-full bg-accent px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[#e00000]">
           {playing ? 'Stop' : 'Play'}
         </button>
@@ -524,25 +543,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
         </div>
       ) : null}
 
-      <div className="mt-4 flex gap-1" role="tablist" aria-label="View">
-        {(
-          [
-            ['roll', 'Piano roll'],
-            ['score', 'Score'],
-          ] as const
-        ).map(([v, label]) => (
-          <button
-            key={v}
-            type="button"
-            role="tab"
-            aria-selected={view === v}
-            onClick={() => setView(v)}
-            className={`h-8 rounded-full px-3 text-[13px] ${view === v ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <div className="mt-4">
       {view === 'roll' ? (
         <ZoomedRoll beats={cur.beats}>
           {(scrollable) => (
@@ -589,6 +590,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
       ) : (
         <Score notes={scoreNotes} beats={cur.beats} songKey="C" bpm={e.tempo} beat={playBeat} chords={scoreChords} caption="The melody at sung pitch and its chords, rounded to 16ths." />
       )}
+      </div>
       {view === 'roll' ? (
         <p className="mt-2 text-[11px] text-white/45">
           Click to add a note · right click to delete · drag to move · hold, then drag to change the length · click a chord to change it · Ctrl+Z to undo. Blue: as
