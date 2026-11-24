@@ -11,7 +11,8 @@ import {
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
-import { vocalsWaitMessage } from '../audio/singVocals';
+import { unsungSections as unsungSectionsOf, vocalsWaitMessage } from '../audio/singVocals';
+import { vocalsApi } from '../api/vocals';
 import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type SampledAutomation } from '../audio/livePlayer';
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
@@ -107,6 +108,18 @@ export function TimelineView() {
       clearTimeout(t);
     };
   }, [liveKey, fetchPayload, editorDirty, pro.version]);
+  // Sung vocals on: which sections of the lead vocal have no current take (greyed out on its track).
+  const vocalsOn = viewSong?.vocals?.enabled === true;
+  const vocalStatus = useQuery({
+    queryKey: ['vocals', 'status', viewSong ? fnv1a(JSON.stringify(viewSong)) : ''],
+    queryFn: ({ signal }) => vocalsApi.status(viewSong!, signal),
+    enabled: vocalsOn && Boolean(viewSong),
+    staleTime: 10_000,
+  });
+  const unsungSections = useMemo(
+    () => (vocalsOn && model ? unsungSectionsOf(model.sections, vocalStatus.data?.sections) : new Set<number>()),
+    [vocalsOn, model, vocalStatus.data],
+  );
   const [dialog, setDialog] = useState<Dialog | undefined>(undefined);
   /** The section dialogs (from the ruler's right-click menu). */
   const [sectionDialog, setSectionDialog] = useState<
@@ -752,6 +765,7 @@ export function TimelineView() {
                     selectedSection={selectedTrack === t.name ? model.sections.findIndex((s) => s.name === activeSegment) : undefined}
                     rowH={rowH}
                     automation={automationByTrack.get(t.name)}
+                    {...(t.name === 'Vocal' ? { unsungSections } : {})}
                   />
                 </div>
                 </div>

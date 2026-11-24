@@ -110,3 +110,11 @@ export function vocalsWaitMessage(err: unknown): string | undefined {
   if (!(err instanceof BrainError) || err.status !== 409 || err.body?.error !== 'vocals_need_singing') return undefined;
   return 'Press Play to sing the vocals; this shows once they are sung.';
 }
+
+/** Indexes (in `sections`) of the sections whose lead vocal is not sung for the song as it is (missing or stale take):
+ *  the timeline greys them out. None while the status is not known. */
+export function unsungSections(sections: readonly { readonly name: string }[], status: readonly SectionStatus[] | undefined): ReadonlySet<number> {
+  if (!status) return new Set();
+  const unsung = new Set(status.filter((s) => s.state === 'missing' || s.state === 'stale').map((s) => s.segment));
+  return new Set(sections.flatMap((s, i) => (unsung.has(s.name) ? [i] : [])));
+}

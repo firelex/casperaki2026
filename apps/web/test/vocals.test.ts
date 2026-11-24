@@ -137,3 +137,21 @@ describe('vocalsWaitMessage', () => {
     expect(vocalsWaitMessage(new Error('x'))).toBeUndefined();
   });
 });
+
+import { unsungSections } from '../src/audio/singVocals';
+
+describe('unsungSections', () => {
+  const sections = [{ name: 'intro' }, { name: 'verse1' }, { name: 'chorus1' }, { name: 'verse2' }];
+  it('the section indexes whose lead vocal has no current take (missing or changed)', () => {
+    const st = [
+      { segment: 'intro', state: 'none' as const },
+      { segment: 'verse1', state: 'current' as const },
+      { segment: 'chorus1', state: 'stale' as const },
+      { segment: 'verse2', state: 'missing' as const },
+    ];
+    expect([...unsungSections(sections, st)].sort()).toEqual([2, 3]);
+  });
+  it('nothing while the status is not known', () => {
+    expect(unsungSections(sections, undefined).size).toBe(0);
+  });
+});

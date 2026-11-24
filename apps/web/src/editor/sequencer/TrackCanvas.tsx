@@ -11,6 +11,9 @@ const CLIP_HEADER_H = 13;
  * the track plays in (name strip on top, as in a DAW), its notes, and the
  * track's measured waveform behind them.
  */
+/** Vocal sections not sung yet (sung vocals on). */
+const UNSUNG_GREY = '#6b6d73';
+
 export function TrackCanvas({
   track,
   model,
@@ -23,6 +26,7 @@ export function TrackCanvas({
   selectedSection,
   rowH,
   automation,
+  unsungSections,
 }: {
   track: SeqTrack;
   model: SequencerModel;
@@ -41,6 +45,8 @@ export function TrackCanvas({
   rowH: number;
   /** The engine's automation for this track: filter sweeps and volume fades. */
   automation: { readonly lowPass?: SampledAutomation; readonly volume?: SampledAutomation } | undefined;
+  /** Sung vocals on: sections of this (lead vocal) track not sung for the song as it is, drawn grey. */
+  unsungSections?: ReadonlySet<number>;
 }) {
   const ROW_H = rowH;
   const ref = useRef<HTMLCanvasElement>(null);
@@ -86,8 +92,10 @@ export function TrackCanvas({
     for (const clip of track.clips) {
       const x = clip.startBar * px + 1;
       const w = Math.max(2, clip.bars * px - 2);
+      const unsung = unsungSections?.has(clip.section) ?? false;
+      const clipColor = unsung ? UNSUNG_GREY : color;
       g.globalAlpha = 0.2 * alpha;
-      g.fillStyle = color;
+      g.fillStyle = clipColor;
       roundRect(g, x, top, w, clipH, 3);
       g.fill();
       if (headerH) {
@@ -96,7 +104,7 @@ export function TrackCanvas({
         g.fill();
       }
       g.globalAlpha = (clip.section === selectedSection ? 1 : 0.5) * alpha;
-      g.strokeStyle = clip.section === selectedSection ? '#ffffff' : color;
+      g.strokeStyle = clip.section === selectedSection ? '#ffffff' : clipColor;
       g.lineWidth = clip.section === selectedSection ? 1.5 : 1;
       roundRect(g, x + 0.5, top + 0.5, w - 1, clipH - 1, 3);
       g.stroke();
@@ -109,7 +117,7 @@ export function TrackCanvas({
         g.beginPath();
         g.rect(x + 4, top, w - 8, CLIP_HEADER_H);
         g.clip();
-        g.fillText(model.sections[clip.section]!.name, x + 5, top + CLIP_HEADER_H / 2 + 0.5);
+        g.fillText(`${model.sections[clip.section]!.name}${unsung ? ' · not sung' : ''}`, x + 5, top + CLIP_HEADER_H / 2 + 0.5);
         g.restore();
       }
     }
@@ -153,7 +161,7 @@ export function TrackCanvas({
     const noteH = track.isDrums ? Math.max(1.5, innerH / Math.max(1, drumLanes.length) - 0.5) : 2;
     g.fillStyle = '#ffffff';
     for (const clip of track.clips) {
-      g.globalAlpha = (peaks ? 0.6 : 0.8) * alpha;
+      g.globalAlpha = (peaks ? 0.6 : 0.8) * alpha * (unsungSections?.has(clip.section) ? 0.35 : 1);
       for (const n of clip.notes) {
         const nx = (n.start / BEATS_PER_BAR) * px;
         const nw = Math.max(1.2, (n.length / BEATS_PER_BAR) * px - 0.5);
@@ -203,7 +211,7 @@ export function TrackCanvas({
     if (automation?.volume) {
       curve(automation.volume, (d) => innerTop + (Math.min(48, Math.max(0, -d)) / 48) * innerH, (d) => Math.abs(d) > 0.1, true, 'VOL');
     }
-  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation]);
+  }, [track, model, px, width, peaks, binSec, meterMax, secondsPerBar, dimmed, selectedSection, ROW_H, automation, unsungSections]);
 
   return <canvas ref={ref} style={{ width, height: ROW_H }} className="block" aria-label={`${track.name}: ${track.clips.length} sections`} />;
 }
