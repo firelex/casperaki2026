@@ -16,6 +16,7 @@ import {
   type VocalResult,
 } from '../src/index.js';
 import { LEGACY_INDEX_TO_MIDI, MIN_NOTE, MAX_NOTE } from '../src/vocals/range.js';
+import { loadBankIndex } from '../src/vocals/precedents.js';
 import { vocalsGoldenPath } from './fixtures.js';
 
 function makeCtx(seed: string | number, key = 'C', genre = 'brightPop'): GeneratorContext {
@@ -103,14 +104,16 @@ describe('generateVocalMelody (brightPop)', () => {
     });
   });
 
-  it('every MIDI note lands in the legacy MelodyClass range envelope [MIN_NOTE..MAX_NOTE]', () => {
+  it('every MIDI note lands in the range envelope [MIN_NOTE..MAX_NOTE], hooks up to hooks.maxNote', () => {
     // Step 17a: range envelope from MelodyClass.minNote=43 (G3) / maxNote=59 (B4),
     // legacy note-table indices; the song holds MIDI (index + 12: G3 = 55, B4 = 71).
+    // Hooks are placed up to the bank index's hooks.maxNote (E4 index = E5 sung), so the top is the higher of the two.
+    const top = Math.max(MAX_NOTE, ...Object.values(loadBankIndex().hooks!.maxNote));
     const { result } = generate('range-check');
     forEachEvent(result, (ev) => {
       if (ev.type === 'vocalNote' && typeof ev.note === 'number') {
         expect(ev.note).toBeGreaterThanOrEqual(MIN_NOTE + LEGACY_INDEX_TO_MIDI);
-        expect(ev.note).toBeLessThanOrEqual(MAX_NOTE + LEGACY_INDEX_TO_MIDI);
+        expect(ev.note).toBeLessThanOrEqual(top + LEGACY_INDEX_TO_MIDI);
       }
     });
   });

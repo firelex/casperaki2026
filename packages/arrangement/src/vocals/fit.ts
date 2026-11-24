@@ -80,10 +80,11 @@ export function mergedChordBars(merged: MergedPrecedent, bars: number): string[]
   return out;
 }
 
-/** The transposition for a section kind: the key's move, plus whole octaves so the peak is at or below the top of the range. */
-export function sectionTransposition(peak: number, keyOffset: number): number {
+/** The transposition for a section kind: the key's move, plus whole octaves so the peak is at or below `ceiling`
+ *  (the top of the range: MAX_NOTE, or higher for a melody placed with a higher ceiling, e.g. a hook). */
+export function sectionTransposition(peak: number, keyOffset: number, ceiling = MAX_NOTE): number {
   let t = keyOffset + 48;
-  while (peak + t > MAX_NOTE) t -= 12;
+  while (peak + t > ceiling) t -= 12;
   return t;
 }
 
@@ -115,12 +116,12 @@ export function refitNonChorus(
  * legacy chose the key so the melody fit), the octave of the whole line that
  * leaves the fewest semitones outside the range (ties: as placed).
  */
-export function fitRange(seq: readonly number[], priority: 'highNotes' | 'lowNotes'): number[] {
+export function fitRange(seq: readonly number[], priority: 'highNotes' | 'lowNotes', ceiling = MAX_NOTE): number[] {
   try {
-    return buildContour(seq, { maxNote: MAX_NOTE, priority });
+    return buildContour(seq, { maxNote: ceiling, priority });
   } catch (err) {
     if (!(err instanceof ContourBuildError)) throw err;
-    const outside = (t: number) => seq.reduce((sum, m) => sum + Math.max(0, MIN_NOTE - (m + t)) + Math.max(0, m + t - MAX_NOTE), 0);
+    const outside = (t: number) => seq.reduce((sum, m) => sum + Math.max(0, MIN_NOTE - (m + t)) + Math.max(0, m + t - ceiling), 0);
     const best = [0, 12, -12].reduce((a, b) => (outside(b) < outside(a) ? b : a));
     return seq.map((m) => m + best);
   }

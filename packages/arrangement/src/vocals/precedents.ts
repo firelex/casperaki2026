@@ -226,6 +226,18 @@ const GenreSegmentRuleSchema = z
   })
   .strict();
 
+const Weight = z.number().min(0);
+const RecipeWeightsSchema = z
+  .object({
+    hookWhole: Weight,
+    hookOnHook: Weight,
+    hookOnStyle: Weight,
+    curatedOnStyle: Weight,
+    curatedOnHook: Weight,
+    curatedBanks: z.record(z.string(), z.number().positive()),
+  })
+  .strict();
+
 const BankIndexSchema = z
   .object({
     $schemaVersion: z.literal(1),
@@ -245,6 +257,9 @@ const BankIndexSchema = z
       })
       .strict()
       .optional(),
+    // Per section type: how likely each way of making the melody is (relative weights), and how the curated
+    // (non-hook) banks are weighted when one is drawn. See "selection: recipes" below. Absent: the bank pick.
+    recipes: z.record(z.string(), RecipeWeightsSchema).optional(),
     genres: z.record(
       z.string(),
       z.record(z.string(), GenreSegmentRuleSchema),
@@ -277,7 +292,23 @@ function checkBankIndex(index: BankIndex): string[] {
       if (hooksBank !== undefined && rule.rhythmic === hooksBank) {
         problems.push(`${where}: the hooks bank cannot be a rhythmic bank (a hook brings its own rhythm)`);
       }
+      const recipe = index.recipes?.[segmentType];
+      if (recipe && typeof rule.melodic !== 'string') {
+        for (const id of rule.melodic) {
+          if (id !== hooksBank && recipe.curatedBanks[id] === undefined) {
+            problems.push(`${where}: melodic bank "${id}" has no weight in recipes.${segmentType}.curatedBanks`);
+          }
+        }
+      }
     }
+  }
+  for (const [segmentType, recipe] of Object.entries(index.recipes ?? {})) {
+    if (hooksBank === undefined) problems.push(`recipes.${segmentType}: recipes need the hooks bank (bank-index "hooks")`);
+    for (const id of Object.keys(recipe.curatedBanks)) {
+      if (!index.banks[id]) problems.push(`recipes.${segmentType}.curatedBanks: "${id}" is not listed under banks`);
+      if (id === hooksBank) problems.push(`recipes.${segmentType}.curatedBanks: the hooks bank is not a curated bank`);
+    }
+    if (RECIPES.every((r) => recipe[r] === 0)) problems.push(`recipes.${segmentType}: every recipe weight is 0`);
   }
   return problems;
 }
@@ -432,21 +463,23 @@ function lookupRule(inputs: DispatchInputs): GenreSegmentRule | undefined {
 
 const remixable = (bank: readonly Precedent[]) => bank.filter((e) => e.properties.useRemix);
 
+/** The rule's rhythmic bank (its useRemix entries, after the legacy tempo split), or undefined without one. */
+function styleRhythms(rule: GenreSegmentRule, tempo: number): readonly Precedent[] | undefined {
+  if (!rule.rhythmic) return undefined;
+  let bank = loadPrecedentBank(rule.rhythmic);
+  if (rule.rhythmicTempoSplit !== undefined) bank = sliceByTempo(bank, tempo, rule.rhythmicTempoSplit);
+  bank = remixable(bank);
+  if (bank.length === 0) throw new Error(`vocals/precedents: rhythmic bank "${rule.rhythmic}" has no entry flagged useRemix at ${tempo} bpm`);
+  return bank;
+}
+
 /** The legacy dispatch of one rule with one melodic bank, over the entries flagged `useRemix` (in the bank's
  *  order, so with every entry flagged the picks are exactly the legacy ones). The rhythmic bank's tempo split
  *  slices the bank as in the file, before the flag filter. */
 function dispatchRule(rule: GenreSegmentRule, melodicBankId: string, tempo: number): DispatchResult {
   const melodicBank = remixable(loadPrecedentBank(melodicBankId));
   if (melodicBank.length === 0) throw new Error(`vocals/precedents: bank "${melodicBankId}" has no entry flagged useRemix`);
-  let rhythmicBank: readonly Precedent[] | undefined;
-  if (rule.rhythmic) {
-    rhythmicBank = loadPrecedentBank(rule.rhythmic);
-    if (rule.rhythmicTempoSplit !== undefined) {
-      rhythmicBank = sliceByTempo(rhythmicBank, tempo, rule.rhythmicTempoSplit);
-    }
-    rhythmicBank = remixable(rhythmicBank);
-    if (rhythmicBank.length === 0) throw new Error(`vocals/precedents: rhythmic bank "${rule.rhythmic}" has no entry flagged useRemix at ${tempo} bpm`);
-  }
+  const rhythmicBank = styleRhythms(rule, tempo);
   const mixPrecedents = rhythmicBank !== undefined;
   // Legacy fallback (line 1404): `rhythmicPrecedents = rhythmicStructurePrecedents ? rhythmicStructurePrecedents : localPrecedents;`
   const rhythmic = rhythmicBank ?? melodicBank;
@@ -718,6 +751,8 @@ export interface MergedPrecedent {
   readonly melody: Readonly<Record<string, readonly { midi: number; duration: number }[]>>;
   /** Mirrors legacy: chords lifted from the melodic precedent. */
   readonly chords: Readonly<Record<string, { readonly chord: string }>>;
+  /** How the melody was made, when the bank index has recipes for the section (see "selection: recipes"). */
+  readonly recipe?: Recipe;
 }
 
 const MAX_MERGE_RETRIES = 6; // legacy: `if (safety++ > 5) throw`
@@ -729,6 +764,8 @@ const MAX_MERGE_RETRIES = 6; // legacy: `if (safety++ > 5) throw`
 export function selectMergedPrecedent(inputs: MergeInputs): MergedPrecedent | undefined {
   const rule = lookupRule(inputs);
   if (!rule) return undefined;
+  const recipe = loadBankIndex().recipes?.[inputs.segmentType];
+  if (recipe && typeof rule.melodic !== 'string') return selectByRecipe(rule, rule.melodic, recipe, inputs);
   const bankIds = typeof rule.melodic === 'string' ? [rule.melodic] : rule.melodic;
   const plans = bankIds.map((bankId) => planBank(rule, bankId, inputs));
   const usable = plans.filter((p) => p.whole.length > 0 || p.remix !== undefined);
@@ -1004,6 +1041,95 @@ function mergeMixedHooks(pool: readonly Precedent[], maxNote: number, inputs: Me
       throw new Error(
         `vocals/precedents: hook "${hook.id}" mixed with other hooks: ${draped.failure} after ${safety} retries (${where(inputs)})`,
       );
+    }
+  }
+}
+
+// ---- selection: recipes ----
+//
+// With `recipes` in the bank index (per section type), a rule listing several melodic banks draws one of five
+// recipes, by the section's relative weights among the recipes that can be made here:
+//   - hookWhole:      a hook sung whole (its rhythm, notes and chords as written, moved by octaves).
+//   - hookOnHook:     a hook's pitch shape and chords on another hook's rhythm (both of the section type and tempo).
+//   - hookOnStyle:    a hook's pitch shape and chords on a rhythm of the rule's rhythmic bank (the style's rhythm).
+//   - curatedOnStyle: a curated bank, drawn by `curatedBanks` weight, sung as before recipes (the legacy merge on
+//                     the style's rhythm, or whole if the admin flagged an entry Original).
+//   - curatedOnHook:  a curated entry's pitch shape and chords (curated bank drawn by weight) on a hook's rhythm.
+// Hooks are the listed hooks bank's entries flagged useRemix, of the section type and suiting the tempo; whole
+// hooks also fit the range (hooks.maxNote). A hook melody is placed up to hooks.maxNote, a curated one up to the
+// rule's maxNote. A recipe that cannot be made here (no hook for this tempo, no rhythmic bank, ...) is left out
+// and the others keep their relative weights; when none can be made, generation stops with an error.
+
+export const RECIPES = ['hookWhole', 'hookOnHook', 'hookOnStyle', 'curatedOnStyle', 'curatedOnHook'] as const;
+export type Recipe = (typeof RECIPES)[number];
+type RecipeWeights = z.infer<typeof RecipeWeightsSchema>;
+
+function selectByRecipe(rule: GenreSegmentRule, bankIds: readonly string[], weights: RecipeWeights, inputs: MergeInputs): MergedPrecedent {
+  const index = loadBankIndex();
+  const hooksId = index.hooks!.bank; // checkBankIndex: recipes need the hooks bank
+  const hookPlan = bankIds.includes(hooksId) ? planBank(rule, hooksId, inputs) : undefined;
+  const hooks = hookPlan ? remixableHooks(hookPlan, inputs) : [];
+  const hookMaxNote = index.hooks!.maxNote[inputs.segmentType]!;
+  const curatedPlans = bankIds.filter((id) => id !== hooksId).map((id) => planBank(rule, id, inputs)).filter((p) => p.whole.length > 0 || p.remix !== undefined);
+  const curatedRemix = curatedPlans.filter((p) => p.remix?.kind === 'legacy');
+  const style = styleRhythms(rule, inputs.tempo);
+
+  const can: Record<Recipe, boolean> = {
+    hookWhole: (hookPlan?.whole.length ?? 0) > 0,
+    hookOnHook: hooks.length >= 2,
+    hookOnStyle: hooks.length >= 1 && style !== undefined,
+    curatedOnStyle: curatedPlans.length > 0,
+    curatedOnHook: hooks.length >= 1 && curatedRemix.length > 0,
+  };
+  const options = RECIPES.filter((r) => can[r] && weights[r] > 0);
+  if (options.length === 0) {
+    throw new Error(
+      `vocals/precedents: no recipe can make a melody for ${where(inputs)}: ${RECIPES.map((r) => `${r} ${can[r] ? `weight ${weights[r]}` : 'cannot be made'}`).join(', ')}; ${[hookPlan, ...curatedPlans].filter(Boolean).map((p) => p!.why).join('; ')}`,
+    );
+  }
+  const recipe = inputs.rng.pickWeighted(options, options.map((r) => weights[r]));
+  const pickCurated = (plans: readonly BankPlan[]) => inputs.rng.pickWeighted(plans, plans.map((p) => weights.curatedBanks[p.bankId]!));
+  const made = (merged: MergedPrecedent): MergedPrecedent => ({ ...merged, recipe });
+
+  switch (recipe) {
+    case 'hookWhole':
+      return made(mergeWhole(inputs.rng.pick(hookPlan!.whole), hookPlan!, inputs));
+    case 'hookOnHook':
+      return made(mergeMixedHooks(hooks, hookMaxNote, inputs));
+    case 'hookOnStyle':
+      return made(drapePair(hooks, style!, hookMaxNote, inputs, 'a hook on the style rhythm'));
+    case 'curatedOnStyle':
+      return made(selectInBank(pickCurated(curatedPlans), inputs));
+    case 'curatedOnHook': {
+      const plan = pickCurated(curatedRemix);
+      const melodies = (plan.remix as { entries: readonly Precedent[] }).entries;
+      return made(drapePair(melodies, hooks, plan.rule.maxNote ?? DEFAULT_MAX_NOTE, inputs, `a ${plan.bankId} melody on a hook rhythm`));
+    }
+  }
+}
+
+/** The hooks of the section and tempo flagged useRemix (the pool for mixing, as melody or as rhythm). */
+function remixableHooks(plan: BankPlan, inputs: MergeInputs): readonly Precedent[] {
+  const ofSection = (e: Precedent) => e.properties.type !== undefined && TYPE_TO_SEGMENT[e.properties.type] === inputs.segmentType;
+  return loadPrecedentBank(plan.bankId).filter((e) => {
+    const p = e.properties as unknown as { tempoMin: number; tempoMax: number };
+    return e.properties.useRemix && ofSection(e) && p.tempoMin <= inputs.tempo && inputs.tempo <= p.tempoMax;
+  });
+}
+
+/** One melody (pitch shape and chords) from `melodies` on one rhythm from `rhythms`, placed up to maxNote; a pair
+ *  that cannot be placed is drawn again (both), up to the legacy retry limit. */
+function drapePair(melodies: readonly Precedent[], rhythms: readonly Precedent[], maxNote: number, inputs: MergeInputs, what: string): MergedPrecedent {
+  const params = { desiredPatternLength: inputs.desiredPatternLength };
+  let safety = 0;
+  while (true) {
+    // Like the legacy merge, a failed placement draws both again.
+    const melodic = pickHelperPrecedent(melodies, params, inputs.rng);
+    const rhythmic = pickHelperPrecedent(rhythms, params, inputs.rng);
+    const draped = drapeAndPlace(rhythmic, melodic, maxNote, undefined);
+    if (draped.ok) return draped.merged;
+    if (safety++ > MAX_MERGE_RETRIES) {
+      throw new Error(`vocals/precedents: ${what} ("${melodic.id}" on "${rhythmic.id}"): ${draped.failure} after ${safety} retries (${where(inputs)})`);
     }
   }
 }

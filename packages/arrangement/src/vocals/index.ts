@@ -182,7 +182,10 @@ function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent, kind: s
   );
   // Into the key, at the octave where the kind's peak fits the range; other
   // kinds than the chorus are re-fitted and smoothed (fit.ts).
-  const shift = sectionTransposition(merged.properties.melodyMaxNote, keyOffset);
+  // The ceiling is the one the melody was placed with when that is above the default (hooks: hooks.maxNote), so a
+  // hook is not dropped an octave below the range; legacy entries (maxNote at or below MAX_NOTE) are unchanged.
+  const ceiling = Math.max(MAX_NOTE, merged.properties.maxNote);
+  const shift = sectionTransposition(merged.properties.melodyMaxNote, keyOffset, ceiling);
   let midis = laid.map((ev) => ev.midi + shift);
   if (kind !== 'chorus') {
     const chordAt = (i: number) => {
@@ -197,7 +200,7 @@ function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent, kind: s
     // The key is fixed (legacy moved the whole song so the chorus peak sat on
     // the top note): when that leaves chorus notes under the range, re-fit
     // its octaves within the range, preferring high notes.
-    midis = fitRange(midis, 'highNotes');
+    midis = fitRange(midis, 'highNotes', ceiling);
   }
   const events = laid.map((ev, i) => ({ ...ev, midi: midis[i]! }));
 

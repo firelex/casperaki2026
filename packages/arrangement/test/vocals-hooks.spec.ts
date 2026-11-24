@@ -358,3 +358,76 @@ describe('the real hooks bank (smoke)', () => {
     }
   });
 });
+
+describe('selection by recipe (bank index "recipes")', () => {
+  const rhythms = JSON.parse(readFileSync(resolve(PRECEDENTS, 'mlDataRaw-rhythmic-dance.json'), 'utf8')) as Precedent[];
+  const schlagerEntries = schlager as Precedent[];
+  const pairOf = (id: string | number | undefined, name: string | undefined) => `${id}|${name}`;
+  const RHYTHM = new Set(rhythms.map((e) => pairOf(e.id, e.properties.name)));
+  const SCHLAGER = new Set(schlagerEntries.map((e) => pairOf(e.id, e.properties.name)));
+  const HOOK_IDS = new Set(HOOKS.map((h) => h.id));
+  const ZERO = { hookWhole: 0, hookOnHook: 0, hookOnStyle: 0, curatedOnStyle: 0, curatedOnHook: 0 };
+  function useRecipes(weights: Partial<typeof ZERO>, curatedBanks: Record<string, number> = { schlager: 1 }): void {
+    setPrecedentDataForTests({
+      index: {
+        $schemaVersion: 1,
+        banks: { hooks: { file: 'hooks.json' }, schlager: { file: 'mlDataRaw-schlager.json' }, 'rhythmic-dance': { file: 'mlDataRaw-rhythmic-dance.json' } },
+        wholeShare: 0.5,
+        hooks: { bank: 'hooks', maxNote: HOOK_MAX_NOTE },
+        recipes: { chorus: { ...ZERO, ...weights, curatedBanks } },
+        genres: { testGenre: { chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'rhythmic-dance' } } },
+      },
+      files: { 'hooks.json': HOOKS, 'mlDataRaw-schlager.json': schlager, 'mlDataRaw-rhythmic-dance.json': rhythms },
+    });
+  }
+  const kind = (m: MergedPrecedent) => {
+    const mel = HOOK_IDS.has(String(m.melodicPrecedentId)) ? 'hook' : SCHLAGER.has(pairOf(m.melodicPrecedentId, m.melodicPrecedentName)) ? 'schlager' : 'other';
+    const rhy = HOOK_IDS.has(String(m.rhythmicPrecedentId)) ? 'hook' : RHYTHM.has(pairOf(m.rhythmicPrecedentId, m.rhythmicPrecedentName)) ? 'style' : 'other';
+    return `${mel} on ${rhy}`;
+  };
+
+  it('makes each recipe from the right sources and says which it used', () => {
+    useRecipes({ hookWhole: 1 });
+    for (const m of sample(20, 110)) {
+      expect(m.recipe).toBe('hookWhole');
+      expect(m.melodicPrecedentId).toBe(m.rhythmicPrecedentId);
+      expect(HOOK_IDS.has(String(m.melodicPrecedentId))).toBe(true);
+    }
+    useRecipes({ hookOnHook: 1 });
+    for (const m of sample(20, 110)) {
+      expect([m.recipe, kind(m)]).toEqual(['hookOnHook', 'hook on hook']);
+      expect(m.melodicPrecedentId).not.toBe(m.rhythmicPrecedentId);
+    }
+    useRecipes({ hookOnStyle: 1 });
+    for (const m of sample(20, 110)) {
+      expect([m.recipe, kind(m)]).toEqual(['hookOnStyle', 'hook on style']);
+      // The hook brings its chords.
+      expect(Object.fromEntries(Object.entries(m.chords).map(([b, c]) => [b, c.chord]))).toEqual(hookFromBarOne(hookById(m.melodicPrecedentId)).chords);
+    }
+    useRecipes({ curatedOnStyle: 1 });
+    for (const m of sample(20, 110)) expect([m.recipe, kind(m)]).toEqual(['curatedOnStyle', 'schlager on style']);
+    useRecipes({ curatedOnHook: 1 });
+    for (const m of sample(20, 110)) expect([m.recipe, kind(m)]).toEqual(['curatedOnHook', 'schlager on hook']);
+  });
+
+  it('draws recipes by their relative weights', () => {
+    useRecipes({ hookWhole: 3, curatedOnStyle: 1 });
+    const n = 400;
+    const whole = sample(n, 110).filter((m) => m.recipe === 'hookWhole').length;
+    expect(whole / n).toBeGreaterThan(0.68);
+    expect(whole / n).toBeLessThan(0.82);
+  });
+
+  it('leaves out a recipe that cannot be made here, and stops with an error when none can', () => {
+    // At 135 bpm only one chorus hook suits (Climb B, 100-140): no second hook to mix with.
+    useRecipes({ hookOnHook: 1, curatedOnStyle: 1 });
+    expect(new Set(sample(30, 135).map((m) => m.recipe))).toEqual(new Set(['curatedOnStyle']));
+    useRecipes({ hookOnHook: 1 });
+    expect(() => select('x', 135)).toThrow(/no recipe can make a melody for testGenre\/chorus at 135 bpm: .*hookOnHook cannot be made/);
+  });
+
+  it('refuses a bank index whose rule lists a curated bank without a weight', () => {
+    useRecipes({ curatedOnStyle: 1 }, { drLuke: 1 });
+    expect(() => select('x', 110)).toThrow(/melodic bank "schlager" has no weight in recipes.chorus.curatedBanks/);
+  });
+});
