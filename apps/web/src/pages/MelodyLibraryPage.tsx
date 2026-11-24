@@ -24,8 +24,8 @@ import { playPhrase, previewNote } from '../hum/playPhrase';
 import { AppHeader } from '../layout/AppHeader';
 
 const KINDS: readonly { kind: MelodyKind; label: string }[] = [
-  { kind: 'hooks', label: 'Hooks' },
-  { kind: 'remix', label: 'Remix patterns' },
+  { kind: 'hooks', label: 'Casperaki' },
+  { kind: 'remix', label: 'Precedents' },
 ];
 const SOURCES: readonly { kind: MelodySource['kind']; label: string }[] = [
   { kind: 'song', label: 'Curated songs' },
@@ -136,7 +136,7 @@ export function MelodyLibraryPage() {
         <div className="mr-2">
           <h1 className="text-[18px] font-semibold text-white">Melodies</h1>
           <p className="text-[12px] text-white/50">
-            {list.isError ? 'Not loaded' : first === undefined ? 'Loading…' : first.noHooksYet ? 'No hooks yet' : `${first.total.toLocaleString('en-GB')} ${kind === 'hooks' ? 'hook' : 'pattern'}${first.total === 1 ? '' : 's'}`}
+            {list.isError ? 'Not loaded' : first === undefined ? 'Loading…' : first.noHooksYet ? 'No hooks yet' : `${first.total.toLocaleString('en-GB')} ${kind === 'hooks' ? (first.total === 1 ? 'melody' : 'melodies') : first.total === 1 ? 'precedent' : 'precedents'}`}
           </p>
         </div>
         <input

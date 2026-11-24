@@ -347,6 +347,8 @@ export class MelodyLibrary {
           (kind === 'hooks' ? query.tempo >= i.tempoMin! && query.tempo <= i.tempoMax! : Math.abs(i.tempo - query.tempo) <= REMIX_TEMPO_WINDOW)) &&
         (!q || i.name.toLowerCase().includes(q) || i.id.toLowerCase() === q || (i.source.title ?? '').toLowerCase().includes(q) || (i.source.artist ?? '').toLowerCase().includes(q) || (i.feel ?? '').toLowerCase().includes(q) || (i.style ?? '').toLowerCase().includes(q) || (i.substyle ?? '').toLowerCase().includes(q)),
     );
+    // Alphabetical by name (ignoring case and accents, numbers in order), then bank and id for equal names.
+    hits.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base', numeric: true }) || a.bank.localeCompare(b.bank) || a.id.localeCompare(b.id, 'en', { numeric: true }));
     return {
       total: hits.length,
       items: hits.slice(query.offset, query.offset + query.limit),

@@ -55,9 +55,17 @@ describe('melody library: the committed banks', () => {
     expect((await get('/api/melody-library?kind=remix&source=melodySauce')).status).toBe(400);
   });
 
+  it('lists entries alphabetically by name, ignoring case', async () => {
+    for (const kind of ['remix', 'hooks']) {
+      const { body } = await get(`/api/melody-library?kind=${kind}&limit=200`);
+      const names = body.items.map((i: { name: string }) => i.name);
+      expect(names).toEqual([...names].sort((a: string, b: string) => a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true })));
+    }
+  });
+
   it('gives each entry its source, flags, range in semitones; one pre-chorus spelling', async () => {
     const { body } = await get('/api/melody-library?kind=remix&q=firework');
-    const fw = body.items.find((i: { bank: string }) => i.bank === 'drLuke');
+    const fw = body.items.find((i: { bank: string; id: string }) => i.bank === 'drLuke' && i.id === '18');
     expect(fw).toMatchObject({ name: 'Firework', type: 'Pre-chorus', source: { kind: 'song', title: 'Firework' }, useOriginal: false, useRemix: true, edited: false, range: 14 });
     const all = await get('/api/melody-library?kind=remix&limit=1');
     expect(all.body.facets.types).toContain('Pre-chorus');
@@ -200,7 +208,7 @@ describe('melody library: edits', () => {
     expect(Object.values(gen.melody).flat().some((n) => n.midi === 48)).toBe(true);
 
     const listed = await req('/api/melody-library?kind=remix&q=firework');
-    expect(listed.body.items.find((i: { bank: string }) => i.bank === 'drLuke')).toMatchObject({ edited: true, useOriginal: true });
+    expect(listed.body.items.find((i: { bank: string; id: string }) => i.bank === 'drLuke' && i.id === '18')).toMatchObject({ edited: true, useOriginal: true });
     expect((await req('/api/melody-library?kind=remix&source=song&original=1')).body.items.map((i: { id: string }) => i.id)).toEqual(['18']);
 
     const again = await boot({ editsPath });
