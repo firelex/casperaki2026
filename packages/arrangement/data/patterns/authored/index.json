@@ -1,5 +1,706 @@
 {
   "$schemaVersion": 1,
   "$description": "Approved Casperaki-written styles for keys, pad, strings, brass, synths, plucked synths and guitar (pattern lab). Written by apps/brain/scripts/export-approved-patterns.ts; see src/patterns/authored-bank.ts.",
-  "styles": {}
+  "styles": {
+    "authored-br-pop-funk-stabs": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop",
+        "organicVibes"
+      ],
+      "file": "styles/br-pop-funk-stabs.json"
+    },
+    "authored-br-pop-horn-swells": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop",
+        "ballad"
+      ],
+      "file": "styles/br-pop-horn-swells.json"
+    },
+    "authored-br-urban-hiphop-hits": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/br-urban-hiphop-hits.json"
+    },
+    "authored-br-rnb-horn-pad": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "urban",
+        "organicVibes"
+      ],
+      "file": "styles/br-rnb-horn-pad.json"
+    },
+    "authored-br-rock-horn-punches": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "rock",
+        "brightPop"
+      ],
+      "file": "styles/br-rock-horn-punches.json"
+    },
+    "authored-br-edm-big-room": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/br-edm-big-room.json"
+    },
+    "authored-br-ballad-warm-swells": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/br-ballad-warm-swells.json"
+    },
+    "authored-br-latin-cumbia-horns": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/br-latin-cumbia-horns.json"
+    },
+    "authored-br-schlager-discofox": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/br-schlager-discofox.json"
+    },
+    "authored-br-urban-trap-brass": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "urban",
+        "edm"
+      ],
+      "file": "styles/br-urban-trap-brass.json"
+    },
+    "authored-g2-folk-forward-roll": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "organicVibes",
+        "ballad"
+      ],
+      "file": "styles/g2-folk-forward-roll.json"
+    },
+    "authored-g2-ballad-triplet-fingerpicking": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "ballad",
+        "urban"
+      ],
+      "file": "styles/g2-ballad-triplet-fingerpicking.json"
+    },
+    "authored-g2-funk-16th-scratch": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "brightPop",
+        "urban"
+      ],
+      "file": "styles/g2-funk-16th-scratch.json"
+    },
+    "authored-g2-disco-16th-strum": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "schlager",
+        "brightPop"
+      ],
+      "file": "styles/g2-disco-16th-strum.json"
+    },
+    "authored-g2-boom-chick": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "schlager",
+        "organicVibes"
+      ],
+      "file": "styles/g2-boom-chick.json"
+    },
+    "authored-g2-rock-palm-mute-chug": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "rock"
+      ],
+      "file": "styles/g2-rock-palm-mute-chug.json"
+    },
+    "authored-g2-open-chord-anthem": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "rock",
+        "brightPop"
+      ],
+      "file": "styles/g2-open-chord-anthem.json"
+    },
+    "authored-g2-bolero-bachata": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "latin",
+        "ballad"
+      ],
+      "file": "styles/g2-bolero-bachata.json"
+    },
+    "authored-g2-reggaeton-dembow": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "latin",
+        "urban"
+      ],
+      "file": "styles/g2-reggaeton-dembow.json"
+    },
+    "authored-g2-rnb-clean-arpeggio": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "urban",
+        "organicVibes"
+      ],
+      "file": "styles/g2-rnb-clean-arpeggio.json"
+    },
+    "authored-g2-pop-muted-pulse": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "brightPop",
+        "schlager",
+        "rock"
+      ],
+      "file": "styles/g2-pop-muted-pulse.json"
+    },
+    "authored-guitar-travis-picking": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "organicVibes",
+        "ballad"
+      ],
+      "file": "styles/guitar-travis-picking.json"
+    },
+    "authored-guitar-ballad-arpeggio": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/guitar-ballad-arpeggio.json"
+    },
+    "authored-guitar-island-strum": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "brightPop",
+        "organicVibes",
+        "latin"
+      ],
+      "file": "styles/guitar-island-strum.json"
+    },
+    "authored-guitar-offbeat-skank": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "latin",
+        "urban"
+      ],
+      "file": "styles/guitar-offbeat-skank.json"
+    },
+    "authored-guitar-rock-power-strum": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "rock"
+      ],
+      "file": "styles/guitar-rock-power-strum.json"
+    },
+    "authored-guitar-funk-chicken-picking": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "urban",
+        "brightPop"
+      ],
+      "file": "styles/guitar-funk-chicken-picking.json"
+    },
+    "authored-guitar-discofox-offbeat": {
+      "family": "guitar",
+      "kind": "guitarPicks",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/guitar-discofox-offbeat.json"
+    },
+    "authored-synth-edm-two-octave-arp": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "brightPop"
+      ],
+      "file": "styles/synth-edm-two-octave-arp.json"
+    },
+    "authored-synth-trance-gate-and-stabs": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "brightPop",
+        "schlager"
+      ],
+      "file": "styles/synth-trance-gate-and-stabs.json"
+    },
+    "authored-pluck-verse-ostinato": {
+      "family": "pluckedSynths",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop",
+        "organicVibes",
+        "urban",
+        "rock"
+      ],
+      "file": "styles/pluck-verse-ostinato.json"
+    },
+    "authored-pluck-tropical-marimba": {
+      "family": "pluckedSynths",
+      "kind": "chordTones",
+      "genres": [
+        "latin",
+        "brightPop"
+      ],
+      "file": "styles/pluck-tropical-marimba.json"
+    },
+    "authored-keys-ballad-broken-chord": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/keys-ballad-broken-chord.json"
+    },
+    "authored-keys-hymn-chords": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/keys-hymn-chords.json"
+    },
+    "authored-keys-ballad-triplet-arpeggio": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/keys-ballad-triplet-arpeggio.json"
+    },
+    "authored-keys-pop-piano-pump": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop"
+      ],
+      "file": "styles/keys-pop-piano-pump.json"
+    },
+    "authored-keys-soul-gospel-comp": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "organicVibes",
+        "urban"
+      ],
+      "file": "styles/keys-soul-gospel-comp.json"
+    },
+    "authored-keys-schlager-oompah-discofox": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/keys-schlager-oompah-discofox.json"
+    },
+    "authored-keys-latin-montuno": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/keys-latin-montuno.json"
+    },
+    "authored-keys-urban-neosoul-lofi": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/keys-urban-neosoul-lofi.json"
+    },
+    "authored-keys-rock-piano-eighths": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "rock"
+      ],
+      "file": "styles/keys-rock-piano-eighths.json"
+    },
+    "authored-keys-edm-house-stabs": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/keys-edm-house-stabs.json"
+    },
+    "authored-k2-pop-cascade-arpeggio": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop",
+        "organicVibes"
+      ],
+      "file": "styles/k2-pop-cascade-arpeggio.json"
+    },
+    "authored-k2-pop-two-bar-pushes": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop"
+      ],
+      "file": "styles/k2-pop-two-bar-pushes.json"
+    },
+    "authored-k2-edm-breakdown-piano": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/k2-edm-breakdown-piano.json"
+    },
+    "authored-k2-edm-piano-house-bounce": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "schlager"
+      ],
+      "file": "styles/k2-edm-piano-house-bounce.json"
+    },
+    "authored-k2-latin-dembow-piano": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "latin",
+        "urban"
+      ],
+      "file": "styles/k2-latin-dembow-piano.json"
+    },
+    "authored-k2-latin-bolero-piano": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "latin",
+        "ballad"
+      ],
+      "file": "styles/k2-latin-bolero-piano.json"
+    },
+    "authored-k2-rock-power-ballad-piano": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "rock",
+        "ballad"
+      ],
+      "file": "styles/k2-rock-power-ballad-piano.json"
+    },
+    "authored-k2-rock-rolling-left-hand": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "rock",
+        "schlager"
+      ],
+      "file": "styles/k2-rock-rolling-left-hand.json"
+    },
+    "authored-k2-schlager-discofox-arpeggio": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/k2-schlager-discofox-arpeggio.json"
+    },
+    "authored-k2-gospel-ballad-swells": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/k2-gospel-ballad-swells.json"
+    },
+    "authored-k2-urban-rhodes-triplets": {
+      "family": "keys",
+      "kind": "chordTones",
+      "genres": [
+        "urban",
+        "organicVibes"
+      ],
+      "file": "styles/k2-urban-rhodes-triplets.json"
+    },
+    "authored-pad-inner-voice": {
+      "family": "pad",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes",
+        "urban",
+        "brightPop",
+        "rock"
+      ],
+      "file": "styles/pad-inner-voice.json"
+    },
+    "authored-pad-sidechain-pump": {
+      "family": "pad",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "brightPop",
+        "schlager"
+      ],
+      "file": "styles/pad-sidechain-pump.json"
+    },
+    "authored-pad-open-restrike": {
+      "family": "pad",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/pad-open-restrike.json"
+    },
+    "authored-strings-divisi-rise": {
+      "family": "popStrings",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes"
+      ],
+      "file": "styles/strings-divisi-rise.json"
+    },
+    "authored-strings-spiccato-ostinato": {
+      "family": "popStrings",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "urban",
+        "schlager"
+      ],
+      "file": "styles/strings-spiccato-ostinato.json"
+    },
+    "authored-strings-pizzicato-backbeat": {
+      "family": "popStrings",
+      "kind": "chordTones",
+      "genres": [
+        "schlager",
+        "organicVibes"
+      ],
+      "file": "styles/strings-pizzicato-backbeat.json"
+    },
+    "authored-strings-octave-counterline": {
+      "family": "popStrings",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes",
+        "schlager",
+        "urban"
+      ],
+      "file": "styles/strings-octave-counterline.json"
+    },
+    "authored-brass-mambo-hits": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/brass-mambo-hits.json"
+    },
+    "authored-brass-soul-stabs": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "organicVibes",
+        "schlager"
+      ],
+      "file": "styles/brass-soul-stabs.json"
+    },
+    "authored-brass-swell-punch": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "schlager",
+        "latin",
+        "organicVibes"
+      ],
+      "file": "styles/brass-swell-punch.json"
+    },
+    "authored-brass-schlager-fanfare": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/brass-schlager-fanfare.json"
+    },
+    "authored-o2-synth-80s-eighth-arp": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop",
+        "rock",
+        "schlager"
+      ],
+      "file": "styles/o2-synth-80s-eighth-arp.json"
+    },
+    "authored-o2-synthwave-pulse": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "brightPop",
+        "edm",
+        "rock",
+        "urban"
+      ],
+      "file": "styles/o2-synthwave-pulse.json"
+    },
+    "authored-o2-synth-rock-pad-stabs": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "rock",
+        "brightPop"
+      ],
+      "file": "styles/o2-synth-rock-pad-stabs.json"
+    },
+    "authored-o2-synth-trap-bell-arp": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "urban",
+        "ballad"
+      ],
+      "file": "styles/o2-synth-trap-bell-arp.json"
+    },
+    "authored-o2-synth-dembow-stabs": {
+      "family": "synths",
+      "kind": "chordTones",
+      "genres": [
+        "latin",
+        "urban"
+      ],
+      "file": "styles/o2-synth-dembow-stabs.json"
+    },
+    "authored-o2-pluck-edm-offbeat-chords": {
+      "family": "pluckedSynths",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "brightPop"
+      ],
+      "file": "styles/o2-pluck-edm-offbeat-chords.json"
+    },
+    "authored-o2-pluck-music-box": {
+      "family": "pluckedSynths",
+      "kind": "chordTones",
+      "genres": [
+        "ballad",
+        "organicVibes",
+        "urban"
+      ],
+      "file": "styles/o2-pluck-music-box.json"
+    },
+    "authored-o2-pluck-discofox": {
+      "family": "pluckedSynths",
+      "kind": "chordTones",
+      "genres": [
+        "schlager",
+        "brightPop"
+      ],
+      "file": "styles/o2-pluck-discofox.json"
+    },
+    "authored-o2-pad-son-clave": {
+      "family": "pad",
+      "kind": "chordTones",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/o2-pad-son-clave.json"
+    },
+    "authored-o2-strings-high-sustain-swell": {
+      "family": "popStrings",
+      "kind": "chordTones",
+      "genres": [
+        "urban",
+        "edm",
+        "ballad"
+      ],
+      "file": "styles/o2-strings-high-sustain-swell.json"
+    },
+    "authored-o2-strings-staccato-quarters": {
+      "family": "popStrings",
+      "kind": "chordTones",
+      "genres": [
+        "edm",
+        "urban",
+        "schlager"
+      ],
+      "file": "styles/o2-strings-staccato-quarters.json"
+    },
+    "authored-o2-brass-latin-pop-pad": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "latin",
+        "schlager"
+      ],
+      "file": "styles/o2-brass-latin-pop-pad.json"
+    },
+    "authored-o2-brass-soul-pad": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "organicVibes",
+        "schlager"
+      ],
+      "file": "styles/o2-brass-soul-pad.json"
+    },
+    "authored-o2-brass-schlager-offbeats": {
+      "family": "popBrass",
+      "kind": "chordTones",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/o2-brass-schlager-offbeats.json"
+    }
+  }
 }

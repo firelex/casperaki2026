@@ -3,47 +3,231 @@
   "$description": "Legacy-derived drum pattern bank manifest. Maps canonical Casperaki genres → which legacy style bank(s) to draw blueprints from, plus the canonical lane → General MIDI drum mapping.",
   "$legacySource": {
     "drLuke": "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/data/drLukePatterns.json @ commit-of-2026-06-06",
-    "rock":   "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/data/rockPatterns.json @ commit-of-2026-06-06",
+    "rock": "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/data/rockPatterns.json @ commit-of-2026-06-06",
     "selector": "casperaki2-engine-js/api/v1.0/services/classes/patterns/drumPatterns/PopRockDrumPatternGeneratorClass.js#createDrumPattern (style → method switch)"
   },
   "lanes": {
-    "bassDrum1":    { "midi": 36 },
-    "bassDrum2":    { "midi": 35 },
-    "snareDrum1":   { "midi": 38 },
-    "snareDrum2":   { "midi": 40 },
-    "hiHatClosed1": { "midi": 42 },
-    "hiHatClosed2": { "midi": 44 },
-    "hiHatPedal":   { "midi": 44 },
-    "hiHatOpen":    { "midi": 46 },
-    "tom1":         { "midi": 50 },
-    "tom2":         { "midi": 47 },
-    "tom3":         { "midi": 43 },
-    "crash1":       { "midi": 49 },
-    "crash2":       { "midi": 57 },
-    "ride":         { "midi": 51 },
-    "rim":          { "midi": 37 },
-    "clap":         { "midi": 39 },
-    "snap":         { "midi": 31 },
-    "shaker":       { "midi": 70 }
+    "bassDrum1": {
+      "midi": 36
+    },
+    "bassDrum2": {
+      "midi": 35
+    },
+    "snareDrum1": {
+      "midi": 38
+    },
+    "snareDrum2": {
+      "midi": 40
+    },
+    "hiHatClosed1": {
+      "midi": 42
+    },
+    "hiHatClosed2": {
+      "midi": 44
+    },
+    "hiHatPedal": {
+      "midi": 44
+    },
+    "hiHatOpen": {
+      "midi": 46
+    },
+    "tom1": {
+      "midi": 50
+    },
+    "tom2": {
+      "midi": 47
+    },
+    "tom3": {
+      "midi": 43
+    },
+    "crash1": {
+      "midi": 49
+    },
+    "crash2": {
+      "midi": 57
+    },
+    "ride": {
+      "midi": 51
+    },
+    "rim": {
+      "midi": 37
+    },
+    "clap": {
+      "midi": 39
+    },
+    "snap": {
+      "midi": 31
+    },
+    "shaker": {
+      "midi": 70
+    }
   },
   "styles": {
-    "drLuke":       { "file": "drLuke.json" },
-    "rock":         { "file": "rock.json" },
-    "edm":          { "algo": "edm" },
-    "urban":        { "algo": "urban" },
-    "latin":        { "algo": "latin" },
-    "balladAlgo":   { "algo": "ballad" },
-    "popLooseAlgo": { "algo": "popLoose" },
-    "popTightAlgo": { "algo": "popTight" }
+    "drLuke": {
+      "file": "drLuke.json"
+    },
+    "rock": {
+      "file": "rock.json"
+    },
+    "edm": {
+      "algo": "edm"
+    },
+    "urban": {
+      "algo": "urban"
+    },
+    "latin": {
+      "algo": "latin"
+    },
+    "balladAlgo": {
+      "algo": "ballad"
+    },
+    "popLooseAlgo": {
+      "algo": "popLoose"
+    },
+    "popTightAlgo": {
+      "algo": "popTight"
+    },
+    "authored-latin-dembow": {
+      "file": "authored/latin-dembow.json"
+    },
+    "authored-latin-tresillo-pop": {
+      "file": "authored/latin-tresillo-pop.json"
+    },
+    "authored-schlager-discofox": {
+      "file": "authored/schlager-discofox.json"
+    },
+    "authored-urban-boom-bap": {
+      "file": "authored/urban-boom-bap.json"
+    },
+    "authored-urban-trap-hats": {
+      "authoredAlgo": "trapHats"
+    },
+    "authored-gmd-latin-baiao-bomba": {
+      "file": "authored/gmd-latin-baiao-bomba.json"
+    },
+    "authored-gmd-latin-samba-kit": {
+      "file": "authored/gmd-latin-samba-kit.json"
+    },
+    "authored-gmd-latin-pop-street": {
+      "file": "authored/gmd-latin-pop-street.json"
+    },
+    "authored-gmd-urban-boom-bap": {
+      "file": "authored/gmd-urban-boom-bap.json"
+    },
+    "authored-gmd-urban-soul-funk-pocket": {
+      "file": "authored/gmd-urban-soul-funk-pocket.json"
+    },
+    "authored-gmd-organic-soul-backbeat": {
+      "file": "authored/gmd-organic-soul-backbeat.json"
+    },
+    "authored-gmd-organic-funk-pop": {
+      "file": "authored/gmd-organic-funk-pop.json"
+    },
+    "authored-gmd-ballad-played": {
+      "file": "authored/gmd-ballad-played.json"
+    },
+    "authored-gmd-schlager-disco": {
+      "file": "authored/gmd-schlager-disco.json"
+    },
+    "authored-gmd-brightpop-funk-pop": {
+      "file": "authored/gmd-brightpop-funk-pop.json"
+    },
+    "authored-gmd-rock-straight": {
+      "file": "authored/gmd-rock-straight.json"
+    },
+    "authored-d2-edm-house": {
+      "file": "authored/d2-edm-house.json"
+    },
+    "authored-d2-edm-bigroom": {
+      "file": "authored/d2-edm-bigroom.json"
+    },
+    "authored-d2-edm-trance": {
+      "file": "authored/d2-edm-trance.json"
+    },
+    "authored-d2-edm-breaks-garage": {
+      "file": "authored/d2-edm-breaks-garage.json"
+    },
+    "authored-d2-edm-halftime-dnb": {
+      "file": "authored/d2-edm-halftime-dnb.json"
+    },
+    "authored-d2-schlager-party": {
+      "file": "authored/d2-schlager-party.json"
+    },
+    "authored-d2-schlager-motown-train": {
+      "file": "authored/d2-schlager-motown-train.json"
+    },
+    "authored-d2-rock-toms-halftime": {
+      "file": "authored/d2-rock-toms-halftime.json"
+    },
+    "authored-d2-rock-shuffle": {
+      "file": "authored/d2-rock-shuffle.json"
+    },
+    "authored-d2-ballad-soft-pop": {
+      "file": "authored/d2-ballad-soft-pop.json"
+    },
+    "authored-d2-ballad-sidestick": {
+      "file": "authored/d2-ballad-sidestick.json"
+    },
+    "authored-d2-brightpop-clap-snap": {
+      "file": "authored/d2-brightpop-clap-snap.json"
+    }
   },
   "genreStyles": {
-    "brightPop":    ["popTightAlgo"],
-    "rock":         ["rock"],
-    "ballad":       ["balladAlgo"],
-    "edm":          ["edm"],
-    "latin":        ["latin"],
-    "organicVibes": ["popLooseAlgo"],
-    "schlager":     ["edm"],
-    "urban":        ["urban"]
+    "brightPop": [
+      "popTightAlgo",
+      "authored-latin-tresillo-pop",
+      "authored-gmd-organic-funk-pop",
+      "authored-gmd-schlager-disco",
+      "authored-gmd-brightpop-funk-pop",
+      "authored-d2-brightpop-clap-snap"
+    ],
+    "rock": [
+      "rock",
+      "authored-gmd-rock-straight",
+      "authored-d2-rock-toms-halftime",
+      "authored-d2-rock-shuffle"
+    ],
+    "ballad": [
+      "balladAlgo",
+      "authored-gmd-ballad-played",
+      "authored-d2-ballad-soft-pop",
+      "authored-d2-ballad-sidestick"
+    ],
+    "edm": [
+      "edm",
+      "authored-d2-edm-house",
+      "authored-d2-edm-bigroom",
+      "authored-d2-edm-trance",
+      "authored-d2-edm-breaks-garage",
+      "authored-d2-edm-halftime-dnb"
+    ],
+    "latin": [
+      "latin",
+      "authored-latin-dembow",
+      "authored-latin-tresillo-pop",
+      "authored-gmd-latin-baiao-bomba",
+      "authored-gmd-latin-samba-kit",
+      "authored-gmd-latin-pop-street"
+    ],
+    "organicVibes": [
+      "popLooseAlgo",
+      "authored-gmd-urban-soul-funk-pocket",
+      "authored-gmd-organic-soul-backbeat",
+      "authored-gmd-organic-funk-pop"
+    ],
+    "schlager": [
+      "edm",
+      "authored-schlager-discofox",
+      "authored-gmd-schlager-disco",
+      "authored-d2-schlager-party",
+      "authored-d2-schlager-motown-train"
+    ],
+    "urban": [
+      "urban",
+      "authored-urban-boom-bap",
+      "authored-urban-trap-hats",
+      "authored-gmd-urban-boom-bap",
+      "authored-gmd-urban-soul-funk-pocket"
+    ]
   }
 }

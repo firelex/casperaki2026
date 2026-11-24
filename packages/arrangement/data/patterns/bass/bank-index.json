@@ -3,36 +3,197 @@
   "$description": "Legacy-derived bass pattern bank manifest. Maps canonical Casperaki genres → which SM (Simple/Manual) style bank(s) to draw patterns from. Each bank entry is a list of patterns; each pattern is an array of [positionInBeats, durationInBeats, semitoneOffsetFromChordRoot] triples covering two 4/4 bars.",
   "$legacySource": {
     "selector": "casperaki2-engine-js/api/v1.0/services/classes/patterns/bassPatterns/BassPatternGeneratorClass.js#getBassPattern (style switch)",
-    "applier":  "casperaki2-engine-js/api/v1.0/services/classes/patterns/bassPatterns/SMBassPatternGeneratorClass.js#createBassPattern",
+    "applier": "casperaki2-engine-js/api/v1.0/services/classes/patterns/bassPatterns/SMBassPatternGeneratorClass.js#createBassPattern",
     "banks": {
-      "balladSM":    "elements/balladPatternsSM.json",
+      "balladSM": "elements/balladPatternsSM.json",
       "brightPopSM": "elements/brightPopPatternsSM.json",
-      "edmHardSM":   "elements/edmHardPatternsSM.json",
-      "edmSoftSM":   "elements/edmSoftPatternsSM.json",
-      "latinSM":     "elements/latinPatternsSM.json",
-      "rockSM":      "elements/rockPatternsSM.json",
-      "urbanSM":     "elements/urbanPatternsSM.json"
+      "edmHardSM": "elements/edmHardPatternsSM.json",
+      "edmSoftSM": "elements/edmSoftPatternsSM.json",
+      "latinSM": "elements/latinPatternsSM.json",
+      "rockSM": "elements/rockPatternsSM.json",
+      "urbanSM": "elements/urbanPatternsSM.json"
     },
     "extractedAt": "2026-06-06"
   },
   "rootMidiOctave": 2,
   "styles": {
-    "balladSM":    { "file": "balladSM.json" },
-    "brightPopSM": { "file": "brightPopSM.json" },
-    "edmHardSM":   { "file": "edmHardSM.json" },
-    "edmSoftSM":   { "file": "edmSoftSM.json" },
-    "latinSM":     { "file": "latinSM.json" },
-    "rockSM":      { "file": "rockSM.json" },
-    "urbanSM":     { "file": "urbanSM.json" }
+    "balladSM": {
+      "file": "balladSM.json"
+    },
+    "brightPopSM": {
+      "file": "brightPopSM.json"
+    },
+    "edmHardSM": {
+      "file": "edmHardSM.json"
+    },
+    "edmSoftSM": {
+      "file": "edmSoftSM.json"
+    },
+    "latinSM": {
+      "file": "latinSM.json"
+    },
+    "rockSM": {
+      "file": "rockSM.json"
+    },
+    "urbanSM": {
+      "file": "urbanSM.json"
+    }
   },
   "genreStyles": {
-    "ballad":       ["balladSM"],
-    "brightPop":    ["brightPopSM"],
-    "edm":          ["edmSoftSM"],
-    "latin":        ["latinSM"],
-    "organicVibes": ["brightPopSM"],
-    "rock":         ["rockSM"],
-    "schlager":     ["brightPopSM"],
-    "urban":        ["urbanSM"]
+    "ballad": [
+      "balladSM"
+    ],
+    "brightPop": [
+      "brightPopSM"
+    ],
+    "edm": [
+      "edmSoftSM"
+    ],
+    "latin": [
+      "latinSM"
+    ],
+    "organicVibes": [
+      "brightPopSM"
+    ],
+    "rock": [
+      "rockSM"
+    ],
+    "schlager": [
+      "brightPopSM"
+    ],
+    "urban": [
+      "urbanSM"
+    ]
+  },
+  "authored": {
+    "authored-schlager-octave-bass": {
+      "file": "authored/schlager-octave-bass.json",
+      "genres": [
+        "schlager"
+      ]
+    },
+    "authored-edm-offbeat-bass": {
+      "file": "authored/edm-offbeat-bass.json",
+      "genres": [
+        "edm"
+      ]
+    },
+    "authored-urban-808-bass": {
+      "file": "authored/urban-808-bass.json",
+      "genres": [
+        "urban"
+      ]
+    },
+    "authored-latin-tumbao-bass": {
+      "file": "authored/latin-tumbao-bass.json",
+      "genres": [
+        "latin"
+      ]
+    },
+    "authored-latin-reggaeton-bass": {
+      "file": "authored/latin-reggaeton-bass.json",
+      "genres": [
+        "latin"
+      ]
+    },
+    "authored-organic-motown-bass": {
+      "file": "authored/organic-motown-bass.json",
+      "genres": [
+        "organicVibes",
+        "brightPop"
+      ]
+    },
+    "authored-ballad-sustain-bass": {
+      "file": "authored/ballad-sustain-bass.json",
+      "genres": [
+        "ballad"
+      ]
+    },
+    "authored-rock-drive-bass": {
+      "file": "authored/rock-drive-bass.json",
+      "genres": [
+        "rock",
+        "brightPop"
+      ]
+    },
+    "authored-urban-rnb-bass": {
+      "file": "authored/urban-rnb-bass.json",
+      "genres": [
+        "urban",
+        "organicVibes"
+      ]
+    },
+    "authored-b3-pop-synth-eighths": {
+      "file": "authored/b3-pop-synth-eighths.json",
+      "genres": [
+        "brightPop"
+      ]
+    },
+    "authored-b3-pop-disco-octaves": {
+      "file": "authored/b3-pop-disco-octaves.json",
+      "genres": [
+        "brightPop"
+      ]
+    },
+    "authored-b3-edm-trance-roll": {
+      "file": "authored/b3-edm-trance-roll.json",
+      "genres": [
+        "edm"
+      ]
+    },
+    "authored-b3-edm-house-bounce": {
+      "file": "authored/b3-edm-house-bounce.json",
+      "genres": [
+        "edm"
+      ]
+    },
+    "authored-b3-ballad-root-fifth": {
+      "file": "authored/b3-ballad-root-fifth.json",
+      "genres": [
+        "ballad"
+      ]
+    },
+    "authored-b3-rock-power-fifths": {
+      "file": "authored/b3-rock-power-fifths.json",
+      "genres": [
+        "rock"
+      ]
+    },
+    "authored-b3-schlager-discofox-pickups": {
+      "file": "authored/b3-schlager-discofox-pickups.json",
+      "genres": [
+        "schlager"
+      ]
+    },
+    "authored-b3-schlager-two-beat": {
+      "file": "authored/b3-schlager-two-beat.json",
+      "genres": [
+        "schlager"
+      ]
+    },
+    "authored-b3-latin-bolero": {
+      "file": "authored/b3-latin-bolero.json",
+      "genres": [
+        "latin"
+      ]
+    },
+    "authored-b3-latin-cumbia": {
+      "file": "authored/b3-latin-cumbia.json",
+      "genres": [
+        "latin"
+      ]
+    },
+    "authored-b3-organic-folk-alternating": {
+      "file": "authored/b3-organic-folk-alternating.json",
+      "genres": [
+        "organicVibes"
+      ]
+    },
+    "authored-b3-urban-boombap": {
+      "file": "authored/b3-urban-boombap.json",
+      "genres": [
+        "urban"
+      ]
+    }
   }
 }
