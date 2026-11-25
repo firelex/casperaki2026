@@ -35,6 +35,16 @@ export interface GuitarPickPattern {
   readonly fx?: ReadonlyArray<readonly [number, string]>;
 }
 
+/** Recorded whole-chord strums: [beat, stroke, length]; optional picks and effects as in GuitarPickPattern. */
+export type StrumStroke = 'down' | 'up' | 'longDown' | 'longUp';
+export interface GuitarStrumPattern {
+  readonly bars: number;
+  readonly energy?: Energy;
+  readonly strums: ReadonlyArray<readonly [number, StrumStroke, number]>;
+  readonly picks?: GuitarPickPattern['hits'];
+  readonly fx?: ReadonlyArray<readonly [number, string]>;
+}
+
 export type LaneFamily = 'keys' | 'pad' | 'popStrings' | 'popBrass' | 'synths' | 'pluckedSynths';
 
 interface ProposalBase {
@@ -54,7 +64,8 @@ export type PatternProposal =
   | (ProposalBase & { readonly family: 'drums'; readonly kind: 'algo'; readonly algo: string })
   | (ProposalBase & { readonly family: 'bass'; readonly kind: 'bassPatterns'; readonly patterns: BassHit[][] })
   | (ProposalBase & { readonly family: LaneFamily; readonly kind: 'chordTones'; readonly patterns: ChordTonePattern[] })
-  | (ProposalBase & { readonly family: 'guitar'; readonly kind: 'guitarPicks'; readonly patterns: GuitarPickPattern[] });
+  | (ProposalBase & { readonly family: 'guitar'; readonly kind: 'guitarPicks'; readonly patterns: GuitarPickPattern[] })
+  | (ProposalBase & { readonly family: 'guitar'; readonly kind: 'guitarStrums'; readonly patterns: GuitarStrumPattern[] });
 
 /** A section of a preview song: where it plays (seconds) and how full it is (verses low, choruses high). */
 export interface PreviewSection {

@@ -95,7 +95,10 @@ export {
   resolveChordTone,
   sectionEnergy,
   type ChordTonePattern,
+  STRUM_STROKES,
   type GuitarPickPattern,
+  type GuitarStrumPattern,
+  type StrumStroke,
 } from './patterns/chord-tones.js';
 export {
   resolveAliases,

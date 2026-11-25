@@ -223,6 +223,13 @@ function filterStyleMap(bank: ResolvedVgBank, genre: Genre, bpm: number): string
     .sort(); // stable iteration order across runs
 }
 
+/** Whether the legacy bank has patterns for this genre at this tempo (its main bank, filtered by the style map). */
+export function virtualGuitaristBankHasPatterns(genre: string, bpm: number): boolean {
+  const parsed = GenreSchema.safeParse(genre);
+  if (!parsed.success) throw new DataAssetError(MAIN_META, `unsupported genre "${genre}"`);
+  return filterStyleMap(loadBank(), parsed.data, bpm).length > 0;
+}
+
 /**
  * Deterministically pick one virtualGuitarist pattern.
  *

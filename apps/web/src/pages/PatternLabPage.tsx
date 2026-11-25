@@ -437,7 +437,7 @@ function ProposalCard({ proposal: p, selected, onSelect }: { proposal: PatternPr
             <BassGrid pattern={p.patterns[take]!} />
           ) : p.kind === 'chordTones' ? (
             <ChordToneGrid pattern={p.patterns[take]!} />
-          ) : p.kind === 'guitarPicks' ? (
+          ) : p.kind === 'guitarPicks' || p.kind === 'guitarStrums' ? (
             <GuitarGrid pattern={p.patterns[take]!} />
           ) : (
             <DrumGrid blueprint={p.blueprints[take]!} />
@@ -447,7 +447,9 @@ function ProposalCard({ proposal: p, selected, onSelect }: { proposal: PatternPr
               ? 'Two bars; each note is an interval from the current chord root, so the line follows the chords. A song picks among these patterns section by section.'
               : p.kind === 'chordTones'
                 ? 'Shown as it sounds over a C major chord. Over every other chord each note moves to the nearest chord tone, so the voicing keeps its shape and moves as little as possible. Verses and choruses can each take their own pattern.'
-                : p.kind === 'guitarPicks'
+                : p.kind === 'guitarStrums'
+                  ? 'Recorded whole-chord strums of the guitar (short or ringing, down or up), each taking the chord playing at its beat; picked strings and guitar effects below. Verses and choruses can each take their own pattern.'
+                  : p.kind === 'guitarPicks'
                   ? 'Strings of the chord shape, counted from its bass note: one string is a picked note, several are a strum in the order shown. Verses and choruses can each take their own pattern.'
                   : 'Two bars, 32nd-note steps. A song picks among these patterns section by section.'}
           </p>
@@ -608,7 +610,7 @@ function takes(p: PatternProposal): number {
 }
 
 function energyOf(p: PatternProposal, i: number): 'low' | 'high' | undefined {
-  return p.kind === 'chordTones' || p.kind === 'guitarPicks' ? p.patterns[i]?.energy : undefined;
+  return p.kind === 'chordTones' || p.kind === 'guitarPicks' || p.kind === 'guitarStrums' ? p.patterns[i]?.energy : undefined;
 }
 
 function ListenButton({ state, onClick, label, primary }: { state: string; onClick(): void; label: string; primary?: boolean }) {

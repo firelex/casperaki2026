@@ -26,6 +26,7 @@ import {
   energyCoverageProblem,
   familyTakesKind,
   GuitarPickPatternSchema,
+  GuitarStrumPatternSchema,
   type AuthoredPatterns,
 } from './chord-tones.js';
 
@@ -42,7 +43,7 @@ const IndexSchema = z
       z
         .object({
           family: InstrumentFamilySchema,
-          kind: z.enum(['chordTones', 'guitarPicks']),
+          kind: z.enum(['chordTones', 'guitarPicks', 'guitarStrums']),
           genres: z.array(GenreSchema).min(1),
           file: z.string().min(1),
         })
@@ -69,7 +70,9 @@ function load(dir: string): AuthoredStyle[] {
     const patterns: AuthoredPatterns =
       entry.kind === 'chordTones'
         ? { kind: 'chordTones', patterns: z.array(ChordTonePatternSchema).min(1).parse(raw) }
-        : { kind: 'guitarPicks', patterns: z.array(GuitarPickPatternSchema).min(1).parse(raw) };
+        : entry.kind === 'guitarPicks'
+          ? { kind: 'guitarPicks', patterns: z.array(GuitarPickPatternSchema).min(1).parse(raw) }
+          : { kind: 'guitarStrums', patterns: z.array(GuitarStrumPatternSchema).min(1).parse(raw) };
     const problem = energyCoverageProblem(patterns.patterns);
     if (problem) throw new Error(`authored/${entry.file}: ${problem}`);
     return { styleName, family: entry.family, genres: entry.genres, patterns };

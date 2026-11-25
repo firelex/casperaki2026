@@ -122,4 +122,33 @@ describe('in-browser playback', () => {
   it('refuses a saved song the caller does not own', async () => {
     expect((await fetch(`${h.url}/api/songs/${'a'.repeat(16)}/playback`)).status).toBe(404);
   });
+
+  it('fails loudly, naming the file, when a guitar strum recording is missing', async () => {
+    const make = async (present: boolean) => {
+      const store = openSongsStore({ path: ':memory:' });
+      const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback({ guitarStrumFile: present }) });
+      const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+        const s = app.listen(0, '127.0.0.1', () => resolve(s));
+      });
+      const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+      try {
+        const gen = await fetch(`${url}/api/songs/generate`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ genre: 'rock', key: 'C', bpm: 120, seed: 'playback-guitar' }),
+        });
+        const { song } = (await gen.json()) as { song: unknown };
+        const res = await fetch(`${url}/api/playback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ song }) });
+        return { status: res.status, body: await res.text() };
+      } finally {
+        await new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); }));
+      }
+    };
+    const ok = await make(true);
+    expect(ok.status).toBe(200);
+    expect(ok.body).toContain('"950"');
+    const missing = await make(false);
+    expect(missing.status).toBeGreaterThanOrEqual(500);
+    expect(missing.body).toContain('Short Strum Down.mp3');
+  });
 });

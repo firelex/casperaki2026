@@ -29,6 +29,7 @@ import {
   ChordTonePatternSchema,
   energyCoverageProblem,
   GuitarPickPatternSchema,
+  GuitarStrumPatternSchema,
   type AuthoredPatterns,
 } from './chord-tones.js';
 import { drumLaneNames, type DrumPreview } from './drums-bank.js';
@@ -71,6 +72,8 @@ export const PatternProposalSchema = z.discriminatedUnion('kind', [
   ProposalBase.extend({ family: z.enum(CHORD_TONE_FAMILIES), kind: z.literal('chordTones'), patterns: z.array(ChordTonePatternSchema).min(1) }),
   // Guitar: strings of the chord shape, picked or strummed (chord-tones.ts).
   ProposalBase.extend({ family: z.literal('guitar'), kind: z.literal('guitarPicks'), patterns: z.array(GuitarPickPatternSchema).min(1) }),
+  // Guitar: recorded whole-chord strums (Virtual Guitarist samples), with optional picks and fx.
+  ProposalBase.extend({ family: z.literal('guitar'), kind: z.literal('guitarStrums'), patterns: z.array(GuitarStrumPatternSchema).min(1) }),
 ]);
 export type PatternProposal = z.infer<typeof PatternProposalSchema>;
 
@@ -92,7 +95,7 @@ export function loadPatternProposals(dir: string = PROPOSALS_DIR): PatternPropos
       if (p.kind === 'algo' && !(p.algo in AUTHORED_DRUM_ALGOS)) {
         throw new Error(`proposals/${file}: "${p.id}" names unknown generator "${p.algo}"`);
       }
-      if (p.kind === 'chordTones' || p.kind === 'guitarPicks') {
+      if (p.kind === 'chordTones' || p.kind === 'guitarPicks' || p.kind === 'guitarStrums') {
         const problem = energyCoverageProblem(p.patterns);
         if (problem) throw new Error(`proposals/${file}: "${p.id}": ${problem}`);
         // The family must be playable in each genre (sounds, and the orchestral gate).
@@ -134,6 +137,10 @@ export function previewParamsFor(p: PatternProposal, take?: number): Record<stri
     const patterns = take === undefined ? p.patterns : pick(p.patterns).map(({ energy: _energy, ...rest }) => rest);
     return { lanePreview: { family: p.family, kind: p.kind, patterns } };
   }
+  if (p.kind === 'guitarStrums') {
+    const patterns = take === undefined ? p.patterns : pick(p.patterns).map(({ energy: _energy, ...rest }) => rest);
+    return { lanePreview: { family: p.family, kind: p.kind, patterns } };
+  }
   const drumPreview: DrumPreview =
     p.kind === 'algo' ? { kind: 'algo', algo: p.algo } : { kind: 'blueprints', blueprints: pick(p.blueprints) };
   return { drumPreview };
@@ -166,6 +173,7 @@ export function bassPreviewFromParams(params: Readonly<Record<string, unknown>> 
 const LanePreviewSchema = z.discriminatedUnion('kind', [
   z.object({ family: z.enum(CHORD_TONE_FAMILIES), kind: z.literal('chordTones'), patterns: z.array(ChordTonePatternSchema).min(1) }),
   z.object({ family: z.literal('guitar'), kind: z.literal('guitarPicks'), patterns: z.array(GuitarPickPatternSchema).min(1) }),
+  z.object({ family: z.literal('guitar'), kind: z.literal('guitarStrums'), patterns: z.array(GuitarStrumPatternSchema).min(1) }),
 ]);
 export interface LanePreview {
   readonly family: InstrumentFamily;

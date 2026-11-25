@@ -287,9 +287,11 @@ export class PlaybackService {
           const base = chordFileBasename(engineChordToDiskChord(String(e.chord)), String(e.chordPosition), String(e.type));
           if (base) abs = join(chordsDir, base);
         }
-        if (!abs || !existsSync(abs)) continue;
+        const what = typeof e.fx === 'string' && e.fx ? `effect ${e.fx}` : `strum ${String(e.chord)} ${String(e.type)}`;
+        if (!abs) throw new Error(`PlaybackService: guitar ${String(inst.name)} (${String(inst.type)}): the sound library has no folder for ${what}`);
+        if (!existsSync(abs)) throw new Error(`PlaybackService: guitar ${String(inst.name)} (${String(inst.type)}) has no recording for ${what}: ${abs}`);
         const rel = relative(this.libraryRoot, abs);
-        if (rel.startsWith('..') || isAbsolute(rel)) continue;
+        if (rel.startsWith('..') || isAbsolute(rel)) throw new Error(`PlaybackService: guitar sample ${abs} lies outside the sound library ${this.libraryRoot}`);
         add(String(e.id), 'strum', { relativePath: rel });
       }
     }

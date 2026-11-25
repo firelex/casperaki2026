@@ -42,6 +42,7 @@ import type { SongStructure } from '@casperaki/song-schema';
 
 import type { Rng } from '@casperaki/music-theory';
 import type { GeneratorContext } from '../context.js';
+import { authoredStylesFor } from '../patterns/authored-bank.js';
 import {
   loadValidatedCatalog,
   type ValidatedCatalogEntry,
@@ -518,6 +519,17 @@ interface CandidatePool {
   readonly pickSource: 'genre' | 'fallback';
 }
 
+/**
+ * The genre whose guitar sounds a genre's guitar lanes use (owner, 2026-11-25): urban takes the ballad
+ * guitars; schlager, latin and EDM take the brightPop guitars; the rest their own.
+ */
+const GUITAR_SOUND_GENRE: Readonly<Record<string, string>> = { urban: 'ballad', schlager: 'brightPop', latin: 'brightPop', edm: 'brightPop' };
+
+/** The genre a lane looks its sounds up under. */
+function soundGenre(familyClass: InstrumentFamily, genre: string): string {
+  return familyClass === 'guitar' ? (GUITAR_SOUND_GENRE[genre] ?? genre) : genre;
+}
+
 function candidatesFor(
   entries: readonly ValidatedCatalogEntry[],
   cfg: RoleConfig,
@@ -579,7 +591,7 @@ class RosterBuilder {
    *  gate) or the catalog has no candidate at all (lane skipped). */
   add(spec: LaneSpec, essential: boolean, perSegment = false): string | undefined {
     if (!laneSupportedForGenre(spec.familyClass, this.genre)) return undefined;
-    const pool = candidatesFor(this.entries, spec.cfg, this.genre);
+    const pool = candidatesFor(this.entries, spec.cfg, soundGenre(spec.familyClass, this.genre));
     if (pool.candidates.length === 0) return undefined;
     const entry = this.pickDistinct(pool.candidates);
     const lane = this.assignName(spec.familyClass);
@@ -601,7 +613,7 @@ class RosterBuilder {
    *  addition). */
   ensure(spec: LaneSpec): string | undefined {
     if (!laneSupportedForGenre(spec.familyClass, this.genre)) return undefined;
-    const pool = candidatesFor(this.entries, spec.cfg, this.genre);
+    const pool = candidatesFor(this.entries, spec.cfg, soundGenre(spec.familyClass, this.genre));
     if (pool.candidates.length === 0) return undefined;
     // Probe a candidate's lowLevel for the reuse key (deterministic: first by
     // id). If a lane with that family+lowLevel already exists, reuse it.
@@ -686,6 +698,28 @@ function activateType(
 // Entry point
 // ===========================================================================
 
+/** Genres that get an optional guitar, and the guitar lanes they may take. */
+const EXTRA_GUITAR_SPECS: Readonly<Record<string, readonly LaneSpec[]>> = {
+  urban: [ACOUSTIC_GUITAR],
+  schlager: [ACOUSTIC_GUITAR, ELECTRIC_GUITAR_CLEAN],
+  edm: [ACOUSTIC_GUITAR, ELECTRIC_GUITAR_CLEAN],
+};
+
+/**
+ * The extra guitar lane for a song, if any. Only once the genre has an approved pattern-lab guitar style
+ * (the legacy guitar bank has nothing for these genres); then one song in three. A pattern-lab preview of
+ * a guitar style always gets one.
+ */
+function extraGuitarSpec(rng: Rng, genre: string, params: Readonly<Record<string, unknown>> | undefined): LaneSpec | undefined {
+  const specs = EXTRA_GUITAR_SPECS[genre];
+  if (!specs) return undefined;
+  const preview = params?.lanePreview as { family?: unknown } | undefined;
+  if (preview?.family === 'guitar') return rng.pick(specs);
+  if (authoredStylesFor('guitar', genre).length === 0) return undefined;
+  if (!rng.pick([true, false, false])) return undefined;
+  return rng.pick(specs);
+}
+
 export function selectInstruments(
   ctx: GeneratorContext,
   structure: SongStructure,
@@ -722,6 +756,14 @@ export function selectInstruments(
   const baseNonEssential: string[] = [];
   for (const spec of roll.nonEssential) {
     const name = builder.add(spec, false);
+    if (name) baseNonEssential.push(name);
+  }
+
+  // Extra guitar (owner, 2026-11-25): genres whose legacy roster has no guitar get one in about a third of
+  // songs, from its own draw so the rest of the roster is unchanged.
+  const extra = extraGuitarSpec(rng.fork('roster/extraGuitar'), genre, ctx.params.params);
+  if (extra) {
+    const name = builder.add(extra, false);
     if (name) baseNonEssential.push(name);
   }
 
@@ -837,7 +879,7 @@ export function familySoundPool(family: InstrumentFamily, genre: string): readon
   const byId = new Map<string, ValidatedCatalogEntry>();
   for (const spec of ALL_LANE_SPECS) {
     if (spec.familyClass !== family) continue;
-    for (const e of candidatesFor(entries, spec.cfg, genre).candidates) byId.set(e.id, e);
+    for (const e of candidatesFor(entries, spec.cfg, soundGenre(family, genre)).candidates) byId.set(e.id, e);
   }
   return sortById([...byId.values()]);
 }

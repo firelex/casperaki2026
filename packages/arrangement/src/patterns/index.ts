@@ -20,6 +20,7 @@ import { emitAuthoredPatterns, familyTakesKind } from './chord-tones.js';
 import { generateBassPattern } from './bass.js';
 import { generateDrumPattern } from './drums.js';
 import { generateGuitarPattern } from './guitar.js';
+import { virtualGuitaristBankHasPatterns } from './virtual-guitarist-bank.js';
 import { generateKeysPattern } from './keys.js';
 import { generateBrassPattern, generateStringsPattern } from './orchestral.js';
 import { generatePadPattern } from './pad.js';
@@ -149,8 +150,10 @@ export function generatePatterns(
  * Pattern lab styles for a lane, or undefined to use the family's own
  * generator. A preview of this family always plays the proposal. Otherwise,
  * with n approved styles for the family and genre (authored-bank.ts), the lane
- * takes one of them n times in n + 1, drawn once per song lane; with none,
- * nothing is drawn, so songs without approved styles are unchanged.
+ * takes one of them n times in n + 1 (guitar: half the time, or always where
+ * the legacy Virtual Guitarist bank has nothing for the genre and tempo), drawn
+ * once per song lane; with none, nothing is drawn, so songs without approved
+ * styles are unchanged.
  */
 function authoredPattern(
   laneCtx: GeneratorContext,
@@ -163,6 +166,12 @@ function authoredPattern(
   if (preview && preview.family === family) return emitAuthoredPatterns(rng, segment, preview.patterns);
   const styles = authoredStylesFor(family, laneCtx.params.genre).filter((s) => familyTakesKind(family, s.patterns.kind));
   if (styles.length === 0) return undefined;
-  if (rng.next() >= styles.length / (styles.length + 1)) return undefined;
+  // Guitar: the lab styles and the legacy Virtual Guitarist bank share the lane half and half; where the
+  // legacy bank has nothing for this genre and tempo, the lab styles always play.
+  const share =
+    family === 'guitar'
+      ? virtualGuitaristBankHasPatterns(laneCtx.params.genre, laneCtx.params.bpm) ? 0.5 : 1
+      : styles.length / (styles.length + 1);
+  if (rng.next() >= share) return undefined;
   return emitAuthoredPatterns(rng, segment, rng.pick(styles).patterns);
 }

@@ -39,7 +39,7 @@ export function exportApprovedPatterns(approved: ReadonlySet<string>, opts: { dr
 
   const drumProposals = proposals.filter((p) => p.family === 'drums');
   const bassProposals = proposals.filter((p) => p.family === 'bass');
-  const laneProposals = proposals.flatMap((p) => (p.kind === 'chordTones' || p.kind === 'guitarPicks' ? [p] : []));
+  const laneProposals = proposals.flatMap((p) => (p.kind === 'chordTones' || p.kind === 'guitarPicks' || p.kind === 'guitarStrums' ? [p] : []));
   const changes: string[] = [];
 
   // ---- keys, pad, strings, brass, synths, plucked synths, guitar: authored/index.json ----

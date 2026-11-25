@@ -8,13 +8,16 @@ import { PlaybackService } from '../src/render/playbackService.js';
 /** Stand-in playback: the "emit" writes a one-lane envelope (a bass
  *  multisample with two slots, one drum lane), the "ffmpeg" writes its
  *  arguments into the output file so slicing can be checked. */
-export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffprobe reports (duration and sample rate). */ probe?: string; /** Sung vocal takes directory. */ vocalTakesDir?: string; /** The fake emit writes this sourcePath for every take instead of <takes dir>/<fp>.wav. */ takeSourceOverride?: string } = {}): PlaybackService {
+export function fakePlayback(opts: { mixConfig?: string; /** What the fake ffprobe reports (duration and sample rate). */ probe?: string; /** Sung vocal takes directory. */ vocalTakesDir?: string; /** The fake emit writes this sourcePath for every take instead of <takes dir>/<fp>.wav. */ takeSourceOverride?: string; /** Add a guitar with one chord-strum sample; `false` leaves its recording missing. */ guitarStrumFile?: boolean } = {}): PlaybackService {
   const dir = mkdtempSync(join(tmpdir(), 'casperaki-playback-test-'));
   const lib = join(dir, 'library');
   mkdirSync(join(lib, 'basses'), { recursive: true });
   mkdirSync(join(lib, 'kicks'), { recursive: true });
   writeFileSync(join(lib, 'basses', 'bass.mp3'), 'mp3');
   writeFileSync(join(lib, 'kicks', 'kick.mp3'), 'mp3');
+  const chordsDir = join(lib, 'guitars', 'chords');
+  mkdirSync(chordsDir, { recursive: true });
+  if (opts.guitarStrumFile) writeFileSync(join(chordsDir, 'C _ Pos 1 _ Short Strum Down.mp3'), 'mp3');
   // The library's fx sheet, beside the instruments folder.
   writeFileSync(join(dir, 'fxMetadata.json'), '{}');
   const stubs = join(dir, 'stubs');
@@ -43,7 +46,10 @@ if (songIn.aiArtifacts.some((a) => a.kind === 'soulx-vocal')) {
   });
   writeFileSync(o + '/inst-2.json', JSON.stringify({ id: 60000, name: 'Vocal', type: 'audioClips', lowLevelType: 'vocalsLaSinger', clips }));
 }
+const guitar = ${opts.guitarStrumFile === undefined ? 'false' : 'true'};
+if (guitar) writeFileSync(o + '/inst-3.json', JSON.stringify({ id: 3, name: 'Guitar', type: 'electricGuitars', virtualGuitaristSamples: [{ id: 950, chord: 'C', chordPosition: '1', type: 'chordShortStrumDown', fx: null }] }));
 writeFileSync(o + '/asset-manifest.json', JSON.stringify({
+  ...(guitar ? { Guitar: { chordsAbsDir: ${JSON.stringify(chordsDir)}, fxAbsDir: ${JSON.stringify(join(lib, 'guitars', 'fx'))} } } : {}),
   Bass: { status: 'resolved', relativePath: 'basses/bass.mp3', multisample: { slots: [
     { status: 'resolved', slot: { id: 900, note: 'c2', type: 'longNote' }, sliceStart: 0.5, sliceEnd: 4.5 },
     { status: 'resolved', slot: { id: 901, note: 'd#2', type: 'longNote' }, sliceStart: 4.5, sliceEnd: 8.5 },

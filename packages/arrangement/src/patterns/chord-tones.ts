@@ -88,13 +88,48 @@ export const GuitarPickPatternSchema = z
   });
 export type GuitarPickPattern = z.infer<typeof GuitarPickPatternSchema>;
 
+/** How a recorded chord strum is played: short or long (let ring), down or up. */
+export const STRUM_STROKES = ['down', 'up', 'longDown', 'longUp'] as const;
+export type StrumStroke = (typeof STRUM_STROKES)[number];
+/** The Virtual Guitarist sample each stroke plays. */
+export const STRUM_STROKE_EVENTS: Readonly<Record<StrumStroke, string>> = {
+  down: 'chordShortStrumDown',
+  up: 'chordShortStrumUp',
+  longDown: 'chordLongStrumDown',
+  longUp: 'chordLongStrumUp',
+};
+/** [beat in the pattern, stroke, length in beats] */
+export const GuitarStrumSchema = z.tuple([z.number().min(0), z.enum(STRUM_STROKES), z.number().positive()]);
+
+export const GuitarStrumPatternSchema = z
+  .object({
+    bars: z.number().int().min(1).max(8),
+    energy: EnergySchema.optional(),
+    /** Recorded whole-chord strums (the guitar's Virtual Guitarist chord samples). */
+    strums: z.array(GuitarStrumSchema).min(1),
+    /** Optional picked strings between the strums (the guitar-picks hit format). */
+    picks: z.array(GuitarPickSchema).optional(),
+    fx: z.array(z.tuple([z.number().min(0), z.enum(GUITAR_FX)])).optional(),
+  })
+  .strict()
+  .superRefine((p, ctx) => {
+    const past = (field: string, i: number, beat: number) => {
+      if (beat >= p.bars * BEATS_PER_BAR) ctx.addIssue({ code: 'custom', path: [field, i], message: `beat ${beat} is past the pattern's ${p.bars} bar(s)` });
+    };
+    p.strums.forEach(([beat], i) => past('strums', i, beat));
+    (p.picks ?? []).forEach(([beat], i) => past('picks', i, beat));
+    (p.fx ?? []).forEach(([beat], i) => past('fx', i, beat));
+  });
+export type GuitarStrumPattern = z.infer<typeof GuitarStrumPatternSchema>;
+
 /** A set of patterns one style plays. */
 export type AuthoredPatterns =
   | { readonly kind: 'chordTones'; readonly patterns: readonly ChordTonePattern[] }
-  | { readonly kind: 'guitarPicks'; readonly patterns: readonly GuitarPickPattern[] };
+  | { readonly kind: 'guitarPicks'; readonly patterns: readonly GuitarPickPattern[] }
+  | { readonly kind: 'guitarStrums'; readonly patterns: readonly GuitarStrumPattern[] };
 
 export function familyTakesKind(family: InstrumentFamily, kind: AuthoredPatterns['kind']): boolean {
-  return kind === 'guitarPicks' ? family === 'guitar' : (CHORD_TONE_FAMILIES as readonly string[]).includes(family);
+  return kind === 'guitarPicks' || kind === 'guitarStrums' ? family === 'guitar' : (CHORD_TONE_FAMILIES as readonly string[]).includes(family);
 }
 
 /** The energy a section asks for: verses quiet, choruses full, the rest either. */
@@ -135,7 +170,7 @@ export const STRUM_SPREAD_BEATS = 0.02;
  * sounding at its beat.
  */
 export function emitAuthoredPatterns(rng: Rng, segment: Segment, style: AuthoredPatterns): FamilyPattern {
-  const candidates = patternsForSection<ChordTonePattern | GuitarPickPattern>(style.patterns, segment.name);
+  const candidates = patternsForSection<ChordTonePattern | GuitarPickPattern | GuitarStrumPattern>(style.patterns, segment.name);
   if (candidates.length === 0) throw new Error(`authored patterns: no pattern fits section "${segment.name}"`);
   const pattern = rng.fork(`authored/${segmentType(segment.name)}`).pick(candidates);
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
@@ -156,7 +191,16 @@ export function emitAuthoredPatterns(rng: Rng, segment: Segment, style: Authored
         addNoteEvent(bars[segBar]!, beat, { type: 'noteRelative', chord: chordAt(segBar, beat), distanceFromMiddleC: pitch, duration });
       }
     } else {
-      for (const [at, strings, duration, velocity] of (pattern as GuitarPickPattern).hits) {
+      const guitar = pattern as GuitarPickPattern | GuitarStrumPattern;
+      if (style.kind === 'guitarStrums') {
+        for (const [at, stroke, duration] of (guitar as GuitarStrumPattern).strums) {
+          if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
+          const beat = at - patternBar * BEATS_PER_BAR;
+          addNoteEvent(bars[segBar]!, beat, { type: 'virtualGuitarist', chord: chordAt(segBar, beat), event: STRUM_STROKE_EVENTS[stroke], duration });
+        }
+      }
+      const picks = 'hits' in guitar ? guitar.hits : (guitar.picks ?? []);
+      for (const [at, strings, duration, velocity] of picks) {
         if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
         const beat = at - patternBar * BEATS_PER_BAR;
         addNoteEvent(bars[segBar]!, beat, {
@@ -168,7 +212,7 @@ export function emitAuthoredPatterns(rng: Rng, segment: Segment, style: Authored
           velocities: [velocity],
         });
       }
-      for (const [at, event] of (pattern as GuitarPickPattern).fx ?? []) {
+      for (const [at, event] of guitar.fx ?? []) {
         if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
         const beat = at - patternBar * BEATS_PER_BAR;
         addNoteEvent(bars[segBar]!, beat, { type: 'virtualGuitarist', chord: chordAt(segBar, beat), event });
