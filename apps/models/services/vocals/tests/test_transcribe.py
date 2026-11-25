@@ -95,3 +95,29 @@ def test_a_take_off_our_grid_is_read_through_its_clock(tracker):
     out = seg(synth(slow, total_16ths=64, offset_s=1.0), len(NOTES), tracker, clock=clock)
     assert [o["start"] for o in out] == [s / 4 for s, _, _, _ in NOTES]
     assert [o["midi"] for o in out] == [m - 12 for _, _, m, _ in NOTES]
+
+
+def test_starts_a_16th_apart_on_half_16ths_never_share_a_16th():
+    # 16ths 1.5 and 2.5 both round to 2 (round half to even): only one of them can be a start
+    beats = np.zeros(40)
+    beats[10], beats[20], beats[30] = 1.5 / 4, 2.5 / 4, 4 / 4  # frames 100 ms apart
+    assert transcribe.pick_starts([10, 20, 30], beats, 3) == [10, 30]
+    assert transcribe.pick_starts([20, 10, 30], beats, 3) == [20, 30]
+
+
+def test_starts_closer_than_the_minimum_gap_are_not_both_taken():
+    beats = np.arange(20) / 4  # a 16th per frame (10 ms): distinct 16ths but under MIN_GAP_S apart
+    assert transcribe.pick_starts([0, 5, 8, 10], beats, 4) == [0, 10]
+
+
+def test_octave_slips_are_corrected_and_genuine_leaps_kept():
+    assert transcribe.fix_octave_slips([67, 69, 57, 71, 72]) == [67, 69, 69, 71, 72]
+    assert transcribe.fix_octave_slips([60, 60, 67, 60, 60]) == [60, 60, 67, 60, 60]  # a leap of 7: kept
+    assert transcribe.fix_octave_slips([60, 62, 60, 84, 62, 60, 62]) == [60, 62, 60, 60, 62, 60, 62]  # two octaves high
+    assert transcribe.fix_octave_slips([70]) == [70]
+
+
+def test_a_note_sung_an_octave_low_comes_back(tracker):
+    notes = [(0, 2, 69, True), (2, 2, 71, True), (4, 2, 57, True), (6, 2, 72, True), (8, 2, 74, True)]
+    out = seg(synth(notes), 5, tracker, octave=0)
+    assert [o["midi"] for o in out] == [69, 71, 69, 72, 74]

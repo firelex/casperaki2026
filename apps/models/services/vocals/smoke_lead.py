@@ -23,6 +23,7 @@ sys.path.insert(0, str(HERE.parent / "_serving" / "adapters"))
 SONG = Path("/home/roli79/casperaki-data/renders/a31c5ba00357d922/brain-song.json")
 LYRICS = Path("/mnt/d/casperaki-models/vocal-model-tests/_inputs/lyrics_fitted.txt")
 UNITS = ("verse1", "chorus1", "bridge1")
+STYLE = "EDM, dance pop, energetic, female lead vocal, synthesizer, drum machine, synth bass, 128 bpm, C major"
 OCTAVE = 12  # a31c5ba0's computed shift (global constraints, "Sung register")
 OVERRIDES = {"every": ["Ev", "ery"]}
 VOWELS = "aeiouy"
@@ -119,7 +120,7 @@ def main(out_dir=None, seeds="2"):
     blocks = [b.strip().split("\n") for b in LYRICS.read_text().strip().split("\n\n")]
     blocks = [b[1:] for b in blocks if len(b) > 1]
     units = build_units(song, blocks)
-    params = {"stage": "lead", "bpm": song["bpm"], "key": song["key"], "octave": OCTAVE, "seeds": int(seeds),
+    params = {"stage": "lead", "bpm": song["bpm"], "key": song["key"], "style": STYLE, "octave": OCTAVE, "seeds": int(seeds),
               "threshold": 0.7, "units": units}
     (out / "params.json").write_text(json.dumps(params, indent=1))
     job = PrintingJob()

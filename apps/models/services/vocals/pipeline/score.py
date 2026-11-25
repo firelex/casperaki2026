@@ -18,7 +18,6 @@ LEAD_BARS = 2
 TAIL_BARS = 2  # the chords that follow the section, no singing: room for YuE2 to finish a phrase that runs over
 UNITS_PER_BEAT = 4  # L:1/16
 OCTAVES = (-12, 0, 12)
-STYLE = "EDM, dance pop, energetic, female lead vocal, synthesizer, drum machine, synth bass"
 SECTION_WORD = {"intro": "intro", "verse": "verse", "prechorus": "pre-chorus", "chorus": "chorus",
                 "bridge": "bridge", "break": "interlude", "outro": "outro"}
 LYRIC_TAG = {"verse": "[Verse]", "pre-chorus": "[Pre-Chorus]", "chorus": "[Chorus]", "bridge": "[Bridge]",
@@ -49,11 +48,6 @@ def scale(key: str) -> tuple[int, ...]:
     """Pitch classes of the key's scale (natural minor for a minor key), starting at the root."""
     root, mode = parse_key(key)
     return tuple((ROOTS[root] + step) % 12 for step in (MINOR if mode == "minor" else MAJOR))
-
-
-def style(bpm, key: str) -> str:
-    root, mode = parse_key(key)
-    return f"{STYLE}, {bpm:g} bpm, {root} {mode}"
 
 
 def abc_pitch(midi: int) -> str:

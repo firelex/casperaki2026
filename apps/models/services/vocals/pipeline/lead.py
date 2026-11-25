@@ -4,7 +4,8 @@ through its bar map, by note count (transcribe.segment: the lane's N note positi
 starts), its notes paired in order with our syllables (`melody_of`), and cut to our bars (<unit>_section.wav,
 time-stretched bar by bar).
 
-params = {"bpm", "key", "octave" (-12/0/12: sung = lane + octave), "seeds" (takes per unit), "threshold" (least share
+params = {"bpm", "key", "style" (YuE2's style text: genre words and "female lead vocal"), "octave" (-12/0/12: sung =
+lane + octave), "seeds" (takes per unit), "threshold" (least share
 of the section's half-beats on our chord), "units": [{"id", "lead_in_chords": [chord per beat] (LEAD_BARS bars),
 "chords": [chord per beat], "tail_chords": [chord per beat] (TAIL_BARS bars after the section, no singing), "notes": [{"start", "duration", "midi"}] (beats, lane register), "lyrics": [line],
 "words": [[syllable] per line], "phonemes": [[[phoneme] per syllable] per line]}]}.
@@ -89,13 +90,15 @@ def run(params: dict, out_dir, job):
     seeds = int(_required(params, "seeds"))
     threshold = float(_required(params, "threshold"))
     units = _required(params, "units")
+    style = _required(params, "style")
+    if not isinstance(style, str) or not style.strip():
+        raise ValueError(f"lead: param 'style' must be a non-empty string (genre words and 'female lead vocal'), got {style!r}")
     if seeds < 1:
         raise ValueError(f"lead: seeds {seeds} must be at least 1")
     check_units(units)
     score.scale(key)
     out = Path(out_dir)
     device = _device()
-    style = score.style(bpm, key)
     seed_list = list(range(1, seeds + 1))
     try:
         takes = _sing(units, bpm, octave, style, seed_list, out, device, job)
@@ -202,11 +205,12 @@ class ChooseError(RuntimeError):
     """No take of a unit both matches our chords and transcribes fully (one line per seed)."""
 
 
-def choose_take(uid: str, scores: dict, threshold: float, transcribe, job, on_chosen=None):
+def choose_take(uid: str, scores: dict, threshold: float, transcribe, job, on_chosen=None, take_files=None):
     """The best take that both matches our chords (at least `threshold`) and transcribes fully. Takes at or above the
     threshold are transcribed in order of their chord match (ties: lower seed) until one succeeds.
     scores: {seed: chord match}; transcribe(seed) -> notes, raising TranscribeError when the take lacks a word;
-    on_chosen(seed, notes) -> files for the choose step. Returns (seed, notes)."""
+    on_chosen(seed, notes) -> files for the choose step; take_files(seed) -> the audio a transcribe step read.
+    Returns (seed, notes)."""
     from .transcribe import TranscribeError
 
     errors = {}
@@ -220,7 +224,7 @@ def choose_take(uid: str, scores: dict, threshold: float, transcribe, job, on_ch
             errors[seed] = str(e)
             st.fail(str(e))
             continue
-        st.done(f"{len(notes)} notes", {"notes": len(notes)})
+        st.done(f"{len(notes)} notes", {"notes": len(notes)}, take_files(seed) if take_files is not None else [])
         ch = job.step(f"choose:{uid}", f"Choose the take of {uid}")
         files = on_chosen(seed, notes) if on_chosen is not None else []
         ch.done(f"take {seed}: {_pct(scores[seed])} on our chords, {len(notes)} notes",
@@ -262,7 +266,8 @@ def _choose_and_transcribe(units, bpm, key, octave, seed_list, takes, scores, th
                                "chords_match": round(scores[(uid, seed)], 4), "melody": melody}
                 return [f"{uid}_section.wav", f"{uid}_melody.json"]
 
-            choose_take(uid, {s: scores[(uid, s)] for s in seed_list}, threshold, transcribe, job, on_chosen)
+            choose_take(uid, {s: scores[(uid, s)] for s in seed_list}, threshold, transcribe, job, on_chosen,
+                        take_files=lambda seed, uid=uid: [f"{uid}_s{seed}_vocals.wav"])
             for s in seed_list:
                 takes[(uid, s)].pop("vocals")
     finally:

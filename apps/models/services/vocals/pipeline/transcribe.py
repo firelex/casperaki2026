@@ -7,10 +7,11 @@ Ported from apps/models/ace-vocal-tests/other-models/syllable_notes.py (shared t
 - a candidate start is a local maximum of the envelope (at least MIN_STRENGTH of its maximum: weaker ones are ripple
   inside a held note; the experiment had no floor) where the voice is singing and pitched singing follows within
   80 ms (breaths and lone consonants are not starts);
-- the N strongest candidates at least one 16th apart (in our beats, so two starts never share a 16th) and at least
-  MIN_GAP_S apart; fewer than N -> TranscribeError("<section>: found K of N note starts");
+- the N strongest candidates, each on its own 16th of our grid (as rounded for the notes) and at least MIN_GAP_S
+  apart (`pick_starts`); fewer than N -> TranscribeError("<section>: found K of N note starts");
 - a note lasts until the next start or until singing stops; its pitch is the SwiftF0 median over it (the hum service's
-  pitch front end), snapped to the key's scale, returned in the Vocal lane's register (sung - octave).
+  pitch front end), moved by octaves when it is more than 7 semitones from its neighbours' median
+  (`fix_octave_slips`), snapped to the key's scale, returned in the Vocal lane's register (sung - octave).
 The take is read unstretched through a Clock (align.py: take seconds <-> our beats). Starts must lie inside the
 section's beats; the bars after it (the tail) may only hold the end of the last note, which is cut at the section end.
 """
@@ -27,6 +28,7 @@ FRAME_S = HOP / SR16
 PAD = 10  # frames of silence analysed in front of the audio
 MIN_GAP_S = 0.09
 MIN_STRENGTH = 0.05  # of the envelope's maximum: weaker local maxima are ripple, not starts
+OCTAVE_SLIP = 7  # semitones from the neighbours' median beyond which a note is moved by octaves
 PITCHED_WITHIN = 8  # frames (80 ms): a start must be followed by pitched singing this soon
 SINGING = 0.02  # a frame is singing when its RMS is above this share of the take's loudest frame
 FMIN_HZ, FMAX_HZ = 50.0, 1600.0  # the hum service's SwiftF0 range
@@ -122,12 +124,7 @@ def segment(vocal, sr: int, n: int, bpm, *, key: str, octave: int, section: str,
     peaks = [k for k in range(a, b) if env[k] >= env[k - 1] and env[k] > env[k + 1] and env[k] >= floor and singing[k]
              and round(beats[k] * 4) < round(section_beats * 4) and pitched(k)]
     peaks.sort(key=lambda k: -env[k])
-    chosen = []
-    for k in peaks:
-        if all(abs(k - c) * FRAME_S >= MIN_GAP_S and abs(beats[k] - beats[c]) >= 0.25 for c in chosen):
-            chosen.append(k)
-            if len(chosen) == n:
-                break
+    chosen = pick_starts(peaks, beats, n)
     if len(chosen) < n:
         raise TranscribeError(f"{section}: found {len(chosen)} of {n} note starts")
     chosen.sort()
@@ -135,7 +132,7 @@ def segment(vocal, sr: int, n: int, bpm, *, key: str, octave: int, section: str,
     sec_end = int(round(section_beats * 4))
     qs = [int(round(beats[k] * 4)) for k in chosen]
     assert all(x < y for x, y in zip(qs, qs[1:])), f"{section}: two starts share a 16th: {qs}"
-    out = []
+    found = []  # (stop frame, sung pitch)
     for i, k in enumerate(chosen):
         end = chosen[i + 1] if i + 1 < n else nf
         stop = next((f for f in range(k, end) if not singing[f]), end)
@@ -143,12 +140,48 @@ def segment(vocal, sr: int, n: int, bpm, *, key: str, octave: int, section: str,
         seg = seg[~np.isnan(seg)]
         if len(seg) == 0:
             raise TranscribeError(f"{section}: note {i + 1} at {k * FRAME_S:.2f} s has no pitch")
+        found.append((stop, int(round(float(np.median(seg))))))
+    pitches = fix_octave_slips([p for _, p in found])
+    out = []
+    for i, (k, (stop, _), sung) in enumerate(zip(chosen, found, pitches)):
         q = qs[i]
         e = max(q + 1, int(round(float(clock.beats(stop * FRAME_S)) * 4)))
         if i + 1 < n:
             e = min(e, qs[i + 1])
         e = min(e, sec_end)
-        out.append({"start": q / 4, "duration": (e - q) / 4,
-                    "midi": int(snap(int(round(float(np.median(seg)))), pcs) - octave),
+        out.append({"start": q / 4, "duration": (e - q) / 4, "midi": int(snap(sung, pcs) - octave),
                     "start_s": round(k * FRAME_S, 3), "stop_s": round(stop * FRAME_S, 3)})
+    return out
+
+
+def pick_starts(order, beats, n: int) -> list[int]:
+    """Up to `n` start frames from `order` (candidates, strongest first): each on its own 16th of our grid (rounded
+    as the notes will be) and at least MIN_GAP_S from every one already taken. Returned in time order."""
+    chosen, taken = [], set()
+    for k in order:
+        q = int(round(float(beats[k]) * 4))
+        if q in taken or any(abs(k - c) * FRAME_S < MIN_GAP_S for c in chosen):
+            continue
+        chosen.append(k)
+        taken.add(q)
+        if len(chosen) == n:
+            break
+    return sorted(chosen)
+
+
+def fix_octave_slips(pitches: list[int]) -> list[int]:
+    """A note more than OCTAVE_SLIP semitones from the median of its neighbours (up to 2 on each side; those before it
+    as already corrected, so one slipped note does not drag the next one)
+    moves by whole octaves toward that median until within OCTAVE_SLIP: a pitch tracker's octave error, or a slip in
+    the take. A genuine leap of OCTAVE_SLIP or fewer semitones is kept."""
+    out = []
+    for i, p in enumerate(pitches):
+        nb = out[max(0, i - 2):i] + list(pitches[i + 1:i + 3])  # the notes before as corrected
+        if nb:
+            m = float(np.median(nb))
+            while p - m > OCTAVE_SLIP:
+                p -= 12
+            while m - p > OCTAVE_SLIP:
+                p += 12
+        out.append(p)
     return out

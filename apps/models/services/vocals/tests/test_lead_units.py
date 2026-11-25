@@ -31,9 +31,19 @@ def test_tail_chords_are_required():
         lead.check_units([u])
 
 
-def test_missing_param_is_named():
-    with pytest.raises(ValueError, match="lead: missing param 'octave'"):
-        lead.run({"bpm": 128, "key": "C", "seeds": 1, "threshold": 0.7, "units": [unit()]}, "/tmp", None)
+PARAMS = {"bpm": 128, "key": "C", "octave": 12, "seeds": 1, "threshold": 0.7, "style": "EDM, female lead vocal"}
+
+
+@pytest.mark.parametrize("missing", ["octave", "style"])
+def test_missing_param_is_named(missing):
+    params = {k: v for k, v in PARAMS.items() if k != missing}
+    with pytest.raises(ValueError, match=f"lead: missing param '{missing}'"):
+        lead.run({**params, "units": [unit()]}, "/tmp", None)
+
+
+def test_style_must_be_text():
+    with pytest.raises(ValueError, match="lead: param 'style' must be a non-empty string"):
+        lead.run({**PARAMS, "style": "  ", "units": [unit()]}, "/tmp", None)
 
 
 def test_notes_take_the_syllables_in_order_and_a_held_position_keeps_its_dash():
@@ -46,6 +56,7 @@ def test_notes_take_the_syllables_in_order_and_a_held_position_keeps_its_dash():
 class FakeJob:
     def __init__(self):
         self.steps = []
+        self.files = {}
 
     def check_cancelled(self):
         pass
@@ -56,6 +67,7 @@ class FakeJob:
         class S:
             def done(self, text="", numbers=None, files=None):
                 job.steps.append((id, "done", text, numbers or {}))
+                job.files[id] = list(files or [])
 
             def fail(self, text):
                 job.steps.append((id, "failed", text, {}))
@@ -81,8 +93,9 @@ SCORES = {1: 0.8, 2: 1.0, 3: 0.9, 4: 0.5}
 def test_the_best_take_that_transcribes_is_chosen():
     fn, tried = fake_transcriber(fails={2})
     job = FakeJob()
-    seed, melody = lead.choose_take("verse1", SCORES, 0.7, fn, job)
+    seed, melody = lead.choose_take("verse1", SCORES, 0.7, fn, job, take_files=lambda s: [f"verse1_s{s}_vocals.wav"])
     assert seed == 3 and tried == [2, 3] and len(melody) == 1
+    assert job.files["transcribe:verse1:s3"] == ["verse1_s3_vocals.wav"]
     assert [(i, st) for i, st, _, _ in job.steps] == [("transcribe:verse1:s2", "failed"), ("transcribe:verse1:s3", "done"),
                                                        ("choose:verse1", "done")]
     assert job.steps[-1][3] == {"seed": 3, "chords_match": 0.9, "notes": 1}

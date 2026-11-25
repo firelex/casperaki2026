@@ -89,9 +89,7 @@ def test_lyrics_in_yue2_layout():
         "Every window shining golden\nI've been waiting for the weekend\nhere it comes\nhere it comes\n\n[Outro]")
 
 
-def test_style_and_key():
-    assert score.style(128, "C") == ("EDM, dance pop, energetic, female lead vocal, synthesizer, drum machine, "
-                                     "synth bass, 128 bpm, C major")
+def test_key_scales():
     assert score.scale("C") == (0, 2, 4, 5, 7, 9, 11)
     assert score.scale("Am") == (9, 11, 0, 2, 4, 5, 7)
     assert score.scale("Bb") == (10, 0, 2, 3, 5, 7, 9)
