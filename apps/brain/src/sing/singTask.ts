@@ -180,7 +180,7 @@ const iso = (seconds: number) => new Date(seconds * 1000).toISOString();
 export const SING_STAGES = ['lead', 'repeats'] as const;
 export type SingStage = (typeof SING_STAGES)[number];
 /** Every service stage a task runs (Sing's two, Transcribe melody's one): the subfolders step files are served from. */
-export const TASK_FILE_STAGES = [...SING_STAGES, 'transcribe'] as const;
+export const TASK_FILE_STAGES = [...SING_STAGES, 'transcribe', 'ace'] as const;
 export type TaskFileStage = (typeof TASK_FILE_STAGES)[number];
 
 /** A step's files as the task lists them: "<stage>/<name>" (GET /api/tasks/:id/files/<stage>/<name>). */

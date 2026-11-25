@@ -83,7 +83,8 @@ const MASTER_TIMEOUT_MS = 10 * 60 * 1000;
 
 export class RenderService {
   private readonly statuses = new Map<string, RenderStatus>();
-  private readonly queue: Array<{ songId: string; canonical: string }> = [];
+  /** Song renders and one-off mix renders (renderMix), run one at a time in order. */
+  private readonly queue: Array<{ songId: string; canonical: string } | { oneOff: () => Promise<void> }> = [];
   private running = false;
 
   constructor(private readonly config: RenderServiceConfig) {
@@ -160,7 +161,7 @@ export class RenderService {
 
   /** Position in the queue (0 = next to run), or undefined if not queued. */
   queuePosition(songId: string): number | undefined {
-    const i = this.queue.findIndex((j) => j.songId === songId);
+    const i = this.queue.findIndex((j) => 'songId' in j && j.songId === songId);
     return i < 0 ? undefined : i;
   }
 
@@ -174,11 +175,63 @@ export class RenderService {
     this.running = true;
     try {
       for (let job = this.queue.shift(); job; job = this.queue.shift()) {
-        await this.run(job.songId);
+        if ('oneOff' in job) await job.oneOff();
+        else await this.run(job.songId);
       }
     } finally {
       this.running = false;
     }
+  }
+
+  /** Renders a song's mix, unmastered, into `dir` (its own folder, e.g. a background task's), in turn with the song
+   *  renders, without touching any song's render: the WAV's path. `mixConfig`: the song's Pro-mode mix, or undefined
+   *  for the standard one. Rejects with the failing step's log tail. */
+  renderMix(dir: string, canonical: string, mixConfig?: string): Promise<string> {
+    rmSync(dir, { recursive: true, force: true });
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, 'song-in.json'), canonical);
+    if (mixConfig !== undefined) writeFileSync(join(dir, 'mix-config.json'), mixConfig);
+    const wav = join(dir, 'out-unmastered.wav');
+    return new Promise((resolvePromise, reject) => {
+      this.queue.push({
+        oneOff: () => this.lowerAndRender(dir, wav).then(() => resolvePromise(wav), reject),
+      });
+      void this.drain();
+    });
+  }
+
+  /** Lowers `dir`/song-in.json and renders it (with `dir`/mix-config.json when there is one) to `wav`, unmastered. */
+  private async lowerAndRender(dir: string, wav: string, onStep?: (step: 'lower' | 'render') => void): Promise<void> {
+    const c = this.config;
+    const env = { ...process.env, CASPERAKI_SAMPLE_LIBRARY_ROOT: c.sampleLibraryRoot };
+    onStep?.('lower');
+    await runLogged(
+      c.nodeBin,
+      [c.emitScript],
+      {
+        ...env,
+        BRAIN_SONG_FILE: join(dir, 'song-in.json'),
+        OUT_DIR: dir,
+        ...(c.vocalTakesDir ? { CASPERAKI_VOCAL_TAKES_DIR: resolve(c.vocalTakesDir) } : {}),
+      },
+      join(dir, 'lower.log'),
+      LOWER_TIMEOUT_MS,
+    );
+    onStep?.('render');
+    await runLogged(
+      c.renderBin,
+      [dir, wav, c.stubSamplesDir, c.sampleLibraryRoot],
+      {
+        ...env,
+        CASPERAKI_BITS: '24',
+        ...(c.mix ? { CASPERAKI_MIX: '1' } : {}),
+        // The song's own mix (Pro-mode changes), else the renderer's standard config.
+        ...(existsSync(join(dir, 'mix-config.json')) ? { CASPERAKI_MIX_CONFIG: join(dir, 'mix-config.json') } : {}),
+      },
+      join(dir, 'render.log'),
+      RENDER_TIMEOUT_MS,
+    );
+    if (!existsSync(wav)) throw new Error(`renderer exited cleanly but wrote no ${wav.split('/').pop()} (see render.log)`);
   }
 
   private async run(songId: string): Promise<void> {
@@ -188,39 +241,9 @@ export class RenderService {
     const c = this.config;
     const env = { ...process.env, CASPERAKI_SAMPLE_LIBRARY_ROOT: c.sampleLibraryRoot };
     try {
-      this.set({ ...base, state: 'running', step: 'lower', startedAt });
-      await runLogged(
-        c.nodeBin,
-        [c.emitScript],
-        {
-          ...env,
-          BRAIN_SONG_FILE: join(dir, 'song-in.json'),
-          OUT_DIR: dir,
-          ...(c.vocalTakesDir ? { CASPERAKI_VOCAL_TAKES_DIR: resolve(c.vocalTakesDir) } : {}),
-        },
-        join(dir, 'lower.log'),
-        LOWER_TIMEOUT_MS,
-      );
-
       const unmastered = this.wavPath(songId, 'unmastered');
       const mastered = this.wavPath(songId, 'mastered');
-      this.set({ ...base, state: 'running', step: 'render', startedAt });
-      await runLogged(
-        c.renderBin,
-        [dir, unmastered, c.stubSamplesDir, c.sampleLibraryRoot],
-        {
-          ...env,
-          CASPERAKI_BITS: '24',
-          ...(c.mix ? { CASPERAKI_MIX: '1' } : {}),
-          // The song's own mix (Pro-mode changes), else the renderer's standard config.
-          ...(existsSync(join(dir, 'mix-config.json')) ? { CASPERAKI_MIX_CONFIG: join(dir, 'mix-config.json') } : {}),
-        },
-        join(dir, 'render.log'),
-        RENDER_TIMEOUT_MS,
-      );
-      if (!existsSync(unmastered)) {
-        throw new Error('renderer exited cleanly but wrote no out-unmastered.wav (see render.log)');
-      }
+      await this.lowerAndRender(dir, unmastered, (step) => this.set({ ...base, state: 'running', step, startedAt }));
 
       this.set({ ...base, state: 'running', step: 'master', startedAt });
       await runLogged(c.masteringBin, [unmastered, mastered, 'sergree'], env, join(dir, 'master.log'), MASTER_TIMEOUT_MS);

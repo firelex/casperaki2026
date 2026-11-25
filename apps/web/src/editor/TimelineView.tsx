@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import type { Song } from '@casperaki/song-schema';
+import type { AceInstrument } from '@casperaki/song-schema/ace-layer';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -32,6 +33,7 @@ import { bytesToBase64, lyricsWritten, staleTakes, startOnSaved, sungTakes, tran
 import { hasNotes } from './audioOnlyTracks';
 import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
+import { AceLayerDialog } from './sequencer/AceLayerDialog';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -81,7 +83,7 @@ export function TimelineView() {
   const stale = useQuery({
     queryKey: ['stale-takes', viewSong ? fnv1a(JSON.stringify(viewSong)) : undefined],
     queryFn: () => staleTakes(viewSong!),
-    enabled: Boolean(viewSong && sungTakes(viewSong).length > 0),
+    enabled: Boolean(viewSong && viewSong.aiArtifacts.length > 0),
   });
   const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong, stale.data) : undefined), [viewSong, stale.data]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
@@ -321,7 +323,7 @@ export function TimelineView() {
     [secondsPerBar],
   );
 
-  const selectionMenu: SelectionActions = {
+  const selectionBase: Omit<SelectionActions, 'aceLayer'> = {
     label: range ? `Selection ${fmtBar(range.start)} – ${fmtBar(range.end)}` : '',
     looping: live.looping,
     onLoop: () => {
@@ -563,6 +565,21 @@ export function TimelineView() {
       setTaskError(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
+  /** Add ACE layer's dialog (open: true), and the song's ACE layer task while it runs (one at a time). */
+  const [layering, setLayering] = useState(false);
+  const aceTask = tasks?.find((t) => t.kind === 'aceLayer' && t.songId === activeSong?.id && t.state === 'running');
+  const addAceLayer = async (instrument: AceInstrument, words: string, bars: { startBar: number; endBar: number } | undefined) => {
+    setLayering(false);
+    setTaskError(undefined);
+    try {
+      await onSaved((songId, song) => tasksApi.startAceLayer(songId, song, instrument, words, bars));
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Add ACE layer failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+  const aceLayerItem: AceLayerItem = { disabled: Boolean(aceTask), onSelect: () => setLayering(true) };
+  const selectionMenu: SelectionActions = { ...selectionBase, aceLayer: aceLayerItem };
   const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
   const sing = () => startTask('sing', 'Sing');
   const transcribe = async (section: string, file: File, hasBacking: boolean) => {
@@ -765,6 +782,7 @@ export function TimelineView() {
                   : undefined
               }
               onRemove={() => edits.removeTrack(t.name)}
+              aceLayer={aceLayerItem}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
                 setDialog({ kind: 'add', sections: s === undefined ? model.sections.map((x) => x.name) : [model.sections[s]!.name] })
@@ -915,6 +933,13 @@ export function TimelineView() {
         </div>
       ) : null}
 
+      {layering ? (
+        <AceLayerDialog
+          selection={range ? { startBar: range.start, endBar: range.end } : undefined}
+          onClose={() => setLayering(false)}
+          onStart={(instrument, words, bars) => void addAceLayer(instrument, words, bars)}
+        />
+      ) : null}
       {transcribing && viewSong ? (
         <TranscribeDialog
           sections={transcribeSections(viewSong)}
@@ -1130,6 +1155,7 @@ function TrackMenu({
   vocal,
   onRemove,
   onAdd,
+  aceLayer,
   onOverview,
   children,
 }: {
@@ -1151,6 +1177,8 @@ function TrackMenu({
   vocal: VocalSteps | undefined;
   onRemove(): void;
   onAdd(section: number | undefined): void;
+  /** Add ACE layer… (disabled while the song's ACE layer task runs). */
+  aceLayer: AceLayerItem;
   /** Whole-track piano roll / score (pitched tracks). */
   onOverview: (() => void) | undefined;
   children: ReactNode;
@@ -1230,6 +1258,7 @@ function TrackMenu({
         <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onAdd(section)}>
           Add track…
         </ContextMenuItem>
+        <AceLayerMenuItem item={aceLayer} />
       </ContextMenuContent>
     </ContextMenu>
   );
@@ -1252,6 +1281,21 @@ interface SelectionActions {
   onPlay(): void;
   onLoop(): void;
   onClear(): void;
+  /** Add ACE layer… over the selection (or the whole song). */
+  readonly aceLayer: AceLayerItem;
+}
+
+interface AceLayerItem {
+  readonly disabled: boolean;
+  onSelect(): void;
+}
+
+function AceLayerMenuItem({ item }: { item: AceLayerItem }) {
+  return (
+    <ContextMenuItem className={ITEM} disabled={item.disabled} onSelect={item.onSelect}>
+      Add ACE layer… {item.disabled ? <MenuHint text="one is being made" /> : null}
+    </ContextMenuItem>
+  );
 }
 
 function SelectionItems({ selection }: { selection: SelectionActions }) {
@@ -1269,6 +1313,7 @@ function SelectionItems({ selection }: { selection: SelectionActions }) {
       <ContextMenuItem className={ITEM} onSelect={selection.onClear}>
         Clear selection
       </ContextMenuItem>
+      <AceLayerMenuItem item={selection.aceLayer} />
     </>
   );
 }

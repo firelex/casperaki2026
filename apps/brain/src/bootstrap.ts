@@ -18,7 +18,8 @@ import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
 import { createTasksRouter } from './routes/tasks.js';
-import { BackgroundTasks } from './tasks/tasks.js';
+import { BackgroundTasks, type AceDeps } from './tasks/tasks.js';
+import { applyMixOverrides, canonicalStringifySong } from '@casperaki/song-schema';
 import { VocalsClient } from './sing/vocalsClient.js';
 import { EventHub } from './events.js';
 import { ArtworkTasks, HarnessImageService, type ImageService } from './artwork/tasks.js';
@@ -289,7 +290,31 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     ffmpegBin: config.ffmpegBin,
     pollMs: deps.singPollMs ?? SING_POLL_MS,
   };
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  // ACE layer: renders the working song (with the project's Pro-mode mix) into the task's folder, then the ace service
+  // plays one instrument part over it; the clips are stored with the sung takes.
+  let ace: AceDeps | undefined;
+  if (config.aceServiceUrl) {
+    const aceMissing = Object.entries({ BRAIN_TASK_FILES_DIR: config.taskFilesDir, BRAIN_VOCAL_TAKES_DIR: config.vocalTakesDir, CASPERAKI_SAMPLE_LIBRARY_ROOT: renders }).filter(([, v]) => v === undefined).map(([k]) => k);
+    if (aceMissing.length > 0) throw new Error(`ACE_SERVICE_URL is set, so ACE layers also need ${aceMissing.join(' and ')}.`);
+    const aceRenders = renders!;
+    const taskFilesDir = config.taskFilesDir!;
+    ace = {
+      client: new VocalsClient(config.aceServiceUrl),
+      filesDir: taskFilesDir,
+      takesDir: config.vocalTakesDir!,
+      ffmpegBin: config.ffmpegBin,
+      pollMs: deps.singPollMs ?? SING_POLL_MS,
+      renderWav: (ownerId, songId, song, taskId) => {
+        const mix = store.getProject(ownerId, songId)?.mixOverrides;
+        if (mix && !playback) throw new Error('This song has a Pro-mode mix, but the brain has no mix config (CASPERAKI_MIX_CONFIG).');
+        const mixConfig = mix ? applyMixOverrides(playback!.mixConfig, mix) : undefined;
+        return aceRenders.renderMix(join(resolve(taskFilesDir), taskId, 'render'), canonicalStringifySong(song, 2), mixConfig);
+      },
+    };
+  } else {
+    console.warn('[brain] ACE_SERVICE_URL not set — Add ACE layer answers 503.');
+  }
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));

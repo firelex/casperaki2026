@@ -11,7 +11,7 @@ import { toEngineFixture } from '../src/index.js';
 const GOLDEN = resolve(dirname(fileURLToPath(import.meta.url)), '../../arrangement/test/fixtures/golden/orchestrate/brightPop/brightPop-vertical-slice.song.json');
 const base = (): Song => SongSchema.parse(JSON.parse(readFileSync(GOLDEN, 'utf8')));
 const SONG = base();
-type Kind = 'yue2-vocal' | 'soulx-vocal';
+type Kind = 'yue2-vocal' | 'soulx-vocal' | 'ace-step-conditioned';
 const fpOf = (segment: string, track = 'Vocal') => vocalTakeFingerprint(SONG, segment, track);
 const take = (segment: string, instrument = 'Vocal', kind: Kind = 'yue2-vocal', fp = fpOf(segment, instrument)) => ({
   id: `vocal-${segment}-${instrument}-${kind}`, kind, modelId: 'soulx-singer', modelVersion: 'steps-32', seed: 1, prompt: 'en_prompt',
@@ -75,5 +75,20 @@ describe('sung vocal takes lowered to an audioClips instrument', () => {
     const insts = clipsInsts(lower(on, '/t'));
     expect(insts.map((j) => j.name)).toEqual(['Ad-libs']);
     expect(insts[0]).toMatchObject({ fxSends: DRY_SENDS });
+  });
+});
+
+describe('ACE layers lowered to an audioClips instrument', () => {
+  it('an ACE layer is one lane mixed as its instrument (its type, no own sends); a stale section is left out', () => {
+    const on = { ...base(), aiArtifacts: [take('chorus1', 'ACE Guitar', 'ace-step-conditioned'), take('verse1', 'ACE Guitar', 'ace-step-conditioned', 'f'.repeat(64))] } as Song;
+    const insts = clipsInsts(lower(on, '/t'));
+    expect(insts.map((j) => j.name)).toEqual(['ACE Guitar']);
+    expect(insts[0]).toMatchObject({ lowLevelType: 'acousticGuitarsSteelStereo', clips: [clip('chorus1', 'ACE Guitar')] });
+    expect(insts[0]!.fxSends).toBeUndefined();
+  });
+
+  it('ACE clips on a track that is not named as an ACE layer: an error', () => {
+    const on = { ...base(), aiArtifacts: [take('chorus1', 'Guitar layer', 'ace-step-conditioned')] } as Song;
+    expect(() => lower(on, '/t')).toThrow(/not an ACE layer track name/u);
   });
 });

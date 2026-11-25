@@ -6,6 +6,9 @@
 //                                  -> 201 { task }   Transcribe melody: a recording of one section (data: base64 of the
 //                                     file, any format ffmpeg reads, at most 10 MB decoded; 413 when larger), sung or
 //                                     hummed along from the section's first beat; hasBacking: music plays behind the voice
+//   POST /api/tasks { kind: 'aceLayer', songId, song, instrument, words?, range?: { startBar, endBar } }
+//                                  -> 201 { task }   Add ACE layer: one instrument part played over the song by ACE-Step,
+//                                     for the whole song or the selected bars (src/ace/aceLayerTask.ts)
 //   POST /api/tasks/:id/apply      -> { task, songId, result } a ready result saved into the song (its new id);
 //                                     result: what the task made (writeLyrics: section → lines)
 //   POST /api/tasks/:id/retry      -> { task }                a failed task started again
@@ -13,7 +16,7 @@
 //   GET  /api/tasks/:id/files/:stage/:name -> a file a step of the task made (step.files lists "<stage>/<name>")
 //
 // TaskJson: { id, kind, songId, title, state, message?, startedAt, finishedAt?, steps: TaskStep[] }
-// (TaskStep: src/store.ts; kinds: writeLyrics, sing, transcribe).
+// (TaskStep: src/store.ts; kinds: writeLyrics, sing, transcribe, aceLayer).
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
@@ -40,6 +43,8 @@ const StartBody = z.union([
       hasBacking: z.boolean(),
     })
     .strict(),
+  // The ACE layer's own options (instrument, words, range) are checked by the task (AceLayerOptionsSchema).
+  z.object({ kind: z.literal('aceLayer'), songId: z.string().min(1), song: z.unknown(), instrument: z.string(), words: z.string().optional(), range: z.unknown().optional() }).strict(),
 ]);
 
 export function taskJson(t: TaskRow, title: string) {
@@ -88,6 +93,12 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
       }
       return answer(res, () =>
         res.status(201).json({ task: titled(owner, tasks.start(owner, b.songId, b.kind, song, { segment: b.segment, recording, hasBacking: b.hasBacking })) }),
+      );
+    }
+    if (b.kind === 'aceLayer') {
+      const { instrument, words, range } = b;
+      return answer(res, () =>
+        res.status(201).json({ task: titled(owner, tasks.startAceLayer(owner, b.songId, song, { instrument, ...(words !== undefined ? { words } : {}), ...(range !== undefined ? { range } : {}) } as Parameters<BackgroundTasks['startAceLayer']>[3])) }),
       );
     }
     return answer(res, () => res.status(201).json({ task: titled(owner, tasks.start(owner, b.songId, b.kind, song)) }));

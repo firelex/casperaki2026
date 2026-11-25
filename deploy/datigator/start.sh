@@ -9,6 +9,7 @@
 #   svc-amt          melody completion model service (hum to song), port 16511
 #   svc-vocals       sing and transcribe model service (YuE2, SoulX-Singer, ChordNet), port 16514
 #   svc-artwork      song artwork image service (segmind/small-sd), port 16513
+#   svc-ace          add one instrument part to a song (ACE-Step 1.5 lego, ace-layer adapter), port 16515
 #
 # At boot the Windows task "Start WSL at boot" starts WSL; systemd starts cron, whose @reboot line runs this
 # (crontab: @reboot $HOME/apps/casperaki/deploy/datigator/start.sh >> $HOME/casperaki-data/boot.log 2>&1).
@@ -42,3 +43,5 @@ start svc-amt "cd $SERVING && exec python3 harness.py --adapter amt --port 16511
 start svc-artwork "cd $SERVING && exec python3 harness.py --adapter small-sd --port 16513 --models-dir /mnt/d/casperaki-models 2>&1 | tee -a run/svc-artwork.log"
 # Sing and transcribe (vocals adapter; own venv at apps/models/services/vocals/.venv).
 start svc-vocals "cd $SERVING && exec python3 harness.py --adapter vocals --port 16514 2>&1 | tee -a run/svc-vocals.log"
+# Add ACE layer (ace-layer adapter: ACE-Step 1.5 base model, lego; runs in ACE-Step's venv at apps/models/services/ace-step/.venv).
+start svc-ace "cd $SERVING && exec python3 harness.py --adapter ace-layer --port 16515 --models-dir /mnt/d/casperaki-models 2>&1 | tee -a run/svc-ace.log"

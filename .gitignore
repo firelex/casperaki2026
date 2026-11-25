@@ -49,6 +49,7 @@ __pycache__/
 apps/models/services/matchering/.venv/
 # Generated audio / outputs / run logs / caches under the model services
 apps/models/services/*/outputs/
+apps/models/services/*/.cache/
 apps/models/services/_serving/run/
 apps/models/services/.cache/
 apps/models/services/sam-audio/*.wav

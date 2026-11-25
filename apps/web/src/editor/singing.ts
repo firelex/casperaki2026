@@ -1,4 +1,5 @@
 import type { Song } from '@casperaki/song-schema';
+import { ACE_LAYER_KIND } from '@casperaki/song-schema/ace-layer';
 import { SUNG_TAKE_KINDS, vocalTakeCanonical } from '@casperaki/song-schema/vocal-take-input';
 
 import type { BackgroundTask } from '../api/tasks';
@@ -30,7 +31,9 @@ async function sha256Hex(text: string): Promise<string> {
  */
 export async function staleTakes(song: Song): Promise<Set<string>> {
   const stale = new Set<string>();
-  for (const a of sungTakes(song)) {
+  // ACE layer clips (docs/superpowers/specs/2026-11-25-ace-layer-design.md) carry the same fingerprint as sung takes.
+  const aceClips = song.aiArtifacts.filter((a) => a.kind === ACE_LAYER_KIND && a.attachedTo.scope === 'segment' && a.attachedTo.instrument !== undefined);
+  for (const a of [...sungTakes(song), ...aceClips]) {
     const at = a.attachedTo;
     if (at.scope !== 'segment' || at.instrument === undefined) throw new Error(`staleTakes: take "${a.id}" is not attached to a section and instrument`);
     const stored = a.conditioning?.hashes?.[0];

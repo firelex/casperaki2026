@@ -346,11 +346,15 @@ function removeTrack(song: Song, track: string): Song {
     }
     arrangement[seg] = next;
   }
+  // Audio clips on the track (sung takes, ad-libs, ACE layers) go with it.
+  const onTrack = (a: Song['aiArtifacts'][number]) => a.attachedTo.scope === 'segment' && a.attachedTo.instrument === track;
+  if (song.aiArtifacts.some(onTrack)) found = true;
   if (!found) throw new Error(`track '${track}' is not in this song`);
   return {
     ...song,
     arrangement,
     instrumentDefinitions: song.instrumentDefinitions.filter((d) => d.name !== track),
+    aiArtifacts: song.aiArtifacts.filter((a) => !onTrack(a)),
   };
 }
 

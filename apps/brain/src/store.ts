@@ -92,7 +92,7 @@ export interface MixDismissal {
 }
 
 /** A background task on a song (src/tasks/tasks.ts): its song follows the project when saves move it. */
-export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe';
+export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe' | 'aceLayer';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task as the Tasks page lists it (the brain's own steps and a model service's, in the order they run). */
@@ -115,6 +115,8 @@ export interface TaskJobs {
   readonly lead?: string;
   readonly repeats?: string;
   readonly transcribe?: string;
+  /** ACE layer: the ace service's lego job. */
+  readonly ace?: string;
 }
 
 export interface TaskRow {
@@ -543,7 +545,7 @@ interface TaskDbRow {
   options: string | null;
 }
 
-const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'sing', 'transcribe'];
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'sing', 'transcribe', 'aceLayer'];
 const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];
 
 function toTaskRow(row: TaskDbRow): TaskRow {

@@ -427,6 +427,24 @@ describe('removeTrack', () => {
     expect(applyCommand(state, { kind: 'undo' }).working).toBe(song);
   });
 
+  it('removes an audio-only track (clips on a track with no definition, such as an ACE layer) with its clips', () => {
+    const song = makeValidSong();
+    const segment = song.songStructure[0]!.name;
+    const clip = (id: string, instrument: string) => ({
+      id,
+      kind: 'ace-step-conditioned' as const,
+      modelId: 'ace-step-1.5-base',
+      modelVersion: 'lego',
+      attachedTo: { scope: 'segment' as const, segment, instrument },
+      output: { uri: `vocal-take:${'a'.repeat(64)}.ogg`, sha256: 'a'.repeat(64), durationSeconds: 8 },
+    });
+    const withClips = { ...song, aiArtifacts: [...song.aiArtifacts, clip('c1', 'ACE Guitar'), clip('c2', 'ACE Strings')] } as typeof song;
+    const state = applyCommand(initEditState(withClips), { kind: 'removeTrack', track: 'ACE Guitar' });
+    expect(state.lastError).toBeUndefined();
+    expect(state.working.aiArtifacts.map((a) => a.id)).not.toContain('c1');
+    expect(state.working.aiArtifacts.map((a) => a.id)).toContain('c2');
+  });
+
   it('reports a track that is not in the song', () => {
     const state = applyCommand(initEditState(makeValidSong()), { kind: 'removeTrack', track: 'Nope' });
     expect(state.lastError).toMatch(/not in this song/);

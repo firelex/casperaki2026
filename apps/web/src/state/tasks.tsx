@@ -56,6 +56,7 @@ export interface ApplyContext {
 export function mergeOp(kind: BackgroundTask['kind'], result: AppliedTask['result'], saved: Song): TrackEdit {
   if (kind === 'sing') return { kind: 'applySung', result, sungOver: saved };
   if (kind === 'transcribe') return { kind: 'applySung', result, sungOver: saved, partial: true };
+  if (kind === 'aceLayer') return { kind: 'applyAceLayer', result };
   return { kind: 'applyLyrics', lyrics: result as Readonly<Record<string, readonly string[]>> };
 }
 

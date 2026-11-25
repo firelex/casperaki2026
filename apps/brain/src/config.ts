@@ -73,6 +73,9 @@ const ConfigSchema = z.object({
    *  each task's step files in (<dir>/<task id>/). Unset → Sing answers 503 naming the setting. */
   vocalsServiceUrl: z.string().url().optional(),
   taskFilesDir: z.string().min(1).optional(),
+  /** ACE layer: the ace service (svc-ace, the ace-layer adapter on the serving harness) as a base URL. Needs
+   *  BRAIN_TASK_FILES_DIR, BRAIN_VOCAL_TAKES_DIR and per-song rendering. Unset → ACE layer answers 503. */
+  aceServiceUrl: z.string().url().optional(),
   /** Song artwork: the image service (svc-artwork, small-sd on the serving harness) and the directory the pictures
    *  are kept in. Both or neither (without them songs get no artwork). */
   artworkServiceUrl: z.string().url().optional(),
@@ -147,6 +150,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
     vocalsServiceUrl: env.VOCALS_SERVICE_URL || undefined,
     taskFilesDir: env.BRAIN_TASK_FILES_DIR || undefined,
+    aceServiceUrl: env.ACE_SERVICE_URL || undefined,
     artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,
     artworkDir: env.BRAIN_ARTWORK_DIR || undefined,
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,

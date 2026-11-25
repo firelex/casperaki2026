@@ -6,7 +6,7 @@
 // passed in as `vocalTakesDir`). The brain puts on the song exactly the stored takes that match its sections now
 // (takes are found by fingerprint, not saved with the song). No takes: nothing (the Vocal track stays silent).
 
-import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
+import { ACE_LAYER_KIND, ACE_MIX_TYPES, aceInstrumentOfTrack, isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
 
 export const AUDIO_CLIPS_TYPE = 'audioClips';
 const TAKE_URI = /^vocal-take:([0-9a-f]{64})\.ogg$/u;
@@ -33,13 +33,24 @@ export function buildVocalClipsInsts(
   o: { vocalTakesDir: string | undefined; firstId: number; firstFilenameIndex: number },
 ): { filename: string; json: Record<string, unknown> }[] {
   const takes = song.aiArtifacts.filter(
-    (a) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) && a.attachedTo.scope === 'segment' && a.attachedTo.instrument && isTakeFresh(song, a),
+    (a) =>
+      ((SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) || a.kind === ACE_LAYER_KIND) &&
+      a.attachedTo.scope === 'segment' &&
+      a.attachedTo.instrument &&
+      isTakeFresh(song, a),
   );
   const trackOf = (a: (typeof takes)[number]) => (a.attachedTo as { instrument: string }).instrument;
   const tracks = [...new Set(takes.map(trackOf))].sort((a, b) => (a === 'Vocal' ? -1 : b === 'Vocal' ? 1 : 0));
+  // An ACE layer (docs/superpowers/specs/2026-11-25-ace-layer-design.md) is one lane, mixed as its instrument.
+  const aceType = (track: string) => {
+    const instrument = aceInstrumentOfTrack(track);
+    if (!instrument) throw new Error(`engine-adapter: ACE layer clips on "${track}", which is not an ACE layer track name`);
+    return ACE_MIX_TYPES[instrument];
+  };
   const lanes = tracks.flatMap((track) => [
-    { track, name: track, kind: 'yue2-vocal', sends: DRY_SENDS },
-    { track, name: `${track} wet`, kind: 'soulx-vocal', sends: WET_SENDS },
+    { track, name: track, kind: 'yue2-vocal', sends: DRY_SENDS as typeof DRY_SENDS | undefined, lowLevelType: 'vocalsLaSinger' },
+    { track, name: `${track} wet`, kind: 'soulx-vocal', sends: WET_SENDS as typeof DRY_SENDS | typeof WET_SENDS | undefined, lowLevelType: 'vocalsLaSinger' },
+    ...(takes.some((a) => trackOf(a) === track && a.kind === ACE_LAYER_KIND) ? [{ track, name: track, kind: ACE_LAYER_KIND, sends: undefined, lowLevelType: aceType(track) }] : []),
   ]).filter((l) => takes.some((a) => trackOf(a) === l.track && a.kind === l.kind));
   return lanes.map((lane, i) => {
     const clips: AudioClip[] = [];
@@ -54,7 +65,8 @@ export function buildVocalClipsInsts(
     }
     return {
       filename: `inst-${o.firstFilenameIndex + i}.json`,
-      json: { id: o.firstId + i, name: lane.name, type: AUDIO_CLIPS_TYPE, lowLevelType: 'vocalsLaSinger', fxSends: lane.sends, clips },
+      // ACE layers take their instrument type's own effect sends (no fxSends).
+      json: { id: o.firstId + i, name: lane.name, type: AUDIO_CLIPS_TYPE, lowLevelType: lane.lowLevelType, ...(lane.sends ? { fxSends: lane.sends } : {}), clips },
     };
   });
 }

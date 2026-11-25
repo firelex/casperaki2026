@@ -22,6 +22,10 @@
     "./schemas": {
       "types": "./dist/schemas/index.d.ts",
       "import": "./dist/schemas/index.js"
+    },
+    "./ace-layer": {
+      "types": "./dist/ace-layer.d.ts",
+      "import": "./dist/ace-layer.js"
     }
   },
   "files": [

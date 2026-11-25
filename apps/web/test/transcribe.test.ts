@@ -74,5 +74,6 @@ describe('a finished transcription merged into unsaved edits', () => {
     expect(mergeOp('transcribe', { melody: {}, takes: [] }, saved)).toEqual({ kind: 'applySung', result: { melody: {}, takes: [] }, sungOver: saved, partial: true });
     expect(mergeOp('sing', { melody: {}, takes: [] }, saved)).toEqual({ kind: 'applySung', result: { melody: {}, takes: [] }, sungOver: saved });
     expect(mergeOp('writeLyrics', { verse1: ['la'] }, saved)).toEqual({ kind: 'applyLyrics', lyrics: { verse1: ['la'] } });
+    expect(mergeOp('aceLayer', { track: 'ACE Guitar' }, saved)).toEqual({ kind: 'applyAceLayer', result: { track: 'ACE Guitar' } });
   });
 });

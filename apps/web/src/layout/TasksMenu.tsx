@@ -8,7 +8,7 @@ import { duration, TaskSteps } from './TaskSteps';
 import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks';
 
 /** What a running task is doing, in a word. */
-const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing' };
+const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering' };
 
 /**
  * The Tasks item of the top bar: the user's background tasks across their songs (running, ready to go in when playback

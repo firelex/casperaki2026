@@ -12,13 +12,14 @@
 // applied only while the sung sections are as they were sung), transcribe (src/sing/transcribeTask.ts: a recording of
 // one section back into its Vocal lane; the same steps, cancel and apply check, for that section only).
 
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-import { applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { AceLayerResultSchema, applyAceLayer, applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, type Song } from '@casperaki/song-schema';
 
+import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../ace/aceLayerTask.js';
 import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
 import { writeLyrics } from '../lyrics/lyricist.js';
@@ -66,6 +67,19 @@ export interface BackgroundTasksDeps {
   /** Transcribe melody: the task files folder, the vocals service and the hum service (each needed for some
    *  recordings), ffmpeg and the poll interval. */
   readonly transcribe?: TranscribeDeps;
+  /** ACE layer: the ace service, the task files folder, the takes folder, ffmpeg, the poll interval and a way to
+   *  render the owner's song; without it, ACE layer tasks cannot start. */
+  readonly ace?: AceDeps;
+}
+
+export interface AceDeps {
+  readonly client: VocalsClient;
+  readonly filesDir: string;
+  readonly takesDir: string;
+  readonly ffmpegBin: string;
+  readonly pollMs: number;
+  /** Renders the song with the project's mix (unmastered) into the task's files folder: the WAV's path. */
+  readonly renderWav: (ownerId: string, songId: string, song: Song, taskId: string) => Promise<string>;
 }
 
 export interface TranscribeDeps {
@@ -123,10 +137,37 @@ export class BackgroundTasks {
     return store.getTask(ownerId, id)!;
   }
 
+  /** Starts an ACE layer task on the owner's project `songId` from the posted working song. */
+  startAceLayer(ownerId: string, songId: string, song: Song, request: Omit<AceLayerOptions, 'seed'>): TaskRow {
+    const parsed = AceLayerOptionsSchema.safeParse({ ...request, seed: randomInt(0, 2 ** 31 - 1) });
+    if (!parsed.success) throw new TaskError(400, 'invalid_options', parsed.error.issues[0]?.message ?? 'invalid options');
+    const options = parsed.data;
+    this.checkCanStart(ownerId, songId, 'aceLayer', song, undefined, options);
+    const id = randomUUID();
+    const { store } = this.deps;
+    store.insertTask({ id, ownerId, songId, kind: 'aceLayer', input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), options });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
+    this.enqueue(ownerId, id, 'aceLayer');
+    return store.getTask(ownerId, id)!;
+  }
+
   /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
-  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, options?: TranscribeOptions): void {
+  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, options?: TranscribeOptions, ace?: AceLayerOptions): void {
     const { store } = this.deps;
     if (!store.getProject(ownerId, songId)) throw new TaskError(404, 'not_found', 'There is no such song.');
+    if (kind === 'aceLayer') {
+      if (!ace) throw new Error('checkCanStart: an ACE layer task without its options');
+      if (!this.deps.ace) {
+        throw new TaskError(503, 'no_ace_service', 'ACE layers are not set up: the brain needs ACE_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
+      }
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_layering', 'An ACE layer is already being made for this song.');
+      try {
+        coveredSections(song, ace.range);
+        keyScale(song.key);
+      } catch (err) {
+        throw new TaskError(422, 'cannot_layer', err instanceof Error ? err.message : String(err));
+      }
+    }
     if (kind === 'writeLyrics') {
       if (this.isSinging(ownerId, songId)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
       if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_running', 'The lyrics of this song are already being written.');
@@ -181,7 +222,14 @@ export class BackgroundTasks {
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
     if (task.kind === 'sing' && task.message === SONG_CHANGED) throw new TaskError(409, 'song_changed', RETRY_SONG_CHANGED);
     if (task.kind === 'transcribe' && task.message === TRANSCRIBE_CHANGED) throw new TaskError(409, 'song_changed', RETRY_TRANSCRIBE_CHANGED);
-    this.checkCanStart(ownerId, task.songId, task.kind, parseSong(JSON.parse(task.input)), task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined);
+    this.checkCanStart(
+      ownerId,
+      task.songId,
+      task.kind,
+      parseSong(JSON.parse(task.input)),
+      task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined,
+      task.kind === 'aceLayer' ? AceLayerOptionsSchema.parse(task.options) : undefined,
+    );
     store.setTaskSteps(id, []);
     store.setTaskJobs(id, null);
     store.setTaskState(id, { state: 'running', result: null, message: null, finishedAt: null, startedAt: this.deps.clock() });
@@ -248,7 +296,7 @@ export class BackgroundTasks {
     if (!isPlainFileName(name)) throw new TaskError(400, 'bad_name', `"${name}" is not a file name.`);
     const task = this.deps.store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
-    const filesDir = task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : this.deps.sing?.filesDir;
+    const filesDir = task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : task.kind === 'aceLayer' ? this.deps.ace?.filesDir : this.deps.sing?.filesDir;
     if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
     const path = join(resolve(filesDir), id, stage, name);
     if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
@@ -366,6 +414,32 @@ export class BackgroundTasks {
         now: clock,
       });
     }
+    if (task.kind === 'aceLayer') {
+      const ace = this.deps.ace;
+      if (!ace) throw new Error('the brain is not set up for ACE layers (ACE_SERVICE_URL, BRAIN_TASK_FILES_DIR, BRAIN_VOCAL_TAKES_DIR)');
+      const { store, events, clock } = this.deps;
+      return await runAceLayer({
+        taskId: task.id,
+        input: parseSong(JSON.parse(task.input)),
+        options: AceLayerOptionsSchema.parse(task.options),
+        client: ace.client,
+        filesDir: join(resolve(ace.filesDir), task.id),
+        takesDir: resolve(ace.takesDir),
+        ffmpegBin: ace.ffmpegBin,
+        pollMs: ace.pollMs,
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
+        },
+        now: clock,
+        renderWav: (song) => ace.renderWav(task.ownerId, task.songId, song, task.id),
+      });
+    }
     throw new Error(`unknown task kind ${String(task.kind)}`);
   }
 }
@@ -390,5 +464,6 @@ function resultInto(task: TaskRow, song: Song): Song {
     }
     return applySungVocals(song, result, { partial: true });
   }
+  if (task.kind === 'aceLayer') return applyAceLayer(song, AceLayerResultSchema.parse(task.result));
   throw new Error(`unknown task kind ${String(task.kind)}`);
 }

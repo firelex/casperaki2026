@@ -395,3 +395,4 @@ export { laneWordsOn, SUNG_MELODY_PARAM, SungMelodySchema, SungNoteSchema, sungM
 export { applySungVocals, applySungVocalsOver, applyWrittenLyrics, type ApplySungOptions, lyricsTargets, newMelody, paramsWithLyrics, sungSections, vocalMelodyShown, writeMelody, type NewMelody, type SungSection, type SungTake } from './edits/vocal-edits.js';
 export { VOCAL_MELODY_PARAM } from './vocals/vocal-melody.js';
 export { HOLD_BEATS } from './vocals/written-lyrics.js';
+export { ACE_MODEL_ID, AceLayerResultSchema, applyAceLayer, type AceLayerResult } from './edits/ace-layer.js';
