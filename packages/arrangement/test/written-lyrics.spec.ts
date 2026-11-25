@@ -49,13 +49,42 @@ function lyricsFor(song: Song, filter: (type: string) => boolean = () => true): 
 const slot = (barIndex: number, beat: number, duration: number) => ({ barIndex, beat, duration, start: barIndex * 4 + beat, strong: Number.isInteger(beat) || duration >= 1 });
 
 describe('lyric lines', () => {
-  it('cuts a melody at rests and held notes, joins short lines and splits long ones', () => {
+  it('cuts a melody every two bars, keeps every note, never a line over 16 notes', () => {
     const song = orchestrate(PARAMS);
     for (const s of sungSections(song)) {
       for (const line of s.lines) expect(line.length).toBeGreaterThanOrEqual(1);
       for (const line of s.lines) expect(line.length).toBeLessThanOrEqual(16);
       expect(s.lines.flat().length).toBe(Object.values(song.arrangement[s.name]!.overrides.Vocal!.bars!).flatMap((b) => Object.values(b.notes ?? {}).flat()).length);
     }
+  });
+
+  /** Bars from [bar, beat, duration] vocal notes (bars from 0). */
+  const barsOf = (n: number, notes: [number, number, number][]) =>
+    Array.from({ length: n }, (_, bi) => ({
+      notes: Object.fromEntries(notes.filter(([b]) => b === bi).map(([, beat, duration]) => [beat.toFixed(1), [{ type: 'vocalNote', note: 60, duration }]])),
+    }));
+  const starts = (bars: ReturnType<typeof barsOf>) => lyricLines(bars).map((l) => l.map((x) => x.start));
+
+  it('a line is two bars; a note sung in a line\'s bars before a rest belongs to that line (Tangerine "…behind we")', () => {
+    // Tangerine Sidewalk verse 1: "Leaving chill behind" in bars 5-6, "We" at bar 6 beat 1.5 then a beat of rest,
+    // "Walk slow and warm our bones" from bar 7.
+    const bars = barsOf(8, [
+      [4, 0, 1], [4, 1, 0.5], [4, 1.5, 1], [4, 2.5, 1], [4, 3.5, 2], [5, 1.5, 1.5],
+      [6, 0, 1], [6, 1, 0.5], [6, 1.5, 1], [6, 2.5, 1], [6, 3.5, 0.5], [7, 0, 1],
+    ]);
+    expect(starts(bars)).toEqual([[16, 17, 17.5, 18.5, 19.5, 21.5], [24, 25, 25.5, 26.5, 27.5, 28]]);
+  });
+
+  it('a pickup (short notes at the end of a line running straight into the next) opens the next line', () => {
+    // "…brick walls" in bars 1-2, "Cit-" at bar 2 beat 3.5 running into "rus" on bar 3's first beat.
+    const bars = barsOf(4, [[0, 0, 1], [0, 1, 0.5], [0, 1.5, 1], [0, 2.5, 1], [0, 3.5, 1], [1, 0.5, 1.5], [1, 3.5, 0.5], [2, 0, 1], [2, 1, 0.5], [2, 1.5, 1]]);
+    expect(starts(bars)).toEqual([[0, 1, 1.5, 2.5, 3.5, 4.5], [7.5, 8, 9, 9.5]]);
+  });
+
+  it('a held note ending a phrase into the next line is not a pickup; a short last line stays a line', () => {
+    // Tangerine bridge: "Light Sun-light" with "light" held two beats up to bar 5; "Grows Bright" alone in bars 7-8.
+    const bars = barsOf(8, [[0, 0, 4], [1, 1, 1], [1, 2, 2], [2, 0, 4], [3, 1, 1], [3, 2, 2], [4, 0, 3], [4, 3, 1], [5, 1, 1], [5, 2, 2], [6, 0, 2], [6, 2, 5]]);
+    expect(starts(bars)).toEqual([[0, 5, 6], [8, 13, 14], [16, 19, 21, 22], [24, 26]]);
   });
 
   it('rhymes lines ABCB in fours (a leftover three ABA, a leftover two AA, a leftover one free)', () => {
