@@ -53,6 +53,7 @@
 #include <cstdlib>
 #include <map>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -173,7 +174,7 @@ public:
                 // Its sends keep their resolved levels.
                 if (!o->fxGroup.empty()) l.fxGroup = o->fxGroup;
                 for (int k = 0; k < 3; ++k) {
-                    if (!o->hasSend[k]) continue;
+                    if (!o->hasSend[k] || l.ownSends) continue;  // a take lane's sends are fixed (Pro mode never touches them)
                     l.sendDb[k] = o->sendDb[k];
                     l.sendGain[k] = o->sendDb[k] <= -100.0 ? 0.0f : mix::dbToGain(o->sendDb[k]);
                 }
@@ -368,7 +369,7 @@ public:
         if (!std::isfinite(db) || db > 12.0f) throw std::out_of_range("Mixer::setLaneSendDb: send must be finite and <= +12 dB");
         group(lane);  // range check
         for (auto& l : lanes_) {
-            if (l.group != lane) continue;
+            if (l.group != lane || l.ownSends) continue;  // spec: sung take sends are not adjustable in Pro mode
             l.sendDb[bus] = db;
             l.sendGain[bus] = db <= -100.0f ? 0.0f : mix::dbToGain(db);
         }
@@ -811,6 +812,7 @@ private:
         std::vector<std::unique_ptr<Source>> sources;
         std::string name;       // IR track name (for matching automation by baseName)
         std::string fxGroup;
+        bool ownSends = false;  // the instrument's fxSends set this lane's sends: Pro-mode overrides leave them alone
         float sendGain[3] = {0.0f, 0.0f, 0.0f};  // linear; 0 = no send (Scope B step 2)
         // As resolved, for reporting (laneInfoJson): the lane's lowLevelType, its
         // target volume and its send levels in dB (empty / NaN when not resolved).
@@ -932,10 +934,14 @@ private:
             // Scope B: the 3 aux send gains (reverb/delay/chorus). bus 0=reverb,
             // 1=delay, 2=chorus — matching FX::Send + MixGraph::returns_.
             lane.lowLevelType = laneLowLevelType(track.name);
-            const mix::FxSends sd = cfgLaneSends(lane.fxGroup, lane.lowLevelType);
-            lane.sendGain[0] = mix::dbToGain(sd.reverb);
-            lane.sendGain[1] = mix::dbToGain(sd.delay);
-            lane.sendGain[2] = mix::dbToGain(sd.chorus);
+            const std::optional<mix::FxSends> own = laneSendOverride(track.name);
+            const mix::FxSends sd = own ? *own : cfgLaneSends(lane.fxGroup, lane.lowLevelType);
+            lane.ownSends = own.has_value();
+            // -100 or lower is an exact "off" (gain 0), as in the Pro-mode paths
+            auto sendGain = [](float db) { return db <= -100.0f ? 0.0f : mix::dbToGain(db); };
+            lane.sendGain[0] = sendGain(sd.reverb);
+            lane.sendGain[1] = sendGain(sd.delay);
+            lane.sendGain[2] = sendGain(sd.chorus);
             lane.sendDb[0] = sd.reverb;
             lane.sendDb[1] = sd.delay;
             lane.sendDb[2] = sd.chorus;
@@ -1470,6 +1476,25 @@ private:
         if (inst.contains("lowLevelType") && inst["lowLevelType"].is_string())
             return inst["lowLevelType"].get<std::string>();
         return std::string();
+    }
+
+    // A lane's own sends (dB, -100 = off): the instrument's "fxSends" object
+    // ({reverb, delay, chorus}), written for sung vocal takes. nullopt when the
+    // instrument has none (the lane then takes the mix table's sends). An object
+    // missing a key is an error naming the lane and the key.
+    std::optional<mix::FxSends> laneSendOverride(const std::string& trackName) const {
+        auto it = instByName_.find(baseName(trackName));
+        if (it == instByName_.end() || it->second == nullptr) return std::nullopt;
+        const auto& inst = *it->second;
+        if (!inst.contains("fxSends")) return std::nullopt;
+        const auto& fx = inst["fxSends"];
+        if (!fx.is_object()) throw std::runtime_error("Mixer: lane '" + trackName + "' fxSends is not an object");
+        auto get = [&](const char* key) {
+            if (!fx.contains(key) || !fx[key].is_number())
+                throw std::runtime_error("Mixer: lane '" + trackName + "' fxSends is missing the number '" + key + "'");
+            return fx[key].get<float>();
+        };
+        return mix::FxSends{get("reverb"), get("delay"), get("chorus")};
     }
 
     // Phase 2 Scope B: the fxGroup submix a track routes to. Drum step tracks split

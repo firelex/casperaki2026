@@ -25,12 +25,12 @@ export function useTrackEdits(songKey: string | undefined) {
   });
 
   const run = useCallback(
-    async (op: TrackEdit, label: string) => {
+    async (op: TrackEdit, label: string, songId?: string) => {
       if (!viewSong) throw new Error('No song is open.');
       setBusy(label);
       setError(undefined);
       try {
-        const { song } = await tracksApi.edit(viewSong, op);
+        const { song } = await tracksApi.edit(viewSong, op, undefined, songId);
         applyEdit({ kind: 'replaceSong', song });
       } catch (err) {
         setError(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);

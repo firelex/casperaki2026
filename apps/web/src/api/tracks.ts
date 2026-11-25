@@ -31,7 +31,16 @@ export type TrackEdit =
   /** The vocal tracks show the melody the generator chose (a new song's vocal tracks start empty). */
   | { readonly kind: 'writeMelody' }
   /** Written lyrics (section → lines) on the vocal tracks: a finished Write lyrics task merged into unsaved edits. */
-  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> };
+  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> }
+  /** A finished Sing task's result (the apply response's `result`) put into the working copy. */
+  | {
+      readonly kind: 'applySung';
+      readonly result: unknown;
+      /** The saved version: its take fingerprints are kept. */
+      readonly sungOver: Song;
+      /** The result covers only its melody's sections (Transcribe melody): other sections keep their takes. */
+      readonly partial?: boolean;
+    };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 
@@ -57,8 +66,9 @@ export const tracksApi = {
   options: (song: Song, signal?: AbortSignal) =>
     defaultBrainClient.post<TrackOptions>('/api/tracks/options', { song }, { signal }),
   /** The brain rewrites one track with the generator and returns the whole song. */
-  edit: (song: Song, op: TrackEdit, signal?: AbortSignal) =>
-    defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op }, { signal }),
+  /** `songId`: the saved project the song belongs to; the brain refuses Write melody / New melody while it is being sung. */
+  edit: (song: Song, op: TrackEdit, signal?: AbortSignal, songId?: string) =>
+    defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op, ...(songId !== undefined ? { songId } : {}) }, { signal }),
   /** Switch a transition on or off in sections (the brain writes snare-roll grids). */
   setTransition: (
     song: Song,

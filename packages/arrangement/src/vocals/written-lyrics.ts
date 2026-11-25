@@ -409,7 +409,7 @@ function fitLine(text: string, slots: LyricLine, where: string): { start: number
 }
 
 const BEATS_PER_BAR = 4;
-const beatKey = (start: number) => {
+export const beatKey = (start: number) => {
   const inBar = start - Math.floor(start / BEATS_PER_BAR + EPS) * BEATS_PER_BAR;
   const b = Math.round(inBar * 1e6) / 1e6;
   return formatBarBeat(b);

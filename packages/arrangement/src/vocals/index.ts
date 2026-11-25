@@ -42,6 +42,7 @@ import { buildContour } from './contour.js';
 import { LEGACY_INDEX_TO_MIDI, MAX_NOTE, MIN_NOTE } from './range.js';
 import { fitRange, keyOffsetFromC, mergedChordBars, refitNonChorus, sectionTransposition, transposeChordSymbol } from './fit.js';
 import { applyLyricsToSegments } from './syllabify.js';
+import { attachSungMelody, sungMelodyOf } from './sung-melody.js';
 import { attachWrittenLyrics, writtenLyricsOf } from './written-lyrics.js';
 import { melodyVariantsOf } from './melody-variants.js';
 import type { VocalBar, VocalResult, VocalSegment } from './types.js';
@@ -154,8 +155,20 @@ export function writeVocals(
   for (const name of Object.keys(written)) {
     if (!bankResult.segments.some((s) => s.segmentName === name)) throw new Error(`written lyrics: the song has no sung section "${name}"`);
   }
+  // The sung melody (generator params `sungMelody`, see sung-melody.ts) replaces the lead's notes and words in its
+  // sections; the chords stay the precedent's.
+  const sungMelody = sungMelodyOf(ctx.params.params);
+  for (const name of Object.keys(sungMelody)) {
+    if (!bankResult.segments.some((s) => s.segmentName === name)) throw new Error(`sung melody: the song has no sung section "${name}"`);
+  }
   const leadResult: VocalResult = {
-    segments: bankResult.segments.map((s) => (written[s.segmentName] ? attachWrittenLyrics(s, written[s.segmentName]!) : s)),
+    segments: bankResult.segments.map((s) =>
+      sungMelody[s.segmentName]
+        ? attachSungMelody(s, sungMelody[s.segmentName]!)
+        : written[s.segmentName]
+          ? attachWrittenLyrics(s, written[s.segmentName]!)
+          : s,
+    ),
   };
 
   // Phase 3 — deterministic backing vocal generator (Step 17d).

@@ -4,6 +4,7 @@ import { LufsSchema, Sha256Schema } from './common.js';
 export const AIArtifactKindSchema = z.enum([
   'ace-step-conditioned',
   'soulx-vocal',
+  'yue2-vocal',
   'sam-stem',
   'matchering-master',
 ]);

@@ -19,6 +19,7 @@ import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
 import { createTasksRouter } from './routes/tasks.js';
 import { BackgroundTasks } from './tasks/tasks.js';
+import { VocalsClient } from './sing/vocalsClient.js';
 import { EventHub } from './events.js';
 import { ArtworkTasks, HarnessImageService, type ImageService } from './artwork/tasks.js';
 import { SongTitler } from './titles/songTitler.js';
@@ -53,6 +54,9 @@ import { VideoService } from './video/videoService.js';
 import { authRouter } from './routes/auth.js';
 import { attachDemoSession, demoAuthRouter } from './auth/demoAuth.js';
 
+/** How often the brain polls a running vocals-service job (ms). */
+const SING_POLL_MS = 2000;
+
 export interface CreateAppDeps {
   /** Optional injected store. Tests pass an in-memory store; bootstrap
    *  uses the configured songsDbPath when no store is provided. */
@@ -72,6 +76,8 @@ export interface CreateAppDeps {
   readonly songTitler?: SongTitler;
   /** For tests: draws song artwork instead of the image service. */
   readonly imageService?: ImageService;
+  /** Tests: how often a running vocals-service job is polled (ms; production 2000). */
+  readonly singPollMs?: number;
   /** The language model artwork briefs are written with (tests inject a fake). */
   readonly chatModel?: ChatModel;
   /** The language model lyrics are written with (tests inject a fake; production: the chat model). */
@@ -263,11 +269,28 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createSongsRouter({ store, renders, ...(playback ? { mixConfig: () => playback.mixConfig } : {}), ...(titler ? { onPlaceholderTitle: (u) => titler.name(u) } : {}), ...(artwork ? { artwork } : {}) }));
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
-  app.use(createTracksRouter());
-  // Background tasks on songs (src/tasks/tasks.ts): writing lyrics needs the language model.
+  // Background tasks on songs (src/tasks/tasks.ts): writing lyrics needs the language model; singing the vocals service,
+  // a folder for each task's step files and the takes folder.
   const lyricModel = deps.lyricModel ?? chatModel;
   if (!lyricModel) console.warn('[brain] ASSISTANT_LLM_URL not set — Write lyrics answers 503.');
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), hash: hashCanonical, clock: () => new Date().toISOString() });
+  const singSettings = { VOCALS_SERVICE_URL: config.vocalsServiceUrl, BRAIN_TASK_FILES_DIR: config.taskFilesDir, BRAIN_VOCAL_TAKES_DIR: config.vocalTakesDir };
+  const singMissing = Object.entries(singSettings).filter(([, v]) => v === undefined).map(([k]) => k);
+  if (config.vocalsServiceUrl && singMissing.length > 0) throw new Error(`VOCALS_SERVICE_URL is set, so Sing also needs ${singMissing.join(' and ')}.`);
+  if (!config.vocalsServiceUrl) console.warn('[brain] VOCALS_SERVICE_URL not set — Sing answers 503.');
+  const sing = config.vocalsServiceUrl
+    ? { client: new VocalsClient(config.vocalsServiceUrl), filesDir: config.taskFilesDir!, takesDir: config.vocalTakesDir!, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS }
+    : undefined;
+  // Transcribe melody: the recording is kept in BRAIN_TASK_FILES_DIR; the vocals service reads sections with written
+  // lyrics (or with music behind the voice), the hum service sections without.
+  const transcribe = {
+    filesDir: config.taskFilesDir,
+    client: sing?.client,
+    humServiceUrl: config.humServiceUrl,
+    ffmpegBin: config.ffmpegBin,
+    pollMs: deps.singPollMs ?? SING_POLL_MS,
+  };
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));

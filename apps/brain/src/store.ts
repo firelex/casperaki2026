@@ -92,8 +92,30 @@ export interface MixDismissal {
 }
 
 /** A background task on a song (src/tasks/tasks.ts): its song follows the project when saves move it. */
-export type TaskKind = 'writeLyrics';
+export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
+
+/** One step of a task as the Tasks page lists it (the brain's own steps and a model service's, in the order they run). */
+export interface TaskStep {
+  readonly id: string;
+  readonly label: string;
+  readonly state: 'waiting' | 'running' | 'done' | 'failed';
+  readonly startedAt?: string;
+  readonly finishedAt?: string;
+  /** What the step found, or why it failed. */
+  readonly text?: string;
+  readonly numbers?: Readonly<Record<string, number>>;
+  /** Files the step made, fetchable at GET /api/tasks/:id/files/:name. */
+  readonly files?: readonly string[];
+}
+
+/** The model-service jobs a task runs (sing: the lead stage's job, then the repeats stage's; transcribe: the vocals
+ *  service's transcribe stage, when it needs one). */
+export interface TaskJobs {
+  readonly lead?: string;
+  readonly repeats?: string;
+  readonly transcribe?: string;
+}
 
 export interface TaskRow {
   readonly id: string;
@@ -110,6 +132,13 @@ export interface TaskRow {
   readonly message: string | null;
   readonly startedAt: string;
   readonly finishedAt: string | null;
+  /** Its steps, in order (empty for kinds that report none). */
+  readonly steps: readonly TaskStep[];
+  /** The model-service jobs it runs (resumed after a restart), or null. */
+  readonly jobs: TaskJobs | null;
+  /** What the kind needs besides the song (transcribe: the section, the recording's file, whether it has backing),
+   *  or null. */
+  readonly options: unknown;
 }
 
 export interface SongsStore {
@@ -147,7 +176,7 @@ export interface SongsStore {
   listPatternReviews(): PatternReview[];
   setPatternReview(review: PatternReview): void;
   clearPatternReview(proposalId: string): void;
-  insertTask(input: { id: string; ownerId: string; songId: string; kind: TaskKind; input: string; startedAt: string }): void;
+  insertTask(input: { id: string; ownerId: string; songId: string; kind: TaskKind; input: string; startedAt: string; options?: unknown }): void;
   getTask(ownerId: string, id: string): TaskRow | undefined;
   /** The owner's tasks on projects they still have: unfinished ones, and the rest finished at or after `since`;
    *  newest first, each with its project's title. */
@@ -156,6 +185,12 @@ export interface SongsStore {
   listRunningTasks(): TaskRow[];
   /** The owner's running or ready task of this kind on this song. */
   activeTask(ownerId: string, songId: string, kind: TaskKind): TaskRow | undefined;
+  /** The owner's running task of this kind on this song. */
+  runningTask(ownerId: string, songId: string, kind: TaskKind): TaskRow | undefined;
+  /** Replaces a task's steps. */
+  setTaskSteps(id: string, steps: readonly TaskStep[]): void;
+  /** Records the model-service jobs a task runs (null clears them). */
+  setTaskJobs(id: string, jobs: TaskJobs | null): void;
   /** Sets a task's state (with its result, failure message and finish time; null clears them). */
   setTaskState(id: string, update: { state: TaskState; result: unknown; message: string | null; finishedAt: string | null; startedAt?: string }): void;
   deleteTask(id: string): void;
@@ -240,6 +275,12 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   if (!projectCols.has('artwork_state')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_state TEXT`);
   if (!projectCols.has('artwork_task')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_task TEXT`);
   if (!projectCols.has('artwork_detail')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_detail TEXT`);
+  // Task steps and model-service jobs (added 2026-11-25, the Sing task).
+  const taskCols = new Set((db.prepare(`PRAGMA table_info(tasks)`).all() as Array<{ name: string }>).map((c) => c.name));
+  if (!taskCols.has('steps')) db.exec(`ALTER TABLE tasks ADD COLUMN steps TEXT`);
+  if (!taskCols.has('jobs')) db.exec(`ALTER TABLE tasks ADD COLUMN jobs TEXT`);
+  // A kind's options besides the song (added 2026-11-25, Transcribe melody).
+  if (!taskCols.has('options')) db.exec(`ALTER TABLE tasks ADD COLUMN options TEXT`);
 
   const insertStmt = db.prepare(
     `INSERT OR REPLACE INTO songs
@@ -423,8 +464,16 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     listDrawingArtwork() {
       return (drawingArtworkStmt.all() as ProjectDbRow[]).map(toProjectRow);
     },
-    insertTask({ id, ownerId, songId, kind, input, startedAt }) {
-      db.prepare(`INSERT INTO tasks (id, owner_id, song_id, kind, state, input, started_at) VALUES (?, ?, ?, ?, 'running', ?, ?)`).run(id, ownerId, songId, kind, input, startedAt);
+    insertTask({ id, ownerId, songId, kind, input, startedAt, options }) {
+      db.prepare(`INSERT INTO tasks (id, owner_id, song_id, kind, state, input, started_at, options) VALUES (?, ?, ?, ?, 'running', ?, ?, ?)`).run(
+        id,
+        ownerId,
+        songId,
+        kind,
+        input,
+        startedAt,
+        options === undefined ? null : JSON.stringify(options),
+      );
     },
     getTask(ownerId, id) {
       const row = db.prepare(`SELECT * FROM tasks WHERE owner_id = ? AND id = ?`).get(ownerId, id) as TaskDbRow | undefined;
@@ -448,6 +497,20 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
         .prepare(`SELECT * FROM tasks WHERE owner_id = ? AND song_id = ? AND kind = ? AND state IN ('running', 'ready') ORDER BY started_at DESC LIMIT 1`)
         .get(ownerId, songId, kind) as TaskDbRow | undefined;
       return row ? toTaskRow(row) : undefined;
+    },
+    runningTask(ownerId, songId, kind) {
+      const row = db
+        .prepare(`SELECT * FROM tasks WHERE owner_id = ? AND song_id = ? AND kind = ? AND state = 'running' ORDER BY started_at DESC LIMIT 1`)
+        .get(ownerId, songId, kind) as TaskDbRow | undefined;
+      return row ? toTaskRow(row) : undefined;
+    },
+    setTaskSteps(id, steps) {
+      const r = db.prepare(`UPDATE tasks SET steps = ? WHERE id = ?`).run(JSON.stringify(steps), id);
+      if (r.changes === 0) throw new Error(`setTaskSteps: no task ${id}`);
+    },
+    setTaskJobs(id, jobs) {
+      const r = db.prepare(`UPDATE tasks SET jobs = ? WHERE id = ?`).run(jobs === null ? null : JSON.stringify(jobs), id);
+      if (r.changes === 0) throw new Error(`setTaskJobs: no task ${id}`);
     },
     setTaskState(id, { state, result, message, finishedAt, startedAt }) {
       const r = db
@@ -475,9 +538,12 @@ interface TaskDbRow {
   message: string | null;
   started_at: string;
   finished_at: string | null;
+  steps: string | null;
+  jobs: string | null;
+  options: string | null;
 }
 
-const TASK_KINDS: readonly TaskKind[] = ['writeLyrics'];
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'sing', 'transcribe'];
 const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];
 
 function toTaskRow(row: TaskDbRow): TaskRow {
@@ -494,6 +560,9 @@ function toTaskRow(row: TaskDbRow): TaskRow {
     message: row.message,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
+    steps: row.steps === null ? [] : (JSON.parse(row.steps) as TaskStep[]),
+    jobs: row.jobs === null ? null : (JSON.parse(row.jobs) as TaskJobs),
+    options: row.options === null ? null : (JSON.parse(row.options) as unknown),
   };
 }
 

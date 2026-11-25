@@ -5,7 +5,7 @@
 // The brain writes the words (a language model); this module is pure: it says which lines the melody has, checks
 // nothing itself (see vocals/written-lyrics.ts) and splices regenerated sections into the working song.
 
-import { parseSong, type Song } from '@casperaki/song-schema';
+import { parseSong, SUNG_TAKE_KINDS, vocalTakeFingerprint, Sha256Schema, type AIArtifact, type Song } from '@casperaki/song-schema';
 
 import { segmentType } from '../arrangement-polish/segment-type.js';
 import type { GenerateParams } from '../context.js';
@@ -13,6 +13,7 @@ import { userChorusOf } from '../hum/user-chorus.js';
 import { orchestrate } from '../orchestrate/index.js';
 import { lyricLines, type LyricLine } from '../vocals/lyric-lines.js';
 import { MELODY_VARIANTS_PARAM, melodyVariantsOf } from '../vocals/melody-variants.js';
+import { SUNG_MELODY_PARAM, SungMelodySchema, sungMelodyOf, type SungMelody } from '../vocals/sung-melody.js';
 import { VOCAL_MELODY_PARAM, vocalMelodyShownIn } from '../vocals/vocal-melody.js';
 import { WRITTEN_LYRICS_PARAM, writtenLyricsOf, type WrittenLyrics } from '../vocals/written-lyrics.js';
 import { generatorParams, spliceTrack, TrackEditError } from './track-edits.js';
@@ -85,6 +86,17 @@ export function paramsWithLyrics(params: GenerateParams, lyrics: WrittenLyrics):
   return withInner(params, inner);
 }
 
+/** The generator params without the sung melody of the sections of these types (new words no longer fit it). */
+function paramsWithoutSung(params: GenerateParams, types: ReadonlySet<string>): GenerateParams {
+  const sung = sungMelodyOf(params.params);
+  const kept = Object.fromEntries(Object.entries(sung).filter(([name]) => !types.has(segmentType(name))));
+  if (Object.keys(kept).length === Object.keys(sung).length) return params;
+  const inner = { ...(params.params ?? {}) };
+  if (Object.keys(kept).length > 0) inner[SUNG_MELODY_PARAM] = kept;
+  else delete inner[SUNG_MELODY_PARAM];
+  return withInner(params, inner);
+}
+
 /** Whether the song's vocal tracks show their melody (see vocals/vocal-melody.ts). */
 export function vocalMelodyShown(song: Song): boolean {
   return vocalMelodyShownIn(generatorParams(song).params);
@@ -128,7 +140,7 @@ export function writeMelody(working: Song): Song {
  */
 export function applyWrittenLyrics(working: Song, lyrics: WrittenLyrics): Song {
   const hidden = !vocalMelodyShown(working);
-  const withLyrics = paramsWithLyrics(generatorParams(working), lyrics);
+  const withLyrics = paramsWithoutSung(paramsWithLyrics(generatorParams(working), lyrics), new Set(Object.keys(lyrics).map(segmentType)));
   const params = hidden ? paramsShowingMelody(withLyrics) : withLyrics;
   const regenerated = orchestrate(params);
   if (hidden) return recordParams(showVocals(working, regenerated), params);
@@ -175,11 +187,14 @@ export function newMelody(working: Song, type: string): NewMelody {
   const variants = melodyVariantsOf(params.params);
   const lyrics = Object.fromEntries(Object.entries(writtenLyricsOf(params.params)).filter(([name]) => segmentType(name) !== type));
   const before = vocalSignature(current, type);
+  // A sung melody of the type would stay on the lead whatever the variant (it replaces the lead's notes), so a new
+  // melody drops it, as new words do (applyWrittenLyrics); the type's sung takes then come out stale.
+  const unsung = paramsWithoutSung(params, new Set([type]));
   for (let v = (variants[type] ?? 0) + 1, tries = 0; tries < MELODY_TRIES; v++, tries++) {
-    const inner: Record<string, unknown> = { ...(params.params ?? {}), [MELODY_VARIANTS_PARAM]: { ...variants, [type]: v } };
+    const inner: Record<string, unknown> = { ...(unsung.params ?? {}), [MELODY_VARIANTS_PARAM]: { ...variants, [type]: v } };
     if (Object.keys(lyrics).length > 0) inner[WRITTEN_LYRICS_PARAM] = lyrics;
     else delete inner[WRITTEN_LYRICS_PARAM];
-    const next = withInner(params, inner);
+    const next = withInner(unsung, inner);
     const generated = orchestrate(next);
     if (vocalSignature(generated, type) === before) continue;
     return { song: recordParams(spliceSectionsOfType(working, generated, type), next), generated, sections: sungSections(generated).filter((s) => s.type === type).map((s) => s.name) };
@@ -216,4 +231,83 @@ export function lyricsTargets(working: Song, section: string): { generated: Song
     .map((s) => s.name);
   if (sections.length === 0) throw new TrackEditError(400, 'not_sung', `The song has no sung ${type} section.`);
   return { generated, sections };
+}
+
+export interface SungTake {
+  readonly segment: string;
+  readonly track: string;
+  readonly kind: (typeof SUNG_TAKE_KINDS)[number];
+  readonly sha256: string;
+  readonly durationSeconds: number;
+  readonly modelId: string;
+  readonly modelVersion: string;
+  readonly seed?: number;
+}
+
+/** How much of the song a sung result covers. */
+export interface ApplySungOptions {
+  /** The result covers only the sections of its melody (Transcribe melody): sung takes of other sections are kept,
+   *  those of its sections replaced by `sung.takes`. Without it (Sing) every earlier sung take is replaced. */
+  readonly partial?: boolean;
+}
+
+/**
+ * The working song with the sung melody of some sections (recorded as `sungMelody`, replacing the lead's notes and
+ * words there; other sections keep their recorded sung melody; the vocal tracks regenerated and spliced as for
+ * written lyrics) and the song's sung-take artifacts replaced by `sung.takes` (all of them, or with `partial` only
+ * those of the melody's sections), each stamped with the fingerprint of the vocal lane it was sung over.
+ */
+export function applySungVocals(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, opts: ApplySungOptions = {}): Song {
+  const melody = SungMelodySchema.parse(sung.melody);
+  const hidden = !vocalMelodyShown(working);
+  const base = generatorParams(working);
+  const inner = { ...(base.params ?? {}), [SUNG_MELODY_PARAM]: { ...sungMelodyOf(base.params), ...melody } };
+  const withMelody = withInner(base, inner);
+  const params = hidden ? paramsShowingMelody(withMelody) : withMelody;
+  const regenerated = orchestrate(params);
+  let song = working;
+  if (hidden) song = showVocals(working, regenerated);
+  else {
+    const names = new Set(Object.keys(melody));
+    for (const track of vocalTracks(regenerated)) {
+      if (!song.instrumentDefinitions.some((d) => d.name === track)) continue;
+      song = spliceTrack(song, regenerated, track, undefined, (name) => names.has(name));
+    }
+  }
+  song = recordParams(song, params);
+  const replaced = (a: AIArtifact) =>
+    (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) &&
+    (!opts.partial || (a.attachedTo.scope === 'segment' && melody[a.attachedTo.segment] !== undefined));
+  if (opts.partial) {
+    for (const t of sung.takes) {
+      if (melody[t.segment] === undefined) throw new Error(`applySungVocals: a partial result's take is for ${t.segment}, which is not among its sections`);
+    }
+  }
+  const kept = song.aiArtifacts.filter((a) => !replaced(a));
+  const artifacts: AIArtifact[] = sung.takes.map((t) => {
+    if (!SUNG_TAKE_KINDS.includes(t.kind)) throw new Error(`applySungVocals: unknown take kind "${t.kind}"`);
+    const sha256 = Sha256Schema.parse(t.sha256);
+    return {
+      id: `${t.kind}:${t.segment}:${t.track}:${t.sha256.slice(0, 8)}`,
+      kind: t.kind,
+      modelId: t.modelId,
+      modelVersion: t.modelVersion,
+      ...(t.seed !== undefined ? { seed: t.seed } : {}),
+      conditioning: { hashes: [Sha256Schema.parse(vocalTakeFingerprint(song, t.segment, t.track))] },
+      output: { uri: `vocal-take:${t.sha256}.ogg`, sha256, durationSeconds: t.durationSeconds },
+      attachedTo: { scope: 'segment', segment: t.segment, instrument: t.track },
+    };
+  });
+  return parseSong({ ...song, aiArtifacts: [...kept, ...artifacts] });
+}
+
+/**
+ * A finished sing result put into a working copy that may have unsaved edits: `applySungVocals`, then the sung takes
+ * are the ones of `saved` (the version the task's result was saved into), whose fingerprints say what they were sung
+ * over. A section the working copy changed since (chords, tempo, vocal lanes) therefore comes out stale.
+ */
+export function applySungVocalsOver(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, saved: Song, opts: ApplySungOptions = {}): Song {
+  const merged = applySungVocals(working, sung, opts);
+  const isSung = (a: AIArtifact) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind);
+  return parseSong({ ...merged, aiArtifacts: [...merged.aiArtifacts.filter((a) => !isSung(a)), ...saved.aiArtifacts.filter(isSung)] });
 }

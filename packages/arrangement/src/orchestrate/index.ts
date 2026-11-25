@@ -151,6 +151,12 @@ const BACKING_2_INSTRUMENT_FIXTURE: InstrumentDefinition = {
 export const ORCHESTRATOR_NAME = '@casperaki/arrangement.orchestrate';
 export const ORCHESTRATOR_VERSION = '0.1.0';
 
+/** The sections (names and bar counts) `orchestrate(params)` makes, without writing the rest of the song (the
+ *  structure is drawn first, from the seed and the explicit structure, whatever else the params record). */
+export function generatedSections(params: GenerateParams): { name: string; bars: number }[] {
+  return generateSongStructure({ params, rng: createRng(params.seed) }).map((s) => ({ name: s.name, bars: s.bars.length }));
+}
+
 export function orchestrate(params: GenerateParams): Song {
   const ctx = { params, rng: createRng(params.seed) };
   const structure = generateSongStructure(ctx);

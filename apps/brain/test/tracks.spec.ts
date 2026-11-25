@@ -116,7 +116,7 @@ describe('POST /api/transitions/set', () => {
   it('switches a transition on in sections and refuses unknown types', async () => {
     const { createTracksRouter } = await import('../src/routes/tracks.js');
     const express = (await import('express')).default;
-    const app = express().use(express.json({ limit: '20mb' })).use(createTracksRouter());
+    const app = express().use(express.json({ limit: '20mb' })).use(createTracksRouter({ isSinging: () => false }));
     const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
       const s = app.listen(0, '127.0.0.1', () => resolve(s));
     });

@@ -12,6 +12,12 @@ The harness:
         POST /generate {params}   -> 202 {"job_id"}
         GET  /result?job=ID       -> {"state": running|done|error, "kind", "error"}
         GET  /file?job=ID         -> streams the generated file
+        GET  /file?job=ID&name=F  -> streams a file that one of the job's steps listed
+        POST /cancel?job=ID       -> 200 (a queued job is removed, a running one is flagged)
+
+`generate` may take a 4th argument `job` (the harness passes it when the function has four parameters):
+`job.step(id, label)` returns a Step (`.done(text, numbers, files)` / `.fail(text)`), `job.cancelled()`, and
+`job.check_cancelled()` (raises adapter_common.Cancelled). /result then also lists `steps`.
 
 An adapter may also expose synchronous JSON endpoints: `ROUTES = {"/path": fn}`,
 where `fn(handle, headers, body: bytes) -> (status, dict)`. They answer in the
@@ -27,11 +33,13 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import inspect
 import json
 import os
 import subprocess
 import sys
 import threading
+import time
 import traceback
 import urllib.request
 import uuid
@@ -40,6 +48,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 SERVING_DIR = Path(__file__).resolve().parent
+if str(SERVING_DIR) not in sys.path:
+    sys.path.insert(0, str(SERVING_DIR))
+import adapter_common as common  # noqa: E402
 SERVICES_DIR = SERVING_DIR.parent
 
 
@@ -159,6 +170,59 @@ class Ctx:
         self.log = log
 
 
+class Step:
+    """One reported step of a job. Created by `job.step(id, label)`; finish it with `done` or `fail`."""
+
+    def __init__(self, job: "Job", id: str, label: str):
+        self._job = job
+        self.data = {"id": id, "label": label, "state": "running", "started": time.time(),
+                     "finished": None, "text": "", "numbers": {}, "files": []}
+
+    def _finish(self, state: str, text: str, numbers: dict, files: list) -> None:
+        with self._job._lock:
+            self.data.update(state=state, finished=time.time(), text=text,
+                             numbers=dict(numbers), files=list(files))
+
+    def done(self, text: str = "", numbers: dict | None = None, files: list | None = None) -> None:
+        self._finish("done", text, numbers or {}, files or [])
+
+    def fail(self, text: str) -> None:
+        self._finish("failed", text, {}, [])
+
+
+class Job:
+    """What an adapter's 4-argument `generate` receives: step reporting and the cancel flag."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._steps: list[Step] = []
+        self._cancel = threading.Event()
+
+    def step(self, id: str, label: str) -> Step:
+        s = Step(self, id, label)
+        with self._lock:
+            self._steps.append(s)
+        return s
+
+    def cancelled(self) -> bool:
+        return self._cancel.is_set()
+
+    def check_cancelled(self) -> None:
+        if self._cancel.is_set():
+            raise common.Cancelled("Cancelled")
+
+    def fail_running(self, text: str) -> None:
+        """Mark every step still running as failed with `text` (the job ended in an error or was cancelled)."""
+        with self._lock:
+            running = [s for s in self._steps if s.data["state"] == "running"]
+        for s in running:
+            s.fail(text)
+
+    def steps(self) -> list[dict]:
+        with self._lock:
+            return [json.loads(json.dumps(s.data)) for s in self._steps]
+
+
 class Jobs:
     def __init__(self):
         self._jobs: dict[str, dict] = {}
@@ -169,7 +233,8 @@ class Jobs:
     def submit(self, params: dict) -> str:
         job_id = uuid.uuid4().hex
         with self._cv:
-            self._jobs[job_id] = {"state": "running", "file": None, "kind": None, "error": None}
+            self._jobs[job_id] = {"state": "running", "file": None, "kind": None, "error": None,
+                                  "job": Job(), "out_dir": None}
             self._queue.append((job_id, params))
             self._cv.notify()
         return job_id
@@ -178,6 +243,20 @@ class Jobs:
         with self._lock:
             j = self._jobs.get(job_id)
             return dict(j) if j else None
+
+    def cancel(self, job_id: str) -> bool:
+        """Remove a queued job (it ends "Cancelled" without running) or flag a running one. False if unknown."""
+        with self._cv:
+            j = self._jobs.get(job_id)
+            if not j:
+                return False
+            j["job"]._cancel.set()
+            for i, (qid, _) in enumerate(self._queue):
+                if qid == job_id:
+                    del self._queue[i]
+                    j.update(state="error", error="Cancelled")
+                    break
+            return True
 
     def next(self):
         with self._cv:
@@ -190,18 +269,32 @@ class Jobs:
             self._jobs.get(job_id, {}).update(fields)
 
 
+def _takes_job(fn) -> bool:
+    return len(inspect.signature(fn).parameters) >= 4
+
+
 def worker(jobs: Jobs, adapter, handle, out_root: Path):
     while True:
         job_id, params = jobs.next()
         out_dir = out_root / job_id
         out_dir.mkdir(parents=True, exist_ok=True)
+        jobs.finish(job_id, out_dir=str(out_dir))
+        job = jobs.get(job_id)["job"]
         try:
             log(f"job {job_id}: generating")
-            res = adapter.generate(handle, params, str(out_dir))
+            if _takes_job(adapter.generate):
+                res = adapter.generate(handle, params, str(out_dir), job)
+            else:
+                res = adapter.generate(handle, params, str(out_dir))
             jobs.finish(job_id, state="done", file=res["file"], kind=res.get("kind", "file"))
             log(f"job {job_id}: done -> {res['file']}")
+        except common.Cancelled:
+            log(f"job {job_id}: cancelled")
+            job.fail_running("Cancelled")
+            jobs.finish(job_id, state="error", error="Cancelled")
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
+            job.fail_running(str(e))
             jobs.finish(job_id, state="error", error=str(e))
 
 
@@ -232,10 +325,24 @@ def make_handler(jobs: Jobs, manifest: dict, routes: dict | None = None, handle=
                 if not j:
                     self._send(404, {"error": "unknown job"})
                 else:
-                    self._send(200, {"state": j["state"], "kind": j["kind"], "error": j["error"]})
+                    self._send(200, {"state": j["state"], "kind": j["kind"], "error": j["error"],
+                                     "steps": j["job"].steps()})
             elif u.path == "/file":
-                job = parse_qs(u.query).get("job", [""])[0]
+                q = parse_qs(u.query)
+                job = q.get("job", [""])[0]
                 j = jobs.get(job)
+                if j and "name" in q:
+                    name = q["name"][0]
+                    listed = {f for st in j["job"].steps() for f in st["files"]}
+                    if name not in listed:
+                        self._send(404, {"error": f"file {name!r} was not listed by any step of this job"})
+                        return
+                    path = Path(j["out_dir"]) / name
+                    if not path.is_file():
+                        self._send(404, {"error": f"step file {name!r} is missing on disk"})
+                        return
+                    self._send_file(path)
+                    return
                 if not j or j["state"] != "done" or not j["file"]:
                     self._send(404, {"error": "no file for job"})
                     return
@@ -269,6 +376,13 @@ def make_handler(jobs: Jobs, manifest: dict, routes: dict | None = None, handle=
                     self._send(status or 500, {"error": str(e)})
                     return
                 self._send(code, obj)
+                return
+            if u.path == "/cancel":
+                job = parse_qs(u.query).get("job", [""])[0]
+                if jobs.cancel(job):
+                    self._send(200, {"cancelled": True})
+                else:
+                    self._send(404, {"error": "unknown job"})
                 return
             if u.path != "/generate":
                 self._send(404, {"error": "not found"})

@@ -42,7 +42,7 @@ describe('applying finished tasks', () => {
       pathname: '/editor/old/timeline',
       apply: async () => ({ task: task({ state: 'done', songId: 'new' }), songId: 'new', result: { verse1: ['la la day'] } }),
       getSong: async (id) => (calls.push(`get ${id}`), saved),
-      mergeLyrics: async (song, lyrics) => (calls.push(`merge ${Object.keys(lyrics).join(',')}`), { ...song, bpm: 99 } as Song),
+      mergeResult: async (song, kind, result) => (calls.push(`merge ${kind} ${Object.keys(result as object).join(',')}`), { ...song, bpm: 99 } as Song),
       setActiveSong: (s) => calls.push(`active ${s.id}`),
       applyEdit: (c) => calls.push(`edit ${c.kind} ${c.song.bpm}`),
       cacheSong: (s, old) => calls.push(`cache ${s.id} ${old}`),
@@ -51,6 +51,18 @@ describe('applying finished tasks', () => {
       ...over,
     };
   }
+
+  it('puts a sing result into unsaved edits too, with the saved version for its takes', async () => {
+    const seen: unknown[] = [];
+    const c = context({
+      editorDirty: true,
+      apply: async () => ({ task: task({ kind: 'sing', state: 'done', songId: 'new' }), songId: 'new', result: { melody: {}, takes: [] } }),
+      mergeResult: async (song, kind, _result, saved) => (seen.push(kind, saved.title), { ...song, bpm: 99 } as Song),
+    });
+    await applyReadyTask(task({ kind: 'sing' }), c);
+    expect(seen).toEqual(['sing', 'Test Track']);
+    expect(c.calls).toContain('edit replaceSong 99');
+  });
 
   it('switches the open editor to the saved version', async () => {
     const c = context({});
@@ -61,7 +73,7 @@ describe('applying finished tasks', () => {
   it('keeps unsaved edits, with the words put into them', async () => {
     const c = context({ editorDirty: true });
     await applyReadyTask(task(), c);
-    expect(c.calls).toEqual(['get new', 'merge verse1', 'active new', 'edit replaceSong 99', 'cache new old', 'go /editor/new/timeline', 'refresh']);
+    expect(c.calls).toEqual(['get new', 'merge writeLyrics verse1', 'active new', 'edit replaceSong 99', 'cache new old', 'go /editor/new/timeline', 'refresh']);
   });
 
   it('only refreshes the lists when the song is not open', async () => {

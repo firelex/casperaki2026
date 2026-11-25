@@ -12,6 +12,7 @@ export {
   normalizeBarBeatKey,
   contentHash,
 } from './canonical/index.js';
+export { vocalTakeFingerprint, isTakeFresh, SUNG_TAKE_KINDS } from './vocal-takes.js';
 export { generateSongJsonSchema } from './json-schema/generate.js';
 export * from './adapters/index.js';
 export {

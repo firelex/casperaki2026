@@ -10,6 +10,7 @@ import { useSession } from '../state/session';
 import { useSaveSong } from '../state/useSongActions';
 import { downloadBytes, fileStem, songMidiParts, toBase64 } from './exportMidi';
 import { mixExportStatus } from './mixExportProgress';
+import { creditedMp3 } from './vocalsCredit';
 
 type MixFormat = 'mp3' | 'wav';
 type Format = MixFormat | 'midi' | DawFormat;
@@ -139,7 +140,8 @@ export function ExportDialog({ onClose }: { onClose(): void }) {
     setMixJob({ running: { share: 0, label: 'Preparing the song' } });
     try {
       const files = await livePlayer.mixExport(key, fetchPayload, (p) => setMixJob({ running: mixExportStatus(p) }));
-      setMixJob({ files, key });
+      // A song with a YuE2 vocal take carries its credit in the MP3s, as the server's render writes it.
+      setMixJob({ files: { ...files, masteredMp3: creditedMp3(viewSong, files.masteredMp3), unmasteredMp3: creditedMp3(viewSong, files.unmasteredMp3) }, key });
     } catch (err) {
       setMixJob({ error: err instanceof Error ? err.message : String(err) });
     }

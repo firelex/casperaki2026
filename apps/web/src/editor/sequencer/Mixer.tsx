@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { automationAt, livePlayer, type LaneMeters, type MixConfigJson, type ResolvedMix, type ResolvedMixLane } from '../../audio/livePlayer';
 import { changeLane, changeLaneRoute, linkedLanes, setPro, type ProMixState } from '../../audio/proMix';
+import { mixerStrips, trackOfLane } from '../../audio/vocalLanes';
 import type { LaneMixOverride } from '@casperaki/song-schema/schemas';
 
 import type { PlaybackPayload } from '../../api/playback';
@@ -124,30 +125,43 @@ export function Mixer({
     for (let b = Math.max(0, bin - 3); b <= Math.min(peaks.length - 1, bin); b++) m = Math.max(m, peaks[b]!);
     return m;
   };
-  const levelOf = (lane: string) => peakAt(meters?.peaks[meters.names.indexOf(lane)]);
+  const laneLevel = (lane: string) => peakAt(meters?.peaks[meters.names.indexOf(lane)]);
   /** Bus meters: 0..2 the returns in RETURNS order, 3 the master. */
   const busLevel = (bus: number) => peakAt(meters?.busPeaks[bus]);
-  // Strips in track order, then any engine lane without a track row (e.g. transitions).
-  const trackOrder = [...tracks.map((t) => t.name).filter((n) => byLane.has(n)), ...[...byLane.keys()].filter((n) => !tracks.some((t) => t.name === n))];
+  // Strips in track order, then any engine lane without a track row (e.g. transitions). A vocal track's wet lane
+  // (its SoulX takes) shares its track's strip: one track, one strip (audio/vocalLanes.ts).
+  const strips = mixerStrips(
+    tracks.map((t) => t.name),
+    [...byLane.keys()],
+  );
+  const lanesOf = new Map(strips.map((s) => [s.name, s.lanes]));
+  const trackOrder = strips.map((s) => s.name);
+  const partsOf = (strip: string) => lanesOf.get(strip)!.flatMap((l) => byLane.get(l)!);
+  /** A strip's meter: the louder of its lanes. */
+  const levelOf = (strip: string) => {
+    const levels = (lanesOf.get(strip) ?? [strip]).map(laneLevel).filter((v): v is number => v !== undefined);
+    return levels.length ? Math.max(...levels) : undefined;
+  };
   // The group buses, in the order their first track appears; each with the tracks feeding it.
   const groupBuses: string[] = [];
   const feeders = new Map<string, string[]>();
-  for (const lane of trackOrder) {
-    for (const bus of new Set(byLane.get(lane)!.map((p) => p.fxGroup))) {
+  for (const strip of trackOrder) {
+    for (const bus of new Set(partsOf(strip).map((p) => p.fxGroup))) {
       if (!feeders.has(bus)) {
         groupBuses.push(bus);
         feeders.set(bus, []);
       }
-      feeders.get(bus)!.push(lane);
+      feeders.get(bus)!.push(strip);
     }
   }
-  // Tracks of the same instrument type(s) share one fader, one set of sends and one bus in Pro mode.
-  const linked = (lane: string) => linkedLanes(mix, lane);
+  // Tracks of the same instrument type(s) share one fader, one set of sends and one bus in Pro mode; a strip's lanes
+  // change together.
+  const linked = (strip: string) => [...new Set(lanesOf.get(strip)!.flatMap((l) => linkedLanes(mix, l)))];
   const busColor = (bus: string) => BUS_COLORS[groupBuses.indexOf(bus) % BUS_COLORS.length]!;
   // Every group bus of the mix (what a track can be routed to in Pro mode), in rack order.
   const routable = mix.config.rackChains.map((c) => c.bus).filter((b) => b !== 'master' && !RETURNS.some((r) => r.bus === b));
   // Tracks grouped by the (first) bus they feed, in bus order; track order within a bus.
-  const laneOrder = groupBuses.flatMap((bus) => trackOrder.filter((lane) => byLane.get(lane)![0]!.fxGroup === bus));
+  const laneOrder = groupBuses.flatMap((bus) => trackOrder.filter((strip) => partsOf(strip)[0]!.fxGroup === bus));
   // A bus's meter: the loudest of its tracks at the playhead (before the bus's own plugins).
   const busTrackPeak = (bus: string) => {
     const levels = feeders.get(bus)!.map(levelOf).filter((v): v is number => v !== undefined);
@@ -171,7 +185,7 @@ export function Mixer({
           key={lane}
           name={lane}
           color={tracks.find((t) => t.name === lane)?.color ?? '#8a8b93'}
-          parts={byLane.get(lane)!}
+          parts={partsOf(lane)}
           soundName={soundNames[lane]}
           seconds={seconds}
           busColor={busColor}
@@ -181,8 +195,8 @@ export function Mixer({
           soloed={solo.includes(lane)}
           anySolo={solo.length > 0}
           pro={pro.pro}
-          override={pro.mix.lanes[lane]}
-          linkedWith={linked(lane).filter((l) => l !== lane)}
+          override={pro.mix.lanes[lanesOf.get(lane)![0]!]}
+          linkedWith={[...new Set(linked(lane).filter((l) => !lanesOf.get(lane)!.includes(l)).map(trackOfLane))].filter((t) => t !== lane)}
           onChange={(patch) => changeLane(liveKey, linked(lane), patch)}
           routable={routable}
           onRoute={(bus) => {

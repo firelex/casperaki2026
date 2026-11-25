@@ -8,18 +8,37 @@
 // graphics card); the others wait their turn. The brain only sends requests and waits, so renders and playback are not
 // slowed down.
 //
-// Kinds: writeLyrics (src/lyrics/lyricist.ts).
+// Kinds: writeLyrics (src/lyrics/lyricist.ts), sing (src/sing/singTask.ts: steps recorded on the task, cancellable,
+// applied only while the sung sections are as they were sung), transcribe (src/sing/transcribeTask.ts: a recording of
+// one section back into its Vocal lane; the same steps, cancel and apply check, for that section only).
 
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
-import { applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, type Song } from '@casperaki/song-schema';
 
 import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
 import { writeLyrics } from '../lyrics/lyricist.js';
 import { defaultTitle } from '../routes/songs.js';
-import type { SongsStore, TaskKind, TaskRow } from '../store.js';
+import { checkSectionsGenerated, planSinging, SingError } from '../sing/plan.js';
+import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SONG_CHANGED, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
+import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
+import type { VocalsClient } from '../sing/vocalsClient.js';
+import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
+
+/** The user-facing refusal while a song is being sung. */
+export const ALREADY_SINGING = 'Already singing';
+/** The user-facing refusal while a recording is being transcribed for the song (Sing and Transcribe exclude each other). */
+export const ALREADY_TRANSCRIBING = 'Already transcribing';
+/** The user-facing refusal of Sing while the song's lyrics are being written (running or waiting their turn): new
+ *  words would drop the sung melody of their sections. */
+export const ALREADY_WRITING_LYRICS = 'Already writing lyrics';
+/** Why a Sing (or Transcribe) that failed because the song changed is not started again: it would redo the old song. */
+export const RETRY_SONG_CHANGED = 'The song changed since this sing started, so it cannot be started again: Sing again instead.';
+export const RETRY_TRANSCRIBE_CHANGED = 'The song changed since this transcription started, so it cannot be started again: Transcribe melody again instead.';
 
 /** Why a task cannot start or be applied: an HTTP status, a code and a message for the user. */
 export class TaskError extends Error {
@@ -41,37 +60,130 @@ export interface BackgroundTasksDeps {
   readonly clock: () => string;
   /** A saved song was replaced by a new version. */
   readonly onSongReplaced?: (oldSongId: string) => void;
+  /** Sing: the vocals service, the task files folder, the takes folder, ffmpeg and the poll interval; without it,
+   *  sing tasks cannot start. */
+  readonly sing?: SingDeps;
+  /** Transcribe melody: the task files folder, the vocals service and the hum service (each needed for some
+   *  recordings), ffmpeg and the poll interval. */
+  readonly transcribe?: TranscribeDeps;
+}
+
+export interface TranscribeDeps {
+  /** BRAIN_TASK_FILES_DIR (required to transcribe: the recording is kept there). */
+  readonly filesDir: string | undefined;
+  readonly client: VocalsClient | undefined;
+  /** HUM_SERVICE_URL. */
+  readonly humServiceUrl: string | undefined;
+  readonly ffmpegBin: string;
+  readonly pollMs: number;
+}
+
+/** A transcribe task's start: the section, the recording and whether music plays behind the voice. */
+export interface TranscribeStart {
+  readonly segment: string;
+  readonly recording: Buffer;
+  readonly hasBacking: boolean;
+}
+
+export interface SingDeps {
+  readonly client: VocalsClient;
+  /** BRAIN_TASK_FILES_DIR: each task's step files in <dir>/<task id>/. */
+  readonly filesDir: string;
+  /** BRAIN_VOCAL_TAKES_DIR: takes as <sha256>.ogg. */
+  readonly takesDir: string;
+  readonly ffmpegBin: string;
+  /** How often a running service job is polled (ms). */
+  readonly pollMs: number;
 }
 
 export class BackgroundTasks {
   /** Per kind, the end of its queue. */
   private readonly queues = new Map<TaskKind, Promise<void>>();
   private readonly running = new Set<Promise<void>>();
+  /** Per running task, the signal that cancels it. */
+  private readonly aborts = new Map<string, AbortController>();
 
   constructor(private readonly deps: BackgroundTasksDeps) {}
 
-  /** Starts a task on the owner's project `songId` from the posted working song. */
-  start(ownerId: string, songId: string, kind: TaskKind, song: Song): TaskRow {
+  /** Starts a task on the owner's project `songId` from the posted working song (transcribe: with its recording). */
+  start(ownerId: string, songId: string, kind: TaskKind, song: Song, transcribe?: TranscribeStart): TaskRow {
     const { store } = this.deps;
-    if (!store.getProject(ownerId, songId)) throw new TaskError(404, 'not_found', 'There is no such song.');
-    if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_running', 'The lyrics of this song are already being written.');
-    if (kind === 'writeLyrics') {
-      if (!this.deps.lyricModel) throw new TaskError(503, 'no_lyric_model', 'Lyrics cannot be written: the brain has no language model (ASSISTANT_LLM_URL).');
-      if (!vocalMelodyShown(song)) throw new TaskError(422, 'no_melody', 'Write a melody first.');
-    }
+    if ((kind === 'transcribe') !== (transcribe !== undefined)) throw new Error(`start: a ${kind} task ${transcribe ? 'takes no' : 'needs a'} recording`);
+    const options: TranscribeOptions | undefined = transcribe ? { segment: transcribe.segment, recording: 'upload', hasBacking: transcribe.hasBacking } : undefined;
+    this.checkCanStart(ownerId, songId, kind, song, options);
     const id = randomUUID();
-    store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock() });
+    if (transcribe) {
+      // checkCanStart made sure the folder is set
+      const name = keepRecording(join(resolve(this.deps.transcribe!.filesDir!), id), transcribe.recording);
+      if (name !== options!.recording) throw new Error(`start: the recording was kept as ${name}, not ${options!.recording}`);
+    }
+    store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), ...(options ? { options } : {}) });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
     this.enqueue(ownerId, id, kind);
     return store.getTask(ownerId, id)!;
   }
 
-  /** Starts a failed task again, from the same song. */
+  /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
+  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, options?: TranscribeOptions): void {
+    const { store } = this.deps;
+    if (!store.getProject(ownerId, songId)) throw new TaskError(404, 'not_found', 'There is no such song.');
+    if (kind === 'writeLyrics') {
+      if (this.isSinging(ownerId, songId)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_running', 'The lyrics of this song are already being written.');
+      if (!this.deps.lyricModel) throw new TaskError(503, 'no_lyric_model', 'Lyrics cannot be written: the brain has no language model (ASSISTANT_LLM_URL).');
+      if (!vocalMelodyShown(song)) throw new TaskError(422, 'no_melody', 'Write a melody first.');
+    }
+    if (kind === 'sing') {
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
+      if (store.runningTask(ownerId, songId, 'transcribe')) throw new TaskError(409, 'already_transcribing', ALREADY_TRANSCRIBING);
+      if (store.runningTask(ownerId, songId, 'writeLyrics')) throw new TaskError(409, 'already_writing_lyrics', ALREADY_WRITING_LYRICS);
+      if (!this.deps.sing) {
+        throw new TaskError(503, 'no_vocals_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
+      }
+      try {
+        planSinging(song);
+      } catch (err) {
+        if (err instanceof SingError) throw new TaskError(422, 'cannot_sing', err.message);
+        throw err;
+      }
+    }
+    if (kind === 'transcribe') {
+      if (!options) throw new Error('checkCanStart: a transcribe task without its options');
+      if (this.isSinging(ownerId, songId)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_transcribing', ALREADY_TRANSCRIBING);
+      const t = this.deps.transcribe;
+      if (!t?.filesDir) throw new TaskError(503, 'no_task_files', 'Transcribe melody is not set up: the brain needs BRAIN_TASK_FILES_DIR.');
+      if (!vocalMelodyShown(song)) throw new TaskError(422, 'no_melody', 'Write a melody first.');
+      if (!sungSections(song).some((s) => s.name === options.segment)) {
+        throw new TaskError(400, 'unknown_section', `The song has no sung section "${options.segment}".`);
+      }
+      try {
+        checkSectionsGenerated(song, [options.segment]);
+      } catch (err) {
+        if (err instanceof SingError) throw new TaskError(422, 'section_not_generated', err.message);
+        throw err;
+      }
+      const needs = transcribeNeeds(song, options);
+      if (needs.vocals && !t.client) {
+        throw new TaskError(503, 'no_vocals_service', 'Transcribing this recording needs the vocals service: the brain needs VOCALS_SERVICE_URL.');
+      }
+      if (needs.hum && !t.humServiceUrl) {
+        throw new TaskError(503, 'no_hum_service', 'Transcribing a section without written lyrics needs the hum service: the brain needs HUM_SERVICE_URL.');
+      }
+    }
+  }
+
+  /** Starts a failed task again, from the same song (with the same checks as a start). */
   retry(ownerId: string, id: string): TaskRow {
     const { store } = this.deps;
     const task = store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
+    if (task.kind === 'sing' && task.message === SONG_CHANGED) throw new TaskError(409, 'song_changed', RETRY_SONG_CHANGED);
+    if (task.kind === 'transcribe' && task.message === TRANSCRIBE_CHANGED) throw new TaskError(409, 'song_changed', RETRY_TRANSCRIBE_CHANGED);
+    this.checkCanStart(ownerId, task.songId, task.kind, parseSong(JSON.parse(task.input)), task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined);
+    store.setTaskSteps(id, []);
+    store.setTaskJobs(id, null);
     store.setTaskState(id, { state: 'running', result: null, message: null, finishedAt: null, startedAt: this.deps.clock() });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: task.songId, state: 'running' });
     this.enqueue(ownerId, id, task.kind);
@@ -89,7 +201,15 @@ export class BackgroundTasks {
       store.deleteTask(id);
       throw new TaskError(404, 'song_deleted', 'The song was deleted.');
     }
-    const song = resultInto(task, current.song);
+    let song: Song;
+    try {
+      song = resultInto(task, current.song);
+    } catch (err) {
+      if (!(err instanceof SongChangedError)) throw err;
+      store.setTaskState(id, { state: 'failed', result: null, message: err.message, finishedAt: clock() });
+      this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: task.songId, state: 'failed' });
+      throw new TaskError(409, 'song_changed', err.message);
+    }
     const canonical = canonicalStringifySong(song, 2);
     const songHash = hash(canonical);
     const newId = songHash.slice(0, 16);
@@ -100,6 +220,39 @@ export class BackgroundTasks {
     if (newId !== task.songId) this.deps.onSongReplaced?.(task.songId);
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: newId, state: 'done' });
     return { task: store.getTask(ownerId, id)!, songId: newId };
+  }
+
+  /** Cancels a running task (queued or under way): it fails with "Cancelled", and a service job it runs is cancelled. */
+  cancel(ownerId: string, id: string): TaskRow {
+    const { store, clock } = this.deps;
+    const task = store.getTask(ownerId, id);
+    if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
+    if (task.state !== 'running') throw new TaskError(409, 'not_running', `The task is ${task.state}, not running.`);
+    const at = clock();
+    const steps: TaskStep[] = task.steps.map((s) => (s.state === 'running' ? { ...s, state: 'failed', finishedAt: at, text: 'Cancelled' } : s));
+    store.setTaskSteps(id, steps);
+    store.setTaskState(id, { state: 'failed', result: null, message: 'Cancelled', finishedAt: at });
+    this.aborts.get(id)?.abort();
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: task.songId, state: 'failed' });
+    return store.getTask(ownerId, id)!;
+  }
+
+  /** Whether a sing task runs on the owner's song (Write melody and Write lyrics wait for it). */
+  isSinging(ownerId: string, songId: string): boolean {
+    return this.deps.store.runningTask(ownerId, songId, 'sing') !== undefined;
+  }
+
+  /** The path of a file a step of the owner's task made (a TaskError when there is none). */
+  stepFile(ownerId: string, id: string, stage: string, name: string): string {
+    if (!(TASK_FILE_STAGES as readonly string[]).includes(stage)) throw new TaskError(400, 'bad_stage', `"${stage}" is not a stage (${TASK_FILE_STAGES.join(', ')}).`);
+    if (!isPlainFileName(name)) throw new TaskError(400, 'bad_name', `"${name}" is not a file name.`);
+    const task = this.deps.store.getTask(ownerId, id);
+    if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
+    const filesDir = task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : this.deps.sing?.filesDir;
+    if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
+    const path = join(resolve(filesDir), id, stage, name);
+    if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
+    return path;
   }
 
   /** Resumes every task the database says is running (at start-up: a restart ended them). */
@@ -124,10 +277,13 @@ export class BackgroundTasks {
     const { store, events, clock } = this.deps;
     const task = store.getTask(ownerId, id);
     if (!task || task.state !== 'running') return;
+    const abort = new AbortController();
+    this.aborts.set(id, abort);
     try {
-      const result = await this.work(task);
+      const result = await this.work(task, abort.signal);
       const now = store.getTask(ownerId, id);
-      if (!now) return;
+      // Gone, or cancelled meanwhile.
+      if (!now || now.state !== 'running') return;
       // The song was deleted meanwhile: the task goes with it.
       if (!store.getProject(ownerId, now.songId)) {
         store.deleteTask(id);
@@ -139,14 +295,16 @@ export class BackgroundTasks {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`[tasks] ${task.kind} ${id} failed: ${message}`);
       const now = store.getTask(ownerId, id);
-      if (!now) return;
+      if (!now || now.state !== 'running') return;
       store.setTaskState(id, { state: 'failed', result: null, message, finishedAt: clock() });
       events.publish(ownerId, { type: 'task', taskId: id, songId: now.songId, state: 'failed' });
+    } finally {
+      this.aborts.delete(id);
     }
   }
 
   /** The task's result. */
-  private async work(task: TaskRow): Promise<unknown> {
+  private async work(task: TaskRow, signal: AbortSignal): Promise<unknown> {
     if (task.kind === 'writeLyrics') {
       const model = this.deps.lyricModel;
       if (!model) throw new Error('the brain has no language model to write lyrics with (ASSISTANT_LLM_URL)');
@@ -159,6 +317,55 @@ export class BackgroundTasks {
       const title = project && project.title !== defaultTitle(input.genre ?? '', input.key) ? project.title : undefined;
       return await writeLyrics(generated, model, { sections, ...(title ? { title } : {}) });
     }
+    if (task.kind === 'sing') {
+      const sing = this.deps.sing;
+      if (!sing) throw new Error('the brain is not set up to sing (VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR, BRAIN_VOCAL_TAKES_DIR)');
+      const { store, events, clock } = this.deps;
+      return await runSing({
+        taskId: task.id,
+        input: parseSong(JSON.parse(task.input)),
+        client: sing.client,
+        filesDir: join(resolve(sing.filesDir), task.id),
+        takesDir: resolve(sing.takesDir),
+        ffmpegBin: sing.ffmpegBin,
+        pollMs: sing.pollMs,
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
+        },
+        now: clock,
+      });
+    }
+    if (task.kind === 'transcribe') {
+      const t = this.deps.transcribe;
+      if (!t?.filesDir) throw new Error('the brain is not set up to transcribe (BRAIN_TASK_FILES_DIR)');
+      const { store, events, clock } = this.deps;
+      return await runTranscribe({
+        taskId: task.id,
+        input: parseSong(JSON.parse(task.input)),
+        options: TranscribeOptionsSchema.parse(task.options),
+        client: t.client,
+        humServiceUrl: t.humServiceUrl,
+        filesDir: join(resolve(t.filesDir), task.id),
+        ffmpegBin: t.ffmpegBin,
+        pollMs: t.pollMs,
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
+        },
+        now: clock,
+      });
+    }
     throw new Error(`unknown task kind ${String(task.kind)}`);
   }
 }
@@ -166,5 +373,22 @@ export class BackgroundTasks {
 /** The song with the task's result in it. */
 function resultInto(task: TaskRow, song: Song): Song {
   if (task.kind === 'writeLyrics') return applyWrittenLyrics(song, WrittenLyricsSchema.parse(task.result));
+  if (task.kind === 'sing') {
+    const result = SingResultSchema.parse(task.result);
+    checkUnchanged(parseSong(JSON.parse(task.input)), song, result);
+    return applySungVocals(song, result);
+  }
+  if (task.kind === 'transcribe') {
+    const result = SingResultSchema.parse(task.result);
+    const { segment } = TranscribeOptionsSchema.parse(task.options);
+    if (Object.keys(result.melody).join() !== segment || result.takes.length > 0) throw new Error(`a transcribe result must hold ${segment} only and no takes`);
+    try {
+      checkUnchanged(parseSong(JSON.parse(task.input)), song, result);
+    } catch (err) {
+      if (err instanceof SongChangedError) throw new SongChangedError(err.detail, TRANSCRIBE_CHANGED);
+      throw err;
+    }
+    return applySungVocals(song, result, { partial: true });
+  }
   throw new Error(`unknown task kind ${String(task.kind)}`);
 }

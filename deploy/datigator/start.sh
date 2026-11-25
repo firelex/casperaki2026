@@ -7,6 +7,7 @@
 #   casperaki-brain  brain: /api + the built web app, port 16500
 #   svc-hum          hum transcription model service (hum to song), port 16510
 #   svc-amt          melody completion model service (hum to song), port 16511
+#   svc-vocals       sing and transcribe model service (YuE2, SoulX-Singer, ChordNet), port 16514
 #   svc-artwork      song artwork image service (segmind/small-sd), port 16513
 #
 # At boot the Windows task "Start WSL at boot" starts WSL; systemd starts cron, whose @reboot line runs this
@@ -39,3 +40,5 @@ start svc-hum "cd $SERVING && exec python3 harness.py --adapter hum --port 16510
 start svc-amt "cd $SERVING && exec python3 harness.py --adapter amt --port 16511 2>&1 | tee -a run/svc-amt.log"
 # Song artwork (apps/brain/src/artwork; brain.env ARTWORK_SERVICE_URL + BRAIN_ARTWORK_DIR).
 start svc-artwork "cd $SERVING && exec python3 harness.py --adapter small-sd --port 16513 --models-dir /mnt/d/casperaki-models 2>&1 | tee -a run/svc-artwork.log"
+# Sing and transcribe (vocals adapter; own venv at apps/models/services/vocals/.venv).
+start svc-vocals "cd $SERVING && exec python3 harness.py --adapter vocals --port 16514 2>&1 | tee -a run/svc-vocals.log"

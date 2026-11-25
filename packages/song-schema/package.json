@@ -11,6 +11,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./vocal-take-input": {
+      "types": "./dist/vocal-take-input.d.ts",
+      "import": "./dist/vocal-take-input.js"
+    },
     "./parse": {
       "types": "./dist/parse.d.ts",
       "import": "./dist/parse.js"
