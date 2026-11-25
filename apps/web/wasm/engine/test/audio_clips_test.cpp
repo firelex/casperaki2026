@@ -153,6 +153,57 @@ int main() {
         check(threw, "a missing take file throws, naming it");
     }
 
+    // (5) per-lane sends: an instrument's fxSends object replaces the table sends for its lane only
+    if (vocal) {
+        nlohmann::json wetInst = clipsInst;
+        wetInst["id"] = 60001;
+        wetInst["name"] = "Vocal wet";
+        wetInst["fxSends"] = {{"reverb", -10}, {"delay", -18}, {"chorus", -100}};
+        ResolvedEvents two = only;
+        Track wetTrack = *vocal;
+        wetTrack.name = "Vocal wet";
+        two.tracks.push_back(wetTrack);
+        std::vector<nlohmann::json> twoInsts = {clipsInst, wetInst};
+        auto sendsOf = [&](const std::vector<nlohmann::json>& insts, const ResolvedEvents& ev2) {
+            Mixer m(44100.0, 128, 0.5, stubs);
+            m.setMixEnabled(true);
+            m.setMixConfig(cfg);
+            SampleLibrary lib("/");
+            lib.loadInto(m, genreDir, insts);
+            m.build(ev2, insts);
+            return nlohmann::json::parse(m.laneInfoJson());
+        };
+        const auto info = sendsOf(twoInsts, two);
+        const nlohmann::json* dryLane = nullptr;
+        const nlohmann::json* wetLane = nullptr;
+        for (const auto& l : info.at("lanes")) {
+            if (l.at("track") == "Vocal") dryLane = &l;
+            if (l.at("track") == "Vocal wet") wetLane = &l;
+        }
+        check(dryLane && wetLane, "both Vocal lanes exist");
+        if (dryLane && wetLane) {
+            const auto& w = wetLane->at("sendsDb");
+            check(w.at("reverb") == -10 && w.at("delay") == -18 && w.at("chorus") == -100,
+                  "the wet lane uses its fxSends: " + w.dump());
+            const mix::FxSends t = cfg.laneSends(dryLane->at("fxGroup").get<std::string>(), "vocalsLaSinger", info.at("genre").get<std::string>());
+            const auto& d = dryLane->at("sendsDb");
+            check(d.at("reverb") == t.reverb && d.at("delay") == t.delay && d.at("chorus") == t.chorus,
+                  "the lane without fxSends keeps the table sends: " + d.dump());
+        }
+        // a partial fxSends object throws, naming the lane and the key
+        nlohmann::json partial = wetInst;
+        partial["fxSends"] = {{"reverb", -10}, {"delay", -18}};
+        bool threw = false;
+        ResolvedEvents wetOnly = only;
+        wetOnly.tracks.clear();
+        wetOnly.tracks.push_back(wetTrack);
+        try { sendsOf({partial}, wetOnly); } catch (const std::exception& e) {
+            const std::string msg = e.what();
+            threw = msg.find("Vocal wet") != std::string::npos && msg.find("chorus") != std::string::npos;
+        }
+        check(threw, "an fxSends object missing a key throws, naming the lane and the key");
+    }
+
     fs::remove_all(tmp);
     if (failures == 0) std::printf("PASS audio_clips_test\n");
     return failures == 0 ? 0 : 1;

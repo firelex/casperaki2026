@@ -53,6 +53,7 @@
 #include <cstdlib>
 #include <map>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -932,7 +933,8 @@ private:
             // Scope B: the 3 aux send gains (reverb/delay/chorus). bus 0=reverb,
             // 1=delay, 2=chorus — matching FX::Send + MixGraph::returns_.
             lane.lowLevelType = laneLowLevelType(track.name);
-            const mix::FxSends sd = cfgLaneSends(lane.fxGroup, lane.lowLevelType);
+            const std::optional<mix::FxSends> own = laneSendOverride(track.name);
+            const mix::FxSends sd = own ? *own : cfgLaneSends(lane.fxGroup, lane.lowLevelType);
             lane.sendGain[0] = mix::dbToGain(sd.reverb);
             lane.sendGain[1] = mix::dbToGain(sd.delay);
             lane.sendGain[2] = mix::dbToGain(sd.chorus);
@@ -1470,6 +1472,25 @@ private:
         if (inst.contains("lowLevelType") && inst["lowLevelType"].is_string())
             return inst["lowLevelType"].get<std::string>();
         return std::string();
+    }
+
+    // A lane's own sends (dB, -100 = off): the instrument's "fxSends" object
+    // ({reverb, delay, chorus}), written for sung vocal takes. nullopt when the
+    // instrument has none (the lane then takes the mix table's sends). An object
+    // missing a key is an error naming the lane and the key.
+    std::optional<mix::FxSends> laneSendOverride(const std::string& trackName) const {
+        auto it = instByName_.find(baseName(trackName));
+        if (it == instByName_.end() || it->second == nullptr) return std::nullopt;
+        const auto& inst = *it->second;
+        if (!inst.contains("fxSends")) return std::nullopt;
+        const auto& fx = inst["fxSends"];
+        if (!fx.is_object()) throw std::runtime_error("Mixer: lane '" + trackName + "' fxSends is not an object");
+        auto get = [&](const char* key) {
+            if (!fx.contains(key) || !fx[key].is_number())
+                throw std::runtime_error("Mixer: lane '" + trackName + "' fxSends is missing the number '" + key + "'");
+            return fx[key].get<float>();
+        };
+        return mix::FxSends{get("reverb"), get("delay"), get("chorus")};
     }
 
     // Phase 2 Scope B: the fxGroup submix a track routes to. Drum step tracks split
