@@ -11,6 +11,7 @@
 //       | { kind: 'newMelody', section }   a new melody (its chords and every part
 //                                          under it, the phrase bank's words) for every section of that type
 //       | { kind: 'writeMelody' }          the vocal tracks show the melody the generator chose (new songs start empty)
+//       | { kind: 'applySung', result, sungOver }  a finished Sing task's result put into the posted working copy (sungOver: the saved version, whose take fingerprints it keeps)
 //       | { kind: 'applyLyrics', lyrics }  written lyrics (section → lines) on the vocal tracks (a finished Write
 //                                          lyrics task merged into unsaved edits)
 //     The edit is recorded in the song's generator block and only the edited
@@ -45,9 +46,10 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { applyWrittenLyrics, newMelody, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { applySungVocalsOver, applyWrittenLyrics, newMelody, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
+import { SingResultSchema } from '../sing/singTask.js';
 import { ownerOf } from './songs.js';
 
 
@@ -56,6 +58,7 @@ const VocalEditSchema = z.union([
   z.object({ kind: z.literal('newMelody'), section: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('writeMelody') }).strict(),
   z.object({ kind: z.literal('applyLyrics'), lyrics: WrittenLyricsSchema }).strict(),
+  z.object({ kind: z.literal('applySung'), result: SingResultSchema, sungOver: z.unknown() }).strict(),
 ]);
 /** songId: the saved project the working song belongs to (a new melody waits while the project is being sung). */
 const EditBody = z.object({ song: z.unknown(), songId: z.string().min(1).optional(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
@@ -110,6 +113,7 @@ export function createTracksRouter({ isSinging }: TracksRouterDeps): Router {
     if (op.kind === 'newMelody') return run(res, () => ({ song: newMelody(song, segmentType(op.section)).song, track: 'Vocal' }));
     if (op.kind === 'writeMelody') return run(res, () => ({ song: writeMelody(song), track: 'Vocal' }));
     if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));
+    if (op.kind === 'applySung') return run(res, () => ({ song: applySungVocalsOver(song, op.result, parseSong(op.sungOver)), track: 'Vocal' }));
     return run(res, () => editTrack(song, op));
   });
 

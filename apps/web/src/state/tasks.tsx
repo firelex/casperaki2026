@@ -42,8 +42,8 @@ export interface ApplyContext {
   readonly pathname: string;
   apply(id: string): Promise<AppliedTask>;
   getSong(id: string): Promise<GeneratedSong>;
-  /** The working song with the written lyrics put in (the brain's applyLyrics edit). */
-  mergeLyrics(song: Song, lyrics: AppliedTask['result']): Promise<Song>;
+  /** The working song with the result put in (the brain's applyLyrics / applySung edit). */
+  mergeResult(song: Song, kind: BackgroundTask['kind'], result: AppliedTask['result'], saved: Song): Promise<Song>;
   setActiveSong(song: GeneratedSong): void;
   applyEdit(command: { kind: 'replaceSong'; song: Song }): void;
   cacheSong(saved: GeneratedSong, oldId: string): void;
@@ -60,8 +60,7 @@ export async function applyReadyTask(task: BackgroundTask, c: ApplyContext): Pro
   const applied = await c.apply(task.id);
   if (open) {
     const saved = await c.getSong(applied.songId);
-    // Sung takes are in the saved version itself; only written lyrics are put into unsaved edits.
-    const merged = task.kind === 'writeLyrics' && c.editorDirty && c.viewSong ? await c.mergeLyrics(c.viewSong, applied.result) : undefined;
+    const merged = c.editorDirty && c.viewSong ? await c.mergeResult(c.viewSong, task.kind, applied.result, saved.song) : undefined;
     c.setActiveSong(saved);
     if (merged) c.applyEdit({ kind: 'replaceSong', song: merged });
     c.cacheSong(saved, task.songId);
@@ -130,7 +129,8 @@ export function useApplyReadyTasks(): void {
       pathname: loc.pathname,
       apply: (id) => tasksApi.apply(id),
       getSong: (id) => songsApi.get(id),
-      mergeLyrics: async (song, lyrics) => (await tracksApi.edit(song, { kind: 'applyLyrics', lyrics })).song,
+      mergeResult: async (song, kind, result, saved) =>
+        (await tracksApi.edit(song, kind === 'sing' ? { kind: 'applySung', result, sungOver: saved } : { kind: 'applyLyrics', lyrics: result as Readonly<Record<string, readonly string[]>> })).song,
       setActiveSong: s.setActiveSong,
       applyEdit: s.applyEdit,
       cacheSong: (saved, oldId) => {

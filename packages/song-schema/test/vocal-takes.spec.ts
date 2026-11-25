@@ -1,4 +1,6 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { vocalTakeCanonical } from '../src/vocal-take-input.js';
 import {
   AIArtifactKindSchema,
   SUNG_TAKE_KINDS,
@@ -100,5 +102,14 @@ describe('kinds', () => {
   it('accepts yue2-vocal', () => {
     expect(AIArtifactKindSchema.parse('yue2-vocal')).toBe('yue2-vocal');
     expect(SUNG_TAKE_KINDS).toEqual(['yue2-vocal', 'soulx-vocal']);
+  });
+});
+
+describe('vocalTakeCanonical (the browser-safe half)', () => {
+  it('is the text vocalTakeFingerprint hashes, so the fingerprint is unchanged', () => {
+    const song = makeSong();
+    for (const [segment, track] of [['verse', 'Vocal'], ['chorus', 'Vocal'], ['verse', 'Bass']] as const) {
+      expect(vocalTakeFingerprint(song, segment, track)).toBe(createHash('sha256').update(vocalTakeCanonical(song, segment, track), 'utf8').digest('hex'));
+    }
   });
 });

@@ -153,3 +153,19 @@ describe('the credit', () => {
     expect(html).toContain('), CC BY-NC 4.0');
   });
 });
+
+describe('track edits', () => {
+  it('send the project id with the edit, so the brain can refuse while singing', async () => {
+    const { vi } = await import('vitest');
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ song: {}, track: 'Vocal' }), { status: 200, headers: { 'content-type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+    const { tracksApi } = await import('../src/api/tracks');
+    await tracksApi.edit(makeFixtureSong().song, { kind: 'writeMelody' }, undefined, 'proj1');
+    await tracksApi.edit(makeFixtureSong().song, { kind: 'writeMelody' });
+    vi.unstubAllGlobals();
+    const body = (n: number) => JSON.parse((fetchMock.mock.calls[n] as unknown as [string, RequestInit])[1].body as string);
+    expect(body(0)).toMatchObject({ songId: 'proj1', op: { kind: 'writeMelody' } });
+    expect(body(1)).not.toHaveProperty('songId');
+  });
+});

@@ -281,3 +281,14 @@ export function applySungVocals(working: Song, sung: { melody: SungMelody; takes
   });
   return parseSong({ ...song, aiArtifacts: [...kept, ...artifacts] });
 }
+
+/**
+ * A finished sing result put into a working copy that may have unsaved edits: `applySungVocals`, then the sung takes
+ * are the ones of `saved` (the version the task's result was saved into), whose fingerprints say what they were sung
+ * over. A section the working copy changed since (chords, tempo, vocal lanes) therefore comes out stale.
+ */
+export function applySungVocalsOver(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, saved: Song): Song {
+  const merged = applySungVocals(working, sung);
+  const isSung = (a: AIArtifact) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind);
+  return parseSong({ ...merged, aiArtifacts: [...merged.aiArtifacts.filter((a) => !isSung(a)), ...saved.aiArtifacts.filter(isSung)] });
+}

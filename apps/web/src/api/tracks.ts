@@ -31,7 +31,9 @@ export type TrackEdit =
   /** The vocal tracks show the melody the generator chose (a new song's vocal tracks start empty). */
   | { readonly kind: 'writeMelody' }
   /** Written lyrics (section → lines) on the vocal tracks: a finished Write lyrics task merged into unsaved edits. */
-  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> };
+  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> }
+  /** A finished Sing task's result (the apply response's `result`) put into the working copy. */
+  | { readonly kind: 'applySung'; readonly result: unknown; /** The saved version: its take fingerprints are kept. */ readonly sungOver: Song };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 

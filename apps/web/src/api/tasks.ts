@@ -49,8 +49,8 @@ export interface AppliedTask {
   readonly task: BackgroundTask;
   /** The saved version's id. */
   readonly songId: string;
-  /** What the task made (writeLyrics: section → lines). */
-  readonly result: Readonly<Record<string, readonly string[]>>;
+  /** What the task made (writeLyrics: section → lines; sing: the sung melody and takes). */
+  readonly result: unknown;
 }
 
 export const tasksQueryKey = ['tasks'] as const;

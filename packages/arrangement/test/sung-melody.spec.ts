@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isTakeFresh, type Song } from '@casperaki/song-schema';
 
-import { applySungVocals, applyWrittenLyrics, orchestrate, sungSections, type SungMelody, type SungTake } from '../src/index.js';
+import { applySungVocals, applySungVocalsOver, applyWrittenLyrics, orchestrate, sungSections, type SungMelody, type SungTake } from '../src/index.js';
 
 const PARAMS = { genre: 'brightPop', key: 'C', bpm: 110, seed: 'a' } as const;
 const BARS = (song: Song, section: string, track: string) => song.arrangement[section]!.overrides[track]!.bars!;
@@ -67,5 +67,26 @@ describe('applySungVocals', () => {
     const lines = sec.lines.map((l) => [...Array.from({ length: l.length - 1 }, () => 'la'), 'day'].join(' '));
     const changed = applyWrittenLyrics(second, { [chorus]: lines });
     expect(isTakeFresh(changed, changed.aiArtifacts[0]!)).toBe(false);
+  });
+});
+
+describe('applySungVocalsOver (a result merged into unsaved edits)', () => {
+  it('keeps the saved takes: a section edited meanwhile comes out stale, the others fresh', () => {
+    const sections = sungSections(base).map((s) => s.name);
+    const other = sections.find((n) => n !== chorus)!;
+    const takes = [take(chorus, 'Vocal', 'a'), take(other, 'Vocal', 'b')];
+    const saved = applySungVocals(base, { melody, takes });
+    // The unsaved edit: another chord in the chorus's first bar.
+    const edited = {
+      ...base,
+      songStructure: base.songStructure.map((s) =>
+        s.name === chorus ? { ...s, bars: s.bars.map((b, i) => (i === 0 ? { ...b, chords: ['Dm' as never] } : b)) } : s,
+      ),
+    } as Song;
+    const merged = applySungVocalsOver(edited, { melody, takes }, saved);
+    expect(merged.aiArtifacts).toHaveLength(2);
+    const fresh = (seg: string) => isTakeFresh(merged, merged.aiArtifacts.find((a) => a.attachedTo.scope === 'segment' && a.attachedTo.segment === seg)!);
+    expect(fresh(chorus)).toBe(false);
+    expect(fresh(other)).toBe(true);
   });
 });
