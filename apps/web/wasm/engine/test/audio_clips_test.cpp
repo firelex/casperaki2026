@@ -190,6 +190,40 @@ int main() {
             check(d.at("reverb") == t.reverb && d.at("delay") == t.delay && d.at("chorus") == t.chorus,
                   "the lane without fxSends keeps the table sends: " + d.dump());
         }
+        // Pro mode never touches a take lane's sends (spec "Mix"): song overrides and live setLaneSendDb
+        {
+            nlohmann::json pj = nlohmann::json::parse(readFile(AUDIO_CLIPS_MIX_CONFIG));
+            pj["laneOverrides"]["Vocal"] = {{"reverb", -3}, {"delay", -3}, {"chorus", -3}};
+            pj["laneOverrides"]["Vocal wet"] = {{"reverb", -3}, {"delay", -3}, {"chorus", -3}};
+            const mix::MixConfig proCfg = mix::MixConfig::fromJson(pj);
+            nlohmann::json dryInst = clipsInst;
+            dryInst["fxSends"] = {{"reverb", -100}, {"delay", -100}, {"chorus", -100}};
+            std::vector<nlohmann::json> proInsts = {dryInst, wetInst};
+            Mixer m(44100.0, 128, 0.5, stubs);
+            m.setMixEnabled(true);
+            m.setMixConfig(proCfg);
+            SampleLibrary lib("/");
+            lib.loadInto(m, genreDir, proInsts);
+            m.build(two, proInsts);
+            for (int li = 0; li < m.laneCount(); ++li)
+                for (int bus = 0; bus < 3; ++bus) m.setLaneSendDb(li, bus, -1.0f);
+            const auto pinfo = nlohmann::json::parse(m.laneInfoJson());
+            int seen = 0;
+            for (const auto& l : pinfo.at("lanes")) {
+                const auto& sd = l.at("sendsDb");
+                if (l.at("track") == "Vocal") {
+                    ++seen;
+                    check(sd.at("reverb") == -100 && sd.at("delay") == -100 && sd.at("chorus") == -100,
+                          "the dry take lane keeps -100 sends under Pro overrides: " + sd.dump());
+                }
+                if (l.at("track") == "Vocal wet") {
+                    ++seen;
+                    check(sd.at("reverb") == -10 && sd.at("delay") == -18 && sd.at("chorus") == -100,
+                          "the wet take lane keeps its sends under Pro overrides: " + sd.dump());
+                }
+            }
+            check(seen == 2, "both take lanes seen under Pro overrides");
+        }
         // a partial fxSends object throws, naming the lane and the key
         nlohmann::json partial = wetInst;
         partial["fxSends"] = {{"reverb", -10}, {"delay", -18}};

@@ -174,7 +174,7 @@ public:
                 // Its sends keep their resolved levels.
                 if (!o->fxGroup.empty()) l.fxGroup = o->fxGroup;
                 for (int k = 0; k < 3; ++k) {
-                    if (!o->hasSend[k]) continue;
+                    if (!o->hasSend[k] || l.ownSends) continue;  // a take lane's sends are fixed (Pro mode never touches them)
                     l.sendDb[k] = o->sendDb[k];
                     l.sendGain[k] = o->sendDb[k] <= -100.0 ? 0.0f : mix::dbToGain(o->sendDb[k]);
                 }
@@ -369,7 +369,7 @@ public:
         if (!std::isfinite(db) || db > 12.0f) throw std::out_of_range("Mixer::setLaneSendDb: send must be finite and <= +12 dB");
         group(lane);  // range check
         for (auto& l : lanes_) {
-            if (l.group != lane) continue;
+            if (l.group != lane || l.ownSends) continue;  // spec: sung take sends are not adjustable in Pro mode
             l.sendDb[bus] = db;
             l.sendGain[bus] = db <= -100.0f ? 0.0f : mix::dbToGain(db);
         }
@@ -812,6 +812,7 @@ private:
         std::vector<std::unique_ptr<Source>> sources;
         std::string name;       // IR track name (for matching automation by baseName)
         std::string fxGroup;
+        bool ownSends = false;  // the instrument's fxSends set this lane's sends: Pro-mode overrides leave them alone
         float sendGain[3] = {0.0f, 0.0f, 0.0f};  // linear; 0 = no send (Scope B step 2)
         // As resolved, for reporting (laneInfoJson): the lane's lowLevelType, its
         // target volume and its send levels in dB (empty / NaN when not resolved).
@@ -935,9 +936,12 @@ private:
             lane.lowLevelType = laneLowLevelType(track.name);
             const std::optional<mix::FxSends> own = laneSendOverride(track.name);
             const mix::FxSends sd = own ? *own : cfgLaneSends(lane.fxGroup, lane.lowLevelType);
-            lane.sendGain[0] = mix::dbToGain(sd.reverb);
-            lane.sendGain[1] = mix::dbToGain(sd.delay);
-            lane.sendGain[2] = mix::dbToGain(sd.chorus);
+            lane.ownSends = own.has_value();
+            // -100 or lower is an exact "off" (gain 0), as in the Pro-mode paths
+            auto sendGain = [](float db) { return db <= -100.0f ? 0.0f : mix::dbToGain(db); };
+            lane.sendGain[0] = sendGain(sd.reverb);
+            lane.sendGain[1] = sendGain(sd.delay);
+            lane.sendGain[2] = sendGain(sd.chorus);
             lane.sendDb[0] = sd.reverb;
             lane.sendDb[1] = sd.delay;
             lane.sendDb[2] = sd.chorus;
