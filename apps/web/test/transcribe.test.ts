@@ -77,3 +77,12 @@ describe('a finished transcription merged into unsaved edits', () => {
     expect(mergeOp('aceLayer', { track: 'ACE Guitar' }, saved)).toEqual({ kind: 'applyAceLayer', result: { track: 'ACE Guitar' } });
   });
 });
+
+
+describe('Sing while new lyrics wait to go in', () => {
+  it('is greyed out: it would sing the old words and fail when the new ones go in', () => {
+    const m = vocalMenu({ ...base, lyricsWritten: true, lyricsTask: task({ kind: 'writeLyrics', state: 'ready' }) });
+    expect(m.sing.disabled).toBe(true);
+    expect(m.sing.hint).toMatch(/new lyrics go in when playback stops/u);
+  });
+});

@@ -100,7 +100,10 @@ export function vocalMenu(i: VocalMenuInput): VocalMenu {
       ? { label, disabled: true, hint: ALREADY_TRANSCRIBING }
       : i.lyricsTask?.state === 'running'
         ? { label, disabled: true, hint: ALREADY_WRITING_LYRICS }
-        : !i.melodyShown
+        : i.lyricsTask?.state === 'ready'
+          ? // Singing now would sing the old words, and the sing fails when the new ones go in.
+            { label, disabled: true, hint: 'new lyrics go in when playback stops' }
+          : !i.melodyShown
           ? { label, disabled: true, hint: 'write a melody first' }
           : !i.lyricsWritten
             ? { label, disabled: true, hint: 'Write lyrics first' }

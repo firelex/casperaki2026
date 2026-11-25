@@ -27,7 +27,7 @@ import { drumBarNotes, patternSong, trackSong } from './sequencer/preview';
 import { TrackOverview } from './sequencer/TrackOverview';
 import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
-import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
+import { TASK_LABELS, tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { useTasks } from '../state/tasks';
 import { bytesToBase64, lyricsWritten, staleTakes, startOnSaved, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
 import { hasNotes } from './audioOnlyTracks';
@@ -533,6 +533,12 @@ export function TimelineView() {
   const queryClient = useQueryClient();
   const { data: tasks } = useTasks();
   const [taskError, setTaskError] = useState<string | undefined>(undefined);
+  // A task on this song that failed in the last ten minutes is said here (the Tasks menu lists only tasks under way).
+  const [dismissedFailures, setDismissedFailures] = useState<ReadonlySet<string>>(new Set());
+  const failedTask = tasks?.find(
+    (t) => t.songId === activeSong?.id && t.state === 'failed' && t.finishedAt !== undefined && Date.now() - Date.parse(t.finishedAt) < 10 * 60_000 && !dismissedFailures.has(t.id),
+  );
+  const failedNotice = failedTask ? `${TASK_LABELS[failedTask.kind]} failed: ${failedTask.message ?? 'no reason given'}` : undefined;
   const melodyShown = viewSong ? !vocalMelodyHidden(viewSong) : false;
   const lyricsTask = tasks?.find((t) => t.kind === 'writeLyrics' && t.songId === activeSong?.id && (t.state === 'running' || t.state === 'ready'));
   const writeMelody = () => void edits.run({ kind: 'writeMelody' }, 'Writing the melody', activeSong?.id);
@@ -634,10 +640,18 @@ export function TimelineView() {
           </span>
         ) : editor?.lastError ? (
           <span className="text-err" role="alert">{editor.lastError}</span>
-        ) : taskError || stale.error ? (
+        ) : taskError || failedNotice || stale.error ? (
           <span className="flex items-center gap-2 text-err" role="alert">
-            {taskError ?? `Could not check the sung takes: ${stale.error instanceof Error ? stale.error.message : String(stale.error)}`}
-            <button type="button" onClick={() => setTaskError(undefined)} className="text-white/60 hover:text-white" aria-label="Dismiss">
+            {taskError ?? failedNotice ?? `Could not check the sung takes: ${stale.error instanceof Error ? stale.error.message : String(stale.error)}`}
+            <button
+              type="button"
+              onClick={() => {
+                if (taskError) setTaskError(undefined);
+                else if (failedTask) setDismissedFailures(new Set([...dismissedFailures, failedTask.id]));
+              }}
+              className="text-white/60 hover:text-white"
+              aria-label="Dismiss"
+            >
               ✕
             </button>
           </span>
