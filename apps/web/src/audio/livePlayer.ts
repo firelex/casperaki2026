@@ -11,6 +11,7 @@
  */
 
 import type { PlaybackPayload, PlaybackSample } from '../api/playback';
+import { laneGains } from './vocalLanes';
 
 export type LiveStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 'error';
 
@@ -579,12 +580,8 @@ export class LivePlayer {
   private postLaneGains(): void {
     if (!this.node) return;
     const { laneNames, muted, solo } = this.state;
-    const gains: Record<string, number> = {};
-    for (const lane of laneNames) {
-      const audible = solo.length > 0 ? solo.includes(lane) : !muted.includes(lane);
-      gains[lane] = audible ? 1 : 0;
-    }
-    this.node.port.postMessage({ type: 'laneGains', gains });
+    // A vocal track's wet lane follows its track (one track in the editor, two engine lanes).
+    this.node.port.postMessage({ type: 'laneGains', gains: laneGains(laneNames, muted, solo) });
   }
 
   /**

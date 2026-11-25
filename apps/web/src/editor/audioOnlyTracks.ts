@@ -14,3 +14,9 @@ export function audioOnlyTracks(song: Pick<Song, 'aiArtifacts' | 'instrumentDefi
   }
   return names;
 }
+
+/** Whether a track has notes to open (piano roll, whole-track view) and a sound and pattern to change: not an
+ *  audio-only track. */
+export function hasNotes(track: { readonly audioOnly?: boolean }): boolean {
+  return track.audioOnly !== true;
+}

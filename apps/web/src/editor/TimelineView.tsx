@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type { Song } from '@casperaki/song-schema';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -27,7 +28,9 @@ import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
 import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { useTasks } from '../state/tasks';
-import { bytesToBase64, lyricsWritten, staleTakes, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
+import { bytesToBase64, lyricsWritten, staleTakes, startOnSaved, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
+import { hasNotes } from './audioOnlyTracks';
+import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
@@ -539,14 +542,22 @@ export function TimelineView() {
     singTask,
     lyricsTask,
     transcribeTask,
+    sungSections: viewSong ? transcribeSections(viewSong).length : 0,
   });
   /** Transcribe melody's dialog, open on the clicked section (if any). */
   const [transcribing, setTranscribing] = useState<{ section: string | undefined } | undefined>(undefined);
+  const saveSong = useSaveSong();
+  /** Sing and Transcribe melody start on the saved song: unsaved edits are saved first (editor/singing.ts). */
+  const onSaved = <T,>(start: (songId: string, song: Song) => Promise<T>): Promise<T> => {
+    if (!activeSong || !viewSong) throw new Error('No song is open.');
+    return startOnSaved({ dirty: editorDirty, songId: activeSong.id, song: viewSong, save: () => saveSong.mutateAsync(), start });
+  };
   const startTask = async (kind: 'writeLyrics' | 'sing', label: string) => {
     if (!activeSong || !viewSong) throw new Error('No song is open.');
     setTaskError(undefined);
     try {
-      await tasksApi.start(kind, activeSong.id, viewSong);
+      if (kind === 'sing') await onSaved((songId, song) => tasksApi.start(kind, songId, song));
+      else await tasksApi.start(kind, activeSong.id, viewSong);
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
       setTaskError(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -560,7 +571,7 @@ export function TimelineView() {
     setTaskError(undefined);
     try {
       const data = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
-      await tasksApi.startTranscribe(activeSong.id, viewSong, section, { name: file.name, type: file.type, data }, hasBacking);
+      await onSaved((songId, song) => tasksApi.startTranscribe(songId, song, section, { name: file.name, type: file.type, data }, hasBacking));
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
       setTaskError(`Transcribe melody failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -810,7 +821,8 @@ export function TimelineView() {
                   }
                   onDoubleClick={(e) => {
                     const s = sectionIndexAt(barFromEvent(e));
-                    if (s >= 0) openDetail(t, s);
+                    // An audio-only track (ad-libs) has no notes to open.
+                    if (s >= 0 && hasNotes(t)) openDetail(t, s);
                   }}
                   title="Drag to select a range · double-click a clip to open it · right-click for more"
                 >
@@ -1176,9 +1188,11 @@ function TrackMenu({
         ) : null}
         {section !== undefined ? (
           <>
-            <ContextMenuItem className={ITEM} onSelect={() => onOpen(section)}>
-              Open <span className="ml-auto pl-6 text-[12px] text-white/40">Double-click</span>
-            </ContextMenuItem>
+            {hasNotes(track) ? (
+              <ContextMenuItem className={ITEM} onSelect={() => onOpen(section)}>
+                Open <span className="ml-auto pl-6 text-[12px] text-white/40">Double-click</span>
+              </ContextMenuItem>
+            ) : null}
             <ContextMenuItem className={ITEM} onSelect={() => onLoop(section)}>
               Loop {sections[section]!.name}
             </ContextMenuItem>
@@ -1193,17 +1207,22 @@ function TrackMenu({
             ) : null}
           </>
         ) : null}
-        <ContextMenuItem className={ITEM} disabled={!onOverview} onSelect={() => onOverview?.()}>
-          Show whole track… <span className="ml-auto pl-6 text-[12px] text-white/40">roll / score</span>
-        </ContextMenuItem>
-        <ContextMenuSeparator className="my-1 h-px bg-line" />
-        <ContextMenuItem className={ITEM} disabled={!soundChangeable || busy} onSelect={onChangeSound}>
-          Change sound…
-        </ContextMenuItem>
-        <ContextMenuItem className={ITEM} disabled={!editable || busy} onSelect={onNewPattern}>
-          New pattern
-        </ContextMenuItem>
-        <ContextMenuSeparator className="my-1 h-px bg-line" />
+        {/* An audio-only track (ad-libs) has no notes, sound or pattern: none of these apply. */}
+        {hasNotes(track) ? (
+          <>
+            <ContextMenuItem className={ITEM} disabled={!onOverview} onSelect={() => onOverview?.()}>
+              Show whole track… <span className="ml-auto pl-6 text-[12px] text-white/40">roll / score</span>
+            </ContextMenuItem>
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+            <ContextMenuItem className={ITEM} disabled={!soundChangeable || busy} onSelect={onChangeSound}>
+              Change sound…
+            </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={!editable || busy} onSelect={onNewPattern}>
+              New pattern
+            </ContextMenuItem>
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+          </>
+        ) : null}
         <ContextMenuItem className={`${ITEM} text-err`} disabled={busy} onSelect={onRemove}>
           Remove track <span className="ml-auto pl-6 text-[12px] text-white/40">Undo: Ctrl+Z</span>
         </ContextMenuItem>

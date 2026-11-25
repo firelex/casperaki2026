@@ -11,7 +11,10 @@ import { vocalTakeFingerprint } from '@casperaki/song-schema';
 import { tasksApi, type BackgroundTask, type TaskStep } from '../src/api/tasks';
 import { audioOnlyTracks } from '../src/editor/audioOnlyTracks';
 import { buildSequencerModel } from '../src/editor/sequencerModel';
-import { lyricsWritten, staleTakes, vocalMenu, type VocalMenuInput } from '../src/editor/singing';
+import { laneGains, mixerStrips } from '../src/audio/vocalLanes';
+import { hasNotes } from '../src/editor/audioOnlyTracks';
+import { lyricsWritten, staleTakes, startOnSaved, vocalMenu, type VocalMenuInput } from '../src/editor/singing';
+import { creditedMp3, withCommentTag } from '../src/export/vocalsCredit';
 import { TaskSteps } from '../src/layout/TaskSteps';
 import { VOCALS_CREDIT, VocalsCredit } from '../src/layout/VocalsCredit';
 import { makeFixtureSong } from './fixture';
@@ -28,7 +31,7 @@ const singTask = (over: Partial<BackgroundTask> = {}): BackgroundTask => ({
   ...over,
 });
 
-const base: VocalMenuInput = { melodyShown: true, lyricsWritten: true, hasSungTakes: false, singTask: undefined, lyricsTask: undefined, transcribeTask: undefined };
+const base: VocalMenuInput = { melodyShown: true, lyricsWritten: true, hasSungTakes: false, singTask: undefined, lyricsTask: undefined, transcribeTask: undefined, sungSections: 3 };
 
 describe('the Vocal track menu', () => {
   it('Sing waits for written lyrics', () => {
@@ -43,6 +46,10 @@ describe('the Vocal track menu', () => {
     expect(m.writeLyrics).toMatchObject({ disabled: true, hint: 'Already singing' });
     const noMelody = vocalMenu({ ...base, melodyShown: false, singTask: singTask() });
     expect(noMelody.writeMelody).toMatchObject({ disabled: true, hint: 'Already singing' });
+  });
+  it('Sing waits while the lyrics are being written (running or waiting its turn)', () => {
+    expect(vocalMenu({ ...base, lyricsTask: singTask({ kind: 'writeLyrics' }) }).sing).toEqual({ label: 'Sing', disabled: true, hint: 'Already writing lyrics' });
+    expect(vocalMenu({ ...base, lyricsTask: singTask({ kind: 'writeLyrics', state: 'ready' }) }).sing).toMatchObject({ disabled: false });
   });
   it('says Sing again when the song has sung takes', () => {
     expect(vocalMenu({ ...base, hasSungTakes: true }).sing).toMatchObject({ label: 'Sing again', disabled: false });
@@ -73,6 +80,45 @@ const steps: TaskStep[] = [
   { id: 'c', label: 'Levelling', state: 'waiting' },
 ];
 
+describe('Sing and Transcribe start from the saved song', () => {
+  const song = makeFixtureSong().song;
+  const saved = { id: 'saved1', song: { ...song, bpm: 99 } as Song };
+  it('unsaved edits are saved first, and the task starts on the saved version', async () => {
+    const calls: string[] = [];
+    const out = await startOnSaved({
+      dirty: true,
+      songId: 'old1',
+      song,
+      save: async () => {
+        calls.push('save');
+        return saved;
+      },
+      start: async (id, s) => {
+        calls.push(`start ${id} ${s.bpm}`);
+        return 'task';
+      },
+    });
+    expect(out).toBe('task');
+    expect(calls).toEqual(['save', 'start saved1 99']);
+  });
+  it('without unsaved edits nothing is saved', async () => {
+    const calls: string[] = [];
+    await startOnSaved({
+      dirty: false,
+      songId: 'old1',
+      song,
+      save: async () => {
+        calls.push('save');
+        return saved;
+      },
+      start: async (id, s) => {
+        calls.push(`start ${id} ${s.bpm}`);
+      },
+    });
+    expect(calls).toEqual([`start old1 ${song.bpm}`]);
+  });
+});
+
 describe('a sing task in the Tasks list', () => {
   const html = renderToStaticMarkup(createElement(TaskSteps, { task: singTask({ steps }), now: Date.parse('2026-11-25T10:00:10.000Z'), onCancel: () => undefined }));
   it('lists the steps in order with label, state, running time and text', () => {
@@ -86,6 +132,10 @@ describe('a sing task in the Tasks list', () => {
     expect(html).toContain('data-state="done"');
     expect(html).toContain('data-state="running"');
     expect(html).toContain('data-state="waiting"');
+  });
+  it('highlights the running step', () => {
+    expect(html.match(/aria-current="step"/g)).toHaveLength(1);
+    expect(html).toMatch(/<li[^>]*aria-current="step"[^>]*data-state="running"|<li[^>]*data-state="running"[^>]*aria-current="step"/);
   });
   it('has a play button per audio file and a Cancel button while running', () => {
     expect(html).toContain('aria-label="Play chorus1_s1.wav"');
@@ -129,6 +179,56 @@ describe('audio-only tracks', () => {
     expect(row).toBeDefined();
     expect(row!.audioOnly).toBe(true);
     expect(row!.clips).toEqual([expect.objectContaining({ section: 1, notes: [] })]);
+  });
+  it('have no notes to open: no piano roll, overview, sound or pattern for them', () => {
+    const model = buildSequencerModel(withAdlibs());
+    expect(hasNotes(model.tracks.find((t) => t.name === 'Ad-libs')!)).toBe(false);
+    expect(hasNotes(model.tracks.find((t) => t.name === 'Vocal')!)).toBe(true);
+  });
+});
+
+describe('a vocal track\'s two engine lanes (dry YuE2, wet SoulX) are one track', () => {
+  it('one mixer strip per track, its own lane then its wet lane; other lanes alone', () => {
+    expect(mixerStrips(['Drums', 'Vocal', 'Backing vocals 1', 'Ad-libs'], ['Drums', 'Vocal', 'Vocal wet', 'Backing vocals 1 wet', 'Ad-libs', 'Transitions'])).toEqual([
+      { name: 'Drums', lanes: ['Drums'] },
+      { name: 'Vocal', lanes: ['Vocal', 'Vocal wet'] },
+      { name: 'Backing vocals 1', lanes: ['Backing vocals 1 wet'] },
+      { name: 'Ad-libs', lanes: ['Ad-libs'] },
+      { name: 'Transitions', lanes: ['Transitions'] },
+    ]);
+  });
+  it('muting or soloing the track silences or keeps both lanes', () => {
+    const lanes = ['Drums', 'Vocal', 'Vocal wet'];
+    expect(laneGains(lanes, ['Vocal'], [])).toEqual({ Drums: 1, Vocal: 0, 'Vocal wet': 0 });
+    expect(laneGains(lanes, [], ['Vocal'])).toEqual({ Drums: 0, Vocal: 1, 'Vocal wet': 1 });
+    expect(laneGains(lanes, [], [])).toEqual({ Drums: 1, Vocal: 1, 'Vocal wet': 1 });
+  });
+});
+
+describe('the browser export\'s MP3 credit', () => {
+  const mp3 = new Uint8Array([0xff, 0xfb, 0x90, 0x00, 1, 2, 3]);
+  it('an ID3v2.3 comment frame with the credit, before the audio', () => {
+    const tagged = withCommentTag(mp3, CREDIT);
+    expect(String.fromCharCode(...tagged.subarray(0, 3))).toBe('ID3');
+    expect([tagged[3], tagged[4], tagged[5]]).toEqual([3, 0, 0]);
+    const size = (tagged[6]! << 21) | (tagged[7]! << 14) | (tagged[8]! << 7) | tagged[9]!;
+    expect(tagged.length).toBe(10 + size + mp3.length);
+    expect(String.fromCharCode(...tagged.subarray(10, 14))).toBe('COMM');
+    const frameSize = new DataView(tagged.buffer, tagged.byteOffset + 14, 4).getUint32(0);
+    const body = tagged.subarray(20, 20 + frameSize);
+    expect(body[0]).toBe(0); // ISO-8859-1
+    expect(String.fromCharCode(...body.subarray(1, 4))).toBe('eng');
+    expect(body[4]).toBe(0); // empty description
+    expect(String.fromCharCode(...body.subarray(5))).toBe(CREDIT);
+    expect([...tagged.subarray(tagged.length - mp3.length)]).toEqual([...mp3]);
+  });
+  it('only when the song has a YuE2 take', () => {
+    expect(creditedMp3(withAdlibs(), mp3)).not.toBe(mp3);
+    expect(String.fromCharCode(...creditedMp3(withAdlibs(), mp3).subarray(0, 3))).toBe('ID3');
+    expect(creditedMp3(makeFixtureSong().song, mp3)).toBe(mp3);
+  });
+  it('refuses an MP3 that has a tag already', () => {
+    expect(() => withCommentTag(withCommentTag(mp3, CREDIT), CREDIT)).toThrow(/already/);
   });
 });
 

@@ -65,7 +65,14 @@ export function TaskSteps({ task, now, onCancel }: { task: BackgroundTask; now: 
         {steps.map((s) => {
           const sec = stepSeconds(s, now);
           return (
-            <li key={s.id} data-state={s.state} className={`flex flex-col gap-0.5 text-[12px] ${s.state === 'failed' ? 'text-err' : s.state === 'waiting' ? 'text-white/35' : 'text-white/75'}`}>
+            <li
+              key={s.id}
+              data-state={s.state}
+              {...(s.state === 'running' ? { 'aria-current': 'step' as const } : {})}
+              className={`flex flex-col gap-0.5 rounded-[4px] text-[12px] ${
+                s.state === 'failed' ? 'text-err' : s.state === 'waiting' ? 'text-white/35' : s.state === 'running' ? '-mx-1 bg-white/[0.08] px-1 font-medium text-white' : 'text-white/75'
+              }`}
+            >
               <span className="flex items-baseline gap-1.5">
                 <span aria-hidden>{MARK[s.state]}</span>
                 <span className="min-w-0 flex-1">{s.label}</span>

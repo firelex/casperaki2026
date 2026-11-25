@@ -16,7 +16,7 @@ import { makeFixtureSong } from './fixture';
 const task = (over: Partial<BackgroundTask>): BackgroundTask => ({
   id: 't1', kind: 'transcribe', songId: 'abc', title: 'Test', state: 'running', startedAt: '2026-11-25T10:00:00.000Z', ...over,
 });
-const base: VocalMenuInput = { melodyShown: true, lyricsWritten: false, hasSungTakes: false, singTask: undefined, lyricsTask: undefined, transcribeTask: undefined };
+const base: VocalMenuInput = { melodyShown: true, lyricsWritten: false, hasSungTakes: false, singTask: undefined, lyricsTask: undefined, transcribeTask: undefined, sungSections: 2 };
 
 describe('Transcribe melody on the Vocal track menu', () => {
   it('is offered once the melody is shown, with or without lyrics', () => {
@@ -32,6 +32,9 @@ describe('Transcribe melody on the Vocal track menu', () => {
   it('Sing waits while a transcription runs, with the same reason', () => {
     expect(vocalMenu({ ...base, lyricsWritten: true, transcribeTask: task({}) }).sing).toEqual({ label: 'Sing', disabled: true, hint: 'Already transcribing' });
     expect(vocalMenu({ ...base, lyricsWritten: true, transcribeTask: task({ state: 'ready' }) }).sing).toMatchObject({ disabled: false });
+  });
+  it('is off when no section has notes in the Vocal lane (nothing to transcribe into)', () => {
+    expect(vocalMenu({ ...base, sungSections: 0 }).transcribe).toEqual({ disabled: true, hint: 'no sung sections' });
   });
   it('names the task', () => {
     expect(TASK_LABELS.transcribe).toBe('Transcribe melody');
