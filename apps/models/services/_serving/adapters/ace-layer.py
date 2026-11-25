@@ -11,7 +11,8 @@ through ACE-Step's HTTP server (that is the separate `ace-step` adapter, on the 
 
 POST /generate params (all required, no others accepted):
   src_wav    absolute path of the song's WAV (must exist; 10 s to 600 s, ACE-Step's supported range)
-  track      guitar | strings | brass | woodwinds | keyboard | synth | fx | backing_vocals
+  track      guitar | strings | brass | woodwinds | keyboard | synth | fx | backing_vocals | vocals
+  lyrics     (optional, sung parts only) the words, in ACE's lyrics format; without it every part is instrumental
   caption    plain description of the part (and the song), e.g. "acoustic guitar strumming, pop, 128 bpm, C major"
   bpm        number, 30..300
   key_scale  "<note>[#|b] major|minor", e.g. "C major", "F# minor"
@@ -35,8 +36,11 @@ MODEL = "acestep-v15-base"
 
 # The instruments the brain may ask for. ACE-Step's own list (acestep.constants.TRACK_NAMES) also has bass, drums,
 # percussion and vocals: left out (the song has its own bass and drums; percussion copied our drums in the spike).
-TRACKS = ("guitar", "strings", "brass", "woodwinds", "keyboard", "synth", "fx", "backing_vocals")
+TRACKS = ("guitar", "strings", "brass", "woodwinds", "keyboard", "synth", "fx", "backing_vocals", "vocals")
+# Parts that sing: they may be given words (`lyrics`, ACE's lyrics format, e.g. "[Chorus]\n(oh yeah)\n(ooh)").
+VOCAL_TRACKS = ("backing_vocals", "vocals")
 PARAMS = ("src_wav", "track", "caption", "bpm", "key_scale", "seed")
+OPTIONAL_PARAMS = ("lyrics",)
 MIN_SECONDS = 10.0   # acestep.constants.DURATION_MIN
 MAX_SECONDS = 600.0  # acestep.constants.DURATION_MAX (also the length of the model's silence latent: 15000 frames at 25 Hz)
 
@@ -73,6 +77,7 @@ MANIFEST = {
         "src_wav": {"type": "string", "required": True, "description": "absolute path of the song's WAV"},
         "track": {"type": "string", "required": True, "enum": list(TRACKS)},
         "caption": {"type": "string", "required": True},
+        "lyrics": {"type": "string", "required": False},
         "bpm": {"type": "number", "required": True},
         "key_scale": {"type": "string", "required": True, "description": 'e.g. "C major", "A minor"'},
         "seed": {"type": "number", "required": True},
@@ -100,9 +105,9 @@ def check_params(params) -> dict:
     missing = [k for k in PARAMS if k not in params]
     if missing:
         raise ValueError(f"ace-layer: missing params {missing}; required: {list(PARAMS)}")
-    unknown = sorted(set(params) - set(PARAMS))
+    unknown = sorted(set(params) - set(PARAMS) - set(OPTIONAL_PARAMS))
     if unknown:
-        raise ValueError(f"ace-layer: unknown params {unknown}; accepted: {list(PARAMS)}")
+        raise ValueError(f"ace-layer: unknown params {unknown}; accepted: {list(PARAMS + OPTIONAL_PARAMS)}")
 
     src = params["src_wav"]
     if not isinstance(src, str) or not os.path.isabs(src):
@@ -132,9 +137,16 @@ def check_params(params) -> dict:
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise ValueError(f"ace-layer: seed must be an integer, got {seed!r}")
 
+    lyrics = params.get("lyrics")
+    if lyrics is not None:
+        if track not in VOCAL_TRACKS:
+            raise ValueError(f"ace-layer: lyrics are for sung parts ({list(VOCAL_TRACKS)}), not {track!r}")
+        if not isinstance(lyrics, str) or not lyrics.strip():
+            raise ValueError(f"ace-layer: lyrics must be a non-empty string, got {lyrics!r}")
+
     # ACE takes an integer bpm (GenerationParams.bpm: Optional[int]); the brain's tempo may be fractional.
     return {"src_wav": src, "track": track, "caption": caption.strip(), "bpm": int(round(bpm)),
-            "key_scale": key, "seed": seed}
+            "key_scale": key, "seed": seed, **({"lyrics": lyrics.strip()} if lyrics is not None else {})}
 
 
 def fit_length(audio, n: int):
@@ -219,7 +231,9 @@ def generate(handle, params, out_dir, job):
 
     # 2. ACE writes the part.
     step = job.step("lego", f"ACE writes the {name} part")
-    gp = GenerationParams(**ACE_SETTINGS, src_audio=p["src_wav"], instruction=lego_instruction(track),
+    # A sung part with words sings them (not instrumental); every other part stays "[Instrumental]".
+    settings = {**ACE_SETTINGS, "lyrics": p["lyrics"], "instrumental": False} if "lyrics" in p else ACE_SETTINGS
+    gp = GenerationParams(**settings, src_audio=p["src_wav"], instruction=lego_instruction(track),
                           caption=p["caption"], bpm=p["bpm"], keyscale=p["key_scale"], seed=p["seed"])
     config = GenerationConfig(batch_size=1, use_random_seed=False, seeds=[p["seed"]], audio_format="wav")
     t = time.time()
