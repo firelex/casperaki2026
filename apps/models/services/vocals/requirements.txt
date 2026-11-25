@@ -29,3 +29,5 @@ beartype==0.22.9
 datasets==5.0.1
 # Lead-stage pitch (the hum service front end)
 swift-f0==0.3.0
+# torchaudio 2.10 decodes through TorchCodec (SoulX-Singer's load_wav calls torchaudio.load); needs FFmpeg 4-7 libs
+torchcodec==0.10.0

@@ -23,6 +23,10 @@ The harness builds the venv from the adapter's manifest on first start. By hand:
 Version notes: `yue2_infer` pins `numpy==2.2.6` and `accelerate==1.13.0`, while MuLaCover's metadata pins
 `numpy==2.0.2` and `accelerate==1.12.0`; we install both with `--no-deps` and use the yue2 versions. SoulX-Singer's
 own requirements ask for older pins (numpy<2, transformers 4.41.2, torch 2.2); the newer ones are used here.
+SoulX's
+decoder layer was written for transformers 4.41.2; `pipeline/soulx_compat.py` patches it for 4.57.6 (checked equal on
+one layer, tests/test_soulx_compat.py). torchaudio 2.10 decodes files through TorchCodec (`torchcodec==0.10.0`, needs
+the system FFmpeg 4-7 libraries).
 
 ## Code and weights (absolute paths, all in `pipeline/paths.py`)
 

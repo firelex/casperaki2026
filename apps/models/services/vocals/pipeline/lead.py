@@ -117,7 +117,11 @@ def run(params: dict, out_dir, job):
     return {"file": str(out / "lead.json"), "kind": "json"}
 
 
-def _sing(units, bpm, octave, style, seed_list, out, device, job):
+def _step_id(phase: str, uid: str, seed: int) -> str:
+    return f"{phase}:{uid}:s{seed}"
+
+
+def _sing(units, bpm, octave, style, seed_list, out, device, job, step_id=_step_id):
     from .yue2_takes import Singer
 
     takes = {}
@@ -131,7 +135,7 @@ def _sing(units, bpm, octave, style, seed_list, out, device, job):
             (out / f"{uid}_lyrics.txt").write_text(lyrics)
             for seed in seed_list:
                 job.check_cancelled()
-                st = job.step(f"yue2:{uid}:s{seed}", f"Sing {uid} (take {seed})")
+                st = job.step(step_id("yue2", uid, seed), f"Sing {uid} (take {seed})")
                 try:
                     audio, sr = singer.sing(abc, lyrics, style, seed, job.cancelled)
                 except InterruptedError:
@@ -147,7 +151,7 @@ def _sing(units, bpm, octave, style, seed_list, out, device, job):
     return takes
 
 
-def _separate(units, seed_list, takes, out, device, job):
+def _separate(units, seed_list, takes, out, device, job, step_id=_step_id):
     from .separate import SR, Separator
 
     job.check_cancelled()
@@ -157,7 +161,7 @@ def _separate(units, seed_list, takes, out, device, job):
             for seed in seed_list:
                 job.check_cancelled()
                 uid = u["id"]
-                st = job.step(f"separate:{uid}:s{seed}", f"Separate the voice of {uid} (take {seed})")
+                st = job.step(step_id("separate", uid, seed), f"Separate the voice of {uid} (take {seed})")
                 t = takes[(uid, seed)]
                 vocals, backing = sep.separate(t.pop("audio"), t["sr"])
                 t.update(vocals=vocals, backing=backing, sr=SR)
@@ -169,7 +173,7 @@ def _separate(units, seed_list, takes, out, device, job):
         sep.close()
 
 
-def _chords(units, bpm, seed_list, takes, out, device, job):
+def _chords(units, bpm, seed_list, takes, out, device, job, step_id=_step_id):
     from .chords import ChordReader
 
     job.check_cancelled()
@@ -181,7 +185,7 @@ def _chords(units, bpm, seed_list, takes, out, device, job):
             expected = list(u["lead_in_chords"]) + list(u["chords"]) + list(u["tail_chords"])
             for seed in seed_list:
                 job.check_cancelled()
-                st = job.step(f"chords:{uid}:s{seed}", f"Check the chords of {uid} (take {seed})")
+                st = job.step(step_id("chords", uid, seed), f"Check the chords of {uid} (take {seed})")
                 t = takes[(uid, seed)]
                 segs = reader.read(t.pop("backing"), t["sr"])
                 name = f"{uid}_s{seed}_chords.json"
