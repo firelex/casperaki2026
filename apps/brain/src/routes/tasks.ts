@@ -5,8 +5,11 @@
 //   POST /api/tasks/:id/apply      -> { task, songId, result } a ready result saved into the song (its new id);
 //                                     result: what the task made (writeLyrics: section → lines)
 //   POST /api/tasks/:id/retry      -> { task }                a failed task started again
+//   POST /api/tasks/:id/cancel     -> { task }                a running task cancelled (fails with "Cancelled")
+//   GET  /api/tasks/:id/files/:name -> the file a step of the task made (step.files names)
 //
-// TaskJson: { id, kind, songId, title, state, message?, startedAt, finishedAt? }.
+// TaskJson: { id, kind, songId, title, state, message?, startedAt, finishedAt?, steps: TaskStep[] }
+// (TaskStep: src/store.ts; kinds: writeLyrics, sing).
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
@@ -20,7 +23,7 @@ import { ownerOf } from './songs.js';
 
 const KEEP_MS = 24 * 3600_000;
 
-const StartBody = z.object({ kind: z.literal('writeLyrics'), songId: z.string().min(1), song: z.unknown() }).strict();
+const StartBody = z.object({ kind: z.enum(['writeLyrics', 'sing']), songId: z.string().min(1), song: z.unknown() }).strict();
 
 export function taskJson(t: TaskRow, title: string) {
   return {
@@ -32,6 +35,7 @@ export function taskJson(t: TaskRow, title: string) {
     ...(t.message !== null ? { message: t.message } : {}),
     startedAt: t.startedAt,
     ...(t.finishedAt !== null ? { finishedAt: t.finishedAt } : {}),
+    steps: t.steps,
   };
 }
 
@@ -72,6 +76,16 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
   router.post('/api/tasks/:id/retry', (req, res) => {
     const owner = ownerOf(req);
     return answer(res, () => res.json({ task: titled(owner, tasks.retry(owner, req.params.id)) }));
+  });
+
+  router.post('/api/tasks/:id/cancel', (req, res) => {
+    const owner = ownerOf(req);
+    return answer(res, () => res.json({ task: titled(owner, tasks.cancel(owner, req.params.id)) }));
+  });
+
+  router.get('/api/tasks/:id/files/:name', (req, res) => {
+    const owner = ownerOf(req);
+    return answer(res, () => res.sendFile(tasks.stepFile(owner, req.params.id, req.params.name)));
   });
 
   return router;

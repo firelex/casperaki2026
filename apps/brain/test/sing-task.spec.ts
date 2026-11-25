@@ -1,0 +1,260 @@
+// The Sing task through the brain (docs/superpowers/specs/2026-11-25-sing-and-transcribe-design.md) against a fake
+// vocals service: both service stages run with every step recorded in order and their files fetchable; the result
+// goes in only while the sung sections are as they were sung; cancel (queued and running), a lost job, a restart that
+// finds the job lost; Write lyrics and Write melody refuse while a song is being sung.
+
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
+import { generatorParams } from '@casperaki/arrangement';
+import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
+
+import { createApp } from '../src/bootstrap.js';
+import { loadConfig } from '../src/config.js';
+import { openSongsStore, type SongsStore } from '../src/store.js';
+import type { BackgroundTasks } from '../src/tasks/tasks.js';
+import { fakeLyricModel } from './fakeLyricModel.js';
+import { startFakeVocalsService, type FakeVocalsService } from './fakeVocalsService.js';
+
+interface Harness { url: string; store: SongsStore; tasks: BackgroundTasks; stop: () => Promise<void> }
+interface StepJson { id: string; label: string; state: string; text?: string; files?: string[]; numbers?: Record<string, number> }
+interface TaskJson { id: string; kind: string; songId: string; state: string; message?: string; steps: StepJson[] }
+
+const LOST = 'the vocal service lost the job: sing again';
+const CHANGED = 'The song changed while it was being sung: sing again';
+
+let dir: string;
+let svc: FakeVocalsService;
+const brains: Harness[] = [];
+
+async function boot(store: SongsStore, pollMs = 5): Promise<Harness> {
+  const env = { VOCALS_SERVICE_URL: svc.url, BRAIN_TASK_FILES_DIR: join(dir, 'files'), BRAIN_VOCAL_TAKES_DIR: join(dir, 'takes') } as NodeJS.ProcessEnv;
+  const app = createApp(loadConfig(env), { store, lyricModel: fakeLyricModel(), singPollMs: pollMs });
+  const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
+    const s = app.listen(0, '127.0.0.1', () => resolve(s));
+  });
+  const h = {
+    url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
+    store,
+    tasks: (app.locals as { tasks: BackgroundTasks }).tasks,
+    stop: () => new Promise<void>((resolve) => server.close(() => resolve())),
+  };
+  brains.push(h);
+  return h;
+}
+
+const send = async (method: string, url: string, body?: unknown) => {
+  const res = await fetch(url, { method, headers: { 'content-type': 'application/json' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+  return { status: res.status, body: (await res.json().catch(() => undefined)) as Record<string, unknown> };
+};
+
+const tasksOf = async (h: Harness) => (await send('GET', `${h.url}/api/tasks`)).body.tasks as TaskJson[];
+const taskOf = async (h: Harness, id: string) => (await tasksOf(h)).find((t) => t.id === id)!;
+
+async function waitFor(what: string, cond: () => boolean | Promise<boolean>): Promise<void> {
+  for (let i = 0; i < 500; i++) {
+    if (await cond()) return;
+    await new Promise((r) => setTimeout(r, 10));
+  }
+  throw new Error(`timed out waiting for ${what}`);
+}
+
+// Seed 'sing-a' gives a brightPop song whose backing vocal lines lie within the singable range at its octave; the
+// tests that only need a sing under way use other seeds.
+
+/** A saved project whose song has a melody and written lyrics (Write melody, then a Write lyrics task applied). */
+async function songWithLyrics(h: Harness, seed: string): Promise<{ id: string; song: Song }> {
+  const made = await send('POST', `${h.url}/api/songs/generate`, { genre: 'brightPop', key: 'C', bpm: 110, seed });
+  const edited = await send('POST', `${h.url}/api/tracks/edit`, { song: made.body.song, op: { kind: 'writeMelody' } });
+  expect(edited.status).toBe(200);
+  const task = (await send('POST', `${h.url}/api/tasks`, { kind: 'writeLyrics', songId: made.body.id, song: edited.body.song })).body.task as TaskJson;
+  await h.tasks.idle();
+  const applied = await send('POST', `${h.url}/api/tasks/${task.id}/apply`);
+  expect(applied.status).toBe(200);
+  const id = applied.body.songId as string;
+  return { id, song: (await send('GET', `${h.url}/api/songs/${id}`)).body.song as Song };
+}
+
+const startSing = (h: Harness, songId: string, song: Song) => send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId, song });
+
+/** Saves a changed song over the project: its new id. */
+async function save(h: Harness, id: string, song: Song): Promise<string> {
+  const r = await send('PUT', `${h.url}/api/songs/${id}`, { song });
+  expect(r.status).toBeLessThan(300);
+  return r.body.id as string;
+}
+
+describe('the Sing task', { timeout: 60_000 }, () => {
+  beforeEach(async () => {
+    dir = mkdtempSync(join(tmpdir(), 'sing-task-'));
+    svc = await startFakeVocalsService();
+  });
+  afterEach(async () => {
+    for (const s of ['lead', 'repeats']) svc.release(s);
+    for (const b of brains.splice(0)) await b.stop();
+    await svc.stop();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('runs both stages, lists every step in order with its state, and keeps the steps\' files', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    const started = await startSing(h, id, song);
+    expect(started.status).toBe(201);
+    const taskId = (started.body.task as TaskJson).id;
+    await h.tasks.idle();
+
+    const task = await taskOf(h, taskId);
+    expect(task).toMatchObject({ kind: 'sing', state: 'ready' });
+    const ids = task.steps.map((s) => s.id);
+    expect(ids[0]).toBe('plan');
+    expect(ids.at(-1)).toBe('store-takes');
+    const backing = ids.indexOf('backing-lines');
+    expect(ids.slice(1, backing).every((s) => /^(yue2|choose):/u.test(s))).toBe(true);
+    expect(ids.slice(backing + 1, -1)).toContain('levels');
+    expect(ids.slice(1, backing).length).toBeGreaterThan(0);
+    expect(task.steps.every((s) => s.state === 'done')).toBe(true);
+
+    // The two jobs: the lead's units, then the repeats with the lead job and the chorus take as the voice.
+    expect(svc.jobs.map((j) => j.stage)).toEqual(['lead', 'repeats']);
+    const lead = svc.jobs[0]!.params;
+    expect(lead).toMatchObject({ stage: 'lead', bpm: 110, key: song.key, seeds: 3, threshold: 0.7 });
+    const repeats = svc.jobs[1]!.params as { lead_job: string; levels: { reference: string; backing_db: number; adlib_db: number } };
+    expect(repeats.lead_job).toBe(svc.jobs[0]!.id);
+    expect(repeats.levels).toEqual({ reference: 'chorus1_section.wav', backing_db: -6, adlib_db: -4 });
+    const { copies, backings } = svc.jobs[1]!.params as { copies: { segment: string; voice: string }[]; backings: { track: string; voice: string }[] };
+    expect(copies.length).toBeGreaterThan(0);
+    expect(copies.every((c) => c.voice.endsWith('_section.wav'))).toBe(true);
+    expect(backings.length).toBeGreaterThan(0);
+    expect(backings.every((b) => /^Backing vocals [12]$/u.test(b.track) && b.voice === 'chorus1_section.wav')).toBe(true);
+
+    // A step's file, copied when the step finished.
+    const choose = task.steps.find((s) => s.id === 'choose:chorus1')!;
+    expect(choose.files).toEqual(['chorus1_section.wav']);
+    const file = await fetch(`${h.url}/api/tasks/${taskId}/files/chorus1_section.wav`);
+    expect(file.status).toBe(200);
+    expect(Buffer.from(await file.arrayBuffer()).toString('ascii', 0, 4)).toBe('RIFF');
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/nothing.wav`)).status).toBe(404);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/..%2Fsecret`)).status).toBe(400);
+  });
+
+  it('fails on apply when a sung section changed (a chord in chorus1)', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    const taskId = ((await startSing(h, id, song)).body.task as TaskJson).id;
+    await h.tasks.idle();
+    const changed = structuredClone(song);
+    const chorus = changed.songStructure.find((s) => s.name === 'chorus1')!;
+    chorus.bars[0]!.chords = chorus.bars[0]!.chords.map(() => 'F#');
+    await save(h, id, changed);
+    const applied = await send('POST', `${h.url}/api/tasks/${taskId}/apply`);
+    expect(applied.status).toBe(409);
+    expect(applied.body.message).toBe(CHANGED);
+    expect(await taskOf(h, taskId)).toMatchObject({ state: 'failed', message: CHANGED });
+  });
+
+  it('applies after a drum edit: fresh takes on the vocal tracks and the sung melody recorded', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    const taskId = ((await startSing(h, id, song)).body.task as TaskJson).id;
+    await h.tasks.idle();
+    const edited = await send('POST', `${h.url}/api/tracks/edit`, { song, op: { kind: 'newPattern', track: 'Drums' } });
+    expect(edited.status).toBe(200);
+    expect(JSON.stringify(edited.body.song)).not.toBe(JSON.stringify(song));
+    await save(h, id, edited.body.song as Song);
+
+    const applied = await send('POST', `${h.url}/api/tasks/${taskId}/apply`);
+    expect(applied.status).toBe(200);
+    const saved = (await send('GET', `${h.url}/api/songs/${applied.body.songId as string}`)).body.song as Song;
+    const takes = saved.aiArtifacts.filter((a) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind));
+    expect(takes.length).toBeGreaterThan(0);
+    for (const t of takes) {
+      expect(isTakeFresh(saved, t)).toBe(true);
+      const file = t.output.uri.replace(/^vocal-take:/u, '');
+      expect(existsSync(join(dir, 'takes', file))).toBe(true);
+    }
+    expect(takes.some((t) => t.kind === 'yue2-vocal' && t.attachedTo.scope === 'segment' && t.attachedTo.segment === 'chorus1')).toBe(true);
+    expect(generatorParams(saved).params?.['sungMelody']).toBeDefined();
+  });
+
+  it('cancels a queued and a running sing (the running one cancels its service job)', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const a = await songWithLyrics(h, 'sing-d');
+    const b = await songWithLyrics(h, 'sing-e');
+    svc.hold('lead');
+    const runningId = ((await startSing(h, a.id, a.song)).body.task as TaskJson).id;
+    const queuedId = ((await startSing(h, b.id, b.song)).body.task as TaskJson).id;
+    await waitFor('the lead job', () => svc.jobs.length === 1);
+
+    const q = await send('POST', `${h.url}/api/tasks/${queuedId}/cancel`);
+    expect(q.status).toBe(200);
+    expect(await taskOf(h, queuedId)).toMatchObject({ state: 'failed', message: 'Cancelled' });
+    const r = await send('POST', `${h.url}/api/tasks/${runningId}/cancel`);
+    expect(r.status).toBe(200);
+    await h.tasks.idle();
+    expect(await taskOf(h, runningId)).toMatchObject({ state: 'failed', message: 'Cancelled' });
+    expect(svc.cancels).toEqual([svc.jobs[0]!.id]);
+    expect(svc.jobs).toHaveLength(1);
+    expect((await send('POST', `${h.url}/api/tasks/${runningId}/cancel`)).status).toBe(409);
+  });
+
+  it('fails when the vocal service lost the job', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-f');
+    svc.hold('lead');
+    const taskId = ((await startSing(h, id, song)).body.task as TaskJson).id;
+    await waitFor('the lead job', () => svc.jobs.length === 1);
+    svc.lose();
+    await h.tasks.idle();
+    expect(await taskOf(h, taskId)).toMatchObject({ state: 'failed', message: LOST });
+  });
+
+  it('a brain restart resumes the running sing, which finds its job lost', async () => {
+    const store = openSongsStore({ path: ':memory:' });
+    const first = await boot(store, 60_000);
+    const { id, song } = await songWithLyrics(first, 'sing-g');
+    svc.hold('lead');
+    const taskId = ((await startSing(first, id, song)).body.task as TaskJson).id;
+    await waitFor('the recorded job', () => (store.listRunningTasks().find((t) => t.id === taskId)?.jobs ?? null) !== null);
+    const job = svc.jobs[0]!.id;
+    svc.lose();
+    // A second brain on the same database (the first one "crashed" with the task running).
+    const second = await boot(store);
+    const pollsBefore = svc.polls.length;
+    second.tasks.resumeAll();
+    await second.tasks.idle();
+    expect(await taskOf(second, taskId)).toMatchObject({ state: 'failed', message: LOST });
+    expect(svc.polls.slice(pollsBefore)).toContain(job);
+  });
+
+  it('Write lyrics and Write melody refuse while the song is being sung', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-h');
+    svc.hold('lead');
+    await startSing(h, id, song);
+    await waitFor('the lead job', () => svc.jobs.length === 1);
+    const lyrics = await send('POST', `${h.url}/api/tasks`, { kind: 'writeLyrics', songId: id, song });
+    expect(lyrics.status).toBe(409);
+    expect(lyrics.body.message).toBe('Already singing');
+    const melody = await send('POST', `${h.url}/api/tracks/edit`, { song, songId: id, op: { kind: 'newMelody', section: 'verse1' } });
+    expect(melody.status).toBe(409);
+    expect(melody.body.message).toBe('Already singing');
+    const again = await startSing(h, id, song);
+    expect(again.status).toBe(409);
+    expect(again.body.message).toBe('Already singing');
+    svc.release('lead');
+    await h.tasks.idle();
+  });
+
+  it('refuses to sing without written lyrics', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const made = await send('POST', `${h.url}/api/songs/generate`, { genre: 'brightPop', key: 'C', bpm: 110, seed: 'sing-i' });
+    const edited = await send('POST', `${h.url}/api/tracks/edit`, { song: made.body.song, op: { kind: 'writeMelody' } });
+    const r = await startSing(h, made.body.id as string, edited.body.song as Song);
+    expect(r.status).toBe(422);
+    expect(r.body.message).toBe('Write lyrics first');
+  });
+});

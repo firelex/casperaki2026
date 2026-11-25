@@ -69,6 +69,10 @@ const ConfigSchema = z.object({
   amtServiceUrl: z.string().url().optional(),
   /** The directory audio clips on vocal tracks (sung takes) are read from by the lowering. */
   vocalTakesDir: z.string().min(1).optional(),
+  /** Sing: the vocals service (svc-vocals on the serving harness) as a base URL, and the directory the brain keeps
+   *  each task's step files in (<dir>/<task id>/). Unset → Sing answers 503 naming the setting. */
+  vocalsServiceUrl: z.string().url().optional(),
+  taskFilesDir: z.string().min(1).optional(),
   /** Song artwork: the image service (svc-artwork, small-sd on the serving harness) and the directory the pictures
    *  are kept in. Both or neither (without them songs get no artwork). */
   artworkServiceUrl: z.string().url().optional(),
@@ -141,6 +145,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     humServiceUrl: env.HUM_SERVICE_URL || undefined,
     amtServiceUrl: env.AMT_SERVICE_URL || undefined,
     vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
+    vocalsServiceUrl: env.VOCALS_SERVICE_URL || undefined,
+    taskFilesDir: env.BRAIN_TASK_FILES_DIR || undefined,
     artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,
     artworkDir: env.BRAIN_ARTWORK_DIR || undefined,
     videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,

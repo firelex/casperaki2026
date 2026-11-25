@@ -48,6 +48,8 @@ import {
 import { applyWrittenLyrics, newMelody, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
+import { ownerOf } from './songs.js';
+
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
 const VocalEditSchema = z.union([
@@ -55,7 +57,8 @@ const VocalEditSchema = z.union([
   z.object({ kind: z.literal('writeMelody') }).strict(),
   z.object({ kind: z.literal('applyLyrics'), lyrics: WrittenLyricsSchema }).strict(),
 ]);
-const EditBody = z.object({ song: z.unknown(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
+/** songId: the saved project the working song belongs to (a new melody waits while the project is being sung). */
+const EditBody = z.object({ song: z.unknown(), songId: z.string().min(1).optional(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
 
 const VocalPianoBody = z.object({ song: z.unknown(), track: z.string().min(1) }).strict();
 
@@ -75,7 +78,12 @@ const AddSectionBody = z
   .object({ song: z.unknown(), type: z.string().min(1), index: z.number().int().min(0), bars: z.number().int().min(1).max(64).optional() })
   .strict();
 
-export function createTracksRouter(): Router {
+export interface TracksRouterDeps {
+  /** Whether the owner's saved song is being sung (Write melody waits for it). */
+  readonly isSinging: (ownerId: string, songId: string) => boolean;
+}
+
+export function createTracksRouter({ isSinging }: TracksRouterDeps): Router {
   const router = Router();
 
   router.post('/api/tracks/options', (req, res) => {
@@ -95,6 +103,10 @@ export function createTracksRouter(): Router {
     const song = songOf(body.data.song, res);
     if (!song) return;
     const op = body.data.op;
+    const songId = body.data.songId;
+    if ((op.kind === 'newMelody' || op.kind === 'writeMelody') && songId !== undefined && isSinging(ownerOf(req), songId)) {
+      return res.status(409).json({ error: 'already_singing', message: 'Already singing' });
+    }
     if (op.kind === 'newMelody') return run(res, () => ({ song: newMelody(song, segmentType(op.section)).song, track: 'Vocal' }));
     if (op.kind === 'writeMelody') return run(res, () => ({ song: writeMelody(song), track: 'Vocal' }));
     if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));

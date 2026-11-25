@@ -92,8 +92,28 @@ export interface MixDismissal {
 }
 
 /** A background task on a song (src/tasks/tasks.ts): its song follows the project when saves move it. */
-export type TaskKind = 'writeLyrics';
+export type TaskKind = 'writeLyrics' | 'sing';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
+
+/** One step of a task as the Tasks page lists it (the brain's own steps and a model service's, in the order they run). */
+export interface TaskStep {
+  readonly id: string;
+  readonly label: string;
+  readonly state: 'waiting' | 'running' | 'done' | 'failed';
+  readonly startedAt?: string;
+  readonly finishedAt?: string;
+  /** What the step found, or why it failed. */
+  readonly text?: string;
+  readonly numbers?: Readonly<Record<string, number>>;
+  /** Files the step made, fetchable at GET /api/tasks/:id/files/:name. */
+  readonly files?: readonly string[];
+}
+
+/** The model-service jobs a task runs (sing: the lead stage's job, then the repeats stage's). */
+export interface TaskJobs {
+  readonly lead: string;
+  readonly repeats?: string;
+}
 
 export interface TaskRow {
   readonly id: string;
@@ -110,6 +130,10 @@ export interface TaskRow {
   readonly message: string | null;
   readonly startedAt: string;
   readonly finishedAt: string | null;
+  /** Its steps, in order (empty for kinds that report none). */
+  readonly steps: readonly TaskStep[];
+  /** The model-service jobs it runs (resumed after a restart), or null. */
+  readonly jobs: TaskJobs | null;
 }
 
 export interface SongsStore {
@@ -156,6 +180,12 @@ export interface SongsStore {
   listRunningTasks(): TaskRow[];
   /** The owner's running or ready task of this kind on this song. */
   activeTask(ownerId: string, songId: string, kind: TaskKind): TaskRow | undefined;
+  /** The owner's running task of this kind on this song. */
+  runningTask(ownerId: string, songId: string, kind: TaskKind): TaskRow | undefined;
+  /** Replaces a task's steps. */
+  setTaskSteps(id: string, steps: readonly TaskStep[]): void;
+  /** Records the model-service jobs a task runs (null clears them). */
+  setTaskJobs(id: string, jobs: TaskJobs | null): void;
   /** Sets a task's state (with its result, failure message and finish time; null clears them). */
   setTaskState(id: string, update: { state: TaskState; result: unknown; message: string | null; finishedAt: string | null; startedAt?: string }): void;
   deleteTask(id: string): void;
@@ -240,6 +270,10 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
   if (!projectCols.has('artwork_state')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_state TEXT`);
   if (!projectCols.has('artwork_task')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_task TEXT`);
   if (!projectCols.has('artwork_detail')) db.exec(`ALTER TABLE projects ADD COLUMN artwork_detail TEXT`);
+  // Task steps and model-service jobs (added 2026-11-25, the Sing task).
+  const taskCols = new Set((db.prepare(`PRAGMA table_info(tasks)`).all() as Array<{ name: string }>).map((c) => c.name));
+  if (!taskCols.has('steps')) db.exec(`ALTER TABLE tasks ADD COLUMN steps TEXT`);
+  if (!taskCols.has('jobs')) db.exec(`ALTER TABLE tasks ADD COLUMN jobs TEXT`);
 
   const insertStmt = db.prepare(
     `INSERT OR REPLACE INTO songs
@@ -449,6 +483,20 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
         .get(ownerId, songId, kind) as TaskDbRow | undefined;
       return row ? toTaskRow(row) : undefined;
     },
+    runningTask(ownerId, songId, kind) {
+      const row = db
+        .prepare(`SELECT * FROM tasks WHERE owner_id = ? AND song_id = ? AND kind = ? AND state = 'running' ORDER BY started_at DESC LIMIT 1`)
+        .get(ownerId, songId, kind) as TaskDbRow | undefined;
+      return row ? toTaskRow(row) : undefined;
+    },
+    setTaskSteps(id, steps) {
+      const r = db.prepare(`UPDATE tasks SET steps = ? WHERE id = ?`).run(JSON.stringify(steps), id);
+      if (r.changes === 0) throw new Error(`setTaskSteps: no task ${id}`);
+    },
+    setTaskJobs(id, jobs) {
+      const r = db.prepare(`UPDATE tasks SET jobs = ? WHERE id = ?`).run(jobs === null ? null : JSON.stringify(jobs), id);
+      if (r.changes === 0) throw new Error(`setTaskJobs: no task ${id}`);
+    },
     setTaskState(id, { state, result, message, finishedAt, startedAt }) {
       const r = db
         .prepare(`UPDATE tasks SET state = ?, result = ?, message = ?, finished_at = ?, started_at = COALESCE(?, started_at) WHERE id = ?`)
@@ -475,9 +523,11 @@ interface TaskDbRow {
   message: string | null;
   started_at: string;
   finished_at: string | null;
+  steps: string | null;
+  jobs: string | null;
 }
 
-const TASK_KINDS: readonly TaskKind[] = ['writeLyrics'];
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'sing'];
 const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];
 
 function toTaskRow(row: TaskDbRow): TaskRow {
@@ -494,6 +544,8 @@ function toTaskRow(row: TaskDbRow): TaskRow {
     message: row.message,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
+    steps: row.steps === null ? [] : (JSON.parse(row.steps) as TaskStep[]),
+    jobs: row.jobs === null ? null : (JSON.parse(row.jobs) as TaskJobs),
   };
 }
 
