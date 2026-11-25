@@ -7,7 +7,7 @@
 // Pure: reads the song only. Notes are in the Vocal lane's register throughout; `octave` says how far above the lane
 // the song is sung.
 
-import { generatorParams, lyricLines, sungSections, vocalMelodyShown, writtenLyricsOf } from '@casperaki/arrangement';
+import { generatorParams, lyricLines, sungSections, vocalMelodyShown } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 
 /** A failure the user sees as the Sing task's reason. */
@@ -70,8 +70,10 @@ export interface SingPlan {
   readonly style: string;
   /** YuE2 units in song order: the first section of each type, and the extra bars of longer copies. */
   readonly units: LeadUnit[];
-  /** Later sections of a type with other words: SoulX sings the unit's sung melody (`followSung`) for `bars` bars. */
-  readonly copies: { segment: string; from: string; bars: number }[];
+  /** Later sections of a type with other words: SoulX sings the unit's sung melody (`followSung`) for the first
+   *  `sungBars` bars (min of the section's and the unit's bar counts; not the section's length — the repeats stage's
+   *  `section_bars` is that). */
+  readonly copies: { segment: string; from: string; sungBars: number }[];
   /** Later sections the same as their type's unit (words, melody, chords, bars): they play its take. */
   readonly reuses: { segment: string; from: string }[];
   /** A copy longer than its unit: YuE2 unit `unit` sings bars `fromBar`.. of `segment`. */
@@ -217,8 +219,10 @@ function signature(song: Song, name: string): string {
 export function planSinging(song: Song): SingPlan {
   const sung = vocalMelodyShown(song) ? sungSections(song) : [];
   if (sung.length === 0) throw new SingError('Write a melody first');
-  const lyrics = writtenLyricsOf(generatorParams(song).params);
-  if (sung.some((s) => !lyrics[s.name])) throw new SingError('Write lyrics first');
+  // Read raw: writtenLyricsOf's schema rejects an empty line list with its own error, and an empty list means the
+  // section has no written words ("Write lyrics first").
+  const lyrics = (generatorParams(song).params?.['lyrics'] ?? {}) as Readonly<Record<string, readonly unknown[] | undefined>>;
+  if (sung.some((s) => !lyrics[s.name]?.length)) throw new SingError('Write lyrics first');
 
   const index = new Map(song.songStructure.map((s, i) => [s.name, i] as const));
   const barsOf = (name: string) => song.songStructure[index.get(name)!]!.bars.length;
@@ -240,7 +244,7 @@ export function planSinging(song: Song): SingPlan {
     }
     const own = barsOf(s.name);
     const theirs = barsOf(from);
-    copies.push({ segment: s.name, from, bars: Math.min(own, theirs) });
+    copies.push({ segment: s.name, from, sungBars: Math.min(own, theirs) });
     if (own > theirs && vocalEvents(laneBars(song, s.name).slice(theirs)).length > 0) {
       const id = `${s.name}_ext`;
       units.push(unitOf(song, index.get(s.name)!, theirs, id));

@@ -75,9 +75,9 @@ describe('planSinging on song a31c5ba0', () => {
   it('sings the first section of each type with YuE2, copies the later verses, reuses the choruses', () => {
     expect(plan.units.map((u) => u.id)).toEqual(['verse1', 'chorus1', 'bridge1']);
     expect(plan.copies).toEqual([
-      { segment: 'verse2', from: 'verse1', bars: 8 },
-      { segment: 'verse3', from: 'verse1', bars: 8 },
-      { segment: 'verse4', from: 'verse1', bars: 8 },
+      { segment: 'verse2', from: 'verse1', sungBars: 8 },
+      { segment: 'verse3', from: 'verse1', sungBars: 8 },
+      { segment: 'verse4', from: 'verse1', sungBars: 8 },
     ]);
     expect(plan.reuses).toEqual(['chorus2', 'chorus3', 'chorus4', 'chorus5', 'chorus6'].map((segment) => ({ segment, from: 'chorus1' })));
     expect(plan.extensions).toEqual([]);
@@ -122,7 +122,7 @@ describe('planSinging on other song shapes', () => {
   it('a 12-bar verse3 against verse1\'s 8: a copy of 8 bars and a YuE2 unit for bars 9-12 (lead-in bars 7-8)', () => {
     const song = withLyrics(resize(fresh(), 'verse3', 12));
     const plan = planSinging(song);
-    expect(plan.copies.find((c) => c.segment === 'verse3')).toEqual({ segment: 'verse3', from: 'verse1', bars: 8 });
+    expect(plan.copies.find((c) => c.segment === 'verse3')).toEqual({ segment: 'verse3', from: 'verse1', sungBars: 8 });
     expect(plan.extensions).toEqual([{ segment: 'verse3', unit: 'verse3_ext', fromBar: 8 }]);
     const ext = plan.units.find((u) => u.id === 'verse3_ext')!;
     expect(ext.lead_in_chords).toEqual(chordsOf(song, 'verse3', 6, 8));
@@ -135,7 +135,7 @@ describe('planSinging on other song shapes', () => {
 
   it('a 4-bar verse3: the copy is cut to 4 bars', () => {
     const plan = planSinging(withLyrics(resize(fresh(), 'verse3', 4)));
-    expect(plan.copies.find((c) => c.segment === 'verse3')).toEqual({ segment: 'verse3', from: 'verse1', bars: 4 });
+    expect(plan.copies.find((c) => c.segment === 'verse3')).toEqual({ segment: 'verse3', from: 'verse1', sungBars: 4 });
     expect(plan.extensions).toEqual([]);
   });
 
@@ -170,6 +170,8 @@ describe('planSinging on other song shapes', () => {
     const song = withLyrics(fresh());
     const params = (song.generator as unknown as { params: { params: { lyrics: Record<string, string[]> } } }).params.params;
     delete params.lyrics['verse3'];
+    expect(() => planSinging(song)).toThrow(new SingError('Write lyrics first'));
+    params.lyrics['verse3'] = [];
     expect(() => planSinging(song)).toThrow(new SingError('Write lyrics first'));
   });
 

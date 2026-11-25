@@ -8,6 +8,7 @@ from __future__ import annotations
 import numpy as np
 
 FADE_S = 0.15
+PEAK_CAP_DB = -1.0  # the level match never lifts a take's peak above this
 SINGING = 1e-3  # a sample louder than this (any channel) counts as singing
 
 
@@ -32,6 +33,19 @@ def match(take: np.ndarray, reference: np.ndarray, offset_db: float, name: str =
     if not np.isfinite(b):
         raise ValueError(f"{name}: the level reference is silent")
     return np.asarray(take) * (b / a * 10 ** (offset_db / 20))
+
+
+def match_capped(take: np.ndarray, reference: np.ndarray, offset_db: float, name: str = "take"):
+    """As `match`, but the gain is capped at the gain that puts the take's peak at PEAK_CAP_DB. Returns (take,
+    {"gain_db": the gain applied, "peak_db": the peak after it, "gain_capped": 1 if the cap applied else 0})."""
+    want = match(take, reference, offset_db, name=name)
+    peak = float(np.max(np.abs(take)))
+    want_gain = gain_db(take, reference, offset_db)
+    cap = PEAK_CAP_DB - 20 * np.log10(peak)
+    if want_gain > cap:
+        out = np.asarray(take) * 10 ** (cap / 20)
+        return out, {"gain_db": float(cap), "peak_db": float(20 * np.log10(np.max(np.abs(out)))), "gain_capped": 1}
+    return want, {"gain_db": float(want_gain), "peak_db": float(20 * np.log10(np.max(np.abs(want)))), "gain_capped": 0}
 
 
 def gain_db(take: np.ndarray, reference: np.ndarray, offset_db: float) -> float:

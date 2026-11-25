@@ -24,10 +24,10 @@ def jobs(tmp_path):
 
 def params(**over):
     p = {"lead_job": "leadjob", "bpm": 128, "octave": 12, "style": "EDM, female lead vocal",
-         "copies": [{"segment": "verse2", "from": "verse1", "bars": 8, "notes": [sung(0)], "voice": "verse1_section.wav"}],
-         "backings": [{"track": "Backing vocals 1", "segment": "chorus1", "bars": 8, "notes": [sung(1)],
+         "copies": [{"segment": "verse2", "from": "verse1", "section_bars": 8, "notes": [sung(0)], "voice": "verse1_section.wav"}],
+         "backings": [{"track": "Backing vocals 1", "segment": "chorus1", "section_bars": 8, "notes": [sung(1)],
                        "voice": "chorus1_section.wav"}],
-         "extensions": [{"segment": "verse3", "unit": "verse3_ext", "from_bar": 8, "bars": 12}],
+         "extensions": [{"segment": "verse3", "unit": "verse3_ext", "from_bar": 8, "section_bars": 12}],
          "adlibs": None,
          "levels": {"reference": "chorus1_section.wav", "backing_db": -6, "adlib_db": -4}}
     p.update(over)
@@ -87,7 +87,14 @@ def test_adlibs_need_their_keys(jobs):
 def test_the_extension_take_starts_at_the_section_start():
     sr, bar_s = 100, 2.0
     section = np.ones((int(4 * bar_s * sr), 2))
-    take = repeats.extension_take(section, sr, from_bar=8, bars=12, bar_s=bar_s)
+    take = repeats.extension_take(section, sr, from_bar=8, section_bars=12, bar_s=bar_s)
     assert len(take) == int(12 * bar_s * sr)
     assert np.all(take[: int(8 * bar_s * sr)] == 0)
     assert np.all(take[int(8 * bar_s * sr):] == 1)
+
+
+def test_items_name_the_sections_bar_count_section_bars(jobs):
+    bad = params()
+    bad["copies"][0]["bars"] = bad["copies"][0].pop("section_bars")
+    with pytest.raises(ValueError, match="copy verse2: missing 'section_bars'"):
+        repeats.check_params(bad, jobs)

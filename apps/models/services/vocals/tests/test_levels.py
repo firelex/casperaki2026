@@ -57,3 +57,22 @@ def test_fit_pads_a_short_take_with_silence():
     y = levels.fit(np.ones((SR, 2)), SR, 2.0)
     assert len(y) == int(2.15 * SR)
     assert np.all(y[int(1.1 * SR):] == 0)
+
+
+def test_a_normal_take_is_not_capped():
+    ref, take = sung(0.5), sung(0.1)
+    y, info = levels.match_capped(take, ref, -6)
+    assert info["gain_capped"] == 0
+    assert db(y, ref) == pytest.approx(-6, abs=1e-6)
+    assert info["peak_db"] == pytest.approx(20 * np.log10(np.abs(y).max()), abs=1e-6)
+
+
+def test_a_quiet_take_with_a_loud_transient_is_capped_at_minus_1_dbfs():
+    ref = sung(0.5)
+    take = sung(0.05)
+    take[SR, :] = 0.9  # a click far above the singing
+    y, info = levels.match_capped(take, ref, 0)
+    assert info["gain_capped"] == 1
+    assert np.abs(y).max() == pytest.approx(10 ** (-1 / 20), rel=1e-9)
+    assert info["peak_db"] == pytest.approx(-1, abs=1e-9)
+    assert info["gain_db"] == pytest.approx(20 * np.log10(10 ** (-1 / 20) / 0.9), abs=1e-9)

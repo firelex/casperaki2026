@@ -31,6 +31,16 @@ def test_neighbouring_gap_bars_are_kept_as_one_stretch():
     assert np.all(out[int(3 * BAR_S * SR):int(5 * BAR_S * SR) - int(adlibs.FADE_S * SR)] == 1)
 
 
+def test_a_gap_at_bar_0_fades_in_over_10_ms_inside_the_bar():
+    take = np.ones((int(8 * BAR_S * SR), 2))
+    out = adlibs.gate(take, SR, [0], BAR_S)
+    k = int(adlibs.START_FADE_S * SR)
+    assert adlibs.START_FADE_S == 0.01
+    assert out[0, 0] == 0
+    assert 0 < out[k // 2, 0] < 1
+    assert np.all(out[k:int(BAR_S * SR) - int(adlibs.FADE_S * SR)] == 1)
+
+
 def test_a_bar_outside_the_take_is_an_error():
     with pytest.raises(ValueError, match="bar 9"):
         adlibs.gate(np.ones((int(8 * BAR_S * SR), 2)), SR, [8], BAR_S)

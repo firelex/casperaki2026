@@ -79,10 +79,10 @@ def main(lead_dir="outputs/smoke_lead_t7e", out_dir=None, seeds="2"):
     units = {u["id"]: u for u in lead_params["units"]}
     bars = {s["name"]: len(s["bars"]) for s in song["songStructure"]}
 
-    copies = [{"segment": v, "from": "verse1", "bars": bars[v],
+    copies = [{"segment": v, "from": "verse1", "section_bars": bars[v],
                "notes": follow(lane(song, v, "Vocal"), units["verse1"]["notes"], lead["verse1"]["melody"], v),
                "voice": lead["verse1"]["take"]} for v in ("verse2", "verse3", "verse4")]
-    backings = [{"track": t, "segment": "chorus1", "bars": bars["chorus1"], "notes": lane(song, "chorus1", t),
+    backings = [{"track": t, "segment": "chorus1", "section_bars": bars["chorus1"], "notes": lane(song, "chorus1", t),
                  "voice": lead["chorus1"]["take"]} for t in ("Backing vocals 1", "Backing vocals 2")]
     chorus = units["chorus1"]
     melody = lead["chorus1"]["melody"]

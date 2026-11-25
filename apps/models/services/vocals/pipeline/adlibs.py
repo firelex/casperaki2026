@@ -16,6 +16,7 @@ import numpy as np
 from .score import ROOTS
 
 FADE_S = 0.15
+START_FADE_S = 0.01  # a gap at bar 0 has no audio before it: a short fade-in inside the bar instead
 BEATS_PER_BAR = 4
 EPS = 1e-6
 WORDS = ("oh", "yeah")
@@ -76,8 +77,8 @@ def unit(p: dict) -> dict:
 
 def gate(take: np.ndarray, sr: int, bars, bar_s: float) -> np.ndarray:
     """Only the given bars (0-based) of the take, neighbouring bars kept as one stretch; each stretch fades in over
-    the FADE_S before its first bar line (so a sung attack on the bar line stays whole) and fades out over the last
-    FADE_S of its last bar."""
+    the FADE_S before its first bar line (so a sung attack on the bar line stays whole; a stretch starting at bar 0
+    fades in over START_FADE_S inside the bar) and fades out over the last FADE_S of its last bar."""
     take = np.asarray(take)
     out = np.zeros_like(take, dtype=np.float64 if take.dtype.kind != "f" else take.dtype)
     n_bars = len(take) / (bar_s * sr)
@@ -92,9 +93,12 @@ def gate(take: np.ndarray, sr: int, bars, bar_s: float) -> np.ndarray:
     f = int(FADE_S * sr)
     for a, z in runs:
         i0, i1 = int(round(a * bar_s * sr)), min(len(take), int(round(z * bar_s * sr)))
-        s0 = max(0, i0 - f)
+        if i0 == 0:  # nothing before the first bar line to fade in over
+            s0, fin = 0, int(START_FADE_S * sr)
+        else:
+            s0 = max(0, i0 - f)
+            fin = i0 - s0
         seg = take[s0:i1].astype(out.dtype, copy=True)
-        fin = i0 - s0
         if fin:
             seg[:fin] *= np.linspace(0, 1, fin, endpoint=False)[:, None] if seg.ndim == 2 else np.linspace(0, 1, fin, endpoint=False)
         ramp = np.linspace(1, 0, f)

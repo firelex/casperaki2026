@@ -14,9 +14,10 @@
 params = {"lead_job": the lead stage's job id (the harness keeps each job's files in <jobs dir>/<job id>, so the lead
 job's folder is the sibling of this job's out_dir; voice and reference files are names in it), "bpm", "octave" (-12/0/12:
 SoulX sings lane + octave), "style" (YuE2's style text, as the lead stage's),
-"copies": [{"segment", "from" (unit id), "bars" (the section's bars: the take's length), "notes": [SungNote], "voice": "<unit>_section.wav"}],
-"backings": [{"track", "segment", "bars", "notes": [SungNote], "voice": "<chorus unit>_section.wav"}],
-"extensions": [{"segment", "unit" (lead unit id), "from_bar" (0-based), "bars" (the section's bars)}],
+"copies": [{"segment", "from" (unit id), "section_bars" (the section's whole bar count: the take's length; the
+  notes cover only the bars sung, the plan's sungBars), "notes": [SungNote], "voice": "<unit>_section.wav"}],
+"backings": [{"track", "segment", "section_bars", "notes": [SungNote], "voice": "<chorus unit>_section.wav"}],
+"extensions": [{"segment", "unit" (lead unit id), "from_bar" (0-based), "section_bars"}],
 "adlibs": null (no ad-libs) or {"chorus_unit", "lead_in_chords", "chords", "tail_chords" (as the chorus unit's),
   "melody": [SungNote] (the chorus's sung melody), "gaps_bars": [0-based bar], "segments": [chorus name], "seeds", "threshold"},
 "levels": {"reference": "<chorus unit>_section.wav", "backing_db", "adlib_db"}}.
@@ -49,9 +50,9 @@ OUT_SR = 44100
 LEAD_TRACK = "Vocal"
 ADLIB_TRACK = "Ad-libs"
 REQUIRED = ("lead_job", "bpm", "octave", "style", "copies", "backings", "extensions", "adlibs", "levels")
-COPY_KEYS = ("segment", "from", "bars", "notes", "voice")
-BACKING_KEYS = ("track", "segment", "bars", "notes", "voice")
-EXTENSION_KEYS = ("segment", "unit", "from_bar", "bars")
+COPY_KEYS = ("segment", "from", "section_bars", "notes", "voice")
+BACKING_KEYS = ("track", "segment", "section_bars", "notes", "voice")
+EXTENSION_KEYS = ("segment", "unit", "from_bar", "section_bars")
 ADLIB_KEYS = ("chorus_unit", "lead_in_chords", "chords", "tail_chords", "melody", "gaps_bars", "segments", "seeds",
               "threshold")
 LEVEL_KEYS = ("reference", "backing_db", "adlib_db")
@@ -109,7 +110,7 @@ def check_params(params: dict, out_dir) -> dict:
             _required(c, k, f"{what}: missing")
         _check_notes(c["notes"], what)
         seg = c["segment"]
-        sung.append({"kind": "copy", "what": what, "segment": seg, "track": LEAD_TRACK, "bars": int(c["bars"]),
+        sung.append({"kind": "copy", "what": what, "segment": seg, "track": LEAD_TRACK, "bars": int(c["section_bars"]),
                      "notes": c["notes"], "voice_path": _lead_file(lead_dir, c["voice"], what), "tag": seg,
                      "sing_step": f"soulx:{seg}", "svc_step": f"svc:{seg}", "chain_step": f"chain:{seg}",
                      "offset_key": None, "take": f"take_{seg}_{_slug(LEAD_TRACK)}.wav"})
@@ -120,21 +121,21 @@ def check_params(params: dict, out_dir) -> dict:
         _check_notes(b["notes"], what)
         seg, track = b["segment"], b["track"]
         tag = f"{seg}_{_slug(track)}"
-        sung.append({"kind": "backing", "what": what, "segment": seg, "track": track, "bars": int(b["bars"]),
+        sung.append({"kind": "backing", "what": what, "segment": seg, "track": track, "bars": int(b["section_bars"]),
                      "notes": b["notes"], "voice_path": _lead_file(lead_dir, b["voice"], what), "tag": tag,
                      "sing_step": f"backing:{track}:{seg}", "svc_step": f"svc:{track}:{seg}",
                      "chain_step": f"chain:{track}:{seg}", "offset_key": "backing_db", "take": f"take_{tag}.wav"})
     for item in sung:
         if item["bars"] < 1:
-            raise ValueError(f"{item['what']}: bars {item['bars']} must be at least 1")
+            raise ValueError(f"{item['what']}: section_bars {item['bars']} must be at least 1")
 
     extensions = []
     for e in params["extensions"]:
         what = f"extension {e.get('segment', '?')}"
         for k in EXTENSION_KEYS:
             _required(e, k, f"{what}: missing")
-        if not 0 < int(e["from_bar"]) < int(e["bars"]):
-            raise ValueError(f"{what}: from_bar {e['from_bar']} must lie inside the section's {e['bars']} bars")
+        if not 0 < int(e["from_bar"]) < int(e["section_bars"]):
+            raise ValueError(f"{what}: from_bar {e['from_bar']} must lie inside the section's {e['section_bars']} bars")
         extensions.append({**e, "what": what, "path": _lead_file(lead_dir, f"{e['unit']}_section.wav", what),
                            "take": f"take_{e['segment']}_ext.wav"})
 
@@ -160,9 +161,9 @@ def check_params(params: dict, out_dir) -> dict:
             "backing_db": float(lv["backing_db"]), "adlib_db": float(lv["adlib_db"])}
 
 
-def extension_take(section: np.ndarray, sr: int, from_bar: int, bars: int, bar_s: float) -> np.ndarray:
-    """The extension's YuE2 section (bars from_bar..bars) placed at its bars of the whole section: silence before."""
-    n = int(round(bars * bar_s * sr))
+def extension_take(section: np.ndarray, sr: int, from_bar: int, section_bars: int, bar_s: float) -> np.ndarray:
+    """The extension's YuE2 section (bars from_bar..section_bars) placed at its bars of the whole section: silence before."""
+    n = int(round(section_bars * bar_s * sr))
     i0 = int(round(from_bar * bar_s * sr))
     section = section if section.ndim == 2 else section[:, None]
     out = np.zeros((n, section.shape[1]), dtype=np.float32)
@@ -234,12 +235,12 @@ def run(params: dict, out_dir, job):
     for e in p["extensions"]:
         job.check_cancelled()
         st = job.step(f"extension:{e['segment']}", f"Join the extra bars of {e['segment']}")
-        x = extension_take(_read(e["path"]), OUT_SR, int(e["from_bar"]), int(e["bars"]), bar_s)
-        x = levels.fit(x, OUT_SR, int(e["bars"]) * bar_s)
+        x = extension_take(_read(e["path"]), OUT_SR, int(e["from_bar"]), int(e["section_bars"]), bar_s)
+        x = levels.fit(x, OUT_SR, int(e["section_bars"]) * bar_s)
         sf.write(out / e["take"], x, OUT_SR, subtype="FLOAT")
         takes.append({"segment": e["segment"], "track": LEAD_TRACK, "kind": "yue2-vocal", "file": e["take"],
                       "durationSeconds": round(len(x) / OUT_SR, 3)})
-        st.done(f"bars {int(e['from_bar']) + 1}-{e['bars']} from {e['unit']}",
+        st.done(f"bars {int(e['from_bar']) + 1}-{e['section_bars']} from {e['unit']}",
                 {"from_bar": int(e["from_bar"])}, [e["take"]])
 
     gated = None
@@ -258,18 +259,20 @@ def run(params: dict, out_dir, job):
     numbers, files = {}, []
     for item in p["sung"]:
         offset = 0.0 if item["offset_key"] is None else p[item["offset_key"]]
-        x = chained[item["tag"]]
-        numbers[f"{item['tag']}_db"] = round(levels.gain_db(x, reference, offset), 2)
-        x = levels.fit(levels.match(x, reference, offset, name=item["what"]), OUT_SR, item["bars"] * bar_s)
+        x, info = levels.match_capped(chained[item["tag"]], reference, offset, name=item["what"])
+        for k, v in info.items():
+            numbers[f"{item['tag']}_{k}"] = round(v, 2) if k != "gain_capped" else v
+        x = levels.fit(x, OUT_SR, item["bars"] * bar_s)
         sf.write(out / item["take"], x, OUT_SR, subtype="FLOAT")
         files.append(item["take"])
         takes.append({"segment": item["segment"], "track": item["track"], "kind": "soulx-vocal", "file": item["take"],
                       "durationSeconds": round(len(x) / OUT_SR, 3)})
     if gated is not None:
         ad = p["adlibs"]
-        numbers["adlibs_db"] = round(levels.gain_db(gated, reference, p["adlib_db"]), 2)
-        x = levels.fit(levels.match(gated, reference, p["adlib_db"], name="adlibs"), OUT_SR,
-                       len(ad["chords"]) / 4 * bar_s)
+        x, info = levels.match_capped(gated, reference, p["adlib_db"], name="adlibs")
+        for k, v in info.items():
+            numbers[f"adlibs_{k}"] = round(v, 2) if k != "gain_capped" else v
+        x = levels.fit(x, OUT_SR, len(ad["chords"]) / 4 * bar_s)
         sf.write(out / "take_adlibs.wav", x, OUT_SR, subtype="FLOAT")
         files.append("take_adlibs.wav")
         for seg in ad["segments"]:
