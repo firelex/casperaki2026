@@ -12,6 +12,7 @@
 
 import type { PlaybackPayload, PlaybackSample } from '../api/playback';
 import { laneGains } from './vocalLanes';
+import { loadProfile, profileStoreKey, saveProfile } from './masteringProfileStore';
 
 export type LiveStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'ended' | 'error';
 
@@ -672,7 +673,8 @@ export class LivePlayer {
   /**
    * The matched-mastering profile of one song version: rendered unmastered in a
    * worker and analysed (the same analysis as the server's casperaki_master).
-   * Cached per key; a profile still being computed for another key is cancelled.
+   * Cached per key; a profile still being computed for another key is cancelled. Profiles are also kept in the
+   * browser (masteringProfileStore.ts), so after a page reload a song analysed before starts with its matched master.
    */
   profileOf(key: string, fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>): Promise<Uint8Array> {
     const cached = this.profiles.get(key);
@@ -680,8 +682,11 @@ export class LivePlayer {
     if (this.profileJob && this.profileJob.key !== key) this.profileJob.cancel();
     const ctx = this.context();
     const job = Promise.all([this.ensurePrepared(key, fetchPayload, () => undefined), this.wasm(), this.stubs(ctx)]).then(
-      ([{ payload, realSamples }, wasmBytes, stubs]) =>
-        new Promise<Uint8Array>((resolve, reject) => {
+      async ([{ payload, realSamples }, wasmBytes, stubs]) => {
+        const storeKey = await profileStoreKey(payload, __ENGINE_VERSION__, ctx.sampleRate);
+        const stored = await loadProfile(storeKey);
+        if (stored) return stored;
+        const bytes = await new Promise<Uint8Array>((resolve, reject) => {
           if (this.profiles.get(key) !== job) {
             reject(new ProfileCancelled(key));
             return;
@@ -712,7 +717,10 @@ export class LivePlayer {
             realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
             mixConfig: utf8.encode(payload.mixConfig),
           });
-        }),
+        });
+        await saveProfile(storeKey, bytes);
+        return bytes;
+      },
     );
     job.catch(() => {
       if (this.profiles.get(key) === job) this.profiles.delete(key);
