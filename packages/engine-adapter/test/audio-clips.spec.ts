@@ -62,7 +62,7 @@ describe('sung vocal takes lowered to an audioClips instrument', () => {
     expect(insts[0]).toMatchObject({ fxSends: DRY_SENDS, clips: [clip('chorus1')] });
     expect(insts[1]).toMatchObject({ fxSends: WET_SENDS, clips: [clip('verse1')] });
     expect(DRY_SENDS).toEqual({ reverb: -100, delay: -100, chorus: -100 });
-    expect(WET_SENDS).toEqual({ reverb: -10, delay: -18, chorus: -100 });
+    expect(WET_SENDS).toEqual({ reverb: -100, delay: -100, chorus: -100 });
   });
 
   it('a take whose fingerprint no longer matches plays nothing', () => {

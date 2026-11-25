@@ -22,7 +22,9 @@ export interface AudioClip {
 
 /** Effect sends (dB, -100 = no send) carried in the instrument JSON for the engine to honour. */
 export const DRY_SENDS = { reverb: -100, delay: -100, chorus: -100 } as const;
-export const WET_SENDS = { reverb: -10, delay: -18, chorus: -100 } as const;
+// SoulX takes play dry too (owner, 2026-11-25: no reverb or delay on the vocals). The lane stays separate from the
+// YuE2 one so the two can be mixed apart again.
+export const WET_SENDS = { reverb: -100, delay: -100, chorus: -100 } as const;
 
 /** Up to two audioClips instruments per vocal track that has fresh takes: `<track>` (dry, YuE2 takes) and
  *  `<track> wet` (SoulX takes, with reverb and delay). The lead "Vocal" comes first, then the other tracks in the
