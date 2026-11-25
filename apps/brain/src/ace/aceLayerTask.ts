@@ -13,8 +13,10 @@ import { AceLayerResultSchema, type AceLayerResult } from '@casperaki/arrangemen
 import {
   ACE_INSTRUMENT_CAPTIONS,
   ACE_INSTRUMENT_LABELS,
+  ACE_ADLIB_VOICES,
   ACE_INSTRUMENTS,
   aceTrackName,
+  aceTrackOf,
   vocalTakeFingerprint,
   type Song,
 } from '@casperaki/song-schema';
@@ -38,9 +40,16 @@ export const AceLayerOptionsSchema = z
     /** The kinds of section the layer plays in ("verse", "chorus", …, as sectionKind names them); none = all. ACE still
      *  plays over the whole song; sections of other kinds get no clip. */
     sectionKinds: z.array(z.string().min(1)).min(1).optional(),
+    /** The sections the layer plays in, by name (ad-libs: the final chorus(es)); none = all. */
+    sections: z.array(z.string().min(1)).min(1).optional(),
+    /** Ad-libs only: the words ACE sings (under every chorus), and the voice (ACE's backing_vocals or vocals track). */
+    lyrics: z.string().trim().min(1).max(1000).optional(),
+    voice: z.enum(ACE_ADLIB_VOICES).optional(),
     seed: z.number().int().min(0),
   })
-  .strict();
+  .strict()
+  .refine((o) => (o.instrument === 'adlibs') === (o.lyrics !== undefined), 'ad-libs need their words, and only ad-libs take words')
+  .refine((o) => (o.instrument === 'adlibs') === (o.voice !== undefined), 'ad-libs need a voice, and only ad-libs take one');
 export type AceLayerOptions = z.infer<typeof AceLayerOptionsSchema>;
 
 const BEATS_PER_BAR = 4;
@@ -73,9 +82,14 @@ export function sectionKind(name: string): string {
 
 /** The sections a layer covers: all of them, or those the selection touches, of the chosen kinds (an Error for a
  *  selection outside the song, a kind the song does not have, or nothing left to cover). */
-export function coveredSections(song: Song, range: AceLayerOptions['range'], kinds?: readonly string[]): AceSection[] {
+export function coveredSections(song: Song, range: AceLayerOptions['range'], kinds?: readonly string[], names?: readonly string[]): AceSection[] {
   const all = sectionsOf(song);
   let covered = all;
+  if (names) {
+    const unknown = names.filter((n) => !all.some((s) => s.name === n));
+    if (unknown.length) throw new Error(`the song has no section ${unknown.map((n) => `"${n}"`).join(', ')}`);
+    covered = covered.filter((s) => names.includes(s.name));
+  }
   if (range) {
     covered = covered.filter((s) => s.startBar < range.endBar && s.startBar + s.bars > range.startBar);
     if (covered.length === 0) throw new Error(`the selection (bars ${range.startBar + 1}–${range.endBar}) is outside the song`);
@@ -101,6 +115,20 @@ export function keyScale(key: string): string {
 export function aceCaption(song: Song, options: AceLayerOptions): string {
   const words = options.words?.trim();
   return [ACE_INSTRUMENT_CAPTIONS[options.instrument], ...(words ? [words] : []), `${song.bpm} bpm`, keyScale(song.key)].join(', ');
+}
+
+const ACE_TAGS: Readonly<Record<string, string>> = { intro: 'Intro', verse: 'Verse', preChorus: 'Pre-Chorus', chorus: 'Chorus', bridge: 'Bridge', outro: 'Outro' };
+
+/** ACE's lyrics for ad-libs: every section of the song as a tag in song order (another kind as an instrumental
+ *  break), the user's words under each chorus. */
+export function aceLyrics(song: Song, words: string): string {
+  return song.songStructure
+    .map((s) => {
+      const kind = sectionKind(s.name);
+      const tag = ACE_TAGS[kind] ?? 'Instrumental Break';
+      return kind === 'chorus' ? `[${tag}]\n${words.trim()}` : `[${tag}]`;
+    })
+    .join('\n\n');
 }
 
 /** Every track name the song uses (instrument tracks and audio-only tracks such as Ad-libs or earlier ACE layers). */
@@ -180,7 +208,7 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
   const log = new StepLog(ctx);
   if (ctx.jobs === null) rmSync(ctx.filesDir, { recursive: true, force: true });
   mkdirSync(ctx.filesDir, { recursive: true });
-  const covered = coveredSections(input, options.range, options.sectionKinds);
+  const covered = coveredSections(input, options.range, options.sectionKinds, options.sections);
   const track = aceTrackName(options.instrument, trackNames(input));
   const caption = aceCaption(input, options);
   const secPerBar = (BEATS_PER_BAR * 60) / input.bpm;
@@ -195,7 +223,17 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
   let jobs: TaskJobs;
   if (ctx.jobs?.ace === undefined) {
     if (ctx.signal.aborted) throw new CancelledError();
-    jobs = { ace: await ctx.client.submit({ src_wav: wav, track: options.instrument, caption, bpm: input.bpm, key_scale: keyScale(input.key), seed: options.seed }) };
+    jobs = {
+      ace: await ctx.client.submit({
+        src_wav: wav,
+        track: aceTrackOf(options.instrument, options.voice),
+        caption,
+        bpm: input.bpm,
+        key_scale: keyScale(input.key),
+        seed: options.seed,
+        ...(options.lyrics !== undefined ? { lyrics: aceLyrics(input, options.lyrics) } : {}),
+      }),
+    };
     ctx.setJobs(jobs);
   } else jobs = ctx.jobs;
   const layer = await followJob(ctx, 'ace', jobs.ace!, (steps) => log.service(steps));

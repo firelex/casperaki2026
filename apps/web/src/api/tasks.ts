@@ -16,7 +16,7 @@
  */
 
 import type { Song } from '@casperaki/song-schema';
-import type { AceInstrument } from '@casperaki/song-schema/ace-layer';
+import type { AceAdlibVoice, AceInstrument } from '@casperaki/song-schema/ace-layer';
 
 import { defaultBrainClient } from './client';
 
@@ -73,6 +73,12 @@ export const tasksApi = {
     defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', {
       kind: 'aceLayer', songId, song, instrument,
       ...(words.trim() ? { words: words.trim() } : {}), ...(range ? { range } : {}), ...(sectionKinds ? { sectionKinds } : {}),
+    }),
+  /** Add ad-libs: ACE sings `lyrics` (under every chorus) in `style` on the chosen voice; clips only in `sections`. */
+  startAdlibs: (songId: string, song: Song, lyrics: string, style: string, voice: AceAdlibVoice, sections: readonly string[]) =>
+    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', {
+      kind: 'aceLayer', songId, song, instrument: 'adlibs', lyrics, voice, sections,
+      ...(style.trim() ? { words: style.trim() } : {}),
     }),
   apply: (id: string) => defaultBrainClient.post<AppliedTask>(`/api/tasks/${encodeURIComponent(id)}/apply`, {}),
   cancel: (id: string) => defaultBrainClient.post<{ task: BackgroundTask }>(`/api/tasks/${encodeURIComponent(id)}/cancel`, {}),

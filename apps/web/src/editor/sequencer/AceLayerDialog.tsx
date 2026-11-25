@@ -67,7 +67,7 @@ export function AceLayerDialog({
               onChange={(e) => setInstrument(e.target.value as AceInstrument)}
               className="h-10 rounded-[8px] border border-line bg-transparent px-3 text-white"
             >
-              {ACE_INSTRUMENTS.map((i) => (
+              {ACE_INSTRUMENTS.filter((i) => i !== 'adlibs').map((i) => (
                 <option key={i} value={i}>
                   {ACE_INSTRUMENT_LABELS[i]}
                 </option>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import type { Song } from '@casperaki/song-schema';
-import type { AceInstrument } from '@casperaki/song-schema/ace-layer';
+import { finalChoruses, type AceAdlibVoice, type AceInstrument } from '@casperaki/song-schema/ace-layer';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -34,6 +34,7 @@ import { hasNotes } from './audioOnlyTracks';
 import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { AceLayerDialog } from './sequencer/AceLayerDialog';
+import { AdlibsDialog } from './sequencer/AdlibsDialog';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -579,6 +580,25 @@ export function TimelineView() {
     }
   };
   const aceLayerItem: AceLayerItem = { disabled: Boolean(aceTask), onSelect: () => setLayering(true) };
+  /** Add ad-libs: ACE sings them over the song, kept in the final chorus(es) (none: the item says why). */
+  const [adlibbing, setAdlibbing] = useState(false);
+  const adlibSections = model ? finalChoruses(model.sections.map((s) => s.name)) : [];
+  const adlibItem: AceLayerItem & { label: string; hint: string } = {
+    label: 'Add ad-libs…',
+    disabled: Boolean(aceTask) || adlibSections.length === 0,
+    hint: aceTask ? 'an ACE layer is being made' : adlibSections.length === 0 ? 'the song does not end in a chorus' : '',
+    onSelect: () => setAdlibbing(true),
+  };
+  const addAdlibs = async (lyrics: string, style: string, voice: AceAdlibVoice) => {
+    setAdlibbing(false);
+    setTaskError(undefined);
+    try {
+      await onSaved((songId, song) => tasksApi.startAdlibs(songId, song, lyrics, style, voice, adlibSections));
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Add ad-libs failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const selectionMenu: SelectionActions = { ...selectionBase, aceLayer: aceLayerItem };
   const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
   const sing = () => startTask('sing', 'Sing');
@@ -783,6 +803,7 @@ export function TimelineView() {
               }
               onRemove={() => edits.removeTrack(t.name)}
               aceLayer={aceLayerItem}
+              adlibs={adlibItem}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
                 setDialog({ kind: 'add', sections: s === undefined ? model.sections.map((x) => x.name) : [model.sections[s]!.name] })
@@ -933,6 +954,9 @@ export function TimelineView() {
         </div>
       ) : null}
 
+      {adlibbing ? (
+        <AdlibsDialog sections={adlibSections} onClose={() => setAdlibbing(false)} onStart={(l, st, v) => void addAdlibs(l, st, v)} />
+      ) : null}
       {layering ? (
         <AceLayerDialog
           selection={range ? { startBar: range.start, endBar: range.end } : undefined}
@@ -1157,6 +1181,7 @@ function TrackMenu({
   onRemove,
   onAdd,
   aceLayer,
+  adlibs,
   onOverview,
   children,
 }: {
@@ -1180,6 +1205,8 @@ function TrackMenu({
   onAdd(section: number | undefined): void;
   /** Add ACE layer… (disabled while the song's ACE layer task runs). */
   aceLayer: AceLayerItem;
+  /** Add ad-libs… (the final chorus(es); disabled with why). */
+  adlibs: AceLayerItem & { label: string; hint: string };
   /** Whole-track piano roll / score (pitched tracks). */
   onOverview: (() => void) | undefined;
   children: ReactNode;
@@ -1260,6 +1287,9 @@ function TrackMenu({
           Add track…
         </ContextMenuItem>
         <AceLayerMenuItem item={aceLayer} />
+        <ContextMenuItem className={ITEM} disabled={adlibs.disabled} onSelect={adlibs.onSelect}>
+          {adlibs.label} <MenuHint text={adlibs.hint} />
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );

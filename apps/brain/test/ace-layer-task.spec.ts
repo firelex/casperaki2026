@@ -9,9 +9,9 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { applyAceLayer, orchestrate } from '@casperaki/arrangement';
-import { vocalTakeFingerprint } from '@casperaki/song-schema';
+import { finalChoruses, vocalTakeFingerprint } from '@casperaki/song-schema';
 
-import { ACE_LAYER_LUFS, aceCaption, coveredSections, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
+import { ACE_LAYER_LUFS, aceCaption, aceLyrics, AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
 import { integratedLoudness } from '../src/audio/loudness.js';
 import type { ServiceResult, VocalsClient } from '../src/sing/vocalsClient.js';
 import type { TaskJobs, TaskStep } from '../src/store.js';
@@ -135,6 +135,26 @@ describe('the ACE layer task', () => {
     expect(submitted).toHaveLength(1);
     expect(() => coveredSections(SONG, undefined, ['solo'])).toThrow(/no section of the kind "solo"/u);
     expect(sectionKind('preChorus2')).toBe('preChorus');
+  });
+
+  it('ad-libs: sung on the chosen voice with the words under every chorus, kept only in the final chorus(es)', async () => {
+    const names = SONG.songStructure.map((s) => s.name);
+    const finals = finalChoruses(names);
+    expect(finals.length).toBeGreaterThan(0);
+    const { result, submitted } = await run({ instrument: 'adlibs', lyrics: '(oh yeah)\n(hey!)', voice: 'backing_vocals', sections: finals, seed: 4 });
+    expect(submitted[0]).toMatchObject({ track: 'backing_vocals', lyrics: aceLyrics(SONG, '(oh yeah)\n(hey!)') });
+    const lyrics = String(submitted[0]!['lyrics']);
+    expect(lyrics.split('\n\n')).toHaveLength(names.length);
+    expect(lyrics.match(/\[Chorus\]\n\(oh yeah\)\n\(hey!\)/gu)?.length).toBe(names.filter((n) => sectionKind(n) === 'chorus').length);
+    expect(result.track).toBe('ACE Ad-libs');
+    expect(result.takes.map((t) => t.segment)).toEqual(finals);
+  });
+
+  it('only ad-libs take words and a voice, and ad-libs need both', () => {
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'guitar', lyrics: 'la', seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'adlibs', lyrics: 'la', seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'adlibs', voice: 'vocals', seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'adlibs', lyrics: 'la', voice: 'vocals', seed: 1 }).success).toBe(true);
   });
 
   it('refuses a selection outside the song and a key ACE does not know', () => {

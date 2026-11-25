@@ -15,3 +15,12 @@ describe('sectionKindsOf', () => {
     expect(sectionKindsOf(['intro', 'verse1', 'preChorus1', 'chorus1', 'verse2', 'chorus2', 'bridge1'])).toEqual(['intro', 'verse', 'preChorus', 'chorus', 'bridge']);
   });
 });
+
+describe('finalChoruses (where ad-libs go)', () => {
+  it('is the run of choruses that ends the song, an outro aside; none when the song ends otherwise', async () => {
+    const { finalChoruses } = await import('@casperaki/song-schema/ace-layer');
+    expect(finalChoruses(['intro', 'verse1', 'chorus1', 'bridge1', 'chorus2', 'chorus3'])).toEqual(['chorus2', 'chorus3']);
+    expect(finalChoruses(['verse1', 'chorus1', 'bridge1', 'chorus2', 'outro'])).toEqual(['chorus2']);
+    expect(finalChoruses(['verse1', 'chorus1', 'bridge1'])).toEqual([]);
+  });
+});

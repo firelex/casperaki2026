@@ -162,7 +162,7 @@ export class BackgroundTasks {
       }
       if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_layering', 'An ACE layer is already being made for this song.');
       try {
-        coveredSections(song, ace.range, ace.sectionKinds);
+        coveredSections(song, ace.range, ace.sectionKinds, ace.sections);
         keyScale(song.key);
       } catch (err) {
         throw new TaskError(422, 'cannot_layer', err instanceof Error ? err.message : String(err));
