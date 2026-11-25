@@ -7,6 +7,7 @@
 
 import type { Song } from '@casperaki/song-schema';
 
+import { LEAD_VOCAL_NAME } from '../types/song';
 import { sectionColor } from './sectionColor';
 
 export const BEATS_PER_BAR = 4;
@@ -251,6 +252,11 @@ export function buildSequencerModel(song: Song): SequencerModel {
       clipsByTrack.set(instrument, list);
     }
   });
+
+  // The lead vocal track keeps its row while it is empty (a new song: its menu writes the melody).
+  for (const def of song.instrumentDefinitions) {
+    if (def.name === LEAD_VOCAL_NAME && !clipsByTrack.has(def.name)) clipsByTrack.set(def.name, []);
+  }
 
   const tracks: SeqTrack[] = [...clipsByTrack.entries()]
     .map(([name, clips]) => {

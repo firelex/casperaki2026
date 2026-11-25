@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import {
   ContextMenu,
@@ -25,6 +25,8 @@ import { drumBarNotes, patternSong, trackSong } from './sequencer/preview';
 import { TrackOverview } from './sequencer/TrackOverview';
 import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
+import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
+import { useTasks } from '../state/tasks';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -512,6 +514,24 @@ export function TimelineView() {
   const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
   /** A new melody for every section of the clicked section's type ("chorus2" → all choruses). */
   const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody for all ${plural(section)}`);
+  // The Vocal track's steps (docs/superpowers/specs/2026-11-25-vocal-tasks-design.md): Write melody is an edit; Write
+  // lyrics a background task on the song (the Tasks menu shows it; its words go in when playback stops).
+  const queryClient = useQueryClient();
+  const { data: tasks } = useTasks();
+  const [taskError, setTaskError] = useState<string | undefined>(undefined);
+  const melodyShown = viewSong ? !vocalMelodyHidden(viewSong) : false;
+  const lyricsTask = tasks?.find((t) => t.kind === 'writeLyrics' && t.songId === activeSong?.id && (t.state === 'running' || t.state === 'ready'));
+  const writeMelody = () => void edits.run({ kind: 'writeMelody' }, 'Writing the melody');
+  const writeLyrics = async () => {
+    if (!activeSong || !viewSong) throw new Error('No song is open.');
+    setTaskError(undefined);
+    try {
+      await tasksApi.start('writeLyrics', activeSong.id, viewSong);
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Write lyrics failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   return (
     <div ref={rootRef} className="flex h-full flex-col text-white">
@@ -532,6 +552,13 @@ export function TimelineView() {
           </span>
         ) : editor?.lastError ? (
           <span className="text-err" role="alert">{editor.lastError}</span>
+        ) : taskError ? (
+          <span className="flex items-center gap-2 text-err" role="alert">
+            {taskError}
+            <button type="button" onClick={() => setTaskError(undefined)} className="text-white/60 hover:text-white" aria-label="Dismiss">
+              ✕
+            </button>
+          </span>
         ) : edits.error ? (
           <span className="flex items-center gap-2 text-err" role="alert">
             {edits.error}
@@ -681,6 +708,7 @@ export function TimelineView() {
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
               onNewMelody={t.name === LEAD_VOCAL_NAME ? (s) => newMelody(model.sections[s]!.name) : undefined}
+              vocal={t.name === LEAD_VOCAL_NAME ? { melodyShown, lyricsTask, onWriteMelody: writeMelody, onWriteLyrics: () => void writeLyrics() } : undefined}
               onRemove={() => edits.removeTrack(t.name)}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
@@ -1025,6 +1053,7 @@ function TrackMenu({
   onChangeSound,
   onNewPattern,
   onNewMelody,
+  vocal,
   onRemove,
   onAdd,
   onOverview,
@@ -1044,6 +1073,8 @@ function TrackMenu({
   onNewPattern(): void;
   /** The lead vocal: a new melody for every section of the clicked section's type. */
   onNewMelody: ((section: number) => void) | undefined;
+  /** The lead vocal's steps: Write melody, Write lyrics (with why they cannot be done now). */
+  vocal: VocalSteps | undefined;
   onRemove(): void;
   onAdd(section: number | undefined): void;
   /** Whole-track piano roll / score (pitched tracks). */
@@ -1061,6 +1092,26 @@ function TrackMenu({
         {selection ? (
           <>
             <SelectionItems selection={selection} />
+            <ContextMenuSeparator className="my-1 h-px bg-line" />
+          </>
+        ) : null}
+        {vocal ? (
+          <>
+            <ContextMenuItem className={ITEM} disabled={busy || vocal.melodyShown} onSelect={vocal.onWriteMelody}>
+              Write melody {vocal.melodyShown ? <span className="ml-auto pl-6 text-[12px] text-white/40">written</span> : null}
+            </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={busy || !vocal.melodyShown || Boolean(vocal.lyricsTask)} onSelect={vocal.onWriteLyrics}>
+              Write lyrics
+              <span className="ml-auto pl-6 text-[12px] text-white/40">
+                {!vocal.melodyShown
+                  ? 'write a melody first'
+                  : vocal.lyricsTask?.state === 'running'
+                    ? 'already writing'
+                    : vocal.lyricsTask?.state === 'ready'
+                      ? 'ready · goes in when you stop'
+                      : 'in the background'}
+              </span>
+            </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>
         ) : null}
@@ -1294,3 +1345,19 @@ function writeNumberPref(key: string, value: number): void {
   }
 }
 
+
+/** The lead vocal's steps in its menu. */
+interface VocalSteps {
+  /** Whether the vocal tracks show their melody (a new song's start empty). */
+  readonly melodyShown: boolean;
+  /** The song's Write lyrics task while it runs or waits to go in. */
+  readonly lyricsTask: BackgroundTask | undefined;
+  onWriteMelody(): void;
+  onWriteLyrics(): void;
+}
+
+/** Whether the song's vocal melody is hidden (generator param vocalMelody: false, packages/arrangement). */
+function vocalMelodyHidden(song: { readonly generator?: { readonly params?: unknown } }): boolean {
+  const inner = (song.generator?.params as { params?: Record<string, unknown> } | undefined)?.params;
+  return inner?.vocalMelody === false;
+}

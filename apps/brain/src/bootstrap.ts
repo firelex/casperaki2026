@@ -16,7 +16,9 @@ import express, { type Express } from 'express';
 import { loadConfig, oidcConfigured, type BrainConfig } from './config.js';
 import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
-import { createSongsRouter, ownerOf } from './routes/songs.js';
+import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
+import { createTasksRouter } from './routes/tasks.js';
+import { BackgroundTasks } from './tasks/tasks.js';
 import { EventHub } from './events.js';
 import { ArtworkTasks, HarnessImageService, type ImageService } from './artwork/tasks.js';
 import { SongTitler } from './titles/songTitler.js';
@@ -72,6 +74,8 @@ export interface CreateAppDeps {
   readonly imageService?: ImageService;
   /** The language model artwork briefs are written with (tests inject a fake). */
   readonly chatModel?: ChatModel;
+  /** The language model lyrics are written with (tests inject a fake; production: the chat model). */
+  readonly lyricModel?: ChatModel;
   /** The melody library's precedent bank directory (tests point it at fixtures). */
   readonly melodyLibraryDir?: string;
   /**
@@ -260,6 +264,12 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createDawExportRouter({ store, exports: dawExports, ownerOf }));
   app.use(createPlaybackRouter({ store, playback, ownerOf }));
   app.use(createTracksRouter());
+  // Background tasks on songs (src/tasks/tasks.ts): writing lyrics needs the language model.
+  const lyricModel = deps.lyricModel ?? chatModel;
+  if (!lyricModel) console.warn('[brain] ASSISTANT_LLM_URL not set — Write lyrics answers 503.');
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), hash: hashCanonical, clock: () => new Date().toISOString() });
+  (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
+  app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(
     createHumRouter({
@@ -368,6 +378,7 @@ export function startServer(): { stop: () => Promise<void> } {
     console.log(`[brain] listening on http://${config.host}:${config.port}`);
   });
   (app.locals as { artworkTasks?: ArtworkTasks }).artworkTasks?.resumeAll();
+  (app.locals as { tasks?: BackgroundTasks }).tasks?.resumeAll();
   return {
     stop: () =>
       new Promise<void>((resolvePromise, reject) => {

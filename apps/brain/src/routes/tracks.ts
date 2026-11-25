@@ -10,6 +10,9 @@
 //       | { kind: 'setDrumSound', role, soundId | null }   (null: genre default)
 //       | { kind: 'newMelody', section }   a new melody (its chords and every part
 //                                          under it, the phrase bank's words) for every section of that type
+//       | { kind: 'writeMelody' }          the vocal tracks show the melody the generator chose (new songs start empty)
+//       | { kind: 'applyLyrics', lyrics }  written lyrics (section → lines) on the vocal tracks (a finished Write
+//                                          lyrics task merged into unsaved edits)
 //     The edit is recorded in the song's generator block and only the edited
 //     track changes in the posted (working) song (for a new melody: every track
 //     of the sections of that type). Removing a track is a client-side edit.
@@ -42,12 +45,16 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { newMelody, segmentType } from '@casperaki/arrangement';
+import { applyWrittenLyrics, newMelody, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 
 const OptionsBody = z.object({ song: z.unknown() }).strict();
-const VocalEditSchema = z.object({ kind: z.literal('newMelody'), section: z.string().min(1) }).strict();
+const VocalEditSchema = z.union([
+  z.object({ kind: z.literal('newMelody'), section: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal('writeMelody') }).strict(),
+  z.object({ kind: z.literal('applyLyrics'), lyrics: WrittenLyricsSchema }).strict(),
+]);
 const EditBody = z.object({ song: z.unknown(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
 
 const VocalPianoBody = z.object({ song: z.unknown(), track: z.string().min(1) }).strict();
@@ -89,6 +96,8 @@ export function createTracksRouter(): Router {
     if (!song) return;
     const op = body.data.op;
     if (op.kind === 'newMelody') return run(res, () => ({ song: newMelody(song, segmentType(op.section)).song, track: 'Vocal' }));
+    if (op.kind === 'writeMelody') return run(res, () => ({ song: writeMelody(song), track: 'Vocal' }));
+    if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));
     return run(res, () => editTrack(song, op));
   });
 

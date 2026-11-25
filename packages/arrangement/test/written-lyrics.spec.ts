@@ -17,6 +17,8 @@ import {
   paramsWithLyrics,
   rhymeScheme,
   sungSections,
+  vocalMelodyShown,
+  writeMelody,
   wordsRhyme,
   type LyricLine,
   type WrittenLyrics,
@@ -56,9 +58,12 @@ describe('lyric lines', () => {
     }
   });
 
-  it('pairs lines for rhyme, an odd last line with the one before', () => {
-    expect(rhymeScheme(4)).toEqual(['A', 'A', 'B', 'B']);
-    expect(rhymeScheme(3)).toEqual(['A', 'A', 'A']);
+  it('rhymes lines ABCB in fours (a leftover three ABA, a leftover two AA, a leftover one free)', () => {
+    expect(rhymeScheme(4)).toEqual(['A', 'B', 'C', 'B']);
+    expect(rhymeScheme(8)).toEqual(['A', 'B', 'C', 'B', 'D', 'E', 'F', 'E']);
+    expect(rhymeScheme(3)).toEqual(['A', 'B', 'A']);
+    expect(rhymeScheme(6)).toEqual(['A', 'B', 'C', 'B', 'D', 'D']);
+    expect(rhymeScheme(5)).toEqual(['A', 'B', 'C', 'B', 'D']);
     expect(rhymeScheme(1)).toEqual(['A']);
   });
 });
@@ -84,7 +89,15 @@ describe('checking lines', () => {
 
   it('wants rhyming last words, never the same word twice', () => {
     expect(checkSectionLyrics([four, four], ['walk into the night', 'all the city lane'])[0]!.message).toMatch(/must rhyme/u);
-    expect(checkSectionLyrics([four, four], ['walk into the night', 'all into the night'])[0]!.message).toMatch(/must rhyme/u);
+    expect(checkSectionLyrics([four, four], ['walk into the night', 'all into the night'])[0]!.message).toMatch(/same word, "night": a word may not rhyme with itself/u);
+  });
+
+  it('checks ABCB: only line 4 has to rhyme with line 2', () => {
+    const lines = [four, four, four, four];
+    expect(checkSectionLyrics(lines, ['walk into the rain', 'all the city light', 'la la la day', 'la la la night'])).toEqual([]);
+    const [p] = checkSectionLyrics(lines, ['walk into the rain', 'all the city light', 'la la la day', 'la la la rain']);
+    expect(p!.line).toBe(3);
+    expect(p!.message).toMatch(/Lines 2 and 4 must rhyme/u);
   });
 
   it('hears pop rhymes: the same vowel sound from the last stressed one on', () => {
@@ -109,6 +122,18 @@ describe('checking lines', () => {
     const six: LyricLine = [slot(0, 0.5, 0.5), slot(0, 1, 0.5), slot(0, 1.5, 0.5), slot(0, 2, 0.5), slot(0, 2.5, 0.5), slot(0, 3, 0.5)];
     expect(checkSectionLyrics([six], ['tonight tonight tonight'])).toEqual([]);
     expect(checkSectionLyrics([six], ['happy happy happy'])[0]!.message).toMatch(/stressed against the beat/u);
+  });
+
+  it('sends back a line that cuts a word across a held note (a half note or longer)', () => {
+    // DA DA DA(held, 2 beats) DA: the held note must carry the end of a word.
+    const line: LyricLine = [slot(0, 0, 1), slot(0, 1, 1), slot(0, 2, 2), slot(1, 0, 1)];
+    expect(checkSectionLyrics([line], ['walk the night home'])).toEqual([]);
+    const [p] = checkSectionLyrics([line], ['in the sunrise']);
+    expect(p!.message).toMatch(/cut in two across a long held note/u);
+    expect(p!.message).toMatch(/"sun·rise" \(held on "sun"\)/u);
+    // A held note carrying a syllable over a spare note still ends the word when that syllable does.
+    const slur: LyricLine = [slot(0, 0, 1), slot(0, 1, 1), slot(0, 2, 2), slot(1, 0, 1), slot(1, 1, 1)];
+    expect(checkSectionLyrics([slur], ['walk the night home'])).toEqual([]);
   });
 });
 
@@ -195,5 +220,47 @@ describe('vocal edits', () => {
     const g = withWords.generator!.params as { params: { melodyVariants: Record<string, number>; lyrics: WrittenLyrics } };
     expect(g.params.melodyVariants).toEqual({ chorus: expect.any(Number) });
     expect(Object.keys(g.params.lyrics).sort()).toEqual(sungSections(made.generated).map((s) => s.name).sort());
+  });
+});
+
+describe('a hidden vocal melody (new songs) and Write melody', () => {
+  const VOCALS = ['Vocal', 'Backing vocals 1', 'Backing vocals 2'];
+  const shown = orchestrate(PARAMS);
+  const hidden = orchestrate({ ...PARAMS, params: { vocalMelody: false } });
+  const vocalsOf = (song: Song) => Object.fromEntries(song.songStructure.map((s) => [s.name, VOCALS.map((t) => [song.arrangement[s.name]!.instruments[t], song.arrangement[s.name]!.overrides[t]])]));
+  const withoutVocals = (song: Song) => ({
+    defs: song.instrumentDefinitions,
+    structure: song.songStructure,
+    arrangement: Object.fromEntries(
+      Object.entries(song.arrangement).map(([n, a]) => [n, { ...a, instruments: Object.fromEntries(Object.entries(a.instruments).filter(([t]) => !VOCALS.includes(t))), overrides: Object.fromEntries(Object.entries(a.overrides).filter(([t]) => !VOCALS.includes(t))) }]),
+    ),
+  });
+
+  it('keeps the vocal tracks defined but empty, and changes nothing else', () => {
+    expect(vocalMelodyShown(hidden)).toBe(false);
+    expect(vocalMelodyShown(shown)).toBe(true);
+    for (const t of VOCALS) expect(hidden.instrumentDefinitions.some((d) => d.name === t)).toBe(true);
+    for (const a of Object.values(hidden.arrangement)) {
+      for (const t of VOCALS) {
+        expect(a.instruments[t]).toBe(false);
+        expect(a.overrides[t]).toBeUndefined();
+      }
+    }
+    expect(sungSections(hidden)).toEqual([]);
+    expect(withoutVocals(hidden)).toEqual(withoutVocals(shown));
+  });
+
+  it('Write melody shows the melody the generator chose, in every section', () => {
+    const written = writeMelody(hidden);
+    expect(vocalMelodyShown(written)).toBe(true);
+    expect(vocalsOf(written)).toEqual(vocalsOf(shown));
+    expect(() => writeMelody(written)).toThrow(/has a vocal melody already/u);
+  });
+
+  it('writing lyrics on a hidden melody shows it with the words', () => {
+    const lyrics = lyricsFor(shown);
+    const song = applyWrittenLyrics(hidden, lyrics);
+    expect(vocalMelodyShown(song)).toBe(true);
+    for (const s of sungSections(song)) expect(s.words.map((w) => w.toLowerCase())).toEqual(lyrics[s.name]);
   });
 });

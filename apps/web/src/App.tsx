@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 
 import { SessionProvider } from './state/session';
 import { useBrainEvents } from './state/useBrainEvents';
+import { ApplyingOverlay, useApplyReadyTasks } from './state/tasks';
 import { useAuth } from './auth/AuthContext';
 import { LandingPage } from './pages/landing/LandingPage';
 import { ProjectsPage } from './pages/ProjectsPage';
@@ -37,10 +38,12 @@ const HumSongPage = lazy(() => import('./pages/HumSongPage').then((m) => ({ defa
  * Signed-out users see only the landing (LandingPage). Signed-in users get
  * the full route tree wrapped in <SessionProvider>.
  */
-/** The brain's events for the signed-in user (state/useBrainEvents.ts). */
-function BrainEvents(): null {
+/** The brain's events for the signed-in user (state/useBrainEvents.ts) and applying finished tasks. */
+function BrainEvents() {
   useBrainEvents();
-  return null;
+  // Finished background tasks go into their songs while nothing plays (state/tasks.tsx).
+  useApplyReadyTasks();
+  return <ApplyingOverlay />;
 }
 
 export function App() {

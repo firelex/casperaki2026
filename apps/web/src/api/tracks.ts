@@ -27,7 +27,11 @@ export type TrackEdit =
   /** Replace one drum of the kit (null: back to the style's own). */
   | { readonly kind: 'setDrumSound'; readonly role: string; readonly soundId: string | null }
   /** A new melody (with its chords and the parts under it) for every section of this section's type. */
-  | { readonly kind: 'newMelody'; readonly section: string };
+  | { readonly kind: 'newMelody'; readonly section: string }
+  /** The vocal tracks show the melody the generator chose (a new song's vocal tracks start empty). */
+  | { readonly kind: 'writeMelody' }
+  /** Written lyrics (section → lines) on the vocal tracks: a finished Write lyrics task merged into unsaved edits. */
+  | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 

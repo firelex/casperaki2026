@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
-import { orchestrate, type GenerateParams } from '@casperaki/arrangement';
+import { orchestrate, VOCAL_MELODY_PARAM, type GenerateParams } from '@casperaki/arrangement';
 import {
   canonicalStringifySong,
   formatGenreTempoRange,
@@ -161,7 +161,10 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     }
     let made: GeneratedProject;
     try {
-      made = await generateProject({ store, clock, onPlaceholderTitle, ...(artwork ? { artwork } : {}) }, ownerOf(req), parsed.data, title.data);
+      // A new song's vocal tracks start empty: Write melody on the Vocal track shows the melody
+      // (docs/superpowers/specs/2026-11-25-vocal-tasks-design.md).
+      const params = { ...parsed.data, params: { ...(parsed.data.params ?? {}), [VOCAL_MELODY_PARAM]: false } };
+      made = await generateProject({ store, clock, onPlaceholderTitle, ...(artwork ? { artwork } : {}) }, ownerOf(req), params, title.data);
     } catch (err) {
       return generateError(res, err);
     }
@@ -361,7 +364,8 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
   return router;
 }
 
-function defaultTitle(genre: string, key: string): string {
+/** The placeholder title a new song has until it is named ("Bright Pop in C"). */
+export function defaultTitle(genre: string, key: string): string {
   const label = genre.replace(/([a-z])([A-Z])/g, '$1 $2');
   return `${label.charAt(0).toUpperCase()}${label.slice(1)} in ${key}`;
 }

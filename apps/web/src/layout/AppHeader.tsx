@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useSession } from '../state/session';
 import { AccountMenu } from './AccountMenu';
+import { TasksMenu } from './TasksMenu';
 
 /**
  * The navigation of every signed-in page, the editor included: wordmark,
@@ -40,6 +41,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
           {user?.isAdmin ? <HeaderLink to="/suggestions">Suggestions</HeaderLink> : null}
         </nav>
         <div className="ml-auto flex items-center gap-3">
+          <TasksMenu />
           <button
             type="button"
             onClick={() => navigate('/hum')}

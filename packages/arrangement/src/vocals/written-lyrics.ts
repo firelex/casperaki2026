@@ -269,6 +269,32 @@ function stressClashes(words: readonly { word: string; p: Pronunciation }[], sun
 /** Stress clashes a line may have before it is sent back. */
 const MAX_STRESS_CLASHES = 1;
 
+/** A note this long (beats) or longer is held: the syllable it ends on must end its word. */
+export const HOLD_BEATS = 2;
+
+/** Words cut across a held note: the last syllable sung on (or carried over) a held note is not the end of its word,
+ *  so the singer would stop mid-word ("sun-rise" with "sun" held). Each as the word with "·" between its syllables. */
+function heldNoteCuts(plan: LinePlan, slots: LyricLine): string[] {
+  const sung = sungNotes(slots, plan);
+  // Which word each sung syllable belongs to.
+  const wordOf: number[] = plan.words.flatMap(({ p }, w) => p.syllables.map(() => w));
+  const cuts: string[] = [];
+  slots.forEach((s, i) => {
+    if (s.duration < HOLD_BEATS - EPS) return;
+    // The last syllable on this note: its own (the second half's, if split), or the one it carries on when held.
+    let k = -1;
+    sung.forEach((n, j) => {
+      if (n.slot <= i) k = j;
+    });
+    if (k < 0) return;
+    if (plan.syllables[k]!.fullWord.endsWith('-')) {
+      const w = plan.words[wordOf[k]!]!;
+      cuts.push(`"${w.p.syllables.join('·')}" (held on "${w.p.syllables[k - wordOf.indexOf(wordOf[k]!)]}")`);
+    }
+  });
+  return cuts;
+}
+
 // ---- rhyme ------------------------------------------------------------------------------------------------------
 
 /** Vowels a pop rhyme treats as one: "on" / "gone" (AA, AO); before R, "near" / "here", "sure" / "pure",
@@ -323,6 +349,10 @@ function lineProblem(text: string, slots: LyricLine): string | undefined {
   }
   const clashes = stressClashes(plan.words, sungNotes(slots, plan));
   if (clashes.length > MAX_STRESS_CLASHES) return `These words are stressed against the beat (their stressed syllable falls on a weak note, a da): ${clashes.join(', ')}.`;
+  const cuts = heldNoteCuts(plan, slots);
+  if (cuts.length > 0) {
+    return `A word is cut in two across a long held note (a HOLD), so the singer would stop in the middle of the word: ${cuts.join(', ')}. The syllable on a HOLD must end its word: a one-syllable word, or the last syllable of a longer word.`;
+  }
   return undefined;
 }
 
@@ -334,7 +364,7 @@ export function checkSectionLyrics(lines: readonly LyricLine[], text: readonly s
     const message = lineProblem(t, lines[i]!);
     if (message) problems.push({ line: i, message });
   });
-  // Rhymes: each line with the first line of its rhyme group.
+  // Rhymes (ABCB): each line with the first line of its rhyme group.
   const scheme = rhymeScheme(lines.length);
   const lastWord = (t: string) => wordsOf(t).at(-1);
   scheme.forEach((letter, i) => {
@@ -343,7 +373,12 @@ export function checkSectionLyrics(lines: readonly LyricLine[], text: readonly s
     const a = lastWord(text[first]!);
     const b = lastWord(text[i]!);
     if (!a || !b || !pronounce(a) || !pronounce(b)) return;
-    if (!wordsRhyme(a, b)) {
+    if (dictionaryKey(a) === dictionaryKey(b)) {
+      problems.push({
+        line: i,
+        message: `Lines ${first + 1} and ${i + 1} must rhyme, but both end on the same word, "${b}": a word may not rhyme with itself. Rewrite line ${i + 1}, or both lines, so they end on two different words that rhyme.`,
+      });
+    } else if (!wordsRhyme(a, b)) {
       problems.push({
         line: i,
         message: `Lines ${first + 1} and ${i + 1} must rhyme, but their last words "${a}" and "${b}" do not (a rhyme has the same vowel sound and a similar ending, and is not the same word). Rewrite line ${i + 1}, or both lines, so they end on rhyming words.`,

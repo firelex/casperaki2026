@@ -48,6 +48,7 @@ import { generatePatterns } from '../patterns/index.js';
 import { selectInstruments } from '../selection/index.js';
 import { generateSongStructure } from '../structure/index.js';
 import { writeVocals } from '../vocals/index.js';
+import { vocalMelodyShownIn } from '../vocals/vocal-melody.js';
 import { applyTrackEditsToSelection, recordedDrumSounds, recordedTrackEdits } from '../edits/recorded.js';
 import { drumKit, DRUM_SOUNDS_DETAIL } from '../drums/kit.js';
 
@@ -279,9 +280,11 @@ export function lowerToSong(inputs: LowerInputs): Song {
   } = inputs;
 
   const arrangement: Record<string, SegmentPayload> = {};
-  const vocalSegmentsByName = new Map(vocals.segments.map((s) => [s.segmentName, s]));
-  const backing1ByName = new Map((vocals.backings ?? []).map((s) => [s.segmentName, s]));
-  const backing2ByName = new Map((vocals.backings2 ?? []).map((s) => [s.segmentName, s]));
+  // A hidden vocal melody (generator param vocalMelody: false): the vocal tracks are defined but empty everywhere.
+  const shown = vocalMelodyShownIn(params.params);
+  const vocalSegmentsByName = new Map(shown ? vocals.segments.map((s) => [s.segmentName, s]) : []);
+  const backing1ByName = new Map(shown ? (vocals.backings ?? []).map((s) => [s.segmentName, s]) : []);
+  const backing2ByName = new Map(shown ? (vocals.backings2 ?? []).map((s) => [s.segmentName, s]) : []);
   const patternSegmentsByName = new Map(patterns.segments.map((s) => [s.segmentName, s]));
   const activityByName = new Map(
     selection.segments.map((s) => [s.segmentName, s.activeLanes]),

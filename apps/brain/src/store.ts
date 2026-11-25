@@ -91,6 +91,27 @@ export interface MixDismissal {
   readonly dismissedAt: string;
 }
 
+/** A background task on a song (src/tasks/tasks.ts): its song follows the project when saves move it. */
+export type TaskKind = 'writeLyrics';
+export type TaskState = 'running' | 'ready' | 'done' | 'failed';
+
+export interface TaskRow {
+  readonly id: string;
+  readonly ownerId: string;
+  /** The project's current song. */
+  readonly songId: string;
+  readonly kind: TaskKind;
+  readonly state: TaskState;
+  /** The song as it was when the task started (canonical JSON). */
+  readonly input: string;
+  /** The task's result (ready and done), its own JSON shape per kind. */
+  readonly result: unknown;
+  /** Why it failed. */
+  readonly message: string | null;
+  readonly startedAt: string;
+  readonly finishedAt: string | null;
+}
+
 export interface SongsStore {
   put(input: { id: string; song: Song; canonical: string; hash: string; createdAt: string }): void;
   get(id: string): StoredSong | undefined;
@@ -126,6 +147,18 @@ export interface SongsStore {
   listPatternReviews(): PatternReview[];
   setPatternReview(review: PatternReview): void;
   clearPatternReview(proposalId: string): void;
+  insertTask(input: { id: string; ownerId: string; songId: string; kind: TaskKind; input: string; startedAt: string }): void;
+  getTask(ownerId: string, id: string): TaskRow | undefined;
+  /** The owner's tasks on projects they still have: unfinished ones, and the rest finished at or after `since`;
+   *  newest first, each with its project's title. */
+  listTasks(ownerId: string, since: string): (TaskRow & { readonly title: string })[];
+  /** Every running task (resumed when the brain starts). */
+  listRunningTasks(): TaskRow[];
+  /** The owner's running or ready task of this kind on this song. */
+  activeTask(ownerId: string, songId: string, kind: TaskKind): TaskRow | undefined;
+  /** Sets a task's state (with its result, failure message and finish time; null clears them). */
+  setTaskState(id: string, update: { state: TaskState; result: unknown; message: string | null; finishedAt: string | null; startedAt?: string }): void;
+  deleteTask(id: string): void;
   close(): void;
 }
 
@@ -164,6 +197,19 @@ const SONGS_SCHEMA = `
     dismissed_at TEXT NOT NULL,
     PRIMARY KEY (genre, change_key)
   );
+  CREATE TABLE IF NOT EXISTS tasks (
+    id          TEXT PRIMARY KEY,
+    owner_id    TEXT NOT NULL,
+    song_id     TEXT NOT NULL,
+    kind        TEXT NOT NULL,
+    state       TEXT NOT NULL CHECK (state IN ('running', 'ready', 'done', 'failed')),
+    input       TEXT NOT NULL,
+    result      TEXT,
+    message     TEXT,
+    started_at  TEXT NOT NULL,
+    finished_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS tasks_owner_song ON tasks (owner_id, song_id);
   CREATE TABLE IF NOT EXISTS pattern_reviews (
     proposal_id TEXT PRIMARY KEY,
     status      TEXT NOT NULL CHECK (status IN ('approved', 'rejected')),
@@ -228,6 +274,7 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
        FROM projects p JOIN songs s ON s.id = p.song_id
       WHERE p.mix_overrides IS NOT NULL ORDER BY p.mix_updated_at DESC`,
   );
+  const moveTasksStmt = db.prepare(`UPDATE tasks SET song_id = ? WHERE owner_id = ? AND song_id = ?`);
   const moveProject = db.transaction(
     (input: { ownerId: string; fromSongId: string; toSongId: string; updatedAt: string }): boolean => {
       const from = getProjectStmt.get(input.ownerId, input.fromSongId) as ProjectDbRow | undefined;
@@ -247,6 +294,8 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
       // The Pro-mode mix moves with the project.
       setMixStmt.run(from.mix_overrides, from.mix_updated_at, input.ownerId, input.toSongId);
       setArtworkStmt.run(from.artwork_state, from.artwork_task, from.artwork_detail, input.ownerId, input.toSongId);
+      // Background tasks follow the project.
+      moveTasksStmt.run(input.toSongId, input.ownerId, input.fromSongId);
       return true;
     },
   );
@@ -374,10 +423,78 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     listDrawingArtwork() {
       return (drawingArtworkStmt.all() as ProjectDbRow[]).map(toProjectRow);
     },
+    insertTask({ id, ownerId, songId, kind, input, startedAt }) {
+      db.prepare(`INSERT INTO tasks (id, owner_id, song_id, kind, state, input, started_at) VALUES (?, ?, ?, ?, 'running', ?, ?)`).run(id, ownerId, songId, kind, input, startedAt);
+    },
+    getTask(ownerId, id) {
+      const row = db.prepare(`SELECT * FROM tasks WHERE owner_id = ? AND id = ?`).get(ownerId, id) as TaskDbRow | undefined;
+      return row ? toTaskRow(row) : undefined;
+    },
+    listTasks(ownerId, since) {
+      const rows = db
+        .prepare(
+          `SELECT t.*, p.title FROM tasks t JOIN projects p ON p.owner_id = t.owner_id AND p.song_id = t.song_id
+            WHERE t.owner_id = ? AND (t.state IN ('running', 'ready') OR t.finished_at >= ?)
+            ORDER BY t.started_at DESC`,
+        )
+        .all(ownerId, since) as (TaskDbRow & { title: string })[];
+      return rows.map((r) => ({ ...toTaskRow(r), title: r.title }));
+    },
+    listRunningTasks() {
+      return (db.prepare(`SELECT * FROM tasks WHERE state = 'running' ORDER BY started_at`).all() as TaskDbRow[]).map(toTaskRow);
+    },
+    activeTask(ownerId, songId, kind) {
+      const row = db
+        .prepare(`SELECT * FROM tasks WHERE owner_id = ? AND song_id = ? AND kind = ? AND state IN ('running', 'ready') ORDER BY started_at DESC LIMIT 1`)
+        .get(ownerId, songId, kind) as TaskDbRow | undefined;
+      return row ? toTaskRow(row) : undefined;
+    },
+    setTaskState(id, { state, result, message, finishedAt, startedAt }) {
+      const r = db
+        .prepare(`UPDATE tasks SET state = ?, result = ?, message = ?, finished_at = ?, started_at = COALESCE(?, started_at) WHERE id = ?`)
+        .run(state, result === null || result === undefined ? null : JSON.stringify(result), message, finishedAt, startedAt ?? null, id);
+      if (r.changes === 0) throw new Error(`setTaskState: no task ${id}`);
+    },
+    deleteTask(id) {
+      db.prepare(`DELETE FROM tasks WHERE id = ?`).run(id);
+    },
     close() {
       db.close();
     },
   } satisfies SongsStore;
+}
+
+interface TaskDbRow {
+  id: string;
+  owner_id: string;
+  song_id: string;
+  kind: string;
+  state: string;
+  input: string;
+  result: string | null;
+  message: string | null;
+  started_at: string;
+  finished_at: string | null;
+}
+
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics'];
+const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];
+
+function toTaskRow(row: TaskDbRow): TaskRow {
+  if (!TASK_KINDS.includes(row.kind as TaskKind)) throw new Error(`Task ${row.id}: unknown kind "${row.kind}".`);
+  if (!TASK_STATES.includes(row.state as TaskState)) throw new Error(`Task ${row.id}: unknown state "${row.state}".`);
+  return {
+    id: row.id,
+    ownerId: row.owner_id,
+    songId: row.song_id,
+    kind: row.kind as TaskKind,
+    state: row.state as TaskState,
+    input: row.input,
+    result: row.result === null ? null : JSON.parse(row.result),
+    message: row.message,
+    startedAt: row.started_at,
+    finishedAt: row.finished_at,
+  };
 }
 
 interface ProjectDbRow {

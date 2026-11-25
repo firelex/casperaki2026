@@ -110,13 +110,25 @@ export function lyricLines(bars: VocalBarsLike): LyricLine[] {
   return out;
 }
 
-/** Lines paired for rhyme (AABB; an odd last line rhymes with the one before): each line's rhyme group letter. */
+/** Each line's rhyme group letter (lines with the same letter rhyme; a letter used once is a line that need not rhyme).
+ *  Lines go in fours, ABCB: line 4 rhymes with line 2, lines 1 and 3 are free. A leftover three rhymes its first and
+ *  last line (ABA), a leftover two rhyme together (AA), a leftover single line is free. */
 export function rhymeScheme(lineCount: number): string[] {
   const letters: string[] = [];
-  for (let i = 0; i < lineCount; i++) {
-    const pair = Math.floor(i / 2);
-    const lastOdd = lineCount % 2 === 1 && i === lineCount - 1 && i > 0;
-    letters.push(String.fromCharCode(65 + (lastOdd ? pair - 1 : pair)));
+  let next = 0;
+  const fresh = () => String.fromCharCode(65 + next++);
+  for (let g = 0; g < lineCount; g += 4) {
+    const size = Math.min(4, lineCount - g);
+    if (size === 4) {
+      const [a, b, c] = [fresh(), fresh(), fresh()];
+      letters.push(a, b, c, b);
+    } else if (size === 3) {
+      const [a, b] = [fresh(), fresh()];
+      letters.push(a, b, a);
+    } else if (size === 2) {
+      const a = fresh();
+      letters.push(a, a);
+    } else letters.push(fresh());
   }
   return letters;
 }

@@ -13,6 +13,7 @@ import { userChorusOf } from '../hum/user-chorus.js';
 import { orchestrate } from '../orchestrate/index.js';
 import { lyricLines, type LyricLine } from '../vocals/lyric-lines.js';
 import { MELODY_VARIANTS_PARAM, melodyVariantsOf } from '../vocals/melody-variants.js';
+import { VOCAL_MELODY_PARAM, vocalMelodyShownIn } from '../vocals/vocal-melody.js';
 import { WRITTEN_LYRICS_PARAM, writtenLyricsOf, type WrittenLyrics } from '../vocals/written-lyrics.js';
 import { generatorParams, spliceTrack, TrackEditError } from './track-edits.js';
 
@@ -84,13 +85,53 @@ export function paramsWithLyrics(params: GenerateParams, lyrics: WrittenLyrics):
   return withInner(params, inner);
 }
 
+/** Whether the song's vocal tracks show their melody (see vocals/vocal-melody.ts). */
+export function vocalMelodyShown(song: Song): boolean {
+  return vocalMelodyShownIn(generatorParams(song).params);
+}
+
+/** The generator params with the vocal melody shown (the param dropped). */
+function paramsShowingMelody(params: GenerateParams): GenerateParams {
+  const inner = { ...(params.params ?? {}) };
+  delete inner[VOCAL_MELODY_PARAM];
+  return withInner(params, inner);
+}
+
+/** The working song with the regenerated vocal tracks in every section: each on where the generator has it on
+ *  (by section name, else by a section of the same type). */
+function showVocals(working: Song, regenerated: Song): Song {
+  let song = working;
+  for (const track of vocalTracks(regenerated)) {
+    const on = (name: string): boolean => {
+      const own = regenerated.arrangement[name];
+      if (own) return own.instruments[track] === true;
+      const same = regenerated.songStructure.find((s) => segmentType(s.name) === segmentType(name));
+      return same ? regenerated.arrangement[same.name]!.instruments[track] === true : false;
+    };
+    song = spliceTrack(song, regenerated, track, new Set(song.songStructure.map((s) => s.name).filter(on)));
+  }
+  return song;
+}
+
+/** Write melody: the working song's vocal tracks show the melody the generator chose for the song (every section).
+ *  An error when they show it already. */
+export function writeMelody(working: Song): Song {
+  if (vocalMelodyShown(working)) throw new TrackEditError(409, 'melody_shown', 'The song has a vocal melody already.');
+  const params = paramsShowingMelody(generatorParams(working));
+  return recordParams(showVocals(working, orchestrate(params)), params);
+}
+
 /**
  * The working song with new words for some sections (generator names): recorded in the generator block, and the
- * vocal tracks regenerated in every working section of those sections' types.
+ * vocal tracks regenerated in every working section of those sections' types. Words are written for the melody, so a
+ * hidden melody is shown (every section).
  */
 export function applyWrittenLyrics(working: Song, lyrics: WrittenLyrics): Song {
-  const params = paramsWithLyrics(generatorParams(working), lyrics);
+  const hidden = !vocalMelodyShown(working);
+  const withLyrics = paramsWithLyrics(generatorParams(working), lyrics);
+  const params = hidden ? paramsShowingMelody(withLyrics) : withLyrics;
   const regenerated = orchestrate(params);
+  if (hidden) return recordParams(showVocals(working, regenerated), params);
   const types = new Set(Object.keys(lyrics).map(segmentType));
   let song = working;
   for (const track of vocalTracks(regenerated)) {
