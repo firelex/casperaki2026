@@ -4,7 +4,6 @@
 // running), a lost job, a restart that finds the job lost; Write lyrics and Write melody refuse while a song is being
 // sung.
 
-import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -16,12 +15,13 @@ import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema'
 
 import { createApp } from '../src/bootstrap.js';
 import { DEV_OWNER_ID } from '../src/routes/songs.js';
-import { encodeTake, TAKE_GAIN_DB } from '../src/sing/singTask.js';
+import { integratedLoudness, integratedLoudnessOf } from '../src/audio/loudness.js';
+import { encodeTake, LEAD_TAKE_LUFS } from '../src/sing/singTask.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
-import { startFakeVocalsService, type FakeVocalsService } from './fakeVocalsService.js';
+import { startFakeVocalsService, toneWav, type FakeVocalsService } from './fakeVocalsService.js';
 
 interface Harness { url: string; store: SongsStore; tasks: BackgroundTasks; stop: () => Promise<void> }
 interface StepJson { id: string; label: string; state: string; text?: string; files?: string[]; numbers?: Record<string, number> }
@@ -180,6 +180,15 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect((await fetch(`${h.url}/api/tasks/${taskId}/files/other/chorus1_soulx.wav`)).status).toBe(400);
     // Copies are written whole under their name: no temporary file is left.
     expect(readdirSync(join(dir, 'files', taskId, 'sing')).some((f) => f.includes('.part-'))).toBe(false);
+
+    // The stored takes: the leads together at LEAD_TAKE_LUFS (the approved demo's level), every take by one gain (the
+    // fake service sends the same tone for every take, so a backing comes out as loud as a lead).
+    const takes = (h.store.getTask(DEV_OWNER_ID, taskId)!.result as { takes: { track: string; sha256: string }[] }).takes;
+    const path = (t: { sha256: string }) => join(dir, 'takes', `${t.sha256}.ogg`);
+    const leads = takes.filter((t) => t.track === 'Vocal');
+    expect(await integratedLoudnessOf('ffmpeg', leads.map(path), 'leads')).toBeCloseTo(LEAD_TAKE_LUFS, 0);
+    const backing = takes.find((t) => t.track !== 'Vocal')!;
+    expect(await integratedLoudness('ffmpeg', path(backing))).toBeCloseTo(await integratedLoudness('ffmpeg', path(leads[0]!)), 0);
   });
 
   it('fails on apply when a sung section changed (a chord in chorus1)', async () => {
@@ -362,34 +371,13 @@ describe('the Sing task', { timeout: 60_000 }, () => {
   });
 });
 
-describe('stored takes get the headroom gain', () => {
-  it(`a take is stored ${-TAKE_GAIN_DB} dB below the service's WAV (-3 dB: the unmastered render must not clip)`, async () => {
-    expect(TAKE_GAIN_DB).toBe(-3);
+describe('encodeTake', () => {
+  it('stores a take as Ogg Vorbis with the gain it is given', async () => {
     const tmp = mkdtempSync(join(tmpdir(), 'take-gain-'));
     try {
-      // 1 s of a 440 Hz sine at half scale, 44.1 kHz mono 16-bit.
-      const rate = 44100;
-      const data = Buffer.alloc(rate * 2);
-      for (let i = 0; i < rate; i++) data.writeInt16LE(Math.round(0.5 * 32767 * Math.sin((2 * Math.PI * 440 * i) / rate)), i * 2);
-      const head = Buffer.alloc(44);
-      head.write('RIFF', 0, 'ascii');
-      head.writeUInt32LE(36 + data.length, 4);
-      head.write('WAVEfmt ', 8, 'ascii');
-      head.writeUInt32LE(16, 16);
-      head.writeUInt16LE(1, 20);
-      head.writeUInt16LE(1, 22);
-      head.writeUInt32LE(rate, 24);
-      head.writeUInt32LE(rate * 2, 28);
-      head.writeUInt16LE(2, 32);
-      head.writeUInt16LE(16, 34);
-      head.write('data', 36, 'ascii');
-      head.writeUInt32LE(data.length, 40);
-      writeFileSync(join(tmp, 'in.wav'), Buffer.concat([head, data]));
-      await encodeTake('ffmpeg', join(tmp, 'in.wav'), join(tmp, 'out.ogg'));
-      const pcm = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', join(tmp, 'out.ogg'), '-f', 'f32le', '-ac', '1', '-']);
-      let peak = 0;
-      for (let i = 0; i + 4 <= pcm.length; i += 4) peak = Math.max(peak, Math.abs(pcm.readFloatLE(i)));
-      expect(20 * Math.log10(peak / 0.5)).toBeCloseTo(-3, 0);
+      writeFileSync(join(tmp, 'in.wav'), toneWav(2));
+      await encodeTake('ffmpeg', join(tmp, 'in.wav'), join(tmp, 'out.ogg'), -5);
+      expect((await integratedLoudness('ffmpeg', join(tmp, 'out.ogg'))) - (await integratedLoudness('ffmpeg', join(tmp, 'in.wav')))).toBeCloseTo(-5, 0);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }

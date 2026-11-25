@@ -11,7 +11,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyAceLayer, orchestrate } from '@casperaki/arrangement';
 import { vocalTakeFingerprint } from '@casperaki/song-schema';
 
-import { ACE_LAYER_LUFS, aceCaption, coveredSections, integratedLoudness, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
+import { ACE_LAYER_LUFS, aceCaption, coveredSections, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
+import { integratedLoudness } from '../src/audio/loudness.js';
 import type { ServiceResult, VocalsClient } from '../src/sing/vocalsClient.js';
 import type { TaskJobs, TaskStep } from '../src/store.js';
 import { toneWav } from './fakeVocalsService.js';

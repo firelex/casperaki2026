@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { SungMelodySchema, type SungMelody, type SungTake } from '@casperaki/arrangement';
 import { SUNG_TAKE_KINDS, vocalTakeFingerprint, type Song } from '@casperaki/song-schema';
 
+import { integratedLoudnessOf } from '../audio/loudness.js';
 import type { TaskJobs, TaskStep } from '../store.js';
 import { planSinging, type SingPlan } from './plan.js';
 import type { ServiceStep, VocalsClient } from './vocalsClient.js';
@@ -314,18 +315,17 @@ export function wavSeconds(buf: Buffer, name: string): number {
 }
 
 /**
- * The gain every stored vocal take gets (dB), applied once, here, where every take of the song passes (`storeTakes`):
- * the service levels the takes against the chorus take near full scale, and the vocal lanes play at unity on the vocals
- * bus with reverb and delay sends on top, so without it the unmastered render clips where the vocals peak. The takes
- * keep their levels relative to each other. Measured on the end-to-end song of 2026-11-25 (EDM, 128 bpm): samples at
- * or above -0.1 dBFS in the unmastered render 173 -> 26, in the vocals alone 12 -> 2; the vocals bus's compressor
- * (Logical4) makes up most of the lower input, so the rest is for the bus's output level (mix-config), not the takes.
+ * The lead's loudness as stored (EBU R128 integrated, over all lead takes of a song together), the level of the
+ * owner-approved demo (2026-11-25: its lead track measured -16.8 LUFS). It matters for more than level: the vocal
+ * sends (reverb, delay) are fed before the vocals bus's compressor, so a hotter take is pulled down by the compressor
+ * while its reverb is not; takes 6 dB hotter than the demo sounded too wet and no louder. One gain for every take of
+ * the song (backings too), so the takes keep their levels to each other.
  */
-export const TAKE_GAIN_DB = -3;
+export const LEAD_TAKE_LUFS = -16.8;
 
-/** A take's WAV encoded as Ogg Vorbis at TAKE_GAIN_DB. */
-export function encodeTake(ffmpegBin: string, src: string, dest: string): Promise<void> {
-  const args = ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-af', `volume=${TAKE_GAIN_DB}dB`, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest];
+/** A take's WAV encoded as Ogg Vorbis, `gainDb` louder (or quieter). */
+export function encodeTake(ffmpegBin: string, src: string, dest: string, gainDb: number): Promise<void> {
+  const args = ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-af', `volume=${gainDb.toFixed(2)}dB`, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest];
   return new Promise((resolve, reject) => {
     execFile(ffmpegBin, args, (err, _out, stderr) => {
       if (err) reject(new Error(`ffmpeg could not encode ${src}: ${stderr.trim() || err.message}`));
@@ -345,14 +345,20 @@ async function storeTakes(ctx: SingContext, plan: SingPlan, sung: readonly { seg
   if (extra.length > 0) throw new Error(`the vocal service's sing.json has takes nobody asked for: ${extra.join(', ')}`);
 
   mkdirSync(ctx.takesDir, { recursive: true });
+  const fileOf = (t: { file: string }) => join(ctx.filesDir, SING_STAGE, t.file);
+  for (const t of sung) {
+    if (!existsSync(fileOf(t))) throw new Error(`the take ${t.file} (${t.track} in ${t.segment}) was not among the files the vocal service's steps made`);
+  }
+  const leads = sung.filter((t) => t.track === 'Vocal');
+  const leadLufs = await integratedLoudnessOf(ctx.ffmpegBin, leads.map(fileOf), "the song's lead takes");
+  const gainDb = LEAD_TAKE_LUFS - leadLufs;
   const takes: SungTake[] = [];
   for (const t of sung) {
     if (ctx.signal.aborted) throw new CancelledError();
-    const src = join(ctx.filesDir, SING_STAGE, t.file);
-    if (!existsSync(src)) throw new Error(`the take ${t.file} (${t.track} in ${t.segment}) was not among the files the vocal service's steps made`);
+    const src = fileOf(t);
     const durationSeconds = wavSeconds(readFileSync(src), t.file);
     const tmp = join(ctx.takesDir, `.${ctx.taskId}-${SING_STAGE}-${t.file}.ogg`);
-    await encodeTake(ctx.ffmpegBin, src, tmp);
+    await encodeTake(ctx.ffmpegBin, src, tmp, gainDb);
     const sha256 = createHash('sha256').update(readFileSync(tmp)).digest('hex');
     const dest = join(ctx.takesDir, `${sha256}.ogg`);
     if (existsSync(dest)) unlinkSync(tmp);

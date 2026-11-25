@@ -20,6 +20,7 @@ import {
 } from '@casperaki/song-schema';
 
 import type { TaskJobs, TaskStep } from '../store.js';
+import { integratedLoudnessOf } from '../audio/loudness.js';
 import { CancelledError, followJob, wavSeconds, writeAtomic } from '../sing/singTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 
@@ -203,7 +204,7 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
 
   const takes = await log.run('clips', async () => {
     // One gain for the whole layer (measured over the whole song), so its sections keep their levels to each other.
-    const lufs = await integratedLoudness(ctx.ffmpegBin, layerPath);
+    const lufs = await integratedLoudnessOf(ctx.ffmpegBin, [layerPath], "ACE's part (nothing to add)");
     const gainDb = ACE_LAYER_LUFS - lufs;
     mkdirSync(ctx.takesDir, { recursive: true });
     const out: Array<{ segment: string; sha256: string; durationSeconds: number; fingerprint: string }> = [];
@@ -232,20 +233,6 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
 }
 
 const fmt = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, '0')}`;
-
-/** The integrated loudness (EBU R128, LUFS) of an audio file; an error for a silent one (ACE played nothing). */
-export function integratedLoudness(ffmpegBin: string, path: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    execFile(ffmpegBin, ['-hide_banner', '-nostats', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], { maxBuffer: 64 * 1024 * 1024 }, (err, _out, stderr) => {
-      if (err) return reject(new Error(`ffmpeg could not measure the loudness of ${path}: ${stderr.trim().split('\n').slice(-3).join(' ') || err.message}`));
-      const m = /Integrated loudness:\s*I:\s*(-?[\d.]+|-inf) LUFS/u.exec(stderr);
-      if (!m) return reject(new Error(`ffmpeg printed no integrated loudness for ${path}`));
-      const lufs = m[1] === '-inf' ? -Infinity : Number(m[1]);
-      if (!(lufs > -70)) return reject(new Error(`ACE's part is silent (${m[1]} LUFS): nothing to add`));
-      resolve(lufs);
-    });
-  });
-}
 
 /** One section's clip of the layer as Ogg Vorbis: `duration` seconds from `start`, `gainDb` louder (or quieter),
  *  silent outside `keep` when given. */
