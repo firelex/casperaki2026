@@ -44,9 +44,9 @@ def test_a_phrase_last_note_is_sung_into_the_rest_after_it():
     # A long rest: one beat more, no more.
     ph = soulx.phrases([n(0, 1, 60), n(8, 1, 62)], BPM, 16)
     assert ph[0]["duration"] == pytest.approx([2 * 0.5])
-    # Less than BREATH_BEATS to the next phrase: unchanged (and a rest that short does not split phrases anyway).
+    # A rest that short does not split phrases: the note is simply sung up to the next one (legato).
     ph = soulx.phrases([n(0, 1, 60), n(1.4, 1, 62)], BPM, 16)
-    assert ph[0]["duration"][1] == pytest.approx(0.4 * 0.5)
+    assert ph[0]["duration"][0] == pytest.approx(1.4 * 0.5) and "<SP>" not in ph[0]["phoneme"]
 
 
 def test_a_phrase_final_s_or_z_is_sung_as_its_own_short_s():
@@ -61,3 +61,11 @@ def test_a_phrase_final_s_or_z_is_sung_as_its_own_short_s():
     # The last note: one beat into the rest (CODA_BEATS), its last SIBILANT_S the "s".
     assert p["duration"][2] == pytest.approx(2 * 0.5 - soulx.SIBILANT_S)
     assert p["duration"][3] == pytest.approx(soulx.SIBILANT_S)
+
+
+def test_inside_a_phrase_every_note_is_sung_up_to_the_next():
+    """Marigold Static's chorus rhythm: "Ma-" (1 beat), half a beat of rest, "ri-" (half), "gold" (1): no gap inside."""
+    notes = [n(0, 1, 60, "ma", ("m", "aa1")), n(1.5, 0.5, 62, "ri", ("r", "ih0")), n(2, 1, 64, "gold", ("g", "ow1", "l", "d"))]
+    p = soulx.phrases(notes, BPM, 16)[0]
+    assert "<SP>" not in p["phoneme"]
+    assert p["duration"][:2] == pytest.approx([1.5 * 0.5, 0.5 * 0.5])

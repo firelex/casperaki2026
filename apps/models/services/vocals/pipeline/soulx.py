@@ -57,6 +57,11 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
         ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]),
                    "midi": int(n["midi"]), "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
     groups = phrase_groups(ns)
+    # Inside a phrase every note is sung up to the next one (legato): a rest shorter than SPLIT_REST_BEATS between two
+    # notes, even inside a word ("Ma- . ri-gold" in Marigold Static's chorus), was sung as a gap (owner, 2026-11-25).
+    for g in groups:
+        for a, b in zip(g, g[1:]):
+            a["end"] = max(a["end"], b["start"])
     sib_beats = SIBILANT_S / beat_s
     for gi, g in enumerate(groups):
         nxt = groups[gi + 1][0]["start"] if gi + 1 < len(groups) else float(section_beats)
