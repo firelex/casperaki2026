@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { orchestrate } from '../src/index.js';
+import { generatedSections, orchestrate } from '../src/index.js';
 
 describe('explicit structure (params.structure)', () => {
   const base = { genre: 'brightPop', key: 'C', bpm: 120, seed: 'explicit-1' };
@@ -16,5 +16,10 @@ describe('explicit structure (params.structure)', () => {
   });
   it('rejects unknown section types', () => {
     expect(() => orchestrate({ ...base, params: { structure: [{ name: 'solo1', bars: 4 }] } })).toThrow(/unknown section type/);
+  });
+  it('generatedSections: the sections orchestrate makes, without the rest of the song', () => {
+    for (const params of [base, { ...base, seed: 'other-2', genre: 'schlager' }, { ...base, params: { structure: [{ name: 'intro', bars: 4 }, { name: 'chorus1', bars: 12 }] } }]) {
+      expect(generatedSections(params)).toEqual(orchestrate(params).songStructure.map((s) => ({ name: s.name, bars: s.bars.length })));
+    }
   });
 });

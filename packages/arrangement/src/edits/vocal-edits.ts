@@ -187,11 +187,14 @@ export function newMelody(working: Song, type: string): NewMelody {
   const variants = melodyVariantsOf(params.params);
   const lyrics = Object.fromEntries(Object.entries(writtenLyricsOf(params.params)).filter(([name]) => segmentType(name) !== type));
   const before = vocalSignature(current, type);
+  // A sung melody of the type would stay on the lead whatever the variant (it replaces the lead's notes), so a new
+  // melody drops it, as new words do (applyWrittenLyrics); the type's sung takes then come out stale.
+  const unsung = paramsWithoutSung(params, new Set([type]));
   for (let v = (variants[type] ?? 0) + 1, tries = 0; tries < MELODY_TRIES; v++, tries++) {
-    const inner: Record<string, unknown> = { ...(params.params ?? {}), [MELODY_VARIANTS_PARAM]: { ...variants, [type]: v } };
+    const inner: Record<string, unknown> = { ...(unsung.params ?? {}), [MELODY_VARIANTS_PARAM]: { ...variants, [type]: v } };
     if (Object.keys(lyrics).length > 0) inner[WRITTEN_LYRICS_PARAM] = lyrics;
     else delete inner[WRITTEN_LYRICS_PARAM];
-    const next = withInner(params, inner);
+    const next = withInner(unsung, inner);
     const generated = orchestrate(next);
     if (vocalSignature(generated, type) === before) continue;
     return { song: recordParams(spliceSectionsOfType(working, generated, type), next), generated, sections: sungSections(generated).filter((s) => s.type === type).map((s) => s.name) };

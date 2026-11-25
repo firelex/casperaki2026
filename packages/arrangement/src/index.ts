@@ -285,6 +285,7 @@ export {
   ORCHESTRATOR_NAME,
   ORCHESTRATOR_VERSION,
   arrangeParts,
+  generatedSections,
   lowerToSong,
   orchestrate,
   type LowerInputs,

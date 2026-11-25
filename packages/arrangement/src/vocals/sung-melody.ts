@@ -52,6 +52,12 @@ export function attachSungMelody(segment: VocalSegment, notes: readonly SungNote
     const barIndex = Math.floor(n.start / BEATS_PER_BAR + EPS);
     const bar = bars[barIndex];
     if (!bar) throw new Error(`sung melody for ${segment.segmentName}: a note at beat ${n.start} falls outside the section`);
+    const sectionBeats = segment.bars.length * BEATS_PER_BAR;
+    if (n.start + n.duration > sectionBeats + EPS) {
+      throw new Error(
+        `sung melody for ${segment.segmentName}: a note at beat ${n.start} lasting ${n.duration} beats runs past the section end (beat ${sectionBeats})`,
+      );
+    }
     const next = sorted[i + 1];
     const endOfPhrase = next === undefined || next.start - (n.start + n.duration) >= 1 - EPS;
     const ev: VocalNoteEvent = {

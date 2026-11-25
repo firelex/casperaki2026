@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isTakeFresh, type Song } from '@casperaki/song-schema';
 
-import { applySungVocals, applySungVocalsOver, applyWrittenLyrics, laneWordsOn, orchestrate, sungSections, type SungMelody, type SungTake } from '../src/index.js';
+import { applySungVocals, applySungVocalsOver, applyWrittenLyrics, laneWordsOn, newMelody, orchestrate, sungSections, type SungMelody, type SungTake } from '../src/index.js';
 
 const PARAMS = { genre: 'brightPop', key: 'C', bpm: 110, seed: 'a' } as const;
 const BARS = (song: Song, section: string, track: string) => song.arrangement[section]!.overrides[track]!.bars!;
@@ -51,6 +51,12 @@ describe('sungMelody param', () => {
   it('throws naming an unknown section', () => {
     expect(() => orchestrate({ ...PARAMS, params: { sungMelody: { nope9: melody[chorus] } } })).toThrow(/nope9/);
   });
+
+  it('throws naming the section when a note runs past its end', () => {
+    const bars = base.songStructure.find((s) => s.name === chorus)!.bars.length;
+    const over = [{ start: bars * 4 - 1, duration: 2, midi: 60, word: 'sky', phonemes: ['s', 'k', 'ay1'] }];
+    expect(() => orchestrate({ ...PARAMS, params: { sungMelody: { [chorus]: over } } })).toThrow(new RegExp(`${chorus}.*past the section end`));
+  });
 });
 
 describe('applySungVocals', () => {
@@ -67,6 +73,24 @@ describe('applySungVocals', () => {
     const lines = sec.lines.map((l) => [...Array.from({ length: l.length - 1 }, () => 'la'), 'day'].join(' '));
     const changed = applyWrittenLyrics(second, { [chorus]: lines });
     expect(isTakeFresh(changed, changed.aiArtifacts[0]!)).toBe(false);
+  });
+});
+
+describe('newMelody after Sing', () => {
+  it('drops the type\'s sung melody, so a new chorus melody is found and the chorus takes go stale', () => {
+    const sung = applySungVocals(base, { melody, takes: [take(chorus, 'Vocal', 'a')] });
+    const out = newMelody(sung, 'chorus');
+    expect(out.song.generator!.params.params).not.toHaveProperty('sungMelody');
+    expect(notesOf(out.song, chorus, 'Vocal')).not.toEqual(notesOf(sung, chorus, 'Vocal'));
+    expect(isTakeFresh(out.song, out.song.aiArtifacts[0]!)).toBe(false);
+  });
+
+  it('keeps the sung melody of the other types', () => {
+    const verse = sungSections(base).map((s) => s.name).find((n) => n.startsWith('verse'))!;
+    const verseSung = notesOf(base, verse, 'Vocal').map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note, word: n.ev.fullWord!, phonemes: ['l', 'aa1'] }));
+    const sung = applySungVocals(base, { melody: { ...melody, [verse]: verseSung }, takes: [] });
+    const out = newMelody(sung, 'chorus');
+    expect(Object.keys((out.song.generator!.params.params as { sungMelody: object }).sungMelody)).toEqual([verse]);
   });
 });
 
