@@ -31,15 +31,16 @@ const POP_PARAMS: GenerateParams = {
 };
 
 // docs/58 lane model — guitar selection is probabilistic per genre, and the
-// canonical brightPop slice no longer rosters a Guitar. The ballad
-// vertical-slice seed deterministically rosters an acoustic Guitar with
-// chord + virtualGuitarist + per-string strum events, so the integration
-// tests below run against it.
+// canonical brightPop slice no longer rosters a Guitar. This ballad seed
+// rosters an acoustic Guitar that plays the legacy Virtual Guitarist bank
+// (chord + virtualGuitarist + per-string strum events; approved pattern-lab
+// guitar styles take the lane on other seeds), so the integration tests below
+// run against it.
 const GUITAR_PARAMS: GenerateParams = {
   genre: 'ballad',
   key: 'C',
   bpm: 75,
-  seed: 'ballad-vertical-slice',
+  seed: 'ballad-guitar-2',
 };
 
 /** Segment names where the Guitar lane is active in the lowered envelope. */
@@ -446,10 +447,10 @@ describe('toEngineFixture — Guitar production wiring', () => {
     for (const e of chordEntries) {
       expect(e.type).toMatch(/^chord(Long|Short)Strum(Up|Down)$/);
     }
-    // The canonical brightPop slice's chord vocabulary is
-    // [C, Dm, F, G, A#9]; the chord-strum pool must cover the brain's emission.
-    const chords = new Set(chordEntries.map((e) => e.chord));
-    expect(chords.has('C')).toBe(true);
+    // The pool's chords are chords the song plays: each one's root is a root of the song's chords.
+    const root = (c: string) => /^[A-G][#b]?/u.exec(c)?.[0];
+    const songRoots = new Set(song.songStructure.flatMap((seg) => seg.bars.flatMap((b) => b.chords.map((c) => root(String(c))))));
+    for (const e of chordEntries) expect(songRoots.has(root(e.chord)), e.chord).toBe(true);
   });
 
   it('lowers virtualGuitarist events into engine overrides on a Guitar-active segment', () => {
