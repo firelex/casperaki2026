@@ -1,12 +1,12 @@
 // Sung vocal takes → an `audioClips` engine instrument (docs/superpowers/specs/2026-11-24-sung-vocals-design.md §4).
 //
 // An audioClips instrument is a general audio-clip lane: each clip names its own audio file and plays once from
-// its section's start (sung vocals today; ACE-Step tracks later). Every `soulx-vocal` artifact attached to
+// its section's start (sung vocals today; ACE-Step tracks later). Every sung-take artifact (`yue2-vocal` or `soulx-vocal`) attached to
 // { segment, instrument: 'Vocal' } becomes one clip, read from the takes directory (CASPERAKI_VOCAL_TAKES_DIR,
 // passed in as `vocalTakesDir`). The brain puts on the song exactly the stored takes that match its sections now
 // (takes are found by fingerprint, not saved with the song). No takes: nothing (the Vocal track stays silent).
 
-import type { Song } from '@casperaki/song-schema';
+import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
 
 export const AUDIO_CLIPS_TYPE = 'audioClips';
 const TAKE_URI = /^vocal-take:([0-9a-f]{64})\.ogg$/u;
@@ -20,28 +20,41 @@ export interface AudioClip {
   readonly durationSec: number;
 }
 
-/** One audioClips instrument per vocal track that has takes (the lead "Vocal" first, then the backing tracks in the
- *  order their takes appear), each its own lane. */
+/** Effect sends (dB, -100 = no send) carried in the instrument JSON for the engine to honour. */
+export const DRY_SENDS = { reverb: -100, delay: -100, chorus: -100 } as const;
+export const WET_SENDS = { reverb: -10, delay: -18, chorus: -100 } as const;
+
+/** Up to two audioClips instruments per vocal track that has fresh takes: `<track>` (dry, YuE2 takes) and
+ *  `<track> wet` (SoulX takes, with reverb and delay). The lead "Vocal" comes first, then the other tracks in the
+ *  order their takes appear; dry before wet. The wet lane name has no parentheses because the mixer's baseName
+ *  strips a trailing "(...)". Takes that no longer match the song's chords and words are left out. */
 export function buildVocalClipsInsts(
   song: Song,
   o: { vocalTakesDir: string | undefined; firstId: number; firstFilenameIndex: number },
 ): { filename: string; json: Record<string, unknown> }[] {
-  const takes = song.aiArtifacts.filter((a) => a.kind === 'soulx-vocal' && a.attachedTo.scope === 'segment' && a.attachedTo.instrument);
-  const tracks = [...new Set(takes.map((a) => (a.attachedTo as { instrument: string }).instrument))].sort((a, b) => (a === 'Vocal' ? -1 : b === 'Vocal' ? 1 : 0));
-  return tracks.map((track, i) => {
+  const takes = song.aiArtifacts.filter(
+    (a) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) && a.attachedTo.scope === 'segment' && a.attachedTo.instrument && isTakeFresh(song, a),
+  );
+  const trackOf = (a: (typeof takes)[number]) => (a.attachedTo as { instrument: string }).instrument;
+  const tracks = [...new Set(takes.map(trackOf))].sort((a, b) => (a === 'Vocal' ? -1 : b === 'Vocal' ? 1 : 0));
+  const lanes = tracks.flatMap((track) => [
+    { track, name: track, kind: 'yue2-vocal', sends: DRY_SENDS },
+    { track, name: `${track} wet`, kind: 'soulx-vocal', sends: WET_SENDS },
+  ]).filter((l) => takes.some((a) => trackOf(a) === l.track && a.kind === l.kind));
+  return lanes.map((lane, i) => {
     const clips: AudioClip[] = [];
     for (const seg of song.songStructure) {
-      const a = takes.find((x) => x.attachedTo.scope === 'segment' && x.attachedTo.segment === seg.name && x.attachedTo.instrument === track);
+      const a = takes.find((x) => x.attachedTo.scope === 'segment' && x.attachedTo.segment === seg.name && trackOf(x) === lane.track && x.kind === lane.kind);
       if (!a) continue;
       const m = TAKE_URI.exec(a.output.uri);
-      if (!m) throw new Error(`engine-adapter: the ${track} take of ${seg.name} has an unknown uri "${a.output.uri}" (want vocal-take:<sha256>.ogg)`);
-      if (a.output.durationSeconds === undefined) throw new Error(`engine-adapter: the ${track} take of ${seg.name} has no durationSeconds`);
+      if (!m) throw new Error(`engine-adapter: the ${lane.track} take of ${seg.name} has an unknown uri "${a.output.uri}" (want vocal-take:<sha256>.ogg)`);
+      if (a.output.durationSeconds === undefined) throw new Error(`engine-adapter: the ${lane.track} take of ${seg.name} has no durationSeconds`);
       if (!o.vocalTakesDir) throw new Error('engine-adapter: the song has vocal takes but no takes directory was given (set CASPERAKI_VOCAL_TAKES_DIR)');
       clips.push({ segment: seg.name, key: `take-${m[1]}.ogg`, sourcePath: `${o.vocalTakesDir.replace(/\/$/u, '')}/${m[1]}.ogg`, durationSec: a.output.durationSeconds });
     }
     return {
       filename: `inst-${o.firstFilenameIndex + i}.json`,
-      json: { id: o.firstId + i, name: track, type: AUDIO_CLIPS_TYPE, lowLevelType: 'vocalsLaSinger', clips },
+      json: { id: o.firstId + i, name: lane.name, type: AUDIO_CLIPS_TYPE, lowLevelType: 'vocalsLaSinger', fxSends: lane.sends, clips },
     };
   });
 }
