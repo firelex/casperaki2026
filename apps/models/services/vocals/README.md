@@ -36,7 +36,6 @@ Weights (/mnt/d/casperaki-models):
 - `Soul-AILab__SoulX-Singer/{model.pt,model-svc.pt}`, `Soul-AILab__SoulX-Singer-Preprocess/rmvpe/rmvpe.pt`
 - `heartmula/mulacover_root/SymbolicTranscriptor/chord` (ChordNet checkpoints)
 - `viperx__bs-roformer-ep317-sdr12.9755`
-- torchaudio's MMS forced aligner (`MMS_FA`) downloads its weights on first use.
 
 ## Licences
 

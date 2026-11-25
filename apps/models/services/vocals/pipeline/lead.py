@@ -1,7 +1,8 @@
 """The lead stage: YuE2 sings each unit (one take per seed), ChordNet checks every take against our chords, and the
 best take that both matches our chords and transcribes fully is chosen (`choose_take`): transcribed, unstretched
-through its bar map, to one note per syllable of our words (each lyric line aligned inside its own window:
-`line_windows`), and cut to our bars (<unit>_section.wav, time-stretched bar by bar).
+through its bar map, by note count (transcribe.segment: the lane's N note positions found as the N strongest note
+starts), its notes paired in order with our syllables (`melody_of`), and cut to our bars (<unit>_section.wav,
+time-stretched bar by bar).
 
 params = {"bpm", "key", "octave" (-12/0/12: sung = lane + octave), "seeds" (takes per unit), "threshold" (least share
 of the section's half-beats on our chord), "units": [{"id", "lead_in_chords": [chord per beat] (LEAD_BARS bars),
@@ -11,7 +12,7 @@ Writes lead.json = {"units": {id: {"take": "<id>_section.wav", "seed", "chords_m
 SungNote is {"start", "duration" (beats from the section start), "midi" (lane register), "word", "phonemes"}.
 
 Steps, in the order the models are loaded (one model on the GPU at a time, released after its phase):
-yue2:<unit>:s<seed>, separate:<unit>:s<seed>, chords:<unit>:s<seed>, then per unit transcribe:<unit>:s<seed> for each
+yue2:<unit>:s<seed>, separate:<unit>:s<seed>, chords:<unit>:s<seed>, then per unit transcribe:<unit>:s<seed> (numbers: notes) for each
 take tried (best chord match first, among those at or above the threshold) and choose:<unit>.
 """
 from __future__ import annotations
@@ -54,30 +55,16 @@ def check_units(units) -> None:
             raise ValueError(f"{uid}: no words")
         n_syl = sum(len(line) for line in u["words"])
         if len(u["notes"]) != n_syl:
-            raise ValueError(f"{uid}: {len(u['notes'])} notes for {n_syl} syllables (want one note per syllable)")
+            raise ValueError(f"{uid}: {len(u['notes'])} notes for {n_syl} syllable positions (want one note per position)")
 
 
-LINE_SLACK_BEATS = 1.0  # a line's window reaches this far past its neighbours' first notes (the take's own timing)
-
-
-def line_windows(unit) -> list[tuple[float, float]]:
-    """Each lyric line's window, in beats from the section start: from a beat before its first note (the section start
-    for the first line) to a beat after the next line's first note (for the last line, the end of the tail bars after
-    the section: a take that sings slower than the score finishes its last phrase there)."""
-    notes = sorted(unit["notes"], key=lambda n: n["start"])
-    firsts, k = [], 0
-    for i, line in enumerate(unit["words"]):
-        if not line:
-            raise ValueError(f"{unit['id']}: line {i + 1} has no words")
-        firsts.append(float(notes[k]["start"]))
-        k += len(line)
-    end = float(len(unit["chords"]) + len(unit["tail_chords"]))
-    out = []
-    for i, f in enumerate(firsts):
-        a = 0.0 if i == 0 else max(0.0, f - LINE_SLACK_BEATS)
-        b = end if i + 1 == len(firsts) else firsts[i + 1] + LINE_SLACK_BEATS
-        out.append((a, b))
-    return out
+def melody_of(unit, notes) -> list[dict]:
+    """SungNotes: the found notes paired in order with the unit's syllable positions (word and phonemes; a held "-"
+    position keeps "-")."""
+    words = [w for line in unit["words"] for w in line]
+    phonemes = [p for line in unit["phonemes"] for p in line]
+    return [{"start": n["start"], "duration": n["duration"], "midi": n["midi"], "word": w, "phonemes": list(p)}
+            for n, w, p in zip(notes, words, phonemes, strict=True)]
 
 
 def _device() -> torch.device:
@@ -233,11 +220,11 @@ def choose_take(uid: str, scores: dict, threshold: float, transcribe, job, on_ch
             errors[seed] = str(e)
             st.fail(str(e))
             continue
-        st.done(f"{len(notes)} syllables", {"syllables": len(notes)})
+        st.done(f"{len(notes)} notes", {"notes": len(notes)})
         ch = job.step(f"choose:{uid}", f"Choose the take of {uid}")
         files = on_chosen(seed, notes) if on_chosen is not None else []
-        ch.done(f"take {seed}: {_pct(scores[seed])} on our chords, {len(notes)} syllables",
-                {"seed": seed, "chords_match": round(scores[seed], 4), "syllables": len(notes)}, files)
+        ch.done(f"take {seed}: {_pct(scores[seed])} on our chords, {len(notes)} notes",
+                {"seed": seed, "chords_match": round(scores[seed], 4), "notes": len(notes)}, files)
         return seed, notes
     lines = [f"seed {s}: chords {_pct(scores[s])}, " + (errors[s] if s in errors else f"below the {_pct(threshold)} threshold")
              for s in sorted(scores)]
@@ -247,31 +234,29 @@ def choose_take(uid: str, scores: dict, threshold: float, transcribe, job, on_ch
 
 
 def _choose_and_transcribe(units, bpm, key, octave, seed_list, takes, scores, threshold, out, device, job):
-    from .transcribe import MmsAligner, PitchTracker, syllable_notes
+    from .transcribe import PitchTracker, segment
 
     job.check_cancelled()
-    aligner, tracker = MmsAligner(device), PitchTracker()
+    tracker = PitchTracker()
     chosen = {}
     try:
         for u in units:
             uid = u["id"]
             n_bars = len(u["chords"]) // 4
-            phonemes = [p for line in u["phonemes"] for p in line]
 
             def transcribe(seed, u=u, uid=uid):
                 t = takes[(uid, seed)]
-                # the unstretched take, read through its bar map (a stretched take smears the words for the aligner)
-                return syllable_notes(t["vocals"], t["sr"], u["words"], bpm, key=key, octave=octave, section=uid,
-                                      aligner=aligner, tracker=tracker, line_beats=line_windows(u),
-                                      section_beats=float(len(u["chords"])),
-                                      clock=align.take_clock(t["bar_map"], LEAD_BARS))
+                # the unstretched take, read through its bar map (a phase-vocoder stretch smears onsets and pitch)
+                return segment(t["vocals"], t["sr"], len(u["notes"]), bpm, key=key, octave=octave, section=uid,
+                               tracker=tracker, section_beats=float(len(u["chords"])),
+                               clock=align.take_clock(t["bar_map"], LEAD_BARS))
 
-            def on_chosen(seed, notes, u=u, uid=uid, n_bars=n_bars, phonemes=phonemes):
+            def on_chosen(seed, notes, u=u, uid=uid, n_bars=n_bars):
                 t = takes[(uid, seed)]
                 section = align.cut_bars(t["vocals"], t["sr"], t["bar_map"], bpm, from_bar=LEAD_BARS,
                                          to_bar=LEAD_BARS + n_bars)
                 sf.write(out / f"{uid}_section.wav", section.T, t["sr"])
-                melody = [{**n, "phonemes": list(p)} for n, p in zip(notes, phonemes, strict=True)]
+                melody = melody_of(u, notes)
                 (out / f"{uid}_melody.json").write_text(json.dumps(melody, indent=0))
                 chosen[uid] = {"file": f"{uid}_section.wav", "seed": seed,
                                "chords_match": round(scores[(uid, seed)], 4), "melody": melody}
@@ -281,5 +266,5 @@ def _choose_and_transcribe(units, bpm, key, octave, seed_list, takes, scores, th
             for s in seed_list:
                 takes[(uid, s)].pop("vocals")
     finally:
-        aligner.close()
+        _release()
     return chosen

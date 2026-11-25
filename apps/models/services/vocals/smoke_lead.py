@@ -134,7 +134,7 @@ def main(out_dir=None, seeds="2"):
     lead = json.loads(Path(res["file"]).read_text())
     for uid, u in lead["units"].items():
         mel = u["melody"]
-        print(f"{uid}: seed {u['seed']}, chords {u['chords_match']:.0%}, {len(mel)} syllables: "
+        print(f"{uid}: seed {u['seed']}, chords {u['chords_match']:.0%}, {len(mel)} notes: "
               + " ".join(f"{n['word']}@{n['start']:g}:{n['duration']:g}/{n['midi']}" for n in mel))
 
 

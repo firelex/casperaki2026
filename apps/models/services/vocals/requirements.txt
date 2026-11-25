@@ -1,4 +1,4 @@
-# svc-vocals: one venv for YuE2, SoulX-Singer, ChordNet (MuLaCover), BS-RoFormer separation, MMS aligner.
+# svc-vocals: one venv for YuE2, SoulX-Singer, ChordNet (MuLaCover), BS-RoFormer separation, SwiftF0 pitch.
 # Install: see README.md (torch first from the cu128 index, then this file, then the local packages).
 --extra-index-url https://download.pytorch.org/whl/cu128
 torch==2.10.0+cu128
