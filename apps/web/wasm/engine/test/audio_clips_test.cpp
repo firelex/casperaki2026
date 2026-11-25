@@ -37,9 +37,9 @@ std::string readFile(const fs::path& p) {
     return ss.str();
 }
 
-// 16-bit stereo 44.1 kHz sine WAV of `sec` seconds.
-void writeSineWav(const fs::path& p, double sec) {
-    const int rate = 44100, ch = 2;
+// 16-bit stereo 330 Hz sine WAV of `sec` seconds at `rate` (44.1 kHz by default).
+void writeSineWav(const fs::path& p, double sec, int rate = 44100) {
+    const int ch = 2;
     const uint32_t n = (uint32_t)std::llround(sec * rate);
     std::ofstream f(p, std::ios::binary);
     auto u32 = [&](uint32_t v) { f.write(reinterpret_cast<const char*>(&v), 4); };
@@ -138,6 +138,35 @@ int main() {
     // (3) with the mix on: the lane routes through the vocals group (vocalsLaSinger) and sounds.
     const auto wet = render(true, sources);
     check(wet.first > 0.01, "the Vocal lane sounds with the mix on (peak " + std::to_string(wet.first) + ")");
+
+    // (3b) a take at another sample rate (SoulX writes 48 kHz) plays at its own pitch and length: 330 Hz for 2 s,
+    // not 1.47 semitones flat and 9 % long as when its samples were played one for one at 44.1 kHz.
+    {
+        const fs::path take48 = tmp / "take48.wav";
+        writeSineWav(take48, 2.0, 48000);
+        nlohmann::json inst48 = clipsInst;
+        inst48["clips"][0]["sourcePath"] = take48.string();
+        std::vector<nlohmann::json> insts48 = {inst48};
+        Mixer m(44100.0, 128, 0.5, stubs);
+        SampleLibrary lib("/");
+        lib.loadInto(m, genreDir, insts48);
+        m.build(only, insts48);
+        AudioBuffer block(2, 128);
+        std::vector<float> out;
+        while (out.size() < (size_t)(4.0 * 44100)) {
+            m.pullBlock(block, 128);
+            for (int i = 0; i < 128; ++i) out.push_back(block.getReadPointer(0)[i]);
+        }
+        // Rising zero crossings over 0.2–1.8 s: 330 Hz → 528.
+        int rises = 0;
+        for (size_t i = (size_t)(0.2 * 44100) + 1; i < (size_t)(1.8 * 44100); ++i)
+            if (out[i - 1] < 0 && out[i] >= 0) ++rises;
+        const double hz = rises / 1.6;
+        check(std::abs(hz - 330.0) < 2.0, "a 48 kHz take plays at 330 Hz, got " + std::to_string(hz) + " Hz");
+        double after = 0;
+        for (size_t i = (size_t)(2.05 * 44100); i < out.size(); ++i) after = std::max(after, (double)std::abs(out[i]));
+        check(after < 1e-6, "a 48 kHz take lasts 2 s (peak after " + std::to_string(after) + ")");
+    }
 
     // (4) a missing take is an error, never a silent render without the vocal
     {

@@ -177,6 +177,19 @@ private:
                 auto decoded = decodeCached(src, st);
                 if (!decoded || !decoded->ok)
                     throw std::runtime_error("SampleLibrary: cannot read the audio clip " + src);
+                // Wave clips play their samples one for one at the mixer's rate: a take at another rate (SoulX
+                // writes 48 kHz) is converted first, else it plays off pitch and off tempo.
+                if (decoded->sampleRate != (int)mixer.sampleRate()) {
+                    if ((int)mixer.sampleRate() != 44100)
+                        throw std::runtime_error("SampleLibrary: audio clips are converted to 44.1 kHz, but the mixer runs at "
+                                                 + std::to_string(mixer.sampleRate()) + " Hz");
+                    const std::string converted = convertTo44k(src);
+                    decoded = std::make_shared<DecodedAudio>(decodeAudioFile(converted));
+                    if (!decoded->ok || decoded->sampleRate != 44100)
+                        throw std::runtime_error("SampleLibrary: the audio clip " + src + " converted to " + converted
+                                                 + " did not decode at 44.1 kHz");
+                    st.filesDecoded++;
+                }
                 mixer.setSample(key, makeWaveWhole(*decoded));
                 st.waveSources++;
             }
@@ -428,7 +441,11 @@ private:
     std::string prepareNormalizedSource(const std::string& abs) const {
         if (isNativeAudioFormat(abs)) return abs;
         if (!std::filesystem::exists(abs)) return abs;
+        return convertTo44k(abs);
+    }
 
+    // The file as 44.1 kHz stereo Ogg Vorbis in the normalized cache (converted once, by ffmpeg).
+    std::string convertTo44k(const std::string& abs) const {
         const std::string prepared = normalizedCachePath(abs);
         if (prepared.empty()) return abs;
         std::error_code ec;
