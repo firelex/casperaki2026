@@ -46,6 +46,10 @@ export interface SingPlan {
   readonly sections: { segment: string; sectionBars: number; notes: SungNote[] }[];
   /** Every backing lane with notes in a sung section: its notes moved by `shift` semitones (`backingShift`). */
   readonly backings: { track: string; segment: string; shift: number; notes: BackingNote[] }[];
+  /** Sections sung exactly as an earlier one (same length, the same Vocal notes with the same words, the same backing
+   *  lines): not sung again, `from`'s takes are reused (owner, 2026-11-25: one chorus is enough when the words are the
+   *  same). `sections` and `backings` leave them out. */
+  readonly reuses: { segment: string; from: string }[];
 }
 
 type LaneEvent = { type?: string; note: number; duration: number; fullWord?: string; vocaloidPhonemes?: string[] };
@@ -156,10 +160,12 @@ export function planSinging(song: Song): SingPlan {
 
   const sections: SingPlan['sections'] = [];
   const backings: SingPlan['backings'] = [];
+  const reuses: SingPlan['reuses'] = [];
+  const sungAs = new Map<string, string>(); // what a section sings (its key) -> the first section that sings it
   for (const s of sung) {
     const own = song.songStructure.find((x) => x.name === s.name)!;
     const notes = laneNotes(song, s.name, LEAD_TRACK);
-    sections.push({ segment: s.name, sectionBars: own.bars.length, notes });
+    const lines: SingPlan['backings'] = [];
     for (const track of BACKING_TRACKS) {
       const line = lanePitches(song, s.name, track);
       if (line.length === 0) continue;
@@ -168,8 +174,17 @@ export function planSinging(song: Song): SingPlan {
         notes.map((n) => n.midi),
         `${track} in ${s.name}`,
       );
-      backings.push({ track, segment: s.name, shift, notes: line.map((n) => ({ ...n, midi: n.midi + shift })) });
+      lines.push({ track, segment: s.name, shift, notes: line.map((n) => ({ ...n, midi: n.midi + shift })) });
     }
+    const key = JSON.stringify([own.bars.length, notes, lines.map((l) => [l.track, l.notes])]);
+    const first = sungAs.get(key);
+    if (first !== undefined) {
+      reuses.push({ segment: s.name, from: first });
+      continue;
+    }
+    sungAs.set(key, s.name);
+    sections.push({ segment: s.name, sectionBars: own.bars.length, notes });
+    backings.push(...lines);
   }
-  return { sections, backings };
+  return { sections, backings, reuses };
 }

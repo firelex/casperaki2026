@@ -11,16 +11,17 @@ import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks
 const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering' };
 
 /**
- * The Tasks item of the top bar: the user's background tasks across their songs (running, ready to go in when playback
- * stops, done, failed with why and a Retry), with the count of those not finished. Clicking a task opens its song.
- * Hidden while the user has no tasks.
+ * The Tasks item of the top bar: the user's background tasks still under way across their songs (running, or ready to
+ * go in when playback stops), with their count. Clicking a task opens its song. Hidden while none is under way.
  */
 export function TasksMenu() {
   const { data: tasks } = useTasks();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  if (!tasks || tasks.length === 0) return null;
-  const pending = tasks.filter((t) => t.state === 'running' || t.state === 'ready').length;
+  // Only tasks still under way: running, or ready and waiting to go in when playback stops (owner, 2026-11-25).
+  const ongoing = (tasks ?? []).filter((t) => t.state === 'running' || t.state === 'ready');
+  if (ongoing.length === 0) return null;
+  const pending = ongoing.length;
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger
@@ -35,7 +36,7 @@ export function TasksMenu() {
       <DropdownMenuContent align="end" sideOffset={8} className="z-50 max-h-[80vh] w-[420px] overflow-y-auto rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl">
         <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">Background tasks</DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
-        {tasks.map((t) => (
+        {ongoing.map((t) => (
           <TaskItem key={t.id} task={t} ticking={open} onOpen={() => navigate(`/editor/${t.songId}/timeline`)} />
         ))}
       </DropdownMenuContent>

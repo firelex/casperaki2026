@@ -23,6 +23,10 @@ TAIL_S = 2.0  # room after the section for a last phrase's release
 # phrase or the section's end): given only the written length, SoulX swallowed final consonants ("walls", "stones":
 # 27-28 dB under the vowel; extended, 13 and 22 dB; owner's idea, 2026-11-25). Only what SoulX is given changes.
 CODA_BEATS, BREATH_BEATS = 1.0, 0.5
+# A phrase's last word ending in "s" or "z" sings its final SIBILANT_S as a note of its own, an unvoiced "s": inside the
+# word SoulX swallowed it ("stones": 22 dB under the vowel even with the longer note; its own "s" note: 9 dB; its own
+# "z" note did not help).
+SIBILANT_S = 0.12
 
 
 def phrase_groups(notes) -> list[list[dict]]:
@@ -53,11 +57,19 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
         ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]),
                    "midi": int(n["midi"]), "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
     groups = phrase_groups(ns)
+    sib_beats = SIBILANT_S / beat_s
     for gi, g in enumerate(groups):
         nxt = groups[gi + 1][0]["start"] if gi + 1 < len(groups) else float(section_beats)
-        room = nxt - g[-1]["end"] - BREATH_BEATS
+        last = g[-1]
+        room = nxt - last["end"] - BREATH_BEATS
         if room > 0:
-            g[-1]["end"] += min(CODA_BEATS, room)
+            last["end"] += min(CODA_BEATS, room)
+        phones = last["phones"][3:].split("-")
+        end = min(last["end"], float(section_beats))
+        if len(phones) > 1 and phones[-1] in ("S", "Z") and end - last["start"] >= 2 * sib_beats:
+            last["phones"] = "en_" + "-".join(phones[:-1])
+            last["end"] = end - sib_beats
+            g.append({"bar": last["bar"], "start": end - sib_beats, "end": end, "midi": last["midi"], "phones": "en_S"})
     out, prev_end = [], 0.0
     for gi, g in enumerate(groups):
         first = g[0]["start"] * beat_s

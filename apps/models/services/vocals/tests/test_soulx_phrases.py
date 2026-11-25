@@ -47,3 +47,17 @@ def test_a_phrase_last_note_is_sung_into_the_rest_after_it():
     # Less than BREATH_BEATS to the next phrase: unchanged (and a rest that short does not split phrases anyway).
     ph = soulx.phrases([n(0, 1, 60), n(1.4, 1, 62)], BPM, 16)
     assert ph[0]["duration"][1] == pytest.approx(0.4 * 0.5)
+
+
+def test_a_phrase_final_s_or_z_is_sung_as_its_own_short_s():
+    """ "walls" (w ao1 l z) ending a phrase: the word without its "z", then SIBILANT_S of "s" at the same pitch, at the
+    end of the (extended) note. Inside a phrase, a word keeps its final consonant."""
+    notes = [n(0, 1, 60, "walls", ("w", "ao1", "l", "z")), n(1, 1, 62, "is", ("ih1", "z")), n(2, 1, 64, "walls", ("w", "ao1", "l", "z"))]
+    ph = soulx.phrases(notes, BPM, 16)
+    assert len(ph) == 1
+    p = ph[0]
+    assert p["phoneme"] == ["en_W-AO1-L-Z", "en_IH1-Z", "en_W-AO1-L", "en_S"]
+    assert p["pitch"] == [60, 62, 64, 64]
+    # The last note: one beat into the rest (CODA_BEATS), its last SIBILANT_S the "s".
+    assert p["duration"][2] == pytest.approx(2 * 0.5 - soulx.SIBILANT_S)
+    assert p["duration"][3] == pytest.approx(soulx.SIBILANT_S)

@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest';
 import { sungSections } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 
-import { backingShift, planSinging, SingError } from '../src/sing/plan.js';
+import { backingShift, laneNotes, planSinging, SingError } from '../src/sing/plan.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const RAW = readFileSync(join(HERE, 'fixtures', 'sing-a31c5ba0.json'), 'utf8');
@@ -67,8 +67,16 @@ describe('planSinging on song a31c5ba0', () => {
   it('sings every section with Vocal notes, in song order, from the lane\'s own notes, words and phonemes', () => {
     const song = withLyrics(fresh());
     const plan = planSinging(song);
-    expect(plan.sections.map((s) => s.segment)).toEqual(sungSections(song).map((s) => s.name));
-    expect(plan.sections.map((s) => s.segment)).toEqual(['verse1', 'verse2', 'chorus1', 'chorus2', 'verse3', 'verse4', 'chorus3', 'chorus4', 'bridge1', 'chorus5', 'chorus6']);
+    // Every section with Vocal notes is sung, or reuses an earlier section that sings the same notes and words.
+    const all = ['verse1', 'verse2', 'chorus1', 'chorus2', 'verse3', 'verse4', 'chorus3', 'chorus4', 'bridge1', 'chorus5', 'chorus6'];
+    expect(sungSections(song).map((s) => s.name)).toEqual(all);
+    expect([...plan.sections.map((s) => s.segment), ...plan.reuses.map((r) => r.segment)].sort()).toEqual([...all].sort());
+    expect(plan.sections.map((s) => s.segment)).toEqual(all.filter((n) => !plan.reuses.some((r) => r.segment === n)));
+    expect(plan.reuses.length).toBeGreaterThan(0); // this song repeats its choruses word for word
+    for (const r of plan.reuses) {
+      expect(all.indexOf(r.from)).toBeLessThan(all.indexOf(r.segment));
+      expect(laneNotes(song, r.segment, 'Vocal')).toEqual(laneNotes(song, r.from, 'Vocal'));
+    }
     expect(plan.sections.every((s) => s.sectionBars === 8)).toBe(true);
     const verse1 = plan.sections[0]!;
     expect(verse1.notes).toHaveLength(44);
@@ -85,7 +93,8 @@ describe('planSinging on song a31c5ba0', () => {
   it('a song without a chorus is sung too', () => {
     const song = withLyrics(fresh());
     for (const name of ['chorus1', 'chorus2', 'chorus3', 'chorus4', 'chorus5', 'chorus6']) dropSection(song, name);
-    expect(planSinging(song).sections.map((s) => s.segment)).toEqual(['verse1', 'verse2', 'verse3', 'verse4', 'bridge1']);
+    const plan = planSinging(song);
+    expect([...plan.sections.map((s) => s.segment), ...plan.reuses.map((r) => r.segment)].sort()).toEqual(['bridge1', 'verse1', 'verse2', 'verse3', 'verse4']);
   });
 
   it('backing lines come from the backing lanes of the sung sections, each moved into F3-A5 near the lead', () => {

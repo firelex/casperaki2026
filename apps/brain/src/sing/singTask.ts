@@ -272,14 +272,23 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
 
 /** The sung melody recorded on apply: every sung section's Vocal lane notes, as written. */
 export function melodyOf(plan: SingPlan): SungMelody {
-  return Object.fromEntries(plan.sections.map((s) => [s.segment, s.notes.map((n) => ({ ...n, phonemes: [...n.phonemes] }))]));
+  const sung = Object.fromEntries(plan.sections.map((s) => [s.segment, s.notes.map((n) => ({ ...n, phonemes: [...n.phonemes] }))]));
+  for (const r of plan.reuses) {
+    const from = sung[r.from];
+    if (!from) throw new Error(`melodyOf: ${r.segment} reuses ${r.from}, which is not sung`);
+    sung[r.segment] = from.map((n) => ({ ...n, phonemes: [...n.phonemes] }));
+  }
+  return sung;
 }
 
 function describePlan(plan: SingPlan): { text: string; numbers: Record<string, number> } {
   const lines = plan.backings.map((b) => `${b.track} in ${b.segment}${b.shift === 0 ? '' : ` ${b.shift > 0 ? '+' : ''}${b.shift}`}`);
   return {
-    text: `SoulX sings ${plan.sections.map((s) => s.segment).join(', ')}; backing vocals: ${lines.length > 0 ? lines.join(', ') : 'none'}`,
-    numbers: { sections: plan.sections.length, backingLines: plan.backings.length },
+    text:
+      `SoulX sings ${plan.sections.map((s) => s.segment).join(', ')}` +
+      (plan.reuses.length > 0 ? `; ${plan.reuses.map((r) => `${r.segment} as ${r.from}`).join(', ')} (same words and notes: reused)` : '') +
+      `; backing vocals: ${lines.length > 0 ? lines.join(', ') : 'none'}`,
+    numbers: { sections: plan.sections.length, reused: plan.reuses.length, backingLines: plan.backings.length },
   };
 }
 
@@ -369,6 +378,12 @@ async function storeTakes(ctx: SingContext, plan: SingPlan, sung: readonly { seg
     if (existsSync(dest)) unlinkSync(tmp);
     else renameSync(tmp, dest);
     takes.push({ segment: t.segment, track: t.track, kind: TAKE_KIND, sha256, durationSeconds, ...MODEL });
+  }
+  // Sections sung exactly as an earlier one get its takes (the same files).
+  for (const r of plan.reuses) {
+    const from = takes.filter((t) => t.segment === r.from);
+    if (from.length === 0) throw new Error(`${r.segment} reuses the takes of ${r.from}, which has none`);
+    for (const t of from) takes.push({ ...t, segment: r.segment });
   }
   return takes;
 }
