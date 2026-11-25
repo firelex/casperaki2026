@@ -103,12 +103,20 @@ function exportedStyles(): Set<string> {
  * variants get the same lane, so the proposal and the current library are
  * heard on the same parts.
  */
-function withProposalLane(song: Song, proposal: PatternProposal): Song {
+function withProposalLane(song: Song, proposal: PatternProposal, take?: number): Song {
   if (proposal.family === 'drums' || proposal.family === 'bass') return song;
   const sections = song.songStructure.map((s) => s.name);
   const lanes = song.instrumentDefinitions.map((d) => d.name).filter((n) => laneFamilyOf(n) === proposal.family);
-  const coverage = Math.max(0, ...lanes.map((lane) => sections.filter((s) => song.arrangement[s]?.instruments[lane] === true).length));
-  if (coverage * 2 >= sections.length) return song;
+  const plays = (lane: string, s: string) => song.arrangement[s]?.instruments[lane] === true;
+  const coverage = Math.max(0, ...lanes.map((lane) => sections.filter((s) => plays(lane, s)).length));
+  // The sections a marked pattern is previewed in (the page loops verses for a quiet pattern, choruses
+  // for a busy one): the instrument must play in all of them, or "in context" would be silent.
+  const energy = take !== undefined && 'patterns' in proposal ? (proposal.patterns[take] as { energy?: string } | undefined)?.energy : undefined;
+  const type = energy === 'low' ? 'verse' : energy === 'high' ? 'chorus' : undefined;
+  const ofType = sections.filter((s) => type !== undefined && s.replace(/\d+$/u, '') === type);
+  const targets = ofType.length ? ofType : sections.filter((s) => energy !== undefined && sectionEnergy(s) === energy);
+  const targetsCovered = targets.every((s) => lanes.some((lane) => plays(lane, s)));
+  if (coverage * 2 >= sections.length && targetsCovered) return song;
   return editTrack(song, { kind: 'addTrack', family: proposal.family, segments: sections }).song;
 }
 
@@ -143,7 +151,7 @@ function labSong(req: Request): { proposal: PatternProposal; genre: Genre; seed:
   } catch (err) {
     throw new LabError(400, 'invalid_take', err instanceof Error ? err.message : String(err));
   }
-  let song = withProposalLane(orchestrate({ genre, key: 'C', bpm: DEFAULT_BPM_BY_GENRE[genre], seed, ...(params ? { params } : {}) }), proposal);
+  let song = withProposalLane(orchestrate({ genre, key: 'C', bpm: DEFAULT_BPM_BY_GENRE[genre], seed, ...(params ? { params } : {}) }), proposal, body.data.take);
   if (soundId) {
     if (proposal.family === 'drums') throw new LabError(400, 'drum_kit_fixed', 'The drum kit is fixed per genre; drum proposals cannot change sound.');
     for (const lane of familyLanes(song, proposal)) {

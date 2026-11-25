@@ -106,6 +106,16 @@ describe('pattern lab', () => {
     }
   });
 
+  it('a quiet pattern plays in the verses in context, even where the song itself leaves the instrument out there', async () => {
+    // House offbeat stabs, EDM: the lab seed's song switches its guitar off in both verses.
+    const res = await post(`${h.url}/api/patterns/gs-edm-house-offbeat-stabs/preview`, { genre: 'edm', variant: 'proposal', take: 0 });
+    expect(res.status).toBe(200);
+    const { sections } = (await res.json()) as { sections: { name: string; plays: boolean }[] };
+    const verses = sections.filter((x) => x.name.startsWith('verse'));
+    expect(verses.length).toBeGreaterThan(0);
+    for (const v of verses) expect(v.plays, v.name).toBe(true);
+  });
+
   it('keeps comments on a proposal without changing its review', async () => {
     const p = loadPatternProposals()[0]!;
     const res = await post(`${h.url}/api/patterns/${p.id}/comments`, { body: 'Nice in the chorus, busy in the verse' });
