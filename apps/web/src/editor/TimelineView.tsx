@@ -1239,6 +1239,9 @@ function TrackMenu({
             <ContextMenuItem className={ITEM} disabled={busy || vocal.menu.transcribe.disabled} onSelect={() => vocal.onTranscribe(section)}>
               Transcribe melody <MenuHint text={vocal.menu.transcribe.hint} />
             </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={adlibs.disabled} onSelect={adlibs.onSelect}>
+              {adlibs.label} <MenuHint text={adlibs.hint} />
+            </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>
         ) : null}
@@ -1287,9 +1290,6 @@ function TrackMenu({
           Add track…
         </ContextMenuItem>
         <AceLayerMenuItem item={aceLayer} />
-        <ContextMenuItem className={ITEM} disabled={adlibs.disabled} onSelect={adlibs.onSelect}>
-          {adlibs.label} <MenuHint text={adlibs.hint} />
-        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );

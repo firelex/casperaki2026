@@ -186,6 +186,7 @@ function eventNotes(ev: RawEvent, start: number): SeqNote[] {
 /** Track order: lead vocal, backing vocals, then the rhythm section, harmony and melody. */
 function trackRank(name: string): number {
   const k = name.toLowerCase();
+  if (k.includes('ad-lib')) return -0.5; // ad-libs (sung or ACE) sit with the vocals, after the backings
   if (k.includes('backing')) return -1;
   if (k.includes('vocal')) return -2;
   if (k.startsWith('drum')) return 0;
@@ -206,7 +207,7 @@ export function trackColor(name: string): string {
   if (k.startsWith('bass')) return 'var(--color-c1)';
   if (k.startsWith('key')) return 'var(--color-c2)';
   if (k.startsWith('pad')) return 'var(--color-c3)';
-  if (k.includes('vocal')) return 'var(--color-c4)';
+  if (k.includes('vocal') || k.includes('ad-lib')) return 'var(--color-c4)';
   return 'var(--color-c5)';
 }
 
