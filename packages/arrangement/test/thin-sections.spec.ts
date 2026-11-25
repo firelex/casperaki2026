@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createRng } from '@casperaki/music-theory';
 
-import { addThinPartners, fillScore, measureSection, partnerLane, replayThinPartners, THIN_RULES } from '../src/arrangement-polish/thin-sections.js';
+import { addThinPartners, fillScore, helps, measureSection, partnerLane, replayThinPartners, THIN_RULES } from '../src/arrangement-polish/thin-sections.js';
 import type { ValidatedCatalogEntry } from '../src/catalog/validated-catalog.js';
 import type { GeneratorContext } from '../src/context.js';
 import type { PatternResult } from '../src/patterns/types.js';
@@ -49,7 +49,7 @@ describe('measureSection', () => {
   });
 
   it('strums without a duration ring to the next strum, so a strummed section is not thin', () => {
-    const strum: Make = () => ({ type: 'strum', chord: 'C', durations: [1], offset: [0], strings: [3], velocities: [70] });
+    const strum: Make = () => ({ type: 'strum', chord: 'C', durations: [1], offset: [0], strings: [1, 2, 3, 4, 5, 6], velocities: [70, 70, 70, 70, 70, 70] });
     expect(measureSection({ Guitar: lane(EIGHTHS, 4, strum) })).toMatchObject({ harmony: false, rhythm: false });
   });
 
@@ -57,6 +57,23 @@ describe('measureSection', () => {
     const fret: Make = () => ({ type: 'fretNoise', duration: 0.25 });
     const m = measureSection({ Pad: lane([0], 4, chord('C')), Guitar: lane([1, 2, 3], 4, fret) });
     expect(m).toMatchObject({ rhythm: false, medianVoices: 3 });
+  });
+
+  it('a guitar event on single strings counts one note per string, and a near-silent one counts for nothing', () => {
+    const pick = (strings: number[], velocity: number): Make => () => ({ type: 'strum', chord: 'C', durations: [1], offset: [0], strings, velocities: strings.map(() => velocity) });
+    // Two single strings over a one-note pad: 2 notes (strings) + 1 (pad) = 3 on the beats the picks ring.
+    const m = measureSection({ Pad: lane([0], 4, padNote(60)), Guitar: lane([0, 1, 2, 3], 4, pick([2, 3], 80)) });
+    expect(m.medianVoices).toBe(3);
+    // Picks at velocity 1 are silent: no notes, and no onsets either.
+    const silent = measureSection({ Pad: lane([0], 4, chord('C')), Guitar: lane([0, 1, 2, 3], 4, pick([2], 1)) });
+    expect(silent).toMatchObject({ medianVoices: 3, rhythm: true, movingParts: 0 });
+  });
+
+  it('too little motion: fewer than THIN_RULES.minMovingParts moving parts above bass and drums', () => {
+    const oneMoving = measureSection({ Pad: lane([0], 4, chord('C')), Synths: lane(EIGHTHS, 4, note(72)), Bass: lane(EIGHTHS) });
+    expect(oneMoving).toMatchObject({ motion: true, movingParts: 1 });
+    const twoMoving = measureSection({ Pad: lane([0], 4, chord('C')), Synths: lane(EIGHTHS, 4, note(72)), Keys: lane([0, 1, 2, 3], 4, chord('C')) });
+    expect(twoMoving).toMatchObject({ motion: false, movingParts: 2 });
   });
 
   it('drums, bass, vocals and the loop are not measured', () => {
@@ -77,14 +94,20 @@ describe('partnerLane', () => {
 });
 
 describe('fillScore', () => {
-  it('ranks clearing a thin kind above anything else', () => {
-    const thin = { harmony: true, rhythm: true, medianVoices: 2, gapBars: 2 };
-    expect(fillScore(thin, { ...thin, harmony: false, medianVoices: 4 })).toEqual([1, 0, 2]);
+  const thin = { harmony: true, rhythm: true, motion: true, medianVoices: 2, gapBars: 2, movingParts: 1 };
+  it('leads with the problem the option is for: clearing it, then the others, then how much it improved', () => {
+    expect(fillScore(thin, { ...thin, harmony: false, medianVoices: 4 }, 'harmony')).toEqual([1, 0, 2, 0, 0]);
+    expect(fillScore(thin, { ...thin, motion: false, movingParts: 2, gapBars: 0, rhythm: false }, 'motion')).toEqual([1, 1, 1, 0, 2]);
+  });
+  it('an option that only fixes another problem does not help the target', () => {
+    expect(helps(fillScore(thin, { ...thin, harmony: false, medianVoices: 4 }, 'motion'))).toBe(false);
+    expect(helps(fillScore(thin, { ...thin, movingParts: 1 }, 'motion'))).toBe(false);
+    expect(helps(fillScore(thin, { ...thin, medianVoices: 3, harmony: false }, 'harmony'))).toBe(true);
   });
 });
 
 it('the thresholds live in one place', () => {
-  expect(THIN_RULES).toMatchObject({ minVoices: 3, gapBeats: 2, maxGapBarShare: 0.25, variants: 4, maxAddedTracks: 2 });
+  expect(THIN_RULES).toMatchObject({ minVoices: 3, gapBeats: 2, maxGapBarShare: 0.25, minMovingParts: 2, silentVelocity: 10, variants: 4, maxAddedTracks: 2 });
 });
 
 // ---- the partner loop, with a stand-in pattern writer ----------------------------------------------------------
@@ -188,8 +211,14 @@ describe('addThinPartners', () => {
     // The chorus is full (keys chords on every eighth), so only the verse and the intro are thin.
     const s = sel([inst('Pad', 'pad', 'p1'), inst('Keys', 'keys', 'k1')], { intro: ['Pad'], verse1: ['Pad'], chorus1: ['Keys'] });
     const r = addThinPartners({ ctx, selection: s, write: writer(thinTable), soundPool: pool({ pad: ['p1', 'p2', 'p3'] }), reservedNames: new Set() });
-    // The verse is paired first (main sections before intros and outros), then the intro borrows its partner.
-    expect(r.added.map((a) => [a.lane, a.sectionType])).toEqual([['Pad 2', 'verse'], ['Pad 2', 'intro']]);
+    // The verse is paired first (main sections before intros and outros): Pad 2 for harmony, then the song's own Keys
+    // switched on for motion (two held pads move nothing). The intro then borrows Pad 2 and gets Keys the same way.
+    expect(r.added.map((a) => [a.lane, a.sectionType, a.kind])).toEqual([
+      ['Pad 2', 'verse', 'harmony'],
+      ['Keys', 'verse', 'motion'],
+      ['Pad 2', 'intro', 'harmony'],
+      ['Keys', 'intro', 'motion'],
+    ]);
     expect(r.selection.instruments.map((i) => i.lane)).toEqual(['Pad', 'Keys', 'Pad 2']);
     expect(r.selection.segments.map((x) => x.activeLanes.includes('Pad 2'))).toEqual([true, true, false]);
   });
@@ -213,6 +242,34 @@ describe('addThinPartners', () => {
     const write = writer(thinTable);
     const r = addThinPartners({ ctx, selection: s, write, soundPool: pool({ pad: ['p1', 'p2', 'p3'] }), reservedNames: new Set() });
     const replayed = replayThinPartners({ ctx, selection: s, write, recorded: r.added, soundFor: (_f, id) => entry(id, 'pad') });
+    expect(replayed.selection).toEqual(r.selection);
+    expect(replayed.laneForks).toEqual(r.laneForks);
+  });
+
+  it('too little motion: a track the song already has is switched on first (no new track, not counted)', () => {
+    // Verse: a chord pad and one moving lead; Keys plays only in the chorus.
+    const table = { Pad: lane([0], 4, chord('C')), Synths: lane(EIGHTHS, 4, note(72)), Keys: lane([0, 1, 2, 3], 4, chord('F')) };
+    const s = sel([inst('Pad', 'pad', 'p1'), inst('Synths', 'synths', 's1'), inst('Keys', 'keys', 'k1')], { verse1: ['Pad', 'Synths'], chorus1: ['Pad', 'Synths', 'Keys'] });
+    const r = addThinPartners({ ctx, selection: s, write: writer(table), soundPool: pool({ synths: ['s1', 's2'], keys: ['k1', 'k2'] }), reservedNames: new Set() });
+    expect(r.added).toEqual([{ lane: 'Keys', family: 'keys', soundId: 'k1', sectionType: 'verse', kind: 'motion', fork: 'lane/Keys' }]);
+    expect(r.selection.instruments).toEqual(s.instruments);
+    expect(r.selection.segments[0]!.activeLanes).toContain('Keys');
+  });
+
+  it('ballads keep their held sound: no motion pairing', () => {
+    const balladCtx = { ...ctx, params: { ...ctx.params, genre: 'ballad' } } as GeneratorContext;
+    const table = { Pad: lane([0], 4, chord('C')), Synths: lane(EIGHTHS, 4, note(72)), Keys: lane([0, 1, 2, 3], 4, chord('F')) };
+    const s = sel([inst('Pad', 'pad', 'p1'), inst('Synths', 'synths', 's1'), inst('Keys', 'keys', 'k1')], { verse1: ['Pad', 'Synths'], chorus1: ['Pad', 'Synths', 'Keys'] });
+    const r = addThinPartners({ ctx: balladCtx, selection: s, write: writer(table), soundPool: pool({ synths: ['s1', 's2'], keys: ['k1', 'k2'] }), reservedNames: new Set() });
+    expect(r.added).toEqual([]);
+  });
+
+  it('replaying a switched-on track switches it on again', () => {
+    const table = { Pad: lane([0], 4, chord('C')), Synths: lane(EIGHTHS, 4, note(72)), Keys: lane([0, 1, 2, 3], 4, chord('F')) };
+    const s = sel([inst('Pad', 'pad', 'p1'), inst('Synths', 'synths', 's1'), inst('Keys', 'keys', 'k1')], { verse1: ['Pad', 'Synths'], chorus1: ['Pad', 'Synths', 'Keys'] });
+    const write = writer(table);
+    const r = addThinPartners({ ctx, selection: s, write, soundPool: pool({ synths: ['s1', 's2'], keys: ['k1', 'k2'] }), reservedNames: new Set() });
+    const replayed = replayThinPartners({ ctx, selection: s, write, recorded: r.added, soundFor: (f, id) => entry(id, f) });
     expect(replayed.selection).toEqual(r.selection);
     expect(replayed.laneForks).toEqual(r.laneForks);
   });

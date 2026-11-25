@@ -1,0 +1,196 @@
+# Fast rock / pop-rock (108-129 bpm): 7 verses, 3 pre-choruses, 7 choruses and 3 bridges, written for the song style "rock".
+# Long-note toplines for fast tempos: half notes, whole notes and ties across bar lines, anticipations, held suspensions.
+
+# ---- Verses ----
+
+hook: Tarmac Sermon
+type: Verse
+tempo: 108-122
+feel: gritty
+style: rock
+chords: Am | Am | F | G | Am | Am | F | E
+melody: r:1 a3:1 c4:1 e4:1- | e4:2 c4:2 | r:1 c4:1 f4:2 | d4:3 r:1 |
+        r:1 a3:1 c4:1 g4:1- | g4:2 e4:2 | f4:2 c4:1 a3:1 | b3:4 |
+
+hook: Smokestack Hymn
+type: Verse
+tempo: 110-124
+feel: brooding
+style: rock
+chords: C | G | Am | F | C | G | F | G
+melody: r:2 e4:2 | d4:2 b3:1 g3:1 | a3:3 r:1 | r:1 a3:1 c4:1 f4:1- |
+        f4:1 e4:3 | d4:2 g4:2 | f4:1.5 e4:0.5 c4:2 | d4:4 |
+
+hook: Cinderblock Saints
+type: Verse
+tempo: 112-126
+feel: restless
+style: rock
+chords: Am G | F | Am G | F | C | G | Am | F G
+melody: a3:2 b3:2 | c4:3 r:1 | a3:1 c4:1 d4:2 | f4:3.5 e4:0.5- |
+        e4:2 g4:2 | g4:1 f4:1 d4:2 | e4:4 | c4:2 d4:2 |
+
+hook: Ashtray Mornings
+type: Verse
+tempo: 114-128
+feel: weary
+style: rock
+chords: C | Bb | F | C | C | Bb | F | G
+melody: r:1 g3:1 c4:2 | d4:2 bb3:2 | c4:4 | r:2 e4:1 g4:1- |
+        g4:2 e4:2 | f4:2 d4:2 | c4:1 d4:1 f4:2 | d4:3 r:1 |
+
+hook: Static on the Wire
+type: Verse
+tempo: 115-129
+feel: tense
+style: rock
+chords: Am | F | C | G | Am | F | C | E
+melody: r:1 c4:1 e4:2 | f4:2 a3:1.5 c4:0.5- | c4:2 e4:2 | d4:2 b3:2 |
+        r:1 c4:1 e4:1 g4:1- | g4:1 f4:1 c4:2 | e4:2 c4:1 d4:1 | e4:4 |
+
+hook: Gasoline Prayer
+type: Verse
+tempo: 118-129
+feel: defiant
+style: rock
+chords: C G | Am F | C G | F | C G | Am F | F | G
+melody: e4:2 d4:2 | c4:3 a3:1 | e4:2 g4:2 | f4:4 |
+        e4:2 d4:1.5 b3:0.5- | b3:1 c4:1 a3:2 | r:1 c4:1 f4:1 e4:1 | d4:4 |
+
+hook: Backseat Confession
+type: Verse
+tempo: 110-126
+feel: smoky
+style: rock
+leadin: yes
+chords: G | Am | Am | C | G | F | F | Am | G
+melody: r:3 e4:0.5 d4:0.5 |
+        c4:2 e4:2 | a3:3 r:1 | r:1 g3:1 c4:1 e4:1- | e4:2 d4:2 |
+        r:1 c4:1 f4:2- | f4:1 e4:1 c4:2 | e4:2 c4:2 | b3:4 |
+
+# ---- Pre-choruses ----
+
+hook: Fault Line Fever
+type: Pre-chorus
+tempo: 108-124
+feel: climbing
+style: rock
+chords: F | G | Am | Am | F | G | Bb | G
+melody: c4:2 f4:2 | d4:2 g4:2 | e4:4 | r:1 e4:1 a4:2- |
+        a4:3 g4:1 | b4:2 d5:2 | d5:3 c5:1 | b4:1 d5:3 |
+
+hook: Wire Taut
+type: Pre-chorus
+tempo: 110-129
+feel: taut
+style: rock
+chords: Am | F | C | G | Am | F | Dm | E
+melody: r:2 c4:1 e4:1- | e4:1 f4:1 a4:2 | g4:3 r:1 | r:1 d4:1 g4:1 b4:1- |
+        b4:1 c5:1 a4:2 | c5:4 | d5:2 a4:2 | b4:2 g#4:2 |
+
+hook: Breaking Weather
+type: Pre-chorus
+tempo: 114-129
+feel: surging
+style: rock
+leadin: yes
+chords: G | C | Em | F | G | Am | Em | F | G
+melody: r:2 g4:2 |
+        c5:3 b4:1- | b4:2 g4:2 | a4:3 g4:1- | g4:2 d5:2 |
+        c5:3 b4:1 | e5:2 b4:2 | c5:2 a4:2 | b4:2 d5:2 |
+
+# ---- Choruses ----
+
+hook: Burning Skyline
+type: Chorus
+tempo: 108-124
+feel: anthem
+style: rock
+chords: C | G | Am | F | C | G | F | C
+melody: g4:1 c5:3 | b4:2 d5:2 | e5:4 | r:1 c5:1 a4:1 c5:1- |
+        c5:2 e5:2 | d5:3 b4:1 | c5:2 a4:1 b4:1 | g4:4 |
+
+hook: Raise the Ruins
+type: Chorus
+tempo: 110-126
+feel: triumphant
+style: rock
+chords: Am | F | C | G | Am | F | G | G
+melody: r:1 e4:1 a4:2 | c5:3 a4:1 | c5:2 e5:2 | d5:4 |
+        r:0.5 c5:0.5 e5:3 | c5:2 a4:2 | b4:2 d5:2- | d5:1 b4:1 g4:2 |
+
+hook: Iron Lungs
+type: Chorus
+tempo: 112-128
+feel: belted
+style: rock
+chords: C | Bb | F | C | C | Bb | F | G
+melody: c5:2 e5:2 | d5:4 | c5:2 a4:1.5 c5:0.5- | c5:2 g4:2 |
+        e5:3 d5:1 | d5:2 bb4:2 | a4:2 c5:2 | c5:2 b4:2 |
+
+hook: Redline Hearts
+type: Chorus
+tempo: 115-129
+feel: soaring
+style: rock
+chords: F | G | Am | Am | F | G | C | C
+melody: r:1 a4:1 c5:2 | d5:3 b4:1 | c5:2 e5:2- | e5:3 d5:1 |
+        r:1 a4:1 c5:2 | d5:3 e5:1- | e5:3 c5:1- | c5:4 |
+
+hook: Headlights Through Rain
+type: Chorus
+tempo: 110-122
+feel: yearning
+style: rock
+chords: Am | G | F | C | Am | G | F | E
+melody: e5:3 d5:1- | d5:2 b4:2 | c5:2 a4:2 | g4:3 r:1 |
+        r:1 c5:1 e5:2 | d5:3 b4:1 | c5:2 a4:2 | b4:4 |
+
+hook: Concrete Halo
+type: Chorus
+tempo: 118-129
+feel: huge
+style: rock
+chords: C G | Am F | C G | F | C G | Am F | F G | C
+melody: c5:2 d5:2 | e5:2 c5:2 | e5:2 d5:2 | c5:4 |
+        c5:2 b4:2 | a4:2 c5:2 | a4:2 d5:1.5 b4:0.5 | c5:4 |
+
+hook: Last Light Rally
+type: Chorus
+tempo: 113-127
+feel: rallying
+style: rock
+leadin: yes
+chords: G | C | F | Am | G | C | F | Dm | G
+melody: r:3 g4:0.5 a4:0.5 |
+        c5:3.5 d5:0.5- | d5:1 c5:1 a4:2 | e5:3 c5:1 | d5:4 |
+        r:1 g4:1 c5:1 e5:1- | e5:2 c5:2 | d5:2 a4:2 | b4:2 d5:2 |
+
+# ---- Bridges ----
+
+hook: Slow Fuse Hours
+type: Bridge
+tempo: 108-125
+feel: hushed
+style: rock
+chords: F | F | Am | Am | Dm | Dm | G | G
+melody: a4:4 | r:1 g4:1 f4:2 | e4:4 | r:1 a4:1 c5:2 |
+        a4:3 f4:1 | r:1 f4:1 a4:2 | b4:2 d5:2- | d5:3 r:1 |
+
+hook: Glass Horizon
+type: Bridge
+tempo: 110-129
+feel: floating
+style: rock
+chords: Dm | Am | Bb | F | Dm | Am | Bb | G
+melody: r:1 a4:1 f4:2 | e4:3 r:1 | r:1 f4:1 d5:2 | c5:4 |
+        r:1 a4:1 f4:2 | e4:2 a4:2 | bb4:2 d5:2- | d5:1 b4:3 |
+
+hook: Riverbed Echoes
+type: Bridge
+tempo: 114-129
+feel: stark
+style: rock
+chords: Am | Em | F | C | Am | Em | F | G
+melody: c5:4 | b4:2 g4:2 | a4:3 c5:1- | c5:2 g4:2 |
+        r:1 e4:1 a4:2 | b4:2 e5:2 | c5:2 a4:2 | d5:4 |

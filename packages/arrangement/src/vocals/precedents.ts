@@ -221,7 +221,6 @@ const GenreSegmentRuleSchema = z
     // "selection: flags, several banks, hooks" below).
     melodic: z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
     rhythmic: z.string().min(1).optional(),
-    rhythmicTempoSplit: z.number().positive().optional(),
     maxNote: z.number().int().positive().optional(),
   })
   .strict();
@@ -247,6 +246,16 @@ const BankIndexSchema = z
     banks: z.record(z.string(), z.object({ file: z.string().min(1) }).strict()),
     // For an entry with both useOriginal and useRemix: the probability it is used whole when picked.
     wholeShare: z.number().min(0).max(1),
+    // How busy a melody may be at the song's tempo, and from which tempo it may be sung in half time (see
+    // "tempo fit" below).
+    tempoFit: z
+      .object({
+        // Notes per second a melody may have at the song's tempo (notes per bar x bpm / 240).
+        maxNotesPerSecond: z.number().positive(),
+        // From this tempo on, every entry may also be used in half time (twice as long: positions and lengths x2).
+        halfTimeFromBpm: z.number().positive(),
+      })
+      .strict(),
     // The hooks bank (our own complete melodies, docs/superpowers/specs/2026-11-24-hook-library-design.md).
     hooks: z
       .object({
@@ -421,6 +430,102 @@ export function loadPrecedentBank(bankId: string): readonly Precedent[] {
   return bank;
 }
 
+// ---- tempo fit: notes per second, half time ----
+//
+// A melody that suits a slow song is too busy for a fast one: what the ear hears is notes per second, so every
+// selection draws from the entries whose notes per second at the song's tempo (notes per bar x bpm / 240) are at
+// most `tempoFit.maxNotesPerSecond`. From `tempoFit.halfTimeFromBpm` on, each entry may also be sung in half time:
+// a copy twice as long (every position and length x2, each chord held for two beats, its tempo or tempo range x2,
+// id "<id>@half"), which halves its notes per second, so a fast song sings long notes (the usual half-time vocal of
+// dance music). Every path (hooks whole or mixed, style rhythms, curated melodies, the legacy merge) draws from this
+// pool, so the tempo checks that follow (a hook's tempoMin..tempoMax, a whole legacy entry's +-10 bpm) see the
+// half-time copies at their doubled tempo. Replaces the legacy tempo split of the rhythmic banks (the five
+// sparsest or busiest entries dropped either side of 133 bpm).
+
+const HALF_TIME_SUFFIX = '@half';
+
+/** An entry's id without the half-time suffix: the same melody whether used as written or in half time. */
+function baseId(entry: Precedent): string {
+  const id = String(entry.id);
+  return id.endsWith(HALF_TIME_SUFFIX) ? id.slice(0, -HALF_TIME_SUFFIX.length) : id;
+}
+
+/** How many different melodies a pool holds (an entry and its half-time copy are one). */
+function distinctMelodies(pool: readonly Precedent[]): number {
+  return new Set(pool.map(baseId)).size;
+}
+
+/** Notes per bar of an entry, counted from its melody (beats from start*4 to end*4). */
+function notesPerBar(entry: Precedent): number {
+  const from = entry.properties.start * 4;
+  const to = entry.properties.end * 4;
+  const notes = Object.keys(entry.melody).filter((b) => {
+    const beat = parseFloat(b);
+    return beat >= from && beat < to;
+  }).length;
+  return notes / (entry.properties.end - entry.properties.start);
+}
+
+function notesPerSecond(entry: Precedent, tempo: number): number {
+  return (notesPerBar(entry) * tempo) / 240;
+}
+
+function doubledTempo(tempo: string | number | undefined): string | number | undefined {
+  if (tempo === undefined) return undefined;
+  if (typeof tempo === 'number') return tempo * 2;
+  const range = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/u.exec(tempo);
+  if (range) return `${Number(range[1]) * 2}-${Number(range[2]) * 2}`;
+  const n = Number(tempo);
+  if (!Number.isFinite(n)) throw new Error(`vocals/precedents: cannot read the tempo "${tempo}" to double it`);
+  return String(n * 2);
+}
+
+/** The half-time copy of an entry: twice as long, every position and length x2, each chord held for two beats. */
+export function halfTimeCopy(entry: Precedent): Precedent {
+  const melody: Record<string, PrecedentMelodyNote[]> = {};
+  for (const [beat, notes] of Object.entries(entry.melody)) {
+    melody[getBeatString(parseFloat(beat) * 2)] = notes.map((n) => ({ ...n, duration: n.duration * 2 }));
+  }
+  const chords: Record<string, { chord: string }> = {};
+  for (const [beat, c] of Object.entries(entry.chords)) {
+    const b = parseFloat(beat) * 2;
+    chords[getBeatString(b)] = { ...c };
+    chords[getBeatString(b + 1)] = { ...c };
+  }
+  const p = entry.properties as Precedent['properties'] & { tempoMin?: number; tempoMax?: number };
+  const properties: Record<string, unknown> = {
+    ...p,
+    start: p.start * 2,
+    end: p.end * 2,
+    tempo: doubledTempo(p.tempo),
+    ...(p.busyness !== undefined ? { busyness: p.busyness / 2 } : {}),
+    ...(p.tempoMin !== undefined ? { tempoMin: p.tempoMin * 2 } : {}),
+    ...(p.tempoMax !== undefined ? { tempoMax: p.tempoMax * 2 } : {}),
+    halfTime: true,
+  };
+  return { ...entry, id: `${String(entry.id)}${HALF_TIME_SUFFIX}`, properties: properties as Precedent['properties'], melody, chords };
+}
+
+/** Tempo pools by "<bank>@<bpm>", each with the bank it was made from (a new bank, after edits or test data,
+ *  makes the pool again). */
+const cachedTempoBanks = new Map<string, { readonly from: readonly Precedent[]; readonly pool: readonly Precedent[] }>();
+
+/** The entries of a bank a song at `tempo` may draw from: those not busier than tempoFit allows, and from
+ *  halfTimeFromBpm on also the half-time copies that fit (bank order, then the copies in bank order). */
+export function tempoBank(bankId: string, tempo: number): readonly Precedent[] {
+  const bank = loadPrecedentBank(bankId);
+  const key = `${bankId}@${tempo}`;
+  const cached = cachedTempoBanks.get(key);
+  if (cached?.from === bank) return cached.pool;
+  const fit = loadBankIndex().tempoFit;
+  const ok = (e: Precedent) => notesPerSecond(e, tempo) <= fit.maxNotesPerSecond + 1e-9;
+  const pool = bank.filter(ok);
+  if (tempo >= fit.halfTimeFromBpm) pool.push(...bank.map(halfTimeCopy).filter(ok));
+  const frozen = Object.freeze(pool) as readonly Precedent[];
+  cachedTempoBanks.set(key, { from: bank, pool: frozen });
+  return frozen;
+}
+
 // ---- dispatcher ----
 
 export interface DispatchInputs {
@@ -438,20 +543,6 @@ export interface DispatchResult {
 
 const DEFAULT_MAX_NOTE = 59; // legacy MelodyClass.maxNote
 
-function sliceByTempo(
-  bank: readonly Precedent[],
-  tempo: number,
-  threshold: number,
-): readonly Precedent[] {
-  // Legacy idiom (lines 1131-1140, 1166-1173, 1199-1208, 1260-1269, 1297-1308):
-  //   if (tempo >= threshold) bank = bank.slice(0, bank.length - 5)
-  //   else                     bank = bank.slice(5)
-  // Picks the "fast 5" or "slow 5" subset based on which side of the
-  // tempo cutoff we're on. If the bank has ≤5 entries the slice degenerates
-  // — we replicate that legacy behaviour rather than guard against it.
-  return tempo >= threshold ? bank.slice(0, bank.length - 5) : bank.slice(5);
-}
-
 function lookupRule(inputs: DispatchInputs): GenreSegmentRule | undefined {
   const index = loadBankIndex();
   const genreRules = index.genres[inputs.genre];
@@ -463,22 +554,18 @@ function lookupRule(inputs: DispatchInputs): GenreSegmentRule | undefined {
 
 const remixable = (bank: readonly Precedent[]) => bank.filter((e) => e.properties.useRemix);
 
-/** The rule's rhythmic bank (its useRemix entries, after the legacy tempo split), or undefined without one. */
+/** The rule's rhythmic bank (its useRemix entries that fit the tempo), or undefined without one or when none fits. */
 function styleRhythms(rule: GenreSegmentRule, tempo: number): readonly Precedent[] | undefined {
   if (!rule.rhythmic) return undefined;
-  let bank = loadPrecedentBank(rule.rhythmic);
-  if (rule.rhythmicTempoSplit !== undefined) bank = sliceByTempo(bank, tempo, rule.rhythmicTempoSplit);
-  bank = remixable(bank);
-  if (bank.length === 0) throw new Error(`vocals/precedents: rhythmic bank "${rule.rhythmic}" has no entry flagged useRemix at ${tempo} bpm`);
-  return bank;
+  const bank = remixable(tempoBank(rule.rhythmic, tempo));
+  return bank.length > 0 ? bank : undefined;
 }
 
-/** The legacy dispatch of one rule with one melodic bank, over the entries flagged `useRemix` (in the bank's
- *  order, so with every entry flagged the picks are exactly the legacy ones). The rhythmic bank's tempo split
- *  slices the bank as in the file, before the flag filter. */
+/** The legacy dispatch of one rule with one melodic bank, over the entries flagged `useRemix` that fit the tempo
+ *  (see "tempo fit"; in the bank's order). */
 function dispatchRule(rule: GenreSegmentRule, melodicBankId: string, tempo: number): DispatchResult {
-  const melodicBank = remixable(loadPrecedentBank(melodicBankId));
-  if (melodicBank.length === 0) throw new Error(`vocals/precedents: bank "${melodicBankId}" has no entry flagged useRemix`);
+  const melodicBank = remixable(tempoBank(melodicBankId, tempo));
+  if (melodicBank.length === 0) throw new Error(`vocals/precedents: bank "${melodicBankId}" has no entry flagged useRemix that fits ${tempo} bpm`);
   const rhythmicBank = styleRhythms(rule, tempo);
   const mixPrecedents = rhythmicBank !== undefined;
   // Legacy fallback (line 1404): `rhythmicPrecedents = rhythmicStructurePrecedents ? rhythmicStructurePrecedents : localPrecedents;`
@@ -932,7 +1019,7 @@ interface BankPlan {
 
 function planBank(rule: GenreSegmentRule, bankId: string, inputs: MergeInputs): BankPlan {
   const index = loadBankIndex();
-  const bank = loadPrecedentBank(bankId);
+  const bank = tempoBank(bankId, inputs.tempo);
   const isHooks = index.hooks !== undefined && bankId === index.hooks.bank;
   const ofSection = (e: Precedent) => e.properties.type !== undefined && TYPE_TO_SEGMENT[e.properties.type] === inputs.segmentType;
 
@@ -961,7 +1048,7 @@ function planBank(rule: GenreSegmentRule, bankId: string, inputs: MergeInputs): 
       bankId,
       rule,
       whole,
-      remix: mixable.length >= 2 ? { kind: 'hooks', entries: mixable, maxNote } : undefined,
+      remix: distinctMelodies(mixable) >= 2 ? { kind: 'hooks', entries: mixable, maxNote } : undefined,
       wholeMaxNote: maxNote,
       why: `hooks bank "${bankId}": ${suiting.length} hook(s) written for ${inputs.segmentType} with tempoMin <= ${inputs.tempo} <= tempoMax, ${whole.length} of them may be sung whole and fit the range up to maxNote ${maxNote}, ${mixable.length} may be remixed (mixing needs two)`,
     };
@@ -1030,10 +1117,12 @@ function mergeWhole(candidate: WholeCandidate, plan: BankPlan, inputs: MergeInpu
 
 function mergeMixedHooks(pool: readonly Precedent[], maxNote: number, inputs: MergeInputs): MergedPrecedent {
   const params = { desiredPatternLength: inputs.desiredPatternLength };
-  const hook = pickHelperPrecedent(pool, params, inputs.rng);
-  const partners = pool.filter((e) => e.id !== hook.id);
   let safety = 0;
   while (true) {
+    // Like drapePair, a failed placement draws both again: some hook shapes fit the section's range on no partner
+    // rhythm (a narrow verse range), and retrying only the partner would fail every time.
+    const hook = pickHelperPrecedent(pool, params, inputs.rng);
+    const partners = pool.filter((e) => baseId(e) !== baseId(hook)); // not the hook itself, nor its half-time copy
     const rhythmHook = pickHelperPrecedent(partners, params, inputs.rng);
     const draped = drapeAndPlace(rhythmHook, hook, maxNote, undefined);
     if (draped.ok) return draped.merged;
@@ -1076,7 +1165,7 @@ function selectByRecipe(rule: GenreSegmentRule, bankIds: readonly string[], weig
 
   const can: Record<Recipe, boolean> = {
     hookWhole: (hookPlan?.whole.length ?? 0) > 0,
-    hookOnHook: hooks.length >= 2,
+    hookOnHook: distinctMelodies(hooks) >= 2,
     hookOnStyle: hooks.length >= 1 && style !== undefined,
     curatedOnStyle: curatedPlans.length > 0,
     curatedOnHook: hooks.length >= 1 && curatedRemix.length > 0,
@@ -1111,7 +1200,7 @@ function selectByRecipe(rule: GenreSegmentRule, bankIds: readonly string[], weig
 /** The hooks of the section and tempo flagged useRemix (the pool for mixing, as melody or as rhythm). */
 function remixableHooks(plan: BankPlan, inputs: MergeInputs): readonly Precedent[] {
   const ofSection = (e: Precedent) => e.properties.type !== undefined && TYPE_TO_SEGMENT[e.properties.type] === inputs.segmentType;
-  return loadPrecedentBank(plan.bankId).filter((e) => {
+  return tempoBank(plan.bankId, inputs.tempo).filter((e) => {
     const p = e.properties as unknown as { tempoMin: number; tempoMax: number };
     return e.properties.useRemix && ofSection(e) && p.tempoMin <= inputs.tempo && inputs.tempo <= p.tempoMax;
   });

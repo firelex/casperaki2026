@@ -44,19 +44,28 @@ export const THIN_RULES = {
   gapBeats: 2,
   /** More than this share of gap bars makes a section rhythm-thin. */
   maxGapBarShare: 0.25,
+  /** Fewer moving parts (not held) above bass and drums than this is too little motion. */
+  minMovingParts: 2,
+  /** Notes quieter than this velocity (of 127) count for nothing. */
+  silentVelocity: 10,
   /** Pattern options written for a partner track; the one that fills best is kept. */
   variants: 4,
   /** Partner tracks added to one song at most. */
   maxAddedTracks: 2,
 } as const;
 
-export type ThinKind = 'harmony' | 'rhythm';
+export type ThinKind = 'harmony' | 'rhythm' | 'motion';
+const KINDS = ['harmony', 'rhythm', 'motion'] as const;
+/** Genres whose sections hold their sound on purpose: never paired for motion. */
+const MOTION_EXEMPT = new Set(['ballad']);
 
 export interface SectionThinness {
   readonly harmony: boolean;
   readonly rhythm: boolean;
+  readonly motion: boolean;
   readonly medianVoices: number;
   readonly gapBars: number;
+  readonly movingParts: number;
 }
 
 const BEATS_PER_BAR = 4;
@@ -77,20 +86,31 @@ interface Sounding {
   readonly unknown: number;
 }
 
+/** False for a note too quiet to count (velocity below silentVelocity; a guitar event whose strings all are). */
+function audible(e: unknown): boolean {
+  const ev = e as { velocity?: number; velocities?: readonly number[] };
+  if (Array.isArray(ev.velocities)) return ev.velocities.some((v) => v >= THIN_RULES.silentVelocity);
+  return typeof ev.velocity !== 'number' || ev.velocity >= THIN_RULES.silentVelocity;
+}
+
 /** One bar of one lane as sounding spans (beats within the bar). */
 function soundingIn(bar: FamilyPattern['bars'][number]): Sounding[] {
   const onsets = Object.entries(bar.notes)
-    .filter(([, evs]) => evs?.length)
-    .map(([k, evs]) => ({ beat: parseBarBeat(k), evs: evs! }))
+    .map(([k, evs]) => ({ beat: parseBarBeat(k), evs: (evs ?? []).filter(audible) }))
+    .filter(({ evs }) => evs.length > 0)
     .sort((a, b) => a.beat - b.beat);
   const out: Sounding[] = [];
   onsets.forEach(({ beat, evs }, i) => {
     const next = onsets[i + 1]?.beat ?? BEATS_PER_BAR;
     for (const e of evs) {
-      const ev = e as { type?: string; duration?: number; note?: number; chord?: string };
+      const ev = e as { type?: string; duration?: number; note?: number; chord?: string; strings?: readonly number[]; velocities?: readonly number[] };
       const end = typeof ev.duration === 'number' ? Math.min(BEATS_PER_BAR, beat + ev.duration) : next;
       if (ev.type === 'note' && typeof ev.note === 'number') {
         out.push({ start: beat, end, pcs: [ev.note % 12], unknown: 0 });
+      } else if (ev.type === 'strum' && Array.isArray(ev.strings)) {
+        // A guitar event on the listed strings: one note per audible string (the engine voices the pitches).
+        const strings = ev.strings.filter((_, i) => (ev.velocities?.[i] ?? 127) >= THIN_RULES.silentVelocity).length;
+        out.push({ start: beat, end, pcs: [], unknown: strings });
       } else if (ev.type !== undefined && CHORD_EVENTS.has(ev.type) && typeof ev.chord === 'string') {
         out.push({ start: beat, end, pcs: chordNotes(parseChord(ev.chord)).map((n) => n % 12), unknown: 0 });
       } else if (ev.type === 'noteRelative') {
@@ -119,7 +139,7 @@ function gapBarsOf(lanes: readonly FamilyPattern[], bars: number): number {
   for (let b = 0; b < bars; b++) {
     const onsets = new Set<number>();
     for (const p of lanes) {
-      for (const [k, evs] of Object.entries(p.bars[b]?.notes ?? {})) if (evs?.length) onsets.add(parseBarBeat(k));
+      for (const [k, evs] of Object.entries(p.bars[b]?.notes ?? {})) if ((evs ?? []).some(audible)) onsets.add(parseBarBeat(k));
     }
     const points = [0, ...[...onsets].sort((x, y) => x - y), BEATS_PER_BAR];
     if (points.some((p, i) => i > 0 && p - points[i - 1]! >= THIN_RULES.gapBeats)) gaps++;
@@ -148,12 +168,20 @@ export function measureSection(lanes: Readonly<Record<string, FamilyPattern>>): 
   voices.sort((a, b) => a - b);
   const medianVoices = voices[Math.floor(voices.length / 2)]!;
   const gapBars = gapBarsOf(measured.map(([, p]) => p), bars);
+  const movingParts = measured.filter(([, p]) => isMoving(p)).length;
   return {
     harmony: medianVoices < THIN_RULES.minVoices,
     rhythm: gapBars / bars > THIN_RULES.maxGapBarShare,
+    motion: movingParts < THIN_RULES.minMovingParts,
     medianVoices,
     gapBars,
+    movingParts,
   };
+}
+
+/** A part that moves: it plays something audible and does not just hold its notes. */
+function isMoving(p: FamilyPattern): boolean {
+  return !isSustained(p) && p.bars.some((bar) => Object.values(bar.notes).some((evs) => (evs ?? []).some(audible)));
 }
 
 /** Beats a lane sounds over the section. */
@@ -177,15 +205,32 @@ export function partnerLane(lanes: Readonly<Record<string, FamilyPattern>>, kind
     const pads = measured.filter(([lane]) => lane.replace(/ \d+$/u, '') === 'Pad');
     return best(pads, soundingTime) ?? best(measured, soundingTime);
   }
+  if (kind === 'motion') {
+    // The moving part (most onsets) gets a moving partner; with none moving, the harmony part.
+    const onsets = (p: FamilyPattern) => p.bars.reduce((n, bar) => n + Object.values(bar.notes).filter((evs) => (evs ?? []).some(audible)).length, 0);
+    return best(measured.filter(([, p]) => isMoving(p)), onsets) ?? partnerLane(lanes, 'harmony');
+  }
   const moving = measured.filter(([, p]) => !isSustained(p));
   return best(moving, (p) => gapBarsOf([p], p.bars.length));
 }
 
-/** How much a partner track helps a thin section: (thin kinds cleared, gap bars removed, median notes gained),
- *  compared in that order. */
-export function fillScore(before: SectionThinness, after: SectionThinness): readonly [number, number, number] {
-  const cleared = (before.harmony && !after.harmony ? 1 : 0) + (before.rhythm && !after.rhythm ? 1 : 0);
-  return [cleared, before.gapBars - after.gapBars, after.medianVoices - before.medianVoices];
+/** How much an option (a partner track, or a track switched on) helps a thin section, for the problem it was chosen
+ *  for: (that problem cleared, other problems cleared, how much that problem improved, then the other gains), compared
+ *  in that order. Gains: gap bars removed (rhythm), notes sounding gained (harmony), moving parts gained (motion). */
+export function fillScore(before: SectionThinness, after: SectionThinness, target: ThinKind): readonly number[] {
+  const gain: Record<ThinKind, number> = {
+    rhythm: before.gapBars - after.gapBars,
+    harmony: after.medianVoices - before.medianVoices,
+    motion: after.movingParts - before.movingParts,
+  };
+  const cleared = (k: ThinKind) => (before[k] && !after[k] ? 1 : 0);
+  const others = KINDS.filter((k) => k !== target);
+  return [cleared(target), others.reduce((n, k) => n + cleared(k), 0), gain[target], ...others.map((k) => gain[k])];
+}
+
+/** Whether an option helps the problem it was chosen for (clears it or improves it). */
+export function helps(score: readonly number[]): boolean {
+  return score[0]! > 0 || score[2]! > 0;
 }
 
 export const RecordedThinPartnerSchema = z
@@ -194,7 +239,7 @@ export const RecordedThinPartnerSchema = z
     family: InstrumentFamilySchema,
     soundId: z.string().min(1),
     sectionType: z.string().min(1),
-    kind: z.enum(['harmony', 'rhythm']),
+    kind: z.enum(KINDS),
     fork: z.string().min(1),
   })
   .strict();
@@ -231,7 +276,6 @@ const better = (a: readonly number[], b: readonly number[]) => {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i]! > b[i]!;
   return false;
 };
-const NOTHING = [0, 0, 0] as const;
 /** Section types that are sparse on purpose (they drop out): never paired. */
 const SPARSE_ON_PURPOSE = new Set(['break']);
 /** Section types measured after the main sections, which first borrow a partner track the song already has. */
@@ -245,32 +289,49 @@ export function addThinPartners(input: ThinPartnerInput): ThinPartnerResult {
   const added: AddedPartner[] = [];
   const tried = new Set<string>();
 
-  const newLanes = () => new Set(added.map((a) => a.lane)).size;
+  const ownLanes = new Set(input.selection.instruments.map((i) => i.lane));
+  /** Tracks this pass added (switching on the song's own tracks does not count). */
+  const newLanes = () => new Set(added.map((a) => a.lane).filter((l) => !ownLanes.has(l))).size;
+  const motionExempt = MOTION_EXEMPT.has(ctx.params.genre);
 
   for (;;) {
-    const target = firstThin(patterns, tried);
+    const target = firstThin(patterns, tried, motionExempt);
     if (!target) break;
     tried.add(`${target.type}:${target.kind}`);
     const lanes = patterns.segments[target.index]!.lanes;
     const before = measureSection(lanes);
 
-    // An intro or outro first borrows a partner track the song already has (switched on in its sections too): no
-    // new sound, and it does not count toward the limit.
-    if (EDGES.has(target.type)) {
-      let borrow: { score: readonly number[]; selection: SelectionResult; patterns: PatternResult; partner: AddedPartner } | undefined;
-      for (const lane of [...new Set(added.map((a) => a.lane))]) {
-        const first = added.find((a) => a.lane === lane)!;
-        const candidate = activate(selection, lane, target.type);
-        const written = write(candidate, laneForks);
-        const score = fillScore(before, measureSection(written.segments[target.index]!.lanes));
-        if (!borrow || better(score, borrow.score)) borrow = { score, selection: candidate, patterns: written, partner: first };
-      }
-      if (borrow && better(borrow.score, NOTHING)) {
-        selection = borrow.selection;
-        patterns = borrow.patterns;
-        added.push({ ...borrow.partner, sectionType: target.type, kind: target.kind });
-        continue;
-      }
+    // Before adding a track, switch on one the song already has in this section type (no new sound, not counted
+    // toward the limit): with too little motion, any track of the song that is off here; an intro or outro also
+    // borrows a partner track added for the main sections.
+    const switchable = new Set<string>();
+    if (target.kind === 'motion') {
+      for (const i of selection.instruments) if (isMeasured(i.lane) && i.family !== 'drums' && i.family !== 'bass') switchable.add(i.lane);
+    }
+    if (EDGES.has(target.type)) for (const a of added) if (!ownLanes.has(a.lane)) switchable.add(a.lane);
+    const activeHere = new Set(selection.segments[target.index]!.activeLanes);
+    let on: { score: readonly number[]; selection: SelectionResult; patterns: PatternResult; partner: AddedPartner } | undefined;
+    for (const lane of switchable) {
+      if (activeHere.has(lane)) continue;
+      const inst = selection.instruments.find((i) => i.lane === lane)!;
+      const candidate = activate(selection, lane, target.type);
+      const written = write(candidate, laneForks);
+      const score = fillScore(before, measureSection(written.segments[target.index]!.lanes), target.kind);
+      const partner: AddedPartner = {
+        lane,
+        family: inst.family,
+        soundId: inst.entry.id,
+        sectionType: target.type,
+        kind: target.kind,
+        fork: laneForks.get(lane) ?? `lane/${lane}`,
+      };
+      if (!on || better(score, on.score)) on = { score, selection: candidate, patterns: written, partner };
+    }
+    if (on && helps(on.score)) {
+      selection = on.selection;
+      patterns = on.patterns;
+      added.push(on.partner);
+      continue;
     }
     if (newLanes() >= THIN_RULES.maxAddedTracks) continue;
 
@@ -302,10 +363,10 @@ export function addThinPartners(input: ThinPartnerInput): ThinPartnerResult {
       const fork = `thin/${lane}#${k}`;
       const forks = new Map(laneForks).set(lane, fork);
       const written = write(candidate, forks);
-      const score = fillScore(before, measureSection(written.segments[target.index]!.lanes));
+      const score = fillScore(before, measureSection(written.segments[target.index]!.lanes), target.kind);
       if (!best || better(score, best.score)) best = { score, forks, patterns: written, fork };
     }
-    if (!best || !better(best.score, NOTHING)) continue;
+    if (!best || !helps(best.score)) continue;
 
     selection = candidate;
     laneForks = best.forks;
@@ -329,6 +390,13 @@ export function replayThinPartners(
   let selection = input.selection;
   const laneForks = new Map<string, string>();
   for (const p of recorded) {
+    // A track the song has of its own, switched on in this section type.
+    const own = input.selection.instruments.find((i) => i.lane === p.lane);
+    if (own) {
+      if (own.entry.id !== p.soundId) throw new Error(`thin-sections: recorded "${p.lane}" plays ${p.soundId}, the song's track plays ${own.entry.id}`);
+      selection = activate(selection, p.lane, p.sectionType);
+      continue;
+    }
     // A later entry for a partner already replayed is a section type that borrowed it.
     if (laneForks.has(p.lane)) {
       if (laneForks.get(p.lane) !== p.fork) throw new Error(`thin-sections: recorded partner "${p.lane}" has two pattern streams`);
@@ -366,10 +434,11 @@ function withLane(selection: SelectionResult, lane: SelectionResult['instruments
 }
 
 /** The first thin section whose type and kind were not tried yet: the main sections in song order, then intros and
- *  outros; harmony before rhythm. Breaks are never paired. */
+ *  outros; harmony, then rhythm, then motion (not for ballads). Breaks are never paired. */
 function firstThin(
   patterns: PatternResult,
   tried: ReadonlySet<string>,
+  motionExempt: boolean,
 ): { index: number; segmentName: string; type: string; kind: ThinKind } | undefined {
   for (const edges of [false, true]) {
     for (let index = 0; index < patterns.segments.length; index++) {
@@ -377,7 +446,8 @@ function firstThin(
       const type = segmentType(seg.segmentName);
       if (SPARSE_ON_PURPOSE.has(type) || EDGES.has(type) !== edges) continue;
       const m = measureSection(seg.lanes);
-      for (const kind of ['harmony', 'rhythm'] as const) {
+      for (const kind of KINDS) {
+        if (kind === 'motion' && motionExempt) continue;
         if (m[kind] && !tried.has(`${type}:${kind}`)) return { index, segmentName: seg.segmentName, type, kind };
       }
     }

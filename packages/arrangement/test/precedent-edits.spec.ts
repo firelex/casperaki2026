@@ -17,6 +17,9 @@ import {
 } from '../src/index.js';
 import { setPrecedentDataForTests } from '../src/vocals/precedents.js';
 
+// Selection tests here are not about tempo fit (vocals-tempo-fit.spec.ts is): no cap, no half time.
+const NO_TEMPO_FIT = { maxNotesPerSecond: 1e9, halfTimeFromBpm: 1e9 };
+
 const PRECEDENTS = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'vocals', 'precedents');
 
 afterEach(() => {
@@ -46,7 +49,7 @@ describe('flags and source on every bank entry', () => {
       return { ...e, properties };
     });
     setPrecedentDataForTests({
-      index: { $schemaVersion: 1, wholeShare: 0.5, banks: { schlager: { file: 's.json' } }, genres: {} },
+      index: { $schemaVersion: 1, wholeShare: 0.5, tempoFit: NO_TEMPO_FIT, banks: { schlager: { file: 's.json' } }, genres: {} },
       files: { 's.json': without },
     });
     expect(() => loadPrecedentBank('schlager')).toThrow(/useRemix/);

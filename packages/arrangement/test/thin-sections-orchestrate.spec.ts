@@ -50,7 +50,7 @@ describe('thin sections in orchestrate', () => {
 describe('partner tracks are recorded with the song and replayed', () => {
   it('a new song records its partner tracks (none recorded as none) in the generator params', () => {
     const params = orchestrate(SUNLIT).generator!.params as { params?: { thinPartners?: { lane: string }[] } };
-    expect(params.params?.thinPartners?.map((p) => p.lane).sort()).toEqual(['Pad 2', 'Synths 2']);
+    expect([...new Set(params.params?.thinPartners?.map((p) => p.lane))].sort()).toEqual(['Pad 2', 'Synths 2']);
   });
 
   it('recorded partners are replayed, not measured again: recorded none adds none', () => {

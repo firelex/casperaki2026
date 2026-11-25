@@ -18,6 +18,9 @@ import {
   type Precedent,
 } from '../src/vocals/precedents.js';
 
+// Selection tests here are not about tempo fit (vocals-tempo-fit.spec.ts is): no cap, no half time.
+const NO_TEMPO_FIT = { maxNotesPerSecond: 1e9, halfTimeFromBpm: 1e9 };
+
 const PRECEDENTS = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'vocals', 'precedents');
 const schlager = JSON.parse(readFileSync(resolve(PRECEDENTS, 'mlDataRaw-schlager.json'), 'utf8')) as Precedent[];
 const MAX_NOTE = 60;
@@ -31,6 +34,7 @@ function useIndex(wholeShare = 0.5): void {
     index: {
       $schemaVersion: 1,
       wholeShare,
+      tempoFit: NO_TEMPO_FIT,
       banks: { schlager: { file: 'mlDataRaw-schlager.json' } },
       genres: { g: { chorus: { melodic: 'schlager', rhythmic: 'schlager', maxNote: MAX_NOTE }, verse: { melodic: 'schlager', rhythmic: 'schlager', maxNote: MAX_NOTE } } },
     },

@@ -19,6 +19,9 @@ import {
   type Precedent,
 } from '../src/vocals/precedents.js';
 
+// Selection tests here are not about tempo fit (vocals-tempo-fit.spec.ts is): no cap, no half time.
+const NO_TEMPO_FIT = { maxNotesPerSecond: 1e9, halfTimeFromBpm: 1e9 };
+
 const PRECEDENTS = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'vocals', 'precedents');
 const schlager: unknown = JSON.parse(readFileSync(resolve(PRECEDENTS, 'mlDataRaw-schlager.json'), 'utf8'));
 
@@ -72,6 +75,7 @@ function useIndex(rules: Record<string, Rule>, wholeShare = 0.5, hookMaxNote: Re
       $schemaVersion: 1,
       banks: { hooks: { file: 'hooks.json' }, schlager: { file: 'mlDataRaw-schlager.json' } },
       wholeShare,
+      tempoFit: NO_TEMPO_FIT,
       hooks: { bank: 'hooks', maxNote: hookMaxNote },
       genres: { testGenre: rules },
     },
@@ -285,7 +289,7 @@ describe('several melodic banks', () => {
     useIndex({ chorus: { melodic: 'schlager', rhythmic: 'schlager' } });
     const withHooksSetting = select('same', 110);
     setPrecedentDataForTests({
-      index: { $schemaVersion: 1, wholeShare: 0.5, banks: { schlager: { file: 'mlDataRaw-schlager.json' } }, genres: { testGenre: { chorus: { melodic: 'schlager', rhythmic: 'schlager' } } } },
+      index: { $schemaVersion: 1, wholeShare: 0.5, tempoFit: NO_TEMPO_FIT, banks: { schlager: { file: 'mlDataRaw-schlager.json' } }, genres: { testGenre: { chorus: { melodic: 'schlager', rhythmic: 'schlager' } } } },
       files: { 'mlDataRaw-schlager.json': schlager },
     });
     expect(select('same', 110)).toEqual(withHooksSetting);
@@ -323,6 +327,7 @@ describe('the real hooks bank (smoke)', () => {
         $schemaVersion: 1,
         banks: { hooks: { file: 'mlDataRaw-hooks.json' } },
         wholeShare,
+      tempoFit: NO_TEMPO_FIT,
         hooks: { bank: 'hooks', maxNote: Object.fromEntries(Object.values(SECTION).map((s) => [s, maxNote])) },
         genres: { testGenre: Object.fromEntries(Object.values(SECTION).map((s) => [s, { melodic: ['hooks'] }])) },
       },
@@ -373,6 +378,7 @@ describe('selection by recipe (bank index "recipes")', () => {
         $schemaVersion: 1,
         banks: { hooks: { file: 'hooks.json' }, schlager: { file: 'mlDataRaw-schlager.json' }, 'rhythmic-dance': { file: 'mlDataRaw-rhythmic-dance.json' } },
         wholeShare: 0.5,
+        tempoFit: NO_TEMPO_FIT,
         hooks: { bank: 'hooks', maxNote: HOOK_MAX_NOTE },
         recipes: { chorus: { ...ZERO, ...weights, curatedBanks } },
         genres: { testGenre: { chorus: { melodic: ['hooks', 'schlager'], rhythmic: 'rhythmic-dance' } } },

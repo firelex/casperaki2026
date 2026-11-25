@@ -1,0 +1,147 @@
+# Fast Schlager: 5 verses, 2 pre-choruses, 6 choruses and 2 bridges in long notes for the "schlager" style at 120-129 bpm.
+# Key of C major / A minor, sung pitch (C4 = middle C). Half notes, whole notes and ties; at most about 2.9 notes a bar.
+
+# ---- Verses (G3-G4) ----
+
+hook: Station Clock Story
+type: Verse
+tempo: 118-130
+feel: reflective
+style: schlager
+chords: C | Am | F | G | C | Am | Dm | G
+melody: r:1 e4:1 g4:2 | e4:3 c4:1 | c4:2 a3:1 c4:1 | d4:4 |
+        r:0.5 e4:0.5 g4:3- | g4:1 e4:3 | f4:2 d4:1 a3:1 | b3:4 |
+
+hook: Ferry Deck Letters
+type: Verse
+tempo: 116-128
+feel: wistful
+style: schlager
+chords: Am | F | C | G | Am | F | E7 | Am
+melody: a3:2 c4:1 e4:1- | e4:2 f4:2 | e4:3 r:1 | d4:2 b3:1 d4:1 |
+        c4:2 e4:1 g4:1- | g4:2 f4:2 | e4:2 d4:1 b3:1 | c4:4 |
+
+hook: Kiosk at Midnight
+type: Verse
+tempo: 120-132
+feel: playful
+style: schlager
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | G
+melody: r:2 g3:1 c4:1- | c4:2 e4:2 | d4:3 b3:1 | c4:2 e4:1 d4:1- | d4:1 c4:3 |
+        r:1 e4:1 g4:2 | g4:1 f4:1 d4:2 | c4:2 a3:1 c4:1 | b3:1 d4:3 |
+
+hook: Dust Road Home
+type: Verse
+tempo: 118-130
+feel: steady
+style: schlager
+chords: F | C | Dm | G | F | C | E7 | Am
+melody: c4:3 a3:1 | g3:2 c4:2 | d4:2 f4:1 e4:1- | e4:1 d4:3 |
+        r:0.5 a3:0.5 c4:3- | c4:1 e4:1 g4:2 | e4:3 d4:1 | c4:4 |
+
+hook: Porch Step Evening
+type: Verse
+tempo: 120-130
+feel: tender
+style: schlager
+chords: C | Em | F | C | Dm | G | C Am | Dm G
+melody: g3:1 c4:1 e4:2 | e4:2 b3:2 | c4:2 f4:2 | e4:4 |
+        r:1 d4:1 f4:2- | f4:1 e4:1 d4:2 | e4:2 c4:2 | d4:1 a3:1 b3:2 |
+
+# ---- Pre-choruses (up to E5) ----
+
+hook: Ribbons Going Up
+type: Pre-chorus
+tempo: 118-130
+feel: lifting
+style: schlager
+chords: Dm | Em | F | G | Dm | Em | F | Gsus4 G
+melody: r:1 d4:1 f4:2 | e4:3 g4:1 | a4:2 f4:1 a4:1 | g4:2 b4:1 d5:1- |
+        d5:1 c5:1 a4:2 | b4:2 g4:2 | a4:2 c5:2- | c5:2 b4:2 |
+
+hook: Hold the Doorway
+type: Pre-chorus
+tempo: 120-132
+feel: building
+style: schlager
+chords: Am | F | C | G | Am | F | Dm | E7
+melody: e4:3 c4:1 | c4:2 f4:2 | e4:2 g4:2 | g4:1 a4:1 b4:2 |
+        c5:3 a4:1 | a4:2 c5:2 | d5:2 a4:1 f4:1 | r:1 g#4:1 b4:2 |
+
+# ---- Choruses (up to E5) ----
+
+hook: Every Glass Raised
+type: Chorus
+tempo: 118-130
+feel: euphoric
+style: schlager
+chords: C | G | Am | F | C | G | F G | C
+melody: r:1 g4:1 c5:2 | b4:3 g4:1 | a4:2 c5:1 e5:1- | e5:2 c5:2 |
+        r:1 g4:1 c5:2 | d5:3 b4:1 | c5:2 b4:2 | c5:4 |
+
+hook: Hearts Like Flares
+type: Chorus
+tempo: 120-132
+feel: soaring
+style: schlager
+chords: Am | F | C | E7 | Am | F | Dm G | C
+melody: e5:3 c5:1 | c5:2 a4:2 | g4:2 c5:1 b4:1- | b4:2 g#4:1 b4:1 |
+        c5:2 e5:2 | c5:3 a4:1 | a4:2 b4:2 | c5:4 |
+
+hook: Confetti Sky
+type: Chorus
+tempo: 120-130
+feel: jubilant
+style: schlager
+leadin: yes
+chords: G | C | Am | Dm | G | C | Am | F G | C
+melody: r:2 e4:0.5 f4:0.5 g4:1- | g4:1 c5:1 e5:2 | e5:2 d5:1 c5:1 | d5:3 a4:1 | b4:4 |
+        r:1 c5:1 e5:2 | e5:1 d5:1 c5:2 | c5:2 d5:2 | e5:4 |
+
+hook: Arms Around the Room
+type: Chorus
+tempo: 116-128
+feel: warm
+style: schlager
+chords: F | G | Em | Am | F | G | C | C
+melody: a4:2 c5:2- | c5:1 b4:1 d5:2 | b4:3 g4:1 | a4:2 r:1.5 c5:0.5- |
+        c5:3 a4:1 | b4:2 d5:2 | e5:4- | e5:2 c5:2 |
+
+hook: Nobody Goes Home
+type: Chorus
+tempo: 120-130
+feel: rowdy
+style: schlager
+chords: C | Am | F | G | C | Am | Dm7 G | C
+melody: e5:2 d5:1 c5:1 | c5:3 r:0.5 a4:0.5- | a4:2 c5:1 d5:1 | d5:2 r:2 |
+        e5:2 d5:1 c5:1 | c5:1 a4:3 | a4:2 b4:2 | c5:4 |
+
+hook: Summer Keeps Burning
+type: Chorus
+tempo: 118-132
+feel: carefree
+style: schlager
+chords: F | G | Em Am | Dm | F | G | E7 | Am
+melody: c5:2 a4:2 | b4:2 d5:2- | d5:1 b4:1 c5:2 | a4:3 f4:1 |
+        c5:2 a4:1 c5:1- | c5:1 d5:3 | b4:2 g#4:2 | a4:4 |
+
+# ---- Bridges (up to E5) ----
+
+hook: Hush Before Midnight
+type: Bridge
+tempo: 116-128
+feel: hushed
+style: schlager
+chords: Dm | Am | F | C | Dm | Am | Gsus4 | G
+melody: r:2 f4:2 | e4:4 | r:1 a4:1 c5:2 | g4:4 |
+        r:1 f4:1 a4:2 | c5:2 e5:2 | d5:2 c5:2 | b4:4 |
+
+hook: Cold Lake Lights
+type: Bridge
+tempo: 120-130
+feel: dreamy
+style: schlager
+chords: Am | Em | F | C | Dm | F | E | E7
+melody: c5:3 b4:1- | b4:2 g4:2 | a4:3 g4:1 | g4:2 e4:2 |
+        f4:2 a4:1 d5:1- | d5:2 c5:2 | b4:2 g#4:2 | b4:4 |

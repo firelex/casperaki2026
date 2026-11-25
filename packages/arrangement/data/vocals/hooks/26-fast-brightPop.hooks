@@ -1,0 +1,234 @@
+# Bright radio pop at fast tempos (style brightPop), long-note melodies: 9 verses, 4 pre-choruses, 8 choruses, 4 bridges.
+
+hook: Neon Porch Light
+type: Verse
+tempo: 110-124
+feel: wistful
+style: brightPop
+chords: C | G | Am | F | C | G | F | G
+melody: r:1 g3:1 c4:1 e4:1- | e4:1 d4:3 | r:1 a3:1 c4:1 e4:1- | e4:1 c4:3 |
+        r:1 g3:1 c4:1 g4:1- | g4:2 d4:2 | r:1 c4:1 f4:1 e4:1 | d4:4 |
+
+hook: Paper Lantern Talk
+type: Verse
+tempo: 112-126
+feel: hopeful
+style: brightPop
+chords: Am | F | C | G | Am | F | C | G
+melody: r:2 c4:1 e4:1- | e4:2 c4:2 | r:1 e4:1 g4:2 | d4:3 r:1 |
+        r:2 c4:1 e4:1- | e4:2 f4:2 | e4:2 d4:1 c4:1 | b3:4 |
+
+hook: Skyline Hum
+type: Verse
+tempo: 115-129
+feel: cool
+style: brightPop
+chords: C | Em | F | G | C | Em | F G | C
+melody: g4:3 e4:1- | e4:3 d4:1 | c4:2 a3:2 | b3:2 d4:2 |
+        g4:3 e4:1- | e4:2 b3:2 | c4:2 d4:2 | c4:4 |
+
+hook: Window Seat Sunday
+type: Verse
+tempo: 108-122
+feel: easy
+style: brightPop
+leadin: yes
+chords: G | F | C | G | Am | F | C | G | G
+melody: r:3 c4:0.5 d4:0.5 |
+        c4:1 a3:2 c4:1 | e4:3 r:1 | r:1 d4:1 g4:2 | e4:4 |
+        c4:1 a3:2 f4:1- | f4:1 e4:3 | r:1 d4:1 b3:2 | d4:4 |
+
+hook: Tin Roof Murmur
+type: Verse
+tempo: 114-128
+feel: nostalgic
+style: brightPop
+chords: Am | G | F | C | Am | G | F | G
+melody: r:0.5 e4:0.5 e4:3 | d4:2 b3:2 | c4:3 a3:1 | g3:4 |
+        r:0.5 e4:0.5 g4:3 | g4:1 d4:3 | f4:2 c4:2 | d4:4 |
+
+hook: Satellite Small Talk
+type: Verse
+tempo: 110-125
+feel: dreamy
+style: brightPop
+chords: C | Am | F | G | C | Am | Dm | G
+melody: e4:2 g4:2 | e4:4- | e4:1 f4:1 c4:2 | d4:3 r:1 |
+        e4:2 g4:2 | e4:1 c4:3 | d4:2 f4:2 | b3:1 d4:3 |
+
+hook: Late Train Glow
+type: Verse
+tempo: 116-129
+feel: restless
+style: brightPop
+chords: Am | F | C | G | Am | F | G | G
+melody: r:1 c4:1 e4:2 | f4:3 e4:1- | e4:2 c4:2 | d4:2 r:2 |
+        r:1 c4:1 e4:2 | g4:3 f4:1 | r:1 d4:1 b3:2 | g3:4 |
+
+hook: Velvet Overpass
+type: Verse
+tempo: 113-127
+feel: confident
+style: brightPop
+chords: C G | Am | F | C | C G | Am | F | G
+melody: c4:2 d4:2- | d4:1 c4:3 | r:2 a3:1 c4:1- | c4:2 e4:2 |
+        e4:2 d4:2- | d4:1 e4:3 | f4:2 c4:2 | b3:1 d4:3 |
+
+hook: Halfway Home Again
+type: Verse
+tempo: 117-129
+feel: tender
+style: brightPop
+chords: F | G | Em | Am | F | G | C | C
+melody: a3:2 c4:1 f4:1- | f4:1 d4:3 | e4:2 g4:2 | e4:3 r:1 |
+        a3:2 c4:1 g4:1- | g4:2 d4:2 | e4:3 g4:1- | g4:4 |
+
+hook: Pressure Rising Slow
+type: Pre-chorus
+tempo: 110-128
+feel: building
+style: brightPop
+chords: F | G | Em | Am | F | G | Dm | G
+melody: c4:2 f4:2 | g4:3 d4:1 | e4:2 g4:2 | a4:3 c5:1- |
+        c5:2 a4:2 | b4:3 g4:1 | a4:2 d5:2- | d5:4 |
+
+hook: Almost There Tonight
+type: Pre-chorus
+tempo: 111-129
+feel: urgent
+style: brightPop
+chords: Am | Am | F | F | C | C | G | G
+melody: r:1 e4:1 a4:2 | g4:2 e4:2 | r:1 f4:1 c5:2 | a4:4 |
+        r:1 g4:1 e5:2 | d5:2 c5:2 | b4:3 d5:1- | d5:4 |
+
+hook: Gravity Lets Go
+type: Pre-chorus
+tempo: 110-126
+feel: lifting
+style: brightPop
+chords: Dm | Em | F | G | Dm | Em | F | G
+melody: f4:2 a4:2 | g4:3 e4:1- | e4:1 f4:1 a4:2 | g4:3 r:1 |
+        a4:2 d5:2 | b4:3 g4:1- | g4:1 a4:1 c5:2 | b4:4 |
+
+hook: Breath Before Lights
+type: Pre-chorus
+tempo: 113-129
+feel: tense
+style: brightPop
+chords: Am | G | F | G | Am | G | F G | G
+melody: r:2 e4:2 | d4:2 g4:2 | r:2 a4:2 | g4:2 b4:2 |
+        r:2 c5:2 | b4:2 d5:2 | c5:2 b4:2 | d5:4 |
+
+hook: Golden Hour Anthem
+type: Chorus
+tempo: 110-124
+feel: anthem
+style: brightPop
+leadin: yes
+chords: G | C | G | Am | F | C | G | F | C
+melody: r:3 g4:0.5 e5:0.5- |
+        e5:2 d5:1 c5:1 | d5:4 | r:1 c5:1 e5:2 | c5:3 a4:1 |
+        g4:2 e5:2 | d5:2 b4:1 g4:1 | a4:2 c5:1 d5:1 | e5:4 |
+
+hook: Paper Hearts Fly
+type: Chorus
+tempo: 110-126
+feel: euphoric
+style: brightPop
+chords: F | C | G | Am | F | C | G | G
+melody: a4:3 c5:1- | c5:2 e5:2 | d5:3 b4:1 | c5:4 |
+        a4:3 c5:1- | c5:1 d5:1 e5:2 | d5:2 b4:1 a4:1 | g4:4 |
+
+hook: Fireworks On Mute
+type: Chorus
+tempo: 115-129
+feel: bittersweet
+style: brightPop
+chords: Am | F | C | G | Am | F | C | G
+melody: e5:4- | e5:1 d5:1 c5:2 | g4:2 c5:2 | b4:3 r:1 |
+        c5:2 e5:2 | d5:3 c5:1 | c5:2 g4:2 | b4:1 d5:3 |
+
+hook: Brighter Than Rumours
+type: Chorus
+tempo: 110-128
+feel: bold
+style: brightPop
+leadin: yes
+chords: G | C | Em | F | G | C | Em | F G | C
+melody: r:2 g4:1 c5:1- |
+        c5:2 e5:2 | b4:3 g4:1 | a4:2 c5:2 | d5:4 |
+        e5:3 d5:1 | e5:2 b4:2 | c5:2 d5:2- | d5:1 e5:3 |
+
+hook: Sky Full Of Yes
+type: Chorus
+tempo: 114-128
+feel: joyful
+style: brightPop
+chords: Am | G | F | C | Am | G | F | G
+melody: r:1 a4:1 c5:2 | b4:2 g4:2 | a4:4- | a4:1 g4:3 |
+        r:1 a4:1 e5:2 | d5:3 b4:1 | c5:2 a4:2 | b4:4 |
+
+hook: Electric Lemonade
+type: Chorus
+tempo: 116-129
+feel: sunny
+style: brightPop
+chords: C | F | Am | G | C | F | G | C
+melody: g4:1 c5:1 e5:2 | c5:3 a4:1 | e5:2 c5:1 a4:1 | b4:4 |
+        g4:1 c5:1 e5:2 | d5:2 c5:2 | b4:2 d5:2- | d5:1 c5:3 |
+
+hook: Midnight Confetti
+type: Chorus
+tempo: 111-125
+feel: wild
+style: brightPop
+chords: F | G | Am | Am | F | G | C | C
+melody: c5:2 a4:1 c5:1- | c5:1 b4:1 d5:2 | e5:4- | e5:2 r:2 |
+        c5:2 a4:1 c5:1- | c5:1 d5:1 b4:2 | c5:2 g4:2- | g4:4 |
+
+hook: Hold The Summer
+type: Chorus
+tempo: 118-129
+feel: carefree
+style: brightPop
+leadin: yes
+chords: G | Am | F | C | G | Am | F | C G | C
+melody: r:3.5 e5:0.5- |
+        e5:3 d5:1 | c5:2 a4:2 | g4:2 e5:2 | d5:4 |
+        r:1 c5:1 e5:2 | c5:2 a4:1 g4:1 | g4:2 b4:2 | c5:4 |
+
+hook: Static In The Rain
+type: Bridge
+tempo: 110-128
+feel: moody
+style: brightPop
+chords: Dm | Am | Em | F | Dm | Am | F | G
+melody: d4:2 f4:2 | e4:4 | g4:2 b4:2 | a4:3 r:1 |
+        f4:2 a4:2 | c5:3 e5:1- | e5:2 c5:2 | d5:4 |
+
+hook: Mirror Ball Quiet
+type: Bridge
+tempo: 111-129
+feel: hushed
+style: brightPop
+chords: F | Fm | C | Am | F | Fm | G | G
+melody: c5:3 a4:1 | ab4:4 | g4:2 e4:2 | r:2 a4:2 |
+        a4:2 c5:2 | c5:2 ab4:2 | g4:2 b4:1 d5:1- | d5:4 |
+
+hook: Underneath The Noise
+type: Bridge
+tempo: 110-126
+feel: intimate
+style: brightPop
+chords: Am | Em | F | C | Dm | Am | Bb | G
+melody: e4:2 a4:2 | g4:3 b4:1- | b4:1 a4:1 c5:2 | g4:4 |
+        f4:2 a4:2 | c5:2 e5:2 | d5:2 bb4:2 | g4:4 |
+
+hook: Two Lanes Wide
+type: Bridge
+tempo: 113-129
+feel: soaring
+style: brightPop
+chords: F | G | Em | Am | F | G | Am | G
+melody: r:1.5 a4:0.5 c5:2 | b4:3 r:0.5 e5:0.5- | e5:4 | r:1 c5:1 a4:2 |
+        r:1.5 a4:0.5 c5:2 | d5:3 r:0.5 e5:0.5- | e5:2 c5:2 | b4:4 |

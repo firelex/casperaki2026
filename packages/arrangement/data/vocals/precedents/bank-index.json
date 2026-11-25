@@ -20,13 +20,14 @@
     "hooks":                { "file": "mlDataRaw-hooks.json" }
   },
   "wholeShare": 0.5,
+  "tempoFit": { "maxNotesPerSecond": 1.6, "halfTimeFromBpm": 110 },
   "hooks": { "bank": "hooks", "maxNote": { "verse": 55, "preChorus": 64, "chorus": 64, "bridge": 64 } },
   "$dispatcherNotes": {
     "$1": "When `cheesy` is set, the dispatcher hard-overrides every genre to schlager (both melodic + rhythmic). The brain port does not yet surface a `cheesy` flag and so leaves the override out of the data table.",
     "$2": "verse uses `limitedRange` and `maxNote = 55` for ballad / brightPop / latin / organicVibes / urban; `drLuke` and `maxNote = 55` for edm / schlager / rock.",
     "$3": "chorus uses `schlager` for catchyness across every genre.",
     "$4": "Legacy: preChorus / bridge / other fell through to `stefan` (Melody Sauce imports, for variety) except rock-preChorus (`drLuke`); verse used limitedRange or drLuke and chorus schlager. The owner retired Melody Sauce on 2026-11-24 and then asked for every melodic bank in every section: every rule lists hooks, drLuke, schlager and limitedRange (a bank is picked first, each equally likely). Rhythmic banks and maxNote stay as legacy.",
-    "$5": "Rhythmic banks are tempo-windowed: ballad split at 80bpm, brightPop split at 113bpm, edm split at 133bpm, organicVibes split at 93bpm, rock-as-dance split at 115bpm. Each split takes the first or last `length - 5` slice — i.e. drops the slow or the fast 5 entries.",
+    "$5": "Legacy rhythmic banks were tempo-windowed (split at 80/113/133/93/115 bpm, dropping the 5 sparsest or busiest entries either side). Replaced 2026-11-25 by tempoFit: every selection draws from entries with at most maxNotesPerSecond notes per second at the song tempo, and from halfTimeFromBpm on also from half-time copies (twice as long), so fast songs sing long notes (owner: busy melodies only over slow songs).",
     "$6": "Rock-verse uniquely uses drLuke for BOTH melodic and rhythmic (legacy code line 1286 sets `rhythmicStructurePrecedents = drLukePrecedents`).",
     "$7": "`melodic` is one bank id or a list of bank ids, e.g. \"melodic\": [\"hooks\", \"schlager\"]. With a list a bank is picked first, every usable listed bank equally likely (so a small bank is not drowned by a large one), then an entry of that bank. A single-bank rule draws no bank pick.",
     "$8": "Every bank entry carries properties.useOriginal (may be sung whole, exactly as written, moved by whole octaves only), properties.useRemix (may take part in the mixing merge) and properties.source ({ kind: song | melodySauce | casperaki, title?, artist? }). Hooks have both flags; legacy banks are remix-only. Within the picked bank: whole candidates are useOriginal entries of the section's type, suiting the tempo (hooks: tempoMin..tempoMax; legacy entries: their tempo within 10 bpm) and fitting [43..maxNote] by an octave shift; remix candidates are useRemix entries (legacy: merged exactly as the legacy port, rhythm from the rule's rhythmic bank; hooks: of the section type and tempo, mixed with another such hook, so two are needed). With no whole candidate the remix merge runs directly with the legacy draws (every rule today). Otherwise one entry is drawn from both sets: whole-only is sung whole, remix-only runs the merge, both: sung whole with probability `wholeShare`. When no listed bank has a candidate, generation stops with an error naming the section, tempo and each bank's reason.",
@@ -41,22 +42,22 @@
   },
   "genres": {
     "ballad": {
-      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80, "maxNote": 55 },
-      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80 },
-      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80 },
-      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-ballad", "rhythmicTempoSplit": 80 }
+      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-ballad", "maxNote": 55 },
+      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-ballad" },
+      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-ballad" },
+      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-ballad" }
     },
     "brightPop": {
-      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "drLuke",          "rhythmicTempoSplit": 113, "maxNote": 55 },
-      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "drLuke",          "rhythmicTempoSplit": 113 },
-      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "drLuke",          "rhythmicTempoSplit": 113 },
-      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "drLuke",          "rhythmicTempoSplit": 113 }
+      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "drLuke", "maxNote": 55 },
+      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "drLuke" },
+      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "drLuke" },
+      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "drLuke" }
     },
     "edm": {
-      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],       "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133, "maxNote": 55 },
-      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133 },
-      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133 },
-      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 133 }
+      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],       "rhythmic": "rhythmic-dance", "maxNote": 55 },
+      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance" },
+      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-dance" },
+      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance" }
     },
     "latin": {
       "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-latin", "maxNote": 55 },
@@ -65,16 +66,16 @@
       "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-latin" }
     },
     "organicVibes": {
-      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93, "maxNote": 55 },
-      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93 },
-      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93 },
-      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-organicVibes", "rhythmicTempoSplit": 93 }
+      "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-organicVibes", "maxNote": 55 },
+      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-organicVibes" },
+      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-organicVibes" },
+      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-organicVibes" }
     },
     "rock": {
       "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],       "rhythmic": "drLuke", "maxNote": 55 },
-      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 115 },
-      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 115 },
-      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance",  "rhythmicTempoSplit": 115 }
+      "preChorus": { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance" },
+      "chorus":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],     "rhythmic": "rhythmic-dance" },
+      "bridge":    { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"], "rhythmic": "rhythmic-dance" }
     },
     "schlager": {
       "verse":     { "melodic": ["hooks", "drLuke", "schlager", "limitedRange"],       "rhythmic": "schlager", "maxNote": 55 },

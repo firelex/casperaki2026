@@ -13,7 +13,7 @@ import { parseBarBeat } from '@casperaki/music-theory';
 
 const GENRES = ['ballad', 'brightPop', 'edm', 'latin', 'organicVibes', 'rock', 'schlager', 'urban'];
 const SONGS = Number(process.argv[2] ?? 200);
-const SKIP = new Set(['intro', 'outro', 'break']);
+const SKIP = new Set(['break']);
 const BAND = { Bass: 'low', Keys: 'mid', Pad: 'mid', Guitar: 'mid', PopStrings: 'mid', PopBrass: 'mid', Synths: 'high', PluckedSynths: 'high' };
 const family = (lane) => lane.replace(/ \d+$/u, '');
 const typeOf = (name) => (name.startsWith('preChorus') ? 'preChorus' : name.replace(/\d+$/u, ''));
@@ -28,7 +28,7 @@ function onsets(pattern) {
 }
 
 function measureSong(song) {
-  const out = { sections: 0, harmony: 0, rhythm: 0, busyPairs: 0, unison: 0 };
+  const out = { sections: 0, harmony: 0, rhythm: 0, motion: 0, busyPairs: 0, unison: 0 };
   for (const sec of song.songStructure) {
     const a = song.arrangement[sec.name];
     const lanes = Object.fromEntries(Object.entries(a.overrides).filter(([l]) => a.instruments[l]));
@@ -37,6 +37,7 @@ function measureSong(song) {
       out.sections++;
       if (m.harmony) out.harmony++;
       if (m.rhythm) out.rhythm++;
+      if (m.motion) out.motion++;
     }
     const parts = Object.entries(lanes)
       .filter(([l]) => family(l) !== 'Drums' && !/vocal/iu.test(l) && l !== 'Loop')
@@ -60,8 +61,9 @@ function measureSong(song) {
 
 function run(maxAdded) {
   THIN_RULES.maxAddedTracks = maxAdded;
-  const total = { sections: 0, harmony: 0, rhythm: 0, busyPairs: 0, unison: 0, allSections: 0 };
+  const total = { sections: 0, harmony: 0, rhythm: 0, motion: 0, busyPairs: 0, unison: 0, allSections: 0 };
   const addedPerSong = [0, 0, 0];
+  let switchedOn = 0;
   const addedFamilies = {};
   for (let i = 0; i < SONGS; i++) {
     const genre = GENRES[i % GENRES.length];
@@ -72,13 +74,14 @@ function run(maxAdded) {
     if (maxAdded > 0) {
       const base = orchestrateNames.get(i);
       const added = song.instrumentDefinitions.map((d) => d.name).filter((n) => !base.has(n));
+      switchedOn += (song.generator.params.params.thinPartners ?? []).filter((p) => base.has(p.lane)).length;
       addedPerSong[added.length]++;
       for (const n of added) addedFamilies[`${genre}:${family(n)}`] = (addedFamilies[`${genre}:${family(n)}`] ?? 0) + 1;
     } else {
       orchestrateNames.set(i, new Set(song.instrumentDefinitions.map((d) => d.name)));
     }
   }
-  return { total, addedPerSong, addedFamilies };
+  return { total, addedPerSong, addedFamilies, switchedOn };
 }
 
 const orchestrateNames = new Map();
@@ -90,9 +93,9 @@ THIN_RULES.maxAddedTracks = max;
 for (const [label, r] of [['without partners', before], ['with partners', after]]) {
   const t = r.total;
   console.log(
-    `${label}: harmony-thin ${pct(t.harmony, t.sections)}, rhythm-thin ${pct(t.rhythm, t.sections)} of ${t.sections} sections ` +
-      `(intros/outros/breaks excluded); two busy parts ${pct(t.busyPairs, t.allSections)}, unison clashes ${pct(t.unison, t.allSections)} of ${t.allSections}`,
+    `${label}: harmony-thin ${pct(t.harmony, t.sections)}, rhythm-thin ${pct(t.rhythm, t.sections)}, too little motion ${pct(t.motion, t.sections)} of ${t.sections} sections ` +
+      `(breaks excluded); two busy parts ${pct(t.busyPairs, t.allSections)}, unison clashes ${pct(t.unison, t.allSections)} of ${t.allSections}`,
   );
 }
-console.log(`songs with 0/1/2 partner tracks: ${after.addedPerSong.join('/')}`);
+console.log(`songs with 0/1/2 partner tracks: ${after.addedPerSong.join('/')}; the song's own tracks switched on in ${after.switchedOn} section types`);
 console.log('partners by genre:family:', JSON.stringify(after.addedFamilies));
