@@ -54,10 +54,10 @@ def tracker():
 LINES = [(0, 1.5), (1.5, 3.25), (3.25, 8)]  # beats of each line of WORDS
 
 
-def run(notes, words, starts_s, tracker, octave=12, bpm=BPM, lines=LINES):
+def run(notes, words, starts_s, tracker, octave=12, bpm=BPM, lines=LINES, section_beats=8):
     aligner = StubAligner(starts_s)
     out = transcribe.syllable_notes(synth(notes, s16=15 / bpm), SR, words, bpm, key="C", octave=octave, section="verse1",
-                                    aligner=aligner, tracker=tracker, line_beats=lines)
+                                    aligner=aligner, tracker=tracker, line_beats=lines, section_beats=section_beats)
     return out, aligner
 
 
@@ -124,7 +124,7 @@ def test_a_take_off_our_grid_is_read_through_its_clock(tracker):
     slow = [(8 + 2 * s, 2 * n, m) for s, n, m in NOTES]  # in 16ths of 120 bpm: 1 s offset, twice as long
     aligner = StubAligner([(s * S16) for s, _, _ in slow])
     out = transcribe.syllable_notes(synth(slow, total_16ths=80), SR, WORDS, BPM, key="C", octave=12,
-                                    section="verse1", aligner=aligner, tracker=tracker, line_beats=LINES,
+                                    section="verse1", aligner=aligner, tracker=tracker, line_beats=LINES, section_beats=8,
                                     clock=align.Clock([1.0, 11.0], [0.0, 10.0]))
     assert [n["start"] for n in out] == [s / 4 for s, _, _ in NOTES]
     assert [n["duration"] for n in out] == [n / 4 for _, n, _ in NOTES]
@@ -134,3 +134,21 @@ def test_a_take_off_our_grid_is_read_through_its_clock(tracker):
 def test_a_line_outside_the_take(tracker):
     with pytest.raises(transcribe.TranscribeError, match="verse1: line 2 \\(beats 9-10\\) is not in the take"):
         run(NOTES, [["Hel-", "lo"], ["sun-"]], [0.0, 0.25, 0.75], tracker, lines=[(0, 8), (9, 10)])
+
+
+def test_a_phrase_running_into_the_tail_is_cut_at_the_section_end(tracker):
+    # the section is 5.5 beats: 'day' starts at beat 5 inside it and is sung on into the tail
+    out, _ = run(NOTES, WORDS, [s * S16 for s, _, _ in NOTES], tracker, section_beats=5.5)
+    assert (out[-1]["word"], out[-1]["start"], out[-1]["duration"]) == ("day", 5.0, 0.5)
+
+
+def test_a_syllable_starting_in_the_tail_is_an_error(tracker):
+    with pytest.raises(transcribe.TranscribeError, match="verse1: the word 'today' starts after the section ends"):
+        run(NOTES, WORDS, [s * S16 for s, _, _ in NOTES], tracker, section_beats=4.5)
+
+
+def test_a_word_aligned_past_the_next_lines_start(tracker):
+    # line windows overlap; the aligner put 'lo' (line 1) after 'sun' (line 2) began
+    with pytest.raises(transcribe.TranscribeError,
+                       match="verse1: the word 'Hello' is aligned at or after the start of the next word 'sunshine'"):
+        run(NOTES, [["Hel-", "lo"], ["sun-", "shine"]], [0.0, 0.8, 0.7, 1.5], tracker, lines=[(0, 4), (1, 8)])

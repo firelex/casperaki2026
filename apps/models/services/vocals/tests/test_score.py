@@ -29,6 +29,7 @@ def verse1_unit():
     return {
         "id": "verse1",
         "lead_in_chords": [c for b in intro["bars"][-2:] for c in b["chords"]],
+        "tail_chords": [c for b in sections["verse2"]["bars"][:2] for c in b["chords"]],
         "chords": [c for b in verse["bars"] for c in b["chords"]],
         "notes": sorted(notes, key=lambda n: n["start"]),
         "lyrics": ["Streetlights flicker on the corner, I can feel the city calling, out to me, out to me",
@@ -48,7 +49,7 @@ def test_header_and_sections():
                          'V: Vocal clef=treble name="Vocal Melody" snm="Vocal"',
                          'V: Ins clef=treble name="Ins Melody" snm="Inst."', "K:C"]
     assert lines[8] == "% intro" and "% verse" in lines
-    assert lines.count("V: Ins") == 3 and "Z2|" in lines and lines.count("Z4|") == 2
+    assert lines.count("V: Ins") == 4 and lines.count("Z2|") == 2 and lines.count("Z4|") == 2
 
 
 def test_octave_12_matches_the_experiment_score():
@@ -85,7 +86,7 @@ def test_notes_off_the_16th_grid_are_an_error():
 def test_lyrics_in_yue2_layout():
     assert score.lyrics_text(verse1_unit()) == (
         "[Intro]\n\n[Verse]\nStreetlights flicker on the corner\nI can feel the city calling\nout to me\nout to me\n"
-        "Every window shining golden\nI've been waiting for the weekend\nhere it comes\nhere it comes")
+        "Every window shining golden\nI've been waiting for the weekend\nhere it comes\nhere it comes\n\n[Outro]")
 
 
 def test_style_and_key():
@@ -96,3 +97,17 @@ def test_style_and_key():
     assert score.scale("Bb") == (10, 0, 2, 3, 5, 7, 9)
     with pytest.raises(ValueError, match="key 'H'"):
         score.scale("H")
+
+
+def test_tail_bars_after_the_section():
+    lines = score.abc(verse1_unit(), 128, 12).splitlines()
+    i = lines.index("% outro")
+    assert lines[i:] == ["% outro", "V: Vocal", '"C"z16|"Bb"z16|', "V: Ins", "Z2|"]
+    assert lines.index("% verse") < i
+
+
+def test_tail_must_be_two_bars():
+    unit = verse1_unit()
+    unit["tail_chords"] = unit["tail_chords"] + ["C"] * 4
+    with pytest.raises(ValueError, match="verse1: tail has 12 beats of chords, want 8"):
+        score.abc(unit, 128, 12)

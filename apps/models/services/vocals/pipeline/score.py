@@ -4,7 +4,8 @@ Ported from apps/models/ace-vocal-tests/other-models/yue2_abc.py and yue2_sectio
 L:1/16, Q:1/4=<bpm>, voices "Vocal" and "Ins" four bars per line, "% <section>" before each part, chord names in
 quotes where the chord changes (flat roots: YuE2's own scores spell Bb, Eb, Db), ties with "-". The instrumental voice
 is rests (YuE2 arranges the instruments itself). Every unit starts with LEAD_BARS bars of the preceding chords and no
-singing ("% intro").
+singing ("% intro") and ends with TAIL_BARS bars of the following chords and no singing ("% outro"), so a take that
+sings slower than the score has room to finish its last phrase.
 
 Register: the brain sends notes in the Vocal lane's register and one octave shift per song (`octave`, -12/0/12); the
 sung lead is lane + octave, and YuE2's ABC is an octave above sung pitch, so the ABC writes lane + octave + 12.
@@ -14,6 +15,7 @@ from __future__ import annotations
 import re
 
 LEAD_BARS = 2
+TAIL_BARS = 2  # the chords that follow the section, no singing: room for YuE2 to finish a phrase that runs over
 UNITS_PER_BEAT = 4  # L:1/16
 OCTAVES = (-12, 0, 12)
 STYLE = "EDM, dance pop, energetic, female lead vocal, synthesizer, drum machine, synth bass"
@@ -115,7 +117,10 @@ def abc(unit: dict, bpm, octave: int) -> str:
     shift = check_octave(octave) + 12
     if len(unit["lead_in_chords"]) != LEAD_BARS * 4:
         raise ValueError(f"{uid}: lead-in has {len(unit['lead_in_chords'])} beats of chords, want {LEAD_BARS * 4}")
+    if len(unit["tail_chords"]) != TAIL_BARS * 4:
+        raise ValueError(f"{uid}: tail has {len(unit['tail_chords'])} beats of chords, want {TAIL_BARS * 4}")
     lead = _bars(uid, unit["lead_in_chords"], "lead-in")
+    tail = _bars(uid, unit["tail_chords"], "tail")
     sec = _bars(uid, unit["chords"], "section")
     end = len(sec) * 16
     notes = []
@@ -140,14 +145,15 @@ def abc(unit: dict, bpm, octave: int) -> str:
             inbar = [(max(s, a) - a, min(e, b) - a, p, e > b) for s, e, p in notes if s < b and e > a]
             toks.append(bar_tokens(inbar, sec[bi], shift) + "|")
         lines += ["V: Vocal", "".join(toks), "V: Ins", f"Z{len(toks)}|"]
+    lines += ["% outro", "V: Vocal", "".join(bar_tokens([], ch, shift) + "|" for ch in tail), "V: Ins", f"Z{TAIL_BARS}|"]
     return "\n".join(lines) + "\n"
 
 
 def lyrics_text(unit: dict) -> str:
-    """The unit's lyrics in YuE2's layout: an empty [Intro] for the lead-in, then the section tag and one sung phrase
-    per line (each lyric line split at commas)."""
+    """The unit's lyrics in YuE2's layout: an empty [Intro] for the lead-in, the section tag and one sung phrase per
+    line (each lyric line split at commas), an empty [Outro] for the tail."""
     tag = LYRIC_TAG[section_word(unit["id"])]
     phrases = [p.strip() for line in unit["lyrics"] for p in line.split(",") if p.strip()]
     if not phrases:
         raise ValueError(f"{unit['id']}: no lyrics")
-    return "\n".join(["[Intro]", "", tag] + phrases)
+    return "\n".join(["[Intro]", "", tag] + phrases + ["", "[Outro]"])

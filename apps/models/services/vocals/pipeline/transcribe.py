@@ -132,10 +132,11 @@ def _full_words(syllables: list[str]) -> list[str]:
 
 
 def syllable_notes(vocal, sr: int, words_per_line, bpm, *, key: str, octave: int, section: str, aligner, tracker,
-                   line_beats, clock: Clock | None = None):
+                   line_beats, section_beats, clock: Clock | None = None):
     """One note per syllable of `words_per_line` ([[syllable text] per line]; "Un-" continues its word).
     vocal: samples, or channels x samples, at `sr`. line_beats: (start, end) of each line in our beats (the window its
-    words are aligned in). clock: the vocal's seconds <-> our beats (align.take_clock for a take); None means the vocal
+    words are aligned in; the last may reach into the tail bars after the section). section_beats: the section's
+    length: a syllable must start inside it, and one sung on past its end is cut there. clock: the vocal's seconds <-> our beats (align.take_clock for a take); None means the vocal
     is on our grid (Clock.grid(bpm)).
     Returns [{"start": beats, "duration": beats, "midi": lane-register note, "word": syllable text}] in order."""
     octave = check_octave(octave)
@@ -169,6 +170,9 @@ def syllable_notes(vocal, sr: int, words_per_line, bpm, *, key: str, octave: int
     raw = []  # (start_s, stop_s, midi)
     for k, (t0, _) in enumerate(spans):
         t_next = spans[k + 1][0] if k + 1 < len(spans) else last_end
+        if k + 1 < len(spans) and t_next <= t0:
+            raise TranscribeError(f"{section}: the word '{words[k]}' is aligned at or after the start of the next word "
+                                  f"'{words[k + 1]}' ({t0:.2f} s vs {t_next:.2f} s in the take)")
         f_a, f_b = int(t0 / (HOP / SR16)), min(int(np.ceil(t_next / (HOP / SR16))), len(singing))
         on = next((f for f in range(f_a, f_b) if singing[f]), None)
         if on is None:
@@ -184,6 +188,9 @@ def syllable_notes(vocal, sr: int, words_per_line, bpm, *, key: str, octave: int
     at = [float(clock.beats(t0)) * 4 for t0, _, _ in raw]  # starts in 16ths of our section
     for k, x in enumerate(at):
         q = int(round(x))
+        if q >= section_beats * 4:
+            raise TranscribeError(f"{section}: the word '{words[k]}' starts after the section ends "
+                                  f"(beat {x / 4:.2f} of {section_beats:g})")
         if starts and q <= starts[-1]:
             q2 = starts[-1] + 1
             nxt = int(round(at[k + 1])) if k + 1 < len(at) else None
@@ -197,5 +204,6 @@ def syllable_notes(vocal, sr: int, words_per_line, bpm, *, key: str, octave: int
         end = max(q + 1, int(round(float(clock.beats(stop_s)) * 4)))
         if k + 1 < len(starts):
             end = min(end, starts[k + 1])
+        end = min(end, int(round(section_beats * 4)))
         out.append({"start": q / 4, "duration": (end - q) / 4, "midi": int(midi), "word": syllables[k]})
     return out

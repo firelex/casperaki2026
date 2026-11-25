@@ -108,9 +108,9 @@ def align(chord_segments, expected_chords_per_beat, bpm):
     return bar_map, match
 
 
-def section_match(match, lead_bars: int) -> float:
-    """Share of the section's half-beats (after the lead-in) on our chord."""
-    sec = match[lead_bars * STEPS_PER_BAR:]
+def section_match(match, lead_bars: int, section_bars: int) -> float:
+    """Share of the section's half-beats (after the lead-in, before the tail) on our chord."""
+    sec = match[lead_bars * STEPS_PER_BAR:(lead_bars + section_bars) * STEPS_PER_BAR]
     if not sec:
         raise ValueError("no section half-beats after the lead-in")
     return float(np.mean(sec))
@@ -151,12 +151,12 @@ def take_clock(bar_map, from_bar: int) -> Clock:
     return Clock(xs, ys)
 
 
-def cut_bars(voc, sr: int, bar_map, bpm, from_bar: int):
-    """Our bars from `from_bar` on, each the take's audio for that bar time-stretched to our bar length.
+def cut_bars(voc, sr: int, bar_map, bpm, from_bar: int, to_bar: int):
+    """Our bars from `from_bar` up to `to_bar`, each the take's audio for that bar time-stretched to our bar length.
     voc: channels x samples. A bar mapped to None stays silent. Returns channels x samples."""
     beat = 60.0 / bpm
     bar_len = int(round(4 * beat * sr))
-    bars = bar_map[from_bar:]
+    bars = bar_map[from_bar:to_bar]
     out = np.zeros((voc.shape[0], bar_len * len(bars)), dtype=np.float32)
     fade = int(0.01 * sr)
     for b, span in enumerate(bars):

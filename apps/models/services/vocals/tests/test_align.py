@@ -52,7 +52,9 @@ def test_inserted_beats_shift_later_bars():
 def test_section_match_counts_the_section_only():
     take = EXPECTED[:8] + ["Em"] * 8 + EXPECTED[16:]  # the first two section bars over the wrong chord
     _, match = align.align(segments(take), EXPECTED, BPM)
-    assert align.section_match(match, lead_bars=2) == pytest.approx(1 - 16 / 64)
+    assert align.section_match(match, lead_bars=2, section_bars=8) == pytest.approx(1 - 16 / 64)
+    # bars after the section (the tail) do not count
+    assert align.section_match(match + [False] * 16, lead_bars=2, section_bars=8) == pytest.approx(1 - 16 / 64)
 
 
 def test_unknown_chord_is_an_error():
@@ -66,8 +68,9 @@ def test_cut_bars_places_each_bar_on_our_grid():
     voc = np.stack([np.sin(2 * np.pi * 5 * t)] * 2)
     bar_map = [(b * BAR_S + 1.0, (b + 1) * BAR_S + 1.0) for b in range(10)]
     bar_map[5] = None  # skipped by the take: stays silent
-    out = align.cut_bars(voc, sr, bar_map, BPM, from_bar=2)
+    out = align.cut_bars(voc, sr, bar_map, BPM, from_bar=2, to_bar=10)
     assert out.shape == (2, int(8 * BAR_S * sr))
+    assert align.cut_bars(voc, sr, bar_map, BPM, from_bar=2, to_bar=8).shape == (2, int(6 * BAR_S * sr))
     seg = slice(int(3 * BAR_S * sr), int(4 * BAR_S * sr))
     assert np.all(out[:, seg] == 0)
     assert np.abs(out[:, : int(BAR_S * sr)]).max() > 0.5

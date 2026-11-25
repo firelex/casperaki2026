@@ -73,7 +73,11 @@ def build_units(song, blocks):
         words = [[s for w in line.replace(",", " ").split() for s in syllables(w)] for line in lines]
         if sum(map(len, words)) != len(notes):
             raise ValueError(f"{uid}: {sum(map(len, words))} syllables for {len(notes)} notes: {words}")
+        after = [b for s in sections[si + 1:] for b in s["bars"]][:2]
+        if len(after) < 2:  # the song's last section: repeat its own last 2 bars' chords
+            after = sections[si]["bars"][-2:]
         units.append({"id": uid, "lead_in_chords": [c for b in before[-2:] for c in b["chords"]],
+                      "tail_chords": [c for b in after for c in b["chords"]],
                       "chords": [c for b in sections[si]["bars"] for c in b["chords"]], "notes": notes,
                       "lyrics": lines, "words": words, "phonemes": [[["?"] for _ in line] for line in words]})
     return units
