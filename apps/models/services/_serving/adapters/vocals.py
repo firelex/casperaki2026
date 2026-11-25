@@ -40,6 +40,14 @@ MANIFEST = {
 def load(ctx):
     if str(SERVICE_DIR) not in sys.path:
         sys.path.insert(0, str(SERVICE_DIR))
+    from pipeline import paths
+
+    # SoulX-Singer (`import soulxsinger`) and BS-RoFormer (`models.bs_roformer`, `utils`) are code folders, not packages.
+    for code in (paths.SOULX_REPO, paths.BS_ROFORMER_CODE):
+        if not code.is_dir():
+            raise SystemExit(f"vocals: missing code folder {code}")
+        if str(code) not in sys.path:
+            sys.path.append(str(code))
     ctx.log("vocals: ready (models load per job)")
     return {"service_dir": SERVICE_DIR}
 

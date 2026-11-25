@@ -43,6 +43,10 @@ class FakeAdapter:
             s = job.step("f", "Failing")
             s.fail("boom")
             raise RuntimeError("boom")
+        if mode == "raise":
+            job.step("ok", "Fine").done()
+            job.step("r", "Running when it raised")
+            raise RuntimeError("model exploded")
         raise AssertionError(mode)
 
 
@@ -137,6 +141,25 @@ def test_cancel_running(fake):
     assert code == 200
     res = wait_state(base, r["job_id"])
     assert res["state"] == "error" and res["error"] == "Cancelled"
+
+
+def test_running_steps_fail_with_the_error(fake):
+    _, base = fake
+    _, r = jcall(f"{base}/generate", "POST", {"mode": "raise"})
+    res = wait_state(base, r["job_id"])
+    assert res["state"] == "error" and res["error"] == "model exploded"
+    ok, running = res["steps"]
+    assert ok["state"] == "done"
+    assert (running["state"], running["text"]) == ("failed", "model exploded") and running["finished"]
+
+
+def test_cancel_fails_the_running_step(fake):
+    a, base = fake
+    _, r = jcall(f"{base}/generate", "POST", {"mode": "block"})
+    a.started.wait(5)
+    jcall(f"{base}/cancel?job={r['job_id']}", "POST")
+    res = wait_state(base, r["job_id"])
+    assert (res["steps"][0]["state"], res["steps"][0]["text"]) == ("failed", "Cancelled")
 
 
 def test_cancel_queued_never_runs(fake):

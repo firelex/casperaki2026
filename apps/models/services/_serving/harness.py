@@ -211,6 +211,13 @@ class Job:
         if self._cancel.is_set():
             raise common.Cancelled("Cancelled")
 
+    def fail_running(self, text: str) -> None:
+        """Mark every step still running as failed with `text` (the job ended in an error or was cancelled)."""
+        with self._lock:
+            running = [s for s in self._steps if s.data["state"] == "running"]
+        for s in running:
+            s.fail(text)
+
     def steps(self) -> list[dict]:
         with self._lock:
             return [json.loads(json.dumps(s.data)) for s in self._steps]
@@ -283,9 +290,11 @@ def worker(jobs: Jobs, adapter, handle, out_root: Path):
             log(f"job {job_id}: done -> {res['file']}")
         except common.Cancelled:
             log(f"job {job_id}: cancelled")
+            job.fail_running("Cancelled")
             jobs.finish(job_id, state="error", error="Cancelled")
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
+            job.fail_running(str(e))
             jobs.finish(job_id, state="error", error=str(e))
 
 

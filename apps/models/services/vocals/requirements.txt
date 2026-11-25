@@ -27,3 +27,5 @@ rotary_embedding_torch==0.8.9
 beartype==0.22.9
 # torchtune imports datasets at import time
 datasets==5.0.1
+# Lead-stage pitch (the hum service front end)
+swift-f0==0.3.0
