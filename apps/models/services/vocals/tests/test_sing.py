@@ -128,3 +128,14 @@ def test_a_whole_run_with_the_models_stubbed(tmp_path, monkeypatch):
     lead, back = takes["Vocal"][0], takes["Backing vocals 1"][0]
     assert 20 * np.log10(levels.loud(back) / levels.loud(lead)) == pytest.approx(-9, abs=0.05)
     assert sf.info(tmp_path / out["takes"][0]["file"]).subtype == "FLOAT"
+
+
+def test_backing_vocals_are_panned_apart_at_the_same_loudness():
+    from pipeline.sing import BACKING_PAN, panned
+    x = np.repeat(np.sin(np.linspace(0, 200, 4800, dtype=np.float32))[:, None], 2, axis=1)
+    left, right = panned(x, BACKING_PAN["Backing vocals 1"]), panned(x, BACKING_PAN["Backing vocals 2"])
+    assert np.abs(left[:, 0]).max() > np.abs(left[:, 1]).max()  # Backing vocals 1 to the left
+    assert np.abs(right[:, 1]).max() > np.abs(right[:, 0]).max()  # Backing vocals 2 to the right
+    power = lambda y: float((y ** 2).sum())
+    assert abs(power(left) - power(x)) / power(x) < 1e-5  # equal power: as loud as centred
+    assert np.allclose(panned(x, 0.0), x, atol=1e-6)

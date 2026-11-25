@@ -115,6 +115,21 @@ def check_params(params: dict) -> dict:
     return {"bpm": bpm, "backing_db": backing_db, "leads": leads, "backings": backings}
 
 
+# Backing vocals sit apart from the centred lead (owner, 2026-11-25): Backing vocals 1 left, 2 right, at +-PAN.
+PAN = 0.4
+BACKING_PAN = {"Backing vocals 1": -PAN, "Backing vocals 2": PAN}
+
+
+def panned(x: np.ndarray, pan: float) -> np.ndarray:
+    """A dual-mono stereo take (samples x 2) panned by `pan` (-1 left .. 1 right), equal power: the same loudness as
+    centred (each side's gain over the centre's 1/sqrt(2))."""
+    if not -1.0 <= pan <= 1.0:
+        raise ValueError(f"pan {pan} is outside -1..1")
+    theta = (pan + 1.0) * np.pi / 4.0
+    gains = np.array([np.cos(theta), np.sin(theta)], dtype=np.float32) / np.float32(np.cos(np.pi / 4.0))
+    return x * gains[None, :]
+
+
 def _stereo(x: np.ndarray, sr: int) -> np.ndarray:
     """samples (x channels) at sr -> OUT_SR stereo (samples x 2)."""
     import librosa
@@ -175,7 +190,10 @@ def run(params: dict, out_dir, job):
             x = levels.match(x, chained[item["lead"]["tag"]], p["backing_db"], name=item["what"])
             numbers[f"{item['tag']}_gain_db"] = round(levels.gain_db(chained[item["tag"]], chained[item["lead"]["tag"]],
                                                                      p["backing_db"]), 2)
-        x = levels.fit(_stereo(x, chain.OUT_SR), OUT_SR, item["bars"] * bar_s)
+        x = _stereo(x, chain.OUT_SR)
+        if item["track"] in BACKING_PAN:
+            x = panned(x, BACKING_PAN[item["track"]])
+        x = levels.fit(x, OUT_SR, item["bars"] * bar_s)
         sf.write(out / item["take"], x, OUT_SR, subtype="FLOAT")
         files.append(item["take"])
         takes.append({"segment": item["segment"], "track": item["track"], "kind": KIND, "file": item["take"],
