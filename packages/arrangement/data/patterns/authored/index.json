@@ -187,6 +187,1846 @@
       ],
       "file": "styles/g2-pop-muted-pulse.json"
     },
+    "authored-gs-ballad-triplet-roll": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-triplet-roll.json"
+    },
+    "authored-gs-ballad-bass-then-strums": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-bass-then-strums.json"
+    },
+    "authored-gs-ballad-ring-and-answer": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-ring-and-answer.json"
+    },
+    "authored-gs-ballad-slow-shuffle": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-slow-shuffle.json"
+    },
+    "authored-gs-ballad-six-eight-sway": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-six-eight-sway.json"
+    },
+    "authored-gs-ballad-arpeggio-and-chord": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-arpeggio-and-chord.json"
+    },
+    "authored-gs-ballad-soul-backbeat-triplets": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-soul-backbeat-triplets.json"
+    },
+    "authored-gs-ballad-gospel-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-gospel-push.json"
+    },
+    "authored-gs-ballad-brushed-triplets": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-brushed-triplets.json"
+    },
+    "authored-gs-ballad-power-verse-lift": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-power-verse-lift.json"
+    },
+    "authored-gs-ballad-bass-walk-up-flicks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-bass-walk-up-flicks.json"
+    },
+    "authored-gs-ballad-half-time-build": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-half-time-build.json"
+    },
+    "authored-gs-ballad-pickup-into-one": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-pickup-into-one.json"
+    },
+    "authored-gs-ballad-nylon-rocking": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-nylon-rocking.json"
+    },
+    "authored-gs-ballad-longup-swell": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-longup-swell.json"
+    },
+    "authored-gs-ballad-hymn-arpeggio": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-hymn-arpeggio.json"
+    },
+    "authored-gs-ballad-down-down-up-bounce": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-down-down-up-bounce.json"
+    },
+    "authored-gs-ballad-anticipated-triplets": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-anticipated-triplets.json"
+    },
+    "authored-gs-ballad-power-chorus-twelve-eight": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-power-chorus-twelve-eight.json"
+    },
+    "authored-gs-ballad-doowop-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-doowop-chops.json"
+    },
+    "authored-gs-ballad-bass-walk-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-bass-walk-ring.json"
+    },
+    "authored-gs-ballad-swaying-down-up": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-swaying-down-up.json"
+    },
+    "authored-gs-ballad-held-then-lift": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-held-then-lift.json"
+    },
+    "authored-gs-ballad-breath-on-three": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-breath-on-three.json"
+    },
+    "authored-gs-ballad-picks-and-stabs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-picks-and-stabs.json"
+    },
+    "authored-gs-ballad-quarter-triplet-climax": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-quarter-triplet-climax.json"
+    },
+    "authored-gs-ballad-even-eighths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-even-eighths.json"
+    },
+    "authored-gs-ballad-sixteenth-lilt": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-sixteenth-lilt.json"
+    },
+    "authored-gs-ballad-bass-strum-straight": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-bass-strum-straight.json"
+    },
+    "authored-gs-ballad-long-and-flick": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-long-and-flick.json"
+    },
+    "authored-gs-ballad-pushed-and-of-two": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-pushed-and-of-two.json"
+    },
+    "authored-gs-ballad-quarter-pulse": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-quarter-pulse.json"
+    },
+    "authored-gs-ballad-halves-with-pickup": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-halves-with-pickup.json"
+    },
+    "authored-gs-ballad-three-three-two": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-three-three-two.json"
+    },
+    "authored-gs-ballad-sixteenth-chorus": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-sixteenth-chorus.json"
+    },
+    "authored-gs-ballad-ghost-chop-backbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-ghost-chop-backbeat.json"
+    },
+    "authored-gs-ballad-sixteenth-up-flicks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-sixteenth-up-flicks.json"
+    },
+    "authored-gs-ballad-dotted-echo": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-dotted-echo.json"
+    },
+    "authored-gs-ballad-eighth-down-drive": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-eighth-down-drive.json"
+    },
+    "authored-gs-ballad-stop-and-lift": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "ballad"
+      ],
+      "file": "styles/gs-ballad-stop-and-lift.json"
+    },
+    "authored-gs-edm-tropical-muted-offbeats": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-tropical-muted-offbeats.json"
+    },
+    "authored-gs-edm-house-offbeat-stabs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-house-offbeat-stabs.json"
+    },
+    "authored-gs-edm-driving-drop-eighths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-driving-drop-eighths.json"
+    },
+    "authored-gs-edm-half-time-breakdown": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-half-time-breakdown.json"
+    },
+    "authored-gs-edm-syncopated-pushes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-syncopated-pushes.json"
+    },
+    "authored-gs-edm-tropical-sixteenth-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-tropical-sixteenth-chops.json"
+    },
+    "authored-gs-edm-future-bass-swells": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-future-bass-swells.json"
+    },
+    "authored-gs-edm-progressive-pulse": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-progressive-pulse.json"
+    },
+    "authored-gs-edm-dance-pop-down-up-chop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-dance-pop-down-up-chop.json"
+    },
+    "authored-gs-edm-tropical-plucked-answers": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-tropical-plucked-answers.json"
+    },
+    "authored-gs-edm-build-up-accelerating": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-build-up-accelerating.json"
+    },
+    "authored-gs-edm-shuffle-house-triplets": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-shuffle-house-triplets.json"
+    },
+    "authored-gs-edm-stop-and-ring-drop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-stop-and-ring-drop.json"
+    },
+    "authored-gs-edm-offbeat-up-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-offbeat-up-chops.json"
+    },
+    "authored-gs-edm-deep-house-sparse-stab": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-deep-house-sparse-stab.json"
+    },
+    "authored-gs-edm-tresillo-pop-drop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-tresillo-pop-drop.json"
+    },
+    "authored-gs-edm-bright-acoustic-pop-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-bright-acoustic-pop-strum.json"
+    },
+    "authored-gs-edm-boom-pick-stab": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-boom-pick-stab.json"
+    },
+    "authored-gs-edm-anticipated-chord-change": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-anticipated-chord-change.json"
+    },
+    "authored-gs-edm-two-bar-call-response": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-two-bar-call-response.json"
+    },
+    "authored-gs-edm-triplet-future-bass-rolls": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-triplet-future-bass-rolls.json"
+    },
+    "authored-gs-edm-gallop-drop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-gallop-drop.json"
+    },
+    "authored-gs-edm-breakdown-arp-picks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-breakdown-arp-picks.json"
+    },
+    "authored-gs-edm-off-sixteenth-skank": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-off-sixteenth-skank.json"
+    },
+    "authored-gs-edm-clean-electric-quarter-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-clean-electric-quarter-chops.json"
+    },
+    "authored-gs-edm-long-up-shimmer": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-long-up-shimmer.json"
+    },
+    "authored-gs-edm-pump-sidechain-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-pump-sidechain-strum.json"
+    },
+    "authored-gs-edm-twelve-eight-dance-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-twelve-eight-dance-strum.json"
+    },
+    "authored-gs-edm-drop-hits-with-stops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-drop-hits-with-stops.json"
+    },
+    "authored-gs-edm-intro-two-chord-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "edm"
+      ],
+      "file": "styles/gs-edm-intro-two-chord-ring.json"
+    },
+    "authored-gs-latin-dembow-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-dembow-chops.json"
+    },
+    "authored-gs-latin-tresillo-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-tresillo-ring.json"
+    },
+    "authored-gs-latin-cumbia-offbeat-scratch": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-cumbia-offbeat-scratch.json"
+    },
+    "authored-gs-latin-cumbia-bass-and-chuck": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-cumbia-bass-and-chuck.json"
+    },
+    "authored-gs-latin-bossa-comp-picked-bass": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bossa-comp-picked-bass.json"
+    },
+    "authored-gs-latin-bossa-ballad-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bossa-ballad-ring.json"
+    },
+    "authored-gs-latin-samba-partido-alto": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-samba-partido-alto.json"
+    },
+    "authored-gs-latin-samba-sixteenth-drive": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-samba-sixteenth-drive.json"
+    },
+    "authored-gs-latin-son-montuno-anticipation": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-son-montuno-anticipation.json"
+    },
+    "authored-gs-latin-son-clave-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-son-clave-strum.json"
+    },
+    "authored-gs-latin-rumba-flamenca-accents": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-rumba-flamenca-accents.json"
+    },
+    "authored-gs-latin-rumba-triplet-rasgueado": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-rumba-triplet-rasgueado.json"
+    },
+    "authored-gs-latin-bachata-picked-and-strummed": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bachata-picked-and-strummed.json"
+    },
+    "authored-gs-latin-bachata-sixteenth-pulse": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bachata-sixteenth-pulse.json"
+    },
+    "authored-gs-latin-pop-syncopated-ups": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-pop-syncopated-ups.json"
+    },
+    "authored-gs-latin-ballad-arpeggio-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-ballad-arpeggio-ring.json"
+    },
+    "authored-gs-latin-bolero-triplet": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bolero-triplet.json"
+    },
+    "authored-gs-latin-guajira-hemiola": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-guajira-hemiola.json"
+    },
+    "authored-gs-latin-merengue-chop-run": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-merengue-chop-run.json"
+    },
+    "authored-gs-latin-vallenato-paseo": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-vallenato-paseo.json"
+    },
+    "authored-gs-latin-reggaeton-romantico-long": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-reggaeton-romantico-long.json"
+    },
+    "authored-gs-latin-habanera-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-habanera-strum.json"
+    },
+    "authored-gs-latin-baiao-longs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-baiao-longs.json"
+    },
+    "authored-gs-latin-mambo-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-mambo-push.json"
+    },
+    "authored-gs-latin-cha-cha-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-cha-cha-strum.json"
+    },
+    "authored-gs-latin-trap-halftime": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-trap-halftime.json"
+    },
+    "authored-gs-latin-bembe-six-eight": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bembe-six-eight.json"
+    },
+    "authored-gs-latin-chacarera-triplet": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-chacarera-triplet.json"
+    },
+    "authored-gs-latin-salsa-guajeo-picks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-salsa-guajeo-picks.json"
+    },
+    "authored-gs-latin-rumba-catalana-ventilador": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-rumba-catalana-ventilador.json"
+    },
+    "authored-gs-latin-house-offbeat-longups": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-house-offbeat-longups.json"
+    },
+    "authored-gs-latin-son-tres-answers": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-son-tres-answers.json"
+    },
+    "authored-gs-latin-samba-cancao-gentle": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-samba-cancao-gentle.json"
+    },
+    "authored-gs-latin-flamenco-tangos-backbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-flamenco-tangos-backbeat.json"
+    },
+    "authored-gs-latin-pop-acoustic-sixteenths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-pop-acoustic-sixteenths.json"
+    },
+    "authored-gs-latin-tumbao-two-bar": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-tumbao-two-bar.json"
+    },
+    "authored-gs-latin-ghosted-sixteenths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-ghosted-sixteenths.json"
+    },
+    "authored-gs-latin-bossa-anticipated-changes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-bossa-anticipated-changes.json"
+    },
+    "authored-gs-latin-guaracha-scratch-bursts": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-guaracha-scratch-bursts.json"
+    },
+    "authored-gs-latin-ballad-six-eight-arpeggio": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "latin"
+      ],
+      "file": "styles/gs-latin-ballad-six-eight-arpeggio.json"
+    },
+    "authored-gs-organicvibes-folk-pop-backbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-folk-pop-backbeat.json"
+    },
+    "authored-gs-organicvibes-country-boom-chick": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-country-boom-chick.json"
+    },
+    "authored-gs-organicvibes-country-train": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-country-train.json"
+    },
+    "authored-gs-organicvibes-reggae-pop-offbeat-chop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-reggae-pop-offbeat-chop.json"
+    },
+    "authored-gs-organicvibes-indie-driving-downs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-indie-driving-downs.json"
+    },
+    "authored-gs-organicvibes-campfire-down-up": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-campfire-down-up.json"
+    },
+    "authored-gs-organicvibes-pop-sixteenth-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-pop-sixteenth-push.json"
+    },
+    "authored-gs-organicvibes-half-time-ringing": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-half-time-ringing.json"
+    },
+    "authored-gs-organicvibes-anticipated-three": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-anticipated-three.json"
+    },
+    "authored-gs-organicvibes-americana-stop-time": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-americana-stop-time.json"
+    },
+    "authored-gs-organicvibes-folk-funk-ghost-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-folk-funk-ghost-chops.json"
+    },
+    "authored-gs-organicvibes-island-upstroke-skank": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-island-upstroke-skank.json"
+    },
+    "authored-gs-organicvibes-bass-walk-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-bass-walk-strum.json"
+    },
+    "authored-gs-organicvibes-arpeggio-then-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-arpeggio-then-strum.json"
+    },
+    "authored-gs-organicvibes-three-three-two": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-three-three-two.json"
+    },
+    "authored-gs-organicvibes-ringing-with-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-ringing-with-push.json"
+    },
+    "authored-gs-organicvibes-indie-sixteenth-drive": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-indie-sixteenth-drive.json"
+    },
+    "authored-gs-organicvibes-sunny-a-upstrokes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-sunny-a-upstrokes.json"
+    },
+    "authored-gs-organicvibes-island-chuck-pickup": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-island-chuck-pickup.json"
+    },
+    "authored-gs-organicvibes-ballad-strum-and-picks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-ballad-strum-and-picks.json"
+    },
+    "authored-gs-organicvibes-shuffle-down-up": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-shuffle-down-up.json"
+    },
+    "authored-gs-organicvibes-campfire-six-eight": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-campfire-six-eight.json"
+    },
+    "authored-gs-organicvibes-twelve-eight-arpeggio-ballad": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-twelve-eight-arpeggio-ballad.json"
+    },
+    "authored-gs-organicvibes-shuffle-boom-chick": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-shuffle-boom-chick.json"
+    },
+    "authored-gs-organicvibes-swing-backbeat-rolls": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-swing-backbeat-rolls.json"
+    },
+    "authored-gs-organicvibes-swung-reggae-skank": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-swung-reggae-skank.json"
+    },
+    "authored-gs-organicvibes-lazy-twelve-eight-rolls": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-lazy-twelve-eight-rolls.json"
+    },
+    "authored-gs-organicvibes-roll-into-three": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-roll-into-three.json"
+    },
+    "authored-gs-organicvibes-six-eight-bass-bounce": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-six-eight-bass-bounce.json"
+    },
+    "authored-gs-organicvibes-slow-swing-pushes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-slow-swing-pushes.json"
+    },
+    "authored-gs-organicvibes-bass-strum-strum-twelve-eight": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-bass-strum-strum-twelve-eight.json"
+    },
+    "authored-gs-organicvibes-swing-chunk-turnaround": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-swing-chunk-turnaround.json"
+    },
+    "authored-gs-organicvibes-rocking-long-down-up": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-rocking-long-down-up.json"
+    },
+    "authored-gs-organicvibes-shuffle-walk-up": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-shuffle-walk-up.json"
+    },
+    "authored-gs-organicvibes-late-swung-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-late-swung-chops.json"
+    },
+    "authored-gs-organicvibes-gospel-roll-and-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-gospel-roll-and-ring.json"
+    },
+    "authored-gs-organicvibes-swamp-shuffle-mutes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-swamp-shuffle-mutes.json"
+    },
+    "authored-gs-organicvibes-half-time-swing-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-half-time-swing-push.json"
+    },
+    "authored-gs-organicvibes-triplet-pickups-into-beats": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-triplet-pickups-into-beats.json"
+    },
+    "authored-gs-organicvibes-swing-indie-downs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "organicVibes"
+      ],
+      "file": "styles/gs-organicvibes-swing-indie-downs.json"
+    },
+    "authored-gs-schlager-discofox-offbeat-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-discofox-offbeat-chops.json"
+    },
+    "authored-gs-schlager-oom-pah-alternating-bass": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-oom-pah-alternating-bass.json"
+    },
+    "authored-gs-schlager-half-note-ringers": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-half-note-ringers.json"
+    },
+    "authored-gs-schlager-driving-eighths-accent-two-four": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-driving-eighths-accent-two-four.json"
+    },
+    "authored-gs-schlager-upstroke-skank": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-upstroke-skank.json"
+    },
+    "authored-gs-schlager-folk-pop-campfire": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-folk-pop-campfire.json"
+    },
+    "authored-gs-schlager-stop-time-phrase-end": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-stop-time-phrase-end.json"
+    },
+    "authored-gs-schlager-triplet-foxtrot-swing": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-triplet-foxtrot-swing.json"
+    },
+    "authored-gs-schlager-discofox-bass-and-chop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-discofox-bass-and-chop.json"
+    },
+    "authored-gs-schlager-sixteenth-pump": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-sixteenth-pump.json"
+    },
+    "authored-gs-schlager-charleston-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-charleston-push.json"
+    },
+    "authored-gs-schlager-hymn-whole-notes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-hymn-whole-notes.json"
+    },
+    "authored-gs-schlager-syncopated-pop-cell": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-syncopated-pop-cell.json"
+    },
+    "authored-gs-schlager-polka-two-step": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-polka-two-step.json"
+    },
+    "authored-gs-schlager-gallop-chorus": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-gallop-chorus.json"
+    },
+    "authored-gs-schlager-anticipated-downbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-anticipated-downbeat.json"
+    },
+    "authored-gs-schlager-ballad-schlager-arpeggio-strum": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-ballad-schlager-arpeggio-strum.json"
+    },
+    "authored-gs-schlager-double-chop-offbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-double-chop-offbeat.json"
+    },
+    "authored-gs-schlager-triplet-shuffle-chunks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-triplet-shuffle-chunks.json"
+    },
+    "authored-gs-schlager-big-chorus-wall": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-big-chorus-wall.json"
+    },
+    "authored-gs-schlager-country-schlager-boom-chick": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-country-schlager-boom-chick.json"
+    },
+    "authored-gs-schlager-push-and-stab": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-push-and-stab.json"
+    },
+    "authored-gs-schlager-up-down-reverse": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-up-down-reverse.json"
+    },
+    "authored-gs-schlager-disco-sixteenth-strut": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-disco-sixteenth-strut.json"
+    },
+    "authored-gs-schlager-marching-quarters": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-marching-quarters.json"
+    },
+    "authored-gs-schlager-lazy-backbeat-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-lazy-backbeat-ring.json"
+    },
+    "authored-gs-schlager-pushed-two-and-four": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-pushed-two-and-four.json"
+    },
+    "authored-gs-schlager-triplet-roll-fills": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-triplet-roll-fills.json"
+    },
+    "authored-gs-schlager-verse-tick-tock": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-verse-tick-tock.json"
+    },
+    "authored-gs-schlager-bounce-dotted": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-bounce-dotted.json"
+    },
+    "authored-gs-schlager-offbeat-ring-hold": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-offbeat-ring-hold.json"
+    },
+    "authored-gs-schlager-heartbeat-pairs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-heartbeat-pairs.json"
+    },
+    "authored-gs-schlager-sixteenth-strum-engine": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-sixteenth-strum-engine.json"
+    },
+    "authored-gs-schlager-long-up-shimmer": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-long-up-shimmer.json"
+    },
+    "authored-gs-schlager-half-time-bridge": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-half-time-bridge.json"
+    },
+    "authored-gs-schlager-discofox-three-chop-hook": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-discofox-three-chop-hook.json"
+    },
+    "authored-gs-schlager-folk-pop-waltz-feel": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-folk-pop-waltz-feel.json"
+    },
+    "authored-gs-schlager-bass-run-turnaround": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-bass-run-turnaround.json"
+    },
+    "authored-gs-schlager-call-and-answer-bars": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-call-and-answer-bars.json"
+    },
+    "authored-gs-schlager-final-chorus-lift": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "schlager"
+      ],
+      "file": "styles/gs-schlager-final-chorus-lift.json"
+    },
+    "authored-gs-urban-offbeat-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-offbeat-chops.json"
+    },
+    "authored-gs-urban-backbeat-stabs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-backbeat-stabs.json"
+    },
+    "authored-gs-urban-halftime-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-halftime-ring.json"
+    },
+    "authored-gs-urban-trap-sixteenth-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-trap-sixteenth-chops.json"
+    },
+    "authored-gs-urban-ghost-upstrokes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-ghost-upstrokes.json"
+    },
+    "authored-gs-urban-anticipated-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-anticipated-push.json"
+    },
+    "authored-gs-urban-slow-jam-triplets": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-slow-jam-triplets.json"
+    },
+    "authored-gs-urban-and-of-two-ring": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-and-of-two-ring.json"
+    },
+    "authored-gs-urban-funk-sixteenths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-funk-sixteenths.json"
+    },
+    "authored-gs-urban-lazy-e-stabs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-lazy-e-stabs.json"
+    },
+    "authored-gs-urban-tresillo-dotted": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-tresillo-dotted.json"
+    },
+    "authored-gs-urban-neo-soul-long-ghost": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-neo-soul-long-ghost.json"
+    },
+    "authored-gs-urban-halftime-tail-flick": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-halftime-tail-flick.json"
+    },
+    "authored-gs-urban-stop-time-hits": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-stop-time-hits.json"
+    },
+    "authored-gs-urban-ballad-eighths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-ballad-eighths.json"
+    },
+    "authored-gs-urban-gospel-pickups": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-gospel-pickups.json"
+    },
+    "authored-gs-urban-lofi-lazy-ups": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-lofi-lazy-ups.json"
+    },
+    "authored-gs-urban-middle-offbeats": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-middle-offbeats.json"
+    },
+    "authored-gs-urban-three-three-two-sixteenths": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-three-three-two-sixteenths.json"
+    },
+    "authored-gs-urban-a-of-beat-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-a-of-beat-chops.json"
+    },
+    "authored-gs-urban-double-chop-backbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-double-chop-backbeat.json"
+    },
+    "authored-gs-urban-trap-triplet-rolls": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-trap-triplet-rolls.json"
+    },
+    "authored-gs-urban-upstroke-swells": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-upstroke-swells.json"
+    },
+    "authored-gs-urban-two-bar-sample-loop": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-two-bar-sample-loop.json"
+    },
+    "authored-gs-urban-scratch-upstrokes": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-scratch-upstrokes.json"
+    },
+    "authored-gs-urban-one-chord-pick-answer": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-one-chord-pick-answer.json"
+    },
+    "authored-gs-urban-ballad-six-eight-picks": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-ballad-six-eight-picks.json"
+    },
+    "authored-gs-urban-kick-pattern-stabs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-kick-pattern-stabs.json"
+    },
+    "authored-gs-urban-a-of-one-push": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-a-of-one-push.json"
+    },
+    "authored-gs-urban-pickup-into-three": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-pickup-into-three.json"
+    },
+    "authored-gs-urban-and-of-four-only": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-and-of-four-only.json"
+    },
+    "authored-gs-urban-call-and-response-bars": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-call-and-response-bars.json"
+    },
+    "authored-gs-urban-chicken-scratch": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-chicken-scratch.json"
+    },
+    "authored-gs-urban-stutter-stabs": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-stutter-stabs.json"
+    },
+    "authored-gs-urban-bass-pick-backbeat": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-bass-pick-backbeat.json"
+    },
+    "authored-gs-urban-halftime-and-of-three": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-halftime-and-of-three.json"
+    },
+    "authored-gs-urban-swung-triplet-chops": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-swung-triplet-chops.json"
+    },
+    "authored-gs-urban-late-night-shimmer": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-late-night-shimmer.json"
+    },
+    "authored-gs-urban-triplet-halftime-tail": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-triplet-halftime-tail.json"
+    },
+    "authored-gs-urban-downbeat-and-e-of-three": {
+      "family": "guitar",
+      "kind": "guitarStrums",
+      "genres": [
+        "urban"
+      ],
+      "file": "styles/gs-urban-downbeat-and-e-of-three.json"
+    },
     "authored-guitar-travis-picking": {
       "family": "guitar",
       "kind": "guitarPicks",
