@@ -323,9 +323,14 @@ export function wavSeconds(buf: Buffer, name: string): number {
  */
 export const LEAD_TAKE_LUFS = -16.8;
 
-/** A take's WAV encoded as Ogg Vorbis, `gainDb` louder (or quieter). */
+/** Every take starts this much later than SoulX placed it: in the mix the vocal measured about 6 ms ahead of the
+ *  backing (onset cross-correlation, Tangerine Sidewalk and the approved demo, 2026-11-25), the backing's drum and
+ *  instrument samples sounding a few ms after their grid time. */
+export const TAKE_DELAY_MS = 6;
+
+/** A take's WAV encoded as Ogg Vorbis, `gainDb` louder (or quieter) and TAKE_DELAY_MS later. */
 export function encodeTake(ffmpegBin: string, src: string, dest: string, gainDb: number): Promise<void> {
-  const args = ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-af', `volume=${gainDb.toFixed(2)}dB`, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest];
+  const args = ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-af', `adelay=${TAKE_DELAY_MS}:all=1,volume=${gainDb.toFixed(2)}dB`, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest];
   return new Promise((resolve, reject) => {
     execFile(ffmpegBin, args, (err, _out, stderr) => {
       if (err) reject(new Error(`ffmpeg could not encode ${src}: ${stderr.trim() || err.message}`));

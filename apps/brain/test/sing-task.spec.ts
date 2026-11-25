@@ -4,6 +4,7 @@
 // running), a lost job, a restart that finds the job lost; Write lyrics and Write melody refuse while a song is being
 // sung.
 
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -16,7 +17,7 @@ import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema'
 import { createApp } from '../src/bootstrap.js';
 import { DEV_OWNER_ID } from '../src/routes/songs.js';
 import { integratedLoudness, integratedLoudnessOf } from '../src/audio/loudness.js';
-import { encodeTake, LEAD_TAKE_LUFS } from '../src/sing/singTask.js';
+import { encodeTake, LEAD_TAKE_LUFS, TAKE_DELAY_MS } from '../src/sing/singTask.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
@@ -378,6 +379,15 @@ describe('encodeTake', () => {
       writeFileSync(join(tmp, 'in.wav'), toneWav(2));
       await encodeTake('ffmpeg', join(tmp, 'in.wav'), join(tmp, 'out.ogg'), -5);
       expect((await integratedLoudness('ffmpeg', join(tmp, 'out.ogg'))) - (await integratedLoudness('ffmpeg', join(tmp, 'in.wav')))).toBeCloseTo(-5, 0);
+      // TAKE_DELAY_MS of silence first: the tone's first sample is no longer at the start.
+      const pcm = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', join(tmp, 'out.ogg'), '-f', 'f32le', '-ac', '1', '-ar', '48000', '-']);
+      // Where the tone starts: the first sample above half its peak (Vorbis smears a little noise ahead of an onset).
+      let peak = 0;
+      for (let i = 0; i + 4 <= pcm.length; i += 4) peak = Math.max(peak, Math.abs(pcm.readFloatLE(i)));
+      let first = -1;
+      for (let i = 0; i + 4 <= pcm.length; i += 4) if (Math.abs(pcm.readFloatLE(i)) > peak / 2) { first = i / 4; break; }
+      expect((first / 48000) * 1000).toBeGreaterThan(TAKE_DELAY_MS - 1.5);
+      expect((first / 48000) * 1000).toBeLessThan(TAKE_DELAY_MS + 1.5);
     } finally {
       rmSync(tmp, { recursive: true, force: true });
     }
