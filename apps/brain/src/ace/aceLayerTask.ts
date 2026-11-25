@@ -34,6 +34,9 @@ export const AceLayerOptionsSchema = z
       .strict()
       .refine((r) => r.endBar > r.startBar, 'the selection must end after it starts')
       .optional(),
+    /** The kinds of section the layer plays in ("verse", "chorus", …, as sectionKind names them); none = all. ACE still
+     *  plays over the whole song; sections of other kinds get no clip. */
+    sectionKinds: z.array(z.string().min(1)).min(1).optional(),
     seed: z.number().int().min(0),
   })
   .strict();
@@ -60,13 +63,29 @@ export function sectionsOf(song: Song): AceSection[] {
   });
 }
 
-/** The sections a layer covers: all of them, or those the selection touches (a TaskError-worthy Error for a
- *  selection outside the song). */
-export function coveredSections(song: Song, range: AceLayerOptions['range']): AceSection[] {
+/** A section's kind: its name without the number ("chorus2" → "chorus", "preChorus1" → "preChorus"). */
+export function sectionKind(name: string): string {
+  const m = /^[A-Za-z]+/u.exec(name);
+  if (!m) throw new Error(`the section "${name}" has no kind (its name does not start with letters)`);
+  return m[0];
+}
+
+/** The sections a layer covers: all of them, or those the selection touches, of the chosen kinds (an Error for a
+ *  selection outside the song, a kind the song does not have, or nothing left to cover). */
+export function coveredSections(song: Song, range: AceLayerOptions['range'], kinds?: readonly string[]): AceSection[] {
   const all = sectionsOf(song);
-  if (!range) return all;
-  const covered = all.filter((s) => s.startBar < range.endBar && s.startBar + s.bars > range.startBar);
-  if (covered.length === 0) throw new Error(`the selection (bars ${range.startBar + 1}–${range.endBar}) is outside the song`);
+  let covered = all;
+  if (range) {
+    covered = covered.filter((s) => s.startBar < range.endBar && s.startBar + s.bars > range.startBar);
+    if (covered.length === 0) throw new Error(`the selection (bars ${range.startBar + 1}–${range.endBar}) is outside the song`);
+  }
+  if (kinds) {
+    const songKinds = new Set(all.map((s) => sectionKind(s.name)));
+    const unknown = kinds.filter((k) => !songKinds.has(k));
+    if (unknown.length) throw new Error(`the song has no section of the kind ${unknown.map((k) => `"${k}"`).join(', ')}`);
+    covered = covered.filter((s) => kinds.includes(sectionKind(s.name)));
+    if (covered.length === 0) throw new Error(`the selection has no section of the chosen kinds (${kinds.join(', ')})`);
+  }
   return covered;
 }
 
@@ -160,7 +179,7 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
   const log = new StepLog(ctx);
   if (ctx.jobs === null) rmSync(ctx.filesDir, { recursive: true, force: true });
   mkdirSync(ctx.filesDir, { recursive: true });
-  const covered = coveredSections(input, options.range);
+  const covered = coveredSections(input, options.range, options.sectionKinds);
   const track = aceTrackName(options.instrument, trackNames(input));
   const caption = aceCaption(input, options);
   const secPerBar = (BEATS_PER_BAR * 60) / input.bpm;

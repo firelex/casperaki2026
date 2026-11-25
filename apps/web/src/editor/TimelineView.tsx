@@ -568,11 +568,11 @@ export function TimelineView() {
   /** Add ACE layer's dialog (open: true), and the song's ACE layer task while it runs (one at a time). */
   const [layering, setLayering] = useState(false);
   const aceTask = tasks?.find((t) => t.kind === 'aceLayer' && t.songId === activeSong?.id && t.state === 'running');
-  const addAceLayer = async (instrument: AceInstrument, words: string, bars: { startBar: number; endBar: number } | undefined) => {
+  const addAceLayer = async (instrument: AceInstrument, words: string, bars: { startBar: number; endBar: number } | undefined, kinds: string[] | undefined) => {
     setLayering(false);
     setTaskError(undefined);
     try {
-      await onSaved((songId, song) => tasksApi.startAceLayer(songId, song, instrument, words, bars));
+      await onSaved((songId, song) => tasksApi.startAceLayer(songId, song, instrument, words, bars, kinds));
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
       setTaskError(`Add ACE layer failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -936,8 +936,9 @@ export function TimelineView() {
       {layering ? (
         <AceLayerDialog
           selection={range ? { startBar: range.start, endBar: range.end } : undefined}
+          sections={model.sections.map((s) => s.name)}
           onClose={() => setLayering(false)}
-          onStart={(instrument, words, bars) => void addAceLayer(instrument, words, bars)}
+          onStart={(instrument, words, bars, kinds) => void addAceLayer(instrument, words, bars, kinds)}
         />
       ) : null}
       {transcribing && viewSong ? (

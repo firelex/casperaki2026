@@ -6,7 +6,7 @@
  *   POST /api/tasks { kind: 'transcribe', songId, song, segment, recording: { name, type, data }, hasBacking }
  *                                           Transcribe melody: a recording of one section (data: base64, at most
  *                                           10 MB), sung or hummed along from the section's first beat
- *   POST /api/tasks { kind: 'aceLayer', songId, song, instrument, words?, range?: { startBar, endBar } }
+ *   POST /api/tasks { kind: 'aceLayer', songId, song, instrument, words?, range?: { startBar, endBar }, sectionKinds?: [kind] }
  *                                           Add ACE layer: one instrument part ACE-Step plays over the song (or the
  *                                           selected bars), on an audio-only track "ACE <Instrument>"
  *   POST /api/tasks/:id/apply               a ready result saved into the song: its new id
@@ -69,8 +69,11 @@ export const tasksApi = {
   startTranscribe: (songId: string, song: Song, segment: string, recording: { name: string; type: string; data: string }, hasBacking: boolean) =>
     defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'transcribe', songId, song, segment, recording, hasBacking }),
   /** Add ACE layer: `range` in bars from the song's start (end exclusive); none = the whole song. */
-  startAceLayer: (songId: string, song: Song, instrument: AceInstrument, words: string, range: { startBar: number; endBar: number } | undefined) =>
-    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'aceLayer', songId, song, instrument, ...(words.trim() ? { words: words.trim() } : {}), ...(range ? { range } : {}) }),
+  startAceLayer: (songId: string, song: Song, instrument: AceInstrument, words: string, range: { startBar: number; endBar: number } | undefined, sectionKinds: string[] | undefined) =>
+    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', {
+      kind: 'aceLayer', songId, song, instrument,
+      ...(words.trim() ? { words: words.trim() } : {}), ...(range ? { range } : {}), ...(sectionKinds ? { sectionKinds } : {}),
+    }),
   apply: (id: string) => defaultBrainClient.post<AppliedTask>(`/api/tasks/${encodeURIComponent(id)}/apply`, {}),
   cancel: (id: string) => defaultBrainClient.post<{ task: BackgroundTask }>(`/api/tasks/${encodeURIComponent(id)}/cancel`, {}),
   /** Where a step's file ("<stage>/<name>") is served. */

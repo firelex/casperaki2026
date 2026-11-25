@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyAceLayer, orchestrate } from '@casperaki/arrangement';
 import { vocalTakeFingerprint } from '@casperaki/song-schema';
 
-import { ACE_LAYER_LUFS, aceCaption, coveredSections, integratedLoudness, keyScale, runAceLayer, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
+import { ACE_LAYER_LUFS, aceCaption, coveredSections, integratedLoudness, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
 import type { ServiceResult, VocalsClient } from '../src/sing/vocalsClient.js';
 import type { TaskJobs, TaskStep } from '../src/store.js';
 import { toneWav } from './fakeVocalsService.js';
@@ -124,6 +124,16 @@ describe('the ACE layer task', () => {
     const half = (second.bars / 2) * SEC_PER_BAR;
     expect(peakDb(path, 0.1, half - 0.1)).toBeLessThan(-80);
     expect(peakDb(path, half + 0.1, 2 * half - 0.1)).toBeGreaterThan(-30);
+  });
+
+  it('with section kinds: clips only in sections of those kinds (ACE still plays the whole song)', async () => {
+    const choruses = SONG.songStructure.filter((s) => sectionKind(s.name) === 'chorus').map((s) => s.name);
+    expect(choruses.length).toBeGreaterThan(0);
+    const { result, submitted } = await run({ instrument: 'brass', sectionKinds: ['chorus'], seed: 2 });
+    expect(result.takes.map((t) => t.segment)).toEqual(choruses);
+    expect(submitted).toHaveLength(1);
+    expect(() => coveredSections(SONG, undefined, ['solo'])).toThrow(/no section of the kind "solo"/u);
+    expect(sectionKind('preChorus2')).toBe('preChorus');
   });
 
   it('refuses a selection outside the song and a key ACE does not know', () => {

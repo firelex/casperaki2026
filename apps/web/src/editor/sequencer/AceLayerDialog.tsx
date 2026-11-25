@@ -11,6 +11,21 @@ export function selectionBars(range: { startBar: number; endBar: number }): stri
   return first === last ? `bar ${first}` : `bars ${first}–${last}`;
 }
 
+/** A section's kind ("chorus2" → "chorus"), as the brain names it. */
+export function sectionKindOf(name: string): string {
+  const m = /^[A-Za-z]+/u.exec(name);
+  if (!m) throw new Error(`the section "${name}" has no kind (its name does not start with letters)`);
+  return m[0];
+}
+
+/** The kinds of section a song has, in order of first appearance. */
+export function sectionKindsOf(sections: readonly string[]): string[] {
+  return [...new Set(sections.map(sectionKindOf))];
+}
+
+/** "preChorus" → "pre-chorus". */
+const kindLabel = (kind: string) => kind.replace(/([a-z])([A-Z])/gu, '$1-$2').toLowerCase();
+
 /**
  * Add ACE layer (docs/superpowers/specs/2026-11-25-ace-layer-design.md): choose the instrument, optional style words
  * and what it covers (the whole song, or the selection when there is one). ACE-Step plays the part over the song in the
@@ -18,14 +33,20 @@ export function selectionBars(range: { startBar: number; endBar: number }): stri
  */
 export function AceLayerDialog({
   selection,
+  sections,
   onStart,
   onClose,
 }: {
   /** The timeline's selection in bars from the song's start (end exclusive), if any. */
   selection: { startBar: number; endBar: number } | undefined;
-  onStart(instrument: AceInstrument, words: string, range: { startBar: number; endBar: number } | undefined): void;
+  /** The song's section names, in order. */
+  sections: readonly string[];
+  /** kinds: the section kinds ticked, or undefined when all are (the whole song). */
+  onStart(instrument: AceInstrument, words: string, range: { startBar: number; endBar: number } | undefined, kinds: string[] | undefined): void;
   onClose(): void;
 }) {
+  const allKinds = sectionKindsOf(sections);
+  const [kinds, setKinds] = useState<string[]>(allKinds);
   const [instrument, setInstrument] = useState<AceInstrument>('guitar');
   const [words, setWords] = useState('');
   const [onSelection, setOnSelection] = useState(selection !== undefined);
@@ -76,6 +97,21 @@ export function AceLayerDialog({
               </label>
             ) : null}
           </fieldset>
+          <fieldset className="flex flex-col gap-2">
+            <span className="text-[13px] text-white/60">In these sections</span>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {allKinds.map((k) => (
+                <label key={k} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={kinds.includes(k)}
+                    onChange={(e) => setKinds(e.target.checked ? allKinds.filter((x) => x === k || kinds.includes(x)) : kinds.filter((x) => x !== k))}
+                  />
+                  <span>{kindLabel(k)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </div>
         <div className="flex justify-end gap-2 border-t border-line/60 px-5 py-4">
           <button type="button" onClick={onClose} className="h-10 rounded-full px-4 text-[14px] text-white/70 hover:text-white">
@@ -83,8 +119,9 @@ export function AceLayerDialog({
           </button>
           <button
             type="button"
-            onClick={() => onStart(instrument, words, onSelection ? selection : undefined)}
-            className="h-10 rounded-full bg-accent px-5 text-[14px] font-semibold text-white hover:bg-[#e00000]"
+            disabled={kinds.length === 0}
+            onClick={() => onStart(instrument, words, onSelection ? selection : undefined, kinds.length === allKinds.length ? undefined : kinds)}
+            className="h-10 rounded-full bg-accent px-5 text-[14px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-40"
           >
             Add layer
           </button>
