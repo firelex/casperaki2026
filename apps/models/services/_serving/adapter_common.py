@@ -109,6 +109,11 @@ def quote_path(path):
     return urllib.parse.quote(path, safe="")
 
 
+class Cancelled(Exception):
+    """Raised by `job.check_cancelled()` inside an adapter's generate when the job was cancelled; the harness ends
+    the job with error "Cancelled"."""
+
+
 class RequestError(Exception):
     """Raised by a synchronous adapter route (see harness ROUTES) for a bad request: the harness answers with
     `status` and {"error": message} instead of a 500."""
