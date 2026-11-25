@@ -27,7 +27,8 @@ import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
 import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { useTasks } from '../state/tasks';
-import { lyricsWritten, staleTakes, sungTakes, vocalMenu, type VocalMenu } from './singing';
+import { bytesToBase64, lyricsWritten, staleTakes, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
+import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -530,13 +531,17 @@ export function TimelineView() {
   const lyricsTask = tasks?.find((t) => t.kind === 'writeLyrics' && t.songId === activeSong?.id && (t.state === 'running' || t.state === 'ready'));
   const writeMelody = () => void edits.run({ kind: 'writeMelody' }, 'Writing the melody', activeSong?.id);
   const singTask = tasks?.find((t) => t.kind === 'sing' && t.songId === activeSong?.id && t.state === 'running');
+  const transcribeTask = tasks?.find((t) => t.kind === 'transcribe' && t.songId === activeSong?.id && (t.state === 'running' || t.state === 'ready'));
   const menu = vocalMenu({
     melodyShown,
     lyricsWritten: viewSong ? lyricsWritten(viewSong) : false,
     hasSungTakes: viewSong ? sungTakes(viewSong).length > 0 : false,
     singTask,
     lyricsTask,
+    transcribeTask,
   });
+  /** Transcribe melody's dialog, open on the clicked section (if any). */
+  const [transcribing, setTranscribing] = useState<{ section: string | undefined } | undefined>(undefined);
   const startTask = async (kind: 'writeLyrics' | 'sing', label: string) => {
     if (!activeSong || !viewSong) throw new Error('No song is open.');
     setTaskError(undefined);
@@ -549,6 +554,18 @@ export function TimelineView() {
   };
   const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
   const sing = () => startTask('sing', 'Sing');
+  const transcribe = async (section: string, file: File, hasBacking: boolean) => {
+    if (!activeSong || !viewSong) throw new Error('No song is open.');
+    setTranscribing(undefined);
+    setTaskError(undefined);
+    try {
+      const data = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+      await tasksApi.startTranscribe(activeSong.id, viewSong, section, { name: file.name, type: file.type, data }, hasBacking);
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Transcribe melody failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
 
   return (
     <div ref={rootRef} className="flex h-full flex-col text-white">
@@ -725,7 +742,17 @@ export function TimelineView() {
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
               onNewMelody={t.name === LEAD_VOCAL_NAME ? (s) => newMelody(model.sections[s]!.name) : undefined}
-              vocal={t.name === LEAD_VOCAL_NAME ? { menu, onWriteMelody: writeMelody, onWriteLyrics: () => void writeLyrics(), onSing: () => void sing() } : undefined}
+              vocal={
+                t.name === LEAD_VOCAL_NAME
+                  ? {
+                      menu,
+                      onWriteMelody: writeMelody,
+                      onWriteLyrics: () => void writeLyrics(),
+                      onSing: () => void sing(),
+                      onTranscribe: (s) => setTranscribing({ section: s === undefined ? undefined : model.sections[s]!.name }),
+                    }
+                  : undefined
+              }
               onRemove={() => edits.removeTrack(t.name)}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
@@ -876,6 +903,14 @@ export function TimelineView() {
         </div>
       ) : null}
 
+      {transcribing && viewSong ? (
+        <TranscribeDialog
+          sections={transcribeSections(viewSong)}
+          initialSection={transcribing.section}
+          onClose={() => setTranscribing(undefined)}
+          onStart={(section, file, hasBacking) => void transcribe(section, file, hasBacking)}
+        />
+      ) : null}
       {sectionDialog?.kind === 'rename' ? (
         <RenameSectionDialog
           name={sectionDialog.name}
@@ -1133,6 +1168,9 @@ function TrackMenu({
             <ContextMenuItem className={ITEM} disabled={busy || vocal.menu.sing.disabled} onSelect={vocal.onSing}>
               {vocal.menu.sing.label} <MenuHint text={vocal.menu.sing.hint} />
             </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={busy || vocal.menu.transcribe.disabled} onSelect={() => vocal.onTranscribe(section)}>
+              Transcribe melody <MenuHint text={vocal.menu.transcribe.hint} />
+            </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>
         ) : null}
@@ -1374,6 +1412,8 @@ interface VocalSteps {
   onWriteMelody(): void;
   onWriteLyrics(): void;
   onSing(): void;
+  /** Opens Transcribe melody's dialog on the clicked section (undefined: the track header). */
+  onTranscribe(section: number | undefined): void;
 }
 
 function MenuHint({ text }: { text: string }) {

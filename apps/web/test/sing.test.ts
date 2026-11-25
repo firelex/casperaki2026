@@ -28,7 +28,7 @@ const singTask = (over: Partial<BackgroundTask> = {}): BackgroundTask => ({
   ...over,
 });
 
-const base: VocalMenuInput = { melodyShown: true, lyricsWritten: true, hasSungTakes: false, singTask: undefined, lyricsTask: undefined };
+const base: VocalMenuInput = { melodyShown: true, lyricsWritten: true, hasSungTakes: false, singTask: undefined, lyricsTask: undefined, transcribeTask: undefined };
 
 describe('the Vocal track menu', () => {
   it('Sing waits for written lyrics', () => {

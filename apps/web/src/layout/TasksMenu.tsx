@@ -7,6 +7,9 @@ import { TASK_LABELS, tasksApi, tasksQueryKey, type BackgroundTask } from '../ap
 import { duration, TaskSteps } from './TaskSteps';
 import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks';
 
+/** What a running task is doing, in a word. */
+const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing' };
+
 /**
  * The Tasks item of the top bar: the user's background tasks across their songs (running, ready to go in when playback
  * stops, done, failed with why and a Retry), with the count of those not finished. Clicking a task opens its song.
@@ -66,7 +69,7 @@ function TaskItem({ task, ticking, onOpen }: { task: BackgroundTask; ticking: bo
   };
   const status =
     task.state === 'running'
-      ? `● ${task.kind === 'sing' ? 'singing' : 'writing'} · ${duration(elapsed)}`
+      ? `● ${RUNNING_WORDS[task.kind]} · ${duration(elapsed)}`
       : task.state === 'ready'
         ? notApplied
           ? `✕ ${notApplied}`

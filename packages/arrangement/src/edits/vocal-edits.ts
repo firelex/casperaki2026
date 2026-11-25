@@ -241,12 +241,20 @@ export interface SungTake {
   readonly seed?: number;
 }
 
+/** How much of the song a sung result covers. */
+export interface ApplySungOptions {
+  /** The result covers only the sections of its melody (Transcribe melody): sung takes of other sections are kept,
+   *  those of its sections replaced by `sung.takes`. Without it (Sing) every earlier sung take is replaced. */
+  readonly partial?: boolean;
+}
+
 /**
  * The working song with the sung melody of some sections (recorded as `sungMelody`, replacing the lead's notes and
- * words there; the vocal tracks regenerated and spliced as for written lyrics) and the song's sung-take artifacts
- * replaced by `sung.takes`, each stamped with the fingerprint of the vocal lane it was sung over.
+ * words there; other sections keep their recorded sung melody; the vocal tracks regenerated and spliced as for
+ * written lyrics) and the song's sung-take artifacts replaced by `sung.takes` (all of them, or with `partial` only
+ * those of the melody's sections), each stamped with the fingerprint of the vocal lane it was sung over.
  */
-export function applySungVocals(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }): Song {
+export function applySungVocals(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, opts: ApplySungOptions = {}): Song {
   const melody = SungMelodySchema.parse(sung.melody);
   const hidden = !vocalMelodyShown(working);
   const base = generatorParams(working);
@@ -264,7 +272,15 @@ export function applySungVocals(working: Song, sung: { melody: SungMelody; takes
     }
   }
   song = recordParams(song, params);
-  const kept = song.aiArtifacts.filter((a) => !(SUNG_TAKE_KINDS as readonly string[]).includes(a.kind));
+  const replaced = (a: AIArtifact) =>
+    (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) &&
+    (!opts.partial || (a.attachedTo.scope === 'segment' && melody[a.attachedTo.segment] !== undefined));
+  if (opts.partial) {
+    for (const t of sung.takes) {
+      if (melody[t.segment] === undefined) throw new Error(`applySungVocals: a partial result's take is for ${t.segment}, which is not among its sections`);
+    }
+  }
+  const kept = song.aiArtifacts.filter((a) => !replaced(a));
   const artifacts: AIArtifact[] = sung.takes.map((t) => {
     if (!SUNG_TAKE_KINDS.includes(t.kind)) throw new Error(`applySungVocals: unknown take kind "${t.kind}"`);
     const sha256 = Sha256Schema.parse(t.sha256);
@@ -287,8 +303,8 @@ export function applySungVocals(working: Song, sung: { melody: SungMelody; takes
  * are the ones of `saved` (the version the task's result was saved into), whose fingerprints say what they were sung
  * over. A section the working copy changed since (chords, tempo, vocal lanes) therefore comes out stale.
  */
-export function applySungVocalsOver(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, saved: Song): Song {
-  const merged = applySungVocals(working, sung);
+export function applySungVocalsOver(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, saved: Song, opts: ApplySungOptions = {}): Song {
+  const merged = applySungVocals(working, sung, opts);
   const isSung = (a: AIArtifact) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind);
   return parseSong({ ...merged, aiArtifacts: [...merged.aiArtifacts.filter((a) => !isSung(a)), ...saved.aiArtifacts.filter(isSung)] });
 }

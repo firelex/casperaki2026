@@ -2,6 +2,10 @@
 //
 //   GET  /api/tasks                -> { tasks: TaskJson[] }  unfinished tasks and those finished in the last day
 //   POST /api/tasks { kind, songId, song } -> 201 { task }   song = the editor's working copy
+//   POST /api/tasks { kind: 'transcribe', songId, song, segment, recording: { name, type, data }, hasBacking }
+//                                  -> 201 { task }   Transcribe melody: a recording of one section (data: base64 of the
+//                                     file, any format ffmpeg reads, at most 10 MB decoded; 413 when larger), sung or
+//                                     hummed along from the section's first beat; hasBacking: music plays behind the voice
 //   POST /api/tasks/:id/apply      -> { task, songId, result } a ready result saved into the song (its new id);
 //                                     result: what the task made (writeLyrics: section → lines)
 //   POST /api/tasks/:id/retry      -> { task }                a failed task started again
@@ -9,7 +13,7 @@
 //   GET  /api/tasks/:id/files/:stage/:name -> a file a step of the task made (step.files lists "<stage>/<name>")
 //
 // TaskJson: { id, kind, songId, title, state, message?, startedAt, finishedAt?, steps: TaskStep[] }
-// (TaskStep: src/store.ts; kinds: writeLyrics, sing).
+// (TaskStep: src/store.ts; kinds: writeLyrics, sing, transcribe).
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
@@ -18,12 +22,25 @@ import { parseSong } from '@casperaki/song-schema';
 
 import type { TaskRow } from '../store.js';
 import type { SongsStore } from '../store.js';
+import { MAX_RECORDING_BYTES } from '../sing/transcribeTask.js';
 import { TaskError, type BackgroundTasks } from '../tasks/tasks.js';
 import { ownerOf } from './songs.js';
 
 const KEEP_MS = 24 * 3600_000;
 
-const StartBody = z.object({ kind: z.enum(['writeLyrics', 'sing']), songId: z.string().min(1), song: z.unknown() }).strict();
+const StartBody = z.union([
+  z.object({ kind: z.enum(['writeLyrics', 'sing']), songId: z.string().min(1), song: z.unknown() }).strict(),
+  z
+    .object({
+      kind: z.literal('transcribe'),
+      songId: z.string().min(1),
+      song: z.unknown(),
+      segment: z.string().min(1),
+      recording: z.object({ name: z.string(), type: z.string(), data: z.string().min(1) }).strict(),
+      hasBacking: z.boolean(),
+    })
+    .strict(),
+]);
 
 export function taskJson(t: TaskRow, title: string) {
   return {
@@ -62,7 +79,18 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
       return res.status(400).json({ error: 'invalid_song', message: err instanceof Error ? err.message : String(err) });
     }
     const owner = ownerOf(req);
-    return answer(res, () => res.status(201).json({ task: titled(owner, tasks.start(owner, body.data.songId, body.data.kind, song)) }));
+    const b = body.data;
+    if (b.kind === 'transcribe') {
+      const recording = Buffer.from(b.recording.data, 'base64');
+      if (recording.length === 0) return res.status(400).json({ error: 'no_recording', message: 'The recording is empty.' });
+      if (recording.length > MAX_RECORDING_BYTES) {
+        return res.status(413).json({ error: 'recording_too_large', message: `The recording is larger than ${MAX_RECORDING_BYTES / 1024 / 1024} MB: bring one section, not the whole song.` });
+      }
+      return answer(res, () =>
+        res.status(201).json({ task: titled(owner, tasks.start(owner, b.songId, b.kind, song, { segment: b.segment, recording, hasBacking: b.hasBacking })) }),
+      );
+    }
+    return answer(res, () => res.status(201).json({ task: titled(owner, tasks.start(owner, b.songId, b.kind, song)) }));
   });
 
   router.post('/api/tasks/:id/apply', (req, res) => {

@@ -5,7 +5,7 @@ transcribes it back into the Vocal lane. `generate` dispatches on `params["stage
 
 - `lead`: YuE2 sings each section, ChordNet checks it against the song's chords
 - `repeats`: SoulX-Singer (+ voice conversion) for repeated sections and backing vocals
-- `transcribe`: the sung result transcribed back into notes
+- `transcribe`: a recording the user brings of one section (Transcribe melody): BS-RoFormer separation only when `has_backing`; with a `count` (the section has written lyrics) the notes by count as the lead stage finds them, without one only the voice for the brain to send to the hum service (see pipeline/transcribe.py)
 
 One venv (`.venv`, Python 3.10, torch 2.10.0+cu128 for the RTX PRO 6000 Blackwell, sm_120) on the Linux disk;
 weights stay on /mnt/d. Models load per job and are released after each stage (one GPU).

@@ -54,8 +54,11 @@ export class CancelledError extends Error {
 
 /** A sung section changed between the task's start and its apply. */
 export class SongChangedError extends Error {
-  constructor(readonly detail: string) {
-    super(SONG_CHANGED);
+  constructor(
+    readonly detail: string,
+    message: string = SONG_CHANGED,
+  ) {
+    super(message);
     this.name = 'SongChangedError';
   }
 }
@@ -168,9 +171,12 @@ const iso = (seconds: number) => new Date(seconds * 1000).toISOString();
 /** The two service stages; each keeps its step files in its own subfolder of the task's files folder. */
 export const SING_STAGES = ['lead', 'repeats'] as const;
 export type SingStage = (typeof SING_STAGES)[number];
+/** Every service stage a task runs (Sing's two, Transcribe melody's one): the subfolders step files are served from. */
+export const TASK_FILE_STAGES = [...SING_STAGES, 'transcribe'] as const;
+export type TaskFileStage = (typeof TASK_FILE_STAGES)[number];
 
 /** A step's files as the task lists them: "<stage>/<name>" (GET /api/tasks/:id/files/<stage>/<name>). */
-function taskStep(stage: SingStage, s: ServiceStep): TaskStep {
+function taskStep(stage: TaskFileStage, s: ServiceStep): TaskStep {
   return {
     id: s.id,
     label: s.label,
@@ -201,46 +207,58 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
+/** Writes a file whole or not at all: a temporary name in the same folder, then renamed (resume skips files that
+ *  exist, so a half-written one must never carry the real name). */
+export function writeAtomic(dest: string, data: Buffer): void {
+  const tmp = `${dest}.part-${process.pid}`;
+  writeFileSync(tmp, data);
+  renameSync(tmp, dest);
+}
+
+/** What following a service job needs: the service, the task's files folder, the poll interval, the cancel signal. */
+export interface JobFollowing {
+  readonly client: VocalsClient;
+  readonly filesDir: string;
+  readonly pollMs: number;
+  readonly signal: AbortSignal;
+}
+
+/** Polls a service job to its end, copying its steps (`onSteps`) and their files (into <filesDir>/<stage>/); the
+ *  job's result file. Cancelled → the job is cancelled too and CancelledError thrown. */
+export async function followJob(f: JobFollowing, stage: TaskFileStage, job: string, onSteps: (steps: TaskStep[]) => void): Promise<Buffer> {
+  const { client } = f;
+  const dir = join(f.filesDir, stage);
+  mkdirSync(dir, { recursive: true });
+  for (;;) {
+    if (f.signal.aborted) {
+      await client.cancel(job);
+      throw new CancelledError();
+    }
+    const r = await client.result(job);
+    // A name listed by several steps of one job is one file in the job's folder (e.g. a unit's score, listed by
+    // each seed's take): fetched once.
+    for (const s of r.steps) {
+      if (s.state !== 'done') continue;
+      for (const name of s.files) {
+        if (!isPlainFileName(name)) throw new Error(`the vocal service's step ${s.id} listed a file "${name}" that is not a plain file name`);
+        const dest = join(dir, name);
+        if (!existsSync(dest)) writeAtomic(dest, await client.file(job, name));
+      }
+    }
+    onSteps(r.steps.map((x) => taskStep(stage, x)));
+    if (r.state === 'done') return await client.file(job);
+    if (r.state === 'error') throw new Error(r.error ?? `the vocal service's ${stage} job failed without saying why`);
+    await sleep(f.pollMs, f.signal);
+  }
+}
+
 /** Runs the Sing task: its result. */
 export async function runSing(ctx: SingContext): Promise<SingResult> {
   const { client, input } = ctx;
   const log = new StepLog(ctx);
   if (ctx.jobs === null) rmSync(ctx.filesDir, { recursive: true, force: true });
   mkdirSync(ctx.filesDir, { recursive: true });
-  /** Writes a file whole or not at all: a temporary name in the same folder, then renamed (resume skips files that
-   *  exist, so a half-written one must never carry the real name). */
-  const writeAtomic = (dest: string, data: Buffer) => {
-    const tmp = `${dest}.part-${process.pid}`;
-    writeFileSync(tmp, data);
-    renameSync(tmp, dest);
-  };
-
-  /** Polls a service job to its end, copying its steps and their files; the job's result file. */
-  const follow = async (stage: SingStage, job: string): Promise<Buffer> => {
-    const dir = join(ctx.filesDir, stage);
-    mkdirSync(dir, { recursive: true });
-    for (;;) {
-      if (ctx.signal.aborted) {
-        await client.cancel(job);
-        throw new CancelledError();
-      }
-      const r = await client.result(job);
-      // A name listed by several steps of one job is one file in the job's folder (e.g. a unit's score, listed by
-      // each seed's take): fetched once.
-      for (const s of r.steps) {
-        if (s.state !== 'done') continue;
-        for (const name of s.files) {
-          if (!isPlainFileName(name)) throw new Error(`the vocal service's step ${s.id} listed a file "${name}" that is not a plain file name`);
-          const dest = join(dir, name);
-          if (!existsSync(dest)) writeAtomic(dest, await client.file(job, name));
-        }
-      }
-      log.service(stage, r.steps.map((x) => taskStep(stage, x)));
-      if (r.state === 'done') return await client.file(job);
-      if (r.state === 'error') throw new Error(r.error ?? `the vocal service's ${stage} job failed without saying why`);
-      await sleep(ctx.pollMs, ctx.signal);
-    }
-  };
+  const follow = (stage: SingStage, job: string) => followJob(ctx, stage, job, (steps) => log.service(stage, steps));
 
   const plan = await log.run('plan', async () => {
     const value = planSinging(input);
@@ -254,7 +272,8 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
     ctx.setJobs(jobs);
   } else jobs = ctx.jobs;
   const leadJob = jobs.lead;
-  const leadFile = await follow('lead', jobs.lead);
+  if (leadJob === undefined) throw new Error('the sing task recorded its jobs without the lead job');
+  const leadFile = await follow('lead', leadJob);
   writeAtomic(join(ctx.filesDir, 'lead', 'lead.json'), leadFile);
   const lead = parseLead(leadFile, plan);
 
@@ -314,7 +333,7 @@ function parseLead(file: Buffer, plan: SingPlan): LeadJson {
 type LaneEvent = { type?: string; note: number; duration: number; fullWord?: string; vocaloidPhonemes?: string[] };
 
 /** A lane's vocal notes in a section as SungNotes (beats from the section start). */
-function laneNotes(song: Song, segment: string, track: string): SungNote[] {
+export function laneNotes(song: Song, segment: string, track: string): SungNote[] {
   const bars = (song.arrangement[segment]?.overrides?.[track]?.bars ?? []) as unknown as readonly { notes?: Record<string, readonly unknown[] | undefined> }[];
   const out: SungNote[] = [];
   bars.forEach((bar, barIndex) => {

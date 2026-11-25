@@ -121,3 +121,93 @@ def test_a_note_sung_an_octave_low_comes_back(tracker):
     notes = [(0, 2, 69, True), (2, 2, 71, True), (4, 2, 57, True), (6, 2, 72, True), (8, 2, 74, True)]
     out = seg(synth(notes), 5, tracker, octave=0)
     assert [o["midi"] for o in out] == [69, 71, 69, 72, 74]
+
+
+# ---- the standalone stage (Transcribe melody: the user's own recording of one section) ------------------------------
+
+import base64
+import io
+import json
+
+import soundfile as sf
+
+
+class FakeJob:
+    def __init__(self):
+        self.steps = []
+
+    def check_cancelled(self):
+        pass
+
+    def step(self, id, label):
+        job = self
+
+        class S:
+            def done(self, text="", numbers=None, files=None):
+                job.steps.append({"id": id, "state": "done", "numbers": numbers or {}, "files": list(files or [])})
+
+            def fail(self, text):
+                job.steps.append({"id": id, "state": "failed", "text": text})
+
+        return S()
+
+
+def wav_b64(stereo, sr=SR):
+    buf = io.BytesIO()
+    sf.write(buf, stereo.T, sr, format="WAV")
+    return base64.b64encode(buf.getvalue()).decode()
+
+
+def stage_params(**over):
+    p = {"stage": "transcribe", "section": "verse1", "bpm": BPM, "key": "C", "octave": 12, "section_beats": 16,
+         "count": len(NOTES), "has_backing": False, "audio": wav_b64(synth(NOTES))}
+    p.update(over)
+    return p
+
+
+def test_stage_transcribes_a_clean_recording_by_note_count(tmp_path):
+    job = FakeJob()
+    res = transcribe.run(stage_params(), str(tmp_path), job)
+    assert res == {"file": str(tmp_path / "transcribe.json"), "kind": "json"}
+    out = json.loads((tmp_path / "transcribe.json").read_text())
+    assert out["section"] == "verse1" and out["voice"] == "verse1_recording.wav"
+    assert [(n["start"], n["duration"], n["midi"]) for n in out["notes"]] == [(s / 4, ln / 4, m - 12) for s, ln, m, _ in NOTES]
+    assert [s["id"] for s in job.steps] == ["recording:verse1", "transcribe:verse1"]  # no separation asked for
+    assert job.steps[0]["files"] == ["verse1_recording.wav"] and (tmp_path / "verse1_recording.wav").exists()
+    assert job.steps[1]["numbers"] == {"notes": len(NOTES)} and job.steps[1]["files"] == ["verse1_melody.json"]
+
+
+def test_stage_without_a_count_only_prepares_the_voice(tmp_path):
+    job = FakeJob()
+    transcribe.run(stage_params(count=None), str(tmp_path), job)
+    out = json.loads((tmp_path / "transcribe.json").read_text())
+    assert out == {"section": "verse1", "voice": "verse1_recording.wav", "notes": None}
+    assert [s["id"] for s in job.steps] == ["recording:verse1"]
+
+
+def test_stage_with_backing_separates_first(tmp_path, monkeypatch):
+    calls = []
+
+    def separate_voice(audio, sr, out, section, job):
+        calls.append((audio.shape, sr))
+        st = job.step(f"separate:{section}", "Separate")
+        sf.write(out / f"{section}_recording_vocals.wav", audio.T, sr)
+        st.done("", {}, [f"{section}_recording_vocals.wav"])
+        return audio, sr, f"{section}_recording_vocals.wav"
+
+    monkeypatch.setattr(transcribe, "separate_voice", separate_voice)
+    job = FakeJob()
+    transcribe.run(stage_params(has_backing=True), str(tmp_path), job)
+    out = json.loads((tmp_path / "transcribe.json").read_text())
+    assert out["voice"] == "verse1_recording_vocals.wav" and len(out["notes"]) == len(NOTES)
+    assert [s["id"] for s in job.steps] == ["recording:verse1", "separate:verse1", "transcribe:verse1"]
+    assert len(calls) == 1
+
+
+def test_stage_names_a_missing_param_and_a_short_recording(tmp_path):
+    p = stage_params()
+    del p["has_backing"]
+    with pytest.raises(ValueError, match="transcribe: missing param 'has_backing'"):
+        transcribe.run(p, str(tmp_path), FakeJob())
+    with pytest.raises(transcribe.TranscribeError, match="verse1: found 6 of 7 note starts"):
+        transcribe.run(stage_params(count=len(NOTES) + 1), str(tmp_path), FakeJob())

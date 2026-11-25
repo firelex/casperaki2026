@@ -138,6 +138,27 @@ function repeatsScript(params: Record<string, unknown>) {
   return { script, result: { takes } };
 }
 
+/** The transcribe stage (pipeline/transcribe.py run): its steps, and as notes `count` 16ths spread evenly over the
+ *  section (start i * section_beats / count on the 16th grid, a 16th long, midi 60 + i % 5); with no count, only the
+ *  voice. */
+function transcribeScript(params: Record<string, unknown>) {
+  const section = String(params['section']);
+  const count = params['count'] as number | null;
+  const beats = params['section_beats'] as number;
+  const script: Job['script'] = [{ id: `recording:${section}`, label: `Read the recording of ${section}`, numbers: { seconds: 2 }, files: [`${section}_recording.wav`] }];
+  let voice = `${section}_recording.wav`;
+  if (params['has_backing'] === true) {
+    voice = `${section}_recording_vocals.wav`;
+    script.push({ id: `separate:${section}`, label: `Separate the voice of the recording of ${section}`, files: [voice, `${section}_recording_backing.wav`] });
+  }
+  let notes: { start: number; duration: number; midi: number }[] | null = null;
+  if (count !== null) {
+    notes = Array.from({ length: count }, (_, i) => ({ start: Math.floor((i * beats * 4) / count) / 4, duration: 0.25, midi: 60 + (i % 5) }));
+    script.push({ id: `transcribe:${section}`, label: `Write down the sung melody of ${section}`, numbers: { notes: count }, files: [`${section}_melody.json`] });
+  }
+  return { script, result: { section, voice, notes } };
+}
+
 async function body(req: IncomingMessage): Promise<string> {
   let s = '';
   for await (const chunk of req) s += chunk;
@@ -179,7 +200,7 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
       if (req.method === 'POST' && u.pathname === '/generate') {
         const params = JSON.parse(await body(req)) as Record<string, unknown>;
         const stage = String(params['stage']);
-        const { script, result } = stage === 'lead' ? leadScript(params) : repeatsScript(params);
+        const { script, result } = stage === 'lead' ? leadScript(params) : stage === 'transcribe' ? transcribeScript(params) : repeatsScript(params);
         const job: Job = { id: `job${++n}`, stage, params, state: 'running', error: null, script, shown: [], result };
         jobs.push(job);
         return send(202, { job_id: job.id });

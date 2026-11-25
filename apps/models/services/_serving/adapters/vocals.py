@@ -3,7 +3,7 @@
 One service, three stages chosen by params["stage"]:
   lead        YuE2 sings each section's lead (checked by ChordNet against the song's chords)
   repeats     SoulX-Singer + voice conversion for repeated sections and backing vocals
-  transcribe  the sung result transcribed back into notes in the Vocal lane
+  transcribe  a recording the user brings of one section transcribed into notes for its Vocal lane (Transcribe melody)
 Models load per job inside the stage and are released after it (one GPU); `load` loads nothing heavy.
 Code and weights are referenced by absolute path in vocals/pipeline/paths.py (see vocals/README.md).
 """

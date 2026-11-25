@@ -131,6 +131,16 @@ function lineText(syllables: readonly string[]): string {
   return text.trim();
 }
 
+/** The song's octave shift as Sing chooses it (over every sung section's Vocal lane): see `octaveOf`. A SingError
+ *  without a melody, or when no shift fits. */
+export function songOctave(song: Song): Octave {
+  const sung = vocalMelodyShown(song) ? sungSections(song) : [];
+  return octaveOf(
+    song,
+    sung.map((s) => s.name),
+  );
+}
+
 /** The song's octave shift: the one whose sung median is nearest B4 with every note within F3..A5. */
 function octaveOf(song: Song, sections: readonly string[]): Octave {
   const notes = sections.flatMap((name) => vocalEvents(laneBars(song, name)).map((e) => e.note)).sort((a, b) => a - b);

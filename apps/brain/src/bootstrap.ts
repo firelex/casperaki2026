@@ -280,7 +280,16 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const sing = config.vocalsServiceUrl
     ? { client: new VocalsClient(config.vocalsServiceUrl), filesDir: config.taskFilesDir!, takesDir: config.vocalTakesDir!, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS }
     : undefined;
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), hash: hashCanonical, clock: () => new Date().toISOString() });
+  // Transcribe melody: the recording is kept in BRAIN_TASK_FILES_DIR; the vocals service reads sections with written
+  // lyrics (or with music behind the voice), the hum service sections without.
+  const transcribe = {
+    filesDir: config.taskFilesDir,
+    client: sing?.client,
+    humServiceUrl: config.humServiceUrl,
+    ffmpegBin: config.ffmpegBin,
+    pollMs: deps.singPollMs ?? SING_POLL_MS,
+  };
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));

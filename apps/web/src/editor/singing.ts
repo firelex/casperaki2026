@@ -49,6 +49,8 @@ export interface VocalMenuInput {
   readonly singTask: BackgroundTask | undefined;
   /** The song's Write lyrics task while it runs or waits to go in. */
   readonly lyricsTask: BackgroundTask | undefined;
+  /** The song's Transcribe melody task while it runs or waits to go in. */
+  readonly transcribeTask: BackgroundTask | undefined;
 }
 
 export interface MenuState {
@@ -60,6 +62,8 @@ export interface VocalMenu {
   readonly writeMelody: MenuState;
   readonly writeLyrics: MenuState;
   readonly sing: MenuState & { readonly label: 'Sing' | 'Sing again' };
+  /** A recording the user brings of one section, back into the Vocal lane. */
+  readonly transcribe: MenuState;
 }
 
 const ALREADY_SINGING = 'Already singing';
@@ -89,5 +93,33 @@ export function vocalMenu(i: VocalMenuInput): VocalMenu {
       : !i.lyricsWritten
         ? { label, disabled: true, hint: 'Write lyrics first' }
         : { label, disabled: false, hint: 'in the background' };
-  return { writeMelody, writeLyrics, sing };
+  const transcribe: MenuState = singing
+    ? { disabled: true, hint: ALREADY_SINGING }
+    : !i.melodyShown
+      ? { disabled: true, hint: 'write a melody first' }
+      : i.transcribeTask?.state === 'running'
+        ? { disabled: true, hint: 'already transcribing' }
+        : i.transcribeTask?.state === 'ready'
+          ? { disabled: true, hint: 'ready · goes in when you stop' }
+          : { disabled: false, hint: 'from a recording' };
+  return { writeMelody, writeLyrics, sing, transcribe };
+}
+
+/** The sections a recording can be transcribed into: those with notes in the Vocal lane, in song order. */
+export function transcribeSections(song: Pick<Song, 'songStructure' | 'arrangement'>): string[] {
+  return song.songStructure
+    .map((s) => s.name)
+    .filter((name) =>
+      (song.arrangement[name]?.overrides?.['Vocal']?.bars ?? []).some((b) =>
+        Object.values(b.notes ?? {}).some((evs) => (evs ?? []).some((e) => (e as { type?: string }).type === 'vocalNote')),
+      ),
+    );
+}
+
+/** Bytes as base64 (a recording's upload body), in chunks so a large file does not overflow the call stack. */
+export function bytesToBase64(bytes: Uint8Array): string {
+  let text = '';
+  const CHUNK = 0x8000;
+  for (let i = 0; i < bytes.length; i += CHUNK) text += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  return btoa(text);
 }

@@ -6,7 +6,7 @@ import type { Song } from '@casperaki/song-schema';
 
 import { songsApi, songsQueryKeys, type GeneratedSong } from '../api/songs';
 import { tasksApi, tasksQueryKey, type AppliedTask, type BackgroundTask } from '../api/tasks';
-import { tracksApi } from '../api/tracks';
+import { tracksApi, type TrackEdit } from '../api/tracks';
 import type { LiveStatus } from '../audio/livePlayer';
 import { useLiveState } from '../audio/useLivePlayer';
 import { useSession } from './session';
@@ -49,6 +49,14 @@ export interface ApplyContext {
   cacheSong(saved: GeneratedSong, oldId: string): void;
   navigate(path: string): void;
   refresh(): void;
+}
+
+/** The track edit that puts a task's result into a working song: written lyrics, or a sung result (Transcribe
+ *  melody's covers its section only: `partial`, so the other sections keep their takes). */
+export function mergeOp(kind: BackgroundTask['kind'], result: AppliedTask['result'], saved: Song): TrackEdit {
+  if (kind === 'sing') return { kind: 'applySung', result, sungOver: saved };
+  if (kind === 'transcribe') return { kind: 'applySung', result, sungOver: saved, partial: true };
+  return { kind: 'applyLyrics', lyrics: result as Readonly<Record<string, readonly string[]>> };
 }
 
 /**
@@ -129,8 +137,7 @@ export function useApplyReadyTasks(): void {
       pathname: loc.pathname,
       apply: (id) => tasksApi.apply(id),
       getSong: (id) => songsApi.get(id),
-      mergeResult: async (song, kind, result, saved) =>
-        (await tracksApi.edit(song, kind === 'sing' ? { kind: 'applySung', result, sungOver: saved } : { kind: 'applyLyrics', lyrics: result as Readonly<Record<string, readonly string[]>> })).song,
+      mergeResult: async (song, kind, result, saved) => (await tracksApi.edit(song, mergeOp(kind, result, saved))).song,
       setActiveSong: s.setActiveSong,
       applyEdit: s.applyEdit,
       cacheSong: (saved, oldId) => {

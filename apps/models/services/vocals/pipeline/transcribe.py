@@ -14,8 +14,25 @@ Ported from apps/models/ace-vocal-tests/other-models/syllable_notes.py (shared t
   (`fix_octave_slips`), snapped to the key's scale, returned in the Vocal lane's register (sung - octave).
 The take is read unstretched through a Clock (align.py: take seconds <-> our beats). Starts must lie inside the
 section's beats; the bars after it (the tail) may only hold the end of the last note, which is cut at the section end.
+
+The stage `transcribe` (`run`, Transcribe melody in the app): the user's own recording of one section, sung or hummed
+along from the section's first beat at the song's tempo (so the recording is on our grid: Clock.grid(bpm)).
+params = {"section", "bpm", "key", "octave" (-12/0/12: the song's, as Sing uses; notes come back as sung - octave),
+"section_beats", "count" (the section's Vocal-lane notes, held "-" positions included; null: only prepare the voice,
+for the brain to send to the hum service when the section has no written lyrics), "has_backing" (the recording has
+music behind the voice: BS-RoFormer separates the voice first; a clean recording is read as it is), "audio" (the
+recording as base64 WAV: the brain decodes whatever the user brings with ffmpeg)}. Every key is required.
+Steps: recording:<section> (seconds; file <section>_recording.wav), separate:<section> (only with has_backing; files
+<section>_recording_vocals.wav, <section>_recording_backing.wav), transcribe:<section> (only with a count; notes;
+file <section>_melody.json). Writes transcribe.json = {"section", "voice" (the file the notes were read from),
+"notes": [{"start", "duration", "midi"}] or null}.
 """
 from __future__ import annotations
+
+import base64
+import io
+import json
+from pathlib import Path
 
 import numpy as np
 
@@ -185,3 +202,87 @@ def fix_octave_slips(pitches: list[int]) -> list[int]:
                 p += 12
         out.append(p)
     return out
+
+
+PARAMS = ("section", "bpm", "key", "octave", "section_beats", "count", "has_backing", "audio")
+
+
+def separate_voice(audio, sr: int, out: Path, section: str, job):
+    """BS-RoFormer on the recording (channels x samples): (voice as channels x samples, its rate, its file name)."""
+    import gc
+
+    import soundfile as sf
+    import torch
+
+    from .separate import SR, Separator
+
+    if not torch.cuda.is_available():
+        raise RuntimeError("transcribe: separating the voice needs CUDA, which is not available")
+    st = job.step(f"separate:{section}", f"Separate the voice of the recording of {section}")
+    sep = Separator(torch.device("cuda"))
+    try:
+        vocals, backing = sep.separate(np.asarray(audio).T, sr)
+    finally:
+        sep.close()
+        gc.collect()
+    names = [f"{section}_recording_vocals.wav", f"{section}_recording_backing.wav"]
+    sf.write(out / names[0], vocals.T, SR)
+    sf.write(out / names[1], backing.T, SR)
+    st.done("voice and backing separated", {}, names)
+    return vocals, SR, names[0]
+
+
+def run(params: dict, out_dir, job):
+    import soundfile as sf
+
+    for k in PARAMS:
+        if k not in params:
+            raise ValueError(f"transcribe: missing param {k!r}")
+    section = params["section"]
+    if not isinstance(section, str) or not section:
+        raise ValueError(f"transcribe: param 'section' must be a section name, got {section!r}")
+    bpm = float(params["bpm"])
+    key = params["key"]
+    octave = check_octave(params["octave"])
+    section_beats = float(params["section_beats"])
+    count = params["count"]
+    if count is not None and (not isinstance(count, int) or count < 1):
+        raise ValueError(f"transcribe: param 'count' must be a whole number of notes (1 or more) or null, got {count!r}")
+    if not isinstance(params["has_backing"], bool):
+        raise ValueError(f"transcribe: param 'has_backing' must be true or false, got {params['has_backing']!r}")
+    scale(key)
+    out = Path(out_dir)
+
+    job.check_cancelled()
+    st = job.step(f"recording:{section}", f"Read the recording of {section}")
+    try:
+        audio, sr = sf.read(io.BytesIO(base64.b64decode(params["audio"], validate=True)), dtype="float32", always_2d=True)
+    except Exception as e:
+        raise ValueError(f"transcribe: the recording of {section} is not a readable WAV file: {e}") from e
+    if len(audio) == 0:
+        raise ValueError(f"transcribe: the recording of {section} is empty")
+    voice_name = f"{section}_recording.wav"
+    sf.write(out / voice_name, audio, sr)
+    st.done(f"{len(audio) / sr:.1f} s", {"seconds": round(len(audio) / sr, 2)}, [voice_name])
+    voice = audio.T  # channels x samples
+
+    if params["has_backing"]:
+        job.check_cancelled()
+        voice, sr, voice_name = separate_voice(voice, sr, out, section, job)
+
+    notes = None
+    if count is not None:
+        job.check_cancelled()
+        ts = job.step(f"transcribe:{section}", f"Write down the sung melody of {section}")
+        try:
+            found = segment(voice, sr, count, bpm, key=key, octave=octave, section=section, tracker=PitchTracker(),
+                            section_beats=section_beats)
+        except TranscribeError as e:
+            ts.fail(str(e))
+            raise
+        notes = [{"start": n["start"], "duration": n["duration"], "midi": n["midi"]} for n in found]
+        (out / f"{section}_melody.json").write_text(json.dumps(notes, indent=0))
+        ts.done(f"{len(notes)} notes", {"notes": len(notes)}, [f"{section}_melody.json"])
+
+    (out / "transcribe.json").write_text(json.dumps({"section": section, "voice": voice_name, "notes": notes}, indent=1))
+    return {"file": str(out / "transcribe.json"), "kind": "json"}

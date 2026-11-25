@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isTakeFresh, type Song } from '@casperaki/song-schema';
 
-import { applySungVocals, applySungVocalsOver, applyWrittenLyrics, orchestrate, sungSections, type SungMelody, type SungTake } from '../src/index.js';
+import { applySungVocals, applySungVocalsOver, applyWrittenLyrics, laneWordsOn, orchestrate, sungSections, type SungMelody, type SungTake } from '../src/index.js';
 
 const PARAMS = { genre: 'brightPop', key: 'C', bpm: 110, seed: 'a' } as const;
 const BARS = (song: Song, section: string, track: string) => song.arrangement[section]!.overrides[track]!.bars!;
@@ -88,5 +88,74 @@ describe('applySungVocalsOver (a result merged into unsaved edits)', () => {
     const fresh = (seg: string) => isTakeFresh(merged, merged.aiArtifacts.find((a) => a.attachedTo.scope === 'segment' && a.attachedTo.segment === seg)!);
     expect(fresh(chorus)).toBe(false);
     expect(fresh(other)).toBe(true);
+  });
+});
+
+describe('applySungVocals with partial (Transcribe melody: one section, no takes)', () => {
+  it('replaces the melody and takes of the transcribed section only; the others keep theirs', () => {
+    const sections = sungSections(base).map((s) => s.name);
+    const verse = sections.find((n) => n.startsWith('verse'))!;
+    const verseSung = notesOf(base, verse, 'Vocal').map((n) => ({
+      start: n.start, duration: n.ev.duration, midi: n.ev.note, word: n.ev.fullWord!, phonemes: ['l', 'aa1'],
+    }));
+    const sung = applySungVocals(base, { melody: { ...melody, [verse]: verseSung }, takes: [take(chorus, 'Vocal', 'a'), take(verse, 'Vocal', 'b')] });
+    const transcribed = verseSung.map((n, i) => ({ ...n, midi: n.midi + (i % 2 ? 2 : 0) }));
+    const out = applySungVocals(sung, { melody: { [verse]: transcribed }, takes: [] }, { partial: true });
+    // the transcribed section's lane is the transcription, the chorus keeps its sung melody
+    expect(notesOf(out, verse, 'Vocal').map((n) => [n.start, n.ev.note, n.ev.duration, n.ev.fullWord])).toEqual(
+      transcribed.map((n) => [n.start, n.midi, n.duration, n.word]),
+    );
+    expect(notesOf(out, chorus, 'Vocal')).toEqual(notesOf(sung, chorus, 'Vocal'));
+    // the chorus's take stays (and stays fresh); the verse's take is gone
+    expect(out.aiArtifacts.map((a) => a.output.sha256)).toEqual(['a'.repeat(64)]);
+    expect(isTakeFresh(out, out.aiArtifacts[0]!)).toBe(true);
+    // without partial every earlier take is replaced (Sing)
+    expect(applySungVocals(sung, { melody: { [verse]: transcribed }, takes: [] }).aiArtifacts).toEqual([]);
+  });
+
+  it('applySungVocalsOver passes partial on', () => {
+    const verse = sungSections(base).map((s) => s.name).find((n) => n.startsWith('verse'))!;
+    const sung = applySungVocals(base, { melody, takes: [take(chorus, 'Vocal', 'a')] });
+    const verseNotes = notesOf(base, verse, 'Vocal').map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note, word: n.ev.fullWord!, phonemes: ['l', 'aa1'] }));
+    const result = { melody: { [verse]: verseNotes }, takes: [] };
+    const saved = applySungVocals(sung, result, { partial: true });
+    const merged = applySungVocalsOver(sung, result, saved, { partial: true });
+    expect(merged.aiArtifacts.map((a) => a.output.sha256)).toEqual(['a'.repeat(64)]);
+  });
+});
+
+describe('laneWordsOn (pitch-only notes take the lane\'s words, as the generator attaches phrase-bank words)', () => {
+  const verse = sungSections(base).map((s) => s.name).find((n) => n.startsWith('verse'))!;
+  const bars = BARS(base, verse, 'Vocal');
+  const lane = notesOf(base, verse, 'Vocal');
+  const ev = (n: (typeof lane)[number]) => n.ev as unknown as { fullWord: string; vocaloidPhonemes: string[] };
+
+  it('one word per note in order when the counts match', () => {
+    const notes = lane.map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note + 1 }));
+    const out = laneWordsOn(verse, bars, notes);
+    expect(out.map((n) => [n.start, n.duration, n.midi, n.word, n.phonemes])).toEqual(
+      lane.map((n) => [n.start, n.ev.duration, n.ev.note + 1, ev(n).fullWord, ev(n).vocaloidPhonemes]),
+    );
+  });
+
+  it('more notes in a 4-bar line cycle that line\'s words; fewer take its first ones', () => {
+    const firstLine = lane.filter((n) => n.start < 16);
+    const words = firstLine.map((n) => ev(n).fullWord);
+    // the first line sung as twice as many 16ths-long notes from beat 0, the second line as a single note
+    const many = Array.from({ length: words.length + 2 }, (_, i) => ({ start: i * 0.5, duration: 0.25, midi: 60 }));
+    const secondStart = lane.find((n) => n.start >= 16)!.start;
+    const out = laneWordsOn(verse, bars, [...many, { start: secondStart, duration: 1, midi: 62 }]);
+    expect(out.slice(0, many.length).map((n) => n.word)).toEqual([...words, words[0], words[1]]);
+    expect(out.at(-1)!.word).toBe(ev(lane.find((n) => n.start >= 16)!).fullWord);
+  });
+
+  it('a note in a 4-bar line where the lane has no words is an error naming the bars', () => {
+    const empty = { ...bars[0]!, notes: {} };
+    const silentFirstLine = bars.map((b, i) => (i < 4 ? empty : b));
+    expect(() => laneWordsOn(verse, silentFirstLine, [{ start: 0, duration: 1, midi: 60 }])).toThrow(`${verse} bars 1-4`);
+  });
+
+  it('a note outside the section is an error', () => {
+    expect(() => laneWordsOn(verse, bars, [{ start: bars.length * 4, duration: 1, midi: 60 }])).toThrow(/outside the section/);
   });
 });

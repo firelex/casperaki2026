@@ -9,7 +9,8 @@
 // slowed down.
 //
 // Kinds: writeLyrics (src/lyrics/lyricist.ts), sing (src/sing/singTask.ts: steps recorded on the task, cancellable,
-// applied only while the sung sections are as they were sung).
+// applied only while the sung sections are as they were sung), transcribe (src/sing/transcribeTask.ts: a recording of
+// one section back into its Vocal lane; the same steps, cancel and apply check, for that section only).
 
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -22,8 +23,9 @@ import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
 import { writeLyrics } from '../lyrics/lyricist.js';
 import { defaultTitle } from '../routes/songs.js';
-import { planSinging, SingError } from '../sing/plan.js';
-import { checkUnchanged, isPlainFileName, runSing, SING_STAGES, SingResultSchema, SongChangedError } from '../sing/singTask.js';
+import { planSinging, SingError, songOctave } from '../sing/plan.js';
+import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
+import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
 
@@ -53,6 +55,26 @@ export interface BackgroundTasksDeps {
   /** Sing: the vocals service, the task files folder, the takes folder, ffmpeg and the poll interval; without it,
    *  sing tasks cannot start. */
   readonly sing?: SingDeps;
+  /** Transcribe melody: the task files folder, the vocals service and the hum service (each needed for some
+   *  recordings), ffmpeg and the poll interval. */
+  readonly transcribe?: TranscribeDeps;
+}
+
+export interface TranscribeDeps {
+  /** BRAIN_TASK_FILES_DIR (required to transcribe: the recording is kept there). */
+  readonly filesDir: string | undefined;
+  readonly client: VocalsClient | undefined;
+  /** HUM_SERVICE_URL. */
+  readonly humServiceUrl: string | undefined;
+  readonly ffmpegBin: string;
+  readonly pollMs: number;
+}
+
+/** A transcribe task's start: the section, the recording and whether music plays behind the voice. */
+export interface TranscribeStart {
+  readonly segment: string;
+  readonly recording: Buffer;
+  readonly hasBacking: boolean;
 }
 
 export interface SingDeps {
@@ -75,19 +97,26 @@ export class BackgroundTasks {
 
   constructor(private readonly deps: BackgroundTasksDeps) {}
 
-  /** Starts a task on the owner's project `songId` from the posted working song. */
-  start(ownerId: string, songId: string, kind: TaskKind, song: Song): TaskRow {
+  /** Starts a task on the owner's project `songId` from the posted working song (transcribe: with its recording). */
+  start(ownerId: string, songId: string, kind: TaskKind, song: Song, transcribe?: TranscribeStart): TaskRow {
     const { store } = this.deps;
-    this.checkCanStart(ownerId, songId, kind, song);
+    if ((kind === 'transcribe') !== (transcribe !== undefined)) throw new Error(`start: a ${kind} task ${transcribe ? 'takes no' : 'needs a'} recording`);
+    const options: TranscribeOptions | undefined = transcribe ? { segment: transcribe.segment, recording: 'upload', hasBacking: transcribe.hasBacking } : undefined;
+    this.checkCanStart(ownerId, songId, kind, song, options);
     const id = randomUUID();
-    store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock() });
+    if (transcribe) {
+      // checkCanStart made sure the folder is set
+      const name = keepRecording(join(resolve(this.deps.transcribe!.filesDir!), id), transcribe.recording);
+      if (name !== options!.recording) throw new Error(`start: the recording was kept as ${name}, not ${options!.recording}`);
+    }
+    store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), ...(options ? { options } : {}) });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
     this.enqueue(ownerId, id, kind);
     return store.getTask(ownerId, id)!;
   }
 
   /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
-  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song): void {
+  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, options?: TranscribeOptions): void {
     const { store } = this.deps;
     if (!store.getProject(ownerId, songId)) throw new TaskError(404, 'not_found', 'There is no such song.');
     if (kind === 'writeLyrics') {
@@ -108,6 +137,30 @@ export class BackgroundTasks {
         throw err;
       }
     }
+    if (kind === 'transcribe') {
+      if (!options) throw new Error('checkCanStart: a transcribe task without its options');
+      if (this.isSinging(ownerId, songId)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_transcribing', 'A recording is already being transcribed for this song.');
+      const t = this.deps.transcribe;
+      if (!t?.filesDir) throw new TaskError(503, 'no_task_files', 'Transcribe melody is not set up: the brain needs BRAIN_TASK_FILES_DIR.');
+      if (!vocalMelodyShown(song)) throw new TaskError(422, 'no_melody', 'Write a melody first.');
+      if (!sungSections(song).some((s) => s.name === options.segment)) {
+        throw new TaskError(400, 'unknown_section', `The song has no sung section "${options.segment}".`);
+      }
+      const needs = transcribeNeeds(song, options);
+      if (needs.vocals && !t.client) {
+        throw new TaskError(503, 'no_vocals_service', 'Transcribing this recording needs the vocals service: the brain needs VOCALS_SERVICE_URL.');
+      }
+      if (needs.hum && !t.humServiceUrl) {
+        throw new TaskError(503, 'no_hum_service', 'Transcribing a section without written lyrics needs the hum service: the brain needs HUM_SERVICE_URL.');
+      }
+      try {
+        songOctave(song);
+      } catch (err) {
+        if (err instanceof SingError) throw new TaskError(422, 'cannot_transcribe', err.message);
+        throw err;
+      }
+    }
   }
 
   /** Starts a failed task again, from the same song (with the same checks as a start). */
@@ -116,7 +169,7 @@ export class BackgroundTasks {
     const task = store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
-    this.checkCanStart(ownerId, task.songId, task.kind, parseSong(JSON.parse(task.input)));
+    this.checkCanStart(ownerId, task.songId, task.kind, parseSong(JSON.parse(task.input)), task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined);
     store.setTaskSteps(id, []);
     store.setTaskJobs(id, null);
     store.setTaskState(id, { state: 'running', result: null, message: null, finishedAt: null, startedAt: this.deps.clock() });
@@ -179,12 +232,13 @@ export class BackgroundTasks {
 
   /** The path of a file a step of the owner's task made (a TaskError when there is none). */
   stepFile(ownerId: string, id: string, stage: string, name: string): string {
-    if (!(SING_STAGES as readonly string[]).includes(stage)) throw new TaskError(400, 'bad_stage', `"${stage}" is not a stage (${SING_STAGES.join(', ')}).`);
+    if (!(TASK_FILE_STAGES as readonly string[]).includes(stage)) throw new TaskError(400, 'bad_stage', `"${stage}" is not a stage (${TASK_FILE_STAGES.join(', ')}).`);
     if (!isPlainFileName(name)) throw new TaskError(400, 'bad_name', `"${name}" is not a file name.`);
     const task = this.deps.store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
-    if (!this.deps.sing) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
-    const path = join(resolve(this.deps.sing.filesDir), id, stage, name);
+    const filesDir = task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : this.deps.sing?.filesDir;
+    if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
+    const path = join(resolve(filesDir), id, stage, name);
     if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
     return path;
   }
@@ -275,6 +329,31 @@ export class BackgroundTasks {
         now: clock,
       });
     }
+    if (task.kind === 'transcribe') {
+      const t = this.deps.transcribe;
+      if (!t?.filesDir) throw new Error('the brain is not set up to transcribe (BRAIN_TASK_FILES_DIR)');
+      const { store, events, clock } = this.deps;
+      return await runTranscribe({
+        taskId: task.id,
+        input: parseSong(JSON.parse(task.input)),
+        options: TranscribeOptionsSchema.parse(task.options),
+        client: t.client,
+        humServiceUrl: t.humServiceUrl,
+        filesDir: join(resolve(t.filesDir), task.id),
+        ffmpegBin: t.ffmpegBin,
+        pollMs: t.pollMs,
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
+        },
+        now: clock,
+      });
+    }
     throw new Error(`unknown task kind ${String(task.kind)}`);
   }
 }
@@ -286,6 +365,18 @@ function resultInto(task: TaskRow, song: Song): Song {
     const result = SingResultSchema.parse(task.result);
     checkUnchanged(parseSong(JSON.parse(task.input)), song, result);
     return applySungVocals(song, result);
+  }
+  if (task.kind === 'transcribe') {
+    const result = SingResultSchema.parse(task.result);
+    const { segment } = TranscribeOptionsSchema.parse(task.options);
+    if (Object.keys(result.melody).join() !== segment || result.takes.length > 0) throw new Error(`a transcribe result must hold ${segment} only and no takes`);
+    try {
+      checkUnchanged(parseSong(JSON.parse(task.input)), song, result);
+    } catch (err) {
+      if (err instanceof SongChangedError) throw new SongChangedError(err.detail, TRANSCRIBE_CHANGED);
+      throw err;
+    }
+    return applySungVocals(song, result, { partial: true });
   }
   throw new Error(`unknown task kind ${String(task.kind)}`);
 }

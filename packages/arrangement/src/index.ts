@@ -387,7 +387,7 @@ export {
 } from './vocals/written-lyrics.js';
 export { lyricLines, lyricSlots, rhymeScheme, type LyricLine, type LyricSlot } from './vocals/lyric-lines.js';
 export { MELODY_VARIANTS_PARAM, melodyVariantsOf } from './vocals/melody-variants.js';
-export { SUNG_MELODY_PARAM, SungMelodySchema, SungNoteSchema, sungMelodyOf, type SungMelody, type SungNote } from './vocals/sung-melody.js';
-export { applySungVocals, applySungVocalsOver, applyWrittenLyrics, lyricsTargets, newMelody, paramsWithLyrics, sungSections, vocalMelodyShown, writeMelody, type NewMelody, type SungSection, type SungTake } from './edits/vocal-edits.js';
+export { laneWordsOn, SUNG_MELODY_PARAM, SungMelodySchema, SungNoteSchema, sungMelodyOf, type SungMelody, type SungNote } from './vocals/sung-melody.js';
+export { applySungVocals, applySungVocalsOver, applyWrittenLyrics, type ApplySungOptions, lyricsTargets, newMelody, paramsWithLyrics, sungSections, vocalMelodyShown, writeMelody, type NewMelody, type SungSection, type SungTake } from './edits/vocal-edits.js';
 export { VOCAL_MELODY_PARAM } from './vocals/vocal-melody.js';
 export { HOLD_BEATS } from './vocals/written-lyrics.js';

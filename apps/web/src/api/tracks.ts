@@ -33,7 +33,14 @@ export type TrackEdit =
   /** Written lyrics (section → lines) on the vocal tracks: a finished Write lyrics task merged into unsaved edits. */
   | { readonly kind: 'applyLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> }
   /** A finished Sing task's result (the apply response's `result`) put into the working copy. */
-  | { readonly kind: 'applySung'; readonly result: unknown; /** The saved version: its take fingerprints are kept. */ readonly sungOver: Song };
+  | {
+      readonly kind: 'applySung';
+      readonly result: unknown;
+      /** The saved version: its take fingerprints are kept. */
+      readonly sungOver: Song;
+      /** The result covers only its melody's sections (Transcribe melody): other sections keep their takes. */
+      readonly partial?: boolean;
+    };
 
 export type TransitionPlacement = 'beginningOfSegment' | 'midSegment' | 'endOfSegment';
 
