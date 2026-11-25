@@ -15,12 +15,13 @@ import { join } from 'node:path';
 
 import { z } from 'zod';
 
-import { SungMelodySchema, type SungMelody, type SungTake } from '@casperaki/arrangement';
-import { SUNG_TAKE_KINDS, vocalTakeFingerprint, type Song } from '@casperaki/song-schema';
+import { applySungVocals, SungMelodySchema, type SungMelody, type SungTake } from '@casperaki/arrangement';
+import { canonicalStringifySong, SUNG_TAKE_KINDS, vocalTakeFingerprint, type Song } from '@casperaki/song-schema';
 
 import { integratedLoudnessOf } from '../audio/loudness.js';
 import type { TaskJobs, TaskStep } from '../store.js';
 import { planSinging, type SingPlan } from './plan.js';
+import type { VocalLevel } from './vocalLevel.js';
 import type { ServiceStep, VocalsClient } from './vocalsClient.js';
 
 /** The message a Sing task fails with when a sung section changed before its result went in. */
@@ -65,8 +66,12 @@ const SungTakeSchema = z
   })
   .strict();
 
-export const SingResultSchema = z.object({ melody: SungMelodySchema, takes: z.array(SungTakeSchema) }).strict();
-export type SingResult = { melody: SungMelody; takes: SungTake[] };
+/** The vocal level found for the sung song (src/sing/vocalLevel.ts): applied to the song's mix when the result goes in. */
+export const VocalLevelSchema = z.object({ vocalsLufs: z.number(), backingLufs: z.number(), faderDb: z.number() }).strict();
+export const SingResultSchema = z
+  .object({ melody: SungMelodySchema, takes: z.array(SungTakeSchema), vocalLevel: VocalLevelSchema.optional() })
+  .strict();
+export type SingResult = { melody: SungMelody; takes: SungTake[]; vocalLevel?: VocalLevel };
 
 /** The sing stage's sing.json. */
 const SingJsonSchema = z.object({
@@ -99,12 +104,15 @@ export interface SingContext {
   /** Records the steps on the task (and tells pages); does nothing once the task is no longer running. */
   readonly setSteps: (steps: TaskStep[]) => void;
   readonly now: () => string;
+  /** Renders the sung song (vocals alone and in full) and works out its vocal level (src/sing/vocalLevel.ts). */
+  readonly levelVocals: (song: Song) => Promise<VocalLevel>;
 }
 
-type BrainStepId = 'plan' | 'store-takes';
+type BrainStepId = 'plan' | 'store-takes' | 'level';
 const BRAIN_LABELS: Record<BrainStepId, string> = {
   plan: 'Plan who sings what',
   'store-takes': 'Store the takes',
+  level: 'Match the vocal level to the backing',
 };
 
 /** The task's steps: the brain's two around the sing stage's, in the order they run. */
@@ -112,6 +120,7 @@ class StepLog {
   private readonly brain: Record<BrainStepId, TaskStep> = {
     plan: { id: 'plan', label: BRAIN_LABELS.plan, state: 'waiting' },
     'store-takes': { id: 'store-takes', label: BRAIN_LABELS['store-takes'], state: 'waiting' },
+    level: { id: 'level', label: BRAIN_LABELS.level, state: 'waiting' },
   };
   private sing: TaskStep[] = [];
   private last = '';
@@ -119,7 +128,7 @@ class StepLog {
   constructor(private readonly ctx: SingContext) {}
 
   private publish(): void {
-    const steps = [this.brain.plan, ...this.sing, this.brain['store-takes']];
+    const steps = [this.brain.plan, ...this.sing, this.brain['store-takes'], this.brain.level];
     const key = JSON.stringify(steps);
     if (key === this.last) return;
     this.last = key;
@@ -267,7 +276,17 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
     const value = await storeTakes(ctx, plan, sung.takes);
     return { value, text: `${value.length} takes stored`, numbers: { takes: value.length } };
   });
-  return { melody: melodyOf(plan), takes };
+  const melody = melodyOf(plan);
+  const vocalLevel = await log.run('level', async () => {
+    const value = await ctx.levelVocals(applySungVocals(input, { melody, takes }));
+    const d = value.vocalsLufs - value.backingLufs;
+    return {
+      value,
+      text: `vocals ${d >= 0 ? '+' : ''}${d.toFixed(1)} dB over the backing; the vocal fader ${value.faderDb >= 0 ? '+' : ''}${value.faderDb.toFixed(1)} dB for this song`,
+      numbers: { vocalsLufs: value.vocalsLufs, backingLufs: value.backingLufs, faderDb: value.faderDb },
+    };
+  });
+  return { melody, takes, vocalLevel };
 }
 
 /** The sung melody recorded on apply: every sung section's Vocal lane notes, as written. */

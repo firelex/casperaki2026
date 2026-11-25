@@ -20,6 +20,7 @@ import { humNotesOnGrid, laneOctaveShift } from '../src/sing/transcribeTask.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { fakeVocalLevel } from './fakeVocalLevel.js';
 import { startFakeVocalsService, toneWav, type FakeVocalsService } from './fakeVocalsService.js';
 
 interface Harness { url: string; store: SongsStore; tasks: BackgroundTasks; stop: () => Promise<void> }
@@ -76,7 +77,7 @@ async function boot(store: SongsStore): Promise<Harness> {
     BRAIN_TASK_FILES_DIR: join(dir, 'files'),
     BRAIN_VOCAL_TAKES_DIR: join(dir, 'takes'),
   } as NodeJS.ProcessEnv;
-  const app = createApp(loadConfig(env), { store, lyricModel: fakeLyricModel(), singPollMs: 5 });
+  const app = createApp(loadConfig(env), { store, lyricModel: fakeLyricModel(), singPollMs: 5, vocalLevel: fakeVocalLevel() });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });

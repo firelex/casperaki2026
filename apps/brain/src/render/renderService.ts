@@ -186,7 +186,7 @@ export class RenderService {
   /** Renders a song's mix, unmastered, into `dir` (its own folder, e.g. a background task's), in turn with the song
    *  renders, without touching any song's render: the WAV's path. `mixConfig`: the song's Pro-mode mix, or undefined
    *  for the standard one. Rejects with the failing step's log tail. */
-  renderMix(dir: string, canonical: string, mixConfig?: string): Promise<string> {
+  renderMix(dir: string, canonical: string, mixConfig?: string, solo?: 'vocals'): Promise<string> {
     rmSync(dir, { recursive: true, force: true });
     mkdirSync(dir, { recursive: true });
     writeFileSync(join(dir, 'song-in.json'), canonical);
@@ -194,14 +194,15 @@ export class RenderService {
     const wav = join(dir, 'out-unmastered.wav');
     return new Promise((resolvePromise, reject) => {
       this.queue.push({
-        oneOff: () => this.lowerAndRender(dir, wav).then(() => resolvePromise(wav), reject),
+        oneOff: () => this.lowerAndRender(dir, wav, undefined, solo).then(() => resolvePromise(wav), reject),
       });
       void this.drain();
     });
   }
 
-  /** Lowers `dir`/song-in.json and renders it (with `dir`/mix-config.json when there is one) to `wav`, unmastered. */
-  private async lowerAndRender(dir: string, wav: string, onStep?: (step: 'lower' | 'render') => void): Promise<void> {
+  /** Lowers `dir`/song-in.json and renders it (with `dir`/mix-config.json when there is one) to `wav`, unmastered;
+   *  `solo`: only that group bus (CASPERAKI_SOLO, e.g. "vocals": the vocals with their own effects, nothing else). */
+  private async lowerAndRender(dir: string, wav: string, onStep?: (step: 'lower' | 'render') => void, solo?: 'vocals'): Promise<void> {
     const c = this.config;
     const env = { ...process.env, CASPERAKI_SAMPLE_LIBRARY_ROOT: c.sampleLibraryRoot };
     onStep?.('lower');
@@ -225,6 +226,7 @@ export class RenderService {
         ...env,
         CASPERAKI_BITS: '24',
         ...(c.mix ? { CASPERAKI_MIX: '1' } : {}),
+        ...(solo ? { CASPERAKI_SOLO: solo } : {}),
         // The song's own mix (Pro-mode changes), else the renderer's standard config.
         ...(existsSync(join(dir, 'mix-config.json')) ? { CASPERAKI_MIX_CONFIG: join(dir, 'mix-config.json') } : {}),
       },

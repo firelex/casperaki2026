@@ -17,7 +17,7 @@ import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { AceLayerResultSchema, applyAceLayer, applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
-import { canonicalStringifySong, parseSong, type Song } from '@casperaki/song-schema';
+import { canonicalStringifySong, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
 import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../ace/aceLayerTask.js';
 import type { EventHub } from '../events.js';
@@ -26,6 +26,7 @@ import { writeLyrics } from '../lyrics/lyricist.js';
 import { defaultTitle } from '../routes/songs.js';
 import { checkSectionsGenerated, planSinging, SingError } from '../sing/plan.js';
 import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SONG_CHANGED, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
+import type { VocalLevel } from '../sing/vocalLevel.js';
 import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
@@ -108,6 +109,10 @@ export interface SingDeps {
   readonly ffmpegBin: string;
   /** How often a running service job is polled (ms). */
   readonly pollMs: number;
+  /** The sung song's vocal level (renders it twice: src/sing/vocalLevel.ts), for the owner's project. */
+  readonly levelVocals: (ownerId: string, songId: string, song: Song, taskId: string) => Promise<VocalLevel>;
+  /** The song's mix overrides with its vocals fader at `faderDb` (relative to the standard mix). */
+  readonly withVocalFader: (overrides: MixOverrides | null, faderDb: number) => MixOverrides;
 }
 
 export class BackgroundTasks {
@@ -264,6 +269,15 @@ export class BackgroundTasks {
     const at = clock();
     store.put({ id: newId, song, canonical, hash: songHash, createdAt: at });
     store.moveProject({ ownerId, fromSongId: task.songId, toSongId: newId, updatedAt: at });
+    // A sung song's vocal level follows its backing: its vocals fader goes into the song's own mix.
+    if (task.kind === 'sing') {
+      const level = SingResultSchema.parse(task.result).vocalLevel;
+      if (level) {
+        if (!this.deps.sing) throw new Error('applying a sing result: the brain is not set up for Sing');
+        const project = store.getProject(ownerId, newId)!;
+        store.setProjectMix({ ownerId, songId: newId, mixOverrides: this.deps.sing.withVocalFader(project.mixOverrides, level.faderDb), updatedAt: at });
+      }
+    }
     store.setTaskState(id, { state: 'done', result: task.result, message: null, finishedAt: at });
     if (newId !== task.songId) this.deps.onSongReplaced?.(task.songId);
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: newId, state: 'done' });
@@ -387,6 +401,7 @@ export class BackgroundTasks {
           events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
         },
         now: clock,
+        levelVocals: (song) => sing.levelVocals(task.ownerId, task.songId, song, task.id),
       });
     }
     if (task.kind === 'transcribe') {

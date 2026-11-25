@@ -22,6 +22,7 @@ import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
+import { FAKE_LEVEL, fakeVocalLevel } from './fakeVocalLevel.js';
 import { startFakeVocalsService, toneWav, type FakeVocalsService } from './fakeVocalsService.js';
 
 interface Harness { url: string; store: SongsStore; tasks: BackgroundTasks; stop: () => Promise<void> }
@@ -37,7 +38,7 @@ const brains: Harness[] = [];
 
 async function boot(store: SongsStore, pollMs = 5): Promise<Harness> {
   const env = { VOCALS_SERVICE_URL: svc.url, BRAIN_TASK_FILES_DIR: join(dir, 'files'), BRAIN_VOCAL_TAKES_DIR: join(dir, 'takes') } as NodeJS.ProcessEnv;
-  const app = createApp(loadConfig(env), { store, lyricModel: fakeLyricModel(), singPollMs: pollMs });
+  const app = createApp(loadConfig(env), { store, lyricModel: fakeLyricModel(), singPollMs: pollMs, vocalLevel: fakeVocalLevel() });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -134,9 +135,8 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(task).toMatchObject({ kind: 'sing', state: 'ready' });
     const ids = task.steps.map((s) => s.id);
     expect(ids[0]).toBe('plan');
-    expect(ids.at(-1)).toBe('store-takes');
-    expect(ids.at(-2)).toBe('levels');
-    expect(ids.slice(1, -2).every((s) => /^(soulx|harmony|chain):/u.test(s))).toBe(true);
+    expect(ids.slice(-3)).toEqual(['levels', 'store-takes', 'level']);
+    expect(ids.slice(1, -3).every((s) => /^(soulx|harmony|chain):/u.test(s))).toBe(true);
     expect(ids).toContain('soulx:chorus1');
     expect(ids).toContain('harmony:Backing vocals 1:chorus1');
     expect(task.steps.every((s) => s.state === 'done')).toBe(true);
@@ -249,6 +249,10 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(takes.filter((t) => t.attachedTo.scope === 'segment' && t.attachedTo.instrument === 'Vocal').map(at).sort()).toEqual(sung.map((s) => `${s}/Vocal`).sort());
     expect(takes.some((t) => at(t) === 'chorus1/Backing vocals 1')).toBe(true);
     expect(takes.some((t) => at(t).endsWith('/Ad-libs'))).toBe(false);
+    // The vocal level follows the backing: the song's own mix gets its vocals fader (the fake level: +1 dB short).
+    const project = h.store.getProject(DEV_OWNER_ID, applied.body.songId as string)!;
+    expect(project.mixOverrides?.buses['vocals']?.['4']?.[0]).toBeCloseTo(0.5 * 10 ** (FAKE_LEVEL.faderDb / 40), 6);
+    expect(FAKE_LEVEL.faderDb).toBeGreaterThan(0);
     // The melody stays exactly as written: the sung melody recorded is the lane's notes, and the vocal lanes of the
     // sung sections (lead and backings, which were sung as they are) come out of the apply unchanged.
     const melody = generatorParams(saved).params?.['sungMelody'] as Record<string, { midi: number }[]>;

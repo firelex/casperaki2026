@@ -18,7 +18,8 @@ import { createCatalogRouter } from './routes/catalog.js';
 import { createRendersRouter } from './routes/renders.js';
 import { createSongsRouter, hashCanonical, ownerOf } from './routes/songs.js';
 import { createTasksRouter } from './routes/tasks.js';
-import { BackgroundTasks, type AceDeps } from './tasks/tasks.js';
+import { BackgroundTasks, type AceDeps, type SingDeps } from './tasks/tasks.js';
+import { levelVocals, withVocalFader } from './sing/vocalLevel.js';
 import { applyMixOverrides, canonicalStringifySong } from '@casperaki/song-schema';
 import { VocalsClient } from './sing/vocalsClient.js';
 import { EventHub } from './events.js';
@@ -79,6 +80,8 @@ export interface CreateAppDeps {
   readonly imageService?: ImageService;
   /** Tests: how often a running vocals-service job is polled (ms; production 2000). */
   readonly singPollMs?: number;
+  /** Sing's vocal level (default: rendered with the render service and measured, src/sing/vocalLevel.ts). */
+  readonly vocalLevel?: Pick<SingDeps, 'levelVocals' | 'withVocalFader'>;
   /** The language model artwork briefs are written with (tests inject a fake). */
   readonly chatModel?: ChatModel;
   /** The language model lyrics are written with (tests inject a fake; production: the chat model). */
@@ -278,8 +281,36 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const singMissing = Object.entries(singSettings).filter(([, v]) => v === undefined).map(([k]) => k);
   if (config.vocalsServiceUrl && singMissing.length > 0) throw new Error(`VOCALS_SERVICE_URL is set, so Sing also needs ${singMissing.join(' and ')}.`);
   if (!config.vocalsServiceUrl) console.warn('[brain] VOCALS_SERVICE_URL not set — Sing answers 503.');
+  // Sing sets each song's vocal level from its backing (src/sing/vocalLevel.ts): it renders the sung song, so it needs
+  // per-song rendering and the mix config (tests inject their own `vocalLevel`).
+  let vocalLevel: CreateAppDeps['vocalLevel'] = deps.vocalLevel;
+  if (config.vocalsServiceUrl && !vocalLevel) {
+    if (!renders || !playback) throw new Error('VOCALS_SERVICE_URL is set, so Sing also needs per-song rendering and the mix config (CASPERAKI_SAMPLE_LIBRARY_ROOT, CASPERAKI_MIX_CONFIG): it matches the vocal level to each song\'s backing.');
+    const levelRenders = renders;
+    const levelPlayback = playback;
+    const levelFilesDir = config.taskFilesDir!;
+    vocalLevel = {
+      levelVocals: (ownerId, songId, song, taskId) =>
+        levelVocals({
+          dir: join(resolve(levelFilesDir), taskId, 'level'),
+          canonical: canonicalStringifySong(song, 2),
+          baseConfig: levelPlayback.mixConfig,
+          overrides: store.getProject(ownerId, songId)?.mixOverrides ?? null,
+          ffmpegBin: config.ffmpegBin,
+          renderMix: (dir, canonical, mixConfig, solo) => levelRenders.renderMix(dir, canonical, mixConfig, solo),
+        }),
+      withVocalFader: (overrides, faderDb) => withVocalFader(overrides, levelPlayback.mixConfig, faderDb),
+    };
+  }
   const sing = config.vocalsServiceUrl
-    ? { client: new VocalsClient(config.vocalsServiceUrl), filesDir: config.taskFilesDir!, takesDir: config.vocalTakesDir!, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS }
+    ? {
+        client: new VocalsClient(config.vocalsServiceUrl),
+        filesDir: config.taskFilesDir!,
+        takesDir: config.vocalTakesDir!,
+        ffmpegBin: config.ffmpegBin,
+        pollMs: deps.singPollMs ?? SING_POLL_MS,
+        ...vocalLevel!,
+      }
     : undefined;
   // Transcribe melody: the recording is kept in BRAIN_TASK_FILES_DIR; the vocals service reads sections with written
   // lyrics (or with music behind the voice), the hum service sections without.
