@@ -1,23 +1,14 @@
 import { createHash } from 'node:crypto';
 import type { Song } from './schemas/song.js';
 import type { AIArtifact } from './schemas/ai-artifact.js';
-import { stableStringify } from './canonical/stringify.js';
+import { vocalTakeCanonical } from './vocal-take-input.js';
 
-export const SUNG_TAKE_KINDS = ['yue2-vocal', 'soulx-vocal'] as const;
+export { SUNG_TAKE_KINDS } from './vocal-take-input.js';
 
 // What a sung take was sung over: tempo, the section's bars with chords, and
 // the track's lane in that section. A change to any of these makes the take stale.
 export function vocalTakeFingerprint(song: Song, segment: string, track: string): string {
-  const section = song.songStructure.find((s) => s.name === segment);
-  if (!section) throw new Error(`vocalTakeFingerprint: song has no segment "${segment}" in songStructure`);
-  const payload = song.arrangement[segment];
-  if (!payload) throw new Error(`vocalTakeFingerprint: song has no arrangement for segment "${segment}"`);
-  const canonical = stableStringify({
-    bpm: song.bpm,
-    bars: section.bars,
-    lane: payload.overrides[track] ?? null,
-  });
-  return createHash('sha256').update(canonical, 'utf8').digest('hex');
+  return createHash('sha256').update(vocalTakeCanonical(song, segment, track), 'utf8').digest('hex');
 }
 
 export function isTakeFresh(song: Song, artifact: AIArtifact): boolean {

@@ -60,7 +60,8 @@ export async function applyReadyTask(task: BackgroundTask, c: ApplyContext): Pro
   const applied = await c.apply(task.id);
   if (open) {
     const saved = await c.getSong(applied.songId);
-    const merged = c.editorDirty && c.viewSong ? await c.mergeLyrics(c.viewSong, applied.result) : undefined;
+    // Sung takes are in the saved version itself; only written lyrics are put into unsaved edits.
+    const merged = task.kind === 'writeLyrics' && c.editorDirty && c.viewSong ? await c.mergeLyrics(c.viewSong, applied.result) : undefined;
     c.setActiveSong(saved);
     if (merged) c.applyEdit({ kind: 'replaceSong', song: merged });
     c.cacheSong(saved, task.songId);

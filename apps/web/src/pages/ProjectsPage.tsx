@@ -14,6 +14,7 @@ import { playbackApi } from '../api/playback';
 import { livePlayer } from '../audio/livePlayer';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { AppHeader } from '../layout/AppHeader';
+import { VocalsCredit } from '../layout/VocalsCredit';
 import { renderInFlight, renderLabel, songsApi, songsQueryKeys, type Project } from '../api/songs';
 import type { LiveStatus } from '../audio/livePlayer';
 import { GenerateDialog } from '../editor/GenerateDialog';
@@ -317,6 +318,9 @@ export function ProjectsPage() {
             </ul>
           )}
         </div>
+        <footer className="mt-16">
+          <VocalsCredit />
+        </footer>
       </main>
 
       {selectedIds.length > 0 ? (

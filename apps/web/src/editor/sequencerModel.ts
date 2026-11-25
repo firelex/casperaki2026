@@ -8,6 +8,8 @@
 import type { Song } from '@casperaki/song-schema';
 
 import { LEAD_VOCAL_NAME } from '../types/song';
+import { audioOnlyTracks } from './audioOnlyTracks';
+import { takeKey } from './singing';
 import { sectionColor } from './sectionColor';
 
 export const BEATS_PER_BAR = 4;
@@ -42,6 +44,8 @@ export interface SeqClip {
   readonly startBar: number;
   readonly bars: number;
   readonly notes: readonly SeqNote[];
+  /** A sung take whose section changed since it was sung: drawn greyed ("not sung"). */
+  readonly stale?: boolean;
 }
 
 export interface SeqTrack {
@@ -50,6 +54,8 @@ export interface SeqTrack {
   readonly isDrums: boolean;
   /** Sung parts: the engine does not sing yet, so their notes are read from the song (with the words). */
   readonly isVocal: boolean;
+  /** Only sung audio, no instrument and no notes (ad-libs): its clips are the takes. */
+  readonly audioOnly?: boolean;
   readonly clips: readonly SeqClip[];
   /** Pitch range over all notes (for vertical placement); null when no pitched notes. */
   readonly pitchRange: { readonly low: number; readonly high: number } | null;
@@ -204,7 +210,11 @@ export function trackColor(name: string): string {
   return 'var(--color-c5)';
 }
 
-export function buildSequencerModel(song: Song): SequencerModel {
+/**
+ * `stale`: `takeKey(instrument, section)` of the sung takes that no longer fit their section (editor/singing.ts
+ * `staleTakes`); their clips are marked.
+ */
+export function buildSequencerModel(song: Song, stale: ReadonlySet<string> = new Set()): SequencerModel {
   const sections: SeqSection[] = [];
   let bar = 0;
   for (const seg of song.songStructure) {
@@ -258,14 +268,32 @@ export function buildSequencerModel(song: Song): SequencerModel {
     if (def.name === LEAD_VOCAL_NAME && !clipsByTrack.has(def.name)) clipsByTrack.set(def.name, []);
   }
 
+  // Audio-only tracks (ad-libs): one clip per section a take is attached to.
+  const audioOnly = new Set(audioOnlyTracks(song));
+  for (const name of audioOnly) {
+    const sectionsWithTake = new Set<number>();
+    for (const a of song.aiArtifacts) {
+      if (a.attachedTo.scope !== 'segment' || a.attachedTo.instrument !== name) continue;
+      const si = sections.findIndex((s) => s.name === (a.attachedTo as { segment: string }).segment);
+      if (si < 0) throw new Error(`Take "${a.id}" is attached to "${(a.attachedTo as { segment: string }).segment}", which is not a section of the song`);
+      sectionsWithTake.add(si);
+    }
+    clipsByTrack.set(
+      name,
+      [...sectionsWithTake].sort((x, y) => x - y).map((si) => ({ section: si, startBar: sections[si]!.startBar, bars: sections[si]!.bars, notes: [] })),
+    );
+  }
+
   const tracks: SeqTrack[] = [...clipsByTrack.entries()]
-    .map(([name, clips]) => {
+    .map(([name, rawClips]) => {
+      const clips = rawClips.map((c) => (stale.has(takeKey(name, sections[c.section]!.name)) ? { ...c, stale: true } : c));
       const pitches = clips.flatMap((c) => c.notes.map((n) => n.pitch).filter((p): p is number => p !== null));
       return {
         name,
         color: trackColor(name),
         isDrums: name.toLowerCase().startsWith('drum'),
         isVocal: name.toLowerCase().includes('vocal'),
+        ...(audioOnly.has(name) ? { audioOnly: true } : {}),
         clips,
         pitchRange: pitches.length ? { low: Math.min(...pitches), high: Math.max(...pitches) } : null,
       };

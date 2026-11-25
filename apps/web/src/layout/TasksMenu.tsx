@@ -4,13 +4,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { TASK_LABELS, tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
+import { duration, TaskSteps } from './TaskSteps';
 import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks';
-
-/** "1 min 10 s", "45 s". */
-function duration(sec: number): string {
-  const m = Math.floor(sec / 60);
-  return m > 0 ? `${m} min ${sec % 60} s` : `${sec} s`;
-}
 
 /**
  * The Tasks item of the top bar: the user's background tasks across their songs (running, ready to go in when playback
@@ -34,7 +29,7 @@ export function TasksMenu() {
         </span>
         Tasks{pending > 0 ? ` (${pending})` : ''}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={8} className="z-50 w-[340px] rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl">
+      <DropdownMenuContent align="end" sideOffset={8} className="z-50 max-h-[80vh] w-[420px] overflow-y-auto rounded-[10px] border border-line bg-panel p-1 text-white shadow-2xl">
         <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">Background tasks</DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
         {tasks.map((t) => (
@@ -51,6 +46,15 @@ function TaskItem({ task, ticking, onOpen }: { task: BackgroundTask; ticking: bo
   const elapsed = useElapsed(task.startedAt, ticking && task.state === 'running');
   const [retryError, setRetryError] = useState<string | undefined>(undefined);
   const notApplied = failed[task.id];
+  const cancel = async () => {
+    setRetryError(undefined);
+    try {
+      await tasksApi.cancel(task.id);
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setRetryError(`Could not cancel it: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const retry = async () => {
     setRetryError(undefined);
     try {
@@ -62,7 +66,7 @@ function TaskItem({ task, ticking, onOpen }: { task: BackgroundTask; ticking: bo
   };
   const status =
     task.state === 'running'
-      ? `● writing · ${duration(elapsed)}`
+      ? `● ${task.kind === 'sing' ? 'singing' : 'writing'} · ${duration(elapsed)}`
       : task.state === 'ready'
         ? notApplied
           ? `✕ ${notApplied}`
@@ -95,6 +99,11 @@ function TaskItem({ task, ticking, onOpen }: { task: BackgroundTask; ticking: bo
           </button>
         ) : null}
       </span>
+      <TaskSteps
+        task={task}
+        now={Date.now()}
+        onCancel={() => void cancel()}
+      />
     </DropdownMenuItem>
   );
 }

@@ -27,6 +27,7 @@ import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
 import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { useTasks } from '../state/tasks';
+import { lyricsWritten, staleTakes, sungTakes, vocalMenu, type VocalMenu } from './singing';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -72,7 +73,13 @@ const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none da
  */
 export function TimelineView() {
   const { viewSong, activeSong, activeSegment, setActiveSegment, applyEdit, editor } = useSession();
-  const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong) : undefined), [viewSong]);
+  // Sung takes whose section changed since they were sung are drawn greyed.
+  const stale = useQuery({
+    queryKey: ['stale-takes', viewSong ? fnv1a(JSON.stringify(viewSong)) : undefined],
+    queryFn: () => staleTakes(viewSong!),
+    enabled: Boolean(viewSong && sungTakes(viewSong).length > 0),
+  });
+  const model = useMemo(() => (viewSong ? buildSequencerModel(viewSong, stale.data) : undefined), [viewSong, stale.data]);
   const defs = useMemo(() => indexInstrumentDefinitions(viewSong), [viewSong]);
   const { currentSeconds, playing, isThisSong, seek, liveKey, fetchPayload, editorDirty, live, playPause } = useLiveTransport();
   const edits = useTrackEdits(liveKey);
@@ -513,7 +520,7 @@ export function TimelineView() {
 
   const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
   /** A new melody for every section of the clicked section's type ("chorus2" → all choruses). */
-  const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody for all ${plural(section)}`);
+  const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody for all ${plural(section)}`, activeSong?.id);
   // The Vocal track's steps (docs/superpowers/specs/2026-11-25-vocal-tasks-design.md): Write melody is an edit; Write
   // lyrics a background task on the song (the Tasks menu shows it; its words go in when playback stops).
   const queryClient = useQueryClient();
@@ -521,17 +528,27 @@ export function TimelineView() {
   const [taskError, setTaskError] = useState<string | undefined>(undefined);
   const melodyShown = viewSong ? !vocalMelodyHidden(viewSong) : false;
   const lyricsTask = tasks?.find((t) => t.kind === 'writeLyrics' && t.songId === activeSong?.id && (t.state === 'running' || t.state === 'ready'));
-  const writeMelody = () => void edits.run({ kind: 'writeMelody' }, 'Writing the melody');
-  const writeLyrics = async () => {
+  const writeMelody = () => void edits.run({ kind: 'writeMelody' }, 'Writing the melody', activeSong?.id);
+  const singTask = tasks?.find((t) => t.kind === 'sing' && t.songId === activeSong?.id && t.state === 'running');
+  const menu = vocalMenu({
+    melodyShown,
+    lyricsWritten: viewSong ? lyricsWritten(viewSong) : false,
+    hasSungTakes: viewSong ? sungTakes(viewSong).length > 0 : false,
+    singTask,
+    lyricsTask,
+  });
+  const startTask = async (kind: 'writeLyrics' | 'sing', label: string) => {
     if (!activeSong || !viewSong) throw new Error('No song is open.');
     setTaskError(undefined);
     try {
-      await tasksApi.start('writeLyrics', activeSong.id, viewSong);
+      await tasksApi.start(kind, activeSong.id, viewSong);
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
-      setTaskError(`Write lyrics failed: ${err instanceof Error ? err.message : String(err)}`);
+      setTaskError(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
+  const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
+  const sing = () => startTask('sing', 'Sing');
 
   return (
     <div ref={rootRef} className="flex h-full flex-col text-white">
@@ -552,9 +569,9 @@ export function TimelineView() {
           </span>
         ) : editor?.lastError ? (
           <span className="text-err" role="alert">{editor.lastError}</span>
-        ) : taskError ? (
+        ) : taskError || stale.error ? (
           <span className="flex items-center gap-2 text-err" role="alert">
-            {taskError}
+            {taskError ?? `Could not check the sung takes: ${stale.error instanceof Error ? stale.error.message : String(stale.error)}`}
             <button type="button" onClick={() => setTaskError(undefined)} className="text-white/60 hover:text-white" aria-label="Dismiss">
               ✕
             </button>
@@ -708,7 +725,7 @@ export function TimelineView() {
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
               onNewMelody={t.name === LEAD_VOCAL_NAME ? (s) => newMelody(model.sections[s]!.name) : undefined}
-              vocal={t.name === LEAD_VOCAL_NAME ? { melodyShown, lyricsTask, onWriteMelody: writeMelody, onWriteLyrics: () => void writeLyrics() } : undefined}
+              vocal={t.name === LEAD_VOCAL_NAME ? { menu, onWriteMelody: writeMelody, onWriteLyrics: () => void writeLyrics(), onSing: () => void sing() } : undefined}
               onRemove={() => edits.removeTrack(t.name)}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
@@ -783,6 +800,16 @@ export function TimelineView() {
                     rowH={rowH}
                     automation={automationByTrack.get(t.name)}
                   />
+                  {t.clips
+                    .filter((c) => c.stale)
+                    .map((c) => (
+                      <div
+                        key={c.section}
+                        className="absolute top-0 bottom-0"
+                        style={{ left: c.startBar * px, width: c.bars * px }}
+                        title="not sung (changed since it was sung)"
+                      />
+                    ))}
                 </div>
                 </div>
                 {/* Divider between tracks: a dark channel with a hairline highlight. */}
@@ -1097,20 +1124,14 @@ function TrackMenu({
         ) : null}
         {vocal ? (
           <>
-            <ContextMenuItem className={ITEM} disabled={busy || vocal.melodyShown} onSelect={vocal.onWriteMelody}>
-              Write melody {vocal.melodyShown ? <span className="ml-auto pl-6 text-[12px] text-white/40">written</span> : null}
+            <ContextMenuItem className={ITEM} disabled={busy || vocal.menu.writeMelody.disabled} onSelect={vocal.onWriteMelody}>
+              Write melody <MenuHint text={vocal.menu.writeMelody.hint} />
             </ContextMenuItem>
-            <ContextMenuItem className={ITEM} disabled={busy || !vocal.melodyShown || Boolean(vocal.lyricsTask)} onSelect={vocal.onWriteLyrics}>
-              Write lyrics
-              <span className="ml-auto pl-6 text-[12px] text-white/40">
-                {!vocal.melodyShown
-                  ? 'write a melody first'
-                  : vocal.lyricsTask?.state === 'running'
-                    ? 'already writing'
-                    : vocal.lyricsTask?.state === 'ready'
-                      ? 'ready · goes in when you stop'
-                      : 'in the background'}
-              </span>
+            <ContextMenuItem className={ITEM} disabled={busy || vocal.menu.writeLyrics.disabled} onSelect={vocal.onWriteLyrics}>
+              Write lyrics <MenuHint text={vocal.menu.writeLyrics.hint} />
+            </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={busy || vocal.menu.sing.disabled} onSelect={vocal.onSing}>
+              {vocal.menu.sing.label} <MenuHint text={vocal.menu.sing.hint} />
             </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>
@@ -1348,12 +1369,15 @@ function writeNumberPref(key: string, value: number): void {
 
 /** The lead vocal's steps in its menu. */
 interface VocalSteps {
-  /** Whether the vocal tracks show their melody (a new song's start empty). */
-  readonly melodyShown: boolean;
-  /** The song's Write lyrics task while it runs or waits to go in. */
-  readonly lyricsTask: BackgroundTask | undefined;
+  /** What each item offers now, and why not (editor/singing.ts). */
+  readonly menu: VocalMenu;
   onWriteMelody(): void;
   onWriteLyrics(): void;
+  onSing(): void;
+}
+
+function MenuHint({ text }: { text: string }) {
+  return text ? <span className="ml-auto pl-6 text-[12px] text-white/40">{text}</span> : null;
 }
 
 /** Whether the song's vocal melody is hidden (generator param vocalMelody: false, packages/arrangement). */

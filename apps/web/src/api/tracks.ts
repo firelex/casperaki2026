@@ -57,8 +57,9 @@ export const tracksApi = {
   options: (song: Song, signal?: AbortSignal) =>
     defaultBrainClient.post<TrackOptions>('/api/tracks/options', { song }, { signal }),
   /** The brain rewrites one track with the generator and returns the whole song. */
-  edit: (song: Song, op: TrackEdit, signal?: AbortSignal) =>
-    defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op }, { signal }),
+  /** `songId`: the saved project the song belongs to; the brain refuses Write melody / New melody while it is being sung. */
+  edit: (song: Song, op: TrackEdit, signal?: AbortSignal, songId?: string) =>
+    defaultBrainClient.post<{ song: Song; track: string }>('/api/tracks/edit', { song, op, ...(songId !== undefined ? { songId } : {}) }, { signal }),
   /** Switch a transition on or off in sections (the brain writes snare-roll grids). */
   setTransition: (
     song: Song,
