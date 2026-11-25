@@ -23,8 +23,8 @@ import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
 import { writeLyrics } from '../lyrics/lyricist.js';
 import { defaultTitle } from '../routes/songs.js';
-import { planSinging, SingError } from '../sing/plan.js';
-import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
+import { checkSectionsGenerated, planSinging, SingError } from '../sing/plan.js';
+import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SONG_CHANGED, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
 import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
@@ -33,6 +33,12 @@ import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
 export const ALREADY_SINGING = 'Already singing';
 /** The user-facing refusal while a recording is being transcribed for the song (Sing and Transcribe exclude each other). */
 export const ALREADY_TRANSCRIBING = 'Already transcribing';
+/** The user-facing refusal of Sing while the song's lyrics are being written (running or waiting their turn): new
+ *  words would drop the sung melody of their sections. */
+export const ALREADY_WRITING_LYRICS = 'Already writing lyrics';
+/** Why a Sing (or Transcribe) that failed because the song changed is not started again: it would redo the old song. */
+export const RETRY_SONG_CHANGED = 'The song changed since this sing started, so it cannot be started again: Sing again instead.';
+export const RETRY_TRANSCRIBE_CHANGED = 'The song changed since this transcription started, so it cannot be started again: Transcribe melody again instead.';
 
 /** Why a task cannot start or be applied: an HTTP status, a code and a message for the user. */
 export class TaskError extends Error {
@@ -130,6 +136,7 @@ export class BackgroundTasks {
     if (kind === 'sing') {
       if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
       if (store.runningTask(ownerId, songId, 'transcribe')) throw new TaskError(409, 'already_transcribing', ALREADY_TRANSCRIBING);
+      if (store.runningTask(ownerId, songId, 'writeLyrics')) throw new TaskError(409, 'already_writing_lyrics', ALREADY_WRITING_LYRICS);
       if (!this.deps.sing) {
         throw new TaskError(503, 'no_vocals_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
       }
@@ -150,6 +157,12 @@ export class BackgroundTasks {
       if (!sungSections(song).some((s) => s.name === options.segment)) {
         throw new TaskError(400, 'unknown_section', `The song has no sung section "${options.segment}".`);
       }
+      try {
+        checkSectionsGenerated(song, [options.segment]);
+      } catch (err) {
+        if (err instanceof SingError) throw new TaskError(422, 'section_not_generated', err.message);
+        throw err;
+      }
       const needs = transcribeNeeds(song, options);
       if (needs.vocals && !t.client) {
         throw new TaskError(503, 'no_vocals_service', 'Transcribing this recording needs the vocals service: the brain needs VOCALS_SERVICE_URL.');
@@ -166,6 +179,8 @@ export class BackgroundTasks {
     const task = store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
+    if (task.kind === 'sing' && task.message === SONG_CHANGED) throw new TaskError(409, 'song_changed', RETRY_SONG_CHANGED);
+    if (task.kind === 'transcribe' && task.message === TRANSCRIBE_CHANGED) throw new TaskError(409, 'song_changed', RETRY_TRANSCRIBE_CHANGED);
     this.checkCanStart(ownerId, task.songId, task.kind, parseSong(JSON.parse(task.input)), task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined);
     store.setTaskSteps(id, []);
     store.setTaskJobs(id, null);

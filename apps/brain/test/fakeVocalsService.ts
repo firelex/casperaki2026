@@ -107,7 +107,7 @@ function repeatsScript(params: Record<string, unknown>) {
   const backings = params['backings'] as { segment: string; track: string }[];
   const extensions = params['extensions'] as { segment: string }[];
   const adlibs = params['adlibs'] as { segments: string[]; chorus_unit: string } | null;
-  const takes: { segment: string; track: string; kind: string; file: string; durationSeconds: number }[] = [];
+  const takes: { segment: string; track: string; kind: string; file: string; durationSeconds: number; seed?: number }[] = [];
   const sung = [
     ...copies.map((c) => ({ segment: c.segment, track: 'Vocal', tag: c.segment, sing: `soulx:${c.segment}`, svc: `svc:${c.segment}`, chain: `chain:${c.segment}`, take: `take_${c.segment}_vocal.wav` })),
     ...backings.map((b) => {
@@ -134,7 +134,7 @@ function repeatsScript(params: Record<string, unknown>) {
   for (const x of sung) takes.push({ segment: x.segment, track: x.track, kind: 'soulx-vocal', file: x.take, durationSeconds: 0.5 });
   if (adlibs) {
     levelled.push('take_adlibs.wav');
-    for (const seg of adlibs.segments) takes.push({ segment: seg, track: 'Ad-libs', kind: 'yue2-vocal', file: 'take_adlibs.wav', durationSeconds: 0.5 });
+    for (const seg of adlibs.segments) takes.push({ segment: seg, track: 'Ad-libs', kind: 'yue2-vocal', file: 'take_adlibs.wav', durationSeconds: 0.5, seed: 1 });
   }
   script.push({ id: 'levels', label: 'Set the levels', numbers: Object.fromEntries(levelled.map((f) => [`${f}_gain_db`, -6])), files: levelled });
   return { script, result: { takes } };

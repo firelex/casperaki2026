@@ -30,10 +30,20 @@ the system FFmpeg 4-7 libraries).
 
 ## Code and weights (absolute paths, all in `pipeline/paths.py`)
 
-Code (untracked folders in the shared tree `/home/roli79/apps/casperaki`, read-only here):
-- SoulX-Singer repo: `apps/models/services/soulx-singer/repo` (on `sys.path`)
-- BS-RoFormer code: `apps/models/services/bs-roformer` (on `sys.path`)
-- MuLaCover (ChordNet): `apps/models/services/heartmula/MuLaCover` (editable install)
+Code (untracked folders in the shared tree `/home/roli79/apps/casperaki`, read-only here). They exist only on
+datigator, so this is how to make them again: each is a plain `git clone` of its upstream, checked out at the commit
+below, with no local changes (checked 2026-11-25 with `git status`; our fixes live in `pipeline/`, e.g.
+`soulx_compat.py`, never in the clones):
+
+| folder (under `apps/models/services/`) | upstream | commit | used as |
+|---|---|---|---|
+| `soulx-singer/repo` | https://github.com/Soul-AILab/SoulX-Singer.git | `81aeb3ae772c70093c3de74dc23c92d983801ae4` | on `sys.path` (`import soulxsinger`) |
+| `bs-roformer` | https://github.com/ZFTurbo/Music-Source-Separation-Training.git | `1523206d12a521bdb20673726562524cf0f9635b` | on `sys.path` (`models.bs_roformer`, `utils`) |
+| `heartmula/MuLaCover` | https://github.com/HeartMuLa/MuLaCover.git | `78f16a370beb6679c74d2a2b53f754f7b419e8a9` | editable install (`import mulacover`, ChordNet) |
+
+To make one again: `git clone <upstream> <folder> && git -C <folder> checkout <commit>`. (`heartmula/heartlib`,
+https://github.com/HeartMuLa/heartlib.git at `164788308875289016d2f7ab46dba7f77a649cf8`, sits next to MuLaCover but
+this service does not use it.)
 
 Weights (/mnt/d/casperaki-models):
 - `yue2/YuE2-3B` (model and `yue2_infer` wheel), `yue2/YuE2-Vae`
@@ -54,3 +64,26 @@ Weights (/mnt/d/casperaki-models):
     cd apps/models/services/_serving
     python3 harness.py --adapter vocals --port 16514 --models-dir /mnt/d/casperaki-models
     curl localhost:16514/health
+
+## Deploy checklist (datigator)
+
+Deploys are the owner's (`deploy/datigator/deploy.sh`); this is what Sing and Transcribe melody need on top:
+
+1. **The clones above** exist in the shared tree at those commits (`pipeline/paths.py` points there).
+2. **The vocals venv**, built once in the deployed tree before svc-vocals first starts:
+   `apps/models/services/vocals/.venv`, by the harness on first start or by hand as in "Environment" above. Not in
+   git; a fresh checkout has none.
+3. **brain.env** (`~/.config/casperaki/brain.env`, outside the repo) has:
+   - `VOCALS_SERVICE_URL=http://127.0.0.1:16514`
+   - `BRAIN_TASK_FILES_DIR=<a folder for each task's step files>` (Sing and Transcribe melody)
+   - `BRAIN_VOCAL_TAKES_DIR=<a folder for the stored takes, <sha256>.ogg>` (Sing, playback and renders)
+   - `HUM_SERVICE_URL` (Transcribe melody of a section without written lyrics)
+
+   Without the first three the brain refuses Sing ("Sing is not set up: …").
+4. **svc-vocals runs** on port 16514 (see "Run"), and is **restarted after every change under `pipeline/`**: the
+   harness imports the pipeline once at start, so a pull alone changes nothing.
+5. **The packages are built** (`packages/song-schema`, `packages/arrangement`, `packages/engine-adapter`; the brain and
+   the lowering read their `dist/`): `deploy.sh` does this (`pnpm -r --filter "./packages/*" build`); never by hand
+   in the shared tree.
+6. Restart the brain (deploy.sh does) so it reads brain.env.
+

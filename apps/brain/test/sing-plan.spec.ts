@@ -58,6 +58,14 @@ function resize(song: Song, name: string, bars: number): Song {
   return song;
 }
 
+/** Records the song's sections (names and bar counts) as the generator's explicit structure, so the generator makes
+ *  them (as for a song generated with that structure). */
+function generatedAs(song: Song): Song {
+  const g = song.generator as unknown as { params: { params?: Record<string, unknown> } };
+  g.params = { ...g.params, params: { ...(g.params.params ?? {}), structure: song.songStructure.map((s) => ({ name: s.name, bars: s.bars.length })) } };
+  return song;
+}
+
 function dropSection(song: Song, name: string): Song {
   (song as { songStructure: unknown[] }).songStructure = song.songStructure.filter((s) => s.name !== name);
   delete (song.arrangement as Record<string, unknown>)[name];
@@ -120,7 +128,7 @@ describe('planSinging on song a31c5ba0', () => {
 
 describe('planSinging on other song shapes', () => {
   it('a 12-bar verse3 against verse1\'s 8: a copy of 8 bars and a YuE2 unit for bars 9-12 (lead-in bars 7-8)', () => {
-    const song = withLyrics(resize(fresh(), 'verse3', 12));
+    const song = generatedAs(withLyrics(resize(fresh(), 'verse3', 12)));
     const plan = planSinging(song);
     expect(plan.copies.find((c) => c.segment === 'verse3')).toEqual({ segment: 'verse3', from: 'verse1', sungBars: 8 });
     expect(plan.extensions).toEqual([{ segment: 'verse3', unit: 'verse3_ext', fromBar: 8 }]);
@@ -134,7 +142,7 @@ describe('planSinging on other song shapes', () => {
   });
 
   it('a 4-bar verse3: the copy is cut to 4 bars', () => {
-    const plan = planSinging(withLyrics(resize(fresh(), 'verse3', 4)));
+    const plan = planSinging(generatedAs(withLyrics(resize(fresh(), 'verse3', 4))));
     expect(plan.copies.find((c) => c.segment === 'verse3')).toEqual({ segment: 'verse3', from: 'verse1', sungBars: 4 });
     expect(plan.extensions).toEqual([]);
   });
@@ -173,6 +181,29 @@ describe('planSinging on other song shapes', () => {
     expect(() => planSinging(song)).toThrow(new SingError('Write lyrics first'));
     params.lyrics['verse3'] = [];
     expect(() => planSinging(song)).toThrow(new SingError('Write lyrics first'));
+  });
+
+  it('a section resized in the editor: an error naming it, before "Write lyrics first"', () => {
+    expect(() => planSinging(resize(fresh(), 'verse3', 12))).toThrow(
+      new SingError('The section verse3 has 12 bars, but 8 as the song was generated (resized in the editor), so it cannot be sung'),
+    );
+  });
+
+  it('a section renamed (or added) in the editor: an error naming it, before "Write lyrics first"', () => {
+    const song = fresh();
+    const seg = song.songStructure.find((s) => s.name === 'verse3')!;
+    (seg as { name: string }).name = 'verse9';
+    (song.arrangement as Record<string, unknown>)['verse9'] = song.arrangement['verse3'];
+    delete (song.arrangement as Record<string, unknown>)['verse3'];
+    expect(() => planSinging(song)).toThrow(
+      new SingError('The section verse9 was added or renamed in the editor, so it cannot be sung: only sections as the song was generated can be'),
+    );
+  });
+
+  it('no sung chorus: "Sing needs a sung chorus" up front', () => {
+    const song = withLyrics(fresh());
+    for (const name of ['chorus1', 'chorus2', 'chorus3', 'chorus4', 'chorus5', 'chorus6']) dropSection(song, name);
+    expect(() => planSinging(song)).toThrow(/^Sing needs a sung chorus/u);
   });
 
   it('a hidden melody: "Write a melody first"', () => {

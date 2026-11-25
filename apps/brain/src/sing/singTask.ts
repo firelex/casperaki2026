@@ -89,7 +89,15 @@ type LeadJson = z.infer<typeof LeadJsonSchema>;
 
 const RepeatsJsonSchema = z.object({
   takes: z.array(
-    z.object({ segment: z.string().min(1), track: z.string().min(1), kind: z.enum(SUNG_TAKE_KINDS), file: z.string().min(1), durationSeconds: z.number() }),
+    z.object({
+      segment: z.string().min(1),
+      track: z.string().min(1),
+      kind: z.enum(SUNG_TAKE_KINDS),
+      file: z.string().min(1),
+      durationSeconds: z.number(),
+      /** The YuE2 seed (the ad-lib takes). */
+      seed: z.number().int().optional(),
+    }),
   ),
 });
 
@@ -502,9 +510,21 @@ export function wavSeconds(buf: Buffer, name: string): number {
   throw new Error(`${name} has no audio data`);
 }
 
-function encodeOgg(ffmpegBin: string, src: string, dest: string): Promise<void> {
+/**
+ * The gain every stored vocal take gets (dB), applied once, here, where every take of the song passes (`storeTakes`):
+ * the service levels the takes against the chorus take near full scale, and the vocal lanes play at unity on the vocals
+ * bus with reverb and delay sends on top, so without it the unmastered render clips where the vocals peak. The takes
+ * keep their levels relative to each other. Measured on the end-to-end song of 2026-11-25 (EDM, 128 bpm): samples at
+ * or above -0.1 dBFS in the unmastered render 173 -> 26, in the vocals alone 12 -> 2; the vocals bus's compressor
+ * (Logical4) makes up most of the lower input, so the rest is for the bus's output level (mix-config), not the takes.
+ */
+export const TAKE_GAIN_DB = -3;
+
+/** A take's WAV encoded as Ogg Vorbis at TAKE_GAIN_DB. */
+export function encodeTake(ffmpegBin: string, src: string, dest: string): Promise<void> {
+  const args = ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-af', `volume=${TAKE_GAIN_DB}dB`, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest];
   return new Promise((resolve, reject) => {
-    execFile(ffmpegBin, ['-y', '-hide_banner', '-loglevel', 'error', '-i', src, '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest], (err, _out, stderr) => {
+    execFile(ffmpegBin, args, (err, _out, stderr) => {
       if (err) reject(new Error(`ffmpeg could not encode ${src}: ${stderr.trim() || err.message}`));
       else resolve();
     });
@@ -516,7 +536,7 @@ async function storeTakes(
   ctx: SingContext,
   plan: SingPlan,
   lead: LeadJson,
-  repeatsTakes: readonly { segment: string; track: string; kind: (typeof SUNG_TAKE_KINDS)[number]; file: string }[],
+  repeatsTakes: readonly { segment: string; track: string; kind: (typeof SUNG_TAKE_KINDS)[number]; file: string; seed?: number }[],
 ): Promise<SungTake[]> {
   const extUnits = new Set(plan.extensions.map((e) => e.unit));
   const wanted: { segment: string; track: string; kind: (typeof SUNG_TAKE_KINDS)[number]; stage: SingStage; file: string; seed?: number }[] = [];
@@ -525,7 +545,9 @@ async function storeTakes(
     wanted.push({ segment: u.id, track: LEAD_TRACK, kind: 'yue2-vocal', stage: 'lead', file: lead.units[u.id]!.take, seed: lead.units[u.id]!.seed });
   }
   for (const r of plan.reuses) wanted.push({ segment: r.segment, track: LEAD_TRACK, kind: 'yue2-vocal', stage: 'lead', file: lead.units[r.from]!.take, seed: lead.units[r.from]!.seed });
-  for (const t of repeatsTakes) wanted.push({ segment: t.segment, track: t.track, kind: t.kind, stage: 'repeats', file: t.file });
+  for (const t of repeatsTakes) {
+    wanted.push({ segment: t.segment, track: t.track, kind: t.kind, stage: 'repeats', file: t.file, ...(t.seed !== undefined ? { seed: t.seed } : {}) });
+  }
 
   mkdirSync(ctx.takesDir, { recursive: true });
   const stored = new Map<string, { sha256: string; durationSeconds: number }>();
@@ -539,7 +561,7 @@ async function storeTakes(
       if (!existsSync(src)) throw new Error(`the take ${w.file} (${w.track} in ${w.segment}) was not among the files the vocal service's steps made`);
       const durationSeconds = wavSeconds(readFileSync(src), w.file);
       const tmp = join(ctx.takesDir, `.${ctx.taskId}-${w.stage}-${w.file}.ogg`);
-      await encodeOgg(ctx.ffmpegBin, src, tmp);
+      await encodeTake(ctx.ffmpegBin, src, tmp);
       const sha256 = createHash('sha256').update(readFileSync(tmp)).digest('hex');
       const dest = join(ctx.takesDir, `${sha256}.ogg`);
       if (existsSync(dest)) unlinkSync(tmp);

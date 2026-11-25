@@ -3,7 +3,8 @@
 // goes in only while the sung sections are as they were sung; cancel (queued and running), a lost job, a restart that
 // finds the job lost; Write lyrics and Write melody refuse while a song is being sung.
 
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,7 +14,8 @@ import { generatorParams } from '@casperaki/arrangement';
 import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
-import { backingShift } from '../src/sing/singTask.js';
+import { DEV_OWNER_ID } from '../src/routes/songs.js';
+import { backingShift, encodeTake, TAKE_GAIN_DB } from '../src/sing/singTask.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
@@ -168,6 +170,18 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(applied.status).toBe(409);
     expect(applied.body.message).toBe(CHANGED);
     expect(await taskOf(h, taskId)).toMatchObject({ state: 'failed', message: CHANGED });
+    // Started again it would sing the old song: refused, pointing to Sing.
+    const retried = await send('POST', `${h.url}/api/tasks/${taskId}/retry`);
+    expect(retried).toMatchObject({ status: 409, body: { error: 'song_changed', message: 'The song changed since this sing started, so it cannot be started again: Sing again instead.' } });
+  });
+
+  it('refuses to sing while the song\'s lyrics are being written (running or waiting its turn)', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    // A Write lyrics task recorded as running (it runs, or waits for its turn behind another song's).
+    h.store.insertTask({ id: 'lyrics-running', ownerId: DEV_OWNER_ID, songId: id, kind: 'writeLyrics', input: JSON.stringify(song), startedAt: new Date().toISOString() });
+    expect(await startSing(h, id, song)).toMatchObject({ status: 409, body: { error: 'already_writing_lyrics', message: 'Already writing lyrics' } });
+    expect(svc.jobs).toHaveLength(0);
   });
 
   it('applies after a drum edit: fresh takes on the vocal tracks and the sung melody recorded', async () => {
@@ -192,6 +206,10 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     }
     expect(takes.some((t) => t.kind === 'yue2-vocal' && t.attachedTo.scope === 'segment' && t.attachedTo.segment === 'chorus1')).toBe(true);
     expect(generatorParams(saved).params?.['sungMelody']).toBeDefined();
+    // The ad-lib take records the YuE2 seed the service chose for it, as the lead takes do.
+    const adlibs = takes.filter((t) => t.attachedTo.scope === 'segment' && t.attachedTo.instrument === 'Ad-libs');
+    expect(adlibs.length).toBeGreaterThan(0);
+    for (const t of adlibs) expect(t.seed).toBe(1);
   });
 
   it('cancels a queued and a running sing (the running one cancels its service job)', async () => {
@@ -329,5 +347,39 @@ describe('backingShift: a backing line\'s own octave', () => {
     expect(() => backingShift([40, 75], [60], 0, 'Backing vocals 2 in bridge1')).toThrow(
       'Backing vocals 2 in bridge1 spans E2-D#5, which no octave shift puts within the singable range F3-A5',
     );
+  });
+});
+
+describe('stored takes get the headroom gain', () => {
+  it(`a take is stored ${-TAKE_GAIN_DB} dB below the service's WAV (-3 dB: the unmastered render must not clip)`, async () => {
+    expect(TAKE_GAIN_DB).toBe(-3);
+    const tmp = mkdtempSync(join(tmpdir(), 'take-gain-'));
+    try {
+      // 1 s of a 440 Hz sine at half scale, 44.1 kHz mono 16-bit.
+      const rate = 44100;
+      const data = Buffer.alloc(rate * 2);
+      for (let i = 0; i < rate; i++) data.writeInt16LE(Math.round(0.5 * 32767 * Math.sin((2 * Math.PI * 440 * i) / rate)), i * 2);
+      const head = Buffer.alloc(44);
+      head.write('RIFF', 0, 'ascii');
+      head.writeUInt32LE(36 + data.length, 4);
+      head.write('WAVEfmt ', 8, 'ascii');
+      head.writeUInt32LE(16, 16);
+      head.writeUInt16LE(1, 20);
+      head.writeUInt16LE(1, 22);
+      head.writeUInt32LE(rate, 24);
+      head.writeUInt32LE(rate * 2, 28);
+      head.writeUInt16LE(2, 32);
+      head.writeUInt16LE(16, 34);
+      head.write('data', 36, 'ascii');
+      head.writeUInt32LE(data.length, 40);
+      writeFileSync(join(tmp, 'in.wav'), Buffer.concat([head, data]));
+      await encodeTake('ffmpeg', join(tmp, 'in.wav'), join(tmp, 'out.ogg'));
+      const pcm = execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-i', join(tmp, 'out.ogg'), '-f', 'f32le', '-ac', '1', '-']);
+      let peak = 0;
+      for (let i = 0; i + 4 <= pcm.length; i += 4) peak = Math.max(peak, Math.abs(pcm.readFloatLE(i)));
+      expect(20 * Math.log10(peak / 0.5)).toBeCloseTo(-3, 0);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });

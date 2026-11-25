@@ -24,7 +24,8 @@ SoulX sings lane + octave), "style" (YuE2's style text, as the lead stage's),
 A SungNote is {"start", "duration" (beats from the section start), "midi" (lane register), "word", "phonemes"}.
 
 Writes repeats.json = {"takes": [{"segment", "track", "kind" ("soulx-vocal" | "yue2-vocal"), "file" (a name in this
-job's folder, listed by the levels or extension step), "durationSeconds"}]}. Takes are 44.1 kHz stereo float WAV, the
+job's folder, listed by the levels or extension step), "durationSeconds", and for the ad-lib takes "seed" (the YuE2
+seed chosen in adlibs:choose)}]}. Takes are 44.1 kHz stereo float WAV, the
 section's length plus a 0.15 s fade-out.
 
 Steps, in model order (one model on the GPU at a time, released after its phase): soulx:<segment> (copies) and
@@ -172,6 +173,13 @@ def extension_take(section: np.ndarray, sr: int, from_bar: int, section_bars: in
     return out
 
 
+def adlib_takes(segments, seconds: float, seed: int) -> list:
+    """repeats.json's ad-lib takes: the one levelled ad-lib take (take_adlibs.wav) in each of the choruses, with the
+    YuE2 seed it was sung with."""
+    return [{"segment": seg, "track": ADLIB_TRACK, "kind": "yue2-vocal", "file": "take_adlibs.wav",
+             "durationSeconds": round(seconds, 3), "seed": int(seed)} for seg in segments]
+
+
 def _stereo(x: np.ndarray, sr: int) -> np.ndarray:
     """samples (x channels) at sr -> OUT_SR stereo (samples x 2)."""
     import librosa
@@ -209,6 +217,7 @@ def run(params: dict, out_dir, job):
     bar_s = 4 * 60.0 / p["bpm"]
     device = _device()
     adlib_section = None
+    adlib_seed = None
     try:
         if p["sung"]:
             _sing(p, out, device, job)
@@ -216,7 +225,7 @@ def run(params: dict, out_dir, job):
             _convert(p, out, device, job)
             _release()
         if p["adlibs"] is not None:
-            adlib_section = _adlibs(p, out, device, job)
+            adlib_section, adlib_seed = _adlibs(p, out, device, job)
             _release()
     finally:
         _release()
@@ -275,9 +284,7 @@ def run(params: dict, out_dir, job):
         x = levels.fit(x, OUT_SR, len(ad["chords"]) / 4 * bar_s)
         sf.write(out / "take_adlibs.wav", x, OUT_SR, subtype="FLOAT")
         files.append("take_adlibs.wav")
-        for seg in ad["segments"]:
-            takes.append({"segment": seg, "track": ADLIB_TRACK, "kind": "yue2-vocal", "file": "take_adlibs.wav",
-                          "durationSeconds": round(len(x) / OUT_SR, 3)})
+        takes.extend(adlib_takes(ad["segments"], len(x) / OUT_SR, adlib_seed))
     st.done(f"{len(files)} takes levelled to {p['reference_path'].name}", numbers, files)
 
     (out / "repeats.json").write_text(json.dumps({"takes": takes}, indent=1))
@@ -320,7 +327,8 @@ def _convert(p, out, device, job):
 
 
 def _adlibs(p, out, device, job):
-    """The best ad-lib take (by chord match, at least the threshold), cut to the chorus's bars, at OUT_SR stereo."""
+    """The best ad-lib take (by chord match, at least the threshold), cut to the chorus's bars, at OUT_SR stereo, and
+    the seed it was sung with."""
     from . import align, lead
 
     ad = p["adlibs"]
@@ -349,4 +357,4 @@ def _adlibs(p, out, device, job):
     sf.write(out / "adlibs_section.wav", section.T, t["sr"])
     st.done(f"take {best}: {scores[(uid, best)] * 100:.0f}% on our chords",
             {"seed": best, "chords_match": round(scores[(uid, best)], 4)}, ["adlibs_section.wav"])
-    return _stereo(section.T, t["sr"])
+    return _stereo(section.T, t["sr"]), best

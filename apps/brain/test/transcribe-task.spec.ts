@@ -308,6 +308,16 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const { id, song } = await songOf(h, 'sing-a', true);
     const verse = sungSections(song).find((s) => s.type === 'verse')!.name;
     expect((await startTranscribe(h, id, song, 'nope9')).body).toMatchObject({ error: 'unknown_section' });
+    // A section resized in the editor is not the generator's: its transcription could not go in (by generator name).
+    const resized = structuredClone(song);
+    const seg = resized.songStructure.find((s) => s.name === verse)!;
+    const n = seg.bars.length;
+    seg.bars = [...seg.bars, ...seg.bars.slice(0, 4)];
+    for (const o of Object.values(resized.arrangement[verse]!.overrides)) if (o.bars) o.bars = [...o.bars, ...o.bars.slice(0, 4)];
+    expect(await startTranscribe(h, id, resized, verse)).toMatchObject({
+      status: 422,
+      body: { error: 'section_not_generated', message: `The section ${verse} has ${n + 4} bars, but ${n} as the song was generated (resized in the editor), so it cannot be sung` },
+    });
     const big = { name: 'big.wav', type: 'audio/wav', data: Buffer.alloc(10 * 1024 * 1024 + 1).toString('base64') };
     const tooBig = await startTranscribe(h, id, song, verse, { recording: big });
     expect(tooBig.status).toBe(413);

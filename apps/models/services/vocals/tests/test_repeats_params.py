@@ -98,3 +98,11 @@ def test_items_name_the_sections_bar_count_section_bars(jobs):
     bad["copies"][0]["bars"] = bad["copies"][0].pop("section_bars")
     with pytest.raises(ValueError, match="copy verse2: missing 'section_bars'"):
         repeats.check_params(bad, jobs)
+
+
+def test_the_adlib_takes_carry_the_chosen_seed():
+    takes = repeats.adlib_takes(["chorus2", "chorus3"], 15.1534, 2)
+    assert takes == [
+        {"segment": "chorus2", "track": "Ad-libs", "kind": "yue2-vocal", "file": "take_adlibs.wav", "durationSeconds": 15.153, "seed": 2},
+        {"segment": "chorus3", "track": "Ad-libs", "kind": "yue2-vocal", "file": "take_adlibs.wav", "durationSeconds": 15.153, "seed": 2},
+    ]

@@ -7,7 +7,7 @@
 // Pure: reads the song only. Notes are in the Vocal lane's register throughout; `octave` says how far above the lane
 // the song is sung.
 
-import { generatorParams, lyricLines, sungSections, vocalMelodyShown } from '@casperaki/arrangement';
+import { generatedSections, generatorParams, lyricLines, sungSections, vocalMelodyShown } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 
 /** A failure the user sees as the Sing task's reason. */
@@ -215,10 +215,41 @@ function signature(song: Song, name: string): string {
   return JSON.stringify({ chords: seg.bars.map((b) => b.chords), lane });
 }
 
-/** Who sings what (see the file comment). Throws SingError without a melody or written lyrics for every sung section. */
+/**
+ * Throws SingError naming the first of `sections` (working-song names) that the song as its generator makes it does
+ * not have by that name and bar count: a section renamed, added, duplicated or resized in the editor. The sung melody
+ * and the written lyrics are recorded by the generator's section names and replayed through it, so such a section
+ * cannot be sung (or transcribed) into the song.
+ */
+export function checkSectionsGenerated(song: Song, sections: readonly string[]): void {
+  const generated = generatedSections(generatorParams(song));
+  for (const name of sections) {
+    const own = song.songStructure.find((s) => s.name === name);
+    if (!own) throw new Error(`checkSectionsGenerated: the song has no section "${name}"`);
+    const gen = generated.find((s) => s.name === name);
+    if (!gen) {
+      throw new SingError(`The section ${name} was added or renamed in the editor, so it cannot be sung: only sections as the song was generated can be`);
+    }
+    if (gen.bars !== own.bars.length) {
+      throw new SingError(
+        `The section ${name} has ${own.bars.length} bars, but ${gen.bars} as the song was generated (resized in the editor), so it cannot be sung`,
+      );
+    }
+  }
+}
+
+/** Who sings what (see the file comment). Throws SingError without a melody or written lyrics for every sung section,
+ *  without a sung chorus, or with a sung section the generator does not make (`checkSectionsGenerated`). */
 export function planSinging(song: Song): SingPlan {
   const sung = vocalMelodyShown(song) ? sungSections(song) : [];
   if (sung.length === 0) throw new SingError('Write a melody first');
+  if (!sung.some((s) => s.type === 'chorus')) {
+    throw new SingError('Sing needs a sung chorus: its take is the voice and the loudness the other parts are matched to');
+  }
+  checkSectionsGenerated(
+    song,
+    sung.map((s) => s.name),
+  );
   // Read raw: writtenLyricsOf's schema rejects an empty line list with its own error, and an empty list means the
   // section has no written words ("Write lyrics first").
   const lyrics = (generatorParams(song).params?.['lyrics'] ?? {}) as Readonly<Record<string, readonly unknown[] | undefined>>;
