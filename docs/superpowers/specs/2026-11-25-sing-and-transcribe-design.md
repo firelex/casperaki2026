@@ -1,5 +1,26 @@
 # Sing and Transcribe melody: the vocal arrangement sung in the background
 
+> **Update 2026-11-25 (evening): Sing is SoulX-only.** The owner's decision, after hearing the demo track
+> (apps/models/ace-vocal-tests/soulx_sing.py, other-models/harmony_from_lead.py, other-models/vocal_chain.py): "I want
+> the same recipe as in the demo track". YuE2, ChordNet, the transcription of the sung lead, SoulX copies,
+> extensions and ad-libs are gone from Sing; the sections below on who sings what, the steps and the mix describe the
+> first (YuE2) version and are superseded by this:
+>
+> - **Lead**: SoulX-Singer sings every section with notes in the Vocal lane (and written lyrics), straight from the
+>   lane's notes, words and phonemes, at the lane's own pitch, in the demo's voice (`yue2_female_dry2`, kept in
+>   apps/models/services/vocals/voices/).
+> - **Backing vocals 1 and 2**: the song's backing lanes in the sung sections, each moved by whole octaves into F3-A5
+>   near the lead; sung by re-pitching the section's lead take to them with SoulX-Singer-SVC (timing, words and voice
+>   are the lead's, only the pitch changes).
+> - **Vocal chain** on every take: high-pass, EQ, compressor, harmonic exciter at -6 dB, limiter; backing vocals 9 dB
+>   under their lead (loudness of the singing parts).
+> - **The melody stays as written**: the sung melody recorded on apply is the Vocal lane's own notes; nothing is
+>   transcribed back. Every take is a `soulx-vocal` take.
+> - **Steps**: plan, then the service's one `sing` stage (`soulx:<section>`, `harmony:<track>:<section>`,
+>   `chain:...`, `levels`), then store the takes.
+>
+> Transcribe melody (a recording the user brings) is unchanged.
+
 Agreed with the owner on 2026-11-25, after a night of vocal-model experiments (summary below). This is the second
 project announced in [2026-11-25-vocal-tasks-design.md](2026-11-25-vocal-tasks-design.md): Sing (a singing model's
 own interpretation) and Transcribe melody (a sung take back to notes), on the task system that project built.

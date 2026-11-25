@@ -12,12 +12,12 @@ Ported from apps/models/ace-vocal-tests/other-models/syllable_notes.py (shared t
 - a note lasts until the next start or until singing stops; its pitch is the SwiftF0 median over it (the hum service's
   pitch front end), moved by octaves when it is more than 7 semitones from its neighbours' median
   (`fix_octave_slips`), snapped to the key's scale, returned in the Vocal lane's register (sung - octave).
-The take is read unstretched through a Clock (align.py: take seconds <-> our beats). Starts must lie inside the
+The take is read unstretched through a Clock (music.py: take seconds <-> our beats). Starts must lie inside the
 section's beats; the bars after it (the tail) may only hold the end of the last note, which is cut at the section end.
 
 The stage `transcribe` (`run`, Transcribe melody in the app): the user's own recording of one section, sung or hummed
 along from the section's first beat at the song's tempo (so the recording is on our grid: Clock.grid(bpm)).
-params = {"section", "bpm", "key", "octave" (-12/0/12: the song's, as Sing uses; notes come back as sung - octave),
+params = {"section", "bpm", "key", "octave" (-12/0/12: notes come back as sung - octave; the brain sends 0 and moves them itself),
 "section_beats", "count" (the section's Vocal-lane notes, held "-" positions included; null: only prepare the voice,
 for the brain to send to the hum service when the section has no written lyrics), "has_backing" (the recording has
 music behind the voice: BS-RoFormer separates the voice first; a clean recording is read as it is), "audio" (the
@@ -36,8 +36,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .align import Clock
-from .score import check_octave, scale
+from .music import Clock, check_octave, scale
 
 SR16 = 16000
 HOP = 160  # 10 ms frames
@@ -119,7 +118,7 @@ def _frames(y: np.ndarray, tracker):
 def segment(vocal, sr: int, n: int, bpm, *, key: str, octave: int, section: str, tracker, section_beats,
             clock: Clock | None = None):
     """The `n` notes of a sung section. vocal: samples, or channels x samples, at `sr`. clock: the vocal's seconds <->
-    our beats (align.take_clock for a take); None means the vocal is on our grid (Clock.grid(bpm)).
+    our beats; None means the vocal is on our grid (Clock.grid(bpm)).
     Returns [{"start", "duration" (beats from the section start, on 16ths), "midi" (lane register), "start_s",
     "stop_s" (seconds in the vocal)}] in order."""
     octave = check_octave(octave)

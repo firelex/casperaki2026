@@ -109,11 +109,11 @@ export interface TaskStep {
   readonly files?: readonly string[];
 }
 
-/** The model-service jobs a task runs (sing: the lead stage's job, then the repeats stage's; transcribe: the vocals
+/** The model-service jobs a task runs (sing: the sing stage's job; transcribe: the vocals
  *  service's transcribe stage, when it needs one). */
 export interface TaskJobs {
-  readonly lead?: string;
-  readonly repeats?: string;
+  /** Sing: the vocals service's sing stage job. */
+  readonly sing?: string;
   readonly transcribe?: string;
   /** ACE layer: the ace service's lego job. */
   readonly ace?: string;

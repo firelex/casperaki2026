@@ -1,5 +1,12 @@
 # Sing and Transcribe melody Implementation Plan
 
+> **Update 2026-11-25 (evening): Sing is SoulX-only** (owner: "I want the same recipe as in the demo track"). The
+> `lead` and `repeats` stages below were replaced by one `sing` stage (apps/models/services/vocals/pipeline/sing.py):
+> SoulX-Singer sings every section's lead from the Vocal lane at its own pitch, the backing lanes are the lead re-pitched
+> with SoulX-Singer-SVC, every take goes through the vocal chain (with a -6 dB exciter), backings sit 9 dB under the
+> lead, and the Vocal lane's melody stays as written. YuE2, ChordNet, copies, extensions and ad-libs were removed from
+> Sing; see the spec's update note. The tasks below record how the first version was built.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** A Sing task on the Vocal track sings the song's whole vocal arrangement in the background (YuE2 per section,

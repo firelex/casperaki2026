@@ -6,7 +6,7 @@ pitch-change term of the onset envelope can find.
 import numpy as np
 import pytest
 
-from pipeline import align, transcribe
+from pipeline import music, transcribe
 
 SR = 44100
 BPM = 120  # a 16th is 0.125 s
@@ -91,7 +91,7 @@ def test_starts_only_inside_the_section_and_the_last_note_cut_at_its_end(tracker
 def test_a_take_off_our_grid_is_read_through_its_clock(tracker):
     # the take starts 1 s late and sings at half speed: take second t is our beat (t - 1)
     slow = [(2 * s, 2 * ln, m, gap) for s, ln, m, gap in NOTES]
-    clock = align.Clock([1.0, 21.0], [0.0, 20.0])
+    clock = music.Clock([1.0, 21.0], [0.0, 20.0])
     out = seg(synth(slow, total_16ths=64, offset_s=1.0), len(NOTES), tracker, clock=clock)
     assert [o["start"] for o in out] == [s / 4 for s, _, _, _ in NOTES]
     assert [o["midi"] for o in out] == [m - 12 for _, _, m, _ in NOTES]

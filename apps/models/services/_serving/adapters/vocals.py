@@ -1,8 +1,8 @@
-"""Adapter: vocals (sing a song's vocal arrangement in the background, then transcribe it back into the Vocal lane).
+"""Adapter: vocals (sing a song's vocal arrangement in the background; transcribe a recording into the Vocal lane).
 
-One service, three stages chosen by params["stage"]:
-  lead        YuE2 sings each section's lead (checked by ChordNet against the song's chords)
-  repeats     SoulX-Singer + voice conversion for repeated sections and backing vocals
+One service, two stages chosen by params["stage"]:
+  sing        SoulX-Singer sings every section's lead from the Vocal lane, the backing vocals are the lead re-pitched
+              with SoulX-Singer-SVC, every take through the vocal chain (Sing)
   transcribe  a recording the user brings of one section transcribed into notes for its Vocal lane (Transcribe melody)
 Models load per job inside the stage and are released after it (one GPU); `load` loads nothing heavy.
 Code and weights are referenced by absolute path in vocals/pipeline/paths.py (see vocals/README.md).
@@ -13,12 +13,12 @@ import sys
 from pathlib import Path
 
 SERVICE_DIR = Path(__file__).resolve().parents[2] / "vocals"
-STAGES = ("lead", "repeats", "transcribe")
+STAGES = ("sing", "transcribe")
 
 MANIFEST = {
     "id": "vocals",
     "label": "Vocals (sing and transcribe)",
-    "description": "Sings a song's vocal arrangement (YuE2, SoulX-Singer, ChordNet, vocal separation) and transcribes it back.",
+    "description": "Sings a song's vocal arrangement (SoulX-Singer, SoulX-Singer-SVC) and transcribes recordings (vocal separation, pitch).",
     "kind": "json",
     "category": "model",
     "python": "3.10",
@@ -27,10 +27,6 @@ MANIFEST = {
         ["$UV", "venv", "--python", "3.10", ".venv"],
         ["$UV", "pip", "install", "--python", ".venv/bin/python", "--index-strategy", "unsafe-best-match",
          "-r", "requirements.txt"],
-        ["$UV", "pip", "install", "--python", ".venv/bin/python", "--no-deps",
-         "/mnt/d/casperaki-models/yue2/YuE2-3B/yue2_infer-0.1.5-py3-none-any.whl"],
-        ["$UV", "pip", "install", "--python", ".venv/bin/python", "--no-deps", "-e",
-         "/home/roli79/apps/casperaki/apps/models/services/heartmula/MuLaCover"],
     ],
     "setup_in_repo": False,
     "params": {},
@@ -57,10 +53,8 @@ def generate(handle, params, out_dir, job):
     if stage not in STAGES:
         raise ValueError(f"vocals: unknown stage {stage!r}; expected one of {list(STAGES)}")
     # Imported per stage so each stage's heavy imports load only when it runs.
-    if stage == "lead":
-        from pipeline import lead as module
-    elif stage == "repeats":
-        from pipeline import repeats as module
+    if stage == "sing":
+        from pipeline import sing as module
     else:
         from pipeline import transcribe as module
     return module.run(params, out_dir, job)

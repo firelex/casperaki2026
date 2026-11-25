@@ -1,7 +1,8 @@
 // The Sing task through the brain (docs/superpowers/specs/2026-11-25-sing-and-transcribe-design.md) against a fake
-// vocals service: both service stages run with every step recorded in order and their files fetchable; the result
-// goes in only while the sung sections are as they were sung; cancel (queued and running), a lost job, a restart that
-// finds the job lost; Write lyrics and Write melody refuse while a song is being sung.
+// vocals service: the sing stage runs with every step recorded in order and its files fetchable; the result (every
+// take SoulX's, the melody as written) goes in only while the sung sections are as they were sung; cancel (queued and
+// running), a lost job, a restart that finds the job lost; Write lyrics and Write melody refuse while a song is being
+// sung.
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -10,12 +11,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { generatorParams } from '@casperaki/arrangement';
+import { generatorParams, sungSections } from '@casperaki/arrangement';
 import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
 import { DEV_OWNER_ID } from '../src/routes/songs.js';
-import { backingShift, encodeTake, TAKE_GAIN_DB } from '../src/sing/singTask.js';
+import { encodeTake, TAKE_GAIN_DB } from '../src/sing/singTask.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
@@ -65,8 +66,8 @@ async function waitFor(what: string, cond: () => boolean | Promise<boolean>): Pr
   throw new Error(`timed out waiting for ${what}`);
 }
 
-// Seed 'sing-a' gives a brightPop song whose backing vocal lines lie within the singable range at its octave; the
-// tests that only need a sing under way use other seeds.
+// Seed 'sing-a' gives a brightPop song with backing vocal lines; the tests that only need a sing under way use other
+// seeds.
 
 /** A saved project whose song has a melody and written lyrics (Write melody, then a Write lyrics task applied). */
 async function songWithLyrics(h: Harness, seed: string, genre = 'brightPop', bpm = 110): Promise<{ id: string; song: Song }> {
@@ -90,19 +91,37 @@ async function save(h: Harness, id: string, song: Song): Promise<string> {
   return r.body.id as string;
 }
 
+type LaneBars = { notes?: Record<string, { type?: string; note: number; duration: number; fullWord?: string }[]> }[];
+
+/** A lane's vocal notes in a section (bar, beat, pitch, length, word), in order. */
+function laneNotesOf(song: Song, section: string, track: string): [number, string, number, number, string | undefined][] {
+  const bars = (song.arrangement[section]?.overrides?.[track]?.bars ?? []) as unknown as LaneBars;
+  return bars.flatMap((bar, i) =>
+    Object.entries(bar.notes ?? {}).flatMap(([k, evs]) => evs.filter((e) => e.type === 'vocalNote').map((e) => [i, k, e.note, e.duration, e.fullWord] as [number, string, number, number, string | undefined])),
+  );
+}
+
+/** A lane's vocal note pitches in a section, in time order. */
+function laneMidi(song: Song, section: string, track: string): number[] {
+  return laneNotesOf(song, section, track)
+    .map(([bar, beat, note]) => [bar * 4 + Number.parseFloat(beat), note] as const)
+    .sort((a, b) => a[0] - b[0])
+    .map(([, note]) => note);
+}
+
 describe('the Sing task', { timeout: 60_000 }, () => {
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), 'sing-task-'));
     svc = await startFakeVocalsService();
   });
   afterEach(async () => {
-    for (const s of ['lead', 'repeats']) svc.release(s);
+    svc.release('sing');
     for (const b of brains.splice(0)) await b.stop();
     await svc.stop();
     rmSync(dir, { recursive: true, force: true });
   });
 
-  it('runs both stages, lists every step in order with its state, and keeps the steps\' files', async () => {
+  it('runs the sing stage, lists every step in order with its state, and keeps the steps\' files', async () => {
     const h = await boot(openSongsStore({ path: ':memory:' }));
     const { id, song } = await songWithLyrics(h, 'sing-a');
     const started = await startSing(h, id, song);
@@ -115,46 +134,52 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     const ids = task.steps.map((s) => s.id);
     expect(ids[0]).toBe('plan');
     expect(ids.at(-1)).toBe('store-takes');
-    const backing = ids.indexOf('backing-lines');
-    expect(ids.slice(1, backing).every((s) => /^(yue2|separate|chords|transcribe|choose):/u.test(s))).toBe(true);
-    expect(ids).toContain('yue2:chorus1:s3');
-    expect(ids.slice(backing + 1, -1)).toContain('levels');
-    expect(ids.slice(1, backing).length).toBeGreaterThan(0);
+    expect(ids.at(-2)).toBe('levels');
+    expect(ids.slice(1, -2).every((s) => /^(soulx|harmony|chain):/u.test(s))).toBe(true);
+    expect(ids).toContain('soulx:chorus1');
+    expect(ids).toContain('harmony:Backing vocals 1:chorus1');
     expect(task.steps.every((s) => s.state === 'done')).toBe(true);
+    expect(task.steps[0]!.text).toMatch(/^SoulX sings verse1, .*chorus1.*; backing vocals: Backing vocals 1 in chorus1/u);
 
-    // The two jobs: the lead's units, then the repeats with the lead job and the chorus take as the voice.
-    expect(svc.jobs.map((j) => j.stage)).toEqual(['lead', 'repeats']);
-    const lead = svc.jobs[0]!.params;
-    expect(lead).toMatchObject({ stage: 'lead', bpm: 110, key: song.key, seeds: 3, threshold: 0.7 });
-    const repeats = svc.jobs[1]!.params as { lead_job: string; levels: { reference: string; backing_db: number; adlib_db: number } };
-    expect(repeats.lead_job).toBe(svc.jobs[0]!.id);
-    expect(repeats.levels).toEqual({ reference: 'chorus1_section.wav', backing_db: -6, adlib_db: -4 });
-    const { copies, backings } = svc.jobs[1]!.params as { copies: { segment: string; voice: string }[]; backings: { track: string; voice: string }[] };
-    expect(copies.length).toBeGreaterThan(0);
-    expect(copies.every((c) => c.voice.endsWith('_section.wav'))).toBe(true);
-    expect(backings.length).toBeGreaterThan(0);
-    expect(backings.every((b) => /^Backing vocals [12]$/u.test(b.track) && b.voice === 'chorus1_section.wav')).toBe(true);
+    // One job: every sung section from its Vocal lane as written, the backing lanes' lines, backings 9 dB under.
+    expect(svc.jobs.map((j) => j.stage)).toEqual(['sing']);
+    const params = svc.jobs[0]!.params as {
+      bpm: number;
+      backing_db: number;
+      sections: { segment: string; section_bars: number; notes: { start: number; midi: number; word: string; phonemes: string[] }[] }[];
+      backings: { track: string; segment: string; notes: { midi: number }[] }[];
+    };
+    expect(params).toMatchObject({ stage: 'sing', bpm: 110, backing_db: -9 });
+    expect(Object.keys(params).sort()).toEqual(['backing_db', 'backings', 'bpm', 'sections', 'stage']);
+    expect(params.sections.map((s) => s.segment)).toEqual(sungSections(song).map((s) => s.name));
+    const chorus = params.sections.find((s) => s.segment === 'chorus1')!;
+    expect(chorus.section_bars).toBe(song.songStructure.find((s) => s.name === 'chorus1')!.bars.length);
+    expect(chorus.notes.map((n) => n.midi)).toEqual(laneMidi(song, 'chorus1', 'Vocal'));
+    expect(chorus.notes.every((n) => n.word.length > 0 && n.phonemes.length > 0)).toBe(true);
+    expect(params.backings.length).toBeGreaterThan(0);
+    for (const b of params.backings) {
+      expect(b.track).toMatch(/^Backing vocals [12]$/u);
+      const lane = laneMidi(song, b.segment, b.track);
+      const shift = b.notes[0]!.midi - lane[0]!;
+      expect(shift % 12).toBe(0);
+      expect(b.notes.map((n) => n.midi)).toEqual(lane.map((m) => m + shift));
+      for (const n of b.notes) expect(n.midi).toBeGreaterThanOrEqual(53);
+      for (const n of b.notes) expect(n.midi).toBeLessThanOrEqual(81);
+    }
 
     // A step's file, copied when the step finished, under its stage.
-    const choose = task.steps.find((s) => s.id === 'choose:chorus1')!;
-    expect(choose.files).toEqual(['lead/chorus1_section.wav', 'lead/chorus1_melody.json']);
-    const file = await fetch(`${h.url}/api/tasks/${taskId}/files/lead/chorus1_section.wav`);
+    const sung = task.steps.find((s) => s.id === 'soulx:chorus1')!;
+    expect(sung.files).toEqual(['sing/chorus1_soulx.wav']);
+    const file = await fetch(`${h.url}/api/tasks/${taskId}/files/sing/chorus1_soulx.wav`);
     expect(file.status).toBe(200);
     expect(Buffer.from(await file.arrayBuffer()).toString('ascii', 0, 4)).toBe('RIFF');
-    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/repeats/chorus1_section.wav`)).status).toBe(404);
-    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/lead/nothing.wav`)).status).toBe(404);
-    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/lead/..%2Fsecret`)).status).toBe(400);
-    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/other/chorus1.abc`)).status).toBe(400);
-
-    // A name several steps of one job list (the unit's score, in each seed's take step) is one file, fetched once;
-    // the ad-lib unit's score in the repeats job is that job's own file.
-    expect(task.steps.filter((s) => s.files?.includes('lead/chorus1.abc'))).toHaveLength(3);
-    expect(svc.fileFetches.filter((f) => f === `${svc.jobs[0]!.id}/chorus1.abc`)).toHaveLength(1);
-    expect(svc.fileFetches.filter((f) => f === `${svc.jobs[0]!.id}/chorus1_s1_vocals.wav`)).toHaveLength(1);
-    expect(task.steps.find((s) => s.id === 'adlibs:yue2:s2')!.files).toContain('repeats/chorus1_adlibs.abc');
-    expect(await (await fetch(`${h.url}/api/tasks/${taskId}/files/repeats/chorus1_adlibs.abc`)).text()).toBe(`chorus1_adlibs.abc of ${svc.jobs[1]!.id}`);
+    expect(task.steps.find((s) => s.id === 'levels')!.files).toContain('sing/take_chorus1_vocal.wav');
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/lead/chorus1_soulx.wav`)).status).toBe(404);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/sing/nothing.wav`)).status).toBe(404);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/sing/..%2Fsecret`)).status).toBe(400);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/other/chorus1_soulx.wav`)).status).toBe(400);
     // Copies are written whole under their name: no temporary file is left.
-    for (const stage of ['lead', 'repeats']) expect(readdirSync(join(dir, 'files', taskId, stage)).some((f) => f.includes('.part-'))).toBe(false);
+    expect(readdirSync(join(dir, 'files', taskId, 'sing')).some((f) => f.includes('.part-'))).toBe(false);
   });
 
   it('fails on apply when a sung section changed (a chord in chorus1)', async () => {
@@ -204,22 +229,33 @@ describe('the Sing task', { timeout: 60_000 }, () => {
       const file = t.output.uri.replace(/^vocal-take:/u, '');
       expect(existsSync(join(dir, 'takes', file))).toBe(true);
     }
-    expect(takes.some((t) => t.kind === 'yue2-vocal' && t.attachedTo.scope === 'segment' && t.attachedTo.segment === 'chorus1')).toBe(true);
-    expect(generatorParams(saved).params?.['sungMelody']).toBeDefined();
-    // The ad-lib take records the YuE2 seed the service chose for it, as the lead takes do.
-    const adlibs = takes.filter((t) => t.attachedTo.scope === 'segment' && t.attachedTo.instrument === 'Ad-libs');
-    expect(adlibs.length).toBeGreaterThan(0);
-    for (const t of adlibs) expect(t.seed).toBe(1);
+    // Every take is SoulX's: a lead take for every sung section, a take for every backing line, no ad-libs.
+    expect(takes.every((t) => t.kind === 'soulx-vocal' && t.modelId === 'Soul-AILab/SoulX-Singer' && t.seed === undefined)).toBe(true);
+    const at = (t: (typeof takes)[number]) => (t.attachedTo.scope === 'segment' ? `${t.attachedTo.segment}/${t.attachedTo.instrument}` : '');
+    const sung = sungSections(song).map((s) => s.name);
+    expect(takes.filter((t) => t.attachedTo.scope === 'segment' && t.attachedTo.instrument === 'Vocal').map(at).sort()).toEqual(sung.map((s) => `${s}/Vocal`).sort());
+    expect(takes.some((t) => at(t) === 'chorus1/Backing vocals 1')).toBe(true);
+    expect(takes.some((t) => at(t).endsWith('/Ad-libs'))).toBe(false);
+    // The melody stays exactly as written: the sung melody recorded is the lane's notes, and the vocal lanes of the
+    // sung sections (lead and backings, which were sung as they are) come out of the apply unchanged.
+    const melody = generatorParams(saved).params?.['sungMelody'] as Record<string, { midi: number }[]>;
+    expect(Object.keys(melody).sort()).toEqual([...sung].sort());
+    expect(melody['chorus1']!.map((n) => n.midi)).toEqual(laneMidi(song, 'chorus1', 'Vocal'));
+    for (const name of sung) {
+      for (const track of ['Vocal', 'Backing vocals 1', 'Backing vocals 2']) {
+        expect({ name, track, lane: laneNotesOf(saved, name, track) }).toEqual({ name, track, lane: laneNotesOf(song, name, track) });
+      }
+    }
   });
 
   it('cancels a queued and a running sing (the running one cancels its service job)', async () => {
     const h = await boot(openSongsStore({ path: ':memory:' }));
     const a = await songWithLyrics(h, 'sing-d');
     const b = await songWithLyrics(h, 'sing-e');
-    svc.hold('lead');
+    svc.hold('sing');
     const runningId = ((await startSing(h, a.id, a.song)).body.task as TaskJson).id;
     const queuedId = ((await startSing(h, b.id, b.song)).body.task as TaskJson).id;
-    await waitFor('the lead job', () => svc.jobs.length === 1);
+    await waitFor('the sing job', () => svc.jobs.length === 1);
 
     const q = await send('POST', `${h.url}/api/tasks/${queuedId}/cancel`);
     expect(q.status).toBe(200);
@@ -236,9 +272,9 @@ describe('the Sing task', { timeout: 60_000 }, () => {
   it('fails when the vocal service lost the job', async () => {
     const h = await boot(openSongsStore({ path: ':memory:' }));
     const { id, song } = await songWithLyrics(h, 'sing-f');
-    svc.hold('lead');
+    svc.hold('sing');
     const taskId = ((await startSing(h, id, song)).body.task as TaskJson).id;
-    await waitFor('the lead job', () => svc.jobs.length === 1);
+    await waitFor('the sing job', () => svc.jobs.length === 1);
     svc.lose();
     await h.tasks.idle();
     expect(await taskOf(h, taskId)).toMatchObject({ state: 'failed', message: LOST });
@@ -248,7 +284,7 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     const store = openSongsStore({ path: ':memory:' });
     const first = await boot(store, 60_000);
     const { id, song } = await songWithLyrics(first, 'sing-g');
-    svc.hold('lead');
+    svc.hold('sing');
     const taskId = ((await startSing(first, id, song)).body.task as TaskJson).id;
     await waitFor('the recorded job', () => (store.listRunningTasks().find((t) => t.id === taskId)?.jobs ?? null) !== null);
     const job = svc.jobs[0]!.id;
@@ -265,9 +301,9 @@ describe('the Sing task', { timeout: 60_000 }, () => {
   it('Write lyrics and Write melody refuse while the song is being sung', async () => {
     const h = await boot(openSongsStore({ path: ':memory:' }));
     const { id, song } = await songWithLyrics(h, 'sing-h');
-    svc.hold('lead');
+    svc.hold('sing');
     await startSing(h, id, song);
-    await waitFor('the lead job', () => svc.jobs.length === 1);
+    await waitFor('the sing job', () => svc.jobs.length === 1);
     const lyrics = await send('POST', `${h.url}/api/tasks`, { kind: 'writeLyrics', songId: id, song });
     expect(lyrics.status).toBe(409);
     expect(lyrics.body.message).toBe('Already singing');
@@ -277,28 +313,28 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     const again = await startSing(h, id, song);
     expect(again.status).toBe(409);
     expect(again.body.message).toBe('Already singing');
-    svc.release('lead');
+    svc.release('sing');
     await h.tasks.idle();
   });
 
   it('a failed sing is not started again while another sing runs on the song', async () => {
     const h = await boot(openSongsStore({ path: ':memory:' }));
     const { id, song } = await songWithLyrics(h, 'sing-a');
-    svc.hold('lead');
+    svc.hold('sing');
     const first = ((await startSing(h, id, song)).body.task as TaskJson).id;
-    await waitFor('the first lead job', () => svc.jobs.length === 1);
+    await waitFor('the first sing job', () => svc.jobs.length === 1);
     expect((await send('POST', `${h.url}/api/tasks/${first}/cancel`)).status).toBe(200);
     await h.tasks.idle();
     const second = await startSing(h, id, song);
     expect(second.status).toBe(201);
-    await waitFor('the second lead job', () => svc.jobs.length === 2);
+    await waitFor('the second sing job', () => svc.jobs.length === 2);
     const retried = await send('POST', `${h.url}/api/tasks/${first}/retry`);
     expect(retried.status).toBe(409);
     expect(retried.body.message).toBe('Already singing');
     expect(await taskOf(h, first)).toMatchObject({ state: 'failed', message: 'Cancelled' });
-    svc.release('lead');
+    svc.release('sing');
     await h.tasks.idle();
-    expect(svc.jobs.filter((j) => j.stage === 'lead')).toHaveLength(2);
+    expect(svc.jobs.filter((j) => j.stage === 'sing')).toHaveLength(2);
   });
 
   it('refuses to sing without written lyrics', async () => {
@@ -310,43 +346,19 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(r.body.message).toBe('Write lyrics first');
   });
 
-  it('sings each backing line at its own octave, inside F3-A5 (edm: Backing vocals 1 in chorus1 below F3 goes up an octave)', async () => {
-    const h = await boot(openSongsStore({ path: ':memory:' }));
-    // edm, seed sing-j at 128 bpm: the chorus lead sits around D4-E5, Backing vocals 1 an octave and more under it.
-    const { id, song } = await songWithLyrics(h, 'sing-j', 'edm', 128);
-    const taskId = ((await startSing(h, id, song)).body.task as TaskJson).id;
+  it('a restart that finds a sing started before Sing was SoulX-only (a YuE2 lead job) fails it, saying to sing again', async () => {
+    const store = openSongsStore({ path: ':memory:' });
+    const h = await boot(store);
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    store.insertTask({ id: 'old-sing', ownerId: DEV_OWNER_ID, songId: id, kind: 'sing', input: JSON.stringify(song), startedAt: new Date().toISOString() });
+    store.setTaskJobs('old-sing', { lead: 'job-from-before' } as never);
+    h.tasks.resumeAll();
     await h.tasks.idle();
-    expect(await taskOf(h, taskId)).toMatchObject({ state: 'ready' });
-    const lead = svc.jobs[0]!.params as { octave: number };
-    const { backings } = svc.jobs[1]!.params as { backings: { track: string; segment: string; notes: { midi: number }[] }[] };
-    expect(backings.length).toBeGreaterThan(0);
-    for (const b of backings) for (const n of b.notes) expect(n.midi + lead.octave).toBeGreaterThanOrEqual(53);
-    for (const b of backings) for (const n of b.notes) expect(n.midi + lead.octave).toBeLessThanOrEqual(81);
-    const b1 = backings.find((b) => b.track === 'Backing vocals 1' && b.segment === 'chorus1')!;
-    const lane = (song.arrangement['chorus1']!.overrides['Backing vocals 1']!.bars as { notes: Record<string, { type?: string; note: number }[]> }[])
-      .flatMap((bar) => Object.values(bar.notes).flat())
-      .filter((e) => e.type === 'vocalNote')
-      .map((e) => e.note);
-    expect(Math.min(...lane) + lead.octave).toBeLessThan(53);
-    expect(Math.min(...b1.notes.map((n) => n.midi))).toBe(Math.min(...lane) + 12);
-  });
-});
-
-describe('backingShift: a backing line\'s own octave', () => {
-  it('moves a line below F3 up an octave, toward the lead', () => {
-    expect(backingShift([43, 50, 55, 60], [60, 67, 72, 76], 0, 'Backing vocals 1 in chorus1')).toBe(12);
-  });
-  it('keeps a line that fits and sits nearest the lead where it is', () => {
-    expect(backingShift([60, 62, 64], [64, 67, 69], 0, 'Backing vocals 2 in chorus1')).toBe(0);
-  });
-  it('takes the lower shift on a tie', () => {
-    expect(backingShift([60], [66], 0, 'Backing vocals 1 in chorus1')).toBe(0);
-    expect(backingShift([48], [54], 12, 'Backing vocals 1 in chorus1')).toBe(0);
-  });
-  it('fails naming the track, the section and the line\'s range when no shift fits', () => {
-    expect(() => backingShift([40, 75], [60], 0, 'Backing vocals 2 in bridge1')).toThrow(
-      'Backing vocals 2 in bridge1 spans E2-D#5, which no octave shift puts within the singable range F3-A5',
-    );
+    expect(await taskOf(h, 'old-sing')).toMatchObject({
+      state: 'failed',
+      message: 'this sing was started by an earlier version of Sing (with YuE2), which cannot be resumed: sing again',
+    });
+    expect(svc.jobs).toHaveLength(0);
   });
 });
 

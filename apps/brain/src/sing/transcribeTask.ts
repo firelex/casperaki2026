@@ -6,8 +6,7 @@
 // Steps:
 //   recording   the brain decodes the upload (any format ffmpeg reads) to WAV.
 //   With written lyrics for the section: the vocals service's transcribe stage (pipeline/transcribe.py run) finds the
-//     section's Vocal-lane note count (held "-" positions included) as the strongest note starts, as Sing's lead stage
-//     transcribes YuE2's takes; its steps are recorded and their files kept under <task files>/transcribe/.
+//     section's Vocal-lane note count (held "-" positions included) as the strongest note starts; its steps are recorded and their files kept under <task files>/transcribe/.
 //   Without written lyrics: the hum service's pitch-only notes (POST /transcribe in click mode at the song's tempo,
 //     the first beat at 0 s). A recording with music behind the voice (`hasBacking`) first goes through the vocals
 //     service's stage for the voice alone (BS-RoFormer); a clean recording is read as it is.
@@ -29,7 +28,8 @@ import { parseKey, scalePitchClasses } from '@casperaki/music-theory';
 import type { Song } from '@casperaki/song-schema';
 
 import type { TaskJobs, TaskStep } from '../store.js';
-import { CancelledError, followJob, laneNotes, wavSeconds, writeAtomic, type SingResult } from './singTask.js';
+import { laneNotes } from './plan.js';
+import { CancelledError, followJob, wavSeconds, writeAtomic, type SingResult } from './singTask.js';
 import { JobLostError, type VocalsClient } from './vocalsClient.js';
 
 /** Whole-octave shifts a transcription may take to land in the lane's register, lowest first. */

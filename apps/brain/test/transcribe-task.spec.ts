@@ -15,7 +15,7 @@ import { isTakeFresh, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
-import { laneNotes } from '../src/sing/singTask.js';
+import { laneNotes } from '../src/sing/plan.js';
 import { humNotesOnGrid, laneOctaveShift } from '../src/sing/transcribeTask.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
@@ -138,7 +138,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     hum = await startFakeHum();
   });
   afterEach(async () => {
-    for (const st of ['lead', 'repeats', 'transcribe']) svc.release(st);
+    for (const st of ['sing', 'transcribe']) svc.release(st);
     for (const b of brains.splice(0)) await b.stop();
     await svc.stop();
     await hum.stop();
@@ -322,13 +322,13 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const tooBig = await startTranscribe(h, id, song, verse, { recording: big });
     expect(tooBig.status).toBe(413);
 
-    svc.hold('lead');
+    svc.hold('sing');
     const sing = await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song });
     expect(sing.status).toBe(201);
     const refused = await startTranscribe(h, id, song, verse);
     expect(refused).toMatchObject({ status: 409, body: { message: 'Already singing' } });
     expect((await send('POST', `${h.url}/api/tasks/${(sing.body.task as TaskJson).id}/cancel`)).status).toBe(200);
-    svc.release('lead');
+    svc.release('sing');
     await h.tasks.idle();
 
     const t = (await startTranscribe(h, id, song, verse)).body.task as TaskJson;

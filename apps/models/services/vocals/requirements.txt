@@ -1,5 +1,6 @@
-# svc-vocals: one venv for YuE2, SoulX-Singer, ChordNet (MuLaCover), BS-RoFormer separation, SwiftF0 pitch.
-# Install: see README.md (torch first from the cu128 index, then this file, then the local packages).
+# svc-vocals: one venv for SoulX-Singer (+ SVC), BS-RoFormer separation, SwiftF0 pitch.
+# Install: see README.md. Sing no longer uses YuE2 or ChordNet (MuLaCover); the pins below were set with them and are
+# kept as the venv was built and tested (transformers 4.57.6 is what pipeline/soulx_compat.py is written for).
 --extra-index-url https://download.pytorch.org/whl/cu128
 torch==2.10.0+cu128
 torchaudio==2.10.0+cu128
@@ -16,7 +17,7 @@ omegaconf==2.3.0
 pyyaml
 tqdm
 pedalboard==0.8.9
-# MuLaCover (ChordNet) dependencies
+# Once MuLaCover (ChordNet) dependencies; kept as built (see the top)
 torchao==0.9.0
 torchtune==0.4.0
 vector-quantize-pytorch==1.27.15
@@ -27,7 +28,7 @@ rotary_embedding_torch==0.8.9
 beartype==0.22.9
 # torchtune imports datasets at import time
 datasets==5.0.1
-# Lead-stage pitch (the hum service front end)
+# Transcribe pitch (the hum service front end)
 swift-f0==0.3.0
 # torchaudio 2.10 decodes through TorchCodec (SoulX-Singer's load_wav calls torchaudio.load); needs FFmpeg 4-7 libs
 torchcodec==0.10.0

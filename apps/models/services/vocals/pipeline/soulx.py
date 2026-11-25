@@ -1,9 +1,10 @@
-"""SoulX-Singer sings a section from its notes and phonemes (score control), in the female `en_prompt` voice.
+"""SoulX-Singer sings a section from its notes and phonemes (score control), in the voice of the owner's approved demo
+(`yue2_female_dry2`, a dry female voice prompt kept in this service's voices/ folder: paths.VOICE_AUDIO / VOICE_META).
 
 Ported from apps/models/ace-vocal-tests/soulx_sing.py (shared tree): the phrasing of the removed brain score builder
 (a phrase per 4-bar lyric line, split at a rest of a beat or more, a short breath rest before each phrase). The service
 does no g2p: every note carries the lane's Vocaloid phonemes (lowercase, stress digits), written for SoulX as
-"en_" + the phonemes upper-cased and joined with "-". Notes are in the lane's register; SoulX sings lane + octave.
+"en_" + the phonemes upper-cased and joined with "-". SoulX sings the lane's notes at their own pitch.
 The SoulX repo (pipeline.paths.SOULX_REPO) must be on sys.path (the adapter's load() puts it there).
 """
 from __future__ import annotations
@@ -17,13 +18,12 @@ import torch
 from . import paths
 
 LINE_BARS, SPLIT_REST_BEATS, LEAD_REST_SEC, MIN_REST_SEC = 4, 1.0, 0.25, 0.02
-VOICE = "en_prompt"  # the female prompt voice (median G4)
 TAIL_S = 2.0  # room after the section for a last phrase's release
 
 
-def phrases(notes, bpm, section_beats, *, octave: int, section: str = "section"):
+def phrases(notes, bpm, section_beats, *, section: str = "section"):
     """SoulX score phrases: [{"start" (seconds from the section start), "phoneme", "duration" (s), "pitch" (MIDI,
-    0 for a rest), "type" (1 rest, 2 note)}]. notes: [{"start", "duration" (beats), "midi" (lane), "phonemes"}]."""
+    0 for a rest), "type" (1 rest, 2 note)}]. notes: [{"start", "duration" (beats), "midi", "phonemes"}]."""
     beat_s = 60.0 / float(bpm)
     ns = []
     for n in sorted(notes, key=lambda n: n["start"]):
@@ -31,7 +31,7 @@ def phrases(notes, bpm, section_beats, *, octave: int, section: str = "section")
             raise ValueError(f"{section}: the note at beat {n['start']:g} has no phonemes")
         start = float(n["start"])
         ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]),
-                   "midi": int(n["midi"]) + octave, "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
+                   "midi": int(n["midi"]), "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
     groups = []
     for i, n in enumerate(ns):
         prev = ns[i - 1] if i else None
@@ -87,15 +87,17 @@ class Singer:
         self.dp = DataProcessor(hop_size=self.config.audio.hop_size, sample_rate=self.sr,
                                 phoneset_path=str(repo / "soulxsinger" / "utils" / "phoneme" / "phone_set.json"),
                                 device=str(device))
-        audio = repo / "example" / "audio"
-        meta = json.loads((audio / f"{VOICE}.json").read_text())[0]
-        self.prompt = self.dp.process(meta, str(audio / f"{VOICE}.mp3"))
+        for p in (paths.VOICE_AUDIO, paths.VOICE_META):
+            if not p.is_file():
+                raise FileNotFoundError(f"SoulX voice prompt missing: {p}")
+        meta = json.loads(paths.VOICE_META.read_text())[0]
+        self.prompt = self.dp.process(meta, str(paths.VOICE_AUDIO))
 
-    def sing(self, notes, bpm, bars: int, octave: int, section: str) -> np.ndarray:
+    def sing(self, notes, bpm, bars: int, section: str) -> np.ndarray:
         """The section sung (mono, self.sr), every phrase placed at its time; bars * 4 beats + TAIL_S long."""
         beat_s = 60.0 / float(bpm)
         out = np.zeros(int((bars * 4 * beat_s + TAIL_S) * self.sr), dtype=np.float32)
-        for p in phrases(notes, bpm, bars * 4, octave=octave, section=section):
+        for p in phrases(notes, bpm, bars * 4, section=section):
             meta = {"duration": " ".join(f"{d:.4f}" for d in p["duration"]), "phoneme": " ".join(p["phoneme"]),
                     "note_pitch": " ".join(str(x) for x in p["pitch"]),
                     "note_type": " ".join(str(x) for x in p["type"]), "language": "English"}
