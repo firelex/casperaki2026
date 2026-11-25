@@ -6,7 +6,7 @@
 //                                     result: what the task made (writeLyrics: section → lines)
 //   POST /api/tasks/:id/retry      -> { task }                a failed task started again
 //   POST /api/tasks/:id/cancel     -> { task }                a running task cancelled (fails with "Cancelled")
-//   GET  /api/tasks/:id/files/:name -> the file a step of the task made (step.files names)
+//   GET  /api/tasks/:id/files/:stage/:name -> a file a step of the task made (step.files lists "<stage>/<name>")
 //
 // TaskJson: { id, kind, songId, title, state, message?, startedAt, finishedAt?, steps: TaskStep[] }
 // (TaskStep: src/store.ts; kinds: writeLyrics, sing).
@@ -83,9 +83,9 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
     return answer(res, () => res.json({ task: titled(owner, tasks.cancel(owner, req.params.id)) }));
   });
 
-  router.get('/api/tasks/:id/files/:name', (req, res) => {
+  router.get('/api/tasks/:id/files/:stage/:name', (req, res) => {
     const owner = ownerOf(req);
-    return answer(res, () => res.sendFile(tasks.stepFile(owner, req.params.id, req.params.name)));
+    return answer(res, () => res.sendFile(tasks.stepFile(owner, req.params.id, req.params.stage, req.params.name)));
   });
 
   return router;

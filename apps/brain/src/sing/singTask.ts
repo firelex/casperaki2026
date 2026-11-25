@@ -138,7 +138,7 @@ class StepLog {
     this.ctx.setSteps(steps);
   }
 
-  service(stage: 'lead' | 'repeats', steps: TaskStep[]): void {
+  service(stage: SingStage, steps: TaskStep[]): void {
     if (stage === 'lead') this.lead = steps;
     else this.repeats = steps;
     this.publish();
@@ -165,7 +165,12 @@ class StepLog {
 
 const iso = (seconds: number) => new Date(seconds * 1000).toISOString();
 
-function taskStep(s: ServiceStep): TaskStep {
+/** The two service stages; each keeps its step files in its own subfolder of the task's files folder. */
+export const SING_STAGES = ['lead', 'repeats'] as const;
+export type SingStage = (typeof SING_STAGES)[number];
+
+/** A step's files as the task lists them: "<stage>/<name>" (GET /api/tasks/:id/files/<stage>/<name>). */
+function taskStep(stage: SingStage, s: ServiceStep): TaskStep {
   return {
     id: s.id,
     label: s.label,
@@ -174,7 +179,7 @@ function taskStep(s: ServiceStep): TaskStep {
     ...(s.finished !== null ? { finishedAt: iso(s.finished) } : {}),
     ...(s.text ? { text: s.text } : {}),
     ...(Object.keys(s.numbers).length > 0 ? { numbers: { ...s.numbers } } : {}),
-    ...(s.files.length > 0 ? { files: [...s.files] } : {}),
+    ...(s.files.length > 0 ? { files: s.files.map((f) => `${stage}/${f}`) } : {}),
   };
 }
 
@@ -202,30 +207,35 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
   const log = new StepLog(ctx);
   if (ctx.jobs === null) rmSync(ctx.filesDir, { recursive: true, force: true });
   mkdirSync(ctx.filesDir, { recursive: true });
-  /** Step file name → the step that listed it (two steps listing one name would overwrite each other's file). */
-  const owners = new Map<string, string>();
+  /** Writes a file whole or not at all: a temporary name in the same folder, then renamed (resume skips files that
+   *  exist, so a half-written one must never carry the real name). */
+  const writeAtomic = (dest: string, data: Buffer) => {
+    const tmp = `${dest}.part-${process.pid}`;
+    writeFileSync(tmp, data);
+    renameSync(tmp, dest);
+  };
 
   /** Polls a service job to its end, copying its steps and their files; the job's result file. */
-  const follow = async (stage: 'lead' | 'repeats', job: string): Promise<Buffer> => {
+  const follow = async (stage: SingStage, job: string): Promise<Buffer> => {
+    const dir = join(ctx.filesDir, stage);
+    mkdirSync(dir, { recursive: true });
     for (;;) {
       if (ctx.signal.aborted) {
         await client.cancel(job);
         throw new CancelledError();
       }
       const r = await client.result(job);
+      // A name listed by several steps of one job is one file in the job's folder (e.g. a unit's score, listed by
+      // each seed's take): fetched once.
       for (const s of r.steps) {
         if (s.state !== 'done') continue;
         for (const name of s.files) {
           if (!isPlainFileName(name)) throw new Error(`the vocal service's step ${s.id} listed a file "${name}" that is not a plain file name`);
-          const owner = `${stage} ${s.id}`;
-          const before = owners.get(name);
-          if (before !== undefined && before !== owner) throw new Error(`the steps ${before} and ${owner} both made a file "${name}"`);
-          owners.set(name, owner);
-          const dest = join(ctx.filesDir, name);
-          if (!existsSync(dest)) writeFileSync(dest, await client.file(job, name));
+          const dest = join(dir, name);
+          if (!existsSync(dest)) writeAtomic(dest, await client.file(job, name));
         }
       }
-      log.service(stage, r.steps.map(taskStep));
+      log.service(stage, r.steps.map((x) => taskStep(stage, x)));
       if (r.state === 'done') return await client.file(job);
       if (r.state === 'error') throw new Error(r.error ?? `the vocal service's ${stage} job failed without saying why`);
       await sleep(ctx.pollMs, ctx.signal);
@@ -245,7 +255,7 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
   } else jobs = ctx.jobs;
   const leadJob = jobs.lead;
   const leadFile = await follow('lead', jobs.lead);
-  writeFileSync(join(ctx.filesDir, 'lead.json'), leadFile);
+  writeAtomic(join(ctx.filesDir, 'lead', 'lead.json'), leadFile);
   const lead = parseLead(leadFile, plan);
 
   const sung = await log.run('backing-lines', async () => {
@@ -267,7 +277,7 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
     ctx.setJobs(jobs);
   }
   const repeatsFile = await follow('repeats', jobs.repeats!);
-  writeFileSync(join(ctx.filesDir, 'repeats.json'), repeatsFile);
+  writeAtomic(join(ctx.filesDir, 'repeats', 'repeats.json'), repeatsFile);
   const repeats = RepeatsJsonSchema.parse(JSON.parse(repeatsFile.toString('utf8')));
 
   const takes = await log.run('store-takes', async () => {
@@ -490,32 +500,33 @@ async function storeTakes(
   repeatsTakes: readonly { segment: string; track: string; kind: (typeof SUNG_TAKE_KINDS)[number]; file: string }[],
 ): Promise<SungTake[]> {
   const extUnits = new Set(plan.extensions.map((e) => e.unit));
-  const wanted: { segment: string; track: string; kind: (typeof SUNG_TAKE_KINDS)[number]; file: string; seed?: number }[] = [];
+  const wanted: { segment: string; track: string; kind: (typeof SUNG_TAKE_KINDS)[number]; stage: SingStage; file: string; seed?: number }[] = [];
   for (const u of plan.units) {
     if (extUnits.has(u.id)) continue;
-    wanted.push({ segment: u.id, track: LEAD_TRACK, kind: 'yue2-vocal', file: lead.units[u.id]!.take, seed: lead.units[u.id]!.seed });
+    wanted.push({ segment: u.id, track: LEAD_TRACK, kind: 'yue2-vocal', stage: 'lead', file: lead.units[u.id]!.take, seed: lead.units[u.id]!.seed });
   }
-  for (const r of plan.reuses) wanted.push({ segment: r.segment, track: LEAD_TRACK, kind: 'yue2-vocal', file: lead.units[r.from]!.take, seed: lead.units[r.from]!.seed });
-  for (const t of repeatsTakes) wanted.push({ segment: t.segment, track: t.track, kind: t.kind, file: t.file });
+  for (const r of plan.reuses) wanted.push({ segment: r.segment, track: LEAD_TRACK, kind: 'yue2-vocal', stage: 'lead', file: lead.units[r.from]!.take, seed: lead.units[r.from]!.seed });
+  for (const t of repeatsTakes) wanted.push({ segment: t.segment, track: t.track, kind: t.kind, stage: 'repeats', file: t.file });
 
   mkdirSync(ctx.takesDir, { recursive: true });
   const stored = new Map<string, { sha256: string; durationSeconds: number }>();
   const takes: SungTake[] = [];
   for (const w of wanted) {
     if (ctx.signal.aborted) throw new CancelledError();
-    let s = stored.get(w.file);
+    const key = `${w.stage}/${w.file}`;
+    let s = stored.get(key);
     if (!s) {
-      const src = join(ctx.filesDir, w.file);
+      const src = join(ctx.filesDir, w.stage, w.file);
       if (!existsSync(src)) throw new Error(`the take ${w.file} (${w.track} in ${w.segment}) was not among the files the vocal service's steps made`);
       const durationSeconds = wavSeconds(readFileSync(src), w.file);
-      const tmp = join(ctx.takesDir, `.${ctx.taskId}-${w.file}.ogg`);
+      const tmp = join(ctx.takesDir, `.${ctx.taskId}-${w.stage}-${w.file}.ogg`);
       await encodeOgg(ctx.ffmpegBin, src, tmp);
       const sha256 = createHash('sha256').update(readFileSync(tmp)).digest('hex');
       const dest = join(ctx.takesDir, `${sha256}.ogg`);
       if (existsSync(dest)) unlinkSync(tmp);
       else renameSync(tmp, dest);
       s = { sha256, durationSeconds };
-      stored.set(w.file, s);
+      stored.set(key, s);
     }
     takes.push({
       segment: w.segment,

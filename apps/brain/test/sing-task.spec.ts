@@ -3,7 +3,7 @@
 // goes in only while the sung sections are as they were sung; cancel (queued and running), a lost job, a restart that
 // finds the job lost; Write lyrics and Write melody refuse while a song is being sung.
 
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -114,7 +114,8 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(ids[0]).toBe('plan');
     expect(ids.at(-1)).toBe('store-takes');
     const backing = ids.indexOf('backing-lines');
-    expect(ids.slice(1, backing).every((s) => /^(yue2|choose):/u.test(s))).toBe(true);
+    expect(ids.slice(1, backing).every((s) => /^(yue2|separate|chords|transcribe|choose):/u.test(s))).toBe(true);
+    expect(ids).toContain('yue2:chorus1:s3');
     expect(ids.slice(backing + 1, -1)).toContain('levels');
     expect(ids.slice(1, backing).length).toBeGreaterThan(0);
     expect(task.steps.every((s) => s.state === 'done')).toBe(true);
@@ -132,14 +133,26 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(backings.length).toBeGreaterThan(0);
     expect(backings.every((b) => /^Backing vocals [12]$/u.test(b.track) && b.voice === 'chorus1_section.wav')).toBe(true);
 
-    // A step's file, copied when the step finished.
+    // A step's file, copied when the step finished, under its stage.
     const choose = task.steps.find((s) => s.id === 'choose:chorus1')!;
-    expect(choose.files).toEqual(['chorus1_section.wav']);
-    const file = await fetch(`${h.url}/api/tasks/${taskId}/files/chorus1_section.wav`);
+    expect(choose.files).toEqual(['lead/chorus1_section.wav', 'lead/chorus1_melody.json']);
+    const file = await fetch(`${h.url}/api/tasks/${taskId}/files/lead/chorus1_section.wav`);
     expect(file.status).toBe(200);
     expect(Buffer.from(await file.arrayBuffer()).toString('ascii', 0, 4)).toBe('RIFF');
-    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/nothing.wav`)).status).toBe(404);
-    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/..%2Fsecret`)).status).toBe(400);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/repeats/chorus1_section.wav`)).status).toBe(404);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/lead/nothing.wav`)).status).toBe(404);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/lead/..%2Fsecret`)).status).toBe(400);
+    expect((await fetch(`${h.url}/api/tasks/${taskId}/files/other/chorus1.abc`)).status).toBe(400);
+
+    // A name several steps of one job list (the unit's score, in each seed's take step) is one file, fetched once;
+    // the ad-lib unit's score in the repeats job is that job's own file.
+    expect(task.steps.filter((s) => s.files?.includes('lead/chorus1.abc'))).toHaveLength(3);
+    expect(svc.fileFetches.filter((f) => f === `${svc.jobs[0]!.id}/chorus1.abc`)).toHaveLength(1);
+    expect(svc.fileFetches.filter((f) => f === `${svc.jobs[0]!.id}/chorus1_s1_vocals.wav`)).toHaveLength(1);
+    expect(task.steps.find((s) => s.id === 'adlibs:yue2:s2')!.files).toContain('repeats/chorus1_adlibs.abc');
+    expect(await (await fetch(`${h.url}/api/tasks/${taskId}/files/repeats/chorus1_adlibs.abc`)).text()).toBe(`chorus1_adlibs.abc of ${svc.jobs[1]!.id}`);
+    // Copies are written whole under their name: no temporary file is left.
+    for (const stage of ['lead', 'repeats']) expect(readdirSync(join(dir, 'files', taskId, stage)).some((f) => f.includes('.part-'))).toBe(false);
   });
 
   it('fails on apply when a sung section changed (a chord in chorus1)', async () => {
@@ -248,6 +261,26 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(again.body.message).toBe('Already singing');
     svc.release('lead');
     await h.tasks.idle();
+  });
+
+  it('a failed sing is not started again while another sing runs on the song', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    svc.hold('lead');
+    const first = ((await startSing(h, id, song)).body.task as TaskJson).id;
+    await waitFor('the first lead job', () => svc.jobs.length === 1);
+    expect((await send('POST', `${h.url}/api/tasks/${first}/cancel`)).status).toBe(200);
+    await h.tasks.idle();
+    const second = await startSing(h, id, song);
+    expect(second.status).toBe(201);
+    await waitFor('the second lead job', () => svc.jobs.length === 2);
+    const retried = await send('POST', `${h.url}/api/tasks/${first}/retry`);
+    expect(retried.status).toBe(409);
+    expect(retried.body.message).toBe('Already singing');
+    expect(await taskOf(h, first)).toMatchObject({ state: 'failed', message: 'Cancelled' });
+    svc.release('lead');
+    await h.tasks.idle();
+    expect(svc.jobs.filter((j) => j.stage === 'lead')).toHaveLength(2);
   });
 
   it('refuses to sing without written lyrics', async () => {

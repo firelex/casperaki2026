@@ -1,7 +1,8 @@
 // An in-process stand-in for the vocals service (svc-vocals on the serving harness): the harness's job contract
 // (POST /generate, GET /result, GET /file, POST /cancel; an unknown job answers 404 {"error": "unknown job"}) with
 // scripted stages. Each poll of /result finishes one more step; a held stage stays on its first step until released.
-// The lead stage "sings" each unit exactly as written (its melody is the unit's notes with their words), so copies
+// Steps and their files are named as pipeline/lead.py and pipeline/repeats.py name them (3 seeds per YuE2 unit, each
+// seed's take listing the unit's shared score and lyrics). The lead stage "sings" each unit exactly as written (its melody is the unit's notes with their words), so copies
 // follow their unit note for note; the repeats stage makes one take per copy, backing line, extension and the ad-libs.
 
 import { createServer, type IncomingMessage, type Server } from 'node:http';
@@ -27,6 +28,8 @@ export interface FakeVocalsService {
   readonly cancels: string[];
   /** Job ids /result was asked for, in order. */
   readonly polls: string[];
+  /** "<job>/<name>" of every step file sent, in order. */
+  readonly fileFetches: string[];
   /** Keeps jobs of a stage on their first step until `release`. */
   hold(stage: string): void;
   release(stage: string): void;
@@ -61,12 +64,28 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/gu, '_').replace
 
 type Unit = { id: string; notes: { start: number; duration: number; midi: number }[]; words: string[][]; phonemes: string[][][] };
 
+const SEEDS = [1, 2, 3];
+
+/** The yue2 / separate / chords steps of some units, named and listing files as pipeline/lead.py does (the unit's
+ *  score and lyrics listed by every seed's take). */
+function takeSteps(units: readonly string[], id: (phase: string, uid: string, seed: number) => string): Job['script'] {
+  return [
+    ...units.flatMap((u) => SEEDS.map((n) => ({ id: id('yue2', u, n), label: `Sing ${u} (take ${n})`, files: [`${u}_s${n}.wav`, `${u}.abc`, `${u}_lyrics.txt`] }))),
+    ...units.flatMap((u) => SEEDS.map((n) => ({ id: id('separate', u, n), label: `Separate the voice of ${u} (take ${n})`, files: [`${u}_s${n}_vocals.wav`, `${u}_s${n}_backing.wav`] }))),
+    ...units.flatMap((u) => SEEDS.map((n) => ({ id: id('chords', u, n), label: `Check the chords of ${u} (take ${n})`, numbers: { chords_match: 0.9 }, files: [`${u}_s${n}_chords.json`] }))),
+  ];
+}
+
 function leadScript(params: Record<string, unknown>) {
   const units = params['units'] as Unit[];
-  const script = units.flatMap((u) => [
-    { id: `yue2:${u.id}:s1`, label: `YuE2 sings ${u.id} (seed 1)`, files: [`${u.id}_s1.wav`] },
-    { id: `choose:${u.id}`, label: `Choose the take of ${u.id}`, numbers: { seed: 1, chords_match: 0.9, notes: u.notes.length }, files: [`${u.id}_section.wav`] },
-  ]);
+  const script: Job['script'] = [
+    ...takeSteps(units.map((u) => u.id), (phase, uid, seed) => `${phase}:${uid}:s${seed}`),
+    ...units.flatMap((u) => [
+      // the transcription lists the separated vocal the separate step listed already
+      { id: `transcribe:${u.id}:s1`, label: `Write down the sung melody of ${u.id} (take 1)`, numbers: { notes: u.notes.length }, files: [`${u.id}_s1_vocals.wav`] },
+      { id: `choose:${u.id}`, label: `Choose the take of ${u.id}`, numbers: { seed: 1, chords_match: 0.9, notes: u.notes.length }, files: [`${u.id}_section.wav`, `${u.id}_melody.json`] },
+    ]),
+  ];
   const result = {
     units: Object.fromEntries(
       units.map((u) => {
@@ -80,31 +99,42 @@ function leadScript(params: Record<string, unknown>) {
   return { script, result };
 }
 
+/** The repeats stage's steps in pipeline/repeats.py's order and file names. */
 function repeatsScript(params: Record<string, unknown>) {
   const copies = params['copies'] as { segment: string }[];
   const backings = params['backings'] as { segment: string; track: string }[];
   const extensions = params['extensions'] as { segment: string }[];
-  const adlibs = params['adlibs'] as { segments: string[] } | null;
+  const adlibs = params['adlibs'] as { segments: string[]; chorus_unit: string } | null;
   const takes: { segment: string; track: string; kind: string; file: string; durationSeconds: number }[] = [];
-  const script: Job['script'] = [];
-  for (const c of copies) {
-    script.push({ id: `soulx:${c.segment}`, label: `SoulX sings ${c.segment}` });
-    takes.push({ segment: c.segment, track: 'Vocal', kind: 'soulx-vocal', file: `take_${c.segment}_vocal.wav`, durationSeconds: 0.5 });
+  const sung = [
+    ...copies.map((c) => ({ segment: c.segment, track: 'Vocal', tag: c.segment, sing: `soulx:${c.segment}`, svc: `svc:${c.segment}`, chain: `chain:${c.segment}`, take: `take_${c.segment}_vocal.wav` })),
+    ...backings.map((b) => {
+      const tag = `${b.segment}_${slug(b.track)}`;
+      return { segment: b.segment, track: b.track, tag, sing: `backing:${b.track}:${b.segment}`, svc: `svc:${b.track}:${b.segment}`, chain: `chain:${b.track}:${b.segment}`, take: `take_${tag}.wav` };
+    }),
+  ];
+  const script: Job['script'] = [
+    ...sung.map((x) => ({ id: x.sing, label: `SoulX sings ${x.track} in ${x.segment}`, files: [`${x.tag}_soulx.wav`] })),
+    ...sung.map((x) => ({ id: x.svc, label: `Convert ${x.track} in ${x.segment}`, files: [`${x.tag}_svc.wav`] })),
+  ];
+  if (adlibs) {
+    const uid = `${adlibs.chorus_unit}_adlibs`;
+    script.push(...takeSteps([uid], (phase, _u, seed) => `adlibs:${phase}:s${seed}`));
+    script.push({ id: 'adlibs:choose', label: 'Choose the ad-lib take', numbers: { seed: 1, chords_match: 0.9 }, files: ['adlibs_section.wav'] });
   }
-  for (const b of backings) {
-    script.push({ id: `backing:${b.track}:${b.segment}`, label: `SoulX sings ${b.track} in ${b.segment}` });
-    takes.push({ segment: b.segment, track: b.track, kind: 'soulx-vocal', file: `take_${b.segment}_${slug(b.track)}.wav`, durationSeconds: 0.5 });
-  }
+  script.push(...sung.map((x) => ({ id: x.chain, label: `Vocal chain on ${x.track} in ${x.segment}`, files: [`${x.tag}_chain.wav`] })));
   for (const e of extensions) {
-    script.push({ id: `extension:${e.segment}`, label: `Extension of ${e.segment}`, files: [`take_${e.segment}_ext.wav`] });
+    script.push({ id: `extension:${e.segment}`, label: `Join the extra bars of ${e.segment}`, files: [`take_${e.segment}_ext.wav`] });
     takes.push({ segment: e.segment, track: 'Vocal', kind: 'yue2-vocal', file: `take_${e.segment}_ext.wav`, durationSeconds: 0.5 });
   }
+  if (adlibs) script.push({ id: 'adlibs:gate', label: 'Keep the ad-libs in the gaps of the chorus', files: ['adlibs_gated.wav'] });
+  const levelled = sung.map((x) => x.take);
+  for (const x of sung) takes.push({ segment: x.segment, track: x.track, kind: 'soulx-vocal', file: x.take, durationSeconds: 0.5 });
   if (adlibs) {
-    script.push({ id: 'adlibs:gate', label: 'Keep the ad-libs in the gaps' });
-    for (const s of adlibs.segments) takes.push({ segment: s, track: 'Ad-libs', kind: 'yue2-vocal', file: 'take_adlibs.wav', durationSeconds: 0.5 });
+    levelled.push('take_adlibs.wav');
+    for (const seg of adlibs.segments) takes.push({ segment: seg, track: 'Ad-libs', kind: 'yue2-vocal', file: 'take_adlibs.wav', durationSeconds: 0.5 });
   }
-  const levelled = [...new Set(takes.filter((t) => !t.file.endsWith('_ext.wav')).map((t) => t.file))];
-  script.push({ id: 'levels', label: 'Levels', numbers: Object.fromEntries(levelled.map((f) => [`${f}_gain_db`, -6])), files: levelled });
+  script.push({ id: 'levels', label: 'Set the levels', numbers: Object.fromEntries(levelled.map((f) => [`${f}_gain_db`, -6])), files: levelled });
   return { script, result: { takes } };
 }
 
@@ -118,6 +148,7 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
   const jobs: Job[] = [];
   const cancels: string[] = [];
   const polls: string[] = [];
+  const fileFetches: string[] = [];
   const held = new Set<string>();
   let lost = false;
   let n = 0;
@@ -169,8 +200,13 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
           return send(200, job.result);
         }
         if (!job.shown.some((s) => s.files.includes(name))) return send(404, { error: `file '${name}' was not listed by any step of this job` });
-        res.writeHead(200, { 'content-type': 'audio/wav' });
-        return res.end(toneWav());
+        fileFetches.push(`${job.id}/${name}`);
+        if (name.endsWith('.wav')) {
+          res.writeHead(200, { 'content-type': 'audio/wav' });
+          return res.end(toneWav());
+        }
+        res.writeHead(200, { 'content-type': 'text/plain' });
+        return res.end(`${name} of ${job.id}`);
       }
       if (req.method === 'POST' && u.pathname === '/cancel') {
         const job = jobOf();
@@ -191,6 +227,7 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
     jobs,
     cancels,
     polls,
+    fileFetches,
     hold: (stage) => void held.add(stage),
     release: (stage) => void held.delete(stage),
     lose: () => {

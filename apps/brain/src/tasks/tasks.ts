@@ -23,7 +23,7 @@ import type { ChatModel } from '../llm/chatModel.js';
 import { writeLyrics } from '../lyrics/lyricist.js';
 import { defaultTitle } from '../routes/songs.js';
 import { planSinging, SingError } from '../sing/plan.js';
-import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SongChangedError } from '../sing/singTask.js';
+import { checkUnchanged, isPlainFileName, runSing, SING_STAGES, SingResultSchema, SongChangedError } from '../sing/singTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
 
@@ -78,6 +78,17 @@ export class BackgroundTasks {
   /** Starts a task on the owner's project `songId` from the posted working song. */
   start(ownerId: string, songId: string, kind: TaskKind, song: Song): TaskRow {
     const { store } = this.deps;
+    this.checkCanStart(ownerId, songId, kind, song);
+    const id = randomUUID();
+    store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock() });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
+    this.enqueue(ownerId, id, kind);
+    return store.getTask(ownerId, id)!;
+  }
+
+  /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
+  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song): void {
+    const { store } = this.deps;
     if (!store.getProject(ownerId, songId)) throw new TaskError(404, 'not_found', 'There is no such song.');
     if (kind === 'writeLyrics') {
       if (this.isSinging(ownerId, songId)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
@@ -97,19 +108,15 @@ export class BackgroundTasks {
         throw err;
       }
     }
-    const id = randomUUID();
-    store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock() });
-    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
-    this.enqueue(ownerId, id, kind);
-    return store.getTask(ownerId, id)!;
   }
 
-  /** Starts a failed task again, from the same song. */
+  /** Starts a failed task again, from the same song (with the same checks as a start). */
   retry(ownerId: string, id: string): TaskRow {
     const { store } = this.deps;
     const task = store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
+    this.checkCanStart(ownerId, task.songId, task.kind, parseSong(JSON.parse(task.input)));
     store.setTaskSteps(id, []);
     store.setTaskJobs(id, null);
     store.setTaskState(id, { state: 'running', result: null, message: null, finishedAt: null, startedAt: this.deps.clock() });
@@ -171,13 +178,14 @@ export class BackgroundTasks {
   }
 
   /** The path of a file a step of the owner's task made (a TaskError when there is none). */
-  stepFile(ownerId: string, id: string, name: string): string {
+  stepFile(ownerId: string, id: string, stage: string, name: string): string {
+    if (!(SING_STAGES as readonly string[]).includes(stage)) throw new TaskError(400, 'bad_stage', `"${stage}" is not a stage (${SING_STAGES.join(', ')}).`);
     if (!isPlainFileName(name)) throw new TaskError(400, 'bad_name', `"${name}" is not a file name.`);
     const task = this.deps.store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     if (!this.deps.sing) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
-    const path = join(resolve(this.deps.sing.filesDir), id, name);
-    if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
+    const path = join(resolve(this.deps.sing.filesDir), id, stage, name);
+    if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
     return path;
   }
 
