@@ -49,7 +49,8 @@ describe('the Vocal track menu', () => {
   });
   it('Sing waits while the lyrics are being written (running or waiting its turn)', () => {
     expect(vocalMenu({ ...base, lyricsTask: singTask({ kind: 'writeLyrics' }) }).sing).toEqual({ label: 'Sing', disabled: true, hint: 'Already writing lyrics' });
-    expect(vocalMenu({ ...base, lyricsTask: singTask({ kind: 'writeLyrics', state: 'ready' }) }).sing).toMatchObject({ disabled: false });
+    // Lyrics written and waiting to go in: Sing waits for them (it would sing the old words).
+    expect(vocalMenu({ ...base, lyricsTask: singTask({ kind: 'writeLyrics', state: 'ready' }) }).sing).toMatchObject({ disabled: true, hint: 'new lyrics go in when playback stops' });
   });
   it('says Sing again when the song has sung takes', () => {
     expect(vocalMenu({ ...base, hasSungTakes: true }).sing).toMatchObject({ label: 'Sing again', disabled: false });
