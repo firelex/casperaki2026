@@ -13,6 +13,7 @@ import { generatorParams } from '@casperaki/arrangement';
 import { isTakeFresh, SUNG_TAKE_KINDS, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
+import { backingShift } from '../src/sing/singTask.js';
 import { loadConfig } from '../src/config.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
@@ -66,8 +67,8 @@ async function waitFor(what: string, cond: () => boolean | Promise<boolean>): Pr
 // tests that only need a sing under way use other seeds.
 
 /** A saved project whose song has a melody and written lyrics (Write melody, then a Write lyrics task applied). */
-async function songWithLyrics(h: Harness, seed: string): Promise<{ id: string; song: Song }> {
-  const made = await send('POST', `${h.url}/api/songs/generate`, { genre: 'brightPop', key: 'C', bpm: 110, seed });
+async function songWithLyrics(h: Harness, seed: string, genre = 'brightPop', bpm = 110): Promise<{ id: string; song: Song }> {
+  const made = await send('POST', `${h.url}/api/songs/generate`, { genre, key: 'C', bpm, seed });
   const edited = await send('POST', `${h.url}/api/tracks/edit`, { song: made.body.song, op: { kind: 'writeMelody' } });
   expect(edited.status).toBe(200);
   const task = (await send('POST', `${h.url}/api/tasks`, { kind: 'writeLyrics', songId: made.body.id, song: edited.body.song })).body.task as TaskJson;
@@ -256,5 +257,44 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     const r = await startSing(h, made.body.id as string, edited.body.song as Song);
     expect(r.status).toBe(422);
     expect(r.body.message).toBe('Write lyrics first');
+  });
+
+  it('sings each backing line at its own octave, inside F3-A5 (edm: Backing vocals 1 in chorus1 below F3 goes up an octave)', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    // edm, seed sing-j at 128 bpm: the chorus lead sits around D4-E5, Backing vocals 1 an octave and more under it.
+    const { id, song } = await songWithLyrics(h, 'sing-j', 'edm', 128);
+    const taskId = ((await startSing(h, id, song)).body.task as TaskJson).id;
+    await h.tasks.idle();
+    expect(await taskOf(h, taskId)).toMatchObject({ state: 'ready' });
+    const lead = svc.jobs[0]!.params as { octave: number };
+    const { backings } = svc.jobs[1]!.params as { backings: { track: string; segment: string; notes: { midi: number }[] }[] };
+    expect(backings.length).toBeGreaterThan(0);
+    for (const b of backings) for (const n of b.notes) expect(n.midi + lead.octave).toBeGreaterThanOrEqual(53);
+    for (const b of backings) for (const n of b.notes) expect(n.midi + lead.octave).toBeLessThanOrEqual(81);
+    const b1 = backings.find((b) => b.track === 'Backing vocals 1' && b.segment === 'chorus1')!;
+    const lane = (song.arrangement['chorus1']!.overrides['Backing vocals 1']!.bars as { notes: Record<string, { type?: string; note: number }[]> }[])
+      .flatMap((bar) => Object.values(bar.notes).flat())
+      .filter((e) => e.type === 'vocalNote')
+      .map((e) => e.note);
+    expect(Math.min(...lane) + lead.octave).toBeLessThan(53);
+    expect(Math.min(...b1.notes.map((n) => n.midi))).toBe(Math.min(...lane) + 12);
+  });
+});
+
+describe('backingShift: a backing line\'s own octave', () => {
+  it('moves a line below F3 up an octave, toward the lead', () => {
+    expect(backingShift([43, 50, 55, 60], [60, 67, 72, 76], 0, 'Backing vocals 1 in chorus1')).toBe(12);
+  });
+  it('keeps a line that fits and sits nearest the lead where it is', () => {
+    expect(backingShift([60, 62, 64], [64, 67, 69], 0, 'Backing vocals 2 in chorus1')).toBe(0);
+  });
+  it('takes the lower shift on a tie', () => {
+    expect(backingShift([60], [66], 0, 'Backing vocals 1 in chorus1')).toBe(0);
+    expect(backingShift([48], [54], 12, 'Backing vocals 1 in chorus1')).toBe(0);
+  });
+  it('fails naming the track, the section and the line\'s range when no shift fits', () => {
+    expect(() => backingShift([40, 75], [60], 0, 'Backing vocals 2 in bridge1')).toThrow(
+      'Backing vocals 2 in bridge1 spans E2-D#5, which no octave shift puts within the singable range F3-A5',
+    );
   });
 });

@@ -250,12 +250,12 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
 
   const sung = await log.run('backing-lines', async () => {
     const value = backingLines(input, plan, lead, leadJob);
-    const backings = value.params.backings as { track: string; segment: string }[];
+    const backings = value.params.backings as unknown[];
     return {
       value,
       text:
         `Sung melody in ${Object.keys(value.melody).length} sections; backing vocal lines: ` +
-        (backings.length > 0 ? backings.map((b) => `${b.track} in ${b.segment}`).join(', ') : 'none') +
+        (value.shifts.length > 0 ? value.shifts.join(', ') : 'none') +
         (value.adlibNote ? `; ${value.adlibNote}` : ''),
       numbers: { sections: Object.keys(value.melody).length, backingLines: backings.length },
     };
@@ -340,7 +340,7 @@ export function backingLines(
   plan: SingPlan,
   lead: LeadJson,
   leadJob: string,
-): { melody: SungMelody; params: Record<string, unknown>; adlibNote?: string } {
+): { melody: SungMelody; params: Record<string, unknown>; shifts: string[]; adlibNote?: string } {
   const extUnits = new Set(plan.extensions.map((e) => e.unit));
   const sungOf = (unit: string) => lead.units[unit]!.melody;
   const melody: SungMelody = {};
@@ -365,18 +365,21 @@ export function backingLines(
   const regenerated = orchestrate({ ...gp, params: { ...(gp.params ?? {}), [SUNG_MELODY_PARAM]: melody } });
   const order = input.songStructure.map((s) => s.name).filter((name) => melody[name] !== undefined);
   const backings: Record<string, unknown>[] = [];
+  /** Each line with its own octave shift (semitones), for the step's text. */
+  const shifts: string[] = [];
   for (const segment of order) {
     for (const track of BACKING_TRACKS) {
       const notes = laneNotes(regenerated, segment, track);
       if (notes.length === 0) continue;
-      const lo = Math.min(...notes.map((n) => n.midi));
-      const hi = Math.max(...notes.map((n) => n.midi));
-      if (lo + plan.octave < LOWEST_SUNG || hi + plan.octave > HIGHEST_SUNG) {
-        throw new SingError(
-          `${track} in ${segment} spans ${noteName(lo + plan.octave)}-${noteName(hi + plan.octave)} as sung, outside the singable range ${noteName(LOWEST_SUNG)}-${noteName(HIGHEST_SUNG)}`,
-        );
-      }
-      backings.push({ track, segment, section_bars: sectionBars(input, segment), notes, voice });
+      const delta = backingShift(
+        notes.map((n) => n.midi),
+        melody[segment]!.map((n) => n.midi),
+        plan.octave,
+        `${track} in ${segment}`,
+      );
+      const shifted = notes.map((n) => ({ ...n, midi: n.midi + delta }));
+      shifts.push(`${track} in ${segment}${delta === 0 ? '' : ` ${delta > 0 ? '+' : ''}${delta}`}`);
+      backings.push({ track, segment, section_bars: sectionBars(input, segment), notes: shifted, voice });
     }
   }
 
@@ -412,7 +415,42 @@ export function backingLines(
     adlibs,
     levels: { reference: voice, backing_db: BACKING_DB, adlib_db: ADLIB_DB },
   };
-  return { melody, params, ...(adlibNote ? { adlibNote } : {}) };
+  return { melody, params, shifts, ...(adlibNote ? { adlibNote } : {}) };
+}
+
+const median = (xs: readonly number[]): number => {
+  const v = [...xs].sort((a, b) => a - b);
+  const mid = v.length / 2;
+  return v.length % 2 ? v[Math.floor(mid)]! : (v[mid - 1]! + v[mid]!) / 2;
+};
+
+/** Whole-octave shifts a backing line may take on top of the song's octave, lowest first (a tie goes to the lower). */
+const BACKING_SHIFTS = [-24, -12, 0, 12, 24] as const;
+
+/**
+ * A backing line's own octave (semitones added to its lane notes before they go to the repeats stage, which sings
+ * them at lane + the song's octave): the shift whose median sung note is nearest the lead's sung median in the same
+ * section, among shifts that keep every note of the line within F3..A5; a tie goes to the lower shift. No shift fits →
+ * SingError naming the line (`where`: "<track> in <section>") and its range as sung at the song's octave.
+ */
+export function backingShift(line: readonly number[], lead: readonly number[], octave: number, where: string): number {
+  if (line.length === 0) throw new Error(`${where}: a backing line without notes`);
+  if (lead.length === 0) throw new Error(`${where}: no sung lead in the section to place the backing line against`);
+  const lo = Math.min(...line);
+  const hi = Math.max(...line);
+  const leadMedian = median(lead) + octave;
+  const lineMedian = median(line) + octave;
+  let best: number | undefined;
+  for (const d of BACKING_SHIFTS) {
+    if (lo + octave + d < LOWEST_SUNG || hi + octave + d > HIGHEST_SUNG) continue;
+    if (best === undefined || Math.abs(lineMedian + d - leadMedian) < Math.abs(lineMedian + best - leadMedian)) best = d;
+  }
+  if (best === undefined) {
+    throw new SingError(
+      `${where} spans ${noteName(lo + octave)}-${noteName(hi + octave)}, which no octave shift puts within the singable range ${noteName(LOWEST_SUNG)}-${noteName(HIGHEST_SUNG)}`,
+    );
+  }
+  return best;
 }
 
 /** Length of a WAV file in seconds (from its fmt and data chunks). */
