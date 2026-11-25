@@ -13,7 +13,10 @@
 //     service's stage for the voice alone (BS-RoFormer); a clean recording is read as it is.
 //   words       with lyrics: the found notes take the lane's words and phonemes in order (one per note); without:
 //     the lane's words (the phrase bank's) are attached as the generator attaches them (laneWordsOn).
-// Notes come back in the lane's register: sung pitch minus the song's octave (the shift Sing would sing it at).
+// Notes come back in the lane's register: the transcription (at sung pitch; pitch-only notes snapped to the song's key,
+// as the vocals stage snaps its own) moved by the whole octaves (-24..+24) that put its median nearest the median of
+// the section's Vocal-lane notes (`laneOctaveShift`; a tie goes to the higher), so anyone's voice lands where the
+// lane is.
 
 import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
@@ -22,12 +25,42 @@ import { join } from 'node:path';
 import { z } from 'zod';
 
 import { generatorParams, laneWordsOn, type SungNote } from '@casperaki/arrangement';
+import { parseKey, scalePitchClasses } from '@casperaki/music-theory';
 import type { Song } from '@casperaki/song-schema';
 
 import type { TaskJobs, TaskStep } from '../store.js';
-import { songOctave } from './plan.js';
 import { CancelledError, followJob, laneNotes, wavSeconds, writeAtomic, type SingResult } from './singTask.js';
 import { JobLostError, type VocalsClient } from './vocalsClient.js';
+
+/** Whole-octave shifts a transcription may take to land in the lane's register, lowest first. */
+const OCTAVE_SHIFTS = [-24, -12, 0, 12, 24] as const;
+
+const median = (xs: readonly number[]): number => {
+  if (xs.length === 0) throw new Error('median of no notes');
+  const v = [...xs].sort((a, b) => a - b);
+  const mid = v.length / 2;
+  return v.length % 2 ? v[Math.floor(mid)]! : (v[mid - 1]! + v[mid]!) / 2;
+};
+
+/** The whole-octave shift (-24..+24) putting the median of `notes` nearest the median of `lane` (a tie: the higher). */
+export function laneOctaveShift(notes: readonly number[], lane: readonly number[]): number {
+  const target = median(lane);
+  const m = median(notes);
+  let best: number = OCTAVE_SHIFTS[0];
+  for (const d of OCTAVE_SHIFTS) if (Math.abs(m + d - target) <= Math.abs(m + best - target)) best = d;
+  return best;
+}
+
+/** The nearest note of the key's scale (a chromatic note goes to the closer neighbour, down on a tie), as the vocals
+ *  service's transcription snaps. */
+export function snapToKey(midi: number, key: string): number {
+  const pcs = scalePitchClasses(parseKey(key));
+  const inKey = (m: number) => pcs.includes(((m % 12) + 12) % 12);
+  if (inKey(midi)) return midi;
+  if (inKey(midi - 1)) return midi - 1;
+  if (inKey(midi + 1)) return midi + 1;
+  throw new Error(`snapToKey: ${midi} has no note of ${key} a semitone away`);
+}
 
 /** The largest recording accepted (decoded bytes): one section, not a whole song. */
 export const MAX_RECORDING_BYTES = 10 * 1024 * 1024;
@@ -163,8 +196,8 @@ function sectionBeats(song: Song, segment: string): number {
 }
 
 /**
- * The hum service's notes (seconds from the section's first beat, sung pitch) on our 16th grid, in the lane's register
- * (minus `octave`): starts and ends rounded to 16ths (at least a 16th long); two notes starting on one 16th keep the
+ * The hum service's notes (seconds from the section's first beat, sung pitch) on our 16th grid, snapped to `key`
+ * (still at sung pitch): starts and ends rounded to 16ths (at least a 16th long); two notes starting on one 16th keep the
  * longer (as hum to song does); notes starting outside the section are left out; each lasts at most until
  * the next note and the section's end.
  */
@@ -172,12 +205,12 @@ export function humNotesOnGrid(
   notes: readonly { onsetSec: number; offsetSec: number; midi: number }[],
   bpm: number,
   beats: number,
-  octave: number,
+  key: string,
   segment: string,
 ): { start: number; duration: number; midi: number }[] {
   const q = (sec: number) => Math.round((sec * bpm * 4) / 60) / 4;
   const on = notes
-    .map((n) => ({ start: q(n.onsetSec), end: q(n.offsetSec), midi: Math.round(n.midi) - octave }))
+    .map((n) => ({ start: q(n.onsetSec), end: q(n.offsetSec), midi: snapToKey(Math.round(n.midi), key) }))
     .map((n) => ({ ...n, duration: Math.max(0.25, n.end - n.start) }))
     .filter((n) => n.start >= 0 && n.start < beats)
     .sort((a, b) => a.start - b.start);
@@ -193,7 +226,6 @@ export function humNotesOnGrid(
   if (kept.length === 0) throw new Error(`No notes were heard in the recording of ${segment}.`);
   return kept.map((n, i) => {
     const limit = (kept[i + 1]?.start ?? beats) - n.start;
-    if (n.midi < 0 || n.midi > 127) throw new Error(`${segment}: a note at beat ${n.start} lands outside MIDI 0-127 (${n.midi})`);
     return { ...n, duration: Math.min(n.duration, limit) };
   });
 }
@@ -206,7 +238,6 @@ export async function runTranscribe(ctx: TranscribeContext): Promise<SingResult>
   const log = new Steps(ctx, needs.hum);
   const inputDir = join(ctx.filesDir, 'input');
   if (ctx.jobs === null) rmSync(join(ctx.filesDir, 'transcribe'), { recursive: true, force: true });
-  const octave = songOctave(input);
   const beats = sectionBeats(input, segment);
   const lane = laneNotes(input, segment, LEAD_TRACK);
   if (lane.length === 0) throw new Error(`${segment} has no notes in the Vocal lane`);
@@ -233,7 +264,7 @@ export async function runTranscribe(ctx: TranscribeContext): Promise<SingResult>
         section: segment,
         bpm: input.bpm,
         key: input.key,
-        octave,
+        octave: 0, // notes come back at sung pitch; the brain moves them to the lane's octave
         section_beats: beats,
         count: needs.hum ? null : lane.length,
         has_backing: options.hasBacking,
@@ -268,24 +299,34 @@ export async function runTranscribe(ctx: TranscribeContext): Promise<SingResult>
       const res = await fetch(`${url.replace(/\/+$/u, '')}/transcribe`, { method: 'POST', body: form, signal: ctx.signal });
       if (!res.ok) throw new Error(`the hum service answered ${res.status}: ${await res.text()}`);
       const answer = HumAnswerSchema.parse(await res.json());
-      const value = humNotesOnGrid(answer.notes, input.bpm, beats, octave, segment);
+      const value = humNotesOnGrid(answer.notes, input.bpm, beats, input.key, segment);
       return { value, text: `${value.length} notes (${answer.notes.length} heard)`, numbers: { notes: value.length, heard: answer.notes.length } };
     });
   }
 
   const melody = await log.run('words', async () => {
+    const sung = pitchOnly ?? stage?.notes;
+    if (!sung) throw new Error(`the vocal service sent no notes for ${segment}`);
+    const shift = laneOctaveShift(
+      sung.map((n) => n.midi),
+      lane.map((n) => n.midi),
+    );
+    const notes = sung.map((n) => {
+      const midi = n.midi + shift;
+      if (midi < 0 || midi > 127) throw new Error(`${segment}: a note at beat ${n.start} lands outside MIDI 0-127 (${midi})`);
+      return { start: n.start, duration: n.duration, midi };
+    });
     let value: SungNote[];
     if (pitchOnly) {
       const bars = input.arrangement[segment]?.overrides?.[LEAD_TRACK]?.bars;
       if (!bars) throw new Error(`${segment} has no Vocal lane`);
-      value = laneWordsOn(segment, bars, pitchOnly);
+      value = laneWordsOn(segment, bars, notes);
     } else {
-      const notes = stage?.notes;
-      if (!notes) throw new Error(`the vocal service sent no notes for ${segment}`);
       if (notes.length !== lane.length) throw new Error(`${segment}: the vocal service found ${notes.length} notes for the lane's ${lane.length}`);
-      value = notes.map((n, i) => ({ start: n.start, duration: n.duration, midi: n.midi, word: lane[i]!.word, phonemes: [...lane[i]!.phonemes] }));
+      value = notes.map((n, i) => ({ ...n, word: lane[i]!.word, phonemes: [...lane[i]!.phonemes] }));
     }
-    return { value, text: `${value.length} notes with the ${pitchOnly ? "lane's" : 'written'} words`, numbers: { notes: value.length } };
+    const moved = shift === 0 ? 'as sung' : `moved ${shift > 0 ? 'up' : 'down'} ${Math.abs(shift) / 12} octave${Math.abs(shift) === 12 ? '' : 's'} to the lane`;
+    return { value, text: `${value.length} notes with the ${pitchOnly ? "lane's" : 'written'} words, ${moved}`, numbers: { notes: value.length, octaveShift: shift } };
   });
   return { melody: { [segment]: melody }, takes: [] };
 }

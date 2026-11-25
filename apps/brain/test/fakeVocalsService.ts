@@ -30,6 +30,8 @@ export interface FakeVocalsService {
   readonly polls: string[];
   /** "<job>/<name>" of every step file sent, in order. */
   readonly fileFetches: string[];
+  /** The sung pitch of the transcribe stage's i-th note (default 60 + i % 5). */
+  setTranscribeMidi(fn: (i: number) => number): void;
   /** Keeps jobs of a stage on their first step until `release`. */
   hold(stage: string): void;
   release(stage: string): void;
@@ -139,9 +141,9 @@ function repeatsScript(params: Record<string, unknown>) {
 }
 
 /** The transcribe stage (pipeline/transcribe.py run): its steps, and as notes `count` 16ths spread evenly over the
- *  section (start i * section_beats / count on the 16th grid, a 16th long, midi 60 + i % 5); with no count, only the
+ *  section (start i * section_beats / count on the 16th grid, a 16th long, midi from setTranscribeMidi); with no count, only the
  *  voice. */
-function transcribeScript(params: Record<string, unknown>) {
+function transcribeScript(params: Record<string, unknown>, midiOf: (i: number) => number) {
   const section = String(params['section']);
   const count = params['count'] as number | null;
   const beats = params['section_beats'] as number;
@@ -153,7 +155,7 @@ function transcribeScript(params: Record<string, unknown>) {
   }
   let notes: { start: number; duration: number; midi: number }[] | null = null;
   if (count !== null) {
-    notes = Array.from({ length: count }, (_, i) => ({ start: Math.floor((i * beats * 4) / count) / 4, duration: 0.25, midi: 60 + (i % 5) }));
+    notes = Array.from({ length: count }, (_, i) => ({ start: Math.floor((i * beats * 4) / count) / 4, duration: 0.25, midi: midiOf(i) }));
     script.push({ id: `transcribe:${section}`, label: `Write down the sung melody of ${section}`, numbers: { notes: count }, files: [`${section}_melody.json`] });
   }
   return { script, result: { section, voice, notes } };
@@ -172,6 +174,7 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
   const fileFetches: string[] = [];
   const held = new Set<string>();
   let lost = false;
+  let transcribeMidi = (i: number) => 60 + (i % 5);
   let n = 0;
 
   /** One more step of a job (the next scripted one starts running, the running one finishes). */
@@ -200,7 +203,7 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
       if (req.method === 'POST' && u.pathname === '/generate') {
         const params = JSON.parse(await body(req)) as Record<string, unknown>;
         const stage = String(params['stage']);
-        const { script, result } = stage === 'lead' ? leadScript(params) : stage === 'transcribe' ? transcribeScript(params) : repeatsScript(params);
+        const { script, result } = stage === 'lead' ? leadScript(params) : stage === 'transcribe' ? transcribeScript(params, transcribeMidi) : repeatsScript(params);
         const job: Job = { id: `job${++n}`, stage, params, state: 'running', error: null, script, shown: [], result };
         jobs.push(job);
         return send(202, { job_id: job.id });
@@ -249,6 +252,9 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
     cancels,
     polls,
     fileFetches,
+    setTranscribeMidi: (fn) => {
+      transcribeMidi = fn;
+    },
     hold: (stage) => void held.add(stage),
     release: (stage) => void held.delete(stage),
     lose: () => {

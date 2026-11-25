@@ -23,7 +23,7 @@ import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
 import { writeLyrics } from '../lyrics/lyricist.js';
 import { defaultTitle } from '../routes/songs.js';
-import { planSinging, SingError, songOctave } from '../sing/plan.js';
+import { planSinging, SingError } from '../sing/plan.js';
 import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
 import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
@@ -31,6 +31,8 @@ import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
 
 /** The user-facing refusal while a song is being sung. */
 export const ALREADY_SINGING = 'Already singing';
+/** The user-facing refusal while a recording is being transcribed for the song (Sing and Transcribe exclude each other). */
+export const ALREADY_TRANSCRIBING = 'Already transcribing';
 
 /** Why a task cannot start or be applied: an HTTP status, a code and a message for the user. */
 export class TaskError extends Error {
@@ -127,6 +129,7 @@ export class BackgroundTasks {
     }
     if (kind === 'sing') {
       if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
+      if (store.runningTask(ownerId, songId, 'transcribe')) throw new TaskError(409, 'already_transcribing', ALREADY_TRANSCRIBING);
       if (!this.deps.sing) {
         throw new TaskError(503, 'no_vocals_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
       }
@@ -140,7 +143,7 @@ export class BackgroundTasks {
     if (kind === 'transcribe') {
       if (!options) throw new Error('checkCanStart: a transcribe task without its options');
       if (this.isSinging(ownerId, songId)) throw new TaskError(409, 'already_singing', ALREADY_SINGING);
-      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_transcribing', 'A recording is already being transcribed for this song.');
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_transcribing', ALREADY_TRANSCRIBING);
       const t = this.deps.transcribe;
       if (!t?.filesDir) throw new TaskError(503, 'no_task_files', 'Transcribe melody is not set up: the brain needs BRAIN_TASK_FILES_DIR.');
       if (!vocalMelodyShown(song)) throw new TaskError(422, 'no_melody', 'Write a melody first.');
@@ -153,12 +156,6 @@ export class BackgroundTasks {
       }
       if (needs.hum && !t.humServiceUrl) {
         throw new TaskError(503, 'no_hum_service', 'Transcribing a section without written lyrics needs the hum service: the brain needs HUM_SERVICE_URL.');
-      }
-      try {
-        songOctave(song);
-      } catch (err) {
-        if (err instanceof SingError) throw new TaskError(422, 'cannot_transcribe', err.message);
-        throw err;
       }
     }
   }

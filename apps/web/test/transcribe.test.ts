@@ -26,8 +26,12 @@ describe('Transcribe melody on the Vocal track menu', () => {
   });
   it('waits while singing, while one runs, and while one waits to go in', () => {
     expect(vocalMenu({ ...base, singTask: task({ kind: 'sing' }) }).transcribe).toEqual({ disabled: true, hint: 'Already singing' });
-    expect(vocalMenu({ ...base, transcribeTask: task({}) }).transcribe).toEqual({ disabled: true, hint: 'already transcribing' });
+    expect(vocalMenu({ ...base, transcribeTask: task({}) }).transcribe).toEqual({ disabled: true, hint: 'Already transcribing' });
     expect(vocalMenu({ ...base, transcribeTask: task({ state: 'ready' }) }).transcribe).toEqual({ disabled: true, hint: 'ready · goes in when you stop' });
+  });
+  it('Sing waits while a transcription runs, with the same reason', () => {
+    expect(vocalMenu({ ...base, lyricsWritten: true, transcribeTask: task({}) }).sing).toEqual({ label: 'Sing', disabled: true, hint: 'Already transcribing' });
+    expect(vocalMenu({ ...base, lyricsWritten: true, transcribeTask: task({ state: 'ready' }) }).sing).toMatchObject({ disabled: false });
   });
   it('names the task', () => {
     expect(TASK_LABELS.transcribe).toBe('Transcribe melody');

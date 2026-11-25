@@ -15,8 +15,8 @@ import { isTakeFresh, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
-import { songOctave } from '../src/sing/plan.js';
 import { laneNotes } from '../src/sing/singTask.js';
+import { humNotesOnGrid, laneOctaveShift } from '../src/sing/transcribeTask.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
 import { fakeLyricModel } from './fakeLyricModel.js';
@@ -32,7 +32,7 @@ interface FakeHum { url: string; forms: Record<string, string>[]; audioBytes: nu
 const BEAT = 60 / 110;
 const HUM_NOTES = [
   { onsetSec: 0.02, offsetSec: BEAT - 0.03, midi: 72 }, // beat 0, a beat long
-  { onsetSec: BEAT * 1.5, offsetSec: BEAT * 2.5, midi: 74 }, // beat 1.5, a beat long
+  { onsetSec: BEAT * 1.5, offsetSec: BEAT * 2.5, midi: 75 }, // beat 1.5, a beat long; D#5 snaps to D5 in C
   { onsetSec: BEAT * 1.52, offsetSec: BEAT * 1.6, midi: 70 }, // the same 16th: the longer one is kept
   { onsetSec: BEAT * 4, offsetSec: BEAT * 6.1, midi: 76 }, // beat 4 (bar 2), two beats
 ];
@@ -138,6 +138,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     hum = await startFakeHum();
   });
   afterEach(async () => {
+    for (const st of ['lead', 'repeats', 'transcribe']) svc.release(st);
     for (const b of brains.splice(0)) await b.stop();
     await svc.stop();
     await hum.stop();
@@ -166,7 +167,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const job = svc.jobs.at(-1)!;
     expect(job.stage).toBe('transcribe');
     expect(job.params).toMatchObject({
-      section: verse, bpm: 110, key: song.key, octave: songOctave(song), section_beats: sectionBeats(song, verse), count: before.length, has_backing: false,
+      section: verse, bpm: 110, key: song.key, octave: 0, section_beats: sectionBeats(song, verse), count: before.length, has_backing: false,
     });
     expect(Buffer.from(job.params['audio'] as string, 'base64').toString('ascii', 0, 4)).toBe('RIFF');
     expect((await fetch(`${h.url}/api/tasks/${taskId}/files/transcribe/${verse}_melody.json`)).status).toBe(200);
@@ -176,10 +177,11 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const after = (await send('GET', `${h.url}/api/songs/${applied.body.songId as string}`)).body.song as Song;
     // The transcription (the fake: count 16ths spread over the section) with the lane's words in order.
     const n = before.length;
+    const shift = laneOctaveShift(Array.from({ length: n }, (_, i) => 60 + (i % 5)), before.map((x) => x.midi));
     const expected = Array.from({ length: n }, (_, i) => ({
       start: Math.floor((i * sectionBeats(song, verse) * 4) / n) / 4,
       duration: 0.25,
-      midi: 60 + (i % 5),
+      midi: 60 + (i % 5) + shift,
       word: before[i]!.word,
       phonemes: before[i]!.phonemes,
     }));
@@ -211,11 +213,12 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const applied = await send('POST', `${h.url}/api/tasks/${taskId}/apply`);
     expect(applied.status).toBe(200);
     const after = (await send('GET', `${h.url}/api/songs/${applied.body.songId as string}`)).body.song as Song;
-    const octave = songOctave(song);
+    const laneMidis = lane(song, verse).map((x) => x.midi);
+    const shift = laneOctaveShift([72, 74, 76], laneMidis);
     const pitchOnly = [
-      { start: 0, duration: 1, midi: 72 - octave },
-      { start: 1.5, duration: 1, midi: 74 - octave },
-      { start: 4, duration: 2, midi: 76 - octave },
+      { start: 0, duration: 1, midi: 72 + shift },
+      { start: 1.5, duration: 1, midi: 74 + shift }, // snapped to the song's key (C)
+      { start: 4, duration: 2, midi: 76 + shift },
     ];
     const bars = song.arrangement[verse]!.overrides['Vocal']!.bars!;
     expect(lane(after, verse)).toEqual(laneWordsOn(verse, bars, pitchOnly));
@@ -250,6 +253,54 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     expect(merged.status).toBe(200);
     expect((merged.body.song as Song).aiArtifacts.map((a) => a.id)).toEqual(saved.aiArtifacts.map((a) => a.id));
     expect(lane(merged.body.song as Song, verse)).toEqual(lane(saved, verse));
+  });
+
+  it('a recording sung an octave below the lane comes back in the lane\'s octave; one already in it is unchanged', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const made = await songOf(h, 'sing-a', true);
+    let { id, song } = made;
+    const verse = sungSections(song).find((s) => s.type === 'verse')!.name;
+    const laneMidis = lane(song, verse).map((x) => x.midi);
+    for (const offset of [-12, 0]) {
+      svc.setTranscribeMidi((i) => laneMidis[i]! + offset);
+      const t = (await startTranscribe(h, id, song, verse)).body.task as TaskJson;
+      await h.tasks.idle();
+      const ready = await taskOf(h, t.id);
+      expect(ready.state).toBe('ready');
+      const applied = await send('POST', `${h.url}/api/tasks/${t.id}/apply`);
+      expect(applied.status).toBe(200);
+      const melody = (applied.body.result as { melody: Record<string, { midi: number }[]> }).melody[verse]!;
+      expect(melody.map((x) => x.midi)).toEqual(laneMidis);
+      id = applied.body.songId as string;
+      song = (await send('GET', `${h.url}/api/songs/${id}`)).body.song as Song;
+      expect(lane(song, verse).map((x) => x.midi)).toEqual(laneMidis);
+    }
+  });
+
+  it('octave shift: the whole octaves (-24..+24) putting the median nearest the lane\'s (a tie goes higher); pitch-only notes snap to the key', () => {
+    expect(laneOctaveShift([48, 50, 52], [60, 62, 64])).toBe(12);
+    expect(laneOctaveShift([60, 62, 64], [60, 62, 64])).toBe(0);
+    expect(laneOctaveShift([84, 86], [60, 62])).toBe(-24);
+    expect(laneOctaveShift([60], [66])).toBe(12); // 6 below vs 6 above: the higher
+    const grid = humNotesOnGrid([{ onsetSec: 0, offsetSec: 0.5, midi: 61 }, { onsetSec: 0.6, offsetSec: 1, midi: 66 }], 120, 8, 'C', 'verse1');
+    expect(grid.map((n) => n.midi)).toEqual([60, 65]); // C# -> C, F# -> F (down on a tie)
+    expect(humNotesOnGrid([{ onsetSec: 0, offsetSec: 0.5, midi: 68 }], 120, 8, 'Am', 'verse1').map((n) => n.midi)).toEqual([67]); // G# -> G in A minor
+  });
+
+  it('Sing and Transcribe refuse each other while one runs on the song', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songOf(h, 'sing-a', true);
+    const verse = sungSections(song).find((s) => s.type === 'verse')!.name;
+    svc.hold('transcribe');
+    const t = await startTranscribe(h, id, song, verse);
+    expect(t.status).toBe(201);
+    for (let i = 0; i < 500 && svc.jobs.length === 0; i++) await new Promise((r) => setTimeout(r, 10));
+    expect(svc.jobs.map((j) => j.stage)).toEqual(['transcribe']);
+    expect(await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song })).toMatchObject({ status: 409, body: { message: 'Already transcribing' } });
+    expect(await startTranscribe(h, id, song, verse)).toMatchObject({ status: 409, body: { message: 'Already transcribing' } });
+    expect((await send('POST', `${h.url}/api/tasks/${(t.body.task as TaskJson).id}/cancel`)).status).toBe(200);
+    svc.release('transcribe');
+    await h.tasks.idle();
   });
 
   it('refuses: an unknown section, a recording too large, while singing, and a changed section on apply', async () => {
