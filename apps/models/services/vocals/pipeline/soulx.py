@@ -21,6 +21,22 @@ LINE_BARS, SPLIT_REST_BEATS, LEAD_REST_SEC, MIN_REST_SEC = 4, 1.0, 0.25, 0.02
 TAIL_S = 2.0  # room after the section for a last phrase's release
 
 
+def phrase_groups(notes) -> list[list[dict]]:
+    """The notes (sorted by "start", each with "start" and "duration" in beats) split into the phrases SoulX sings one
+    at a time: a phrase per LINE_BARS-bar lyric line, split again at a rest of SPLIT_REST_BEATS or more."""
+    groups = []
+    for i, n in enumerate(notes):
+        start = float(n["start"])
+        prev = notes[i - 1] if i else None
+        if prev is not None:
+            prev_end = float(prev["start"]) + float(prev["duration"]) if "duration" in prev else float(prev["end"])
+        if (prev is None or int(start // 4) // LINE_BARS != int(float(prev["start"]) // 4) // LINE_BARS
+                or start - min(prev_end, start) >= SPLIT_REST_BEATS):
+            groups.append([])
+        groups[-1].append(n)
+    return groups
+
+
 def phrases(notes, bpm, section_beats, *, section: str = "section"):
     """SoulX score phrases: [{"start" (seconds from the section start), "phoneme", "duration" (s), "pitch" (MIDI,
     0 for a rest), "type" (1 rest, 2 note)}]. notes: [{"start", "duration" (beats), "midi", "phonemes"}]."""
@@ -32,12 +48,7 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
         start = float(n["start"])
         ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]),
                    "midi": int(n["midi"]), "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
-    groups = []
-    for i, n in enumerate(ns):
-        prev = ns[i - 1] if i else None
-        if prev is None or n["bar"] // LINE_BARS != prev["bar"] // LINE_BARS or n["start"] - min(prev["end"], n["start"]) >= SPLIT_REST_BEATS:
-            groups.append([])
-        groups[-1].append(n)
+    groups = phrase_groups(ns)
     out, prev_end = [], 0.0
     for gi, g in enumerate(groups):
         first = g[0]["start"] * beat_s

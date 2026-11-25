@@ -33,7 +33,7 @@ from pathlib import Path
 import numpy as np
 import soundfile as sf
 
-from . import chain, levels
+from . import chain, levels, tighten
 
 OUT_SR = 44100
 LEAD_TRACK = "Vocal"
@@ -197,12 +197,20 @@ def _sing(p, out, device, job) -> dict:
         for item in p["leads"]:
             job.check_cancelled()
             st = job.step(f"soulx:{item['segment']}", f"SoulX sings {item['what']}")
-            audio = singer.sing(item["notes"], p["bpm"], item["bars"], item["segment"])
+            raw = singer.sing(item["notes"], p["bpm"], item["bars"], item["segment"])
+            raw_name = f"{item['tag']}_soulx_untightened.wav"
+            sf.write(out / raw_name, raw, singer.sr)
+            # Tightened onto the score (pipeline.tighten); the backing vocals are re-pitched from this take, so they
+            # come out tight too.
+            audio, anc = tighten.tighten(raw, singer.sr, item["notes"], p["bpm"])
             name = f"{item['tag']}_soulx.wav"
             sf.write(out / name, audio, singer.sr)
             sung[item["tag"]] = (audio, singer.sr)
-            st.done(f"{len(item['notes'])} notes, {len(audio) / singer.sr:.1f} s",
-                    {"notes": len(item["notes"]), "seconds": round(len(audio) / singer.sr, 2)}, [name])
+            moved = [abs(a - s) * 1000 for a, s in anc[1:-1]]
+            st.done(f"{len(item['notes'])} notes, {len(audio) / singer.sr:.1f} s; {len(moved)} notes put on the beat "
+                    f"(median move {float(np.median(moved)) if moved else 0:.0f} ms)",
+                    {"notes": len(item["notes"]), "seconds": round(len(audio) / singer.sr, 2), "anchored": len(moved)},
+                    [name, raw_name])
     finally:
         singer.close()
     return sung

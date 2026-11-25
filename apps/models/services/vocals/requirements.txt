@@ -17,6 +17,8 @@ omegaconf==2.3.0
 pyyaml
 tqdm
 pedalboard==0.8.9
+# Score-aligned tightening of the sung leads (pipeline/tighten.py): Signalsmith Stretch, MIT.
+python-stretch==0.3.1
 # Once MuLaCover (ChordNet) dependencies; kept as built (see the top)
 torchao==0.9.0
 torchtune==0.4.0
