@@ -19,6 +19,7 @@ import yazl from 'yazl';
 
 import { runLogged } from '../render/renderService.js';
 import { buildRpp } from './rpp.js';
+import { hasYue2Take, VOCALS_CREDIT } from './vocalsCredit.js';
 
 export type DawFormat = 'stems' | 'reaper' | 'logic';
 
@@ -228,7 +229,7 @@ export function safeFile(name: string): string {
   return s;
 }
 
-function readme(
+export function readme(
   song: DawExportSong,
   format: DawFormat,
   lanes: readonly string[],
@@ -256,5 +257,6 @@ function readme(
       '',
     );
   lines.push('Sections:', ...sections.map((s) => `  ${s.startSec.toFixed(2).padStart(7)} s  ${s.name}`), '');
+  if (hasYue2Take(song.canonical)) lines.push(VOCALS_CREDIT, '');
   return lines.join('\n');
 }

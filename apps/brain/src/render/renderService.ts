@@ -30,6 +30,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { hasYue2Take, VOCALS_CREDIT } from '../export/vocalsCredit.js';
+
 /** Fixed level change before encoding an MP3 (the WAVs are unchanged): MP3 encoding overshoots
  *  the peaks it is given (a master at -1 dBFS decodes up to about +1.6 dBFS, which players clip).
  *  Same as the browser export (public/engine/casperaki-audio-files.js). */
@@ -231,7 +233,7 @@ export class RenderService {
         await runLogged(
           c.ffmpegBin,
           // LAME VBR quality 2 (= lame -V2, what legacy shipped).
-          ['-y', '-hide_banner', '-loglevel', 'error', '-i', this.wavPath(songId, version), '-af', `volume=${MP3_HEADROOM_DB}dB`, '-codec:a', 'libmp3lame', '-q:a', '2', this.mp3Path(songId, version)],
+          mp3EncodeArgs(this.wavPath(songId, version), this.mp3Path(songId, version), MP3_HEADROOM_DB, readFileSync(join(dir, 'song-in.json'), 'utf8')),
           env,
           join(dir, `encode-${version}.log`),
           ENCODE_TIMEOUT_MS,
@@ -270,4 +272,10 @@ export function runLogged(
       resolvePromise();
     });
   });
+}
+
+/** The ffmpeg arguments for one MP3 encode; a song with a YuE2 vocal take gets the CC BY-NC credit as MP3 metadata. */
+export function mp3EncodeArgs(wav: string, mp3: string, headroomDb: number, canonical: string): string[] {
+  const credit = hasYue2Take(canonical) ? ['-metadata', `comment=${VOCALS_CREDIT}`] : [];
+  return ['-y', '-hide_banner', '-loglevel', 'error', '-i', wav, '-af', `volume=${headroomDb}dB`, '-codec:a', 'libmp3lame', '-q:a', '2', ...credit, mp3];
 }
