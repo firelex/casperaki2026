@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { applyAceLayer, orchestrate } from '@casperaki/arrangement';
 import { vocalTakeFingerprint } from '@casperaki/song-schema';
 
-import { aceCaption, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
+import { ACE_LAYER_LUFS, aceCaption, coveredSections, integratedLoudness, keyScale, runAceLayer, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
 import type { ServiceResult, VocalsClient } from '../src/sing/vocalsClient.js';
 import type { TaskJobs, TaskStep } from '../src/store.js';
 import { toneWav } from './fakeVocalsService.js';
@@ -103,6 +103,10 @@ describe('the ACE layer task', () => {
       expect(t.fingerprint).toBe(vocalTakeFingerprint(SONG, t.segment, 'ACE Guitar'));
     }
     expect(existsSync(join(dir, 'files', 't1', 'ace', 'layer.wav'))).toBe(true);
+    // Levelled to the library's -24 LUFS (the fake part is a tone at about -23 LUFS, the same in every section).
+    const clip = join(dir, 'takes', `${result.takes[0]!.sha256}.ogg`);
+    expect(await integratedLoudness('ffmpeg', clip)).toBeCloseTo(ACE_LAYER_LUFS, 0);
+    expect(steps.find((s) => s.id === 'clips')!.numbers!['gainDb']).toBeCloseTo(ACE_LAYER_LUFS - (await integratedLoudness('ffmpeg', join(dir, 'files', 't1', 'ace', 'layer.wav'))), 1);
     // The result goes into the song.
     const song = applyAceLayer(SONG, result);
     expect(song.aiArtifacts.filter((a) => a.kind === 'ace-step-conditioned')).toHaveLength(SONG.songStructure.length);

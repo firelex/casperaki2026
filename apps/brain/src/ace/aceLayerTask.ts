@@ -40,6 +40,9 @@ export const AceLayerOptionsSchema = z
 export type AceLayerOptions = z.infer<typeof AceLayerOptionsSchema>;
 
 const BEATS_PER_BAR = 4;
+/** The level a layer is brought to, as the sample library's tonal samples are (~-24 LUFS integrated): the engine's
+ *  per-instrument levels (mix-config.json) assume it, so the layer sits in the mix like its instrument would. */
+export const ACE_LAYER_LUFS = -24;
 
 export interface AceSection {
   readonly name: string;
@@ -180,6 +183,9 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
   writeAtomic(layerPath, layer);
 
   const takes = await log.run('clips', async () => {
+    // One gain for the whole layer (measured over the whole song), so its sections keep their levels to each other.
+    const lufs = await integratedLoudness(ctx.ffmpegBin, layerPath);
+    const gainDb = ACE_LAYER_LUFS - lufs;
     mkdirSync(ctx.takesDir, { recursive: true });
     const out: Array<{ segment: string; sha256: string; durationSeconds: number; fingerprint: string }> = [];
     for (const s of covered) {
@@ -190,7 +196,7 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
       const r = options.range;
       const mute = r ? { from: Math.max(0, (r.startBar - s.startBar) * secPerBar), to: Math.min(duration, (r.endBar - s.startBar) * secPerBar) } : undefined;
       const tmp = join(ctx.takesDir, `.${ctx.taskId}-${s.name}.ogg`);
-      await cutClip(ctx.ffmpegBin, layerPath, tmp, start, duration, mute);
+      await cutClip(ctx.ffmpegBin, layerPath, tmp, start, duration, gainDb, mute);
       const sha256 = createHash('sha256').update(readFileSync(tmp)).digest('hex');
       const dest = join(ctx.takesDir, `${sha256}.ogg`);
       if (existsSync(dest)) unlinkSync(tmp);
@@ -199,8 +205,8 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
     }
     return {
       value: out,
-      text: `${ACE_INSTRUMENT_LABELS[options.instrument]} on ${track}: ${out.length} clips (${covered.map((s) => s.name).join(', ')})`,
-      numbers: { clips: out.length },
+      text: `${ACE_INSTRUMENT_LABELS[options.instrument]} on ${track}: ${out.length} clips (${covered.map((s) => s.name).join(', ')}), levelled from ${lufs.toFixed(1)} to ${ACE_LAYER_LUFS} LUFS`,
+      numbers: { clips: out.length, lufs, gainDb },
     };
   });
   return AceLayerResultSchema.parse({ track, instrument: options.instrument, caption, seed: options.seed, takes });
@@ -208,9 +214,24 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
 
 const fmt = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, '0')}`;
 
-/** One section's clip of the layer as Ogg Vorbis: `duration` seconds from `start`, silent outside `keep` when given. */
-function cutClip(ffmpegBin: string, src: string, dest: string, start: number, duration: number, keep?: { from: number; to: number }): Promise<void> {
-  const filters = [`apad=whole_dur=${duration.toFixed(6)}`];
+/** The integrated loudness (EBU R128, LUFS) of an audio file; an error for a silent one (ACE played nothing). */
+export function integratedLoudness(ffmpegBin: string, path: string): Promise<number> {
+  return new Promise((resolve, reject) => {
+    execFile(ffmpegBin, ['-hide_banner', '-nostats', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], { maxBuffer: 64 * 1024 * 1024 }, (err, _out, stderr) => {
+      if (err) return reject(new Error(`ffmpeg could not measure the loudness of ${path}: ${stderr.trim().split('\n').slice(-3).join(' ') || err.message}`));
+      const m = /Integrated loudness:\s*I:\s*(-?[\d.]+|-inf) LUFS/u.exec(stderr);
+      if (!m) return reject(new Error(`ffmpeg printed no integrated loudness for ${path}`));
+      const lufs = m[1] === '-inf' ? -Infinity : Number(m[1]);
+      if (!(lufs > -70)) return reject(new Error(`ACE's part is silent (${m[1]} LUFS): nothing to add`));
+      resolve(lufs);
+    });
+  });
+}
+
+/** One section's clip of the layer as Ogg Vorbis: `duration` seconds from `start`, `gainDb` louder (or quieter),
+ *  silent outside `keep` when given. */
+function cutClip(ffmpegBin: string, src: string, dest: string, start: number, duration: number, gainDb: number, keep?: { from: number; to: number }): Promise<void> {
+  const filters = [`volume=${gainDb.toFixed(2)}dB`, `apad=whole_dur=${duration.toFixed(6)}`];
   if (keep) filters.push(`volume=volume=0:enable='not(between(t,${keep.from.toFixed(6)},${keep.to.toFixed(6)}))'`);
   const args = ['-y', '-hide_banner', '-loglevel', 'error', '-ss', start.toFixed(6), '-t', duration.toFixed(6), '-i', src, '-af', filters.join(','), '-t', duration.toFixed(6), '-c:a', 'libvorbis', '-q:a', '6', '-f', 'ogg', dest];
   return new Promise((resolve, reject) => {
