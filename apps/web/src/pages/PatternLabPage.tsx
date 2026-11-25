@@ -117,9 +117,13 @@ export function PatternsSection() {
   );
   const [filter, setFilter] = useState<Filter>('pending');
   const [family, setFamily] = useState<Family | 'all'>('all');
+  const [genreFilter, setGenreFilter] = useState<Genre | 'all'>('all');
   const query = useQuery({ queryKey: patternsQueryKey, queryFn: ({ signal }) => patternsApi.list(signal) });
-  const proposals = (query.data?.proposals ?? []).filter((p) => family === 'all' || p.family === family);
+  const proposals = (query.data?.proposals ?? []).filter(
+    (p) => (family === 'all' || p.family === family) && (genreFilter === 'all' || p.genres.includes(genreFilter)),
+  );
   const families = FAMILY_ORDER.filter((f) => (query.data?.proposals ?? []).some((p) => p.family === f));
+  const genres = (Object.keys(GENRE_LABELS) as Genre[]).filter((g) => (query.data?.proposals ?? []).some((p) => p.genres.includes(g)));
   const count = (f: Filter) => proposals.filter((p) => matches(p, f)).length;
   const shown = proposals.filter((p) => matches(p, filter));
   // Bulk decisions: the ticked proposals among those shown.
@@ -189,6 +193,23 @@ export function PatternsSection() {
           </div>
         ) : null}
 
+        {genres.length > 1 ? (
+          <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Filter by genre">
+            {(['all', ...genres] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                role="tab"
+                aria-selected={genreFilter === g}
+                onClick={() => setGenreFilter(g)}
+                className={`h-8 rounded-full px-3 text-[13px] ${genreFilter === g ? 'bg-white/15 text-white' : 'text-white/55 hover:text-white'}`}
+              >
+                {g === 'all' ? 'All genres' : GENRE_LABELS[g]}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {shown.length > 0 ? (
           <div className="ts-scope sticky top-0 z-10 mt-6 flex flex-col gap-2 bg-bg/95 py-2 backdrop-blur">
             <label className="flex w-fit cursor-pointer items-center gap-2 text-[14px] text-white/75">
@@ -221,7 +242,7 @@ export function PatternsSection() {
           ) : shown.length === 0 ? (
             <p className="text-white/55">{filter === 'pending' ? 'Nothing left to review.' : 'No proposals here.'}</p>
           ) : (
-            shown.map((p) => <ProposalCard key={p.id} proposal={p} selected={ticked.has(p.id)} onSelect={(on) => tick(p.id, on)} />)
+            shown.map((p) => <ProposalCard key={`${p.id}:${genreFilter}`} proposal={p} initialGenre={genreFilter === 'all' ? undefined : genreFilter} selected={ticked.has(p.id)} onSelect={(on) => tick(p.id, on)} />)
           )}
         </div>
     </>
@@ -234,9 +255,20 @@ function matches(p: PatternProposal, f: Filter): boolean {
   return p.review?.status === f;
 }
 
-function ProposalCard({ proposal: p, selected, onSelect }: { proposal: PatternProposal; selected: boolean; onSelect: (on: boolean) => void }) {
+function ProposalCard({
+  proposal: p,
+  initialGenre,
+  selected,
+  onSelect,
+}: {
+  proposal: PatternProposal;
+  /** The genre the page is filtered to: the preview plays in it. */
+  initialGenre?: Genre;
+  selected: boolean;
+  onSelect: (on: boolean) => void;
+}) {
   const queryClient = useQueryClient();
-  const [genre, setGenre] = useState<Genre>(p.genres[0]!);
+  const [genre, setGenre] = useState<Genre>(initialGenre && p.genres.includes(initialGenre) ? initialGenre : p.genres[0]!);
   const [take, setTake] = useState(0);
   /** The instrument picker: a library sound for the proposal's instrument (undefined: the song's own). */
   const [sound, setSound] = useState<string | undefined>(undefined);
