@@ -37,6 +37,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
             </HeaderLink>
           ) : null}
           <HeaderLink to="/sounds">Sounds</HeaderLink>
+          <HeaderLink to="/singers">Singers</HeaderLink>
           <HeaderLink to="/melodies">Melodies</HeaderLink>
           {user?.isAdmin ? <HeaderLink to="/suggestions">Suggestions</HeaderLink> : null}
         </nav>

@@ -38,6 +38,9 @@ export function AccountMenu() {
         <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 sm:hidden" onSelect={() => navigate('/sounds')}>
           Sounds
         </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 sm:hidden" onSelect={() => navigate('/singers')}>
+          Singers
+        </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none data-[highlighted]:bg-white/10 sm:hidden" onSelect={() => navigate('/melodies')}>
           Melodies
         </DropdownMenuItem>

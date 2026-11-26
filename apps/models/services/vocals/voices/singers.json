@@ -1,0 +1,10 @@
+[
+  {
+    "id": "yue2_female_dry2",
+    "name": "Singer 1",
+    "description": "Female pop voice, clear and dry. Sings every Sing take today.",
+    "source": "Cut from a YuE2-3B take (YuE2's weights are CC BY-NC 4.0: non-commercial), de-reverbed with SoulX-Singer-Preprocess.",
+    "audio": "yue2_female_dry2.mp3",
+    "meta": "yue2_female_dry2.json"
+  }
+]

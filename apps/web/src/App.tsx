@@ -15,6 +15,7 @@ const EditorPage = lazy(() => import('./pages/EditorPage').then((m) => ({ defaul
 const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage').then((m) => ({ default: m.SuggestionsPage })));
 const MelodyLibraryPage = lazy(() => import('./pages/MelodyLibraryPage').then((m) => ({ default: m.MelodyLibraryPage })));
 const SoundLibraryPage = lazy(() => import('./pages/SoundLibraryPage').then((m) => ({ default: m.SoundLibraryPage })));
+const SingersPage = lazy(() => import('./pages/SingersPage').then((m) => ({ default: m.SingersPage })));
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
@@ -59,6 +60,7 @@ export function App() {
         <Route path="/" element={<ProjectsPage />} />
         {/* The sound library lists source names: admins only. */}
         <Route path="/sounds" element={<SoundLibraryPage />} />
+        <Route path="/singers" element={<SingersPage />} />
         <Route path="/melodies" element={<MelodyLibraryPage />} />
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
         {/* Suggestions (admins): the pattern lab and the Pro-mode mix changes. */}

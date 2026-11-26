@@ -34,6 +34,7 @@ import { createPatternsRouter } from './routes/patterns.js';
 import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
+import { createSingersRouter, readSingers } from './routes/singers.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { MelodyEdits } from './melodies/melodyEdits.js';
@@ -373,6 +374,8 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     }),
   );
   app.use(createSoundsRouter({ playback }));
+  readSingers(config.singersDir); // fail at startup, naming the file, if the singers list is broken
+  app.use(createSingersRouter({ dir: config.singersDir }));
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
   const commit = deps.commit;
   const melodyEdits = new MelodyEdits(

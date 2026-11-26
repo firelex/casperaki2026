@@ -42,6 +42,8 @@ const ConfigSchema = z.object({
   rendersDir: z.string().default('./data/renders'),
   renderEmitScript: z.string().default('../engine-spike/scripts/emit-brain-roundtrip.mjs'),
   renderBin: z.string().default('../web/wasm/engine/build/casperaki_render'),
+  /** The singers (the vocals service's voices folder, with singers.json). */
+  singersDir: z.string().default('../models/services/vocals/voices'),
   renderStubSamplesDir: z.string().default('../engine-spike/samples'),
   sampleLibraryRoot: z.string().optional(),
   renderMix: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
@@ -133,6 +135,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     rendersDir: env.BRAIN_RENDERS_DIR,
     renderEmitScript: env.BRAIN_RENDER_EMIT_SCRIPT,
     renderBin: env.BRAIN_RENDER_BIN,
+    singersDir: env.BRAIN_SINGERS_DIR,
     renderStubSamplesDir: env.BRAIN_RENDER_STUB_SAMPLES_DIR,
     sampleLibraryRoot: env.CASPERAKI_SAMPLE_LIBRARY_ROOT,
     renderMix: env.BRAIN_RENDER_MIX,
