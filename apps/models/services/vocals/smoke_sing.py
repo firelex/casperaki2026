@@ -88,7 +88,8 @@ def params_of(song):
                 continue
             d = backing_shift([n["midi"] for n in line], [n["midi"] for n in notes])
             backings.append({"track": track, "segment": s["name"], "notes": [{**n, "midi": n["midi"] + d} for n in line]})
-    return {"stage": "sing", "bpm": song["bpm"], "backing_db": -9, "sections": sections, "backings": backings}
+    return {"stage": "sing", "bpm": song["bpm"], "backing_db": -9, "sections": sections, "backings": backings,
+            "voice": {"audio": str(paths.VOICE_AUDIO), "meta": str(paths.VOICE_META)}}  # Singer 1
 
 
 def pitch_check(take: Path, notes, bpm):

@@ -10,6 +10,7 @@
 //                                     sections?: [name], lyrics?, voice? }  (instrument 'adlibs': lyrics and voice required)
 //                                  -> 201 { task }   Add ACE layer: one instrument part played over the song by ACE-Step,
 //                                     for the whole song or the selected bars (src/ace/aceLayerTask.ts)
+//   POST /api/tasks { kind: 'sing', songId, song, singerId } -> 201 { task }   Sing with a singer (GET /api/singers)
 //   POST /api/tasks/:id/apply      -> { task, songId, result } a ready result saved into the song (its new id);
 //                                     result: what the task made (writeLyrics: section → lines)
 //   POST /api/tasks/:id/retry      -> { task }                a failed task started again
@@ -33,7 +34,8 @@ import { ownerOf } from './songs.js';
 const KEEP_MS = 24 * 3600_000;
 
 const StartBody = z.union([
-  z.object({ kind: z.enum(['writeLyrics', 'sing']), songId: z.string().min(1), song: z.unknown() }).strict(),
+  z.object({ kind: z.literal('writeLyrics'), songId: z.string().min(1), song: z.unknown() }).strict(),
+  z.object({ kind: z.literal('sing'), songId: z.string().min(1), song: z.unknown(), singerId: z.string().min(1) }).strict(),
   z
     .object({
       kind: z.literal('transcribe'),
@@ -59,6 +61,8 @@ export function taskJson(t: TaskRow, title: string) {
     startedAt: t.startedAt,
     ...(t.finishedAt !== null ? { finishedAt: t.finishedAt } : {}),
     steps: t.steps,
+    // The singer a Sing sang with (its dialog preselects it for Sing again).
+    ...(t.kind === 'sing' && t.options && typeof (t.options as { singerId?: unknown }).singerId === 'string' ? { singerId: (t.options as { singerId: string }).singerId } : {}),
   };
 }
 
@@ -102,6 +106,7 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
         res.status(201).json({ task: titled(owner, tasks.startAceLayer(owner, b.songId, song, { instrument, ...(words !== undefined ? { words } : {}), ...(range !== undefined ? { range } : {}), ...(sectionKinds !== undefined ? { sectionKinds } : {}), ...(sections !== undefined ? { sections } : {}), ...(lyrics !== undefined ? { lyrics } : {}), ...(voice !== undefined ? { voice } : {}) } as Parameters<BackgroundTasks['startAceLayer']>[3])) }),
       );
     }
+    if (b.kind === 'sing') return answer(res, () => res.status(201).json({ task: titled(owner, tasks.startSing(owner, b.songId, song, b.singerId)) }));
     return answer(res, () => res.status(201).json({ task: titled(owner, tasks.start(owner, b.songId, b.kind, song)) }));
   });
 

@@ -84,7 +84,7 @@ async function songWithLyrics(h: Harness, seed: string, genre = 'brightPop', bpm
   return { id, song: (await send('GET', `${h.url}/api/songs/${id}`)).body.song as Song };
 }
 
-const startSing = (h: Harness, songId: string, song: Song) => send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId, song });
+const startSing = (h: Harness, songId: string, song: Song) => send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId, song, singerId: 'yue2_female_dry2' });
 
 /** Saves a changed song over the project: its new id. */
 async function save(h: Harness, id: string, song: Song): Promise<string> {
@@ -151,7 +151,7 @@ describe('the Sing task', { timeout: 60_000 }, () => {
       backings: { track: string; segment: string; notes: { midi: number }[] }[];
     };
     expect(params).toMatchObject({ stage: 'sing', bpm: 110, backing_db: -9 });
-    expect(Object.keys(params).sort()).toEqual(['backing_db', 'backings', 'bpm', 'sections', 'stage']);
+    expect(Object.keys(params).sort()).toEqual(['backing_db', 'backings', 'bpm', 'sections', 'stage', 'voice']);
     // Sections that repeat an earlier one word for word are not sent again (their takes are reused).
     const sent = params.sections.map((s) => s.segment);
     expect(sent.length).toBeLessThanOrEqual(sungSections(song).length);
@@ -367,7 +367,7 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     const store = openSongsStore({ path: ':memory:' });
     const h = await boot(store);
     const { id, song } = await songWithLyrics(h, 'sing-a');
-    store.insertTask({ id: 'old-sing', ownerId: DEV_OWNER_ID, songId: id, kind: 'sing', input: JSON.stringify(song), startedAt: new Date().toISOString() });
+    store.insertTask({ id: 'old-sing', ownerId: DEV_OWNER_ID, songId: id, kind: 'sing', input: JSON.stringify(song), startedAt: new Date().toISOString(), options: { singerId: 'yue2_female_dry2' } });
     store.setTaskJobs('old-sing', { lead: 'job-from-before' } as never);
     h.tasks.resumeAll();
     await h.tasks.idle();
@@ -376,6 +376,28 @@ describe('the Sing task', { timeout: 60_000 }, () => {
       message: 'this sing was started by an earlier version of Sing (with YuE2), which cannot be resumed: sing again',
     });
     expect(svc.jobs).toHaveLength(0);
+  });
+
+  it('a sing started before singers could be chosen fails, saying to sing again', async () => {
+    const store = openSongsStore({ path: ':memory:' });
+    const h = await boot(store);
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    store.insertTask({ id: 'no-singer', ownerId: DEV_OWNER_ID, songId: id, kind: 'sing', input: JSON.stringify(song), startedAt: new Date().toISOString() });
+    h.tasks.resumeAll();
+    await h.tasks.idle();
+    expect(await taskOf(h, 'no-singer')).toMatchObject({ state: 'failed', message: 'this sing was started before a singer could be chosen: sing again' });
+  });
+
+  it('sends the chosen singer\'s voice to the vocals service, and refuses a singer that does not exist', async () => {
+    const h = await boot(openSongsStore({ path: ':memory:' }));
+    const { id, song } = await songWithLyrics(h, 'sing-a');
+    const bad = await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song, singerId: 'nobody' });
+    expect(bad).toMatchObject({ status: 400, body: { error: 'unknown_singer', message: 'There is no singer "nobody".' } });
+    expect((await startSing(h, id, song)).status).toBe(201);
+    await h.tasks.idle();
+    const voice = (svc.jobs[0]!.params as { voice: { audio: string; meta: string } }).voice;
+    expect(voice.audio).toMatch(/voices\/yue2_female_dry2\.mp3$/u);
+    expect(voice.meta).toMatch(/voices\/yue2_female_dry2\.json$/u);
   });
 });
 

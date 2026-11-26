@@ -118,7 +118,7 @@ async function songOf(h: Harness, seed: string, lyrics: boolean): Promise<{ id: 
 
 /** Sings the song (fake service) and applies it: the saved song with sung melody and takes in every sung section. */
 async function sung(h: Harness, id: string, song: Song): Promise<{ id: string; song: Song }> {
-  const t = (await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song })).body.task as TaskJson;
+  const t = (await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song, singerId: 'yue2_female_dry2' })).body.task as TaskJson;
   await h.tasks.idle();
   const applied = await send('POST', `${h.url}/api/tasks/${t.id}/apply`);
   expect(applied.status).toBe(200);
@@ -297,7 +297,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     expect(t.status).toBe(201);
     for (let i = 0; i < 500 && svc.jobs.length === 0; i++) await new Promise((r) => setTimeout(r, 10));
     expect(svc.jobs.map((j) => j.stage)).toEqual(['transcribe']);
-    expect(await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song })).toMatchObject({ status: 409, body: { message: 'Already transcribing' } });
+    expect(await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song, singerId: 'yue2_female_dry2' })).toMatchObject({ status: 409, body: { message: 'Already transcribing' } });
     expect(await startTranscribe(h, id, song, verse)).toMatchObject({ status: 409, body: { message: 'Already transcribing' } });
     expect((await send('POST', `${h.url}/api/tasks/${(t.body.task as TaskJson).id}/cancel`)).status).toBe(200);
     svc.release('transcribe');
@@ -324,7 +324,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     expect(tooBig.status).toBe(413);
 
     svc.hold('sing');
-    const sing = await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song });
+    const sing = await send('POST', `${h.url}/api/tasks`, { kind: 'sing', songId: id, song, singerId: 'yue2_female_dry2' });
     expect(sing.status).toBe(201);
     const refused = await startTranscribe(h, id, song, verse);
     expect(refused).toMatchObject({ status: 409, body: { message: 'Already singing' } });

@@ -34,7 +34,7 @@ import { createPatternsRouter } from './routes/patterns.js';
 import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
-import { createSingersRouter, readSingers } from './routes/singers.js';
+import { createSingersRouter, readSingers, singerVoice } from './routes/singers.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { MelodyEdits } from './melodies/melodyEdits.js';
@@ -322,6 +322,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         takesDir: config.vocalTakesDir!,
         ffmpegBin: config.ffmpegBin,
         pollMs: deps.singPollMs ?? SING_POLL_MS,
+        singerVoice: (singerId: string) => singerVoice(config.singersDir, singerId),
         ...vocalLevel!,
       }
     : undefined;

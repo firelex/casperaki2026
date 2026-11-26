@@ -16,6 +16,8 @@ import { randomInt, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { z } from 'zod';
+
 import { AceLayerResultSchema, applyAceLayer, applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
@@ -100,6 +102,17 @@ export interface TranscribeStart {
   readonly hasBacking: boolean;
 }
 
+/** Sing's options: the singer it sings with. */
+export const SingOptionsSchema = z.object({ singerId: z.string().min(1) }).strict();
+export type SingOptions = z.infer<typeof SingOptionsSchema>;
+
+/** The singer of a sing task (one started before singers could be chosen has none: an error saying to sing again). */
+function singOptionsOf(task: TaskRow): string {
+  const parsed = SingOptionsSchema.safeParse(task.options);
+  if (!parsed.success) throw new Error('this sing was started before a singer could be chosen: sing again');
+  return parsed.data.singerId;
+}
+
 export interface SingDeps {
   readonly client: VocalsClient;
   /** BRAIN_TASK_FILES_DIR: each task's step files in <dir>/<task id>/. */
@@ -111,6 +124,8 @@ export interface SingDeps {
   readonly pollMs: number;
   /** The sung song's vocal level (renders it twice: src/sing/vocalLevel.ts), for the owner's project. */
   readonly levelVocals: (ownerId: string, songId: string, song: Song, taskId: string) => Promise<VocalLevel>;
+  /** A singer's voice (src/routes/singers.ts): an Error for an unknown singer. */
+  readonly singerVoice: (singerId: string) => { audio: string; meta: string };
   /** The song's mix overrides with its vocals fader at `faderDb` (relative to the standard mix). */
   readonly withVocalFader: (overrides: MixOverrides | null, faderDb: number) => MixOverrides;
 }
@@ -127,6 +142,7 @@ export class BackgroundTasks {
   /** Starts a task on the owner's project `songId` from the posted working song (transcribe: with its recording). */
   start(ownerId: string, songId: string, kind: TaskKind, song: Song, transcribe?: TranscribeStart): TaskRow {
     const { store } = this.deps;
+    if (kind === 'sing') throw new Error('start: Sing needs its singer (startSing)');
     if ((kind === 'transcribe') !== (transcribe !== undefined)) throw new Error(`start: a ${kind} task ${transcribe ? 'takes no' : 'needs a'} recording`);
     const options: TranscribeOptions | undefined = transcribe ? { segment: transcribe.segment, recording: 'upload', hasBacking: transcribe.hasBacking } : undefined;
     this.checkCanStart(ownerId, songId, kind, song, options);
@@ -139,6 +155,24 @@ export class BackgroundTasks {
     store.insertTask({ id, ownerId, songId, kind, input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), ...(options ? { options } : {}) });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
     this.enqueue(ownerId, id, kind);
+    return store.getTask(ownerId, id)!;
+  }
+
+  /** Starts Sing on the owner's project `songId` from the posted working song, with the chosen singer. */
+  startSing(ownerId: string, songId: string, song: Song, singerId: string): TaskRow {
+    const { store } = this.deps;
+    if (!this.deps.sing) throw new TaskError(503, 'no_vocal_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
+    try {
+      this.deps.sing.singerVoice(singerId);
+    } catch (err) {
+      throw new TaskError(400, 'unknown_singer', err instanceof Error ? err.message : String(err));
+    }
+    const options: SingOptions = { singerId };
+    this.checkCanStart(ownerId, songId, 'sing', song);
+    const id = randomUUID();
+    store.insertTask({ id, ownerId, songId, kind: 'sing', input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), options });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
+    this.enqueue(ownerId, id, 'sing');
     return store.getTask(ownerId, id)!;
   }
 
@@ -402,6 +436,7 @@ export class BackgroundTasks {
         },
         now: clock,
         levelVocals: (song) => sing.levelVocals(task.ownerId, task.songId, song, task.id),
+        voice: sing.singerVoice(singOptionsOf(task)),
       });
     }
     if (task.kind === 'transcribe') {

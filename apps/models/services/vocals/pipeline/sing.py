@@ -2,7 +2,8 @@
 (apps/models/ace-vocal-tests/soulx_sing.py and other-models/harmony_from_lead.py, vocal_chain.py, shared tree):
 
 - lead: SoulX-Singer sings each section straight from its Vocal lane's notes and phonemes (score control, the
-  lane's own pitch), in the demo's voice (pipeline.soulx);
+  lane's own pitch), in the singer's voice the brain names (`voice`: the voice reference and its description; the
+  singers are listed in voices/singers.json and the owner's data folder);
 - backing vocals: the section's lead take re-pitched to each backing line's notes with SoulX-Singer-SVC, so timing,
   words and voice are the lead's and only the pitch changes (pipeline.svc);
 - every take through the vocal chain (pipeline.chain: EQ, compressor, exciter at -6 dB, limiter);
@@ -27,6 +28,7 @@ from __future__ import annotations
 
 import gc
 import json
+import os
 import re
 from pathlib import Path
 
@@ -38,7 +40,7 @@ from . import chain, levels, tighten
 OUT_SR = 44100
 LEAD_TRACK = "Vocal"
 KIND = "soulx-vocal"
-REQUIRED = ("bpm", "backing_db", "sections", "backings")
+REQUIRED = ("bpm", "backing_db", "sections", "backings", "voice")
 SECTION_KEYS = ("segment", "section_bars", "notes")
 BACKING_KEYS = ("track", "segment", "notes")
 SUNG_NOTE_KEYS = ("start", "duration", "midi", "word", "phonemes")
@@ -112,7 +114,14 @@ def check_params(params: dict) -> dict:
                          "notes": b["notes"], "lead": by_segment[seg], "tag": tag, "take": f"take_{tag}.wav"})
     if len({(b["track"], b["segment"]) for b in backings}) != len(backings):
         raise ValueError("sing: a backing line appears twice")
-    return {"bpm": bpm, "backing_db": backing_db, "leads": leads, "backings": backings}
+    voice = params["voice"]
+    if not isinstance(voice, dict) or set(voice) != {"audio", "meta"}:
+        raise ValueError(f"sing: voice must be {{audio, meta}} (the singer's voice reference and its description), got {voice!r}")
+    for k in ("audio", "meta"):
+        path = voice[k]
+        if not isinstance(path, str) or not os.path.isabs(path) or not os.path.isfile(path):
+            raise ValueError(f"sing: voice {k} {path!r} is not an existing absolute file path")
+    return {"bpm": bpm, "backing_db": backing_db, "leads": leads, "backings": backings, "voice": voice}
 
 
 # Backing vocals sit apart from the centred lead (owner, 2026-11-25): Backing vocals 1 left, 2 right, at +-PAN.
@@ -209,7 +218,7 @@ def _sing(p, out, device, job) -> dict:
     from .soulx import Singer
 
     job.check_cancelled()
-    singer = Singer(device)
+    singer = Singer(device, Path(p["voice"]["audio"]), Path(p["voice"]["meta"]))
     sung = {}
     try:
         for item in p["leads"]:

@@ -104,7 +104,8 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
 
 
 class Singer:
-    def __init__(self, device: torch.device):
+    def __init__(self, device: torch.device, voice_audio, voice_meta):
+        """voice_audio / voice_meta: the singer's voice reference and its description (SoulX's prompt format)."""
         from . import soulx_compat
 
         soulx_compat.install()
@@ -124,11 +125,11 @@ class Singer:
         self.dp = DataProcessor(hop_size=self.config.audio.hop_size, sample_rate=self.sr,
                                 phoneset_path=str(repo / "soulxsinger" / "utils" / "phoneme" / "phone_set.json"),
                                 device=str(device))
-        for p in (paths.VOICE_AUDIO, paths.VOICE_META):
+        for p in (voice_audio, voice_meta):
             if not p.is_file():
                 raise FileNotFoundError(f"SoulX voice prompt missing: {p}")
-        meta = json.loads(paths.VOICE_META.read_text())[0]
-        self.prompt = self.dp.process(meta, str(paths.VOICE_AUDIO))
+        meta = json.loads(voice_meta.read_text())[0]
+        self.prompt = self.dp.process(meta, str(voice_audio))
 
     def sing(self, notes, bpm, bars: int, section: str) -> np.ndarray:
         """The section sung (mono, self.sr), every phrase placed at its time; bars * 4 beats + TAIL_S long."""

@@ -14,7 +14,7 @@ from pipeline.svc import Converter
 src, notes_path, first_beat, bpm, out = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4]), Path(sys.argv[5])
 notes = json.load(open(notes_path))
 beat = 60.0 / bpm
-singer = Singer(torch.device("cuda"))
+singer = Singer(torch.device("cuda"), paths.VOICE_AUDIO, paths.VOICE_META)  # its prompt is replaced below
 sr = singer.sr
 y, s0 = sf.read(src, always_2d=True); y = librosa.resample(y.mean(1).astype(np.float32), orig_sr=s0, target_sr=sr)
 

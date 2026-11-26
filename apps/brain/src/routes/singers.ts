@@ -36,6 +36,13 @@ export function readSingers(dir: string): Singer[] {
   return singers;
 }
 
+/** A singer's voice reference and its description, as absolute paths (a TaskError-worthy Error for an unknown id). */
+export function singerVoice(dir: string, id: string): { audio: string; meta: string } {
+  const singer = readSingers(dir).find((s) => s.id === id);
+  if (!singer) throw new Error(`There is no singer "${id}".`);
+  return { audio: join(resolve(dir), singer.audio), meta: join(resolve(dir), singer.meta) };
+}
+
 export function createSingersRouter(deps: { dir: string }): Router {
   const router = Router();
   router.get('/api/singers', (_req, res) => {

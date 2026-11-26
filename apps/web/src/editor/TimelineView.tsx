@@ -35,6 +35,7 @@ import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { AceLayerDialog } from './sequencer/AceLayerDialog';
 import { AdlibsDialog } from './sequencer/AdlibsDialog';
+import { SingerDialog } from './sequencer/SingerDialog';
 import { useSession } from '../state/session';
 import { BEATS_PER_BAR, buildSequencerModel, type SeqNote, type SeqSection, type SeqTrack } from './sequencerModel';
 import { ClipDetail } from './sequencer/ClipDetail';
@@ -561,12 +562,11 @@ export function TimelineView() {
     if (!activeSong || !viewSong) throw new Error('No song is open.');
     return startOnSaved({ dirty: editorDirty, songId: activeSong.id, song: viewSong, save: () => saveSong.mutateAsync(), start });
   };
-  const startTask = async (kind: 'writeLyrics' | 'sing', label: string) => {
+  const startTask = async (kind: 'writeLyrics', label: string) => {
     if (!activeSong || !viewSong) throw new Error('No song is open.');
     setTaskError(undefined);
     try {
-      if (kind === 'sing') await onSaved((songId, song) => tasksApi.start(kind, songId, song));
-      else await tasksApi.start(kind, activeSong.id, viewSong);
+      await tasksApi.start(kind, activeSong.id, viewSong);
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
       setTaskError(`${label} failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -607,7 +607,20 @@ export function TimelineView() {
   };
   const selectionMenu: SelectionActions = { ...selectionBase, aceLayer: aceLayerItem };
   const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
-  const sing = () => startTask('sing', 'Sing');
+  /** Sing asks which singer first (SingerDialog), preselecting the one this song last sang with. */
+  const [choosingSinger, setChoosingSinger] = useState(false);
+  const lastSinger = tasks?.filter((t) => t.kind === 'sing' && t.songId === activeSong?.id && t.singerId).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0]?.singerId;
+  const sing = () => setChoosingSinger(true);
+  const startSing = async (singerId: string) => {
+    setChoosingSinger(false);
+    setTaskError(undefined);
+    try {
+      await onSaved((songId, song) => tasksApi.startSing(songId, song, singerId));
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Sing failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const transcribe = async (section: string, file: File, hasBacking: boolean) => {
     if (!activeSong || !viewSong) throw new Error('No song is open.');
     setTranscribing(undefined);
@@ -968,6 +981,7 @@ export function TimelineView() {
         </div>
       ) : null}
 
+      {choosingSinger ? <SingerDialog preselected={lastSinger} onClose={() => setChoosingSinger(false)} onStart={(id) => void startSing(id)} /> : null}
       {adlibbing ? (
         <AdlibsDialog sections={adlibSections} onClose={() => setAdlibbing(false)} onStart={(l, st, v) => void addAdlibs(l, st, v)} />
       ) : null}

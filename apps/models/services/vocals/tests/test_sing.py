@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from pipeline import levels, sing, soulx, svc
+from pipeline import levels, paths, sing, soulx, svc
 
 BPM = 120  # a beat is 0.5 s, a bar 2 s
 
@@ -18,7 +18,8 @@ def params(**over):
     p = {"bpm": BPM, "backing_db": -9,
          "sections": [{"segment": "verse1", "section_bars": 2, "notes": [sung_note(0, 2, 64), sung_note(2, 2, 67)]},
                       {"segment": "chorus1", "section_bars": 2, "notes": [sung_note(0, 4, 69)]}],
-         "backings": [{"track": "Backing vocals 1", "segment": "chorus1", "notes": [{"start": 0, "duration": 4, "midi": 65}]}]}
+         "backings": [{"track": "Backing vocals 1", "segment": "chorus1", "notes": [{"start": 0, "duration": 4, "midi": 65}]}],
+         "voice": {"audio": str(paths.VOICE_AUDIO), "meta": str(paths.VOICE_META)}}
     p.update(over)
     return p
 
@@ -86,7 +87,8 @@ def test_a_whole_run_with_the_models_stubbed(tmp_path, monkeypatch):
     sr = 24000
 
     class Singer:
-        def __init__(self, device):
+        def __init__(self, device, voice_audio, voice_meta):
+            assert voice_audio == paths.VOICE_AUDIO and voice_meta == paths.VOICE_META  # the job's singer
             self.sr = sr
 
         def sing(self, notes, bpm, bars, section):
@@ -139,3 +141,13 @@ def test_backing_vocals_are_panned_apart_at_the_same_loudness():
     power = lambda y: float((y ** 2).sum())
     assert abs(power(left) - power(x)) / power(x) < 1e-5  # equal power: as loud as centred
     assert np.allclose(panned(x, 0.0), x, atol=1e-6)
+
+
+@pytest.mark.parametrize("voice, message", [
+    (None, "voice must be"),
+    ({"audio": "relative.mp3", "meta": str(paths.VOICE_META)}, "not an existing absolute file path"),
+    ({"audio": str(paths.VOICE_AUDIO), "meta": "/no/such/voice.json"}, "not an existing absolute file path"),
+])
+def test_the_singer_s_voice_is_required_and_must_exist(voice, message):
+    with pytest.raises(ValueError, match=message):
+        sing.check_params(params(voice=voice))

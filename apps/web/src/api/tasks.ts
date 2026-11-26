@@ -50,6 +50,8 @@ export interface BackgroundTask {
   readonly startedAt: string;
   readonly finishedAt?: string;
   readonly steps?: readonly TaskStep[];
+  /** Sing: the singer it sang with. */
+  readonly singerId?: string;
 }
 
 export interface AppliedTask {
@@ -64,7 +66,9 @@ export const tasksQueryKey = ['tasks'] as const;
 
 export const tasksApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ tasks: BackgroundTask[] }>('/api/tasks', { signal }),
-  start: (kind: 'writeLyrics' | 'sing', songId: string, song: Song) => defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind, songId, song }),
+  start: (kind: 'writeLyrics', songId: string, song: Song) => defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind, songId, song }),
+  /** Sing with a singer (singersApi.list). */
+  startSing: (songId: string, song: Song, singerId: string) => defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'sing', songId, song, singerId }),
   /** Transcribe melody: `recording.data` is the file as base64. */
   startTranscribe: (songId: string, song: Song, segment: string, recording: { name: string; type: string; data: string }, hasBacking: boolean) =>
     defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'transcribe', songId, song, segment, recording, hasBacking }),

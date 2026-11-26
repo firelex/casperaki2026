@@ -18,6 +18,7 @@ BS_ROFORMER_WEIGHTS = MODELS / "viperx__bs-roformer-ep317-sdr12.9755"
 
 # The voice of the owner's approved demo (2026-11-25): a dry female voice prompt with its SoulX metadata (the sung
 # phonemes, notes and timing of the recording). Copied from the SoulX repo's example/audio/yue2_female_dry2.*.
+# Singer 1 (voices/singers.json): what the smoke run sings with; Sing names its singer in every job (`voice`).
 VOICE = "yue2_female_dry2"
 VOICE_AUDIO = SERVICE_DIR / "voices" / f"{VOICE}.mp3"
 VOICE_META = SERVICE_DIR / "voices" / f"{VOICE}.json"

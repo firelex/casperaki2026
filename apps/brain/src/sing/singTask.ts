@@ -104,6 +104,8 @@ export interface SingContext {
   /** Records the steps on the task (and tells pages); does nothing once the task is no longer running. */
   readonly setSteps: (steps: TaskStep[]) => void;
   readonly now: () => string;
+  /** The singer's voice reference and its description (absolute paths), sent to the vocals service. */
+  readonly voice: { audio: string; meta: string };
   /** Renders the sung song (vocals alone and in full) and works out its vocal level (src/sing/vocalLevel.ts). */
   readonly levelVocals: (song: Song) => Promise<VocalLevel>;
 }
@@ -260,7 +262,7 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
   let job: string;
   if (ctx.jobs === null) {
     if (ctx.signal.aborted) throw new CancelledError();
-    job = await client.submit(singParams(input, plan));
+    job = await client.submit(singParams(input, plan, ctx.voice));
     ctx.setJobs({ sing: job });
   } else {
     if (ctx.jobs.sing === undefined) {
@@ -312,13 +314,14 @@ function describePlan(plan: SingPlan): { text: string; numbers: Record<string, n
 }
 
 /** The sing stage's params (pipeline/sing.py). */
-export function singParams(song: Song, plan: SingPlan): Record<string, unknown> {
+export function singParams(song: Song, plan: SingPlan, voice: { audio: string; meta: string }): Record<string, unknown> {
   return {
     stage: SING_STAGE,
     bpm: song.bpm,
     backing_db: BACKING_DB,
     sections: plan.sections.map((s) => ({ segment: s.segment, section_bars: s.sectionBars, notes: s.notes })),
     backings: plan.backings.map((b) => ({ track: b.track, segment: b.segment, notes: b.notes })),
+    voice,
   };
 }
 
