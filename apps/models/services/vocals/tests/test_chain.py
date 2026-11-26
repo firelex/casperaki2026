@@ -55,3 +55,18 @@ def test_the_exciter_is_mixed_6_db_under():
 def test_a_silent_take_is_an_error():
     with pytest.raises(ValueError, match="silent"):
         chain.process(np.zeros((100, 2), dtype=np.float32), 24000)
+
+
+def test_the_rider_evens_out_a_soft_phrase_and_leaves_pauses_alone():
+    from pipeline.chain import ride
+    sr = 24000
+    t = np.arange(sr) / sr
+    tone = (0.3 * np.sin(2 * np.pi * 220 * t)).astype(np.float32)
+    x = np.concatenate([tone, tone * 10 ** (-10 / 20), np.zeros(sr, np.float32), tone])[:, None]  # loud, soft, pause, loud
+    y, _ = ride(x, sr)
+    rms = lambda a: float(np.sqrt(np.mean(a ** 2)))
+    soft_before = 20 * np.log10(rms(x[sr + sr // 4: 2 * sr - sr // 4]) / rms(x[sr // 4: sr - sr // 4]))
+    soft_after = 20 * np.log10(rms(y[sr + sr // 4: 2 * sr - sr // 4]) / rms(y[sr // 4: sr - sr // 4]))
+    assert soft_before == pytest.approx(-10, abs=0.1)
+    assert soft_after > -5  # brought much closer (at most +-6 dB of riding)
+    assert rms(y[2 * sr + sr // 4: 3 * sr - sr // 4]) < 1e-6  # the pause gets no gain
