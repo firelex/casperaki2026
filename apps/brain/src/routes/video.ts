@@ -1,15 +1,18 @@
 // Music videos for a song (owner-only, like the song routes):
-//   POST /api/songs/:id/video { orientation, quality?, artist }  → 202 + status (409 while one is being made)
-//   GET  /api/songs/:id/video                          → { jobs: { landscape?, portrait? } }
-//   GET  /api/songs/:id/video/<format>.mp4 (landscape, portrait, landscape-preview, portrait-preview)         → the video (?download=1: as an attachment)
+//   POST /api/songs/:id/video { style?, orientation, quality?, artist, console? }  → 202 + status (409 while one is being made)
+//        style 'cartoon' (default): planned by a language model. style 'console': a 3D mixing desk; `console` carries
+//        the tracks the browser measured and the song version they belong to (409 song_changed for another version).
+//   GET  /api/songs/:id/video                          → { jobs: { cartoon: { <format>? }, console: { <format>? } } }
+//   GET  /api/songs/:id/video/<job>.mp4 (cartoon: landscape, portrait, landscape-preview, portrait-preview;
+//        console: console-<format>)                    → the video (?download=1: as an attachment)
 
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import type { SongsStore } from '../store.js';
 import { MissingPlannerConfigError } from '../video/planner.js';
-import { VideoInputError } from '../video/videoInput.js';
-import { FORMATS, VideoBusyError, type VideoFormat, type VideoService, type VideoStatus } from '../video/videoService.js';
+import { parseConsoleBody, VideoInputError } from '../video/videoInput.js';
+import { FORMATS, jobId, STYLES, VideoBusyError, type VideoFormat, type VideoService, type VideoStatus } from '../video/videoService.js';
 
 export interface VideoRouterDeps {
   readonly store: SongsStore;
@@ -26,8 +29,15 @@ const StartBody = z
     /** 'preview': half size, renders about 3x faster; kept beside the full video. */
     quality: z.enum(['full', 'preview']).optional(),
     artist: z.string().trim().min(1, 'the artist name is required').max(80),
+    style: z.enum(['cartoon', 'console']).optional(),
+    /** Console style only: checked with the engine's schema (parseConsoleBody). */
+    console: z.unknown().optional(),
   })
-  .strict();
+  .strict()
+  .refine((b) => (b.style === 'console') === (b.console !== undefined), {
+    message: 'console data goes with style "console", and only with it',
+    path: ['console'],
+  });
 
 export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }: VideoRouterDeps): Router {
   const router = Router();
@@ -43,7 +53,7 @@ export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }:
     ...(s.startedAt ? { startedAt: s.startedAt } : {}),
     ...(s.error ? { error: s.error } : {}),
     ...(s.finishedAt ? { finishedAt: s.finishedAt } : {}),
-    ...(s.state === 'done' ? { url: `/api/songs/${s.songId}/video/${s.format}.mp4` } : {}),
+    ...(s.state === 'done' ? { url: `/api/songs/${s.songId}/video/${jobId(s.style, s.format)}.mp4` } : {}),
   });
 
   router.post('/api/songs/:id/video', (req, res) => {
@@ -55,10 +65,12 @@ export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }:
       const issue = body.error.issues[0];
       return res.status(400).json({ error: 'invalid_body', message: issue ? `${issue.path.join('.')}: ${issue.message}` : 'invalid body' });
     }
-    if (!plannerConfigured) return res.status(503).json({ error: 'planner_not_configured', message: new MissingPlannerConfigError().message });
+    const style = body.data.style ?? 'cartoon';
+    if (style === 'cartoon' && !plannerConfigured) return res.status(503).json({ error: 'planner_not_configured', message: new MissingPlannerConfigError().message });
     try {
       const format = (body.data.quality === 'preview' ? `${body.data.orientation}-preview` : body.data.orientation) as VideoFormat;
-      const s = videos.start({ ownerId: ownerOf(req), songId: req.params.id, format, title: project.title, artist: body.data.artist });
+      const common = { ownerId: ownerOf(req), songId: req.params.id, format, title: project.title, artist: body.data.artist };
+      const s = style === 'console' ? videos.start({ ...common, style, console: parseConsoleBody(body.data.console) }) : videos.start({ ...common, style });
       return res.status(202).json(statusJson(s));
     } catch (err) {
       if (err instanceof VideoBusyError) return res.status(409).json({ error: 'video_in_progress', message: err.message });
@@ -70,25 +82,29 @@ export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }:
   router.get('/api/songs/:id/video', (req, res) => {
     if (!videos) return notConfigured(res);
     if (!store.getProject(ownerOf(req), req.params.id)) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    const jobs: Partial<Record<VideoFormat, ReturnType<typeof statusJson>>> = {};
-    for (const o of FORMATS) {
-      const s = videos.status(req.params.id, o);
-      if (s) jobs[o] = statusJson(s);
-    }
+    const jobs = { cartoon: {}, console: {} } as Record<(typeof STYLES)[number], Partial<Record<VideoFormat, ReturnType<typeof statusJson>>>>;
+    for (const style of STYLES)
+      for (const o of FORMATS) {
+        const s = videos.status(req.params.id, style, o);
+        if (s) jobs[style][o] = statusJson(s);
+      }
     return res.json({ jobs, plannerConfigured });
   });
 
-  for (const format of FORMATS) {
-    router.get(`/api/songs/:id/video/${format}.mp4`, (req, res) => {
-      if (!videos) return notConfigured(res);
-      const project = store.getProject(ownerOf(req), req.params.id);
-      if (!project) return res.status(404).json({ error: 'not_found', id: req.params.id });
-      if (videos.status(req.params.id, format)?.state !== 'done') return res.status(404).json({ error: 'no_video', id: req.params.id, format });
-      if (req.query.download === '1') res.attachment(`${project.title.replace(/[\\/:*?"<>|]+/gu, '_')} (music video${format.endsWith('-preview') ? ', preview' : ''}).mp4`);
-      res.type('video/mp4');
-      return res.sendFile(videos.mp4Path(req.params.id, format));
-    });
-  }
+  for (const style of STYLES)
+    for (const format of FORMATS) {
+      const job = jobId(style, format);
+      router.get(`/api/songs/:id/video/${job}.mp4`, (req, res) => {
+        if (!videos) return notConfigured(res);
+        const project = store.getProject(ownerOf(req), req.params.id);
+        if (!project) return res.status(404).json({ error: 'not_found', id: req.params.id });
+        if (videos.status(req.params.id, style, format)?.state !== 'done') return res.status(404).json({ error: 'no_video', id: req.params.id, format: job });
+        const kind = style === 'console' ? 'console video' : 'music video';
+        if (req.query.download === '1') res.attachment(`${project.title.replace(/[\\/:*?"<>|]+/gu, '_')} (${kind}${format.endsWith('-preview') ? ', preview' : ''}).mp4`);
+        res.type('video/mp4');
+        return res.sendFile(videos.mp4Path(req.params.id, style, format));
+      });
+    }
 
   return router;
 }

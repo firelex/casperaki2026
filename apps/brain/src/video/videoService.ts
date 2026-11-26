@@ -1,21 +1,25 @@
-// Music videos, one job per (song, format): make sure the song has an
-// exported mix (start the export and wait when it has none), ask the planner
-// for a scene plan, render the MP4 with the video engine. Status lives in
-// memory and on disk (status-<format>.json), like RenderService.
+// Music videos, one job per (song, style, format): make sure the song has an
+// exported mix with its own mix (start the export and wait when it has none),
+// then for the cartoon style ask the planner for a scene plan, for the console
+// style check the measured tracks belong to this version of the song, and
+// render the MP4 with the video engine. Status lives in memory and on disk
+// (status-<job>.json), like RenderService. A job is named by jobId(): the
+// cartoon's keep their format names ("portrait"), console ones are
+// "console-portrait".
 
 import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 
-import type { RenderRequest } from '@casperaki/video';
+import type { ConsoleRenderRequest, RenderRequest } from '@casperaki/video';
 import { parseSong } from '@casperaki/song-schema';
 
 import type { RenderService } from '../render/renderService.js';
 import type { SongsStore } from '../store.js';
 import type { Planner } from './planner.js';
 import { songVersionKey } from '../render/songVersion.js';
-import { songToVideoInput, VideoInputError } from './videoInput.js';
+import { songToConsoleInput, songToVideoInput, VideoInputError, type ConsoleBody } from './videoInput.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -25,9 +29,17 @@ export type VideoFormat = Orientation | `${Orientation}-preview`;
 export const FORMATS: readonly VideoFormat[] = ['landscape', 'portrait', 'landscape-preview', 'portrait-preview'];
 export const orientationOf = (f: VideoFormat): Orientation => (f.startsWith('portrait') ? 'portrait' : 'landscape');
 export const qualityOf = (f: VideoFormat): 'full' | 'preview' => (f.endsWith('-preview') ? 'preview' : 'full');
+export type VideoStyle = 'cartoon' | 'console';
+export const STYLES: readonly VideoStyle[] = ['cartoon', 'console'];
+/** A job's name, for its files and its status: the cartoon's keep their format names. */
+export const jobId = (style: VideoStyle, format: VideoFormat): string => (style === 'cartoon' ? format : `console-${format}`);
+
+/** The measured tracks are for another version of the song than the saved one. */
+export const SONG_CHANGED_MESSAGE = 'The song changed after its tracks were measured. Open the Music Video tab again to measure the saved version.';
 
 export interface VideoStatus {
   readonly songId: string;
+  readonly style: VideoStyle;
   readonly format: VideoFormat;
   readonly state: 'queued' | 'running' | 'done' | 'failed';
   readonly step?: 'audio' | 'planning' | 'rendering';
@@ -58,6 +70,8 @@ export interface VideoServiceDeps {
   readonly planner: Planner;
   /** The engine's renderVideo (injected so tests need no Chrome). */
   readonly renderVideo: (request: RenderRequest) => Promise<void>;
+  /** The engine's renderConsoleVideo (injected so tests need no Chrome). */
+  readonly renderConsoleVideo: (request: ConsoleRenderRequest) => Promise<void>;
   /** The song's own mix config (Pro-mode changes applied), or undefined on the standard mix (render/songVersion.ts). */
   readonly songMix: (ownerId: string, songId: string) => string | undefined;
   /** The standard mix config (for the version key of a song on the standard mix). */
@@ -76,6 +90,11 @@ const EXPORT_STEP: Readonly<Record<string, string>> = {
 };
 const AUDIO_TIMEOUT_MS = 30 * 60_000;
 
+export type StartArgs = { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string } & (
+  | { style: 'cartoon' }
+  | { style: 'console'; console: ConsoleBody }
+);
+
 export class VideoBusyError extends Error {
   constructor(songId: string) {
     super(`A music video for song ${songId} is already being made.`);
@@ -92,17 +111,19 @@ export class VideoService {
     return join(this.deps.config.videosDir, songId);
   }
 
-  mp4Path(songId: string, format: VideoFormat): string {
-    return join(this.dirFor(songId), `${format}.mp4`);
+  mp4Path(songId: string, style: VideoStyle, format: VideoFormat): string {
+    return join(this.dirFor(songId), `${jobId(style, format)}.mp4`);
   }
 
-  status(songId: string, format: VideoFormat): VideoStatus | undefined {
-    const key = `${songId}:${format}`;
+  status(songId: string, style: VideoStyle, format: VideoFormat): VideoStatus | undefined {
+    const job = jobId(style, format);
+    const key = `${songId}:${job}`;
     const live = this.statuses.get(key);
     if (live) return live;
-    const file = join(this.dirFor(songId), `status-${format}.json`);
+    const file = join(this.dirFor(songId), `status-${job}.json`);
     if (!existsSync(file)) return undefined;
-    const stored = JSON.parse(readFileSync(file, 'utf8')) as VideoStatus;
+    // Cartoon statuses written before styles existed have no style.
+    const stored = { style, ...(JSON.parse(readFileSync(file, 'utf8')) as Omit<VideoStatus, 'style'>) } as VideoStatus;
     const restored: VideoStatus =
       stored.state === 'queued' || stored.state === 'running'
         ? { ...stored, state: 'failed', error: 'interrupted: the brain restarted while this video was being made' }
@@ -111,26 +132,34 @@ export class VideoService {
     return restored;
   }
 
-  /** Start a video; one job at a time per song (VideoBusyError otherwise). */
-  start(args: { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string }): VideoStatus {
-    for (const o of FORMATS) {
-      const s = this.status(args.songId, o);
-      if (s && (s.state === 'queued' || s.state === 'running')) throw new VideoBusyError(args.songId);
+  /** Start a video; one job at a time per song, of either style (VideoBusyError otherwise). A console video needs
+   *  the tracks measured for the saved version of the song (VideoInputError 409 song_changed otherwise). */
+  start(args: StartArgs): VideoStatus {
+    for (const style of STYLES)
+      for (const f of FORMATS) {
+        const s = this.status(args.songId, style, f);
+        if (s && (s.state === 'queued' || s.state === 'running')) throw new VideoBusyError(args.songId);
+      }
+    if (args.style === 'console' && args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) {
+      throw new VideoInputError(409, 'song_changed', SONG_CHANGED_MESSAGE);
     }
     mkdirSync(this.dirFor(args.songId), { recursive: true });
-    const status: VideoStatus = { songId: args.songId, format: args.format, state: 'queued', queuedAt: new Date().toISOString() };
+    const status: VideoStatus = { songId: args.songId, style: args.style, format: args.format, state: 'queued', queuedAt: new Date().toISOString() };
     this.set(status);
     void this.run(args, status);
     return status;
   }
 
   private set(status: VideoStatus): void {
-    this.statuses.set(`${status.songId}:${status.format}`, status);
-    writeFileSync(join(this.dirFor(status.songId), `status-${status.format}.json`), JSON.stringify(status, null, 2));
+    const job = jobId(status.style, status.format);
+    this.statuses.set(`${status.songId}:${job}`, status);
+    writeFileSync(join(this.dirFor(status.songId), `status-${job}.json`), JSON.stringify(status, null, 2));
   }
 
-  private async run(args: { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string }, base: VideoStatus): Promise<void> {
+  private async run(args: StartArgs, base: VideoStatus): Promise<void> {
     const startedAt = new Date().toISOString();
+    const out = this.mp4Path(args.songId, args.style, args.format);
+    const tmp = join(dirname(out), `.${basename(out)}.tmp-${process.pid}.mp4`);
     try {
       const step = (s: 'audio' | 'planning' | 'rendering', extra: Partial<VideoStatus> = {}) =>
         this.set({ ...base, state: 'running', step: s, startedAt, stepStartedAt: stepStart, ...extra });
@@ -141,48 +170,52 @@ export class VideoService {
       const song = parseSong(JSON.parse(stored.canonical));
       const audioPath = await this.exportedMix(args.songId, stored.canonical, this.deps.songMix(args.ownerId, args.songId), (detail) => step('audio', { detail }));
       const durationSeconds = await (this.deps.probeSeconds ?? ((p: string) => this.probeSeconds(p)))(audioPath);
-      const input = songToVideoInput({ title: args.title, artist: args.artist, song, audio: { path: audioPath, durationSeconds } });
+      const audio = { path: audioPath, durationSeconds };
 
-      stepStart = new Date().toISOString();
-      const expectedShots = Math.max(1, input.sections.length);
-      step('planning', { progress: 0, detail: `asking the scene planner (about ${expectedShots} shots, one per section)` });
-      let lastShots = -1;
-      const plan = await this.deps.planner.plan(input, ({ shots, attempt }) => {
-        if (shots === lastShots) return;
-        lastShots = shots;
-        step('planning', {
-          progress: Math.min(0.95, shots / expectedShots),
-          detail: `${attempt > 1 ? 'fixing the plan: ' : ''}shot ${shots}${shots <= expectedShots ? ` of about ${expectedShots}` : ''} written`,
-        });
-      });
-      writeFileSync(join(this.dirFor(args.songId), `plan-${args.format}.json`), JSON.stringify({ input, plan }, null, 2));
-
-      stepStart = new Date().toISOString();
-      step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scenes)' });
-      const out = this.mp4Path(args.songId, args.format);
-      const tmp = join(dirname(out), `.${basename(out)}.tmp-${process.pid}.mp4`);
       let lastWritten = 0;
-      await this.deps.renderVideo({
-        input,
-        plan,
-        outPath: tmp,
-        orientation: orientationOf(args.format),
-        quality: qualityOf(args.format),
-        concurrency: this.deps.config.renderConcurrency,
-        onProgress: (progress) => {
-          // Status file writes at most every 2%.
-          if (progress - lastWritten >= 0.02 || progress >= 1) {
-            lastWritten = progress;
-            step('rendering', { progress, detail: `${Math.round(progress * 100)}% of ${Math.round(durationSeconds)} s of video rendered` });
-          }
-        },
-      });
+      const onProgress = (progress: number) => {
+        // Status file writes at most every 2%.
+        if (progress - lastWritten >= 0.02 || progress >= 1) {
+          lastWritten = progress;
+          step('rendering', { progress, detail: `${Math.round(progress * 100)}% of ${Math.round(durationSeconds)} s of video rendered` });
+        }
+      };
+      const render = { outPath: tmp, orientation: orientationOf(args.format), quality: qualityOf(args.format), concurrency: this.deps.config.renderConcurrency, onProgress };
+
+      if (args.style === 'console') {
+        // The song's mix may have changed while it exported (a Pro-mode change).
+        if (args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) throw new Error(SONG_CHANGED_MESSAGE);
+        const { versionKey: _versionKey, ...tracks } = args.console;
+        const input = songToConsoleInput({ title: args.title, artist: args.artist, song, audio, body: tracks });
+        writeFileSync(join(this.dirFor(args.songId), `console-input-${args.format}.json`), JSON.stringify(input));
+        stepStart = new Date().toISOString();
+        step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scene)' });
+        await this.deps.renderConsoleVideo({ input, ...render });
+      } else {
+        const input = songToVideoInput({ title: args.title, artist: args.artist, song, audio });
+        stepStart = new Date().toISOString();
+        const expectedShots = Math.max(1, input.sections.length);
+        step('planning', { progress: 0, detail: `asking the scene planner (about ${expectedShots} shots, one per section)` });
+        let lastShots = -1;
+        const plan = await this.deps.planner.plan(input, ({ shots, attempt }) => {
+          if (shots === lastShots) return;
+          lastShots = shots;
+          step('planning', {
+            progress: Math.min(0.95, shots / expectedShots),
+            detail: `${attempt > 1 ? 'fixing the plan: ' : ''}shot ${shots}${shots <= expectedShots ? ` of about ${expectedShots}` : ''} written`,
+          });
+        });
+        writeFileSync(join(this.dirFor(args.songId), `plan-${args.format}.json`), JSON.stringify({ input, plan }, null, 2));
+        stepStart = new Date().toISOString();
+        step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scenes)' });
+        await this.deps.renderVideo({ input, plan, ...render });
+      }
       if (!existsSync(tmp)) throw new Error('the video renderer finished but wrote no file');
       renameSync(tmp, out);
       this.set({ ...base, state: 'done', startedAt, finishedAt: new Date().toISOString() });
     } catch (err) {
-      const message = err instanceof VideoInputError || err instanceof Error ? err.message : String(err);
-      rmSync(join(this.dirFor(args.songId), `.${args.format}.mp4.tmp-${process.pid}.mp4`), { force: true });
+      const message = err instanceof Error ? err.message : String(err);
+      rmSync(tmp, { force: true });
       this.set({ ...base, state: 'failed', error: message, startedAt, finishedAt: new Date().toISOString() });
     }
   }

@@ -17,7 +17,7 @@
     "@casperaki/music-theory": "workspace:*",
     "@casperaki/song-edit": "workspace:*",
     "@casperaki/song-schema": "workspace:*",
-    "@casperaki/video": "github:firelex/casperaki-video",
+    "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#5fb97e8d8bf49a7f81c5d8799882c50867d41ea4",
     "better-sqlite3": "^11.3.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",

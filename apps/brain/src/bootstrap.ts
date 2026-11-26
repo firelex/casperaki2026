@@ -46,7 +46,7 @@ import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
 import { OidcClient } from './auth/OidcClient.js';
 import { attachSession, requireSession } from './auth/middleware.js';
 import { RenderService } from './render/renderService.js';
-import { renderVideo } from '@casperaki/video';
+import { renderConsoleVideo, renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
@@ -230,6 +230,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           renders,
           planner: new DeepSeekPlanner(plannerEndpoint(config)),
           renderVideo,
+          renderConsoleVideo,
           // `playback` (the mix config) is set up below; these run per video, after start-up.
           songMix: (ownerId, songId) => {
             const project = store.getProject(ownerId, songId);

@@ -30,8 +30,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/song-schema
       '@casperaki/video':
-        specifier: github:firelex/casperaki-video
-        version: git+https://git@github.com:firelex/casperaki-video.git#f64dcff5d622872aab27e0fd1e3fb6553f8c54ae(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)
+        specifier: git+https://github.com/firelex/casperaki-video.git#5fb97e8d8bf49a7f81c5d8799882c50867d41ea4
+        version: git+https://git@github.com:firelex/casperaki-video.git#5fb97e8d8bf49a7f81c5d8799882c50867d41ea4(@types/react@19.2.17)(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)
       better-sqlite3:
         specifier: ^11.3.0
         version: 11.10.0
@@ -427,8 +427,8 @@ packages:
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
 
-  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#f64dcff5d622872aab27e0fd1e3fb6553f8c54ae':
-    resolution: {commit: f64dcff5d622872aab27e0fd1e3fb6553f8c54ae, repo: git@github.com:firelex/casperaki-video.git, type: git}
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#5fb97e8d8bf49a7f81c5d8799882c50867d41ea4':
+    resolution: {commit: 5fb97e8d8bf49a7f81c5d8799882c50867d41ea4, repo: git@github.com:firelex/casperaki-video.git, type: git}
     version: 0.1.0
 
   '@emnapi/core@1.11.3':
@@ -1095,6 +1095,31 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
+  '@react-three/fiber@9.8.2':
+    resolution: {integrity: sha512-6s0ejw0bT1myQ/aLLugcil8/zBmNnnHw/AISWF1yfDLOxfX3yYaTS+0IkpJITEnm/SSMLtxje6CJDt0i5Wu1Sw==}
+    peerDependencies:
+      expo: '>=43.0'
+      expo-asset: '>=8.4'
+      expo-file-system: '>=11.0'
+      expo-gl: '>=11.0'
+      react: '>=19 <19.4'
+      react-dom: '>=19 <19.4'
+      react-native: '>=0.78'
+      three: '>=0.156'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+      expo-asset:
+        optional: true
+      expo-file-system:
+        optional: true
+      expo-gl:
+        optional: true
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+
   '@remotion/bundler@4.0.545':
     resolution: {integrity: sha512-HbUp5EDrjJIq++o2TE7Ux4C20q4cuTFK3OAezQWEZC1jc0xdrnp5/IFdmGpp+Kf3l63BPVaMr96nT842EY7M9Q==}
     peerDependencies:
@@ -1221,6 +1246,15 @@ packages:
         optional: true
       '@remotion/whisper-webgpu':
         optional: true
+
+  '@remotion/three@4.0.545':
+    resolution: {integrity: sha512-Rd0c4jbxqukRU3G94OrolHRFzU7Vp4sl6YjV6yYGTrAKe9daA8SqdUjEgDTR3NxBveNmhowTZ/pGLWqBx+s7LA==}
+    peerDependencies:
+      '@react-three/fiber': '>=8.0.0'
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+      remotion: 4.0.545
+      three: '>=0.137.0'
 
   '@remotion/timeline-utils@4.0.545':
     resolution: {integrity: sha512-CfpYEdSPHtbOLBQwrJUuuC83ULVJ8hiowPuwnIenacA2bJFQncFGf5eHlJuYmOaqJHCU5piTxdd7KqG6CG2Vpg==}
@@ -1710,6 +1744,11 @@ packages:
     peerDependencies:
       '@types/react': ^19.2.0
 
+  '@types/react-reconciler@0.28.9':
+    resolution: {integrity: sha512-HHM3nxyUZ3zAylX8ZEyrDNd2XZOnQ0D5XfunJF5FLQnZbHHYq4UWvW1QfelQNXv1ICNkwYhfxjwfnqivYB6bFg==}
+    peerDependencies:
+      '@types/react': '*'
+
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
 
@@ -1724,6 +1763,9 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
+  '@types/webxr@0.5.24':
+    resolution: {integrity: sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==}
 
   '@types/yazl@3.3.1':
     resolution: {integrity: sha512-DIWfCKpsTp6hE5BDBHV3+fIL/bLUF9Bv13iDrWnMlmhQpH67buNvI291ZauQ1xcccxK3FqQ9honnXpq4R8NMuQ==}
@@ -1961,6 +2003,9 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
+
+  buffer@6.0.3:
+    resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
   buffers@0.1.1:
     resolution: {integrity: sha512-9q/rDEGSb/Qsvv2qvzIzdluL5k7AaJOTrw23z9reQthrbF7is4CtlT0DXyO1oei2DCp4uojjzQ7igaSHp1kAEQ==}
@@ -2520,6 +2565,11 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  its-fine@2.1.1:
+    resolution: {integrity: sha512-C5ZoVkeqSt0Aje0tzESO+iT/EQpNFNL39GkP7mCACtoZUFD6GcyerFCr6kp0ZtiII4W9HoYkY48Soy5xE/uHKw==}
+    peerDependencies:
+      react: ^19.0.0
+
   jest-worker@27.5.1:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
@@ -3008,6 +3058,15 @@ packages:
       react-dom:
         optional: true
 
+  react-use-measure@2.1.7:
+    resolution: {integrity: sha512-KrvcAo13I/60HpwGO5jpW7E9DfusKyLPLvuHlUyP5zqnmAPhNc6qTRjUQrdTADl0lpPpDVU2/Gg51UlOGHXbdg==}
+    peerDependencies:
+      react: '>=16.13'
+      react-dom: '>=16.13'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+
   react@19.2.7:
     resolution: {integrity: sha512-HNe9WslTbXmFK8o8cmwgAeJFSBvt1bPdHCVKtaaV+WlAN36mpT4hcRpwbf3fY56ar2oIXzsBpOAiIRHAdY0OlQ==}
     engines: {node: '>=0.10.0'}
@@ -3247,6 +3306,11 @@ packages:
     resolution: {integrity: sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==}
     engines: {node: '>=10'}
 
+  suspend-react@0.1.3:
+    resolution: {integrity: sha512-aqldKgX9aZqpoDp3e8/BZ8Dm7x1pJl+qI3ZKxDN0i/IQTWUwBx/ManmlVJ3wowqbno6c2bmiIfs+Um6LbsjJyQ==}
+    peerDependencies:
+      react: '>=17.0'
+
   svg-parser@2.1.0:
     resolution: {integrity: sha512-bwLf38YmY+TDYHJw1Ex0Co8c4yeXuJAo8YnXGZrscxrvYoVVIvLeniEkV1Ks/54VteMnL4FtyN1+P+TZJdUPmQ==}
     engines: {node: '>=8'}
@@ -3328,6 +3392,9 @@ packages:
   text-segmentation@1.0.3:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
 
+  three@0.187.0:
+    resolution: {integrity: sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA==}
+
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
 
@@ -3407,6 +3474,11 @@ packages:
     hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
+
+  use-sync-external-store@1.7.0:
+    resolution: {integrity: sha512-6L+EeigHMQhdaIPNIFUKwfWJSwWFQ8gJbJ2DLOs5sDIegTwR9fRxvnM3uciHKjIZhFz+KAv2emhWMRvDmMcY8A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
@@ -3627,6 +3699,24 @@ packages:
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
+  zustand@5.1.0:
+    resolution: {integrity: sha512-ciJZlP48M1PTQbVQq81CGVFxHTLpZNrFjKqwjtCU34AWuXTZT/jrF3p9+fI84Cf1eSCMLapxqBy/SNTfwOBuqA==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
+
 snapshots:
 
   '@babel/code-frame@7.29.7':
@@ -3753,15 +3843,18 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#f64dcff5d622872aab27e0fd1e3fb6553f8c54ae(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)':
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#5fb97e8d8bf49a7f81c5d8799882c50867d41ea4(@types/react@19.2.17)(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)':
     dependencies:
+      '@react-three/fiber': 9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)
       '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/cli': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)
       '@remotion/google-fonts': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/renderer': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/three': 4.0.545(@react-three/fiber@9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(remotion@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(three@0.187.0)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      three: 0.187.0
       zod: 4.6.7
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -3772,13 +3865,20 @@ snapshots:
       - '@swc/css'
       - '@swc/helpers'
       - '@swc/html'
+      - '@types/react'
       - bufferutil
       - clean-css
       - cssnano
       - csso
+      - expo
+      - expo-asset
+      - expo-file-system
+      - expo-gl
       - html-minifier-terser
+      - immer
       - lightningcss
       - postcss
+      - react-native
       - supports-color
       - typescript
       - uglify-js
@@ -4168,6 +4268,26 @@ snapshots:
       '@tybys/wasm-util': 0.10.5
     optional: true
 
+  '@react-three/fiber@9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)':
+    dependencies:
+      '@babel/runtime': 7.29.15
+      '@types/webxr': 0.5.24
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      its-fine: 2.1.1(@types/react@19.2.17)(react@19.3.1)
+      react: 19.3.1
+      react-use-measure: 2.1.7(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      scheduler: 0.28.0
+      suspend-react: 0.1.3(react@19.3.1)
+      three: 0.187.0
+      use-sync-external-store: 1.7.0(react@19.3.1)
+      zustand: 5.1.0(@types/react@19.2.17)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1))
+    optionalDependencies:
+      react-dom: 19.3.1(react@19.3.1)
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+
   '@remotion/bundler@4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@remotion/studio': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -4454,6 +4574,14 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@remotion/three@4.0.545(@react-three/fiber@9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(remotion@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(three@0.187.0)':
+    dependencies:
+      '@react-three/fiber': 9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      three: 0.187.0
 
   '@remotion/timeline-utils@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -4885,6 +5013,10 @@ snapshots:
     dependencies:
       '@types/react': 19.2.17
 
+  '@types/react-reconciler@0.28.9(@types/react@19.2.17)':
+    dependencies:
+      '@types/react': 19.2.17
+
   '@types/react@19.2.17':
     dependencies:
       csstype: 3.2.3
@@ -4906,6 +5038,8 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
+
+  '@types/webxr@0.5.24': {}
 
   '@types/yazl@3.3.1':
     dependencies:
@@ -5210,6 +5344,11 @@ snapshots:
   buffer-indexof-polyfill@1.0.2: {}
 
   buffer@5.7.1:
+    dependencies:
+      base64-js: 1.5.1
+      ieee754: 1.2.1
+
+  buffer@6.0.3:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
@@ -5841,6 +5980,13 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  its-fine@2.1.1(@types/react@19.2.17)(react@19.3.1):
+    dependencies:
+      '@types/react-reconciler': 0.28.9(@types/react@19.2.17)
+      react: 19.3.1
+    transitivePeerDependencies:
+      - '@types/react'
+
   jest-worker@27.5.1:
     dependencies:
       '@types/node': 22.19.20
@@ -6257,6 +6403,12 @@ snapshots:
     optionalDependencies:
       react-dom: 19.2.7(react@19.2.7)
 
+  react-use-measure@2.1.7(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
+    dependencies:
+      react: 19.3.1
+    optionalDependencies:
+      react-dom: 19.3.1(react@19.3.1)
+
   react@19.2.7: {}
 
   react@19.3.1: {}
@@ -6524,6 +6676,10 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
+  suspend-react@0.1.3(react@19.3.1):
+    dependencies:
+      react: 19.3.1
+
   svg-parser@2.1.0: {}
 
   svg-pathdata@6.0.3:
@@ -6581,6 +6737,8 @@ snapshots:
     dependencies:
       utrie: 1.0.2
     optional: true
+
+  three@0.187.0: {}
 
   tiny-invariant@1.3.3: {}
 
@@ -6650,6 +6808,10 @@ snapshots:
       browserslist: 4.28.2
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  use-sync-external-store@1.7.0(react@19.3.1):
+    dependencies:
+      react: 19.3.1
 
   util-deprecate@1.0.2: {}
 
@@ -6861,3 +7023,9 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.6.7: {}
+
+  zustand@5.1.0(@types/react@19.2.17)(react@19.3.1)(use-sync-external-store@1.7.0(react@19.3.1)):
+    optionalDependencies:
+      '@types/react': 19.2.17
+      react: 19.3.1
+      use-sync-external-store: 1.7.0(react@19.3.1)
