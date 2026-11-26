@@ -23,6 +23,8 @@ export interface ConsoleBodyTrack {
   readonly bus: string;
   /** null: the strip's parts differ (a drum kit), the fader sits at 0 dB. */
   readonly volumeDb: number | null;
+  /** Send levels to the reverb, delay and chorus returns, dB (null: none). */
+  readonly sends: { readonly reverb: number | null; readonly delay: number | null; readonly chorus: number | null };
   /** Peak level per bin. */
   readonly levels: readonly number[];
   readonly volumeAutomation?: ConsoleAutomation;

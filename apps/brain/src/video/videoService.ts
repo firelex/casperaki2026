@@ -188,9 +188,9 @@ export class VideoService {
         const { versionKey: _versionKey, ...tracks } = args.console;
         const project = this.deps.store.getProject(args.ownerId, args.songId);
         if (!project) throw new Error(SONG_CHANGED_MESSAGE);
-        const trims: Record<string, number> = {};
-        for (const [lane, o] of Object.entries(project.mixOverrides?.lanes ?? {})) if (o.volumeDb !== undefined) trims[lane] = o.volumeDb;
-        const input = songToConsoleInput({ title: args.title, artist: args.artist, song, audio, body: tracks, trims });
+        // A song on the standard mix has no Pro-mode changes.
+        const overrides = project.mixOverrides?.lanes ?? {};
+        const input = songToConsoleInput({ title: args.title, artist: args.artist, song, audio, body: tracks, overrides });
         writeFileSync(join(this.dirFor(args.songId), `console-input-${args.format}.json`), JSON.stringify(input));
         stepStart = new Date().toISOString();
         step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scene)' });

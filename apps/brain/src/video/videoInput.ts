@@ -145,7 +145,7 @@ export function songToVideoInput(args: { title: string; artist: string; song: So
 }
 
 /** The tracks the browser measured (the engine's schema, without the song fields the brain adds: title, artist,
- *  audio and timing). The engine's zod (v4) is not the brain's (v3): this schema stays the engine's. */
+ *  audio, timing and lyrics). The engine's zod (v4) is not the brain's (v3): this schema stays the engine's. */
 const ConsoleTracksSchema = ConsoleInputObjectSchema.omit({
   title: true,
   artist: true,
@@ -154,6 +154,7 @@ const ConsoleTracksSchema = ConsoleInputObjectSchema.omit({
   firstBeatSeconds: true,
   beatsPerBar: true,
   sections: true,
+  lyrics: true,
 });
 const VersionKeySchema = z.object({ versionKey: z.string().regex(/^[0-9a-f]{16}$/u, 'a version key is 16 hex digits') });
 
@@ -191,8 +192,8 @@ export function songToConsoleInput(args: {
   song: Song;
   audio: VideoAudio;
   body: Omit<ConsoleBody, 'versionKey'>;
-  /** The song's Pro-mode fader change per strip (the mixer keys it by the strip's name), dB. */
-  trims: Readonly<Record<string, number>>;
+  /** The song's Pro-mode changes per strip (the mixer keys them by the strip's name): fader trim and sends, dB. */
+  overrides: Readonly<Record<string, { volumeDb?: number; reverb?: number; delay?: number; chorus?: number }>>;
 }): ConsoleInput {
   const { binSeconds } = args.body;
   const bins = Math.round(args.audio.durationSeconds / binSeconds);
@@ -201,8 +202,9 @@ export function songToConsoleInput(args: {
   const fitted = (levels: readonly number[]) =>
     fit ? Array.from({ length: bins }, (_, i) => (i < levels.length ? levels[i]! : 0)) : [...levels];
   const tracks = args.body.tracks.map((t) => {
-    const trimDb = args.trims[t.name];
-    return { ...t, levels: fitted(t.levels), ...(trimDb !== undefined ? { trimDb } : {}) };
+    const o = args.overrides[t.name] ?? {};
+    const sends = { reverb: o.reverb ?? t.sends.reverb, delay: o.delay ?? t.sends.delay, chorus: o.chorus ?? t.sends.chorus };
+    return { ...t, sends, levels: fitted(t.levels), ...(o.volumeDb !== undefined ? { trimDb: o.volumeDb } : {}) };
   });
   const master = fitted(args.body.master);
   return ConsoleInputSchema.parse({
@@ -210,6 +212,7 @@ export function songToConsoleInput(args: {
     artist: args.artist,
     audio: { path: args.audio.path, durationSeconds: args.audio.durationSeconds },
     ...songTiming(args.song),
+    lyrics: lyricLines(args.song),
     binSeconds,
     tracks,
     master,
