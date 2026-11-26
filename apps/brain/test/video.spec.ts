@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { orchestrate } from '@casperaki/arrangement';
 import type { ConsoleRenderRequest, RenderRequest, ScenePlan } from '@casperaki/video';
 import { songVersionKey } from '../src/render/songVersion.js';
+import { DEV_OWNER_ID } from '../src/routes/songs.js';
 
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
@@ -30,7 +31,7 @@ describe('songToConsoleInput', () => {
   it('does not depend on the cartoon style\'s genres', () => {
     const noStyle = { ...song, genre: undefined } as unknown as typeof song;
     expect(() => songToVideoInput({ title: 'T', artist: 'A', song: noStyle, audio: { path: '/tmp/x.mp3', durationSeconds: 1 } })).toThrow(/styles/);
-    const input = songToConsoleInput({ title: 'T', artist: 'A', song: noStyle, audio: { path: '/tmp/x.mp3', durationSeconds: 1 }, body });
+    const input = songToConsoleInput({ title: 'T', artist: 'A', song: noStyle, audio: { path: '/tmp/x.mp3', durationSeconds: 1 }, body, trims: {} });
     expect(input.tracks[0]!.name).toBe('Bass');
     expect(input.sections).toEqual(songToVideoInput({ title: 'T', artist: 'A', song, audio: { path: '/tmp/x.mp3', durationSeconds: 1 } }).sections);
   });
@@ -268,6 +269,25 @@ describe('console music videos', () => {
     expect(r.input.master).toHaveLength(400);
     expect(r.input.tracks[0]!.levels).toHaveLength(400);
     expect(r.input.master.slice(397)).toEqual([0, 0, 0]);
+  });
+
+  it("moves a strip's fader by the song's Pro-mode change for it", async () => {
+    const { id, key } = await songOf(h);
+    h.store.setProjectMix({ ownerId: DEV_OWNER_ID, songId: id, mixOverrides: { lanes: { Bass: { volumeDb: -4 } }, buses: {} }, updatedAt: new Date().toISOString() });
+    // The fake songMix ignores the overrides, so the version key is unchanged here; the trim comes from the project.
+    expect((await post(`${h.url}/api/songs/${id}/video`, { style: 'console', orientation: 'landscape', artist: 'Me', console: consoleBody(key) })).status).toBe(202);
+    expect(await waitFor(h, id, (j) => finished(j.console?.landscape))).toMatchObject({ state: 'done' });
+    const tracks = h.consoleRenders[0]!.input.tracks;
+    expect(tracks.find((t) => t.name === 'Bass')!.trimDb).toBe(-4);
+    expect(tracks.find((t) => t.name === 'Riser')!.trimDb).toBeUndefined();
+  });
+
+  it('rejects a track whose levels are not as long as the master', async () => {
+    const { id, key } = await songOf(h);
+    const body = consoleBody(key);
+    const res = await post(`${h.url}/api/songs/${id}/video`, { style: 'console', orientation: 'landscape', artist: 'Me', console: { ...body, tracks: [{ ...body.tracks[0], levels: [0.5] }, body.tracks[1]] } });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toMatch(/Bass.*1 levels.*400/);
   });
 
   it('fails the job when the measured levels do not cover the song', async () => {

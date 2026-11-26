@@ -186,7 +186,11 @@ export class VideoService {
         // The song's mix may have changed while it exported (a Pro-mode change).
         if (args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) throw new Error(SONG_CHANGED_MESSAGE);
         const { versionKey: _versionKey, ...tracks } = args.console;
-        const input = songToConsoleInput({ title: args.title, artist: args.artist, song, audio, body: tracks });
+        const project = this.deps.store.getProject(args.ownerId, args.songId);
+        if (!project) throw new Error(SONG_CHANGED_MESSAGE);
+        const trims: Record<string, number> = {};
+        for (const [lane, o] of Object.entries(project.mixOverrides?.lanes ?? {})) if (o.volumeDb !== undefined) trims[lane] = o.volumeDb;
+        const input = songToConsoleInput({ title: args.title, artist: args.artist, song, audio, body: tracks, trims });
         writeFileSync(join(this.dirFor(args.songId), `console-input-${args.format}.json`), JSON.stringify(input));
         stepStart = new Date().toISOString();
         step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scene)' });

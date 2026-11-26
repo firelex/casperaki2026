@@ -1,4 +1,5 @@
-import type { LaneMeters, ResolvedMixLane, SampledAutomation } from '../audio/livePlayer';
+import type { LaneMeters, LivePlayer, ResolvedMixLane, SampledAutomation } from '../audio/livePlayer';
+import type { PlaybackPayload } from '../api/playback';
 import { mixerStrips } from '../audio/vocalLanes';
 import type { ConsoleBody, ConsoleBodyTrack } from '../api/video';
 import { BEATS_PER_BAR, type SequencerModel } from './sequencerModel';
@@ -42,8 +43,9 @@ export function buildConsoleBody(args: {
     const parts = strip.lanes.flatMap((l) => byLane.get(l)!);
     const lanePeaks = strip.lanes.map(peaksOf);
     const levels = Array.from({ length: meters.binCount }, (_, b) => round(Math.max(...lanePeaks.map((p) => p[b]!))));
-    const volumes = parts.map((p) => p.volumeDb);
-    const volumeDb = volumes.every((v) => v !== null && v === volumes[0]) ? volumes[0]! : null;
+    // The mixer's rule (Mixer.tsx): parts without a resolved volume are left out; the rest must agree.
+    const volumes = parts.map((p) => p.volumeDb).filter((v): v is number => v !== null);
+    const volumeDb = volumes.length > 0 && volumes.every((v) => v === volumes[0]) ? volumes[0]! : null;
     const automation = (pick: (p: ResolvedMixLane) => SampledAutomation | undefined) => {
       const a = parts.map(pick).find((x) => x !== undefined);
       return a ? { t0: a.t0, step: a.step, values: [...a.values] } : undefined;
@@ -79,4 +81,29 @@ export function buildConsoleBody(args: {
   });
 
   return { versionKey: meters.versionKey, binSeconds: meters.binSec, tracks, master: Array.from(masterPeaks, round) };
+}
+
+/**
+ * Measures every track's level for the saved song through the in-browser engine, reporting the share done. It forgets
+ * cached levels and payloads first: they are kept per song id, and the song's mix may have been changed elsewhere
+ * since (another tab or device), which would send levels of an older version.
+ */
+export function measureTracks(
+  player: Pick<LivePlayer, 'forgetMixes' | 'meters'>,
+  songId: string,
+  fetchPayload: (signal: AbortSignal) => Promise<PlaybackPayload>,
+  onProgress: (share: number) => void,
+): Promise<LaneMeters> {
+  player.forgetMixes();
+  return new Promise((resolve, reject) => {
+    player.meters(
+      songId,
+      fetchPayload,
+      (m) => {
+        onProgress(m.binCount > 0 ? m.doneBins / m.binCount : 0);
+        if (m.done) resolve(m);
+      },
+      (message) => reject(new Error(message)),
+    );
+  });
 }

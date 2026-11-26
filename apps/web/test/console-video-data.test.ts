@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { LaneMeters, ResolvedMixLane } from '../src/audio/livePlayer';
-import { buildConsoleBody } from '../src/editor/consoleVideoData';
+import { buildConsoleBody, measureTracks } from '../src/editor/consoleVideoData';
 import type { SequencerModel, SeqTrack } from '../src/editor/sequencerModel';
 
 const part = (lane: string, extra: Partial<ResolvedMixLane> = {}): ResolvedMixLane => ({
@@ -82,6 +82,13 @@ describe('buildConsoleBody', () => {
     expect(bass.bus).toBe('bass');
   });
 
+  it('leaves parts without a resolved volume out of the target volume, as the mixer does', () => {
+    const m = meters();
+    const lanes = m.mix.lanes.map((l) => (l.lane === 'Vocal wet' ? { ...l, volumeDb: null } : l));
+    const vocal = buildConsoleBody(args({ ...m, mix: { ...m.mix, lanes } })).tracks.find((t) => t.name === 'Vocal')!;
+    expect(vocal.volumeDb).toBe(-3);
+  });
+
   it('makes a lane with no track row an effects strip without a colour', () => {
     const riser = buildConsoleBody(args()).tracks.find((t) => t.name === 'Riser')!;
     expect(riser.role).toBe('effects');
@@ -118,5 +125,25 @@ describe('buildConsoleBody', () => {
     expect(() =>
       buildConsoleBody({ ...args(), hex: () => { throw new Error('CSS colour --x is not defined'); } }),
     ).toThrow(/not defined/);
+  });
+});
+
+describe('measureTracks', () => {
+  it('forgets cached levels first, so it measures the version that is saved now', async () => {
+    const calls: string[] = [];
+    const player = {
+      forgetMixes: () => calls.push('forget'),
+      meters: (key: string, _fetch: unknown, onUpdate: (m: LaneMeters) => void) => {
+        calls.push(`meters ${key}`);
+        onUpdate(meters({ done: false, doneBins: 1 }));
+        onUpdate(meters());
+        return () => undefined;
+      },
+    };
+    const progress: number[] = [];
+    const m = await measureTracks(player, 'song1', async () => { throw new Error('not fetched by the fake'); }, (p) => progress.push(p));
+    expect(calls).toEqual(['forget', 'meters song1']);
+    expect(m.done).toBe(true);
+    expect(progress).toEqual([1 / 3, 1]);
   });
 });

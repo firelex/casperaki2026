@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { playbackApi } from '../api/playback';
 import { videoApi, videoQueryKeys, type ConsoleBody, type VideoFormat, type VideoOrientation, type VideoQuality, type VideoStatus, type VideoStyle } from '../api/video';
-import { livePlayer, type LaneMeters } from '../audio/livePlayer';
+import { livePlayer } from '../audio/livePlayer';
 import { useSession } from '../state/session';
 import { LEAD_VOCAL_NAME } from '../types/song';
-import { buildConsoleBody } from './consoleVideoData';
+import { buildConsoleBody, measureTracks } from './consoleVideoData';
 import { colorHex } from './sequencer/layout';
 import { BEATS_PER_BAR, buildSequencerModel } from './sequencerModel';
 
@@ -60,7 +60,7 @@ export function MusicVideoView() {
       if (!viewSong) throw new Error('The song is not loaded yet.');
       setMeasuring(0);
       try {
-        const meters = await measureTracks(songId, setMeasuring);
+        const meters = await measureTracks(livePlayer, songId, (signal) => playbackApi.forSaved(songId, signal), setMeasuring);
         const model = buildSequencerModel(viewSong);
         const body: ConsoleBody = buildConsoleBody({
           model,
@@ -332,17 +332,3 @@ function useNow(ms: number): number {
   return now;
 }
 
-/** Measures every track's level for the saved song through the in-browser engine, reporting the share done. */
-function measureTracks(songId: string, onProgress: (share: number) => void): Promise<LaneMeters> {
-  return new Promise((resolve, reject) => {
-    livePlayer.meters(
-      songId,
-      (signal) => playbackApi.forSaved(songId, signal),
-      (m) => {
-        onProgress(m.binCount > 0 ? m.doneBins / m.binCount : 0);
-        if (m.done) resolve(m);
-      },
-      (message) => reject(new Error(message)),
-    );
-  });
-}

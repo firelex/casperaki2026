@@ -171,6 +171,9 @@ export function parseConsoleBody(raw: unknown): ConsoleBody {
     const issue = parsed.error.issues[0]!;
     throw new VideoInputError(400, 'invalid_body', `console.${issue.path.join('.')}: ${issue.message}`);
   }
+  const bins = parsed.data.master.length;
+  const uneven = parsed.data.tracks.find((t) => t.levels.length !== bins);
+  if (uneven) throw new VideoInputError(400, 'invalid_body', `console: track "${uneven.name}" has ${uneven.levels.length} levels, the master ${bins}; every track is measured over the same bins`);
   return { ...parsed.data, versionKey: key.data.versionKey };
 }
 
@@ -182,14 +185,25 @@ export const LEVELS_LENGTH_TOLERANCE_SECONDS = 2;
 /** The engine's ConsoleInput for a song and the tracks measured for it (any genre). Levels within
  *  LEVELS_LENGTH_TOLERANCE_SECONDS of the audio are fitted to its length: trimmed, or extended with silence (nothing
  *  was measured to play there); a larger difference is left for the engine's check to refuse. */
-export function songToConsoleInput(args: { title: string; artist: string; song: Song; audio: VideoAudio; body: Omit<ConsoleBody, 'versionKey'> }): ConsoleInput {
+export function songToConsoleInput(args: {
+  title: string;
+  artist: string;
+  song: Song;
+  audio: VideoAudio;
+  body: Omit<ConsoleBody, 'versionKey'>;
+  /** The song's Pro-mode fader change per strip (the mixer keys it by the strip's name), dB. */
+  trims: Readonly<Record<string, number>>;
+}): ConsoleInput {
   const { binSeconds } = args.body;
   const bins = Math.round(args.audio.durationSeconds / binSeconds);
   const measured = args.body.master.length * binSeconds;
   const fit = Math.abs(measured - args.audio.durationSeconds) <= LEVELS_LENGTH_TOLERANCE_SECONDS;
   const fitted = (levels: readonly number[]) =>
     fit ? Array.from({ length: bins }, (_, i) => (i < levels.length ? levels[i]! : 0)) : [...levels];
-  const tracks = args.body.tracks.map((t) => ({ ...t, levels: fitted(t.levels) }));
+  const tracks = args.body.tracks.map((t) => {
+    const trimDb = args.trims[t.name];
+    return { ...t, levels: fitted(t.levels), ...(trimDb !== undefined ? { trimDb } : {}) };
+  });
   const master = fitted(args.body.master);
   return ConsoleInputSchema.parse({
     title: args.title,
