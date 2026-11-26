@@ -1,14 +1,44 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Checkbox } from '@teamsuzie/ui';
 
-import { singersApi, singersQueryKey } from '../api/singers';
+import {
+  addSingerProblem,
+  MAX_RECORDING_MINUTES,
+  REFERENCE_HINTS,
+  REFERENCE_LABELS,
+  referenceText,
+  singersApi,
+  singersQueryKey,
+  type AddSingerForm,
+  type ReferenceChoice,
+  type SingerInfo,
+} from '../api/singers';
+import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { AppHeader } from '../layout/AppHeader';
+import { duration, TaskSteps } from '../layout/TaskSteps';
+import { useElapsed, useTasks } from '../state/tasks';
+
+const message = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 /**
  * The singers: the voices Sing sings in, each with what it sounds like, where the voice came from, and its voice
- * reference to listen to. (Choosing the singer when you sing comes next.)
+ * reference to listen to; the user's own singers (added from a recording: only they see them) also with how their
+ * voice reference was chosen and a test line sung in the new voice, and a Delete button. "Add a singer" makes a new
+ * one from a recording in the background (its steps show here while it runs).
  */
 export function SingersPage() {
   const singers = useQuery({ queryKey: singersQueryKey, queryFn: ({ signal }) => singersApi.list(signal), staleTime: 60_000 });
+  const { data: tasks } = useTasks();
+  const queryClient = useQueryClient();
+  const adding = (tasks ?? []).filter((t) => t.kind === 'addSinger' && (t.state === 'running' || t.state === 'failed'));
+  // A singer made since the list was loaded: load it again.
+  const listed = new Set((singers.data?.singers ?? []).map((s) => s.id));
+  const made = (tasks ?? []).some((t) => t.kind === 'addSinger' && t.state === 'done' && t.singerId !== undefined && !listed.has(t.singerId));
+  useEffect(() => {
+    if (made && singers.data) void queryClient.invalidateQueries({ queryKey: singersQueryKey });
+  }, [made, singers.data, queryClient]);
+
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-bg text-white">
       <AppHeader />
@@ -16,26 +46,212 @@ export function SingersPage() {
         <div className="mx-auto flex max-w-[760px] flex-col gap-6">
           <div>
             <h1 className="text-[22px] font-semibold">Singers</h1>
-            <p className="mt-1 text-[14px] text-white/55">The voices Sing sings in.</p>
+            <p className="mt-1 text-[14px] text-white/55">The voices Sing sings in. The singers you add are yours alone.</p>
           </div>
           {singers.isPending ? <p className="text-[14px] text-white/55">Loading the singers…</p> : null}
           {singers.isError ? (
             <p className="text-[14px] text-err" role="alert">
-              The singers could not be loaded: {singers.error instanceof Error ? singers.error.message : String(singers.error)}
+              The singers could not be loaded: {message(singers.error)}
             </p>
           ) : null}
           {singers.data?.singers.map((s) => (
-            <section key={s.id} className="flex flex-col gap-3 rounded-[12px] border border-line bg-panel p-5">
-              <div>
-                <h2 className="text-[17px] font-semibold">{s.name}</h2>
-                <p className="mt-1 text-[14px] text-white/75">{s.description}</p>
-              </div>
-              <audio controls preload="none" src={s.previewUrl} className="w-full" aria-label={`${s.name}: voice reference`} />
-              <p className="text-[12px] text-white/45">{s.source}</p>
-            </section>
+            <SingerCard key={s.id} singer={s} />
           ))}
+          {adding.map((t) => (
+            <AddingCard key={t.id} task={t} />
+          ))}
+          <AddSingerPanel />
         </div>
       </main>
     </div>
+  );
+}
+
+/** One singer: its name, description, voice reference (and for the user's own: how it was chosen, the test line,
+ *  Delete). */
+export function SingerCard({ singer: s }: { singer: SingerInfo }) {
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+  const remove = async () => {
+    setError(undefined);
+    try {
+      await singersApi.remove(s.id);
+      await queryClient.invalidateQueries({ queryKey: singersQueryKey });
+    } catch (err) {
+      setError(`Could not delete ${s.name}: ${message(err)}`);
+      setConfirming(false);
+    }
+  };
+  return (
+    <section className="flex flex-col gap-3 rounded-[12px] border border-line bg-panel p-5">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-[17px] font-semibold">
+            {s.name}
+            {s.own ? <span className="ml-2 rounded-full border border-white/20 px-2 py-0.5 align-middle text-[11px] font-normal text-white/60">yours</span> : null}
+          </h2>
+          <p className="mt-1 text-[14px] text-white/75">{s.description}</p>
+        </div>
+        {s.own ? (
+          confirming ? (
+            <span className="flex shrink-0 items-center gap-2 text-[13px]">
+              Delete {s.name}?
+              <button type="button" className="rounded-full border border-err/60 px-3 py-1 text-err hover:border-err" onClick={() => void remove()}>
+                Delete
+              </button>
+              <button type="button" className="rounded-full border border-white/30 px-3 py-1 text-white/80 hover:border-white/60" onClick={() => setConfirming(false)}>
+                Keep
+              </button>
+            </span>
+          ) : (
+            <button type="button" className="shrink-0 rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60" onClick={() => setConfirming(true)}>
+              Delete
+            </button>
+          )
+        ) : null}
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className="text-[12px] text-white/55">
+          Voice reference{s.reference ? ` · ${referenceText(s.reference)}` : ''}
+          {s.transcription ? ` · ${s.transcription === 'la' ? 'sung as "la la la"' : 'sung with words'}` : ''}
+        </span>
+        <audio controls preload="none" src={s.previewUrl} className="w-full" aria-label={`${s.name}: voice reference`} />
+      </div>
+      {s.testLineUrl ? (
+        <div className="flex flex-col gap-1">
+          <span className="text-[12px] text-white/55">Test line, sung in this voice</span>
+          <audio controls preload="none" src={s.testLineUrl} className="w-full" aria-label={`${s.name}: test line`} />
+        </div>
+      ) : null}
+      <p className="text-[12px] text-white/45">{s.source}</p>
+      {error ? (
+        <p className="text-[13px] text-err" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+/** A singer being made (or whose making failed): its steps, Cancel while it runs, Retry when it failed. */
+export function AddingCard({ task }: { task: BackgroundTask }) {
+  const queryClient = useQueryClient();
+  const elapsed = useElapsed(task.startedAt, task.state === 'running');
+  const [error, setError] = useState<string | undefined>(undefined);
+  const act = async (what: 'cancel' | 'retry') => {
+    setError(undefined);
+    try {
+      await (what === 'cancel' ? tasksApi.cancel(task.id) : tasksApi.retry(task.id));
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setError(`Could not ${what === 'cancel' ? 'cancel it' : 'start it again'}: ${message(err)}`);
+    }
+  };
+  return (
+    <section className="flex flex-col gap-2 rounded-[12px] border border-dashed border-line bg-panel p-5">
+      <h2 className="text-[17px] font-semibold">{task.title}</h2>
+      <p className={`text-[13px] ${task.state === 'failed' ? 'text-err' : 'text-white/60'}`}>
+        {task.state === 'running' ? `● Making the singer · ${duration(elapsed)}` : `✕ Could not make the singer: ${task.message ?? 'no reason given'}`}
+        {task.state === 'failed' ? (
+          <button type="button" className="ml-3 rounded-full border border-white/30 px-2 py-0.5 text-[12px] text-white hover:border-white/60" onClick={() => void act('retry')}>
+            Retry
+          </button>
+        ) : null}
+      </p>
+      <TaskSteps task={task} now={Date.now()} onCancel={() => void act('cancel')} />
+      {error ? (
+        <p className="text-[13px] text-err" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+const EMPTY: AddSingerForm = { file: undefined, name: '', description: '', rightToUse: false, fullSong: false, reference: 'best' };
+
+/** The Add a singer form: a recording, a name and description, how the voice reference is chosen ("The best stretch"
+ *  preselected), whether it is a full song, and the required consent box. */
+export function AddSingerPanel({ initial = EMPTY }: { initial?: AddSingerForm }) {
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState<AddSingerForm>(initial);
+  const [fileKey, setFileKey] = useState(0);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+  const problem = addSingerProblem(form);
+  const set = (patch: Partial<AddSingerForm>) => setForm((f) => ({ ...f, ...patch }));
+  const submit = async () => {
+    setError(undefined);
+    setSending(true);
+    try {
+      await singersApi.add(form);
+      setForm(EMPTY);
+      setFileKey((k) => k + 1);
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setError(message(err));
+    } finally {
+      setSending(false);
+    }
+  };
+  const field = 'rounded-[8px] border border-line bg-[#141518] px-3 py-2 text-[14px] text-white outline-none focus:border-white/40';
+  return (
+    <section className="flex flex-col gap-4 rounded-[12px] border border-line bg-panel p-5" aria-label="Add a singer">
+      <div>
+        <h2 className="text-[17px] font-semibold">Add a singer</h2>
+        <p className="mt-1 text-[13px] text-white/55">
+          From a recording of up to {MAX_RECORDING_MINUTES} minutes, sung in English or as "la la la". The voice is cleaned up, its
+          silences cut, and about 10 seconds of it become the new singer's voice reference; a test line is sung in it so you can hear
+          the result.
+        </p>
+      </div>
+      <label className="flex flex-col gap-1 text-[13px] text-white/75">
+        Recording
+        <input key={fileKey} type="file" accept="audio/*,video/*" className="text-[13px] text-white/80" onChange={(e) => set({ file: e.target.files?.[0] })} />
+      </label>
+      <label className="flex flex-col gap-1 text-[13px] text-white/75">
+        Name
+        <input type="text" maxLength={60} value={form.name} className={field} onChange={(e) => set({ name: e.target.value })} />
+      </label>
+      <label className="flex flex-col gap-1 text-[13px] text-white/75">
+        Description
+        <textarea maxLength={300} rows={2} value={form.description} className={field} placeholder="What the voice sounds like" onChange={(e) => set({ description: e.target.value })} />
+      </label>
+      <fieldset className="flex flex-col gap-2 text-[13px] text-white/75">
+        <legend className="mb-1">Voice reference</legend>
+        {(['best', 'beginning'] as const).map((c: ReferenceChoice) => (
+          <label key={c} className="flex items-start gap-2">
+            <input type="radio" name="reference" className="mt-0.5" checked={form.reference === c} onChange={() => set({ reference: c })} />
+            <span>
+              {REFERENCE_LABELS[c]} <span className="text-white/50">— {REFERENCE_HINTS[c]}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <label className="flex items-center gap-2 text-[13px] text-white/75">
+        <Checkbox checked={form.fullSong} onChange={(e) => set({ fullSong: e.target.checked })} />
+        This is a full song: separate the vocals first
+      </label>
+      <label className="flex items-center gap-2 text-[13px] text-white/75">
+        <Checkbox checked={form.rightToUse} onChange={(e) => set({ rightToUse: e.target.checked })} required />I have the right to use this voice
+      </label>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          disabled={problem !== undefined || sending}
+          className="rounded-full bg-white px-4 py-1.5 text-[14px] font-medium text-black disabled:opacity-40"
+          onClick={() => void submit()}
+        >
+          {sending ? 'Sending…' : 'Add the singer'}
+        </button>
+        {problem && !sending ? <span className="text-[12px] text-white/50">{problem}</span> : null}
+      </div>
+      {error ? (
+        <p className="text-[13px] text-err" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
   );
 }

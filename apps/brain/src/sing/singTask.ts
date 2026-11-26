@@ -165,9 +165,9 @@ const iso = (seconds: number) => new Date(seconds * 1000).toISOString();
 
 /** Sing's service stage; its step files are kept in its own subfolder of the task's files folder. */
 export const SING_STAGE = 'sing';
-/** Every service stage a task runs (Sing's, Transcribe melody's, the ACE layer's): the subfolders step files are
+/** Every service stage a task runs (Sing's, Transcribe melody's, the ACE layer's, Add a singer's): the subfolders step files are
  *  served from. "lead" and "repeats" are the folders of Sing tasks run before 2026-11-25 (YuE2), still served. */
-export const TASK_FILE_STAGES = [SING_STAGE, 'transcribe', 'ace', 'lead', 'repeats'] as const;
+export const TASK_FILE_STAGES = [SING_STAGE, 'transcribe', 'ace', 'singer', 'lead', 'repeats'] as const;
 export type TaskFileStage = (typeof TASK_FILE_STAGES)[number];
 
 /** A step's files as the task lists them: "<stage>/<name>" (GET /api/tasks/:id/files/<stage>/<name>). */

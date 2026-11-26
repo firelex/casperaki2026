@@ -17,8 +17,9 @@
 //   POST /api/tasks/:id/cancel     -> { task }                a running task cancelled (fails with "Cancelled")
 //   GET  /api/tasks/:id/files/:stage/:name -> a file a step of the task made (step.files lists "<stage>/<name>")
 //
-// TaskJson: { id, kind, songId, title, state, message?, startedAt, finishedAt?, steps: TaskStep[] }
-// (TaskStep: src/store.ts; kinds: writeLyrics, sing, transcribe, aceLayer).
+// TaskJson: { id, kind, songId (null for a task on no song), title, state, message?, startedAt, finishedAt?,
+// steps: TaskStep[], singerId? } (TaskStep: src/store.ts; kinds: writeLyrics, sing, transcribe, aceLayer, addSinger:
+// started by POST /api/singers, src/routes/singers.ts, titled with the singer's name; done when the singer is stored).
 
 import { Router, type Response } from 'express';
 import { z } from 'zod';
@@ -28,6 +29,7 @@ import { parseSong } from '@casperaki/song-schema';
 import type { TaskRow } from '../store.js';
 import type { SongsStore } from '../store.js';
 import { MAX_RECORDING_BYTES } from '../sing/transcribeTask.js';
+import { AddSingerOptionsSchema } from '../singers/addSingerTask.js';
 import { TaskError, type BackgroundTasks } from '../tasks/tasks.js';
 import { ownerOf } from './songs.js';
 
@@ -50,17 +52,20 @@ const StartBody = z.union([
   z.object({ kind: z.literal('aceLayer'), songId: z.string().min(1), song: z.unknown(), instrument: z.string(), words: z.string().optional(), range: z.unknown().optional(), sectionKinds: z.unknown().optional(), sections: z.unknown().optional(), lyrics: z.unknown().optional(), voice: z.unknown().optional() }).strict(),
 ]);
 
+/** A task as pages see it; `title` is its song's (an Add a singer task, on no song, is titled with the singer's name). */
 export function taskJson(t: TaskRow, title: string) {
   return {
     id: t.id,
     kind: t.kind,
     songId: t.songId,
-    title,
+    title: t.kind === 'addSinger' ? AddSingerOptionsSchema.parse(t.options).name : title,
     state: t.state,
     ...(t.message !== null ? { message: t.message } : {}),
     startedAt: t.startedAt,
     ...(t.finishedAt !== null ? { finishedAt: t.finishedAt } : {}),
     steps: t.steps,
+    // Add a singer: the singer it makes.
+    ...(t.kind === 'addSinger' ? { singerId: AddSingerOptionsSchema.parse(t.options).singerId } : {}),
     // The singer a Sing sang with (its dialog preselects it for Sing again).
     ...(t.kind === 'sing' && t.options && typeof (t.options as { singerId?: unknown }).singerId === 'string' ? { singerId: (t.options as { singerId: string }).singerId } : {}),
   };
@@ -68,7 +73,7 @@ export function taskJson(t: TaskRow, title: string) {
 
 export function createTasksRouter({ store, tasks, now }: { store: SongsStore; tasks: BackgroundTasks; now: () => Date }): Router {
   const router = Router();
-  const titled = (owner: string, t: TaskRow) => taskJson(t, store.getProject(owner, t.songId)?.title ?? '');
+  const titled = (owner: string, t: TaskRow) => taskJson(t, t.songId === null ? '' : (store.getProject(owner, t.songId)?.title ?? ''));
 
   router.get('/api/tasks', (req, res) => {
     const owner = ownerOf(req);

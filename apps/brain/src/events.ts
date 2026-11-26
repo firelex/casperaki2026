@@ -15,7 +15,7 @@ export type BrainEvent =
   | { readonly type: 'artwork'; readonly state: 'failed'; readonly songId: string; readonly message: string }
   /** A background task started, has its result ready, was applied (a new version of the song), or failed
    *  (GET /api/tasks has the details). */
-  | { readonly type: 'task'; readonly taskId: string; readonly songId: string; readonly state: 'running' | 'ready' | 'done' | 'failed' };
+  | { readonly type: 'task'; readonly taskId: string; readonly songId: string | null; readonly state: 'running' | 'ready' | 'done' | 'failed' };
 
 export class EventHub {
   private readonly streams = new Map<string, Set<(event: BrainEvent) => void>>();

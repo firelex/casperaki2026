@@ -44,6 +44,11 @@ const ConfigSchema = z.object({
   renderBin: z.string().default('../web/wasm/engine/build/casperaki_render'),
   /** The singers (the vocals service's voices folder, with singers.json). */
   singersDir: z.string().default('../models/services/vocals/voices'),
+  /** Add a singer: where the singers users add from their own recordings are kept, outside git
+   *  (<dir>/<owner>/singers.json and a folder per singer; src/singers/userSingers.ts). Required to add singers, with
+   *  VOCALS_SERVICE_URL and BRAIN_TASK_FILES_DIR; unset → Add a singer answers 503 naming the settings and only the
+   *  built-in singers are listed. */
+  singersDataDir: z.string().min(1).optional(),
   renderStubSamplesDir: z.string().default('../engine-spike/samples'),
   sampleLibraryRoot: z.string().optional(),
   renderMix: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
@@ -136,6 +141,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     renderEmitScript: env.BRAIN_RENDER_EMIT_SCRIPT,
     renderBin: env.BRAIN_RENDER_BIN,
     singersDir: env.BRAIN_SINGERS_DIR,
+    singersDataDir: env.BRAIN_SINGERS_DATA_DIR || undefined,
     renderStubSamplesDir: env.BRAIN_RENDER_STUB_SAMPLES_DIR,
     sampleLibraryRoot: env.CASPERAKI_SAMPLE_LIBRARY_ROOT,
     renderMix: env.BRAIN_RENDER_MIX,

@@ -35,6 +35,7 @@ import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
 import { createSingersRouter, readSingers, singerVoice } from './routes/singers.js';
+import { UserSingers } from './singers/userSingers.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { MelodyEdits } from './melodies/melodyEdits.js';
@@ -315,6 +316,12 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       withVocalFader: (overrides, faderDb) => withVocalFader(overrides, levelPlayback.mixConfig, faderDb),
     };
   }
+  // Add a singer: the users' own singers (BRAIN_SINGERS_DATA_DIR), made by the vocals service's add_singer stage.
+  const userSingers = config.singersDataDir ? new UserSingers(config.singersDataDir) : undefined;
+  if (config.singersDataDir && !(config.vocalsServiceUrl && config.taskFilesDir)) {
+    throw new Error('BRAIN_SINGERS_DATA_DIR is set, so Add a singer also needs VOCALS_SERVICE_URL and BRAIN_TASK_FILES_DIR.');
+  }
+  if (!config.singersDataDir) console.warn('[brain] BRAIN_SINGERS_DATA_DIR not set — Add a singer answers 503.');
   const sing = config.vocalsServiceUrl
     ? {
         client: new VocalsClient(config.vocalsServiceUrl),
@@ -322,7 +329,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         takesDir: config.vocalTakesDir!,
         ffmpegBin: config.ffmpegBin,
         pollMs: deps.singPollMs ?? SING_POLL_MS,
-        singerVoice: (singerId: string) => singerVoice(config.singersDir, singerId),
+        singerVoice: (ownerId: string, singerId: string) => singerVoice(config.singersDir, userSingers, ownerId, singerId),
         ...vocalLevel!,
       }
     : undefined;
@@ -359,7 +366,11 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   } else {
     console.warn('[brain] ACE_SERVICE_URL not set — Add ACE layer answers 503.');
   }
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  const addSinger =
+    userSingers && sing
+      ? { client: sing.client, filesDir: config.taskFilesDir!, singers: userSingers, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS }
+      : undefined;
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
@@ -376,7 +387,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   );
   app.use(createSoundsRouter({ playback }));
   readSingers(config.singersDir); // fail at startup, naming the file, if the singers list is broken
-  app.use(createSingersRouter({ dir: config.singersDir }));
+  app.use(createSingersRouter({ dir: config.singersDir, ...(userSingers ? { users: userSingers } : {}), tasks }));
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
   const commit = deps.commit;
   const melodyEdits = new MelodyEdits(

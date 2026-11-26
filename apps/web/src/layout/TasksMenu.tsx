@@ -8,11 +8,17 @@ import { duration, TaskSteps } from './TaskSteps';
 import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks';
 
 /** What a running task is doing, in a word. */
-const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering' };
+const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering', addSinger: 'making the singer' };
+
+/** Where clicking a task goes: its song, or the Singers page for Add a singer. */
+export function taskPage(task: BackgroundTask): string {
+  return task.songId === null ? '/singers' : `/editor/${task.songId}/timeline`;
+}
 
 /**
  * The Tasks item of the top bar: the user's background tasks still under way across their songs (running, or ready to
- * go in when playback stops), with their count. Clicking a task opens its song. Hidden while none is under way.
+ * go in when playback stops), with their count. Clicking a task opens its song (Add a singer: the Singers page).
+ * Hidden while none is under way.
  */
 export function TasksMenu() {
   const { data: tasks } = useTasks();
@@ -37,7 +43,7 @@ export function TasksMenu() {
         <DropdownMenuLabel className="px-3 py-2 text-[13px] font-normal text-white/60">Background tasks</DropdownMenuLabel>
         <DropdownMenuSeparator className="my-1 h-px bg-line" />
         {ongoing.map((t) => (
-          <TaskItem key={t.id} task={t} ticking={open} onOpen={() => navigate(`/editor/${t.songId}/timeline`)} />
+          <TaskItem key={t.id} task={t} ticking={open} onOpen={() => navigate(taskPage(t))} />
         ))}
       </DropdownMenuContent>
     </DropdownMenu>

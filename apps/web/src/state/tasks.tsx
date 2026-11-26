@@ -57,6 +57,7 @@ export function mergeOp(kind: BackgroundTask['kind'], result: AppliedTask['resul
   if (kind === 'sing') return { kind: 'applySung', result, sungOver: saved };
   if (kind === 'transcribe') return { kind: 'applySung', result, sungOver: saved, partial: true };
   if (kind === 'aceLayer') return { kind: 'applyAceLayer', result };
+  if (kind === 'addSinger') throw new Error('Add a singer has no result to put into a song');
   return { kind: 'applyLyrics', lyrics: result as Readonly<Record<string, readonly string[]>> };
 }
 
@@ -65,15 +66,17 @@ export function mergeOp(kind: BackgroundTask['kind'], result: AppliedTask['resul
  * editor, the editor switches to the new version; unsaved edits stay, with the result put into them too.
  */
 export async function applyReadyTask(task: BackgroundTask, c: ApplyContext): Promise<void> {
-  const open = c.activeSong?.id === task.songId;
+  const songId = task.songId;
+  if (songId === null) throw new Error(`a ${task.kind} task is on no song: it has nothing to apply`);
+  const open = c.activeSong?.id === songId;
   const applied = await c.apply(task.id);
   if (open) {
     const saved = await c.getSong(applied.songId);
     const merged = c.editorDirty && c.viewSong ? await c.mergeResult(c.viewSong, task.kind, applied.result, saved.song) : undefined;
     c.setActiveSong(saved);
     if (merged) c.applyEdit({ kind: 'replaceSong', song: merged });
-    c.cacheSong(saved, task.songId);
-    if (c.pathname.includes(`/editor/${task.songId}`)) c.navigate(c.pathname.replace(`/editor/${task.songId}`, `/editor/${applied.songId}`));
+    c.cacheSong(saved, songId);
+    if (c.pathname.includes(`/editor/${songId}`)) c.navigate(c.pathname.replace(`/editor/${songId}`, `/editor/${applied.songId}`));
   }
   c.refresh();
 }
@@ -130,7 +133,7 @@ export function useApplyReadyTasks(): void {
     busy.current = true;
     const { session: s, location: loc } = latest.current;
     const open = s.activeSong?.id === next.songId;
-    setApplying({ ...applying, songId: open ? next.songId : undefined });
+    setApplying({ ...applying, songId: open && next.songId !== null ? next.songId : undefined });
     void applyReadyTask(next, {
       activeSong: s.activeSong,
       editorDirty: s.editorDirty,

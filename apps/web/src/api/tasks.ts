@@ -13,6 +13,8 @@
  *   POST /api/tasks/:id/retry               a failed task started again
  *   POST /api/tasks/:id/cancel              a running task cancelled (it fails with "Cancelled")
  *   GET  /api/tasks/:id/files/:stage/:name  a file a step made (sing)
+ * Add a singer is started by POST /api/singers (api/singers.ts); its task is on no song (songId null) and is done,
+ * not applied, when the singer is stored.
  */
 
 import type { Song } from '@casperaki/song-schema';
@@ -20,7 +22,7 @@ import type { AceAdlibVoice, AceInstrument } from '@casperaki/song-schema/ace-la
 
 import { defaultBrainClient } from './client';
 
-export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe' | 'aceLayer';
+export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task (sing records every one), as the brain stores it. */
@@ -40,9 +42,9 @@ export interface TaskStep {
 export interface BackgroundTask {
   readonly id: string;
   readonly kind: TaskKind;
-  /** The project's current song. */
-  readonly songId: string;
-  /** The song's title. */
+  /** The project's current song; null for Add a singer (on no song). */
+  readonly songId: string | null;
+  /** The song's title (Add a singer: the singer's name). */
   readonly title: string;
   readonly state: TaskState;
   /** Why it failed. */
@@ -50,7 +52,7 @@ export interface BackgroundTask {
   readonly startedAt: string;
   readonly finishedAt?: string;
   readonly steps?: readonly TaskStep[];
-  /** Sing: the singer it sang with. */
+  /** Sing: the singer it sang with; Add a singer: the singer it makes. */
   readonly singerId?: string;
 }
 
@@ -92,4 +94,4 @@ export const tasksApi = {
 };
 
 /** What a task does, in words ("Write lyrics"). */
-export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer' };
+export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer', addSinger: 'Add a singer' };

@@ -1,7 +1,7 @@
 // An in-process stand-in for the vocals service (svc-vocals on the serving harness): the harness's job contract
 // (POST /generate, GET /result, GET /file, POST /cancel; an unknown job answers 404 {"error": "unknown job"}) with
 // scripted stages. Each poll of /result finishes one more step; a held stage stays on its first step until released.
-// Steps and their files are named as pipeline/sing.py and pipeline/transcribe.py name them; the sing stage makes one
+// Steps and their files are named as pipeline/sing.py, pipeline/transcribe.py and pipeline/add_singer.py name them; the sing stage makes one
 // take per sung section's lead and per backing line.
 
 import { createServer, type IncomingMessage, type Server } from 'node:http';
@@ -105,6 +105,33 @@ function transcribeScript(params: Record<string, unknown>, midiOf: (i: number) =
   return { script, result: { section, voice, notes } };
 }
 
+/** The add_singer stage (pipeline/add_singer.py run): its steps in order (separate only for a full song), the files
+ *  the brain keeps, and add_singer.json. */
+function addSingerScript(params: Record<string, unknown>) {
+  const script: Job['script'] = [
+    { id: 'decode', label: 'Read the recording', numbers: { seconds: 20 }, files: ['recording.wav'] },
+    ...(params['separate'] === true ? [{ id: 'separate', label: 'Separate the vocals from the music', files: ['vocals.wav'] }] : []),
+    { id: 'compress', label: "Even out the voice's level", files: ['compressed.wav'] },
+    { id: 'enhance', label: 'Clean up the voice (Resemble Enhance)', files: ['enhanced.wav'] },
+    { id: 'silence', label: 'Cut the silences', files: ['voice_cut.wav'] },
+    { id: 'reference', label: 'Choose the voice reference', numbers: { startSeconds: 2, endSeconds: 12 }, files: ['voice.wav'] },
+    { id: 'pitch', label: "Read the voice reference's pitch" },
+    { id: 'words', label: 'Hear the words', files: ['words.json'] },
+    { id: 'notes', label: 'Transcribe the notes', files: ['voice.json'] },
+    { id: 'test-line', label: 'Sing a test line in the new voice', files: ['test_line.wav'] },
+  ];
+  const result = {
+    audio: 'voice.wav',
+    meta: 'voice.json',
+    testLine: 'test_line.wav',
+    reference: { choice: params['reference'], startSeconds: 2, endSeconds: 12, recordingStartSeconds: 3.5, recordingEndSeconds: 13.5, seconds: 10.1 },
+    transcription: 'words',
+    heard: 'who says',
+    testLinePitch: { notes: 12, within: 11, medianErrorSemitones: 0.2 },
+  };
+  return { script, result };
+}
+
 async function body(req: IncomingMessage): Promise<string> {
   let s = '';
   for await (const chunk of req) s += chunk;
@@ -147,8 +174,8 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
       if (req.method === 'POST' && u.pathname === '/generate') {
         const params = JSON.parse(await body(req)) as Record<string, unknown>;
         const stage = String(params['stage']);
-        if (stage !== 'sing' && stage !== 'transcribe') return send(400, { error: `unknown stage ${stage}` });
-        const { script, result } = stage === 'sing' ? singScript(params) : transcribeScript(params, transcribeMidi);
+        if (stage !== 'sing' && stage !== 'transcribe' && stage !== 'add_singer') return send(400, { error: `unknown stage ${stage}` });
+        const { script, result } = stage === 'sing' ? singScript(params) : stage === 'add_singer' ? addSingerScript(params) : transcribeScript(params, transcribeMidi);
         const job: Job = { id: `job${++n}`, stage, params, state: 'running', error: null, script, shown: [], result };
         jobs.push(job);
         return send(202, { job_id: job.id });

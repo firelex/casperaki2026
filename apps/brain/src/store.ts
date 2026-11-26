@@ -91,8 +91,9 @@ export interface MixDismissal {
   readonly dismissedAt: string;
 }
 
-/** A background task on a song (src/tasks/tasks.ts): its song follows the project when saves move it. */
-export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe' | 'aceLayer';
+/** A background task (src/tasks/tasks.ts), on a song (its song follows the project when saves move it) or, for
+ *  addSinger (a new singer made from a recording), on no song. */
+export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task as the Tasks page lists it (the brain's own steps and a model service's, in the order they run). */
@@ -117,16 +118,18 @@ export interface TaskJobs {
   readonly transcribe?: string;
   /** ACE layer: the ace service's lego job. */
   readonly ace?: string;
+  /** Add a singer: the vocals service's add_singer stage job. */
+  readonly addSinger?: string;
 }
 
 export interface TaskRow {
   readonly id: string;
   readonly ownerId: string;
-  /** The project's current song. */
-  readonly songId: string;
+  /** The project's current song; null for a task on no song (addSinger). */
+  readonly songId: string | null;
   readonly kind: TaskKind;
   readonly state: TaskState;
-  /** The song as it was when the task started (canonical JSON). */
+  /** The song as it was when the task started (canonical JSON); "" for a task on no song. */
   readonly input: string;
   /** The task's result (ready and done), its own JSON shape per kind. */
   readonly result: unknown;
@@ -178,9 +181,11 @@ export interface SongsStore {
   listPatternReviews(): PatternReview[];
   setPatternReview(review: PatternReview): void;
   clearPatternReview(proposalId: string): void;
-  insertTask(input: { id: string; ownerId: string; songId: string; kind: TaskKind; input: string; startedAt: string; options?: unknown }): void;
+  /** songId null: a task on no song (addSinger). */
+  insertTask(input: { id: string; ownerId: string; songId: string | null; kind: TaskKind; input: string; startedAt: string; options?: unknown }): void;
   getTask(ownerId: string, id: string): TaskRow | undefined;
-  /** The owner's tasks on projects they still have: unfinished ones, and the rest finished at or after `since`;
+  /** The owner's tasks on projects they still have (and on no song): unfinished ones, and the rest finished at or
+   *  after `since`;
    *  newest first, each with its project's title. */
   listTasks(ownerId: string, since: string): (TaskRow & { readonly title: string })[];
   /** Every running task (resumed when the brain starts). */
@@ -470,7 +475,8 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
       db.prepare(`INSERT INTO tasks (id, owner_id, song_id, kind, state, input, started_at, options) VALUES (?, ?, ?, ?, 'running', ?, ?, ?)`).run(
         id,
         ownerId,
-        songId,
+        // song_id is NOT NULL (the table's first version): a task on no song is kept with ''.
+        songId ?? NO_SONG,
         kind,
         input,
         startedAt,
@@ -484,8 +490,8 @@ export function openSongsStore({ path }: OpenStoreOptions): SongsStore {
     listTasks(ownerId, since) {
       const rows = db
         .prepare(
-          `SELECT t.*, p.title FROM tasks t JOIN projects p ON p.owner_id = t.owner_id AND p.song_id = t.song_id
-            WHERE t.owner_id = ? AND (t.state IN ('running', 'ready') OR t.finished_at >= ?)
+          `SELECT t.*, COALESCE(p.title, '') AS title FROM tasks t LEFT JOIN projects p ON p.owner_id = t.owner_id AND p.song_id = t.song_id
+            WHERE t.owner_id = ? AND (t.song_id = '' OR p.song_id IS NOT NULL) AND (t.state IN ('running', 'ready') OR t.finished_at >= ?)
             ORDER BY t.started_at DESC`,
         )
         .all(ownerId, since) as (TaskDbRow & { title: string })[];
@@ -545,7 +551,9 @@ interface TaskDbRow {
   options: string | null;
 }
 
-const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'sing', 'transcribe', 'aceLayer'];
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'sing', 'transcribe', 'aceLayer', 'addSinger'];
+/** The song_id of a task on no song. */
+const NO_SONG = '';
 const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];
 
 function toTaskRow(row: TaskDbRow): TaskRow {
@@ -554,7 +562,7 @@ function toTaskRow(row: TaskDbRow): TaskRow {
   return {
     id: row.id,
     ownerId: row.owner_id,
-    songId: row.song_id,
+    songId: row.song_id === NO_SONG ? null : row.song_id,
     kind: row.kind as TaskKind,
     state: row.state as TaskState,
     input: row.input,

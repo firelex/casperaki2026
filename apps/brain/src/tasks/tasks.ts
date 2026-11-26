@@ -10,7 +10,9 @@
 //
 // Kinds: writeLyrics (src/lyrics/lyricist.ts), sing (src/sing/singTask.ts: steps recorded on the task, cancellable,
 // applied only while the sung sections are as they were sung), transcribe (src/sing/transcribeTask.ts: a recording of
-// one section back into its Vocal lane; the same steps, cancel and apply check, for that section only).
+// one section back into its Vocal lane; the same steps, cancel and apply check, for that section only), aceLayer
+// (src/ace/aceLayerTask.ts), addSinger (src/singers/addSingerTask.ts: a new singer from an uploaded recording; on no
+// song, so it has nothing to apply: it is done when the singer is stored).
 
 import { randomInt, randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -31,6 +33,8 @@ import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SONG_CHANGE
 import type { VocalLevel } from '../sing/vocalLevel.js';
 import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
+import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAddSinger, type AddSingerOptions } from '../singers/addSingerTask.js';
+import { newSingerId, type ReferenceChoice, type UserSingers } from '../singers/userSingers.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
 
 /** The user-facing refusal while a song is being sung. */
@@ -73,6 +77,40 @@ export interface BackgroundTasksDeps {
   /** ACE layer: the ace service, the task files folder, the takes folder, ffmpeg, the poll interval and a way to
    *  render the owner's song; without it, ACE layer tasks cannot start. */
   readonly ace?: AceDeps;
+  /** Add a singer: the vocals service, the task files folder, the users' singers (BRAIN_SINGERS_DATA_DIR), ffmpeg and
+   *  the poll interval; without it, Add a singer answers 503. */
+  readonly addSinger?: AddSingerDeps;
+}
+
+export interface AddSingerDeps {
+  readonly client: VocalsClient;
+  readonly filesDir: string;
+  readonly singers: UserSingers;
+  readonly ffmpegBin: string;
+  readonly pollMs: number;
+}
+
+/** What Add a singer starts with: the upload and the user's choices (checked by startAddSinger). */
+export interface AddSingerStart {
+  readonly recording: Buffer;
+  /** The upload's file name extension (lowercase letters and digits), kept on the stored file. */
+  readonly extension: string;
+  readonly name: string;
+  readonly description: string;
+  readonly rightToUse: boolean;
+  readonly separate: boolean;
+  readonly reference: ReferenceChoice;
+}
+
+/** The user-facing refusals of Add a singer. */
+export const NO_CONSENT = 'Tick "I have the right to use this voice" to add a singer: only voices you may use can become singers.';
+export const ADD_SINGER_NOT_SET_UP = 'Adding singers is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_SINGERS_DATA_DIR.';
+
+/** "4 min 5 s" */
+function minutes(seconds: number): string {
+  const s = Math.round(seconds);
+  const m = Math.floor(s / 60);
+  return m > 0 ? (s % 60 > 0 ? `${m} min ${s % 60} s` : `${m} min`) : `${s} s`;
 }
 
 export interface AceDeps {
@@ -124,8 +162,9 @@ export interface SingDeps {
   readonly pollMs: number;
   /** The sung song's vocal level (renders it twice: src/sing/vocalLevel.ts), for the owner's project. */
   readonly levelVocals: (ownerId: string, songId: string, song: Song, taskId: string) => Promise<VocalLevel>;
-  /** A singer's voice (src/routes/singers.ts): an Error for an unknown singer. */
-  readonly singerVoice: (singerId: string) => { audio: string; meta: string };
+  /** A singer's voice, among the built-in singers and the owner's own (src/routes/singers.ts): an Error for an
+   *  unknown singer. */
+  readonly singerVoice: (ownerId: string, singerId: string) => { audio: string; meta: string };
   /** The song's mix overrides with its vocals fader at `faderDb` (relative to the standard mix). */
   readonly withVocalFader: (overrides: MixOverrides | null, faderDb: number) => MixOverrides;
 }
@@ -163,7 +202,7 @@ export class BackgroundTasks {
     const { store } = this.deps;
     if (!this.deps.sing) throw new TaskError(503, 'no_vocal_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
     try {
-      this.deps.sing.singerVoice(singerId);
+      this.deps.sing.singerVoice(ownerId, singerId);
     } catch (err) {
       throw new TaskError(400, 'unknown_singer', err instanceof Error ? err.message : String(err));
     }
@@ -188,6 +227,43 @@ export class BackgroundTasks {
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
     this.enqueue(ownerId, id, 'aceLayer');
     return store.getTask(ownerId, id)!;
+  }
+
+  /** Starts Add a singer for the owner: the recording is checked (the consent box, a name and description, readable
+   *  audio of at most MAX_RECORDING_SECONDS) and kept in the new singer's folder before the task is queued. */
+  async startAddSinger(ownerId: string, start: AddSingerStart): Promise<TaskRow> {
+    const a = this.deps.addSinger;
+    if (!a) throw new TaskError(503, 'no_singer_service', ADD_SINGER_NOT_SET_UP);
+    if (!start.rightToUse) throw new TaskError(400, 'no_consent', NO_CONSENT);
+    if (start.recording.length === 0) throw new TaskError(400, 'no_recording', 'The recording is empty.');
+    const singerId = newSingerId();
+    const options: AddSingerOptions = (() => {
+      const parsed = AddSingerOptionsSchema.safeParse({ singerId, name: start.name.trim(), description: start.description.trim(), separate: start.separate, reference: start.reference, upload: `original.${start.extension}` });
+      if (!parsed.success) {
+        const issue = parsed.error.issues[0];
+        const field = issue?.path.join('.') ?? 'the form';
+        throw new TaskError(400, 'invalid_singer', field === 'name' ? 'Give the singer a name (at most 60 characters).' : field === 'description' ? 'Describe the voice (at most 300 characters).' : `${field}: ${issue?.message ?? 'invalid'}`);
+      }
+      return parsed.data;
+    })();
+    a.singers.keepUpload(ownerId, singerId, start.recording, start.extension);
+    const upload = join(a.singers.dir(ownerId, singerId), options.upload);
+    let seconds: number;
+    try {
+      seconds = await recordingSeconds(a.ffmpegBin, upload);
+    } catch (err) {
+      a.singers.discard(ownerId, singerId);
+      throw new TaskError(400, 'not_audio', err instanceof Error ? err.message : String(err));
+    }
+    if (seconds > MAX_RECORDING_SECONDS) {
+      a.singers.discard(ownerId, singerId);
+      throw new TaskError(400, 'recording_too_long', `The recording is ${minutes(seconds)} long: a singer's recording can be at most ${minutes(MAX_RECORDING_SECONDS)}.`);
+    }
+    const id = randomUUID();
+    this.deps.store.insertTask({ id, ownerId, songId: null, kind: 'addSinger', input: '', startedAt: this.deps.clock(), options });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: null, state: 'running' });
+    this.enqueue(ownerId, id, 'addSinger');
+    return this.deps.store.getTask(ownerId, id)!;
   }
 
   /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
@@ -261,9 +337,14 @@ export class BackgroundTasks {
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
     if (task.kind === 'sing' && task.message === SONG_CHANGED) throw new TaskError(409, 'song_changed', RETRY_SONG_CHANGED);
     if (task.kind === 'transcribe' && task.message === TRANSCRIBE_CHANGED) throw new TaskError(409, 'song_changed', RETRY_TRANSCRIBE_CHANGED);
-    this.checkCanStart(
+    if (task.kind === 'addSinger') {
+      const a = this.deps.addSinger;
+      if (!a) throw new TaskError(503, 'no_singer_service', ADD_SINGER_NOT_SET_UP);
+      const o = AddSingerOptionsSchema.parse(task.options);
+      if (!existsSync(join(a.singers.dir(ownerId, o.singerId), o.upload))) throw new TaskError(409, 'upload_gone', 'The uploaded recording is gone: add the singer again.');
+    } else this.checkCanStart(
       ownerId,
-      task.songId,
+      songIdOf(task),
       task.kind,
       parseSong(JSON.parse(task.input)),
       task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined,
@@ -283,8 +364,9 @@ export class BackgroundTasks {
     const task = store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     if (task.state !== 'ready') throw new TaskError(409, 'not_ready', `The task is ${task.state}, not ready.`);
-    const current = store.get(task.songId);
-    if (!current || !store.getProject(ownerId, task.songId)) {
+    const songId = songIdOf(task);
+    const current = store.get(songId);
+    if (!current || !store.getProject(ownerId, songId)) {
       store.deleteTask(id);
       throw new TaskError(404, 'song_deleted', 'The song was deleted.');
     }
@@ -302,7 +384,7 @@ export class BackgroundTasks {
     const newId = songHash.slice(0, 16);
     const at = clock();
     store.put({ id: newId, song, canonical, hash: songHash, createdAt: at });
-    store.moveProject({ ownerId, fromSongId: task.songId, toSongId: newId, updatedAt: at });
+    store.moveProject({ ownerId, fromSongId: songId, toSongId: newId, updatedAt: at });
     // A sung song's vocal level follows its backing: its vocals fader goes into the song's own mix.
     if (task.kind === 'sing') {
       const level = SingResultSchema.parse(task.result).vocalLevel;
@@ -313,7 +395,7 @@ export class BackgroundTasks {
       }
     }
     store.setTaskState(id, { state: 'done', result: task.result, message: null, finishedAt: at });
-    if (newId !== task.songId) this.deps.onSongReplaced?.(task.songId);
+    if (newId !== songId) this.deps.onSongReplaced?.(songId);
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: newId, state: 'done' });
     return { task: store.getTask(ownerId, id)!, songId: newId };
   }
@@ -344,7 +426,8 @@ export class BackgroundTasks {
     if (!isPlainFileName(name)) throw new TaskError(400, 'bad_name', `"${name}" is not a file name.`);
     const task = this.deps.store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
-    const filesDir = task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : task.kind === 'aceLayer' ? this.deps.ace?.filesDir : this.deps.sing?.filesDir;
+    const filesDir =
+      task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : task.kind === 'aceLayer' ? this.deps.ace?.filesDir : task.kind === 'addSinger' ? this.deps.addSinger?.filesDir : this.deps.sing?.filesDir;
     if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
     const path = join(resolve(filesDir), id, stage, name);
     if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
@@ -380,6 +463,12 @@ export class BackgroundTasks {
       const now = store.getTask(ownerId, id);
       // Gone, or cancelled meanwhile.
       if (!now || now.state !== 'running') return;
+      // A task on no song (Add a singer) has nothing to apply: it is done.
+      if (now.songId === null) {
+        store.setTaskState(id, { state: 'done', result, message: null, finishedAt: clock() });
+        events.publish(ownerId, { type: 'task', taskId: id, songId: null, state: 'done' });
+        return;
+      }
       // The song was deleted meanwhile: the task goes with it.
       if (!store.getProject(ownerId, now.songId)) {
         store.deleteTask(id);
@@ -409,7 +498,7 @@ export class BackgroundTasks {
       const generated = orchestrate(generatorParams(input));
       const sections = sungSections(generated).map((s) => s.name);
       // A real title gives the lyrics their theme; the placeholder ("Bright Pop in C") does not.
-      const project = this.deps.store.getProject(task.ownerId, task.songId);
+      const project = this.deps.store.getProject(task.ownerId, songIdOf(task));
       const title = project && project.title !== defaultTitle(input.genre ?? '', input.key) ? project.title : undefined;
       return await writeLyrics(generated, model, { sections, ...(title ? { title } : {}) });
     }
@@ -435,8 +524,8 @@ export class BackgroundTasks {
           events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
         },
         now: clock,
-        levelVocals: (song) => sing.levelVocals(task.ownerId, task.songId, song, task.id),
-        voice: sing.singerVoice(singOptionsOf(task)),
+        levelVocals: (song) => sing.levelVocals(task.ownerId, songIdOf(task), song, task.id),
+        voice: sing.singerVoice(task.ownerId, singOptionsOf(task)),
       });
     }
     if (task.kind === 'transcribe') {
@@ -487,11 +576,41 @@ export class BackgroundTasks {
           events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: now.songId, state: 'running' });
         },
         now: clock,
-        renderWav: (song) => ace.renderWav(task.ownerId, task.songId, song, task.id),
+        renderWav: (song) => ace.renderWav(task.ownerId, songIdOf(task), song, task.id),
+      });
+    }
+    if (task.kind === 'addSinger') {
+      const a = this.deps.addSinger;
+      if (!a) throw new Error(ADD_SINGER_NOT_SET_UP);
+      const { store, events, clock } = this.deps;
+      return await runAddSinger({
+        taskId: task.id,
+        ownerId: task.ownerId,
+        options: AddSingerOptionsSchema.parse(task.options),
+        singers: a.singers,
+        client: a.client,
+        filesDir: join(resolve(a.filesDir), task.id),
+        pollMs: a.pollMs,
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: null, state: 'running' });
+        },
+        now: clock,
       });
     }
     throw new Error(`unknown task kind ${String(task.kind)}`);
   }
+}
+
+/** The song a task is on (an error for a task on no song: a bug). */
+function songIdOf(task: TaskRow): string {
+  if (task.songId === null) throw new Error(`task ${task.id} (${task.kind}) is on no song`);
+  return task.songId;
 }
 
 /** The song with the task's result in it. */

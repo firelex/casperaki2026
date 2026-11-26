@@ -22,3 +22,12 @@ BS_ROFORMER_WEIGHTS = MODELS / "viperx__bs-roformer-ep317-sdr12.9755"
 VOICE = "yue2_female_dry2"
 VOICE_AUDIO = SERVICE_DIR / "voices" / f"{VOICE}.mp3"
 VOICE_META = SERVICE_DIR / "voices" / f"{VOICE}.json"
+
+# Add a singer (pipeline/add_singer.py): two steps run as their own processes, each in the venv its models need, by
+# explicit python path. Our scripts for them are in this service's tools/ folder.
+TOOLS_DIR = SERVICE_DIR / "tools"
+# SoulX-Singer-Preprocess (vocal separation and de-reverb, lyric and note transcription): run with cwd = SOULX_REPO
+# (its model paths are relative to it: pretrained_models/SoulX-Singer-Preprocess -> /mnt/d/casperaki-models/soulx-preprocess).
+SOULX_PREPROCESS_PYTHON = SHARED_SERVICES / "soulx-singer" / ".venv-preprocess" / "bin" / "python"
+# Resemble Enhance (the enhancer): its venv was built for the vocal cleanup experiments (torch 2.10 cu128).
+RESEMBLE_PYTHON = SHARED_SERVICES.parent / "vocal-cleanup-tests" / "resemble" / ".venv" / "bin" / "python"
