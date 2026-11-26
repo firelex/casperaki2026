@@ -27,7 +27,7 @@ def test_four_las_on_one_pitch_split_into_four_notes_at_their_pitch():
     assert [p[2] for p in pieces] == [57] * 4
     # Each cut falls in the quiet gap before its "la" (backtracked to the quietest point), not inside a "la".
     for p, s in zip(pieces[1:], starts[1:]):
-        assert s - 0.06 <= p[0] <= s + 0.01
+        assert s - 0.07 <= p[0] <= s + 0.01  # the 0.05 s gap plus one analysis frame
 
 
 def test_click_mode_merges_pieces_on_one_eighth():
