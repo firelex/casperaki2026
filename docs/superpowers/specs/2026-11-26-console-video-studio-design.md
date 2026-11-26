@@ -49,6 +49,16 @@ camera moves (an orbit around the desk and a pulsing zoom on the beat).
    façade, sign, doors and corridor are built in code. Lyrics show over the intro when the singing starts there.
    Rendered live per video (the owner offered pre-recording; not needed while the GPU draws it in ~15 s).
 
+9. **Round 3 (owner, approved):**
+   - The studio door swings open exactly when the song's Intro section ends; the camera is in the control room
+     about a bar later (on a bar line). No section named Intro, or one under 5 s or over 30 s: the ~9 s rule.
+   - Neon sign font: **Monoton** (Google Fonts, OFL).
+   - Pulse zoom: subtler, and only in choruses (not drops or hooks). The logo never pulses.
+   - A realistic studio: one large pro console (SSL/Neve style): dark grey, sloped toward the operator, dense knob
+     rows, analog VU meters on the meter bridge whose needles swing with each track, a centre section with the
+     master; track colours only on the name labels, fader caps and meter LEDs. An office chair in front of it, a
+     couch (CC0 Poly Haven model) at the back of the room.
+
 ## Constraints (unchanged from part 1)
 
 - No fallbacks: missing data throws with a clear message. A song with no lyrics is a defined case (empty list).
