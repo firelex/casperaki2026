@@ -41,6 +41,14 @@ camera moves (an orbit around the desk and a pulsing zoom on the beat).
    arriving at the opening shot as the song starts. About 4 s of silence before the music; the video is that much
    longer than the song. (My call: silence rather than a room-tone sample, so there is no extra asset.)
 
+8. **Street intro** (owner, approved): the video opens across a night street from a building, "Casperaki Studio",
+   with a neon sign; the camera glides to its glass entrance (the doors slide open), down a short dim corridor to
+   the studio door with the song's title (point 7), and on into the control room. **The music starts on the first
+   frame** (replaces point 7's silent 4 s): the video is the song's length; the intro is about 9–10 s and ends on a
+   bar line, where the studio's opening shot begins. Street backdrop: a CC0 Poly Haven night-street panorama; the
+   façade, sign, doors and corridor are built in code. Lyrics show over the intro when the singing starts there.
+   Rendered live per video (the owner offered pre-recording; not needed while the GPU draws it in ~15 s).
+
 ## Constraints (unchanged from part 1)
 
 - No fallbacks: missing data throws with a clear message. A song with no lyrics is a defined case (empty list).
