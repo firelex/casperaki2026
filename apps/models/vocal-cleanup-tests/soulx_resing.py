@@ -45,7 +45,8 @@ print(f"voice reference: {b - a:.1f} s, {len(ref_notes)} notes", flush=True)
 # The notes to sing, in beats from beat 1, as "la".
 sung = [{"start": (n["onsetSec"] - first_beat) / beat, "duration": (n["offsetSec"] - n["onsetSec"]) / beat, "midi": n["midi"],
          "word": "la", "phonemes": ["l", "aa1"]} for n in notes]
-sung = [n for n in sung if n["start"] >= -1e-6]
+# A note starting just before beat 1 (up to a quarter beat early) starts on it; anything earlier is the count-in.
+sung = [dict(n, start=max(0.0, n["start"]), duration=n["duration"] + min(0.0, n["start"])) for n in sung if n["start"] >= -0.25]
 bars = int(np.ceil((max(n["start"] + n["duration"] for n in sung) + 1) / 4))
 audio = singer.sing(sung, bpm, bars, "hum")
 full = np.zeros(int(first_beat * sr) + len(audio), dtype=np.float32); full[int(first_beat * sr):] = audio
