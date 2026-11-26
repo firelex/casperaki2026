@@ -263,3 +263,17 @@ describe('CatalogApi', () => {
     expect(fetchMock.mock.calls[0]![0]).toBe('/api/catalog/audit-summary');
   });
 });
+
+describe('videoApi.start', () => {
+  it('posts the console style with the measured tracks', async () => {
+    const { videoApi } = await import('../src/api/video');
+    const { defaultBrainClient } = await import('../src/api/client');
+    const post = vi.spyOn(defaultBrainClient, 'post').mockResolvedValue({ state: 'queued' } as never);
+    const consoleBody = { versionKey: '0123456789abcdef', binSeconds: 0.5, tracks: [], master: [0.5] };
+    await videoApi.start('abc', { style: 'console', orientation: 'portrait', quality: 'preview', artist: 'Me', console: consoleBody });
+    expect(post).toHaveBeenCalledWith('/api/songs/abc/video', { style: 'console', orientation: 'portrait', quality: 'preview', artist: 'Me', console: consoleBody });
+    await videoApi.start('abc', { style: 'cartoon', orientation: 'landscape', quality: 'full', artist: 'Me' });
+    expect(post).toHaveBeenLastCalledWith('/api/songs/abc/video', { style: 'cartoon', orientation: 'landscape', quality: 'full', artist: 'Me' });
+    post.mockRestore();
+  });
+});

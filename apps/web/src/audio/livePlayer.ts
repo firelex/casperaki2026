@@ -80,6 +80,8 @@ export interface LaneMeters {
   readonly done: boolean;
   /** The mix as the engine resolved it for this version. */
   readonly mix: ResolvedMix;
+  /** The song version these levels belong to (the playback payload's; the console video checks it). */
+  readonly versionKey: string;
 }
 
 /** One IR track's mix as resolved by the engine (Mixer::laneInfoJson). */
@@ -632,7 +634,7 @@ export class LivePlayer {
           } else if (d.type === 'progress' || d.type === 'done') {
             if (!mix) throw new Error('Track levels arrived before the lanes.');
             if (!d.busPeaks) throw new Error('The meter worker sent no bus levels.');
-            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, busPeaks: d.busPeaks, done: d.type === 'done', mix };
+            const m: LaneMeters = { names, binSec, binCount, doneBins: d.doneBins!, peaks: d.peaks!, busPeaks: d.busPeaks, done: d.type === 'done', mix, versionKey: payload.versionKey };
             if (m.done) {
               this.meterCache.set(key, m);
               while (this.meterCache.size > METERS_CACHED) this.meterCache.delete(this.meterCache.keys().next().value!);

@@ -258,6 +258,18 @@ describe('console music videos', () => {
     expect((await post(`${h.url}/api/songs/${id}/video`, { orientation: 'landscape', artist: 'Me', console: consoleBody(key) })).status).toBe(400);
   });
 
+  it('fits levels within 2 s of the exported audio to its length', async () => {
+    const { id, key } = await songOf(h);
+    // 397 bins of 0.5 s = 198.5 s; the export is 200 s (the browser's render and the exported MP3 differ slightly).
+    expect((await post(`${h.url}/api/songs/${id}/video`, { style: 'console', orientation: 'landscape', artist: 'Me', console: consoleBody(key, 397) })).status).toBe(202);
+    const fitJob = await waitFor(h, id, (j) => finished(j.console?.landscape));
+    expect(fitJob).toMatchObject({ state: 'done' });
+    const r = h.consoleRenders[0]!;
+    expect(r.input.master).toHaveLength(400);
+    expect(r.input.tracks[0]!.levels).toHaveLength(400);
+    expect(r.input.master.slice(397)).toEqual([0, 0, 0]);
+  });
+
   it('fails the job when the measured levels do not cover the song', async () => {
     const { id, key } = await songOf(h);
     expect((await post(`${h.url}/api/songs/${id}/video`, { style: 'console', orientation: 'landscape', artist: 'Me', console: consoleBody(key, 100) })).status).toBe(202);
