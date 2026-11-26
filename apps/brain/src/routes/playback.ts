@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
 import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
+import { songVersionKey } from '../render/songVersion.js';
 import type { SongsStore } from '../store.js';
 
 export interface PlaybackRouterDeps {
@@ -29,6 +30,7 @@ const PlayBodySchema = z.object({ song: z.unknown(), mixOverrides: MixOverridesS
 /** Lower a song and list its samples: the body of every playback response. */
 export async function playbackPayload(service: PlaybackService, songId: string, canonical: string, mixOverrides?: MixOverrides | null) {
   const env = await service.envelope(songId, canonical);
+  const mixConfig = mixOverrides ? applyMixOverrides(service.mixConfig, mixOverrides) : service.mixConfig;
   const samples = service.plan(songId).map((e) => ({
     key: e.key,
     kind: e.kind,
@@ -42,7 +44,9 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
     samples,
     stubs: STUB_SAMPLES.map((n) => `/api/playback/stubs/${n}`),
     // The song's Pro-mode mix applied to the standard config (the same rule the export and renders use).
-    mixConfig: mixOverrides ? applyMixOverrides(service.mixConfig, mixOverrides) : service.mixConfig,
+    mixConfig,
+    /** The version these levels and sounds belong to (render/songVersion.ts). */
+    versionKey: songVersionKey(canonical, mixConfig),
     /** The standard mix's FX bus chains (the editor's Pro mode marks and resets changes against them). */
     standardRackChains: (JSON.parse(service.mixConfig) as { rackChains?: unknown }).rackChains ?? [],
   };

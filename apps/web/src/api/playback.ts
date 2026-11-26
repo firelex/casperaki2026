@@ -27,6 +27,8 @@ export interface PlaybackPayload {
   readonly mixConfig: string;
   /** The standard mix's FX bus chains (before the song's Pro-mode changes). */
   readonly standardRackChains: MixConfigJson['rackChains'];
+  /** The song version: its text and the mix config it plays with (the brain's render/songVersion.ts). */
+  readonly versionKey: string;
 }
 
 export const playbackApi = {

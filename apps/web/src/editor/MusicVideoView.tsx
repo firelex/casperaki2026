@@ -2,8 +2,19 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { videoApi, videoQueryKeys, type VideoFormat, type VideoOrientation, type VideoQuality, type VideoStatus } from '../api/video';
+import { playbackApi } from '../api/playback';
+import { videoApi, videoQueryKeys, type ConsoleBody, type VideoFormat, type VideoOrientation, type VideoQuality, type VideoStatus, type VideoStyle } from '../api/video';
+import { livePlayer } from '../audio/livePlayer';
 import { useSession } from '../state/session';
+import { LEAD_VOCAL_NAME } from '../types/song';
+import { buildConsoleBody, measureTracks } from './consoleVideoData';
+import { colorHex } from './sequencer/layout';
+import { BEATS_PER_BAR, buildSequencerModel } from './sequencerModel';
+
+const STYLES: readonly { id: VideoStyle; label: string; hint: string }[] = [
+  { id: 'cartoon', label: 'Cartoon', hint: 'Dancers, scenes and the sung words' },
+  { id: 'console', label: 'Console', hint: 'A 3D mixing desk playing the song' },
+];
 
 const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string }[] = [
   { id: 'landscape', label: 'Wide', hint: '1920 × 1080, for YouTube' },
@@ -11,17 +22,22 @@ const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string
 ];
 
 /**
- * Music Video tab: a cartoon music video of the saved song. Casperaki takes
- * the song's mix (exporting it first if needed), its sections and the sung
- * words, a language model plans the scenes (dancers, props, camera, lyric
- * banners), and the video is rendered in the background, wide or tall.
+ * Music Video tab: a music video of the saved song, wide or tall, rendered in
+ * the background from the song's mix (exported first if needed). Cartoon: a
+ * language model plans the scenes (dancers, props, camera, lyric banners) to
+ * the sections and the sung words. Console: a 3D mixing desk; the tab first
+ * measures each track's level through the in-browser engine and sends them,
+ * with the song's clips and notes, for the version that is saved.
  */
 export function MusicVideoView() {
   const { songId } = useParams<{ songId: string }>();
   if (!songId) throw new Error('MusicVideoView: no song id in the route');
   const { viewSong, editorDirty } = useSession();
   const queryClient = useQueryClient();
+  const [style, setStyle] = useState<VideoStyle>('cartoon');
   const [orientation, setOrientation] = useState<VideoOrientation>('landscape');
+  /** Console style: the share of the track levels measured so far (0..1) while measuring. */
+  const [measuring, setMeasuring] = useState<number | undefined>(undefined);
   const [artist, setArtist] = useState('Casperaki');
   const [quality, setQuality] = useState<VideoQuality>('full');
   const format: VideoFormat = quality === 'preview' ? `${orientation}-preview` : orientation;
@@ -29,14 +45,39 @@ export function MusicVideoView() {
   const jobs = useQuery({
     queryKey: videoQueryKeys.jobs(songId),
     queryFn: ({ signal }) => videoApi.jobs(songId, signal),
-    refetchInterval: (q) => (Object.values(q.state.data?.jobs ?? {}).some((j) => j && (j.state === 'queued' || j.state === 'running')) ? 2000 : false),
+    refetchInterval: (q) =>
+      Object.values(q.state.data?.jobs ?? {})
+        .flatMap((byFormat) => Object.values(byFormat))
+        .some((j) => j && (j.state === 'queued' || j.state === 'running'))
+        ? 2000
+        : false,
   });
   const start = useMutation({
-    mutationFn: () => videoApi.start(songId, orientation, quality, artist.trim()),
+    mutationFn: async () => {
+      const opts = { style, orientation, quality, artist: artist.trim() };
+      if (style === 'cartoon') return videoApi.start(songId, opts);
+      if (editorDirty) throw new Error('Save the song first: the console video shows the saved version.');
+      if (!viewSong) throw new Error('The song is not loaded yet.');
+      setMeasuring(0);
+      try {
+        const meters = await measureTracks(livePlayer, songId, (signal) => playbackApi.forSaved(songId, signal), setMeasuring);
+        const model = buildSequencerModel(viewSong);
+        const body: ConsoleBody = buildConsoleBody({
+          model,
+          meters,
+          secondsPerBar: (BEATS_PER_BAR * 60) / viewSong.bpm,
+          leadVocal: model.tracks.some((t) => t.name === LEAD_VOCAL_NAME) ? LEAD_VOCAL_NAME : undefined,
+          hex: colorHex,
+        });
+        return await videoApi.start(songId, { ...opts, console: body });
+      } finally {
+        setMeasuring(undefined);
+      }
+    },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: videoQueryKeys.jobs(songId) }),
   });
-  const job = jobs.data?.jobs[format];
-  const plannerMissing = jobs.data?.plannerConfigured === false;
+  const job = jobs.data?.jobs[style][format];
+  const plannerMissing = style === 'cartoon' && jobs.data?.plannerConfigured === false;
   const busy = job?.state === 'queued' || job?.state === 'running';
 
   return (
@@ -45,11 +86,32 @@ export function MusicVideoView() {
         <section className="w-full shrink-0 lg:w-[340px]" aria-label="Video settings">
           <h1 className="text-[22px] font-semibold">Music video</h1>
           <p className="mt-1 text-[14px] text-white/60">
-            A cartoon video of {viewSong?.title ? <span className="text-white">{viewSong.title}</span> : 'this song'}: dancers, scenes and the sung words,
-            planned to the song&rsquo;s sections and beat.
+            {style === 'cartoon' ? 'A cartoon video of ' : 'A mixing-desk video of '}
+            {viewSong?.title ? <span className="text-white">{viewSong.title}</span> : 'this song'}
+            {style === 'cartoon'
+              ? ': dancers, scenes and the sung words, planned to the song’s sections and beat.'
+              : ': every track’s strip lights up and meters as it plays, faders ride the fades, and the camera follows the sections.'}
           </p>
 
           <fieldset className="mt-6">
+            <legend className="mb-2 text-[13px] text-white/60">Style</legend>
+            <div className="flex gap-2">
+              {STYLES.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  aria-pressed={style === o.id}
+                  onClick={() => setStyle(o.id)}
+                  className={`flex-1 rounded-[10px] border px-3 py-2 text-left ${style === o.id ? 'border-white bg-white/10' : 'border-line hover:border-white/40'}`}
+                >
+                  <span className="block text-[14px] font-semibold">{o.label}</span>
+                  <span className="block text-[12px] text-white/55">{o.hint}</span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="mt-5">
             <legend className="mb-2 text-[13px] text-white/60">Format</legend>
             <div className="flex gap-2">
               {ORIENTATIONS.map((o) => (
@@ -72,8 +134,8 @@ export function MusicVideoView() {
             <div className="flex gap-2">
               {(
                 [
-                  ['full', 'Full', 'Full size; takes about 2½× the song’s length'],
-                  ['preview', 'Quick preview', 'Half size; about 3× faster, to check the scenes'],
+                  ['full', 'Full', style === 'cartoon' ? 'Full size; takes about 2½× the song’s length' : 'Full size'],
+                  ['preview', 'Quick preview', style === 'cartoon' ? 'Half size; about 3× faster, to check the scenes' : 'Half size; quicker, to check the shots'],
                 ] as const
               ).map(([id, label, hint]) => (
                 <button
@@ -107,17 +169,27 @@ export function MusicVideoView() {
           ) : null}
           {editorDirty ? (
             <p className="mt-4 rounded-[8px] bg-amber-400/10 px-3 py-2 text-[13px] text-amber-200">
-              The video is made from the saved song. Save your edits first to include them.
+              {style === 'console'
+                ? 'Save the song first: the console video shows the saved version, measured track by track.'
+                : 'The video is made from the saved song. Save your edits first to include them.'}
             </p>
           ) : null}
 
           <button
             type="button"
-            disabled={busy || start.isPending || !artist.trim() || plannerMissing}
+            disabled={busy || start.isPending || !artist.trim() || plannerMissing || (style === 'console' && editorDirty)}
             onClick={() => start.mutate()}
             className="mt-5 h-11 w-full rounded-full bg-accent text-[15px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-50"
           >
-            {busy ? 'Making the video…' : job?.state === 'done' ? 'Make it again' : quality === 'preview' ? 'Make a quick preview' : 'Make video'}
+            {measuring !== undefined
+              ? `Measuring the tracks (${Math.round(measuring * 100)}%)…`
+              : busy
+                ? 'Making the video…'
+                : job?.state === 'done'
+                  ? 'Make it again'
+                  : quality === 'preview'
+                    ? 'Make a quick preview'
+                    : 'Make video'}
           </button>
           {start.error ? (
             <p className="mt-3 text-[13px] text-err" role="alert">
@@ -125,8 +197,10 @@ export function MusicVideoView() {
             </p>
           ) : null}
           <p className="mt-3 text-[12px] text-white/45">
-            A full video takes about 2½× the song&rsquo;s length, a quick preview less than the song itself. If the song has not been exported yet, its mix is
-            made first.
+            {style === 'cartoon'
+              ? 'A full video takes about 2½× the song’s length, a quick preview less than the song itself.'
+              : 'The tracks are measured here first (a moment), then the desk is drawn on the server’s graphics card.'}{' '}
+            If the song has not been exported yet, its mix is made first.
           </p>
         </section>
 
@@ -134,7 +208,7 @@ export function MusicVideoView() {
           {jobs.isError ? (
             <p className="text-[14px] text-err">{jobs.error.message}</p>
           ) : (
-            <VideoPanel job={job} orientation={orientation} preview={quality === 'preview'} title={viewSong?.title ?? 'Music video'} />
+            <VideoPanel job={job} style={style} orientation={orientation} preview={quality === 'preview'} title={viewSong?.title ?? 'Music video'} />
           )}
         </section>
       </div>
@@ -142,12 +216,24 @@ export function MusicVideoView() {
   );
 }
 
-function VideoPanel({ job, orientation, preview, title }: { job: VideoStatus | undefined; orientation: VideoOrientation; preview: boolean; title: string }) {
+function VideoPanel({
+  job,
+  style,
+  orientation,
+  preview,
+  title,
+}: {
+  job: VideoStatus | undefined;
+  style: VideoStyle;
+  orientation: VideoOrientation;
+  preview: boolean;
+  title: string;
+}) {
   const frame = orientation === 'portrait' ? 'aspect-[9/16] max-h-[70vh] mx-auto' : 'aspect-video w-full';
   if (!job) {
     return (
       <div className={`${frame} flex items-center justify-center rounded-[12px] border border-dashed border-line text-[14px] text-white/45`}>
-        No {orientation === 'portrait' ? 'tall' : 'wide'} {preview ? 'preview' : 'video'} yet. Make one on the left.
+        No {orientation === 'portrait' ? 'tall' : 'wide'} {style} {preview ? 'preview' : 'video'} yet. Make one on the left.
       </div>
     );
   }
@@ -159,10 +245,10 @@ function VideoPanel({ job, orientation, preview, title }: { job: VideoStatus | u
       </div>
     );
   }
-  if (job.state !== 'done' || !job.url) return <VideoProgress job={job} frame={frame} />;
+  if (job.state !== 'done' || !job.url) return <VideoProgress job={job} style={style} frame={frame} />;
   return (
     <div className="flex flex-col gap-3">
-      <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: music video`} />
+      <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: ${style} music video`} />
       <div className="flex items-center gap-3">
         <a href={`${job.url}?download=1`} className="h-10 rounded-full border border-white/30 px-4 text-[14px] leading-10 text-white hover:border-white/60">
           Download MP4{preview ? ' (preview)' : ''}
@@ -179,10 +265,12 @@ const STEPS: readonly { id: 'audio' | 'planning' | 'rendering'; label: string }[
   { id: 'rendering', label: 'Render the video' },
 ];
 
-/** The three steps with the current one's detail, progress and a running timer, so the page never looks stuck. */
-function VideoProgress({ job, frame }: { job: VideoStatus; frame: string }) {
+/** The steps (the console style has no planning) with the current one's detail, progress and a running timer, so the
+ *  page never looks stuck. */
+function VideoProgress({ job, style, frame }: { job: VideoStatus; style: VideoStyle; frame: string }) {
   const now = useNow(1000);
-  const current = STEPS.findIndex((s) => s.id === job.step);
+  const steps = style === 'console' ? STEPS.filter((s) => s.id !== 'planning') : STEPS;
+  const current = steps.findIndex((s) => s.id === job.step);
   const pct = typeof job.progress === 'number' ? Math.round(job.progress * 100) : undefined;
   const elapsed = (iso: string | undefined) => {
     if (!iso) return '';
@@ -192,7 +280,7 @@ function VideoProgress({ job, frame }: { job: VideoStatus; frame: string }) {
   return (
     <div className={`${frame} flex flex-col justify-center gap-5 rounded-[12px] border border-line bg-black/30 p-6`} role="status" aria-live="polite">
       <ol className="flex flex-col gap-3">
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const state = job.state === 'queued' ? 'todo' : i < current ? 'done' : i === current ? 'now' : 'todo';
           return (
             <li key={s.id} className="flex items-start gap-3">
@@ -243,3 +331,4 @@ function useNow(ms: number): number {
   }, [ms]);
   return now;
 }
+

@@ -29,6 +29,7 @@ import { OpenAiChatModel, type ChatModel } from './llm/chatModel.js';
 import { createDawExportRouter } from './routes/dawExport.js';
 import { DawExportService } from './export/dawExportService.js';
 import { createPlaybackRouter } from './routes/playback.js';
+import { songMixConfig } from './render/songVersion.js';
 import { createPatternsRouter } from './routes/patterns.js';
 import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
@@ -45,7 +46,7 @@ import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
 import { OidcClient } from './auth/OidcClient.js';
 import { attachSession, requireSession } from './auth/middleware.js';
 import { RenderService } from './render/renderService.js';
-import { renderVideo } from '@casperaki/video';
+import { renderConsoleVideo, renderVideo } from '@casperaki/video';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
@@ -229,6 +230,17 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           renders,
           planner: new DeepSeekPlanner(plannerEndpoint(config)),
           renderVideo,
+          renderConsoleVideo,
+          // `playback` (the mix config) is set up below; these run per video, after start-up.
+          songMix: (ownerId, songId) => {
+            const project = store.getProject(ownerId, songId);
+            if (!project) throw new Error(`song ${songId} is not a project of this owner`);
+            return songMixConfig(project, playback ? () => playback.mixConfig : undefined);
+          },
+          standardMixConfig: () => {
+            if (!playback) throw new Error('Music videos need the mix config (CASPERAKI_MIX_CONFIG) to know which version of a song they show.');
+            return playback.mixConfig;
+          },
         })
       : undefined);
   if (!renders) {
