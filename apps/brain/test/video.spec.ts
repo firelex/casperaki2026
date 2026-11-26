@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { orchestrate } from '@casperaki/arrangement';
+import { parseSong } from '@casperaki/song-schema';
 import type { ConsoleRenderRequest, RenderRequest, ScenePlan } from '@casperaki/video';
 import { songVersionKey } from '../src/render/songVersion.js';
 import { DEV_OWNER_ID } from '../src/routes/songs.js';
@@ -25,14 +26,17 @@ describe('songToConsoleInput', () => {
   const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'console-input-1' });
   const body = {
     binSeconds: 0.5,
-    tracks: [{ name: 'Bass', role: 'track' as const, color: '#4a8ae8', bus: 'bass', volumeDb: -6, levels: [0.5, 0.5], clips: [] }],
+    tracks: [{ name: 'Bass', role: 'track' as const, color: '#4a8ae8', bus: 'bass', volumeDb: -6, sends: { reverb: null, delay: null, chorus: null }, levels: [0.5, 0.5], clips: [] }],
     master: [0.7, 0.7],
   };
   it('does not depend on the cartoon style\'s genres', () => {
     const noStyle = { ...song, genre: undefined } as unknown as typeof song;
     expect(() => songToVideoInput({ title: 'T', artist: 'A', song: noStyle, audio: { path: '/tmp/x.mp3', durationSeconds: 1 } })).toThrow(/styles/);
-    const input = songToConsoleInput({ title: 'T', artist: 'A', song: noStyle, audio: { path: '/tmp/x.mp3', durationSeconds: 1 }, body, trims: {} });
+    const input = songToConsoleInput({ title: 'T', artist: 'A', song: noStyle, audio: { path: '/tmp/x.mp3', durationSeconds: 1 }, body, overrides: {} });
     expect(input.tracks[0]!.name).toBe('Bass');
+    // The sung lines, as the cartoon gets them (this song has words).
+    expect(input.lyrics).toEqual(lyricLines(song));
+    expect(input.lyrics.length).toBeGreaterThan(4);
     expect(input.sections).toEqual(songToVideoInput({ title: 'T', artist: 'A', song, audio: { path: '/tmp/x.mp3', durationSeconds: 1 } }).sections);
   });
 });
@@ -199,8 +203,8 @@ const consoleBody = (versionKey: string, bins = 400) => ({
   versionKey,
   binSeconds: 0.5,
   tracks: [
-    { name: 'Bass', role: 'track', color: '#4a8ae8', bus: 'bass', volumeDb: -6, levels: Array.from({ length: bins }, () => 0.5), clips: [] },
-    { name: 'Riser', role: 'effects', bus: 'fx', volumeDb: null, levels: Array.from({ length: bins }, (_, i) => (i > 100 ? 0.3 : 0)), clips: [] },
+    { name: 'Bass', role: 'track', color: '#4a8ae8', bus: 'bass', volumeDb: -6, sends: { reverb: -20, delay: null, chorus: null }, levels: Array.from({ length: bins }, () => 0.5), clips: [] },
+    { name: 'Riser', role: 'effects', bus: 'fx', volumeDb: null, sends: { reverb: -12, delay: -18, chorus: null }, levels: Array.from({ length: bins }, (_, i) => (i > 100 ? 0.3 : 0)), clips: [] },
   ],
   master: Array.from({ length: bins }, () => 0.7),
 });
@@ -280,6 +284,24 @@ describe('console music videos', () => {
     const tracks = h.consoleRenders[0]!.input.tracks;
     expect(tracks.find((t) => t.name === 'Bass')!.trimDb).toBe(-4);
     expect(tracks.find((t) => t.name === 'Riser')!.trimDb).toBeUndefined();
+  });
+
+  it("carries the song's sung lines, as the cartoon gets them", async () => {
+    const { id, key } = await songOf(h);
+    expect((await post(`${h.url}/api/songs/${id}/video`, { style: 'console', orientation: 'landscape', artist: 'Me', console: consoleBody(key) })).status).toBe(202);
+    expect(await waitFor(h, id, (j) => finished(j.console?.landscape))).toMatchObject({ state: 'done' });
+    const song = parseSong(JSON.parse(h.store.get(id)!.canonical));
+    expect(h.consoleRenders[0]!.input.lyrics).toEqual(lyricLines(song));
+  });
+
+  it("a Pro-mode send change replaces the strip's measured send", async () => {
+    const { id, key } = await songOf(h);
+    h.store.setProjectMix({ ownerId: DEV_OWNER_ID, songId: id, mixOverrides: { lanes: { Bass: { reverb: -8 } }, buses: {} }, updatedAt: new Date().toISOString() });
+    expect((await post(`${h.url}/api/songs/${id}/video`, { style: 'console', orientation: 'landscape', artist: 'Me', console: consoleBody(key) })).status).toBe(202);
+    expect(await waitFor(h, id, (j) => finished(j.console?.landscape))).toMatchObject({ state: 'done' });
+    const tracks = h.consoleRenders[0]!.input.tracks;
+    expect(tracks.find((t) => t.name === 'Bass')!.sends).toEqual({ reverb: -8, delay: null, chorus: null });
+    expect(tracks.find((t) => t.name === 'Riser')!.sends).toEqual({ reverb: -12, delay: -18, chorus: null });
   });
 
   it('rejects a track whose levels are not as long as the master', async () => {

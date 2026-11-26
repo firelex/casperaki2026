@@ -53,10 +53,13 @@ export function buildConsoleBody(args: {
     const volumeAutomation = automation((p) => p.volume);
     const lowPassAutomation = automation((p) => p.lowPass);
     const row = tracksByName.get(strip.name);
+    const sendsDb = parts[0]!.sendsDb;
     const common = {
       name: strip.name,
       bus: parts[0]!.fxGroup,
       volumeDb,
+      // The first part's sends, as the mixer shows them (the brain applies Pro-mode changes).
+      sends: { reverb: sendsDb.reverb, delay: sendsDb.delay, chorus: sendsDb.chorus },
       levels,
       ...(volumeAutomation ? { volumeAutomation } : {}),
       ...(lowPassAutomation ? { lowPassAutomation } : {}),

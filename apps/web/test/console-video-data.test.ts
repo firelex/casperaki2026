@@ -89,6 +89,13 @@ describe('buildConsoleBody', () => {
     expect(vocal.volumeDb).toBe(-3);
   });
 
+  it("sends each strip's send levels: its first part's, as the mixer shows them", () => {
+    const m = meters();
+    const lanes = m.mix.lanes.map((l) => (l.lane === 'Vocal' ? { ...l, sendsDb: { reverb: -14, delay: -24, chorus: null } } : l));
+    const vocal = buildConsoleBody(args({ ...m, mix: { ...m.mix, lanes } })).tracks.find((t) => t.name === 'Vocal')!;
+    expect(vocal.sends).toEqual({ reverb: -14, delay: -24, chorus: null });
+  });
+
   it('makes a lane with no track row an effects strip without a colour', () => {
     const riser = buildConsoleBody(args()).tracks.find((t) => t.name === 'Riser')!;
     expect(riser.role).toBe('effects');
