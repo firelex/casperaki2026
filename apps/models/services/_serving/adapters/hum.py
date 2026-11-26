@@ -10,7 +10,7 @@ Synchronous route (see harness ROUTES):
   -> {"bpm", "beats": [s], "downbeats": [s], "key": {"tonic": 0-11, "scale": "major"|"minor"},
       "notes": [{"onsetSec", "offsetSec", "midi"}], "tookMs"}
 
-How (the best measured pipeline, apps/models/hum-beats and apps/models/hum-pitch):
+How (the best measured pipeline, apps/models/hum-beats and apps/models/hum-pitch; then syllables, below):
   * beats, free mode: Beat This! fine-tuned on hums (beatthis-hum-20261123-1045) -> frame activations -> madmom's
     DBN with 4-beat bars (the owner's decision), as in hum-beats/scripts/note_grid.py dbn4. Click mode: the grid
     from the click (no beat tracking).
@@ -20,6 +20,9 @@ How (the best measured pipeline, apps/models/hum-beats and apps/models/hum-pitch
     79.8% right notes on HumTrans test).
   * key: the model's key signature (a major scale); major vs its relative minor by Krumhansl-Schmuckler over the
     notes found.
+  * syllables (hum_pitch/syllables.py, 2026-11-26): the model's notes split at spectral-flux onsets (repeated
+    syllables on one pitch), each piece re-pitched (pYIN, tuning offset, key snap), and in click mode one note per
+    eighth. The owner's la-la "Alle meine Entchen": 12 -> 22 of 27 notes right; HumTrans test 47.2% -> 47.9%.
 Weights stay where training wrote them on /mnt/d; nothing is downloaded.
 """
 from __future__ import annotations
@@ -214,6 +217,18 @@ def _notes_and_key(handle, feat):
     return out, key
 
 
+def _syllables(notes, key, y22, y16, mode, fields):
+    """The model's notes split into syllables (hum_pitch/syllables.py): repeated syllables on one pitch ("la la la")
+    are notes of their own; each piece pitched from its own pitch track; in click mode, one note per eighth."""
+    from hum_pitch.syllables import merge_on_grid, repitch, split_at_onsets
+
+    pieces = split_at_onsets([[n["onsetSec"], n["offsetSec"], n["midi"]] for n in notes], y22, 22050)
+    pieces = repitch(pieces, y16, 16000, key)
+    if mode == "click":
+        pieces = merge_on_grid(pieces, _number(fields, "firstBeatSec"), _number(fields, "bpm"))
+    return [{"onsetSec": round(a, 4), "offsetSec": round(b, 4), "midi": int(m)} for a, b, m in pieces]
+
+
 def transcribe(handle, headers, body):
     t0 = time.perf_counter()
     fields = parse_multipart(headers, body)
@@ -235,6 +250,7 @@ def transcribe(handle, headers, body):
     else:
         bpm, beats, downbeats = _free_beats(handle, y22)
     notes, key = _notes_and_key(handle, _features(handle, y16))
+    notes = _syllables(notes, key, y22, y16, mode, fields)
     return 200, {
         "bpm": round(float(bpm), 3),
         "beats": [round(float(t), 4) for t in beats],

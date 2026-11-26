@@ -120,7 +120,7 @@ def owner_score(notes):
         best = min(best, int(D[-1, -1]))
     return len(mids), 27 - best
 
-DEPTHS = [None, 0.1, 'repitch', 'grid']  # None: service; 0.1: split at flux onsets; repitch: split + each piece re-pitched
+DEPTHS = [None]  # the live service, which now splits syllables itself  # None: service; 0.1: split at flux onsets; repitch: split + each piece re-pitched
 y, sr = sf.read(OWNER, always_2d=True); y = y.mean(1)
 base_full = service_full(OWNER, {"mode": "click", "bpm": "100", "firstBeatSec": str(OWNER_FIRST_BEAT)}); base = base_full["notes"]
 for d in DEPTHS:
