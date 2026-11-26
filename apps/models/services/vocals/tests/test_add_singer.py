@@ -51,7 +51,8 @@ def stubs(monkeypatch):
     calls = state.calls
 
     def run_tool(cmd, cwd, job, what, log):
-        calls.append(cmd[2] if cmd[2] in ("separate", "words", "notes") else "enhance")
+        assert cmd[2] in ("separate", "words", "notes"), cmd  # no other tool (no Resemble Enhance)
+        calls.append(cmd[2])
         if cmd[2] == "separate":
             shutil.copy(cmd[3], cmd[4])
             return json.dumps({"sample_rate": SR, "seconds": 1.0})
@@ -67,9 +68,6 @@ def stubs(monkeypatch):
                                                 "pitches": [0, 60, 62, 0], "types": [1, 2, 2, 1],
                                                 "phonemes": ["<SP>", "en_HH-UW1", "en_S-EH1-Z", "<SP>"]}))
             return "{}"
-        x, sr = sf.read(cmd[2])  # the enhancer: the voice as it is
-        sf.write(cmd[3], x, sr, subtype="FLOAT")
-        return json.dumps({"sample_rate": sr, "seconds": len(x) / sr})
 
     class Singer:
         sr = 24000
@@ -109,9 +107,9 @@ def test_a_recording_with_words_becomes_a_singer(tmp_path, stubs):
     out.mkdir()
     job = FakeJob()
     result = add_singer.run({"stage": "add_singer", "upload": upload, "separate": False, "reference": "best"}, out, job)
-    assert [s for s, _, _ in job.steps] == ["decode", "compress", "enhance", "silence", "reference", "pitch", "words",
+    assert [s for s, _, _ in job.steps] == ["decode", "silence", "reference", "pitch", "words",
                                             "notes", "test-line"]
-    assert stubs.calls == ["enhance", "words", "notes"]
+    assert stubs.calls == ["words", "notes"]
     r = json.loads((out / "add_singer.json").read_text())
     assert result == {"file": str(out / "add_singer.json"), "kind": "json"}
     assert r["transcription"] == "words" and r["heard"] == "who says"
@@ -136,8 +134,8 @@ def test_a_la_recording_in_a_full_song_from_the_beginning(tmp_path, stubs):
     out.mkdir()
     job = FakeJob()
     add_singer.run({"stage": "add_singer", "upload": upload, "separate": True, "reference": "beginning"}, out, job)
-    assert [s for s, _, _ in job.steps][:3] == ["decode", "separate", "compress"]
-    assert stubs.calls == ["separate", "enhance", "words"]  # no note transcriber: the la notes are found here
+    assert [s for s, _, _ in job.steps][:3] == ["decode", "separate", "silence"]
+    assert stubs.calls == ["separate", "words"]  # no note transcriber: the la notes are found here
     r = json.loads((out / "add_singer.json").read_text())
     assert r["transcription"] == "la" and r["reference"]["choice"] == "beginning"
     assert r["reference"]["startSeconds"] == pytest.approx(0.1, abs=0.03)  # the first singing, once the silence is cut

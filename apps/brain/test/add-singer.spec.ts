@@ -86,7 +86,7 @@ describe('Add a singer', () => {
     const listed = (await get('/api/tasks')).body.tasks as Array<Record<string, any>>;
     const task = listed.find((t) => t.id === started.body.task.id)!;
     expect(task.state).toBe('done');
-    expect(task.steps.map((s: { id: string }) => s.id)).toEqual(['decode', 'separate', 'compress', 'enhance', 'silence', 'reference', 'pitch', 'words', 'notes', 'test-line', 'keep']);
+    expect(task.steps.map((s: { id: string }) => s.id)).toEqual(['decode', 'separate', 'silence', 'reference', 'pitch', 'words', 'notes', 'test-line', 'keep']);
     expect(task.steps.every((s: { state: string }) => s.state === 'done')).toBe(true);
     const testLineStep = task.steps.find((s: { id: string }) => s.id === 'test-line');
     expect((await fetch(`${url}/api/tasks/${task.id}/files/${testLineStep.files[0]}`)).status).toBe(200);

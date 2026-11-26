@@ -11,12 +11,13 @@ transcribes it back into the Vocal lane, and makes new singers from recordings. 
   lead (the brain sends `backing_db`). No YuE2, no ad-libs.
 - `transcribe`: a recording the user brings of one section (Transcribe melody): BS-RoFormer separation only when `has_backing`; with a `count` (the section has written lyrics) the notes by count, without one only the voice for the brain to send to the hum service (see pipeline/transcribe.py)
 - `add_singer` (Add a singer, `pipeline/add_singer.py`): a recording the user uploads (up to 5 minutes) made into a
-  singer: decoded; for a full song, the lead vocal separated and de-reverbed (SoulX-Singer-Preprocess); a 3:1
-  compressor, then Resemble Enhance's enhancer; the silences cut (`pipeline/voice_cut.py`); a voice reference of
+  singer: decoded; for a full song, the lead vocal separated and de-reverbed (SoulX-Singer-Preprocess); no
+  compression or enhancement (the voice is taken as it is); the silences cut (`pipeline/voice_cut.py`); a voice reference of
   8-12 s chosen ("beginning" or "best" stretch), always ending at a pause; its pitch (RMVPE), words (Parakeet, on the
   CPU) and notes (ROSVOT; for "la la la", every "l" a note: wav2vec2 letters) written as SoulX's description
-  (`pipeline/voice_meta.py`); a test line sung by SoulX in the new voice. The SoulX-Singer-Preprocess and Resemble
-  steps run as processes of their own in their venvs (`tools/soulx_preprocess.py`, `tools/enhance_voice.py`).
+  (`pipeline/voice_meta.py`); a test line sung by SoulX in the new voice. The SoulX-Singer-Preprocess steps run as
+  processes of their own in its venv (`tools/soulx_preprocess.py`). (`tools/enhance_voice.py`, Resemble Enhance in its
+  venv, is kept for recordings sung into a song: not used by any stage yet.)
 
 One venv (`.venv`, Python 3.10, torch 2.10.0+cu128 for the RTX PRO 6000 Blackwell, sm_120) on the Linux disk;
 weights stay on /mnt/d. Models load per job and are released after each stage (one GPU).

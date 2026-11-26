@@ -7,14 +7,12 @@ params = {"upload" (absolute path of the uploaded file, any format ffmpeg reads,
 required.
 
 Steps, in order (one model on the graphics card at a time: each model step loads its model and releases it, the
-SoulX-Singer-Preprocess and Resemble Enhance steps in processes of their own, in their own venvs, by explicit python
+SoulX-Singer-Preprocess steps in processes of their own, in their own venvs, by explicit python
 path: pipeline.paths):
 - decode: the upload read with ffmpeg (44.1 kHz; stereo when it is to be separated, mono otherwise);
 - separate (only with "separate"): SoulX-Singer-Preprocess's karaoke separation and de-reverb (tools/soulx_preprocess.py);
-- compress: the voice's singing set to LEVEL_DB, a 3:1 compressor (threshold -30 dB, attack 10 ms, release 150 ms),
-  then back to LEVEL_DB: Resemble's enhancer otherwise drops soft notes by 20-35 dB (vocal cleanup experiments,
-  2026-11-26; the owner's recording sang at about -30 dB, the level the compressor was set for);
-- enhance: Resemble Enhance's enhancer (tools/enhance_voice.py);
+  (no compression or Resemble Enhance: the owner, 2026-11-26: those are for recordings sung into a song, not for a
+  singer's voice, which is taken as it is);
 - silence: the silences cut, always (pipeline/voice_cut.py);
 - reference: about 10 s chosen ("beginning" or "best"), ending at a pause;
 - pitch: the reference's pitch curve (RMVPE, SoulX's pitch extractor, 20 ms frames);
@@ -49,8 +47,6 @@ STAGE = "add_singer"
 REQUIRED = ("upload", "separate", "reference")
 MAX_SECONDS = 300
 SR = 44100
-LEVEL_DB = -30.0
-COMPRESSOR = {"threshold_db": -30.0, "ratio": 3.0, "attack_ms": 10.0, "release_ms": 150.0}
 POLL_S = 0.5
 LETTERS = "facebook/wav2vec2-base-960h"
 L_HEIGHT, L_GAP_S, SOUNDING_DB, LA_CONTEXT_S = 0.2, 0.15, -35.0, 10.0
@@ -101,19 +97,6 @@ def decode(path: str, channels: int) -> np.ndarray:
     if len(x) == 0:
         raise ValueError("The file holds no audio.")
     return x
-
-
-def compress(x: np.ndarray, sr: int) -> np.ndarray:
-    """The voice (mono) at LEVEL_DB, compressed (COMPRESSOR), and back at LEVEL_DB (loudness of the singing parts)."""
-    from pedalboard import Compressor, Pedalboard
-
-    target = 10 ** (LEVEL_DB / 20)
-    loud = levels.loud(x)
-    if not np.isfinite(loud):
-        raise ValueError("The voice is silent.")
-    x = (np.asarray(x, dtype=np.float32) * (target / loud)).astype(np.float32)
-    y = Pedalboard([Compressor(**COMPRESSOR)])(x[None, :], sr)[0]
-    return (y * (target / levels.loud(y))).astype(np.float32)
 
 
 def run_tool(cmd: list[str], cwd: Path, job, what: str, log: Path) -> str:
@@ -261,23 +244,8 @@ def run(params: dict, out_dir, job):
         st.done("the lead vocal, without its reverb", {"seconds": res["seconds"]}, ["vocals.wav"])
 
     job.check_cancelled()
-    st = job.step("compress", "Even out the voice's level")
-    v, vsr = sf.read(voice_path, always_2d=True)
-    v = v.mean(axis=1).astype(np.float32)
-    c = compress(v, vsr)
-    sf.write(out / "compressed.wav", c, vsr, subtype="FLOAT")
-    st.done("3:1 compressor before the enhancer, so soft notes stay", {}, ["compressed.wav"])
-
-    job.check_cancelled()
-    st = job.step("enhance", "Clean up the voice (Resemble Enhance)")
-    res = json.loads(run_tool([str(paths.RESEMBLE_PYTHON), str(paths.TOOLS_DIR / "enhance_voice.py"),
-                               str(out / "compressed.wav"), str(out / "enhanced.wav")], paths.TOOLS_DIR, job,
-                              "Resemble Enhance", out / "enhance.log"))
-    st.done("enhanced", {"seconds": res["seconds"]}, ["enhanced.wav"])
-
-    job.check_cancelled()
     st = job.step("silence", "Cut the silences")
-    e, esr = sf.read(out / "enhanced.wav", always_2d=True)
+    e, esr = sf.read(voice_path, always_2d=True)
     e = e.mean(axis=1).astype(np.float32)
     cut, pieces = voice_cut.cut_silence(e, esr)
     sf.write(out / "voice_cut.wav", cut, esr, subtype="FLOAT")

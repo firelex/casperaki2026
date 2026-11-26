@@ -1,6 +1,6 @@
 // Add a singer: a recording the user uploads made into a singer for Sing, by the vocals service's add_singer stage
-// (apps/models/services/vocals/pipeline/add_singer.py: separation when it is a full song, compression, Resemble
-// Enhance, the silences cut, a voice reference of about 10 s chosen at a pause, transcribed into SoulX-Singer's
+// (apps/models/services/vocals/pipeline/add_singer.py: separation when it is a full song (no compression or
+// enhancement: the voice is taken as it is), the silences cut, a voice reference of about 10 s chosen at a pause, transcribed into SoulX-Singer's
 // description, and a test line sung in the new voice). The brain keeps the upload in the singer's folder
 // (src/singers/userSingers.ts), runs the stage as a background task with every step recorded, then stores the
 // singer's files and adds it to the owner's list.

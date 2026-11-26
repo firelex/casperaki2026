@@ -111,8 +111,6 @@ function addSingerScript(params: Record<string, unknown>) {
   const script: Job['script'] = [
     { id: 'decode', label: 'Read the recording', numbers: { seconds: 20 }, files: ['recording.wav'] },
     ...(params['separate'] === true ? [{ id: 'separate', label: 'Separate the vocals from the music', files: ['vocals.wav'] }] : []),
-    { id: 'compress', label: "Even out the voice's level", files: ['compressed.wav'] },
-    { id: 'enhance', label: 'Clean up the voice (Resemble Enhance)', files: ['enhanced.wav'] },
     { id: 'silence', label: 'Cut the silences', files: ['voice_cut.wav'] },
     { id: 'reference', label: 'Choose the voice reference', numbers: { startSeconds: 2, endSeconds: 12 }, files: ['voice.wav'] },
     { id: 'pitch', label: "Read the voice reference's pitch" },
