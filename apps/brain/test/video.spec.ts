@@ -42,18 +42,23 @@ describe('songToVideoInput', () => {
   });
 });
 
-interface Harness { url: string; app: Express; stop: () => Promise<void>; renders: RenderRequest[] }
+interface Harness { url: string; app: Express; stop: () => Promise<void>; renders: RenderRequest[]; enqueued: unknown[][]; videos: VideoService }
 
-async function boot(): Promise<Harness> {
+/** `exported`: whether the song's mix export already exists (otherwise the fake export finishes on enqueue). */
+async function boot(opts: { exported?: boolean; songMix?: (ownerId: string, songId: string) => string | undefined } = {}): Promise<Harness> {
   const store: SongsStore = openSongsStore({ path: ':memory:' });
   const dir = mkdtempSync(join(tmpdir(), 'video-spec-'));
   const mix = join(dir, 'out.mp3');
   writeFileSync(mix, 'not really audio');
   const renders: RenderRequest[] = [];
+  const enqueued: unknown[][] = [];
+  let exported = opts.exported ?? true;
   const fakeRenders = {
-    status: () => ({ songId: 'x', state: 'done', queuedAt: '' }),
-    enqueue: () => {
-      throw new Error('the export is already done in this test');
+    status: () => (exported ? { songId: 'x', state: 'done', queuedAt: '' } : undefined),
+    enqueue: (...args: unknown[]) => {
+      enqueued.push(args);
+      exported = true;
+      return { songId: 'x', state: 'done', queuedAt: '' };
     },
     mp3Path: () => mix,
   } as unknown as RenderService;
@@ -68,6 +73,8 @@ async function boot(): Promise<Harness> {
       writeFileSync(r.outPath, 'mp4 bytes');
     },
     probeSeconds: async () => 200,
+    songMix: opts.songMix ?? (() => undefined),
+    standardMixConfig: () => '{"standard":true}',
   });
   const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, videos });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
@@ -77,6 +84,8 @@ async function boot(): Promise<Harness> {
     url: `http://127.0.0.1:${(server.address() as AddressInfo).port}`,
     app,
     renders,
+    enqueued,
+    videos,
     stop: () => new Promise<void>((resolve) => server.close(() => { store.close(); resolve(); })),
   };
 }
@@ -126,5 +135,22 @@ describe('music video routes', () => {
     expect(h.renders[1]!.orientation).toBe('portrait');
     expect((await fetch(`${h.url}/api/songs/${id}/video/landscape.mp4`)).status).toBe(404);
     expect((await post(`${h.url}/api/songs/0000000000000000/video`, { orientation: 'portrait', artist: 'Me' })).status).toBe(404);
+  });
+});
+
+describe('music video export', () => {
+  it("exports the song with its Pro-mode mix", async () => {
+    const h = await boot({ exported: false, songMix: () => '{"pro":true}' });
+    try {
+      await post(`${h.url}/api/songs/generate`, { genre: 'brightPop', key: 'C', bpm: 120, seed: 'video-pro-mix' });
+      const { id } = await settled<{ id: string }>(h.url, h.app);
+      expect((await post(`${h.url}/api/songs/${id}/video`, { orientation: 'landscape', artist: 'Me' })).status).toBe(202);
+      for (let i = 0; i < 50 && h.renders.length === 0; i++) await new Promise((r) => setTimeout(r, 20));
+      expect(h.enqueued).toHaveLength(1);
+      expect(h.enqueued[0]![0]).toBe(id);
+      expect(h.enqueued[0]![2]).toBe('{"pro":true}');
+    } finally {
+      await h.stop();
+    }
   });
 });

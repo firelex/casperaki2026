@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { fakePlayback } from './fakePlayback.js';
+import { songVersionKey } from '../src/render/songVersion.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
@@ -40,6 +41,8 @@ interface Payload {
   insts: string[];
   samples: Array<{ key: string; kind: string; url: string }>;
   stubs: string[];
+  mixConfig: string;
+  versionKey: string;
 }
 
 describe('in-browser playback', () => {
@@ -71,6 +74,9 @@ describe('in-browser playback', () => {
       ['bassDrum1', 'drum'],
     ]);
     expect(pb.stubs).toHaveLength(5);
+    // The version the browser measures: the saved song text and the mix config it plays with.
+    const stored = h.store.get(id)!;
+    expect(pb.versionKey).toBe(songVersionKey(stored.canonical, pb.mixConfig));
 
     // A tonal slot is cut at its slice; a drum hit is the whole file.
     const slot = await (await fetch(h.url + pb.samples[0]!.url)).text();

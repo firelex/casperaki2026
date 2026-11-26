@@ -58,7 +58,7 @@ export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }:
     if (!plannerConfigured) return res.status(503).json({ error: 'planner_not_configured', message: new MissingPlannerConfigError().message });
     try {
       const format = (body.data.quality === 'preview' ? `${body.data.orientation}-preview` : body.data.orientation) as VideoFormat;
-      const s = videos.start({ songId: req.params.id, format, title: project.title, artist: body.data.artist });
+      const s = videos.start({ ownerId: ownerOf(req), songId: req.params.id, format, title: project.title, artist: body.data.artist });
       return res.status(202).json(statusJson(s));
     } catch (err) {
       if (err instanceof VideoBusyError) return res.status(409).json({ error: 'video_in_progress', message: err.message });

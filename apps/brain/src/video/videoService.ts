@@ -14,6 +14,7 @@ import { parseSong } from '@casperaki/song-schema';
 import type { RenderService } from '../render/renderService.js';
 import type { SongsStore } from '../store.js';
 import type { Planner } from './planner.js';
+import { songVersionKey } from '../render/songVersion.js';
 import { songToVideoInput, VideoInputError } from './videoInput.js';
 
 const execFileAsync = promisify(execFile);
@@ -57,6 +58,10 @@ export interface VideoServiceDeps {
   readonly planner: Planner;
   /** The engine's renderVideo (injected so tests need no Chrome). */
   readonly renderVideo: (request: RenderRequest) => Promise<void>;
+  /** The song's own mix config (Pro-mode changes applied), or undefined on the standard mix (render/songVersion.ts). */
+  readonly songMix: (ownerId: string, songId: string) => string | undefined;
+  /** The standard mix config (for the version key of a song on the standard mix). */
+  readonly standardMixConfig: () => string;
   /** Audio length in seconds (default: ffprobe next to the configured ffmpeg). */
   readonly probeSeconds?: (path: string) => Promise<number>;
 }
@@ -107,7 +112,7 @@ export class VideoService {
   }
 
   /** Start a video; one job at a time per song (VideoBusyError otherwise). */
-  start(args: { songId: string; format: VideoFormat; title: string; artist: string }): VideoStatus {
+  start(args: { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string }): VideoStatus {
     for (const o of FORMATS) {
       const s = this.status(args.songId, o);
       if (s && (s.state === 'queued' || s.state === 'running')) throw new VideoBusyError(args.songId);
@@ -124,7 +129,7 @@ export class VideoService {
     writeFileSync(join(this.dirFor(status.songId), `status-${status.format}.json`), JSON.stringify(status, null, 2));
   }
 
-  private async run(args: { songId: string; format: VideoFormat; title: string; artist: string }, base: VideoStatus): Promise<void> {
+  private async run(args: { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string }, base: VideoStatus): Promise<void> {
     const startedAt = new Date().toISOString();
     try {
       const step = (s: 'audio' | 'planning' | 'rendering', extra: Partial<VideoStatus> = {}) =>
@@ -134,7 +139,7 @@ export class VideoService {
       const stored = this.deps.store.get(args.songId);
       if (!stored) throw new Error(`song ${args.songId} is not in the store`);
       const song = parseSong(JSON.parse(stored.canonical));
-      const audioPath = await this.exportedMix(args.songId, stored.canonical, (detail) => step('audio', { detail }));
+      const audioPath = await this.exportedMix(args.songId, stored.canonical, this.deps.songMix(args.ownerId, args.songId), (detail) => step('audio', { detail }));
       const durationSeconds = await (this.deps.probeSeconds ?? ((p: string) => this.probeSeconds(p)))(audioPath);
       const input = songToVideoInput({ title: args.title, artist: args.artist, song, audio: { path: audioPath, durationSeconds } });
 
@@ -182,11 +187,19 @@ export class VideoService {
     }
   }
 
-  /** The song's mastered export (MP3), starting the export and waiting for it when there is none. */
-  private async exportedMix(songId: string, canonical: string, report: (detail: string) => void): Promise<string> {
+  /** The version key of the song as saved, with its mix (render/songVersion.ts). */
+  versionKey(ownerId: string, songId: string): string {
+    const stored = this.deps.store.get(songId);
+    if (!stored) throw new Error(`song ${songId} is not in the store`);
+    return songVersionKey(stored.canonical, this.deps.songMix(ownerId, songId) ?? this.deps.standardMixConfig());
+  }
+
+  /** The song's mastered export (MP3) with its mix (`mixConfig`: Pro-mode, or undefined for the standard mix);
+   *  the render service re-exports when the mix differs from its last export. */
+  private async exportedMix(songId: string, canonical: string, mixConfig: string | undefined, report: (detail: string) => void): Promise<string> {
     const renders = this.deps.renders;
-    let s = renders.status(songId);
-    if (!s || s.state === 'failed') s = renders.enqueue(songId, canonical);
+    // enqueue reuses an export of the same mix (done or on its way) and re-exports for a different one.
+    let s = renders.enqueue(songId, canonical, mixConfig);
     const deadline = Date.now() + AUDIO_TIMEOUT_MS;
     let lastDetail = '';
     while (s.state === 'queued' || s.state === 'running') {

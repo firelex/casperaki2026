@@ -25,6 +25,7 @@ import {
 import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
+import { songMixConfig } from '../render/songVersion.js';
 import type { ProjectRow, SongsStore } from '../store.js';
 import type { ArtworkTasks } from '../artwork/tasks.js';
 import { readRenderPeaks } from './renders.js';
@@ -309,9 +310,10 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
     if (!stored) return res.status(404).json({ error: 'not_found', id: req.params.id });
     const project = store.getProject(ownerOf(req), req.params.id)!;
     let songMix: string | undefined;
-    if (project.mixOverrides) {
-      if (!mixConfig) return res.status(503).json({ error: 'mix_not_configured', message: 'This song has a Pro-mode mix, but the brain has no mix config (CASPERAKI_MIX_CONFIG).' });
-      songMix = applyMixOverrides(mixConfig(), project.mixOverrides);
+    try {
+      songMix = songMixConfig(project, mixConfig);
+    } catch (err) {
+      return res.status(503).json({ error: 'mix_not_configured', message: err instanceof Error ? err.message : String(err) });
     }
     try {
       renders.enqueue(stored.id, stored.canonical, songMix);
