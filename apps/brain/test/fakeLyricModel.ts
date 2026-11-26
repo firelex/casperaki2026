@@ -1,5 +1,6 @@
 // A lyric model for tests: reads the lyricist's brief and answers with lines that fit exactly — "la" for every
-// syllable but the last, which is a rhyme word ("la la la day" / "la la la way"). Its grammar reading finds nothing.
+// syllable but the last, which is a rhyme word ("la la la day" / "la la la way"), one version per line ("la" and
+// the rhyme words are one-syllable words, free on any note). Its grammar reading finds nothing.
 // Deterministic. `script` replaces chosen answers (by call number, 1-based) to test repairs.
 
 import type { ChatMessage, ChatModel } from '../src/llm/chatModel.js';
@@ -27,10 +28,15 @@ export function fakeLyricModel(script: Readonly<Record<number, (messages: readon
       const scripted = script[calls.length];
       if (scripted) return scripted(messages);
       if (messages[0]!.content.includes('careful editor')) return JSON.stringify({ problems: [] });
-      if (messages.length > 2) return JSON.stringify({ fixes: [] });
-      return JSON.stringify({ parts: fittingParts(messages[1]!.content) });
+      if (messages.length > 2) return JSON.stringify({ lines: [] });
+      return JSON.stringify(asVersions(fittingParts(messages[1]!.content)));
     },
   };
+}
+
+/** The lines as the writer's answer: each line of each part with that one version. */
+export function asVersions(parts: Record<string, { text: string }[]>): { lines: { part: string; line: number; versions: { text: string }[] }[] } {
+  return { lines: Object.entries(parts).flatMap(([part, lines]) => lines.map((l, i) => ({ part, line: i + 1, versions: [l] }))) };
 }
 
 /** Lines that fit the brief exactly, per part id. */

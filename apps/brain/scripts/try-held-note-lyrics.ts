@@ -29,7 +29,7 @@ const modelName = process.env.LLM_MODEL;
 if (!url || !modelName) throw new Error('set LLM_URL and LLM_MODEL (the DeepSeek endpoint)');
 const model = new OpenAiChatModel({ baseUrl: url, model: modelName });
 
-const mark = (s: LyricLine[number]) => (s.duration >= HOLD_BEATS - EPS ? 'HOLD' : s.strong ? 'DA' : 'da');
+const mark = (s: LyricLine[number]) => (s.duration >= HOLD_BEATS - EPS ? 'HOLD' : s.grade === '+' ? 'DA' : 'da');
 
 /** One piece the model writes: a section, or a chorus / pre-chorus shared by its repeats with the same melody. */
 interface Part {
@@ -41,7 +41,7 @@ interface Part {
 function partsOf(sung: readonly SungSection[]): Part[] {
   const parts: (Part & { type: string; shape: string })[] = [];
   for (const s of sung) {
-    const shape = s.lines.map((l) => l.map((x) => `${x.strong ? 'S' : 'w'}${x.duration}`).join('')).join('|');
+    const shape = s.lines.map((l) => l.map((x) => `${x.grade}${x.duration}`).join('')).join('|');
     const shared = ['chorus', 'preChorus'].includes(s.type) ? parts.find((p) => p.type === s.type && p.shape === shape) : undefined;
     if (shared) shared.sections.push(s.name);
     else parts.push({ id: s.name, type: s.type, shape, sections: [s.name], lines: s.lines });

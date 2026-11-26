@@ -9,6 +9,7 @@ import type { Song } from '@casperaki/song-schema';
 import {
   applyWrittenLyrics,
   checkSectionLyrics,
+  gradeNote,
   HELD_SYLLABLE,
   lyricLines,
   lyricsTargets,
@@ -46,7 +47,16 @@ function lyricsFor(song: Song, filter: (type: string) => boolean = () => true): 
   return Object.fromEntries(sungSections(song).filter((s) => filter(s.type)).map((s) => [s.name, fittingLines(s.lines)]));
 }
 
-const slot = (barIndex: number, beat: number, duration: number) => ({ barIndex, beat, duration, start: barIndex * 4 + beat, strong: Number.isInteger(beat) || duration >= 1 });
+/** A lyric line from [bar, beat, duration] notes, each graded by the old rules with its neighbours in its bar. */
+function lineOf(notes: readonly (readonly [number, number, number])[]): LyricLine {
+  return notes.map(([barIndex, beat, duration]) => {
+    const inBar = notes.filter(([b]) => b === barIndex);
+    const j = inBar.findIndex(([, b]) => b === beat);
+    const prevInBar = inBar[j - 1]?.[2];
+    const nextInBar = inBar[j + 1]?.[2];
+    return { barIndex, beat, duration, start: barIndex * 4 + beat, grade: gradeNote(beat, duration, prevInBar, nextInBar), prevInBar, nextInBar };
+  });
+}
 
 describe('lyric lines', () => {
   it('cuts a melody every two bars, keeps every note, never a line over 16 notes', () => {
@@ -98,7 +108,7 @@ describe('lyric lines', () => {
 });
 
 describe('checking lines', () => {
-  const four: LyricLine = [slot(0, 0, 1), slot(0, 1, 1), slot(0, 2, 1), slot(0, 3, 1)];
+  const four = lineOf([[0, 0, 1], [0, 1, 1], [0, 2, 1], [0, 3, 1]]);
 
   it('accepts lines that fit and rhyme', () => {
     expect(checkSectionLyrics([four, four], ['walk into the night', 'all the city light'])).toEqual([]);
@@ -106,7 +116,7 @@ describe('checking lines', () => {
 
   it('names the syllable count, the dictionary split and the fix', () => {
     // Half-beat notes: too short to split for an extra syllable.
-    const short: LyricLine = [slot(0, 0, 0.5), slot(0, 0.5, 0.5), slot(0, 1, 0.5), slot(0, 1.5, 0.5)];
+    const short = lineOf([[0, 0, 0.5], [0, 0.5, 0.5], [0, 1, 0.5], [0, 1.5, 0.5]]);
     const [p] = checkSectionLyrics([short], ['sunlight on my street']);
     expect(p!.message).toMatch(/has 5 syllables \(sun·light on my street\) but must have exactly 4: remove 1 syllable/u);
   });
@@ -136,32 +146,40 @@ describe('checking lines', () => {
 
   it('takes sung short forms ("ev-ry") and lets a line be a little short or long', () => {
     // "every day" is 4 syllables in the dictionary, 3 sung as "ev-ry day".
-    const three: LyricLine = [slot(0, 0, 1), slot(0, 1, 1), slot(0, 2, 2)];
+    const three = lineOf([[0, 0, 1], [0, 1, 1], [0, 2, 2]]);
     expect(checkSectionLyrics([three], ['every day'])).toEqual([]);
     // 8 legato notes: 6 syllables (2 held notes) or 10 (2 split notes) fit, 5 and 11 do not.
-    const eight: LyricLine = Array.from({ length: 8 }, (_, i) => slot(Math.floor(i / 4), i % 4, 1));
+    const eight = lineOf(Array.from({ length: 8 }, (_, i) => [Math.floor(i / 4), i % 4, 1] as const));
     expect(checkSectionLyrics([eight], ['la la la la la day'])).toEqual([]);
     expect(checkSectionLyrics([eight], ['la la la la la la la la la day'])).toEqual([]);
     expect(checkSectionLyrics([eight], ['la la la la day'])[0]!.message).toMatch(/add 3 syllables/u);
     expect(checkSectionLyrics([eight], ['la la la la la la la la la la day'])[0]!.message).toMatch(/remove 3 syllables/u);
   });
 
-  it('sends back a line with more than one word stressed against the beat', () => {
-    // da DA da DA da DA: "tonight" fits (to-NIGHT on da DA), "happy" twice does not (HAP-py on da DA).
-    const six: LyricLine = [slot(0, 0.5, 0.5), slot(0, 1, 0.5), slot(0, 1.5, 0.5), slot(0, 2, 0.5), slot(0, 2.5, 0.5), slot(0, 3, 0.5)];
+  it('sends back a line with any word sung against its stress', () => {
+    // Eighths from beat 1.5 graded - + - + - +: "tonight" fits (to-NIGHT), "happy" (HAP-py) does not.
+    const six = lineOf([[0, 0.5, 0.5], [0, 1, 0.5], [0, 1.5, 0.5], [0, 2, 0.5], [0, 2.5, 0.5], [0, 3, 0.5]]);
     expect(checkSectionLyrics([six], ['tonight tonight tonight'])).toEqual([]);
-    expect(checkSectionLyrics([six], ['happy happy happy'])[0]!.message).toMatch(/stressed against the beat/u);
+    expect(checkSectionLyrics([six], ['happy happy happy'])[0]!.message).toMatch(/Sung against the stress: "hap·py": its stressed syllable "hap" falls on a weak note; "hap·py": its unstressed syllable "py" falls on a strong note/u);
+  });
+
+  it('counts small unstressed words too: "the" on a strong note is a clash, on a weak one fine', () => {
+    // Quarters on every beat: + - + - (beats 1 and 3 strong).
+    expect(checkSectionLyrics([four], ['walk the night home'])).toEqual([]);
+    expect(checkSectionLyrics([four], ['the sun is bright'])[0]!.message).toMatch(/"the" is a small unstressed word but falls on a strong note/u);
+    // Every clash of the line is named, not only the first.
+    expect(checkSectionLyrics([four], ['the sun and night'])[0]!.message).toMatch(/"the" is a small unstressed word but falls on a strong note; "and" is a small unstressed word but falls on a strong note/u);
   });
 
   it('sends back a line that cuts a word across a held note (a half note or longer)', () => {
     // DA DA DA(held, 2 beats) DA: the held note must carry the end of a word.
-    const line: LyricLine = [slot(0, 0, 1), slot(0, 1, 1), slot(0, 2, 2), slot(1, 0, 1)];
+    const line = lineOf([[0, 0, 1], [0, 1, 1], [0, 2, 2], [1, 0, 1]]);
     expect(checkSectionLyrics([line], ['walk the night home'])).toEqual([]);
     const [p] = checkSectionLyrics([line], ['in the sunrise']);
     expect(p!.message).toMatch(/cut in two across a long held note/u);
     expect(p!.message).toMatch(/"sun·rise" \(held on "sun"\)/u);
     // A held note carrying a syllable over a spare note still ends the word when that syllable does.
-    const slur: LyricLine = [slot(0, 0, 1), slot(0, 1, 1), slot(0, 2, 2), slot(1, 0, 1), slot(1, 1, 1)];
+    const slur = lineOf([[0, 0, 1], [0, 1, 1], [0, 2, 2], [1, 0, 1], [1, 1, 1]]);
     expect(checkSectionLyrics([slur], ['walk the night home'])).toEqual([]);
   });
 });
@@ -185,13 +203,21 @@ describe('attaching lines to notes', () => {
     expect(sung(attachWrittenLyrics(segment([1, 1, 1, 1]), ['I see tonight']))).toEqual(['0.0:1:I', '1.0:1:See', '2.0:1:To-', '3.0:1:night']);
   });
 
+  it('writes the word over its notes split the owner\'s way, sung contractions spelled short', () => {
+    expect(sung(attachWrittenLyrics(segment([1, 1, 1, 1]), ['control rhythm']))).toEqual(['0.0:1:Con-', '1.0:1:trol', '2.0:1:Rhy-', '3.0:1:thm']);
+    // "every" on two notes is sung "ev'ry": the dropped vowel letter goes.
+    expect(sung(attachWrittenLyrics(segment([1, 1, 2]), ['every day']))).toEqual(['0.0:1:E-', '1.0:1:vry', '2.0:2:Day']);
+  });
+
   it('holds a syllable over a spare note', () => {
     const out = attachWrittenLyrics(segment([0.5, 0.5, 0.5, 0.5, 1, 1]), ['oh my love so true']);
     expect(sung(out).filter((s) => s.endsWith(`:${HELD_SYLLABLE}`))).toHaveLength(1);
   });
 
-  it('splits a long note in two for an extra syllable', () => {
-    expect(sung(attachWrittenLyrics(segment([1, 1, 2]), ['I see tonight']))).toEqual(['0.0:1:I', '1.0:1:See', '2.0:1:To-', '3.0:1:night']);
+  it('splits a long note in two for an extra syllable, the one that keeps every word on its stress', () => {
+    // Splitting the half note (the longest, tried first) would put "to" on beat 3, a strong note; splitting the
+    // quarter on beat 2 puts it on an off-beat eighth (weak) and "night" on the half note (free).
+    expect(sung(attachWrittenLyrics(segment([1, 1, 2]), ['I see tonight']))).toEqual(['0.0:1:I', '1.0:0.5:See', '1.5:0.5:To-', '2.0:2:night']);
   });
 });
 

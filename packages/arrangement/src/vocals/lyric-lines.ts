@@ -7,7 +7,10 @@
 // to the next line. (Before, a line ended at a rest of a beat or after a held note, so in Tangerine Sidewalk "We",
 // sung in line 3's bars before a rest, opened line 4: the words then fell on the wrong notes.) Lines over MAX_NOTES are
 // split at their longest pause near the middle; a short line stays as it is (the melody's two bars, however few
-// notes). Each note is a syllable slot, strong (on a beat, or a beat long or more) or weak.
+// notes). Each note is a syllable slot with the old lyric writer's grade (stress.ts): '+' a note for a stressed
+// syllable, '-' one for an unstressed syllable, '0' either.
+
+import { gradeBar, type Stress } from './stress.js';
 
 const BEATS_PER_BAR = 4;
 const EPS = 1e-6;
@@ -30,7 +33,12 @@ export interface LyricSlot {
   readonly duration: number;
   /** Beats from the section start. */
   readonly start: number;
-  readonly strong: boolean;
+  /** The old grade of the note as written (stress.ts gradeNote, from its length, place in the bar and neighbours). */
+  readonly grade: Stress;
+  /** Lengths of the notes just before and after it in its bar (undefined at the bar's start or end): the neighbours
+   *  its grade was taken with, kept so that a note split or held for a line can be graded again (written-lyrics). */
+  readonly prevInBar: number | undefined;
+  readonly nextInBar: number | undefined;
 }
 
 export type LyricLine = readonly LyricSlot[];
@@ -42,16 +50,28 @@ export type VocalBarsLike = readonly { readonly notes?: Readonly<Record<string, 
 export function lyricSlots(bars: VocalBarsLike): LyricSlot[] {
   const slots: LyricSlot[] = [];
   bars.forEach((bar, barIndex) => {
+    const notes: { beat: number; duration: number }[] = [];
     for (const [key, evs] of Object.entries(bar.notes ?? {})) {
       for (const ev of evs ?? []) {
         const e = ev as { type?: unknown; duration?: unknown };
         if (e.type !== 'vocalNote') continue;
         if (typeof e.duration !== 'number' || !(e.duration > 0)) throw new Error(`lyricSlots: bar ${barIndex + 1} beat ${key}: a vocal note without a positive duration`);
-        const beat = Number.parseFloat(key);
-        const strong = Math.abs(beat - Math.round(beat)) < EPS || e.duration >= 1 - EPS;
-        slots.push({ barIndex, beat, duration: e.duration, start: barIndex * BEATS_PER_BAR + beat, strong });
+        notes.push({ beat: Number.parseFloat(key), duration: e.duration });
       }
     }
+    notes.sort((a, b) => a.beat - b.beat);
+    const grades = gradeBar(notes);
+    notes.forEach((n, i) =>
+      slots.push({
+        barIndex,
+        beat: n.beat,
+        duration: n.duration,
+        start: barIndex * BEATS_PER_BAR + n.beat,
+        grade: grades[i]!,
+        prevInBar: notes[i - 1]?.duration,
+        nextInBar: notes[i + 1]?.duration,
+      }),
+    );
   });
   slots.sort((a, b) => a.start - b.start);
   for (let i = 1; i < slots.length; i++) {

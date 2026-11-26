@@ -2,8 +2,12 @@
 // attached to the vocal notes, one syllable per note (docs/superpowers/specs/2026-11-24-written-lyrics-design.md).
 //
 // Pronunciations come from casperaki2's CMU-based dictionary (data/lyrics/pronunciations.json.gz, built by
-// scripts/build-pronunciations.mjs): per word its written syllables and ARPAbet phonemes per syllable, the vowel
-// carrying its stress (1 primary, 2 secondary, 0 none).
+// scripts/build-pronunciations.mjs): per word its ARPAbet phonemes per sung syllable, the vowel carrying its stress
+// (1 primary, 2 secondary, 0 none). How the written word is split over those syllables for display is the owner's
+// rule in word-split.ts (the dictionary's own written split, "cont-rol", is not used).
+//
+// Stress follows the old lyric writer exactly (stress.ts): every note has a grade ('+' for a stressed syllable, '-'
+// for an unstressed one, '0' either), every syllable a rhythm mark, and no syllable may be sung against its note.
 //
 // Recorded in the generator block as `params.lyrics` (section name → lines); `writeVocals` attaches them in place of
 // the phrase bank.
@@ -15,6 +19,8 @@ import { gunzipSync } from 'node:zlib';
 import { z } from 'zod';
 
 import { lyricLines, lyricSlots, rhymeScheme, type LyricLine, type LyricSlot } from './lyric-lines.js';
+import { gradeNote, stressFits, UNSTRESSED_SMALL_WORDS, wordRhythm, type Stress } from './stress.js';
+import { contractSplit, splitWord, type WordSplit } from './word-split.js';
 import { formatBarBeat } from '@casperaki/music-theory';
 import { BarBeatSchema } from '@casperaki/song-schema';
 
@@ -35,12 +41,16 @@ export function writtenLyricsOf(params: Readonly<Record<string, unknown>> | unde
 // ---- pronunciations ---------------------------------------------------------------------------------------------
 
 interface Pronunciation {
-  /** Written syllables ("to", "night"). */
+  /** The written word split over its sung syllables ("to", "night"; word-split.ts). */
   readonly syllables: readonly string[];
   /** ARPAbet per syllable, uppercase with stress digits (["T", "AH0"], ["N", "AY1", "T"]). */
   readonly phones: readonly (readonly string[])[];
   /** Stress per syllable: 1 primary, 2 secondary, 0 none. */
   readonly stress: readonly number[];
+  /** The old lyric writer's rhythm per syllable ('+' stressed, '-' unstressed, '0' either; stress.ts wordRhythm). */
+  readonly rhythm: readonly Stress[];
+  /** The written split with where each part's vowel letters are (for sung contractions). */
+  readonly split: WordSplit;
 }
 
 const DictSchema = z.object({ $schemaVersion: z.literal(1), $source: z.string(), words: z.record(z.string(), z.tuple([z.array(z.string()), z.array(z.string())])) }).strict();
@@ -63,13 +73,21 @@ function dictionaryKey(word: string): string | undefined {
   return undefined;
 }
 
+/** The pronunciation built from the word's sung syllables and its written split (an error when the word cannot be
+ *  split over them: word-split.ts splits every word of the dictionary, so that would be a bug there). */
+function pronunciation(key: string, phones: readonly (readonly string[])[], split: WordSplit | undefined): Pronunciation {
+  if (!split) throw new Error(`written lyrics: "${key}" cannot be split over its ${phones.length} sung syllables (word-split.ts)`);
+  if (split.parts.length !== phones.length) throw new Error(`written lyrics: "${key}" split into ${split.parts.length} parts for ${phones.length} sung syllables`);
+  const stress = phones.map(stressOf);
+  return { syllables: split.parts, phones, stress, rhythm: wordRhythm(key, stress), split };
+}
+
 export function pronounce(word: string): Pronunciation | undefined {
   const key = dictionaryKey(word);
   if (!key) return undefined;
-  const [syllables, phonemeSyllables] = dictionary().get(key)!;
+  const [, phonemeSyllables] = dictionary().get(key)!;
   const phones = phonemeSyllables.map((s) => s.split(' '));
-  const stress = phones.map((ps) => Number(ps.find((p) => /\d$/u.test(p))!.slice(-1)));
-  return { syllables, phones, stress };
+  return pronunciation(key, phones, splitWord(key, phones));
 }
 
 /** The words of a line of text: split at spaces and dashes, punctuation dropped (apostrophes kept). */
@@ -92,6 +110,8 @@ export interface SungSyllable {
 
 interface ParsedWord {
   readonly word: string;
+  /** The word as the dictionary spells it. */
+  readonly key: string;
   readonly p: Pronunciation;
   /** The word as it is often sung, one syllable shorter ("ev'ry", "fire" in one), when it has such a form. */
   readonly short?: Pronunciation;
@@ -105,25 +125,28 @@ interface ParsedWord {
 const MERGE_LAST = new Set(['fire', 'fires', 'desire', 'higher', 'liar', 'hour', 'hours', 'our', 'flower', 'flowers', 'power', 'powers', 'tower', 'shower', 'tired', 'being', 'prayer', 'player', 'layer', 'quiet', 'diamond', 'diamonds', 'violet', 'science', 'lion']);
 const DROP_INNER = new Set(['every', 'everything', 'everyone', 'everybody', 'everywhere', 'everyday', 'different', 'difference', 'family', 'families', 'memory', 'memories', 'favorite', 'history', 'mystery', 'chocolate', 'evening', 'camera', 'natural', 'general', 'several', 'interest', 'interesting', 'separate', 'temperature', 'comfortable', 'average', 'beautiful', 'heaven', 'heavenly', 'easily', 'restaurant', 'vegetable', 'traveling', 'wandering', 'wondering', 'whispering', 'listening', 'opening', 'shimmering', 'glittering', 'flickering', 'trembling']);
 
-const isVowel = (ph: string) => /\d$/u.test(ph);
-const stressOf = (ps: readonly string[]) => Number(ps.find(isVowel)!.slice(-1));
+function isVowel(ph: string): boolean {
+  return /\d$/u.test(ph);
+}
+function stressOf(ps: readonly string[]): number {
+  return Number(ps.find(isVowel)!.slice(-1));
+}
 /** A vowel losing its syllable: ER becomes the consonant R, any other vowel goes. */
 const unvowel = (ps: readonly string[]) => ps.flatMap((x) => (isVowel(x) ? (x.startsWith('ER') ? ['R'] : []) : [x]));
 
 function shortForm(key: string, p: Pronunciation): Pronunciation | undefined {
   const n = p.syllables.length;
   if (n < 2) return undefined;
+  // The written parts lose the same syllable: "fi-re" → "fire", "e-ve-ry" → "e-vry" (the dropped vowel letter goes).
   if (MERGE_LAST.has(key)) {
     const phones = [...p.phones.slice(0, n - 2), [...p.phones[n - 2]!, ...unvowel(p.phones[n - 1]!)]];
-    const syllables = [...p.syllables.slice(0, n - 2), p.syllables[n - 2]! + p.syllables[n - 1]!];
-    return { syllables, phones, stress: phones.map(stressOf) };
+    return pronunciation(key, phones, contractSplit(p.split, { kind: 'merge-last' }));
   }
   if (DROP_INNER.has(key)) {
     const i = p.stress.findIndex((st, j) => st === 0 && j > 0 && j < n - 1);
     if (i < 0) return undefined;
     const phones = p.phones.flatMap((ps, j) => (j === i ? [] : j === i + 1 ? [[...unvowel(p.phones[i]!), ...ps]] : [ps]));
-    const syllables = p.syllables.flatMap((t, j) => (j === i ? [] : j === i + 1 ? [p.syllables[i]! + t] : [t]));
-    return { syllables, phones, stress: phones.map(stressOf) };
+    return pronunciation(key, phones, contractSplit(p.split, { kind: 'drop', index: i }));
   }
   return undefined;
 }
@@ -138,8 +161,9 @@ function parseLine(text: string): { words: ParsedWord[]; unknown: string[] } {
       unknown.push(word);
       continue;
     }
-    const short = shortForm(dictionaryKey(word)!, p);
-    words.push({ word, p, ...(short ? { short } : {}) });
+    const key = dictionaryKey(word)!;
+    const short = shortForm(key, p);
+    words.push({ word, key, p, ...(short ? { short } : {}) });
   }
   return { words, unknown };
 }
@@ -147,7 +171,7 @@ function parseLine(text: string): { words: ParsedWord[]; unknown: string[] } {
 const titleCase = (s: string) => (s ? s[0]!.toUpperCase() + s.slice(1) : s);
 
 /** The line's pronunciations with the first `shorten` words that have a sung short form using it. */
-function variant(words: readonly ParsedWord[], shorten: number): { word: string; p: Pronunciation }[] {
+function variant(words: readonly ParsedWord[], shorten: number): SungWord[] {
   let left = shorten;
   return words.map((w) => {
     if (left > 0 && w.short) {
@@ -156,6 +180,12 @@ function variant(words: readonly ParsedWord[], shorten: number): { word: string;
     }
     return { word: w.word, p: w.p };
   });
+}
+
+/** A word as the line sings it: its full or its short pronunciation. */
+interface SungWord {
+  readonly word: string;
+  readonly p: Pronunciation;
 }
 
 function syllablesOf(words: readonly { p: Pronunciation }[]): SungSyllable[] {
@@ -186,7 +216,11 @@ function holdable(slots: LyricLine): number[] {
   for (let i = 1; i < slots.length; i++) {
     const prev = slots[i - 1]!;
     if (slots[i]!.start - (prev.start + prev.duration) > EPS) continue;
-    out.push({ i, score: (slots[i]!.strong ? 0 : 2) + (slots[i]!.duration <= 0.5 + EPS ? 1 : 0) + i / slots.length });
+    // Notes off the beat and short are held first (the order the plan tries; a plan that sings a word against its
+    // stress is then replaced by another hold if one avoids it: planLine).
+    const s = slots[i]!;
+    const accented = Math.abs(s.beat - Math.round(s.beat)) < EPS || s.duration >= 1 - EPS;
+    out.push({ i, score: (accented ? 0 : 2) + (s.duration <= 0.5 + EPS ? 1 : 0) + i / slots.length });
   }
   return out.sort((a, b) => b.score - a.score).map((h) => h.i);
 }
@@ -203,13 +237,12 @@ function splittable(slots: LyricLine): number[] {
 interface SungNote {
   readonly start: number;
   readonly duration: number;
-  readonly strong: boolean;
   /** Index of the line slot it comes from. */
   readonly slot: number;
 }
 
 interface LinePlan {
-  readonly words: { word: string; p: Pronunciation }[];
+  readonly words: SungWord[];
   readonly syllables: SungSyllable[];
   readonly held: ReadonlySet<number>;
   readonly split: ReadonlySet<number>;
@@ -218,24 +251,44 @@ interface LinePlan {
 const maxHeld = (slots: LyricLine) => Math.min(holdable(slots).length, Math.floor(slots.length / 4), MAX_HELD);
 const maxSplit = (slots: LyricLine) => Math.min(splittable(slots).length, slots.length >= 8 ? MAX_SPLIT : 1);
 
+/** All ways to choose `size` of the items, in order of preference (the earliest items first). */
+function choices(items: readonly number[], size: number): number[][] {
+  if (size === 0) return [[]];
+  const out: number[][] = [];
+  items.forEach((x, i) => {
+    for (const rest of choices(items.slice(i + 1), size - 1)) out.push([x, ...rest]);
+  });
+  return out;
+}
+
+/** Whether the plan sings every word with its stress and every held note on a word's end. */
+const planIsClean = (plan: LinePlan, slots: LyricLine) => stressClashes(plan.words, sungGrades(slots, plan)).length === 0 && heldNoteCuts(plan, slots).length === 0;
+
 /** How the words fit the notes: exactly, else with sung short forms, else holding or splitting notes (fewest changes
- *  first); undefined when they cannot fit. */
+ *  first); undefined when they cannot fit. When the plan found that way sings a word against its stress or cuts a word
+ *  on a held note, the other holds and splits of the same size are tried, and the cheapest one that does neither is
+ *  taken instead (the check then reports the first plan's faults when there is none). */
 function planLine(words: readonly ParsedWord[], slots: LyricLine): LinePlan | undefined {
   const shortenable = words.filter((w) => w.short).length;
-  let best: { plan: LinePlan; cost: number } | undefined;
+  const candidates: { plan: LinePlan; cost: number; first: boolean }[] = [];
   for (let k = 0; k <= shortenable; k++) {
     const v = variant(words, k);
     const syllables = syllablesOf(v);
     const diff = syllables.length - slots.length;
-    let plan: LinePlan | undefined;
-    if (diff === 0) plan = { words: v, syllables, held: new Set(), split: new Set() };
-    else if (diff < 0 && -diff <= maxHeld(slots)) plan = { words: v, syllables, held: new Set(holdable(slots).slice(0, -diff)), split: new Set() };
-    else if (diff > 0 && diff <= maxSplit(slots)) plan = { words: v, syllables, held: new Set(), split: new Set(splittable(slots).slice(0, diff)) };
-    if (!plan) continue;
     const cost = k * 0.5 + Math.abs(diff) * (diff > 0 ? 1.5 : 1);
-    if (!best || cost < best.cost) best = { plan, cost };
+    if (diff === 0) candidates.push({ plan: { words: v, syllables, held: new Set(), split: new Set() }, cost, first: true });
+    else if (diff < 0 && -diff <= maxHeld(slots)) {
+      choices(holdable(slots), -diff).forEach((c, i) => candidates.push({ plan: { words: v, syllables, held: new Set(c), split: new Set() }, cost, first: i === 0 }));
+    } else if (diff > 0 && diff <= maxSplit(slots)) {
+      choices(splittable(slots), diff).forEach((c, i) => candidates.push({ plan: { words: v, syllables, held: new Set(), split: new Set(c) }, cost, first: i === 0 }));
+    }
   }
-  return best?.plan;
+  let best: { plan: LinePlan; cost: number } | undefined;
+  for (const c of candidates) if (c.first && (!best || c.cost < best.cost)) best = c;
+  if (!best || planIsClean(best.plan, slots)) return best?.plan;
+  let clean: { plan: LinePlan; cost: number } | undefined;
+  for (const c of candidates) if ((!clean || c.cost < clean.cost) && planIsClean(c.plan, slots)) clean = c;
+  return (clean ?? best).plan;
 }
 
 function sungNotes(slots: LyricLine, plan: LinePlan): SungNote[] {
@@ -244,30 +297,64 @@ function sungNotes(slots: LyricLine, plan: LinePlan): SungNote[] {
     if (plan.held.has(i)) return;
     if (plan.split.has(i)) {
       const half = s.duration / 2;
-      out.push({ start: s.start, duration: half, strong: s.strong, slot: i }, { start: s.start + half, duration: half, strong: false, slot: i });
-    } else out.push({ start: s.start, duration: s.duration, strong: s.strong, slot: i });
+      out.push({ start: s.start, duration: half, slot: i }, { start: s.start + half, duration: half, slot: i });
+    } else out.push({ start: s.start, duration: s.duration, slot: i });
   });
   return out;
 }
 
-/** Multi-syllable words sung against the beat: the stressed syllable on a weak note while an unstressed one of the
- *  same word is on a strong note. */
-function stressClashes(words: readonly { word: string; p: Pronunciation }[], sung: readonly SungNote[]): string[] {
+/**
+ * The old grade of each sung syllable's note: the old rules (stress.ts gradeNote) applied to the line's notes as they
+ * are sung and stored, each note's place in its bar and the lengths of the notes next to it in the same bar (at the
+ * line's ends, the bar's notes outside the line, as written). Sung as written (as many syllables as notes), these are
+ * the notes' own grades. A split note is two notes of half its length, so both halves and their neighbours are graded
+ * as such. A held note sings no syllable of its own but stays a note of the bar (it carries the syllable before it
+ * on, at its own pitch), so it still counts as a neighbour. Each syllable gets the grade of the note it starts on.
+ * This is what an old-rules reading of the stored notes sees (apps/brain/scripts/score-lyric-stress.ts).
+ */
+function sungGrades(slots: LyricLine, plan: LinePlan): Stress[] {
+  const notes: { bar: number; beat: number; duration: number; sings: boolean }[] = [];
+  slots.forEach((s, i) => {
+    if (plan.split.has(i)) {
+      const half = s.duration / 2;
+      notes.push({ bar: s.barIndex, beat: s.beat, duration: half, sings: true }, { bar: s.barIndex, beat: s.beat + half, duration: half, sings: true });
+    } else notes.push({ bar: s.barIndex, beat: s.beat, duration: s.duration, sings: !plan.held.has(i) });
+  });
+  const first = slots[0]!;
+  const last = slots.at(-1)!;
+  const grades: Stress[] = [];
+  notes.forEach((n, k) => {
+    if (!n.sings) return;
+    const before = notes[k - 1];
+    const after = notes[k + 1];
+    const prev = k === 0 ? first.prevInBar : before!.bar === n.bar ? before!.duration : undefined;
+    const next = k === notes.length - 1 ? last.nextInBar : after!.bar === n.bar ? after!.duration : undefined;
+    grades.push(gradeNote(n.beat, n.duration, prev, next));
+  });
+  return grades;
+}
+
+const NOTE_NAMES: Readonly<Record<Stress, string>> = { '+': 'a strong note', '-': 'a weak note', '0': 'a free note' };
+
+/** Every syllable sung against its stress (the old rule: a stressed syllable on a weak note, or an unstressed one,
+ *  small words included, on a strong note), each in plain English. */
+function stressClashes(words: readonly SungWord[], grades: readonly Stress[]): string[] {
   const clashes: string[] = [];
   let at = 0;
   for (const { word, p } of words) {
-    if (p.syllables.length > 1) {
-      const primary = p.stress.indexOf(1);
-      const sl = sung.slice(at, at + p.syllables.length);
-      if (primary >= 0 && sl[primary] && !sl[primary]!.strong && p.stress.some((st, i) => st === 0 && sl[i]?.strong)) clashes.push(word);
-    }
+    p.rhythm.forEach((r, i) => {
+      const g = grades[at + i]!;
+      if (stressFits(g, r)) return;
+      if (p.syllables.length === 1) clashes.push(`"${word}" is a small unstressed word but falls on ${NOTE_NAMES[g]}`);
+      else {
+        const what = r === '+' ? 'stressed' : 'unstressed';
+        clashes.push(`"${p.syllables.join('·')}": its ${what} syllable "${p.syllables[i]}" falls on ${NOTE_NAMES[g]}`);
+      }
+    });
     at += p.syllables.length;
   }
   return clashes;
 }
-
-/** Stress clashes a line may have before it is sent back. */
-const MAX_STRESS_CLASHES = 1;
 
 /** A note this long (beats) or longer is held: the syllable it ends on must end its word. */
 export const HOLD_BEATS = 2;
@@ -336,8 +423,29 @@ export interface LineProblem {
   readonly message: string;
 }
 
-/** What is wrong with one line for its notes (plain English, for the lyricist), undefined when it fits. */
-function lineProblem(text: string, slots: LyricLine): string | undefined {
+/** The words of a line sung against their stress on these notes (plain English, one entry per syllable), or
+ *  undefined when the line does not fit the notes at all (unknown words or the syllable count). */
+export function lineStressClashes(text: string, slots: LyricLine): string[] | undefined {
+  const { words, unknown } = parseLine(text);
+  if (unknown.length > 0) return undefined;
+  const plan = planLine(words, slots);
+  return plan ? stressClashes(plan.words, sungGrades(slots, plan)) : undefined;
+}
+
+/** A word's pronunciations as it may be sung: the dictionary's, then its sung short form when it has one ("every":
+ *  e-ve-ry, then e-vry); empty when the dictionary does not know it. */
+export function sungPronunciations(word: string): Pronunciation[] {
+  const p = pronounce(word);
+  if (!p) return [];
+  const short = shortForm(dictionaryKey(word)!, p);
+  return short ? [p, short] : [p];
+}
+
+const SMALL_WORDS_TEXT = [...UNSTRESSED_SMALL_WORDS].map((w) => `"${w}"`).join(', ');
+
+/** What is wrong with one line for its notes (plain English, for the lyricist), undefined when it fits: unknown
+ *  words, the syllable count, stress, words cut on held notes. Rhymes are a matter between lines (checkSectionLyrics). */
+export function checkLyricLine(text: string, slots: LyricLine): string | undefined {
   const { words, unknown } = parseLine(text);
   if (unknown.length > 0) return `These words are not in the pronunciation dictionary (use other, common English words): ${unknown.join(', ')}.`;
   const plan = planLine(words, slots);
@@ -347,8 +455,10 @@ function lineProblem(text: string, slots: LyricLine): string | undefined {
     const fix = diff > 0 ? `remove ${diff} syllable${diff === 1 ? '' : 's'}` : `add ${-diff} syllable${diff === -1 ? '' : 's'}`;
     return `It has ${n} syllables (${spelled(words)}) but must have exactly ${slots.length}: ${fix}.`;
   }
-  const clashes = stressClashes(plan.words, sungNotes(slots, plan));
-  if (clashes.length > MAX_STRESS_CLASHES) return `These words are stressed against the beat (their stressed syllable falls on a weak note, a da): ${clashes.join(', ')}.`;
+  const clashes = stressClashes(plan.words, sungGrades(slots, plan));
+  if (clashes.length > 0) {
+    return `Sung against the stress: ${clashes.join('; ')}. A stressed syllable must go on a strong note or a free note, an unstressed syllable on a weak note or a free note; the small words ${SMALL_WORDS_TEXT} count as unstressed.`;
+  }
   const cuts = heldNoteCuts(plan, slots);
   if (cuts.length > 0) {
     return `A word is cut in two across a long held note (a HOLD), so the singer would stop in the middle of the word: ${cuts.join(', ')}. The syllable on a HOLD must end its word: a one-syllable word, or the last syllable of a longer word.`;
@@ -361,7 +471,7 @@ export function checkSectionLyrics(lines: readonly LyricLine[], text: readonly s
   if (text.length !== lines.length) return [{ line: -1, message: `The section needs exactly ${lines.length} lines, but ${text.length} were written.` }];
   const problems: LineProblem[] = [];
   text.forEach((t, i) => {
-    const message = lineProblem(t, lines[i]!);
+    const message = checkLyricLine(t, lines[i]!);
     if (message) problems.push({ line: i, message });
   });
   // Rhymes (ABCB): each line with the first line of its rhyme group.

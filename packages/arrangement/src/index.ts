@@ -382,6 +382,9 @@ export {
   WrittenLyricsSchema,
   writtenLyricsOf,
   checkSectionLyrics,
+  checkLyricLine,
+  lineStressClashes,
+  sungPronunciations,
   wordsRhyme,
   HELD_SYLLABLE,
   pronounce,
@@ -390,6 +393,8 @@ export {
   type LineProblem,
 } from './vocals/written-lyrics.js';
 export { lyricLines, lyricSlots, rhymeScheme, type LyricLine, type LyricSlot } from './vocals/lyric-lines.js';
+export { gradeNote, gradeBar, legacyDuration, stressFits, wordRhythm, UNSTRESSED_SMALL_WORDS, type Stress, type BarNote } from './vocals/stress.js';
+export { splitWord, contractSplit, type WordSplit } from './vocals/word-split.js';
 export { MELODY_VARIANTS_PARAM, melodyVariantsOf } from './vocals/melody-variants.js';
 export { laneWordsOn, SUNG_MELODY_PARAM, SungMelodySchema, SungNoteSchema, sungMelodyOf, type SungMelody, type SungNote } from './vocals/sung-melody.js';
 export { applySungVocals, applySungVocalsOver, applyWrittenLyrics, type ApplySungOptions, lyricsTargets, newMelody, paramsWithLyrics, sungSections, vocalMelodyShown, writeMelody, type NewMelody, type SungSection, type SungTake } from './edits/vocal-edits.js';

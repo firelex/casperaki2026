@@ -32,7 +32,9 @@ export class OpenAiChatModel implements ChatModel {
         model: this.ep.model,
         messages,
         temperature: 0.9,
-        max_tokens: options.thinking ? 32000 : 4000,
+        // A cap, not a target: the lyric writer's answers (several versions of every line of a song) run to about
+        // 8000 tokens without reasoning.
+        max_tokens: options.thinking ? 32000 : 16000,
         response_format: { type: 'json_object' },
         chat_template_kwargs: { thinking: options.thinking },
       }),
