@@ -36,6 +36,11 @@ camera moves (an orbit around the desk and a pulsing zoom on the beat).
    - **Pulse zoom:** in choruses and drops, a small punch-in on every beat, harder on loud hits (kick and master
      level), settling back; verses stay smooth.
 
+7. **Studio door intro** (owner's idea, added later, approved "before the music"): the video opens on a studio
+   door with the song's title and artist on it; the door swings open and the camera glides through into the room,
+   arriving at the opening shot as the song starts. About 4 s of silence before the music; the video is that much
+   longer than the song. (My call: silence rather than a room-tone sample, so there is no extra asset.)
+
 ## Constraints (unchanged from part 1)
 
 - No fallbacks: missing data throws with a clear message. A song with no lyrics is a defined case (empty list).
