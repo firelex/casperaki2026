@@ -309,7 +309,8 @@ describe('a hidden vocal melody (new songs) and Write melody', () => {
     const written = writeMelody(hidden);
     expect(vocalMelodyShown(written)).toBe(true);
     expect(vocalsOf(written)).toEqual(vocalsOf(shown));
-    expect(() => writeMelody(written)).toThrow(/has a vocal melody already/u);
+    // Written again: another melody (owner, 2026-11-27: Write melody is always there).
+    expect(vocalsOf(writeMelody(written))).not.toEqual(vocalsOf(written));
   });
 
   it('writing lyrics on a hidden melody shows it with the words', () => {

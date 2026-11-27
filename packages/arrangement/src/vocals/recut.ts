@@ -85,6 +85,8 @@ interface Syllable {
   readonly twinStress: boolean;
   /** One of SMALL_WORDS. */
   readonly small: boolean;
+  /** A one-syllable word the dictionary leaves either way: leans weak if small, strong if not. */
+  readonly lean: '+' | '-' | undefined;
   readonly length: SyllableLength;
   readonly endsWord: boolean;
 }
@@ -110,7 +112,8 @@ function syllablesOf(text: string): Syllable[] {
       const byStress = p.rhythm[i - 1] === '+' || p.rhythm[i + 1] === '+';
       const twinStress = p.rhythm[i] === '+' && byStress;
       const small = p.phones.length === 1 && SMALL_WORDS.has(w.toLowerCase().replace(/[‘’`]/gu, "'"));
-      return { stress: p.rhythm[i]!, byStress, twinStress, small, length: syllableLength(phones, endsWord), endsWord };
+      const lean = p.phones.length === 1 && p.rhythm[0] === '0' ? (small ? '-' : '+') : undefined;
+      return { stress: p.rhythm[i]!, byStress, twinStress, small, lean, length: syllableLength(phones, endsWord), endsWord };
     });
   });
 }
@@ -148,14 +151,17 @@ const grade = (n: Note, pd: number | undefined, nd: number | undefined): Stress 
  *  marked '0' ("ghosts") takes any note. What is asked and not met costs more than any change to the rhythm, so the
  *  recut meets it wherever a layout can: on the eighth grid some lines have none ("DAN-ge-rous" ending a line puts
  *  "-rous" on a beat), and those take the layout that misses least. A syllable on a note heard the opposite way costs
- *  STRESS.opposite, on a note heard as either STRESS.either. */
-const STRESS = { opposite: 12, either: 6 } as const;
+ *  STRESS.opposite, on a note heard as either STRESS.either; a one-syllable word on a note against its lean, STRESS.lean. */
+const STRESS = { opposite: 12, either: 6, lean: 6 } as const;
 function stressCost(n: Note, pd: number | undefined, nd: number | undefined, nextStart: number | undefined, y: Syllable): number {
   const g = grade(n, pd, nd);
   // Two stressed syllables side by side in a word cannot both be heard stressed on an eighth grid when the first
   // is short ("out-side"): either may take a note the ear hears as either.
   if (y.stress === '+') return g === '+' || (y.twinStress && g === '0') ? 0 : g === '-' ? STRESS.opposite : STRESS.either;
   if (y.stress === '-') return g === '-' || weakBeat(n, pd, nextStart) ? 0 : g === '+' ? STRESS.opposite : STRESS.either;
+  // A one-syllable word either way leans (owner, 2026-11-27: "YOU laughed", "I'M done"): a small word on a stressed
+  // note, or a content word on an unstressed one, costs a little.
+  if (y.lean !== undefined && g !== '0' && g !== y.lean) return STRESS.lean;
   return y.byStress && g === '+' ? STRESS.either : 0;
 }
 
@@ -356,13 +362,14 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
 
 /** A note shorter than a beat before a rest inside its line is sung on into the rest, up to a beat (owner,
  *  2026-11-27: an eighth then a rest, "make a fuss | tonight", should be a quarter), where the length rule lets its
- *  syllable last that long. The onsets stay, and the ear hears a stress at the onset: the stresses were laid on the
+ *  syllable last that long, unless it is a small word. The onsets stay, and the ear hears a stress at the onset: the stresses were laid on the
  *  notes as found, and a note sung on into a rest does not weigh more. The line's last note stays as laid (the next
  *  line's pickup rules read it). */
 function singOn(laid: readonly Note[], syl: readonly Syllable[], lineStart: number, bpm: number): Note[] {
   return laid.map((n, i) => {
     const next = laid[i + 1];
-    if (!next || n.s < lineStart || n.d >= Q) return n;
+    // A small word is not held (it leads into the next word): it stays as laid.
+    if (!next || n.s < lineStart || n.d >= Q || syl[i]!.small) return n;
     // A rest stays (an eighth at least): the words keep their breath.
     const d = Math.min(Q, next.s - n.s - EIGHTH);
     return d > n.d && lengthFits(syl[i]!.length, d / Q, bpm) ? { s: n.s, d } : n;

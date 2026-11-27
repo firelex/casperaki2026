@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Song } from '@casperaki/song-schema';
 
-import { applyLyricsFirst, generatorParams, lyricLines, newMelody, newRhythm, orchestrate, sungSections, TrackEditError, type LyricLine } from '../src/index.js';
+import { applyLyricsFirst, generatorParams, lyricLines, newMelody, newRhythm, orchestrate, sungSections, TrackEditError, writeMelody, type LyricLine } from '../src/index.js';
+import { WRITTEN_LYRICS_PARAM } from '../src/vocals/written-lyrics.js';
 import { sungLineSyllables } from '../src/vocals/written-lyrics.js';
 import { LYRIC_RHYTHMS_PARAM } from '../src/vocals/lyric-rhythms.js';
 import { SUNG_MELODY_PARAM } from '../src/vocals/sung-melody.js';
@@ -48,6 +49,21 @@ describe('lyrics first', () => {
   it('records the recut rhythm per type', () => {
     const p = generatorParams(written).params as Record<string, Record<string, unknown>>;
     expect(Object.keys(p[LYRIC_RHYTHMS_PARAM]!).sort()).toEqual(Object.keys(LYRICS).filter((t) => sungSections(song).some((s) => s.type === t)).sort());
+  });
+
+  it('Write melody on a song with words: a new melody everywhere, the words, their rhythms and the sung melody gone', () => {
+    const again = writeMelody(written);
+    const p = generatorParams(again).params as Record<string, unknown>;
+    expect(p[WRITTEN_LYRICS_PARAM]).toBeUndefined();
+    expect(p[LYRIC_RHYTHMS_PARAM]).toBeUndefined();
+    expect(p[SUNG_MELODY_PARAM]).toBeUndefined();
+    // The generator's own words, not the written ones.
+    for (const s of sungSections(again)) expect(s.words.join(' '), s.name).not.toContain((LYRICS as Record<string, string[]>)[s.type]![0]!.split(' ')[0]!);
+    expect(lead(again, 'verse1')).not.toBe(lead(written, 'verse1'));
+    expect(lead(again, 'chorus1')).not.toBe(lead(written, 'chorus1'));
+    expect(chords(again)).toBe(chords(written));
+    // And again on that song: another melody.
+    expect(lead(writeMelody(again), 'verse1')).not.toBe(lead(again, 'verse1'));
   });
 
   it('New rhythm bends another rhythm to the same words; chords and words stay', () => {

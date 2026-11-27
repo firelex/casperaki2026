@@ -57,7 +57,10 @@ describe('the Vocal track menu', () => {
   });
   it('keeps the earlier Write melody and Write lyrics rules without a sing', () => {
     expect(vocalMenu({ ...base, melodyShown: false }).writeMelody).toMatchObject({ disabled: false });
-    expect(vocalMenu(base).writeMelody).toMatchObject({ disabled: true, hint: 'written' });
+    // A melody shown: Write melody writes another (owner, 2026-11-27: always there; the words go).
+    expect(vocalMenu({ ...base, lyricsWritten: false }).writeMelody).toEqual({ disabled: false, hint: 'a new one' });
+    expect(vocalMenu({ ...base, lyricsWritten: true }).writeMelody).toEqual({ disabled: false, hint: 'a new one · the words go' });
+    expect(vocalMenu({ ...base, lyricsTask: singTask({ kind: 'writeLyrics' }) }).writeMelody).toMatchObject({ disabled: true, hint: 'Already writing lyrics' });
     expect(vocalMenu({ ...base, melodyShown: false }).writeLyrics).toMatchObject({ disabled: true, hint: 'write a melody first' });
   });
   it('knows whether lyrics are written', () => {

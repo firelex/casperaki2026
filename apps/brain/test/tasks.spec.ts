@@ -82,8 +82,11 @@ describe('background tasks', () => {
     expect(sungSections(hidden)).toEqual([]);
     expect(hidden.instrumentDefinitions.some((d) => d.name === 'Vocal')).toBe(true);
     expect(sungSections(working).length).toBeGreaterThan(0);
+    // Written again: another melody (owner, 2026-11-27: Write melody is always there).
     const again = await send('POST', `${h.url}/api/tracks/edit`, { song: working, op: { kind: 'writeMelody' } });
-    expect(again.status).toBe(409);
+    expect(again.status).toBe(200);
+    const lead = (song: Song) => JSON.stringify(sungSections(song).map((s) => song.arrangement[s.name]!.overrides.Vocal));
+    expect(lead(again.body.song as Song)).not.toBe(lead(working));
   });
 
   it('refuses to write lyrics before there is a melody', async () => {

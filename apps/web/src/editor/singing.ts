@@ -87,11 +87,14 @@ const ALREADY_WRITING_LYRICS = 'Already writing lyrics';
 /** What the lead vocal's menu offers now, and why an item cannot be used. */
 export function vocalMenu(i: VocalMenuInput): VocalMenu {
   const singing = i.singTask !== undefined;
+  // Always there (owner, 2026-11-27): with a melody shown it writes another, and the words go.
   const writeMelody: MenuState = singing
     ? { disabled: true, hint: ALREADY_SINGING }
-    : i.melodyShown
-      ? { disabled: true, hint: 'written' }
-      : { disabled: false, hint: '' };
+    : i.lyricsTask?.state === 'running' || i.lyricsTask?.state === 'ready'
+      ? { disabled: true, hint: ALREADY_WRITING_LYRICS }
+      : !i.melodyShown
+        ? { disabled: false, hint: '' }
+        : { disabled: false, hint: i.lyricsWritten ? 'a new one · the words go' : 'a new one' };
   const writeLyrics: MenuState = singing
     ? { disabled: true, hint: ALREADY_SINGING }
     : !i.melodyShown

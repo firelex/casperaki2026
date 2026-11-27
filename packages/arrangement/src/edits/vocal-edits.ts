@@ -134,9 +134,38 @@ function showVocals(working: Song, regenerated: Song): Song {
 /** Write melody: the working song's vocal tracks show the melody the generator chose for the song (every section).
  *  An error when they show it already. */
 export function writeMelody(working: Song): Song {
-  if (vocalMelodyShown(working)) throw new TrackEditError(409, 'melody_shown', 'The song has a vocal melody already.');
+  if (vocalMelodyShown(working)) return rewriteMelody(working);
   const params = paramsShowingMelody(generatorParams(working));
   return recordParams(showVocals(working, orchestrate(params)), params);
+}
+
+/**
+ * Write melody on a song that shows one (owner, 2026-11-27: it is always there, and the words just go): a new melody
+ * in every sung type (its next melody variant that changes the lead; a hummed chorus keeps the hum), the words, their
+ * recut rhythms and the sung melody dropped, so the sung takes come out stale.
+ */
+function rewriteMelody(working: Song): Song {
+  const params = generatorParams(working);
+  const inner: Record<string, unknown> = { ...(params.params ?? {}) };
+  for (const key of [WRITTEN_LYRICS_PARAM, LYRIC_RHYTHMS_PARAM, RHYTHM_VARIANTS_PARAM, SUNG_MELODY_PARAM]) delete inner[key];
+  let next = withInner(params, inner);
+  const current = orchestrate(params);
+  const types = new Set(sungSections(current).map((s) => s.type));
+  for (const type of types) {
+    if (type === 'chorus' && userChorusOf(params.params)) continue;
+    const before = vocalSignature(current, type);
+    const variants = melodyVariantsOf(next.params);
+    let found = false;
+    for (let v = (variants[type] ?? 0) + 1, tries = 0; tries < MELODY_TRIES; v++, tries++) {
+      const tried = withInner(next, { ...(next.params ?? {}), [MELODY_VARIANTS_PARAM]: { ...variants, [type]: v } });
+      if (vocalSignature(orchestrate(tried), type) === before) continue;
+      next = tried;
+      found = true;
+      break;
+    }
+    if (!found) throw new TrackEditError(409, 'no_other_melody', `No other ${type} melody changes this song.`);
+  }
+  return applyVocalParams(working, next, types);
 }
 
 /**
