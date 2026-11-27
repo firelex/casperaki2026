@@ -40,7 +40,7 @@ export function recentOpenings(store: SongsStore, ownerId: string, exceptSongId:
 }
 
 /** Answers from the model in all: the first draft and its repairs. */
-export const MAX_ROUNDS = 8;
+export const MAX_ROUNDS = 10;
 /** The last answers may reason (half a minute or more each), as the melody-first writer's last repairs do: for a
  *  line the model could not fix quickly (a syllable count, a rhyme). */
 export const REASONING_ROUNDS = 2;
