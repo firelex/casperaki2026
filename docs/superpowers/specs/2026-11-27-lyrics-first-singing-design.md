@@ -164,8 +164,11 @@ without a situation. No version copied four words in a row from its inspiration.
 - **Sung takes**: new words or a new rhythm drop the section's sung melody, as a new melody does today.
 - **The situation list** ships as the model wrote it; the owner prunes it when convenient (it is data, any edit
   applies at once).
-- **Sections of one type with different lengths** (an 8-bar chorus and a 16-bar last chorus): the words and the recut
-  rhythm are made for the shortest; a longer section repeats them, as pop choruses repeat.
+- **Sections of one type with different lengths** (an 8-bar and a 16-bar chorus, a 12-bar chorus): the words and the
+  recut rhythm are made for the melody pattern the type's first section chose (its length, usually 8 bars); a longer
+  section sings them as its bars repeat the pattern, each line taking the words of the bars it was copied from. (As
+  built, 2026-11-27: the type's melody is chosen once, for its first section, so "the shortest" became "the pattern's
+  length".)
 
 ## Left to the builder
 

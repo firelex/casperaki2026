@@ -174,9 +174,11 @@ const notesOf = (st: State): Note[] => {
 };
 
 /** The cheapest layout of one line (grid steps from the section start), given the previous line's last note. */
-function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart: number, prev: Tail | undefined, bpm: number, isLast: boolean, what: string): Note[] {
+function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart: number, prev: Tail | undefined, bpm: number, what: string): Note[] {
   const lineEnd = lineStart + LINE_STEPS;
-  const durs = [...new Set([...DURATIONS, ...source.map((n) => n.d)])].sort((a, b) => a - b);
+  // Longest first: on equal cost the longer note wins (an added note fills its time rather than clipping to a
+  // sixteenth).
+  const durs = [...new Set([...DURATIONS, ...source.map((n) => n.d)])].sort((a, b) => b - a);
   const fitsLength = (y: Syllable, d: number) => lengthFits(y.length, d / Q, bpm) && (d < HOLD || y.endsWord);
   // The cost of placing a note: matched to a pattern note after k (moved, re-lengthened, the ones between dropped)
   // or added.
@@ -216,8 +218,9 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
       // A line of pickups only would be read as the end of the line before (lyric-lines.ts).
       if (last.s < lineStart) continue;
       if (!stressFits(grade(last, st.pd, undefined), syl[st.j - 1]!.stress)) continue;
-      // The tail stays out of the next line's pickup: long, early, or ending half a beat before the line's end.
-      if (!isLast && !(last.d > PICKUP_MAX || last.s < lineEnd - PICKUP_ZONE || last.s + last.d <= lineEnd - LEGATO_GAP)) continue;
+      // The tail stays out of the next line's pickup: long, early, or ending half a beat before the line's end. The
+      // last line too: a longer section of the type plays the recut again, its first line right after.
+      if (!(last.d > PICKUP_MAX || last.s < lineEnd - PICKUP_ZONE || last.s + last.d <= lineEnd - LEGATO_GAP)) continue;
       // Final cost: the pattern notes after the last match are dropped. Pushed back as a finished state, so the
       // cheapest finished layout comes out first.
       const left = source.length - 1 - st.k;
@@ -242,14 +245,16 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
     }
     for (let s = Math.max(from, prev ? prev.s + prev.d : 0); s <= to; s++) {
       const pickup = s < lineStart;
+      // A word is sung straight through: after a syllable that does not end its word, the next starts as it ends.
+      if (!first && !syl[st.j - 1]!.endsWord && s !== st.last!.s + st.last!.d) continue;
       if (!first && st.last!.s < lineStart) {
         // After a pickup: legato on, and the line's first own note within its first beat.
         if (s - (st.last!.s + st.last!.d) >= LEGATO_GAP) continue;
         if (!pickup && s > lineStart + Q) continue;
       }
       for (const d of durs) {
-        if (s + d > lineEnd) break;
-        if (pickup && d > PICKUP_MAX) break;
+        if (s + d > lineEnd) continue;
+        if (pickup && d > PICKUP_MAX) continue;
         if (!fitsLength(y, d)) continue;
         const note = { s, d };
         // The note before it in its bar, and the grade of the last placed note now that its next is known.
@@ -293,7 +298,7 @@ export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: {
     const syl = syllablesOf(text);
     if (syl.length === 0) throw new Error(`recut: line ${i + 1} has no words`);
     const own = source.filter((n) => n.s >= lineStart && n.s < lineStart + LINE_STEPS);
-    const laid = recutLine(own, syl, lineStart, prev, opts.bpm, i === lines.length - 1, `line ${i + 1} "${text}" on "${rhythm.id}"`);
+    const laid = recutLine(own, syl, lineStart, prev, opts.bpm, `line ${i + 1} "${text}" on "${rhythm.id}"`);
     notes.push(...laid);
     const last = laid.at(-1)!;
     const before = laid.at(-2);

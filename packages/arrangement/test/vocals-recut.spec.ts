@@ -20,8 +20,23 @@ const barsOf = (r: RecutRhythm) =>
     notes: Object.fromEntries(r.notes.filter((n) => Math.floor(n.start / 4 + 1e-9) === bar).map((n) => [String(n.start - bar * 4), [{ type: 'vocalNote', duration: n.duration }]])),
   }));
 
-/** Every line sung on the recut passes the line check and the length rule. */
+/** The recut played `times` times over (a longer section of the type repeats it). */
+const repeated = (r: RecutRhythm, times: number): RecutRhythm => ({
+  ...r,
+  bars: r.bars * times,
+  notes: Array.from({ length: times }, (_, t) => r.notes.map((n) => ({ start: n.start + t * r.bars * 4, duration: n.duration }))).flat(),
+});
+
+/** Every line sung on the recut passes the line check and the length rule; a word is sung straight through (no rest
+ *  between its syllables); and the recut played twice reads back as the lines twice. */
 function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number): void {
+  const twice = lyricLines(barsOf(repeated(r, 2))).map((l) => l.length);
+  const once = lyricLines(barsOf(r)).map((l) => l.length);
+  expect(twice, 'played twice').toEqual([...once, ...once]);
+  const ends = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map((_, i, all) => i === all.length - 1)));
+  r.notes.forEach((n, i) => {
+    if (!ends[i]) expect(r.notes[i + 1]!.start, `syllable ${i + 1} runs into the next of its word`).toBeCloseTo(n.start + n.duration, 9);
+  });
   const sung = lyricLines(barsOf(r));
   expect(sung.map((l) => l.length)).toEqual(lines.map((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones).length));
   lines.forEach((text, i) => {
@@ -53,10 +68,10 @@ describe('the recut', () => {
   });
 
   it('a line that already fits keeps the pattern\'s notes unchanged', () => {
-    const r = rhythm([[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [4, 2]], 2);
+    const r = rhythm([[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [2, 2]], 2);
     const out = recutRhythm(r, ['Take me home tonight'], { bpm: 120, bars: 2 });
     expect(out.notes).toEqual([
-      { start: 0, duration: 0.5 }, { start: 0.5, duration: 0.5 }, { start: 1, duration: 0.5 }, { start: 1.5, duration: 0.5 }, { start: 4, duration: 2 },
+      { start: 0, duration: 0.5 }, { start: 0.5, duration: 0.5 }, { start: 1, duration: 0.5 }, { start: 1.5, duration: 0.5 }, { start: 2, duration: 2 },
     ]);
   });
 
@@ -78,6 +93,11 @@ describe('the recut', () => {
     // Short lines after a busy one on the dance rhythms at 126 bpm (found by a sweep over seeds: "4/4/8").
     const lines = ['Oh la la heart', 'Oh la la day', 'Oh la la dream', 'Oh la la way'];
     for (const e of loadPrecedentBank('rhythmic-dance')) expectSingable(recutRhythm(e, lines, { bpm: 126, bars: 8 }), lines, 126);
+  });
+
+  it('a word is sung straight through, at slow and fast tempos ("Feeling nothing tonight")', () => {
+    const r = rhythm([[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1]], 2);
+    for (const bpm of [70, 100, 170]) expectSingable(recutRhythm(r, ['Feeling nothing tonight'], { bpm, bars: 2 }), ['Feeling nothing tonight'], bpm);
   });
 
   it('is deterministic', () => {

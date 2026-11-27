@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Song } from '@casperaki/song-schema';
 
-import { applyLyricsFirst, checkSectionLyrics, generatorParams, lyricLines, newMelody, newRhythm, orchestrate, sungSections, TrackEditError } from '../src/index.js';
+import { applyLyricsFirst, checkLyricLine, checkSectionLyrics, generatorParams, lyricLines, newMelody, newRhythm, orchestrate, sungSections, TrackEditError } from '../src/index.js';
 import { LYRIC_RHYTHMS_PARAM } from '../src/vocals/lyric-rhythms.js';
 import { SUNG_MELODY_PARAM } from '../src/vocals/sung-melody.js';
 import { MELODY as HUM_MELODY, CHORDS as HUM_CHORDS } from './hum-fixture.js';
@@ -83,5 +83,21 @@ describe('lyrics first', () => {
     const withSung = { ...written, generator: { ...written.generator!, params: sungParams } } as Song;
     const out = applyLyricsFirst(withSung, { chorus: LYRICS.chorus });
     expect((generatorParams(out).params as Record<string, unknown>)[SUNG_MELODY_PARAM]).toBeUndefined();
+  });
+});
+
+describe('lyrics first on a section longer than its pattern', () => {
+  it('a 12-bar chorus sings each line on the rhythm of the line its bars were copied from', () => {
+    const lines = ['You gotta feel it', 'Take me home tonight', 'Maybe I was wrong about you', 'Hold me till the light'];
+    for (const seed of ['a', 'b', 'c']) {
+      const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 110, seed, params: { structure: [{ name: 'verse1', bars: 8 }, { name: 'chorus1', bars: 12 }] } });
+      const out = applyLyricsFirst(song, { verse: LYRICS.verse, chorus: lines });
+      const sung = lyricLines(out.arrangement.chorus1!.overrides.Vocal!.bars!);
+      expect(sung, seed).toHaveLength(6);
+      // Bars 9-12 repeat bars 5-8 (the pattern's lines 3 and 4), so lines 5 and 6 are lines 3 and 4 again.
+      const words = (generatorParams(out).params as { lyrics: Record<string, string[]> }).lyrics.chorus1!;
+      expect(words, seed).toEqual([...lines, lines[2], lines[3]]);
+      words.forEach((w, i) => expect(checkLyricLine(w, sung[i]!), `${seed} line ${i + 1}`).toBeUndefined());
+    }
   });
 });

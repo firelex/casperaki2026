@@ -14,7 +14,7 @@ import { createRng } from '@casperaki/music-theory';
 
 import { orchestrate, vocalSelections } from '../orchestrate/index.js';
 import { LYRIC_RHYTHMS_PARAM, lyricRhythmsOf, RHYTHM_VARIANTS_PARAM, rhythmVariantsOf } from '../vocals/lyric-rhythms.js';
-import { drawRhythm } from '../vocals/precedents.js';
+import { drawRhythm, expandMergedToSegment, type MergedPrecedent } from '../vocals/precedents.js';
 import { recutRhythm, type RecutRhythm } from '../vocals/recut.js';
 import { lyricLines, type LyricLine } from '../vocals/lyric-lines.js';
 import { MELODY_VARIANTS_PARAM, melodyVariantsOf } from '../vocals/melody-variants.js';
@@ -336,12 +336,30 @@ export type LyricsByType = Readonly<Record<string, readonly string[]>>;
 
 const LINE_BARS = 2;
 
-/** The type's lines for every section of it (a longer section repeats them), by section name. */
+/** For each lyric line of a section of `sectionBars` bars, the line of the `patternBars`-bar pattern it sings: the
+ *  generator lays the pattern over a longer section by repeating it and copying its last bars into what is left
+ *  (expandMergedToSegment), and each line takes the words of the bars it was copied from. */
+function patternLineOf(patternBars: number, sectionBars: number): number[] {
+  const probe = {
+    properties: { start: 0, end: patternBars },
+    melody: Object.fromEntries(Array.from({ length: patternBars }, (_, b) => [`${b * 4}.0`, [{ midi: b, duration: 1 }]])),
+  } as unknown as MergedPrecedent;
+  const sourceBar = new Map(expandMergedToSegment(probe, sectionBars).map((e) => [e.barIndex, e.midi]));
+  return Array.from({ length: sectionBars / LINE_BARS }, (_, i) => {
+    const bar = sourceBar.get(i * LINE_BARS);
+    if (bar === undefined) throw new TrackEditError(400, 'section_length', `A section of ${sectionBars} bars cannot sing a ${patternBars}-bar melody line by line.`);
+    return Math.floor(bar / LINE_BARS);
+  });
+}
+
+/** The type's lines for every section of it (a longer section sings them as its bars repeat the pattern), by section
+ *  name. */
 function linesBySection(generated: Song, type: string, lines: readonly string[]): WrittenLyrics {
+  const patternBars = lines.length * LINE_BARS;
   return Object.fromEntries(
     generated.songStructure
       .filter((s) => segmentType(s.name) === type && generated.arrangement[s.name]?.overrides[LEAD_VOCAL_TRACK])
-      .map((s) => [s.name, Array.from({ length: s.bars.length / LINE_BARS }, (_, i) => lines[i % lines.length]!)]),
+      .map((s) => [s.name, patternLineOf(patternBars, s.bars.length).map((k) => lines[k]!)]),
   );
 }
 
