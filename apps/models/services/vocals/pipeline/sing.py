@@ -36,12 +36,13 @@ import numpy as np
 import soundfile as sf
 
 from . import chain, levels, tighten
+from .soulx import tail_beats
 
 OUT_SR = 44100
 LEAD_TRACK = "Vocal"
 KIND = "soulx-vocal"
 REQUIRED = ("bpm", "backing_db", "sections", "backings", "voice")
-SECTION_KEYS = ("segment", "section_bars", "notes")
+SECTION_KEYS = ("segment", "section_bars", "rest_after_beats", "notes")
 BACKING_KEYS = ("track", "segment", "notes")
 SUNG_NOTE_KEYS = ("start", "duration", "midi", "word", "phonemes")
 PITCH_NOTE_KEYS = ("start", "duration", "midi")
@@ -92,9 +93,15 @@ def check_params(params: dict) -> dict:
         bars = int(s["section_bars"])
         if bars < 1:
             raise ValueError(f"{what}: section_bars {bars} must be at least 1")
+        rest_after = s["rest_after_beats"]
+        if rest_after is not None and (isinstance(rest_after, bool) or not isinstance(rest_after, (int, float)) or rest_after < 0):
+            raise ValueError(f"{what}: rest_after_beats {rest_after} must be a number of beats, 0 or more, or null")
         _check_notes(s["notes"], SUNG_NOTE_KEYS, what)
+        # The section's last phrase may be sung past the bar line, into the rest before the next sung note
+        # (pipeline.soulx): its takes are kept that much longer.
+        tail = tail_beats(s["notes"], bars * 4, rest_after)
         item = {"segment": seg, "track": LEAD_TRACK, "what": f"the lead of {seg}", "bars": bars, "notes": s["notes"],
-                "tag": seg, "take": f"take_{seg}_{_slug(LEAD_TRACK)}.wav"}
+                "rest_after": rest_after, "tail_beats": tail, "tag": seg, "take": f"take_{seg}_{_slug(LEAD_TRACK)}.wav"}
         leads.append(item)
         by_segment[seg] = item
 
@@ -193,6 +200,8 @@ def run(params: dict, out_dir, job):
     job.check_cancelled()
     st = job.step("levels", "Set the levels")
     numbers, files, takes = {}, [], []
+    # A backing take is the lead re-pitched: as long as its lead's.
+    by_tag_tail = {i["tag"]: i["tail_beats"] if i["track"] == LEAD_TRACK else i["lead"]["tail_beats"] for i in p["leads"] + p["backings"]}
     for item in p["leads"] + p["backings"]:
         x = chained[item["tag"]]
         if item["track"] != LEAD_TRACK:
@@ -202,7 +211,7 @@ def run(params: dict, out_dir, job):
         x = _stereo(x, chain.OUT_SR)
         if item["track"] in BACKING_PAN:
             x = panned(x, BACKING_PAN[item["track"]])
-        x = levels.fit(x, OUT_SR, item["bars"] * bar_s)
+        x = levels.fit(x, OUT_SR, item["bars"] * bar_s + by_tag_tail[item["tag"]] * bar_s / 4)
         sf.write(out / item["take"], x, OUT_SR, subtype="FLOAT")
         files.append(item["take"])
         takes.append({"segment": item["segment"], "track": item["track"], "kind": KIND, "file": item["take"],
@@ -224,7 +233,7 @@ def _sing(p, out, device, job) -> dict:
         for item in p["leads"]:
             job.check_cancelled()
             st = job.step(f"soulx:{item['segment']}", f"SoulX sings {item['what']}")
-            raw = singer.sing(item["notes"], p["bpm"], item["bars"], item["segment"])
+            raw = singer.sing(item["notes"], p["bpm"], item["bars"], item["segment"], item["rest_after"])
             raw_name = f"{item['tag']}_soulx_untightened.wav"
             sf.write(out / raw_name, raw, singer.sr)
             # Tightened onto the score (pipeline.tighten); the backing vocals are re-pitched from this take, so they

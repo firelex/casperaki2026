@@ -43,7 +43,10 @@ export interface BackingNote {
 
 export interface SingPlan {
   /** Every sung section in song order, with the Vocal lane's notes (the melody sung, kept exactly as written). */
-  readonly sections: { segment: string; sectionBars: number; notes: SungNote[] }[];
+  /** `restAfter`: beats from the section's end to the next sung note of the song, the least over every place its take
+   *  is played (its reuses), null when nothing is sung after any of them; the singer sings the section's last phrase
+   *  into that rest (owner, 2026-11-27: "space", the bridge's last note, was cut off at the bar line). */
+  readonly sections: { segment: string; sectionBars: number; restAfter: number | null; notes: SungNote[] }[];
   /** Every backing lane with notes in a sung section: its notes moved by `shift` semitones (`backingShift`). */
   readonly backings: { track: string; segment: string; shift: number; notes: BackingNote[] }[];
   /** Sections sung exactly as an earlier one (same length, the same Vocal notes with the same words, the same backing
@@ -158,6 +161,19 @@ export function planSinging(song: Song): SingPlan {
   const lyrics = (generatorParams(song).params?.['lyrics'] ?? {}) as Readonly<Record<string, readonly unknown[] | undefined>>;
   if (sung.some((s) => !lyrics[s.name]?.length)) throw new SingError('Write lyrics first');
 
+  // Beats from each sung section's end to the next sung note (null: none after).
+  const structure = song.songStructure;
+  const sungNames = new Set(sung.map((s) => s.name));
+  const restAfterOf = (name: string): number | null => {
+    let beats = 0;
+    for (const next of structure.slice(structure.findIndex((x) => x.name === name) + 1)) {
+      const first = sungNames.has(next.name) ? laneNotes(song, next.name, LEAD_TRACK)[0] : undefined;
+      if (first) return beats + first.start;
+      beats += next.bars.length * 4;
+    }
+    return null;
+  };
+  const least = (a: number | null, b: number | null) => (a === null ? b : b === null ? a : Math.min(a, b));
   const sections: SingPlan['sections'] = [];
   const backings: SingPlan['backings'] = [];
   const reuses: SingPlan['reuses'] = [];
@@ -180,10 +196,12 @@ export function planSinging(song: Song): SingPlan {
     const first = sungAs.get(key);
     if (first !== undefined) {
       reuses.push({ segment: s.name, from: first });
+      const i = sections.findIndex((x) => x.segment === first);
+      sections[i] = { ...sections[i]!, restAfter: least(sections[i]!.restAfter, restAfterOf(s.name)) };
       continue;
     }
     sungAs.set(key, s.name);
-    sections.push({ segment: s.name, sectionBars: own.bars.length, notes });
+    sections.push({ segment: s.name, sectionBars: own.bars.length, restAfter: restAfterOf(s.name), notes });
     backings.push(...lines);
   }
   return { sections, backings, reuses };

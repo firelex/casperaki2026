@@ -90,6 +90,27 @@ describe('planSinging on song a31c5ba0', () => {
     expect(plan.backings).toEqual([]);
   });
 
+  it('gives each sung section the beats from its end to the next sung note (owner, 2026-11-27: "space" was cut off at the bridge\'s end)', () => {
+    const plan = planSinging(withLyrics(fresh()));
+    const rest = Object.fromEntries(plan.sections.map((s) => [s.segment, s.restAfter]));
+    // verse1's take is played for verse1 to 4: verse1 is followed by verse2 singing on its first beat.
+    expect(rest['verse1']).toBe(0);
+    expect(rest['bridge1']).toBe(5); // break3 (a bar) without singing, then chorus5 a beat in
+    // chorus1's take is played for every chorus: the least room after any of them (chorus2 alone would have 4).
+    expect(plan.reuses.some((r) => r.from === 'chorus1' && r.segment === 'chorus2')).toBe(true);
+    expect(rest['chorus1']).toBe(1);
+  });
+
+  it('nothing sung after the last section: no limit (null)', () => {
+    const song = withLyrics(fresh());
+    const plan = planSinging(song);
+    const last = sungSections(song).at(-1)!.name;
+    const owner = plan.reuses.find((r) => r.segment === last)?.from ?? last;
+    const others = [...plan.reuses.filter((r) => r.from === owner).map((r) => r.segment), owner].filter((n) => n !== last);
+    // The last section's own room is unlimited; its take's room is the least of its copies' (others are followed by singing).
+    expect(plan.sections.find((s) => s.segment === owner)!.restAfter).toBe(others.length === 0 ? null : 1);
+  });
+
   it('a song without a chorus is sung too', () => {
     const song = withLyrics(fresh());
     for (const name of ['chorus1', 'chorus2', 'chorus3', 'chorus4', 'chorus5', 'chorus6']) dropSection(song, name);

@@ -319,7 +319,7 @@ export function singParams(song: Song, plan: SingPlan, voice: { audio: string; m
     stage: SING_STAGE,
     bpm: song.bpm,
     backing_db: BACKING_DB,
-    sections: plan.sections.map((s) => ({ segment: s.segment, section_bars: s.sectionBars, notes: s.notes })),
+    sections: plan.sections.map((s) => ({ segment: s.segment, section_bars: s.sectionBars, rest_after_beats: s.restAfter, notes: s.notes })),
     backings: plan.backings.map((b) => ({ track: b.track, segment: b.segment, notes: b.notes })),
     voice,
   };

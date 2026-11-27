@@ -16,8 +16,10 @@ def sung_note(start, duration, midi, word="la"):
 
 def params(**over):
     p = {"bpm": BPM, "backing_db": -9,
-         "sections": [{"segment": "verse1", "section_bars": 2, "notes": [sung_note(0, 2, 64), sung_note(2, 2, 67)]},
-                      {"segment": "chorus1", "section_bars": 2, "notes": [sung_note(0, 4, 69)]}],
+         # verse1 sings to its last beat, and chorus1 starts singing 2 beats into its first bar: verse1's last note is
+         # sung a beat past the bar line, and its take kept that long.
+         "sections": [{"segment": "verse1", "section_bars": 2, "rest_after_beats": 2, "notes": [sung_note(0, 2, 64), sung_note(4, 4, 67)]},
+                      {"segment": "chorus1", "section_bars": 2, "rest_after_beats": None, "notes": [sung_note(0, 4, 69)]}],
          "backings": [{"track": "Backing vocals 1", "segment": "chorus1", "notes": [{"start": 0, "duration": 4, "midi": 65}]}],
          "voice": {"audio": str(paths.VOICE_AUDIO), "meta": str(paths.VOICE_META)}}
     p.update(over)
@@ -44,8 +46,11 @@ def test_a_missing_param_is_an_error():
     ({"backing_db": 3}, "above the lead"),
     ({"backings": [{"track": "Backing vocals 1", "segment": "bridge1", "notes": [{"start": 0, "duration": 1, "midi": 60}]}]},
      "not among the sung sections"),
-    ({"sections": [{"segment": "verse1", "section_bars": 2, "notes": [{**sung_note(0, 1, 60), "phonemes": []}]}]},
+    ({"sections": [{"segment": "verse1", "section_bars": 2, "rest_after_beats": None, "notes": [{**sung_note(0, 1, 60), "phonemes": []}]}]},
      "has no phonemes"),
+    ({"sections": [{"segment": "verse1", "section_bars": 2, "notes": [sung_note(0, 1, 60)]}]}, "missing 'rest_after_beats'"),
+    ({"sections": [{"segment": "verse1", "section_bars": 2, "rest_after_beats": -1, "notes": [sung_note(0, 1, 60)]}]},
+     "rest_after_beats -1 must be"),
 ])
 def test_bad_params_are_errors(change, message):
     with pytest.raises(ValueError, match=message):
@@ -91,7 +96,8 @@ def test_a_whole_run_with_the_models_stubbed(tmp_path, monkeypatch):
             assert voice_audio == paths.VOICE_AUDIO and voice_meta == paths.VOICE_META  # the job's singer
             self.sr = sr
 
-        def sing(self, notes, bpm, bars, section):
+        def sing(self, notes, bpm, bars, section, rest_after):
+            assert rest_after == {"verse1": 2, "chorus1": None}[section]
             t = np.arange(int((bars * 2 + 2) * sr)) / sr
             return (0.3 * np.sin(2 * np.pi * 440 * t)).astype(np.float32)
 
@@ -124,6 +130,8 @@ def test_a_whole_run_with_the_models_stubbed(tmp_path, monkeypatch):
         ("verse1", "Vocal", "soulx-vocal"), ("chorus1", "Vocal", "soulx-vocal"),
         ("chorus1", "Backing vocals 1", "soulx-vocal")]
     assert job.steps[-1][1] == [t["file"] for t in out["takes"]]
+    verse, _ = sf.read(tmp_path / out["takes"][0]["file"], always_2d=True)
+    assert verse.shape[0] == int((4.0 + 0.5 + levels.FADE_S) * 44100)  # a beat (0.5 s) past the bar line
     takes = {t["track"]: sf.read(tmp_path / t["file"], always_2d=True) for t in out["takes"] if t["segment"] == "chorus1"}
     for x, rate in takes.values():
         assert rate == 44100 and x.shape == (int((4.0 + levels.FADE_S) * 44100), 2)

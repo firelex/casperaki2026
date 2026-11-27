@@ -45,9 +45,25 @@ def phrase_groups(notes) -> list[list[dict]]:
     return groups
 
 
-def phrases(notes, bpm, section_beats, *, section: str = "section"):
+def _sung_until(written_end: float, section_beats: float, rest_after) -> float:
+    """Where a section's last phrase may be sung until: its coda runs on past the bar line into the next section too
+    (owner, 2026-11-27: "space", an eighth on the bridge's last beat, was cut off there), keeping BREATH_BEATS before
+    the next section's first sung note, `rest_after` beats after the section end (None: nothing is sung after)."""
+    written_end = min(written_end, section_beats)  # a note is written no further than the bar line
+    nxt = section_beats + (rest_after if rest_after is not None else CODA_BEATS + BREATH_BEATS)
+    return written_end + max(0.0, min(CODA_BEATS, nxt - BREATH_BEATS - written_end))
+
+
+def tail_beats(notes, section_beats, rest_after) -> float:
+    """How far past the section end its singing goes (the take is kept that long)."""
+    written_end = max(float(n["start"]) + float(n["duration"]) for n in notes)
+    return max(0.0, _sung_until(written_end, float(section_beats), rest_after) - float(section_beats))
+
+
+def phrases(notes, bpm, section_beats, *, rest_after=None, section: str = "section"):
     """SoulX score phrases: [{"start" (seconds from the section start), "phoneme", "duration" (s), "pitch" (MIDI,
-    0 for a rest), "type" (1 rest, 2 note)}]. notes: [{"start", "duration" (beats), "midi", "phonemes"}]."""
+    0 for a rest), "type" (1 rest, 2 note)}]. notes: [{"start", "duration" (beats), "midi", "phonemes"}]; rest_after:
+    beats from the section end to the next section's first sung note (None: nothing is sung after)."""
     beat_s = 60.0 / float(bpm)
     ns = []
     for n in sorted(notes, key=lambda n: n["start"]):
@@ -88,14 +104,18 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
             if a["word"].endswith("-") or b["word"] == "-":
                 a["end"] = max(a["end"], b["start"])
     sib_beats = SIBILANT_S / beat_s
+    limit = float(section_beats)
     for gi, g in enumerate(groups):
-        nxt = groups[gi + 1][0]["start"] if gi + 1 < len(groups) else float(section_beats)
         last = g[-1]
-        room = nxt - last["end"] - BREATH_BEATS
-        if room > 0:
-            last["end"] += min(CODA_BEATS, room)
+        if gi + 1 < len(groups):
+            room = groups[gi + 1][0]["start"] - last["end"] - BREATH_BEATS
+            if room > 0:
+                last["end"] += min(CODA_BEATS, room)
+        else:
+            last["end"] = _sung_until(last["end"], float(section_beats), rest_after)
+            limit = max(limit, last["end"])
         phones = last["phones"][3:].split("-")
-        end = min(last["end"], float(section_beats))
+        end = last["end"]
         if len(phones) > 1 and phones[-1] in ("S", "Z") and end - last["start"] >= 2 * sib_beats:
             for x in g:
                 if x["wid"] == last["wid"]:
@@ -120,7 +140,7 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
                 du[-1] += gap
             nxt = g[i + 1]["start"] if i + 1 < len(g) else float("inf")
             nxt_group = groups[gi + 1][0]["start"] if gi + 1 < len(groups) else float("inf")
-            e = min(n["end"], nxt, section_beats, nxt_group)
+            e = min(n["end"], nxt, limit, nxt_group)
             if e <= n["start"]:
                 raise ValueError(f"{section}: the note at beat {n['start']:g} has no length inside the section")
             ph.append(n["phones"]); du.append((e - n["start"]) * beat_s); pi.append(n["midi"]); ty.append(n["type"])
@@ -159,11 +179,12 @@ class Singer:
         meta = json.loads(voice_meta.read_text())[0]
         self.prompt = self.dp.process(meta, str(voice_audio))
 
-    def sing(self, notes, bpm, bars: int, section: str) -> np.ndarray:
-        """The section sung (mono, self.sr), every phrase placed at its time; bars * 4 beats + TAIL_S long."""
+    def sing(self, notes, bpm, bars: int, section: str, rest_after=None) -> np.ndarray:
+        """The section sung (mono, self.sr), every phrase placed at its time; bars * 4 beats + TAIL_S long. rest_after:
+        beats from the section end to the next section's first sung note (None: nothing is sung after)."""
         beat_s = 60.0 / float(bpm)
         out = np.zeros(int((bars * 4 * beat_s + TAIL_S) * self.sr), dtype=np.float32)
-        for p in phrases(notes, bpm, bars * 4, section=section):
+        for p in phrases(notes, bpm, bars * 4, rest_after=rest_after, section=section):
             meta = {"duration": " ".join(f"{d:.4f}" for d in p["duration"]), "phoneme": " ".join(p["phoneme"]),
                     "note_pitch": " ".join(str(x) for x in p["pitch"]),
                     "note_type": " ".join(str(x) for x in p["type"]), "language": "English"}

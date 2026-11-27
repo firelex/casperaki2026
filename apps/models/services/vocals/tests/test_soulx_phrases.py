@@ -31,9 +31,9 @@ def test_a_note_without_phonemes_is_an_error():
 
 
 def test_a_note_ends_at_the_next_note_and_at_the_section_end():
-    ph = soulx.phrases([n(0, 2, 60), n(1, 1, 60), n(15, 4, 60)], BPM, 16)
+    ph = soulx.phrases([n(0, 2, 60), n(1, 1, 60), n(15, 4, 60)], BPM, 16, rest_after=0)
     assert ph[0]["duration"] == pytest.approx([0.5, 1.0])  # the phrase's last note: one beat into the rest
-    assert ph[1]["duration"][-1] == pytest.approx(0.5)  # no room before the section's end: cut there
+    assert ph[1]["duration"][-1] == pytest.approx(0.5)  # the next section sings at once: cut at the bar line
 
 
 def test_a_phrase_last_note_is_sung_into_the_rest_after_it():
@@ -113,3 +113,19 @@ def test_a_phrase_final_word_over_two_notes_sings_its_s_after_both():
     p = soulx.phrases(notes, BPM, 16)[0]
     assert p["phoneme"] == ["en_HH-EH1-D-F-OW2-N", "en_HH-EH1-D-F-OW2-N", "en_S"]
     assert p["type"] == [2, 3, 2]
+
+
+def test_a_section_last_phrase_is_sung_into_the_room_before_the_next_section():
+    """Owner, 2026-11-27: "space", the bridge's last note (an eighth on beat 15 of 16), was cut off: the coda stopped at
+    the bar line. It now runs into the next section too, up to CODA_BEATS, keeping BREATH_BEATS before the next sung
+    note (rest_after: beats from the section end to it; None: nothing sung after)."""
+    notes = [n(14, 1, 60), n(15, 0.5, 62)]
+    last = lambda rest: soulx.phrases(notes, BPM, 16, rest_after=rest)[-1]["duration"][-1] / 0.5  # in beats
+    assert last(0) == pytest.approx(0.5)     # the next section sings at once: as written
+    assert last(0.5) == pytest.approx(1.0)   # the bridge into chorus 3: half a beat more, to the bar line
+    assert last(2.0) == pytest.approx(1.5)   # room: a whole beat of coda, half a beat past the bar line
+    assert last(None) == pytest.approx(1.5)
+    # How far past the section end the singing goes (the take is kept that long).
+    assert soulx.tail_beats(notes, 16, 2.0) == pytest.approx(0.5)
+    assert soulx.tail_beats(notes, 16, 0.5) == pytest.approx(0.0)
+    assert soulx.tail_beats([n(10, 1, 60)], 16, None) == pytest.approx(0.0)  # ends well inside the section
