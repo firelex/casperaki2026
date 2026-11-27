@@ -47,7 +47,8 @@ import { generateChords } from '../chords/index.js';
 import { generatePatterns } from '../patterns/index.js';
 import { selectInstruments } from '../selection/index.js';
 import { generateSongStructure } from '../structure/index.js';
-import { writeVocals } from '../vocals/index.js';
+import { sectionMelodies, writeVocals } from '../vocals/index.js';
+import type { MergedPrecedent } from '../vocals/precedents.js';
 import { vocalMelodyShownIn } from '../vocals/vocal-melody.js';
 import { applyTrackEditsToSelection, recordedDrumSounds, recordedTrackEdits } from '../edits/recorded.js';
 import { drumKit, DRUM_SOUNDS_DETAIL } from '../drums/kit.js';
@@ -155,6 +156,14 @@ export const ORCHESTRATOR_VERSION = '0.1.0';
  *  structure is drawn first, from the seed and the explicit structure, whatever else the params record). */
 export function generatedSections(params: GenerateParams): { name: string; bars: number }[] {
   return generateSongStructure({ params, rng: createRng(params.seed) }).map((s) => ({ name: s.name, bars: s.bars.length }));
+}
+
+/** The melody the generator chooses for each sung section type of these params (vocals/index.ts sectionMelodies),
+ *  before any lyrics-first rhythm is laid under it: the same draws as orchestrate. */
+export function vocalSelections(params: GenerateParams): Map<string, MergedPrecedent | undefined> {
+  const ctx = { params, rng: createRng(params.seed) };
+  const structure = generateChords(ctx, generateSongStructure(ctx));
+  return sectionMelodies(ctx, structure, ctx.rng.fork('vocals'));
 }
 
 export function orchestrate(params: GenerateParams): Song {

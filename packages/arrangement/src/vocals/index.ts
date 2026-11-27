@@ -95,45 +95,27 @@ export function writeVocals(
     );
   }
 
-  // Phase 1 — vocal melody from precedents (Step 17b, unchanged). A user chorus
-  // (hum to song: params.params.userChorus) takes the chorus's place.
-  const cachedBySegmentType = new Map<string, MergedPrecedent | undefined>();
-  const userChorus = userChorusOf(ctx.params.params);
-  const melodyVariants = melodyVariantsOf(ctx.params.params);
+  // Phase 1 — vocal melody from precedents (Step 17b, unchanged).
+  const selected = sectionMelodies(ctx, structure, rng);
   const lyricRhythms = lyricRhythmsOf(ctx.params.params);
-  if (userChorus) cachedBySegmentType.set('chorus', userChorusPrecedent(userChorus, ctx.params.key));
   const skeleton: VocalSegment[] = [];
   const sung = new Map<string, { merged: MergedPrecedent; type: string }>();
+  const laidOn = new Map<string, MergedPrecedent>();
   for (const segment of structure) {
     if (!isSungSegment(segment.name)) continue;
     const segmentType = baseType(segment.name);
-    let merged = cachedBySegmentType.get(segmentType);
-    if (!cachedBySegmentType.has(segmentType)) {
-      const select = (from: typeof rng) =>
-        selectMergedPrecedent({
-          desiredPatternLength: segment.bars.length,
-          segmentType,
-          genre: ctx.params.genre,
-          tempo: ctx.params.bpm,
-          rng: from,
-        });
-      merged = select(rng);
-      // A new melody (Change melody): the type's own stream picks it; the shared draw above still happens, so no
-      // other section's melody moves.
-      const variant = melodyVariants[segmentType];
-      if (variant !== undefined) merged = select(ctx.rng.fork(`vocals/melody/${segmentType}#v${variant}`));
-      cachedBySegmentType.set(segmentType, merged);
-    }
+    let merged = selected.get(segmentType);
     if (!merged) continue;
-    // Lyrics first: the type's melody laid on the rhythm its words bent (lyric-rhythms.ts); the draws above are
-    // unchanged, so nothing else moves.
+    // Lyrics first: the type's melody laid on the rhythm its words bent (lyric-rhythms.ts); the draws are unchanged,
+    // so nothing else moves.
     const recut = lyricRhythms[segmentType];
-    if (recut && !(merged.rhythmic.id === `${recut.pattern}~recut`)) {
-      merged = drapeOnRhythm(recutAsPrecedent(recut), merged.melodic, merged.properties.maxNote);
-      cachedBySegmentType.set(segmentType, merged);
+    if (recut) {
+      if (!laidOn.has(segmentType)) laidOn.set(segmentType, drapeOnRhythm(recutAsPrecedent(recut), merged.melodic, merged.properties.maxNote));
+      merged = laidOn.get(segmentType)!;
     }
     sung.set(segment.name, { merged, type: segmentType });
   }
+
 
   // Sung sections take the borrowed melody's chords, moved into the key.
   const sungStructure: SongStructure = structure.map((segment) => {
@@ -260,4 +242,40 @@ function buildSegmentSkeleton(segment: Segment, merged: MergedPrecedent, kind: s
     else bar.notes[key] = [evt];
   }
   return { segmentName: segment.name, bars };
+}
+
+/**
+ * The melody chosen for each sung section type (by its first section), before any lyrics-first rhythm is laid under
+ * it: the precedent selection, a new melody's own stream (melody variants), a hummed chorus. `rng` is the vocals
+ * stream (`ctx.rng.fork('vocals')`), consumed exactly as before. Undefined for a type the banks have no melody for.
+ */
+export function sectionMelodies(ctx: GeneratorContext, structure: SongStructure, rng: ReturnType<GeneratorContext['rng']['fork']>): Map<string, MergedPrecedent | undefined> {
+  // A user chorus (hum to song: params.params.userChorus) takes the chorus's place.
+  const cachedBySegmentType = new Map<string, MergedPrecedent | undefined>();
+  const userChorus = userChorusOf(ctx.params.params);
+  const melodyVariants = melodyVariantsOf(ctx.params.params);
+  if (userChorus) cachedBySegmentType.set('chorus', userChorusPrecedent(userChorus, ctx.params.key));
+  for (const segment of structure) {
+    if (!isSungSegment(segment.name)) continue;
+    const segmentType = baseType(segment.name);
+    if (cachedBySegmentType.has(segmentType)) continue;
+    let merged: MergedPrecedent | undefined;
+    {
+      const select = (from: typeof rng) =>
+        selectMergedPrecedent({
+          desiredPatternLength: segment.bars.length,
+          segmentType,
+          genre: ctx.params.genre,
+          tempo: ctx.params.bpm,
+          rng: from,
+        });
+      merged = select(rng);
+      // A new melody (Change melody): the type's own stream picks it; the shared draw above still happens, so no
+      // other section's melody moves.
+      const variant = melodyVariants[segmentType];
+      if (variant !== undefined) merged = select(ctx.rng.fork(`vocals/melody/${segmentType}#v${variant}`));
+      cachedBySegmentType.set(segmentType, merged);
+    }
+  }
+  return cachedBySegmentType;
 }

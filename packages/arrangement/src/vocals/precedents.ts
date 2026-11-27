@@ -131,7 +131,7 @@ const PrecedentPropertiesSchema = z
   })
   .passthrough();
 
-const PrecedentSchema = z
+export const PrecedentSchema = z
   .object({
     id: z.union([z.string(), z.number()]),
     properties: PrecedentPropertiesSchema,

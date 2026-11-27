@@ -19,12 +19,14 @@ import { gradeNote, stressFits, type Stress } from './stress.js';
 import { lyricLines } from './lyric-lines.js';
 import { lengthFits, syllableLength, type SyllableLength } from './syllable-length.js';
 import { HOLD_BEATS, pronounce, wordsOf } from './written-lyrics.js';
-import type { Precedent } from './precedents.js';
+import { PrecedentSchema, type Precedent } from './precedents.js';
 
-/** A rhythm recut to a section's words: its notes (beats from the section start), over `bars` bars. */
+/** A rhythm recut to a section's words: its notes (beats from the section start), over `bars` bars, and the pattern
+ *  it was cut from (as shaped), so new words for the section are cut from the same pattern. */
 export const RecutSchema = z
   .object({
     pattern: z.string().min(1),
+    source: PrecedentSchema,
     bars: z.number().int().positive(),
     notes: z.array(z.object({ start: z.number().nonnegative(), duration: z.number().positive() }).strict()).min(1),
   })
@@ -295,7 +297,7 @@ export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: {
     const before = laid.at(-2);
     prev = { ...last, stress: syl.at(-1)!.stress, pd: before && barOf(before.s) === barOf(last.s) ? before.d : undefined };
   });
-  const out: RecutRhythm = { pattern: String(rhythm.id), bars: opts.bars, notes: notes.map((n) => ({ start: n.s / Q, duration: n.d / Q })) };
+  const out: RecutRhythm = { pattern: String(rhythm.id), source: rhythm, bars: opts.bars, notes: notes.map((n) => ({ start: n.s / Q, duration: n.d / Q })) };
   // The lines must read back as written (a bug otherwise).
   const read = lyricLines(recutBars(out));
   const counts = lines.map((l) => syllablesOf(l).length);
