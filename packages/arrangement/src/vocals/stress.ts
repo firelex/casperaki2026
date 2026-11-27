@@ -84,6 +84,23 @@ export interface BarNote {
   readonly duration: number;
 }
 
+/**
+ * The grade of a note as it is heard, for rhythms made to fit words (the lyrics-first recut, owner 2026-11-27): the old
+ * grade where it decides ('+' or '-'), and where it says either ('0'), what the ear takes from where the note falls and
+ * how long it is against the note before it in the bar: on a beat and no shorter than that note, stressed ("night"
+ * held on beat 3); off the beat and no longer than it, unstressed; anything else stays either (an off-beat note longer
+ * than the one before it, "a" on a quarter after an eighth, is heard pushed, so it suits no syllable that has a
+ * stress).
+ */
+export function heardStress(beat: number, duration: number, prev: number | undefined, next: number | undefined): Stress {
+  const g = gradeNote(beat, duration, prev, next);
+  if (g !== '0') return g;
+  const onBeat = whole(beat);
+  if (onBeat && (prev === undefined || duration >= prev)) return '+';
+  if (!onBeat && (prev === undefined || duration <= prev)) return '-';
+  return '0';
+}
+
 /** The grades of one bar's sung notes, in the order given (by beat). */
 export function gradeBar(notes: readonly BarNote[]): Stress[] {
   return notes.map((n, i) => gradeNote(n.beat, n.duration, notes[i - 1]?.duration, notes[i + 1]?.duration));

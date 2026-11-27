@@ -5,6 +5,7 @@ import { recutRhythm, type RecutRhythm } from '../src/vocals/recut.js';
 import { lyricLines } from '../src/vocals/lyric-lines.js';
 import { lineLengthProblems, lengthFits } from '../src/vocals/syllable-length.js';
 import { checkLyricLine, pronounce } from '../src/vocals/written-lyrics.js';
+import { heardStress } from '../src/vocals/stress.js';
 
 /** A rhythm precedent from [beat, duration] notes over `bars` bars. */
 const rhythm = (notes: readonly (readonly [number, number])[], bars: number): Precedent => ({
@@ -42,6 +43,39 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number): 
   const ends = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map((_, i, all) => i === all.length - 1)));
   r.notes.forEach((n, i) => {
     if (!ends[i]) expect(r.notes[i + 1]!.start, `syllable ${i + 1} runs into the next of its word`).toBeCloseTo(n.start + n.duration, 9);
+  });
+  // Stress exactly (owner, 2026-11-27: "a" was heard stressed, "flashlight" as flash-LIGHT): a stressed syllable on a
+  // note graded stressed, an unstressed one on a note graded unstressed, and no weak syllable of a longer word on a
+  // stressed note.
+  const endsAt = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map((_, i, all) => i === all.length - 1)));
+  const syllables = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => { const p = pronounce(w)!; return p.rhythm.map((st, i) => ({ word: w, st, byStress: p.rhythm[i - 1] === '+' || p.rhythm[i + 1] === '+' })); }));
+  const grades = Array.from({ length: Math.ceil(r.bars) }, (_, bar) => {
+    const inBar = r.notes.filter((n) => Math.floor(n.start / 4 + 1e-9) === bar);
+    return inBar.map((n, i) => heardStress(n.start - bar * 4, n.duration, inBar[i - 1]?.duration, inBar[i + 1]?.duration));
+  }).flat();
+  syllables.forEach((y, i) => {
+    const g = grades[i]!;
+    const what = `syllable ${i + 1} ("${y.word}", ${y.st}) at beat ${r.notes[i]!.start} graded ${g}`;
+    if (y.st === '+') {
+      // Two stressed syllables side by side in a word ("out-side"): either may be on a note heard as either.
+      if (y.byStress && g === '0') return;
+      expect(g, what).toBe('+');
+    }
+    else if (y.st === '-') {
+      // Or an eighth on beat 2 or 4, no longer than the note before it, before a note on beat 1 or 3 ("EV-e-ry TIME").
+      const n = r.notes[i]!;
+      const before = r.notes[i - 1];
+      const inBar = n.start % 4;
+      const weak = n.duration === 0.5 && (inBar === 1 || inBar === 3) && (!before || Math.floor(before.start / 4) !== Math.floor(n.start / 4) || n.duration <= before.duration) && r.notes[i + 1] !== undefined && r.notes[i + 1]!.start % 2 === 0;
+      if (!weak) expect(g, what).toBe('-');
+    }
+    else if (y.byStress) expect(g, what).not.toBe('+');
+    // A weaker syllable is never longer than the stressed syllable next to it in its word.
+    const next = syllables[i + 1];
+    if (next && next.word === y.word && !endsAt[i]) {
+      if (y.st === '+' && next.st !== '+') expect(r.notes[i + 1]!.duration, `${what}: its weak neighbour outweighs it`).toBeLessThanOrEqual(r.notes[i]!.duration);
+      if (next.st === '+' && y.st !== '+') expect(r.notes[i]!.duration, `${what}: it outweighs its stressed neighbour`).toBeLessThanOrEqual(r.notes[i + 1]!.duration);
+    }
   });
   const sung = lyricLines(barsOf(r));
   expect(sung.map((l) => l.length)).toEqual(lines.map((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones).length));
@@ -104,6 +138,12 @@ describe('the recut', () => {
   it('a word is sung straight through, at slow and fast tempos ("Feeling nothing tonight")', () => {
     const r = rhythm([[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1]], 2);
     for (const bpm of [70, 100, 170]) expectSingable(recutRhythm(r, ['Feeling nothing tonight'], { bpm, bars: 2 }), ['Feeling nothing tonight'], bpm);
+  });
+
+  it('"Two ghosts with a sheet and a flashlight": "a" unstressed, FLASH-light (Electric Daydream, 128 bpm)', () => {
+    const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
+    const lines = ['We drew it up on a Tuesday night', 'Two ghosts with a sheet and a flashlight', 'You swore that the glue gun would hold', "Now it's midnight and the tape won't fight"];
+    expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
   });
 
   it('is deterministic', () => {
