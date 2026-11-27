@@ -1243,6 +1243,9 @@ function drapeAndPlace(
   melodicPrecedent: Precedent,
   maxNote: number,
   octaveShift: number | undefined,
+  /** Every rhythm note gets a pitch (lyrics first: each note carries a syllable). Where the legacy lookup finds none
+   *  (no melody note or chord near it), the melody's note nearest in time, the earlier on a tie. */
+  everyNote = false,
 ): DrapeResult {
   const merged: {
     melody: Record<string, { midi: number; duration: number }[]>;
@@ -1269,6 +1272,12 @@ function drapeAndPlace(
       melodicPrecedent,
       lastMidi,
     );
+    if (!close && everyNote) {
+      const nearest = melodicBeats.reduce((best, b) => (Math.abs(parseFloat(b) - rhythmicBeat) < Math.abs(parseFloat(best) - rhythmicBeat) ? b : best));
+      merged.melody[getBeatString(rhythmicBeat)] = [{ midi: melodicPrecedent.melody[nearest]![0]!.midi, duration: notes[0]!.duration }];
+      lastMidi = merged.melody[getBeatString(rhythmicBeat)]![0]!.midi;
+      continue;
+    }
     if (!close) continue;
     merged.melody[getBeatString(rhythmicBeat)] = [
       { midi: close.midi, duration: notes[0]!.duration },
@@ -1441,10 +1450,12 @@ export function drawRhythm(inputs: MergeInputs): Precedent {
   return pickHelperPrecedent(rhythmPool(inputs), { desiredPatternLength: inputs.desiredPatternLength }, inputs.rng);
 }
 
-/** The melody's pitches (and its chords) laid on this rhythm and placed up to maxNote. An error when it cannot be
- *  placed (no redraw: the caller chose both). */
+/** The melody's pitches (and its chords) laid on this rhythm and placed up to maxNote, every rhythm note with a pitch.
+ *  An error when the two differ in length or the melody cannot be placed (no redraw: the caller chose both). */
 export function drapeOnRhythm(rhythm: Precedent, melodic: Precedent, maxNote: number): MergedPrecedent {
-  const draped = drapeAndPlace(rhythm, melodic, maxNote, undefined);
+  const bars = (p: Precedent) => p.properties.end - p.properties.start;
+  if (bars(rhythm) !== bars(melodic)) throw new Error(`vocals/precedents: the rhythm "${rhythm.id}" is ${bars(rhythm)} bars, the melody "${melodic.id}" ${bars(melodic)}`);
+  const draped = drapeAndPlace(rhythm, melodic, maxNote, undefined, true);
   if (!draped.ok) throw new Error(`vocals/precedents: the melody "${melodic.id}" on the rhythm "${rhythm.id}": ${draped.failure}`);
   return draped.merged;
 }

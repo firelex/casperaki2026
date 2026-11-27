@@ -36,7 +36,9 @@ import {
 } from './backing.js';
 import { userChorusOf, userChorusPrecedent } from '../hum/user-chorus.js';
 import { selectSeedPhrasePlan } from './lyrics-source/seed.js';
-import { expandMergedToSegment, selectMergedPrecedent, type MergedPrecedent } from './precedents.js';
+import { drapeOnRhythm, expandMergedToSegment, selectMergedPrecedent, type MergedPrecedent } from './precedents.js';
+import { lyricRhythmsOf } from './lyric-rhythms.js';
+import { recutAsPrecedent } from './recut.js';
 import { buildVocalScaffolding } from './scaffolding.js';
 import { buildContour } from './contour.js';
 import { LEGACY_INDEX_TO_MIDI, MAX_NOTE, MIN_NOTE } from './range.js';
@@ -98,6 +100,7 @@ export function writeVocals(
   const cachedBySegmentType = new Map<string, MergedPrecedent | undefined>();
   const userChorus = userChorusOf(ctx.params.params);
   const melodyVariants = melodyVariantsOf(ctx.params.params);
+  const lyricRhythms = lyricRhythmsOf(ctx.params.params);
   if (userChorus) cachedBySegmentType.set('chorus', userChorusPrecedent(userChorus, ctx.params.key));
   const skeleton: VocalSegment[] = [];
   const sung = new Map<string, { merged: MergedPrecedent; type: string }>();
@@ -122,6 +125,13 @@ export function writeVocals(
       cachedBySegmentType.set(segmentType, merged);
     }
     if (!merged) continue;
+    // Lyrics first: the type's melody laid on the rhythm its words bent (lyric-rhythms.ts); the draws above are
+    // unchanged, so nothing else moves.
+    const recut = lyricRhythms[segmentType];
+    if (recut && !(merged.rhythmic.id === `${recut.pattern}~recut`)) {
+      merged = drapeOnRhythm(recutAsPrecedent(recut), merged.melodic, merged.properties.maxNote);
+      cachedBySegmentType.set(segmentType, merged);
+    }
     sung.set(segment.name, { merged, type: segmentType });
   }
 
