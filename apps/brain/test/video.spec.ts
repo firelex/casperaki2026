@@ -17,7 +17,7 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import type { RenderService } from '../src/render/renderService.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
-import { lyricLines, sectionDisplayName, songToConsoleInput, songToVideoInput } from '../src/video/videoInput.js';
+import { lyricLines, sectionDisplayName, songToAvatarInput, songToConsoleInput, songToVideoInput } from '../src/video/videoInput.js';
 import { VideoService } from '../src/video/videoService.js';
 import { settled } from './settled.js';
 import type { Express } from 'express';
@@ -38,6 +38,25 @@ describe('songToConsoleInput', () => {
     expect(input.lyrics).toEqual(lyricLines(song));
     expect(input.lyrics.length).toBeGreaterThan(4);
     expect(input.sections).toEqual(songToVideoInput({ title: 'T', artist: 'A', song, audio: { path: '/tmp/x.mp3', durationSeconds: 1 } }).sections);
+  });
+});
+
+describe('songToAvatarInput', () => {
+  const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'avatar-input-1' });
+  const track = (name: string, role: 'track' | 'leadVocal', levels: number[]) => ({ name, role, color: '#4a8ae8', bus: 'vocals', volumeDb: -6, sends: { reverb: null, delay: null, chorus: null }, levels, clips: [] });
+  const recipe = { pack: 'drophunter', parts: { body: '0', eyes: 'regulareyes' }, textures: {}, colors: {} };
+  it('takes the lead vocal level as the loudest lead-vocal strip per bin, the song timing and words, and letters-and-digits ids', () => {
+    const body = { binSeconds: 0.5, tracks: [track('Bass', 'track', [0.9, 0.9]), track('Lead', 'leadVocal', [0.2, 0]), track('Lead 2', 'leadVocal', [0.1, 0.4])], master: [0.7, 0.8] };
+    const input = songToAvatarInput({ title: 'T', artist: 'A', song, audio: { path: '/tmp/x.mp3', durationSeconds: 1 }, body, avatars: [{ id: 'a-0123456789ab', name: 'Kai', recipe, sings: true }] });
+    expect(input.voice).toEqual([0.2, 0.4]);
+    expect(input.master).toEqual([0.7, 0.8]);
+    expect(input.avatars[0]).toMatchObject({ id: 'a0123456789ab', name: 'Kai', sings: true });
+    expect(input.lyrics).toEqual(lyricLines(song));
+  });
+  it('gives a silent voice to a song without lead vocals', () => {
+    const body = { binSeconds: 0.5, tracks: [track('Bass', 'track', [0.9, 0.9])], master: [0.7, 0.8] };
+    const input = songToAvatarInput({ title: 'T', artist: 'A', song, audio: { path: '/tmp/x.mp3', durationSeconds: 1 }, body, avatars: [{ id: 'a-0123456789ab', name: 'Kai', recipe, sings: false }] });
+    expect(input.voice).toEqual([0, 0]);
   });
 });
 
@@ -102,6 +121,9 @@ async function boot(opts: { exported?: boolean; songMix?: (ownerId: string, song
       consoleRenders.push(r);
       r.onProgress?.(0.5);
       writeFileSync(r.outPath, 'console mp4 bytes');
+    },
+    renderAvatarVideo: async (r) => {
+      writeFileSync(r.outPath, 'avatars mp4 bytes');
     },
     renderVideo: async (r) => {
       renders.push(r);

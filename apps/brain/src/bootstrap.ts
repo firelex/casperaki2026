@@ -51,7 +51,8 @@ import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
 import { OidcClient } from './auth/OidcClient.js';
 import { attachSession, requireSession } from './auth/middleware.js';
 import { RenderService } from './render/renderService.js';
-import { renderConsoleVideo, renderVideo } from '@casperaki/video';
+import { renderAvatarVideo, renderConsoleVideo, renderVideo } from '@casperaki/video';
+import { videoAvatars } from './avatars/videoAvatars.js';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
@@ -225,6 +226,10 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         ...(config.vocalTakesDir ? { vocalTakesDir: config.vocalTakesDir } : {}),
       })
     : undefined);
+  // Avatars: dressed from the part packs (BRAIN_AVATAR_PACKS_DIR), kept per user next to their singers.
+  const avatarPacks = config.avatarPacksDir ? new AvatarPacks(config.avatarPacksDir) : undefined;
+  avatarPacks?.list(); // fail at startup, naming the pack, if a manifest is broken
+  const userAvatars = config.singersDataDir ? new UserAvatars(config.singersDataDir) : undefined;
   // Music videos next to the renders: <rendersDir>/../videos.
   const videos =
     deps.videos ??
@@ -236,6 +241,10 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           planner: new DeepSeekPlanner(plannerEndpoint(config)),
           renderVideo,
           renderConsoleVideo,
+          renderAvatarVideo,
+          ...(avatarPacks && userAvatars
+            ? { avatars: { packsDir: avatarPacks.root, resolve: (ownerId: string, songId: string, ids: readonly string[]) => videoAvatars(store, userAvatars, ownerId, songId, ids) } }
+            : {}),
           // `playback` (the mix config) is set up below; these run per video, after start-up.
           songMix: (ownerId, songId) => {
             const project = store.getProject(ownerId, songId);
@@ -391,14 +400,11 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createSoundsRouter({ playback }));
   readSingers(config.singersDir); // fail at startup, naming the file, if the singers list is broken
   app.use(createSingersRouter({ dir: config.singersDir, ...(userSingers ? { users: userSingers } : {}), tasks }));
-  // Avatars: dressed from the part packs (BRAIN_AVATAR_PACKS_DIR), kept per user next to their singers.
-  const avatarPacks = config.avatarPacksDir ? new AvatarPacks(config.avatarPacksDir) : undefined;
-  avatarPacks?.list(); // fail at startup, naming the pack, if a manifest is broken
   if (!config.avatarPacksDir) console.warn('[brain] BRAIN_AVATAR_PACKS_DIR not set — Avatars answer 503.');
   app.use(
     createAvatarsRouter({
       ...(avatarPacks ? { packs: avatarPacks } : {}),
-      ...(config.singersDataDir ? { avatars: new UserAvatars(config.singersDataDir) } : {}),
+      ...(userAvatars ? { avatars: userAvatars } : {}),
       checkSinger: (ownerId, singerId) => void singerVoice(config.singersDir, userSingers, ownerId, singerId),
     }),
   );

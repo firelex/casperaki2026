@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { avatarsApi, avatarsQueryKey } from '../api/avatars';
 import { playbackApi } from '../api/playback';
 import { videoApi, videoQueryKeys, type ConsoleBody, type VideoFormat, type VideoOrientation, type VideoQuality, type VideoStatus, type VideoStyle } from '../api/video';
 import { livePlayer } from '../audio/livePlayer';
@@ -14,7 +15,11 @@ import { BEATS_PER_BAR, buildSequencerModel } from './sequencerModel';
 const STYLES: readonly { id: VideoStyle; label: string; hint: string }[] = [
   { id: 'cartoon', label: 'Cartoon', hint: 'Dancers, scenes and the sung words' },
   { id: 'console', label: 'Console', hint: 'A 3D mixing desk playing the song' },
+  { id: 'avatars', label: 'Avatars', hint: 'Your avatars dancing in a 3D club' },
 ];
+
+/** How many avatars a dance floor video shows. */
+const MAX_AVATARS = 5;
 
 const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string }[] = [
   { id: 'landscape', label: 'Wide', hint: '1920 × 1080, for YouTube' },
@@ -40,6 +45,12 @@ export function MusicVideoView() {
   const [measuring, setMeasuring] = useState<number | undefined>(undefined);
   const [artist, setArtist] = useState('Casperaki');
   const [quality, setQuality] = useState<VideoQuality>('full');
+  /** Avatars style: the avatars chosen to dance (undefined: the first MAX_AVATARS of the user's avatars). */
+  const [picked, setPicked] = useState<readonly string[] | undefined>(undefined);
+  const avatars = useQuery({ queryKey: avatarsQueryKey, queryFn: ({ signal }) => avatarsApi.list(signal), enabled: style === 'avatars' });
+  const avatarIds = picked ?? (avatars.data?.avatars ?? []).slice(0, MAX_AVATARS).map((a) => a.id);
+  const togglePick = (id: string) =>
+    setPicked(avatarIds.includes(id) ? avatarIds.filter((x) => x !== id) : avatarIds.length >= MAX_AVATARS ? avatarIds : [...avatarIds, id]);
   const format: VideoFormat = quality === 'preview' ? `${orientation}-preview` : orientation;
 
   const jobs = useQuery({
@@ -56,7 +67,8 @@ export function MusicVideoView() {
     mutationFn: async () => {
       const opts = { style, orientation, quality, artist: artist.trim() };
       if (style === 'cartoon') return videoApi.start(songId, opts);
-      if (editorDirty) throw new Error('Save the song first: the console video shows the saved version.');
+      if (editorDirty) throw new Error(`Save the song first: the ${style === 'avatars' ? 'dance floor' : 'console'} video shows the saved version.`);
+      if (style === 'avatars' && avatarIds.length === 0) throw new Error('Choose at least one avatar (make them on the Avatars page).');
       if (!viewSong) throw new Error('The song is not loaded yet.');
       setMeasuring(0);
       try {
@@ -69,7 +81,7 @@ export function MusicVideoView() {
           leadVocal: model.tracks.some((t) => t.name === LEAD_VOCAL_NAME) ? LEAD_VOCAL_NAME : undefined,
           hex: colorHex,
         });
-        return await videoApi.start(songId, { ...opts, console: body });
+        return await videoApi.start(songId, { ...opts, console: body, ...(style === 'avatars' ? { avatarIds } : {}) });
       } finally {
         setMeasuring(undefined);
       }
@@ -86,11 +98,13 @@ export function MusicVideoView() {
         <section className="w-full shrink-0 lg:w-[340px]" aria-label="Video settings">
           <h1 className="text-[22px] font-semibold">Music video</h1>
           <p className="mt-1 text-[14px] text-white/60">
-            {style === 'cartoon' ? 'A cartoon video of ' : 'A mixing-desk video of '}
+            {style === 'cartoon' ? 'A cartoon video of ' : style === 'avatars' ? 'A dance floor video of ' : 'A mixing-desk video of '}
             {viewSong?.title ? <span className="text-white">{viewSong.title}</span> : 'this song'}
             {style === 'cartoon'
               ? ': dancers, scenes and the sung words, planned to the song’s sections and beat.'
-              : ': every track’s strip lights up and meters as it plays, faders ride the fades, and the camera follows the sections.'}
+              : style === 'avatars'
+                ? ': your avatars dance to the beat in a 3D club; the one whose voice sang the song sings the words.'
+                : ': every track’s strip lights up and meters as it plays, faders ride the fades, and the camera follows the sections.'}
           </p>
 
           <fieldset className="mt-6">
@@ -110,6 +124,45 @@ export function MusicVideoView() {
               ))}
             </div>
           </fieldset>
+
+          {style === 'avatars' ? (
+            <fieldset className="mt-5">
+              <legend className="mb-2 text-[13px] text-white/60">Who dances (up to {MAX_AVATARS})</legend>
+              {avatars.isPending ? <p className="text-[13px] text-white/55">Loading your avatars…</p> : null}
+              {avatars.isError ? (
+                <p className="text-[13px] text-err" role="alert">
+                  {avatars.error.message}
+                </p>
+              ) : null}
+              {avatars.data && avatars.data.avatars.length === 0 ? (
+                <p className="text-[13px] text-white/70">
+                  You have no avatars yet: make some on the{' '}
+                  <a href="/avatars" className="underline">
+                    Avatars page
+                  </a>
+                  .
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {(avatars.data?.avatars ?? []).map((a) => {
+                  const on = avatarIds.includes(a.id);
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => togglePick(a.id)}
+                      className={`flex w-[96px] flex-col items-center gap-1 rounded-[10px] border p-2 ${on ? 'border-white bg-white/10' : 'border-line opacity-60 hover:border-white/40'}`}
+                    >
+                      <img src={a.portraitUrl} alt="" className="h-16 w-16 rounded-full bg-black/30 object-cover" />
+                      <span className="w-full truncate text-center text-[12px]">{a.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[12px] text-white/45">The avatar whose voice sang the song sings it; the others dance.</p>
+            </fieldset>
+          ) : null}
 
           <fieldset className="mt-5">
             <legend className="mb-2 text-[13px] text-white/60">Format</legend>
@@ -169,15 +222,15 @@ export function MusicVideoView() {
           ) : null}
           {editorDirty ? (
             <p className="mt-4 rounded-[8px] bg-amber-400/10 px-3 py-2 text-[13px] text-amber-200">
-              {style === 'console'
-                ? 'Save the song first: the console video shows the saved version, measured track by track.'
+              {style !== 'cartoon'
+                ? 'Save the song first: this video shows the saved version, measured track by track.'
                 : 'The video is made from the saved song. Save your edits first to include them.'}
             </p>
           ) : null}
 
           <button
             type="button"
-            disabled={busy || start.isPending || !artist.trim() || plannerMissing || (style === 'console' && editorDirty)}
+            disabled={busy || start.isPending || !artist.trim() || plannerMissing || (style !== 'cartoon' && editorDirty) || (style === 'avatars' && avatarIds.length === 0)}
             onClick={() => start.mutate()}
             className="mt-5 h-11 w-full rounded-full bg-accent text-[15px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-50"
           >
@@ -199,7 +252,9 @@ export function MusicVideoView() {
           <p className="mt-3 text-[12px] text-white/45">
             {style === 'cartoon'
               ? 'A full video takes about 2½× the song’s length, a quick preview less than the song itself.'
-              : 'The tracks are measured here first (a moment), then the desk is drawn on the server’s graphics card.'}{' '}
+              : style === 'avatars'
+                ? 'The tracks are measured here first (a moment), then the club is drawn on the server’s graphics card: about 1¼× the song’s length.'
+                : 'The tracks are measured here first (a moment), then the desk is drawn on the server’s graphics card.'}{' '}
             If the song has not been exported yet, its mix is made first.
           </p>
         </section>
@@ -269,7 +324,7 @@ const STEPS: readonly { id: 'audio' | 'planning' | 'rendering'; label: string }[
  *  page never looks stuck. */
 function VideoProgress({ job, style, frame }: { job: VideoStatus; style: VideoStyle; frame: string }) {
   const now = useNow(1000);
-  const steps = style === 'console' ? STEPS.filter((s) => s.id !== 'planning') : STEPS;
+  const steps = style !== 'cartoon' ? STEPS.filter((s) => s.id !== 'planning') : STEPS;
   const current = steps.findIndex((s) => s.id === job.step);
   const pct = typeof job.progress === 'number' ? Math.round(job.progress * 100) : undefined;
   const elapsed = (iso: string | undefined) => {

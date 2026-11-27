@@ -4,8 +4,9 @@ export type VideoOrientation = 'landscape' | 'portrait';
 /** A video of a song: wide or tall, full size or a half-size quick preview. */
 export type VideoFormat = VideoOrientation | `${VideoOrientation}-preview`;
 export type VideoQuality = 'full' | 'preview';
-/** 'cartoon': dancers and scenes planned by a language model. 'console': a 3D mixing desk driven by the tracks. */
-export type VideoStyle = 'cartoon' | 'console';
+/** 'cartoon': dancers and scenes planned by a language model. 'console': a 3D mixing desk driven by the tracks.
+ *  'avatars': the user's avatars dancing on a 3D dance floor, the lead singing. */
+export type VideoStyle = 'cartoon' | 'console' | 'avatars';
 
 /** An automation curve sampled every `step` seconds from `t0`. */
 export interface ConsoleAutomation {
@@ -77,7 +78,7 @@ export const videoApi = {
    *  tracks measured for the saved version. */
   start: (
     songId: string,
-    opts: { style: VideoStyle; orientation: VideoOrientation; quality: VideoQuality; artist: string; console?: ConsoleBody },
+    opts: { style: VideoStyle; orientation: VideoOrientation; quality: VideoQuality; artist: string; console?: ConsoleBody; avatarIds?: readonly string[] },
   ) =>
     defaultBrainClient.post<VideoStatus>(`/api/songs/${encodeURIComponent(songId)}/video`, {
       style: opts.style,
@@ -85,5 +86,6 @@ export const videoApi = {
       quality: opts.quality,
       artist: opts.artist,
       ...(opts.console ? { console: opts.console } : {}),
+      ...(opts.avatarIds ? { avatars: { avatarIds: opts.avatarIds } } : {}),
     }),
 };

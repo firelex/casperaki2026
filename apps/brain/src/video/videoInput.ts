@@ -1,13 +1,13 @@
 // A Casperaki song as the music-video engine (@casperaki/video) sees it: the
 // engine never reads a Casperaki song; this adapter builds its VideoInput.
 
-import { catalog, ConsoleInputObjectSchema, ConsoleInputSchema, VideoInputSchema, type ConsoleInput, type VideoInput } from '@casperaki/video';
+import { AvatarVideoInputSchema, catalog, ConsoleInputObjectSchema, ConsoleInputSchema, VideoInputSchema, type AvatarVideoInput, type ConsoleInput, type VideoInput } from '@casperaki/video';
 import { z } from 'zod';
 import type { Song } from '@casperaki/song-schema';
 
 export class VideoInputError extends Error {
   constructor(
-    readonly status: 400 | 409,
+    readonly status: 400 | 409 | 503,
     readonly code: string,
     message: string,
   ) {
@@ -216,5 +216,45 @@ export function songToConsoleInput(args: {
     binSeconds,
     tracks,
     master,
+  });
+}
+
+/** One of the user's avatars in a video: its name, recipe, and whether it is the lead (sings the song). */
+export interface VideoAvatar {
+  readonly id: string;
+  readonly name: string;
+  readonly recipe: AvatarVideoInput['avatars'][number]['recipe'];
+  readonly sings: boolean;
+}
+
+/** The engine's AvatarVideoInput: the song's timing and words, the master's level and the lead vocal's (the loudest
+ *  lead-vocal strip per bin; silence when the song has none), both fitted to the audio as for the console, and the
+ *  avatars (ids made letters and digits: the engine seeds each one's dance moves with it). */
+export function songToAvatarInput(args: {
+  title: string;
+  artist: string;
+  song: Song;
+  audio: VideoAudio;
+  body: Omit<ConsoleBody, 'versionKey'>;
+  avatars: readonly VideoAvatar[];
+}): AvatarVideoInput {
+  const { binSeconds } = args.body;
+  const bins = Math.round(args.audio.durationSeconds / binSeconds);
+  const measured = args.body.master.length * binSeconds;
+  const fit = Math.abs(measured - args.audio.durationSeconds) <= LEVELS_LENGTH_TOLERANCE_SECONDS;
+  const fitted = (levels: readonly number[]) =>
+    fit ? Array.from({ length: bins }, (_, i) => (i < levels.length ? levels[i]! : 0)) : [...levels];
+  const leads = args.body.tracks.filter((t) => t.role === 'leadVocal');
+  const voice = args.body.master.map((_, i) => leads.reduce((m, t) => Math.max(m, t.levels[i] ?? 0), 0));
+  return AvatarVideoInputSchema.parse({
+    title: args.title,
+    artist: args.artist,
+    audio: { path: args.audio.path, durationSeconds: args.audio.durationSeconds },
+    ...songTiming(args.song),
+    lyrics: lyricLines(args.song),
+    binSeconds,
+    master: fitted(args.body.master),
+    voice: fitted(voice),
+    avatars: args.avatars.map((a) => ({ id: a.id.replace(/[^a-zA-Z0-9]/gu, ''), name: a.name, recipe: a.recipe, sings: a.sings })),
   });
 }

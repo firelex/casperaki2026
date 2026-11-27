@@ -12,14 +12,14 @@ import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync 
 import { basename, dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 
-import type { ConsoleRenderRequest, RenderRequest } from '@casperaki/video';
+import type { AvatarRenderRequest, ConsoleRenderRequest, RenderRequest } from '@casperaki/video';
 import { parseSong } from '@casperaki/song-schema';
 
 import type { RenderService } from '../render/renderService.js';
 import type { SongsStore } from '../store.js';
 import type { Planner } from './planner.js';
 import { songVersionKey } from '../render/songVersion.js';
-import { songToConsoleInput, songToVideoInput, VideoInputError, type ConsoleBody } from './videoInput.js';
+import { songToAvatarInput, songToConsoleInput, songToVideoInput, VideoInputError, type ConsoleBody, type VideoAvatar } from './videoInput.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -29,10 +29,10 @@ export type VideoFormat = Orientation | `${Orientation}-preview`;
 export const FORMATS: readonly VideoFormat[] = ['landscape', 'portrait', 'landscape-preview', 'portrait-preview'];
 export const orientationOf = (f: VideoFormat): Orientation => (f.startsWith('portrait') ? 'portrait' : 'landscape');
 export const qualityOf = (f: VideoFormat): 'full' | 'preview' => (f.endsWith('-preview') ? 'preview' : 'full');
-export type VideoStyle = 'cartoon' | 'console';
-export const STYLES: readonly VideoStyle[] = ['cartoon', 'console'];
+export type VideoStyle = 'cartoon' | 'console' | 'avatars';
+export const STYLES: readonly VideoStyle[] = ['cartoon', 'console', 'avatars'];
 /** A job's name, for its files and its status: the cartoon's keep their format names. */
-export const jobId = (style: VideoStyle, format: VideoFormat): string => (style === 'cartoon' ? format : `console-${format}`);
+export const jobId = (style: VideoStyle, format: VideoFormat): string => (style === 'cartoon' ? format : `${style}-${format}`);
 
 /** The measured tracks are for another version of the song than the saved one. */
 export const SONG_CHANGED_MESSAGE = 'The song changed after its tracks were measured. Open the Music Video tab again to measure the saved version.';
@@ -72,6 +72,11 @@ export interface VideoServiceDeps {
   readonly renderVideo: (request: RenderRequest) => Promise<void>;
   /** The engine's renderConsoleVideo (injected so tests need no Chrome). */
   readonly renderConsoleVideo: (request: ConsoleRenderRequest) => Promise<void>;
+  /** The engine's renderAvatarVideo (injected so tests need no Chrome). */
+  readonly renderAvatarVideo: (request: AvatarRenderRequest) => Promise<void>;
+  /** Avatars on a dance floor: the owner's avatars by id, the lead marked (throws VideoInputError naming the
+   *  problem), and the part packs' folder. Unset: the avatars style answers 503. */
+  readonly avatars?: { readonly resolve: (ownerId: string, songId: string, ids: readonly string[]) => VideoAvatar[]; readonly packsDir: string };
   /** The song's own mix config (Pro-mode changes applied), or undefined on the standard mix (render/songVersion.ts). */
   readonly songMix: (ownerId: string, songId: string) => string | undefined;
   /** The standard mix config (for the version key of a song on the standard mix). */
@@ -93,6 +98,7 @@ const AUDIO_TIMEOUT_MS = 30 * 60_000;
 export type StartArgs = { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string } & (
   | { style: 'cartoon' }
   | { style: 'console'; console: ConsoleBody }
+  | { style: 'avatars'; console: ConsoleBody; avatarIds: readonly string[] }
 );
 
 export class VideoBusyError extends Error {
@@ -140,8 +146,12 @@ export class VideoService {
         const s = this.status(args.songId, style, f);
         if (s && (s.state === 'queued' || s.state === 'running')) throw new VideoBusyError(args.songId);
       }
-    if (args.style === 'console' && args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) {
+    if (args.style !== 'cartoon' && args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) {
       throw new VideoInputError(409, 'song_changed', SONG_CHANGED_MESSAGE);
+    }
+    if (args.style === 'avatars') {
+      if (!this.deps.avatars) throw new VideoInputError(503, 'avatars_not_configured', 'Avatar videos are not set up: BRAIN_AVATAR_PACKS_DIR and BRAIN_SINGERS_DATA_DIR are needed.');
+      this.deps.avatars.resolve(args.ownerId, args.songId, args.avatarIds);
     }
     mkdirSync(this.dirFor(args.songId), { recursive: true });
     const status: VideoStatus = { songId: args.songId, style: args.style, format: args.format, state: 'queued', queuedAt: new Date().toISOString() };
@@ -182,7 +192,16 @@ export class VideoService {
       };
       const render = { outPath: tmp, orientation: orientationOf(args.format), quality: qualityOf(args.format), concurrency: this.deps.config.renderConcurrency, onProgress };
 
-      if (args.style === 'console') {
+      if (args.style === 'avatars') {
+        if (args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) throw new Error(SONG_CHANGED_MESSAGE);
+        const { versionKey: _versionKey, ...tracks } = args.console;
+        const avatars = this.deps.avatars!.resolve(args.ownerId, args.songId, args.avatarIds);
+        const input = songToAvatarInput({ title: args.title, artist: args.artist, song, audio, body: tracks, avatars });
+        writeFileSync(join(this.dirFor(args.songId), `avatars-input-${args.format}.json`), JSON.stringify(input));
+        stepStart = new Date().toISOString();
+        step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scene, building the avatars)' });
+        await this.deps.renderAvatarVideo({ input, packsDir: this.deps.avatars!.packsDir, ...render });
+      } else if (args.style === 'console') {
         // The song's mix may have changed while it exported (a Pro-mode change).
         if (args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) throw new Error(SONG_CHANGED_MESSAGE);
         const { versionKey: _versionKey, ...tracks } = args.console;
