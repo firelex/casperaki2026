@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadBankIndex, loadPrecedentBank, type Precedent } from '../src/vocals/precedents.js';
-import { recutRhythm, type RecutRhythm } from '../src/vocals/recut.js';
+import { recutRhythm, SMALL_WORDS, type RecutRhythm } from '../src/vocals/recut.js';
 import { lyricLines } from '../src/vocals/lyric-lines.js';
 import { lineLengthProblems, lengthFits } from '../src/vocals/syllable-length.js';
 import { HOLD_BEATS, pronounce, sungLineSyllables } from '../src/vocals/written-lyrics.js';
@@ -31,6 +31,8 @@ const repeated = (r: RecutRhythm, times: number): RecutRhythm => ({
 /** Every line sung on the recut passes the line check and the length rule; a word is sung straight through (no rest
  *  between its syllables); and the recut played twice reads back as the lines twice. */
 /** Returns how many syllables miss their stress; with `exact` (the default) there must be none. */
+/** Rests the property test lets through (counted apart from stress misses). */
+let restMisses = 0;
 function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, exact = true): number {
   let misses = 0;
   const miss = (ok: boolean, what: string) => {
@@ -52,6 +54,23 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
     // A note held HOLD_BEATS or more sings the end of a word.
     if (n.duration >= HOLD_BEATS) expect(ends[i], `the note at ${n.start} is held but its syllable does not end its word`).toBe(true);
     if (!ends[i]) expect(r.notes[i + 1]!.start, `syllable ${i + 1} runs into the next of its word`).toBeCloseTo(n.start + n.duration, 9);
+  });
+  // Rests inside a line (owner, 2026-11-27, "Got the cake and the candles lit": an eighth then a rest phrased
+  // awkwardly): none after a small word, which leads into the next ("the | candles", "your | favorite"), and none
+  // shorter than a beat (an eighth then an eighth rest is sung on as a quarter).
+  const words = lines.map((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map(() => w.toLowerCase().replace(/[‘’`]/gu, "'"))));
+  let at = 0;
+  words.forEach((line) => {
+    for (let i = at; i < at + line.length - 1; i++) {
+      const n = r.notes[i]!;
+      const rest = r.notes[i + 1]!.start - (n.start + n.duration);
+      if (rest <= 1e-9) continue;
+      const word = line[i - at]!;
+      if (!SMALL_WORDS.has(word) && rest >= 1) continue;
+      if (exact) expect.fail(`a rest of ${rest} after "${word}" at ${n.start}`);
+      restMisses++;
+    }
+    at += line.length;
   });
   // Stress exactly (owner, 2026-11-27: "a" was heard stressed, "flashlight" as flash-LIGHT): a stressed syllable on a
   // note graded stressed, an unstressed one on a note graded unstressed, and no weak syllable of a longer word on a
@@ -157,6 +176,12 @@ describe('the recut', () => {
     expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
   });
 
+  it('"Got the cake and the candles lit": no rest after "the" or "your", none shorter than a beat (Electric Daydream, 128 bpm)', () => {
+    const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
+    const lines = ['Got the cake and the candles lit', 'Your favorite song on repeat', 'Checked my phone about a hundred times', "But you're still not on my street"];
+    expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
+  });
+
   it('holds a word that carries the meaning, not a small word before it ("don\'t give a frown": not "don\'t")', () => {
     // The pattern's held note falls where "don't" would go.
     const r = rhythm([[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [2, 0.5], [3, 2], [5, 0.5], [5.5, 0.5], [6, 1.5]], 2);
@@ -180,6 +205,7 @@ describe('the recut', () => {
   });
 
   it('property: every bank rhythm takes any accepted line, at 70 and at 170 bpm', () => {
+    restMisses = 0;
     const entries = Object.keys(loadBankIndex().banks).flatMap((id) => {
       const bank = loadPrecedentBank(id);
       // All the curated and style rhythms; every 7th hook (706 hooks would take minutes).
@@ -197,7 +223,10 @@ describe('the recut', () => {
       }
     }
     // Only lines the eighth grid cannot sing exactly miss (a stressed-unstressed-unstressed ending: DAN-ge-rous).
-    console.log(`stress misses: ${misses} of ${syllables} syllables`);
-    expect(misses / syllables).toBeLessThan(0.01);
+    console.log(`stress misses: ${misses} of ${syllables} syllables; awkward rests: ${restMisses}`);
+    // Avoiding awkward rests (3375 without the rule, 2026-11-27) costs some stresses: 114 misses before, about 290
+    // after.
+    expect(misses / syllables).toBeLessThan(0.015);
+    expect(restMisses / syllables).toBeLessThan(0.005);
   }, 120_000);
 });

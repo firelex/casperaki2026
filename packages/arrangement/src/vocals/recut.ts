@@ -58,8 +58,8 @@ const COST = { length: 1, movePerStep: 2, moveBeatPerStep: 3, drop: 3, split: 3,
 /** Small words that carry no meaning of their own: pronouns, articles, auxiliaries and modals (and their
  *  contractions), prepositions and conjunctions. Held a beat or more inside a line they sound wrong ("don't" held before
  *  "give a frown", owner 2026-11-27), so holding one costs as much as dropping a pattern note: the search keeps a
- *  pattern's long note on such a word only when moving it costs more. */
-const SMALL_WORDS: ReadonlySet<string> = new Set([
+ *  pattern's long note on such a word only when moving it costs more; each beat held costs it again. */
+export const SMALL_WORDS: ReadonlySet<string> = new Set([
   'a', 'an', 'the', 'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
   'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'us', 'them',
   "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'll", "you'll",
@@ -71,6 +71,9 @@ const SMALL_WORDS: ReadonlySet<string> = new Set([
   'to', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 'up', 'down', 'out', 'off', 'into', 'onto', 'through',
   'and', 'but', 'or', 'so', 'if', 'as', 'than', 'when', 'while',
 ]);
+/** What a rest between two words of a line costs: after a small word, which leads into the next ("the | candles"),
+ *  and shorter than a beat (an eighth then an eighth rest sounds clipped; sung on, it is a quarter). */
+const REST = { afterSmallWord: 12, short: 12 } as const;
 /** A note may move this far onto (or from) a pattern note and still count as that note moved. */
 const MAX_MOVE = 2;
 
@@ -333,9 +336,13 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
           stress += stressCost(last, st.pd, same ? d : undefined, s, syl[st.j - 1]!);
           pd = same ? last.d : undefined;
         }
-        const held = y.small && d >= Q && st.j < syl.length - 1 ? COST.heldSmallWord : 0;
+        const held = y.small && d >= Q && st.j < syl.length - 1 ? (COST.heldSmallWord * d) / Q : 0;
+        // A rest between words of a line is a breath of a beat or more, and never after a small word (owner,
+        // 2026-11-27: "Got the cake and the candles lit" phrased awkwardly, an eighth then a rest, "the | candles").
+        const gap = first ? 0 : s - (st.last!.s + st.last!.d);
+        const rest = gap > 0 ? (syl[st.j - 1]!.small ? REST.afterSmallWord : 0) + (gap < Q ? REST.short : 0) : 0;
         for (const p of placements(s, d, st.k)) {
-          const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost + held + stress };
+          const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost + held + stress + rest };
           const nk = key(next);
           if (done.has(nk) || (best.get(nk) ?? Infinity) <= next.g) continue;
           best.set(nk, next.g);
