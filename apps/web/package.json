@@ -29,7 +29,9 @@
     "svg2pdf.js": "^2.9.0",
     "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a",
     "three": "^0.187.0",
-    "@pixiv/three-vrm": "^3.6.0"
+    "@pixiv/three-vrm": "^3.6.0",
+    "zod": "^4.6.7",
+    "three-mesh-bvh": "^0.10.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",

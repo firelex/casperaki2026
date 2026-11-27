@@ -350,6 +350,9 @@ function versionEngineImports(): Plugin {
 export default defineConfig({
   define: { __ENGINE_VERSION__: JSON.stringify(engineVersion) },
   plugins: [react(), tailwindcss(), renderDemoFixtures(), versionEngineImports()],
+  // The video engine (@casperaki/video/avatar) is a git dependency whose pnpm folder name holds a "#": Rollup cannot
+  // resolve its own imports from there, so they come from this app's copies (same versions as the engine's).
+  resolve: { dedupe: ['zod', 'three', '@pixiv/three-vrm', 'three-mesh-bvh'] },
   server: {
     port: 5173,
     headers: crossOriginIsolation,

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { checkRecipe, defaultRecipe, parsePack, type PackManifest } from '@casperaki/video/avatar';
 
 import { packFileUrl } from '../src/api/avatars';
-import { chooseColor, choosePart, chooseTexture, colorChoices, droppedText, groupLabel, orderedGroups, partThumbnail, textureChoices } from '../src/avatars/recipeEdit';
+import { chooseColor, choosePart, chooseTexture, colorChoices, droppedText, groupLabel, orderedGroups, partThumbnail, startingRecipe, textureChoices } from '../src/avatars/recipeEdit';
 import { voiceText } from '../src/pages/AvatarsPage';
 import type { SingerInfo } from '../src/api/singers';
 
@@ -142,6 +142,10 @@ describe('the real packs', () => {
       const solo = m.traits.find((t) => t.trait === 'chest')!.collection.find((i) => JSON.stringify(i.type ?? '').includes('solo'))!;
       const r = choosePart(choosePart(defaultRecipe(name, m), m, 'chest', solo.id).recipe, m, 'outer', jacket);
       expect(r.dropped.map((d) => d.group)).toEqual(['chest']);
+      // A new avatar starts dressed: hair, top, trousers and shoes that go together.
+      const start = startingRecipe(name, m);
+      expect(Object.keys(start.parts).sort()).toEqual(['body', 'chest', 'eyes', 'feet', 'head', 'legs']);
+      checkRecipe(start, m);
     });
   }
 });

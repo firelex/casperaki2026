@@ -3,7 +3,7 @@
 // restrictions (a jacket can't go over a hoodie, trousers not with tall boots), and what the choices look like
 // (thumbnails, swatches, names for people).
 
-import { colorCollection, packGroup, packItem, textureCollection, type AvatarRecipe, type PackItem, type PackManifest } from '@casperaki/video/avatar';
+import { colorCollection, defaultRecipe, packGroup, packItem, textureCollection, type AvatarRecipe, type PackItem, type PackManifest } from '@casperaki/video/avatar';
 
 /** The groups as the dressing room names them. */
 export const GROUP_LABELS: Readonly<Record<string, string>> = {
@@ -198,6 +198,27 @@ export function choosePart(recipe: AvatarRecipe, pack: PackManifest, group: stri
     dropped.push({ group: g, name: other.name, because: item.name });
   }
   return { recipe: { ...recipe, parts, textures, colors }, dropped };
+}
+
+/** The groups a new avatar starts dressed in (hair, top, trousers, shoes), so it is not bald in underwear. */
+const STARTING_GROUPS = ['head', 'chest', 'legs', 'feet'];
+
+/** A new avatar: the pack's required parts plus, in each of STARTING_GROUPS the pack has, its first part that goes
+ *  with what is already on (no part taken off). */
+export function startingRecipe(packName: string, pack: PackManifest): AvatarRecipe {
+  let recipe = defaultRecipe(packName, pack);
+  for (const g of STARTING_GROUPS) {
+    const group = packGroup(pack, g);
+    if (!group) continue;
+    for (const item of group.collection) {
+      const c = choosePart(recipe, pack, g, item.id);
+      if (c.dropped.length === 0) {
+        recipe = c.recipe;
+        break;
+      }
+    }
+  }
+  return recipe;
 }
 
 /** Sets the colouring of the group's part (null: the part's own). */

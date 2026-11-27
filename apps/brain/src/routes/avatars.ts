@@ -62,7 +62,8 @@ export function createAvatarsRouter(deps: AvatarsRouterDeps): Router {
   router.get(/^\/api\/avatar-packs\/([a-z0-9_-]+)\/(.+)$/u, (req, res) => {
     if (notSetUp(res)) return;
     const params = req.params as unknown as Record<string, string>;
-    const file = deps.packs!.file(params[0]!, decodeURIComponent(params[1]!));
+    // Express has already decoded the path.
+    const file = deps.packs!.file(params[0]!, params[1]!);
     if (!file) return res.status(404).json({ error: 'not_found', message: `There is no file ${params[1]} in the avatar pack "${params[0]}".` });
     res.setHeader('cache-control', 'private, max-age=86400');
     return res.sendFile(file);

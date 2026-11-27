@@ -1,5 +1,5 @@
 // Add a singer in the web app: the form's checks, the upload request, the Singers page's cards (own singers with
-// their voice reference choice, test line and Delete; built-in ones without), and Add a singer tasks in the Tasks list.
+// their voice reference choice, test line and Delete; built-in ones without test line), and Add a singer tasks in the Tasks list.
 
 import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -87,9 +87,10 @@ describe('the Singers page', () => {
     expect(referenceText({ ...own.reference!, choice: 'beginning' })).toMatch(/^The beginning:/u);
   });
 
-  it('shows a built-in singer without test line or Delete', () => {
+  it('shows a built-in singer without test line, with Delete (for this user only)', () => {
     const out = html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false } }));
-    expect(out).not.toMatch(/Delete|Test line|yours/u);
+    expect(out).not.toMatch(/Test line|yours/u);
+    expect(out).toMatch(/>Delete</u);
   });
 });
 

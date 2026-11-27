@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { buildAvatar, defaultRecipe, packGroup, packItem, type Avatar, type AvatarRecipe, type PackItem, type PackManifest } from '@casperaki/video/avatar';
+import { buildAvatar, packGroup, packItem, type Avatar, type AvatarRecipe, type PackItem, type PackManifest } from '@casperaki/video/avatar';
 
 import { avatarPacksQueryKey, avatarsApi, avatarsQueryKey, packFileUrl, type AvatarInfo, type AvatarPackInfo } from '../api/avatars';
 import { singersApi, singersQueryKey, type SingerInfo } from '../api/singers';
@@ -17,6 +17,7 @@ import {
   isRequired,
   orderedGroups,
   partThumbnail,
+  startingRecipe,
   textureChoices,
 } from '../avatars/recipeEdit';
 import { AppHeader } from '../layout/AppHeader';
@@ -80,7 +81,7 @@ function findPack(packs: readonly AvatarPackInfo[], name: string): AvatarPackInf
 export function DressingRoom({ packs, singers, existing }: { packs: readonly AvatarPackInfo[]; singers: readonly SingerInfo[]; existing: AvatarInfo | undefined }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [recipe, setRecipe] = useState<AvatarRecipe>(() => existing?.recipe ?? defaultRecipe(packs[0]!.name, packs[0]!.manifest));
+  const [recipe, setRecipe] = useState<AvatarRecipe>(() => existing?.recipe ?? startingRecipe(packs[0]!.name, packs[0]!.manifest));
   const [name, setName] = useState(existing?.name ?? '');
   const [singerId, setSingerId] = useState<string | null>(existing?.singerId ?? null);
   const [focus, setFocus] = useState<string | undefined>(undefined);
@@ -162,7 +163,7 @@ export function DressingRoom({ packs, singers, existing }: { packs: readonly Ava
   const pickPack = (p: AvatarPackInfo) =>
     edit(() => {
       if (p.name === recipe.pack) return;
-      setRecipe(defaultRecipe(p.name, p.manifest));
+      setRecipe(startingRecipe(p.name, p.manifest));
       setNotice(`Switched to ${p.title}: its parts start afresh.`);
       setFocus(undefined);
     });

@@ -28,6 +28,7 @@ function writePack(root: string) {
   mkdirSync(join(p, 'body'), { recursive: true });
   writeFileSync(join(p, 'body', 'base.vrm'), 'vrm');
   writeFileSync(join(p, 'icon.png'), 'png');
+  writeFileSync(join(p, 'Half Jacket-icon0.png'), 'spaced');
   writeFileSync(join(root, 'secret.txt'), 'outside the pack');
   writeFileSync(
     join(p, 'manifest.json'),
@@ -86,6 +87,7 @@ describe('avatars', () => {
     const file = await fetch(`${url}/api/avatar-packs/testpack/body/base.vrm`);
     expect(file.status).toBe(200);
     expect(await file.text()).toBe('vrm');
+    expect(await (await fetch(`${url}/api/avatar-packs/testpack/Half%20Jacket-icon0.png`)).text()).toBe('spaced');
     expect((await fetch(`${url}/api/avatar-packs/testpack/%2E%2E/secret.txt`)).status).toBe(404);
     expect((await fetch(`${url}/api/avatar-packs/testpack/missing.vrm`)).status).toBe(404);
     expect((await fetch(`${url}/api/avatar-packs/nopack/icon.png`)).status).toBe(404);
