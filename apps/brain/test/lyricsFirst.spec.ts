@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { ChatMessage, ChatModel } from '../src/llm/chatModel.js';
 import { ARTISTS, drawInspiration, situations } from '../src/lyrics/inspiration.js';
-import { MAX_ROUNDS, writeLyricsFirst, type LyricsFirstRequest } from '../src/lyrics/lyricsFirst.js';
+import { applyLyricsFirst, orchestrate } from '@casperaki/arrangement';
+import { canonicalStringifySong } from '@casperaki/song-schema';
+
+import { MAX_ROUNDS, recentOpenings, writeLyricsFirst, type LyricsFirstRequest } from '../src/lyrics/lyricsFirst.js';
+import { openSongsStore } from '../src/store.js';
 
 const GOOD = {
   verse: ['Saw your phone light up again', 'A name I do not know', 'You said it was nothing', 'But I could see it show'],
@@ -85,5 +89,25 @@ describe('inspiration', () => {
   });
   it('has at least 150 distinct situations', () => {
     expect(new Set(situations()).size).toBeGreaterThanOrEqual(150);
+  });
+});
+
+describe('recent openings', () => {
+  it("are the first sung lines of the owner's most recently changed songs, without this one", () => {
+    const store = openSongsStore({ path: ':memory:' });
+    const verse = (first: string) => [first, 'A name I do not know', 'You said it was nothing', 'But I could see it show'];
+    const chorus = GOOD.chorus;
+    const pre = ['Now I am walking fast', 'Hoping this will last', 'Do not wait for me', 'I am already past'];
+    const bridge = ['Turn the corner lose the map', 'I do not want it back', 'Maybe it is nothing', 'But I like it like that'];
+    const songs = ['Met you at the corner store', 'Saw your phone light up again', 'Driving with the windows down'].map((first, i) =>
+      applyLyricsFirst(orchestrate({ genre: 'brightPop', key: 'C', bpm: 110, seed: 'a' }), { verse: verse(first), preChorus: pre, chorus, bridge }),
+    );
+    songs.forEach((song, i) => {
+      const id = `s${i}`;
+      store.put({ id, song, canonical: canonicalStringifySong(song, 2), hash: `h${i}`, createdAt: '2026-11-27T00:00:00Z' });
+      store.upsertProject({ ownerId: 'o', songId: id, title: `T${i}`, createdAt: '2026-11-27T00:00:00Z', updatedAt: `2026-11-27T0${i}:00:00Z` });
+    });
+    expect(recentOpenings(store, 'o', 's1')).toEqual(['Driving with the windows down', 'Met you at the corner store']);
+    store.close();
   });
 });

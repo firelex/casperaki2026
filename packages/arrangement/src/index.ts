@@ -293,6 +293,7 @@ export {
   orchestrate,
   type LowerInputs,
   instrumentDefinitionFromCatalog,
+  vocalSelections,
 } from './orchestrate/index.js';
 export {
   VocalBarSchema,

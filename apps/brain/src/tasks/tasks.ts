@@ -20,13 +20,14 @@ import { join, resolve } from 'node:path';
 
 import { z } from 'zod';
 
-import { AceLayerResultSchema, applyAceLayer, applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, segmentType, sungSections, vocalMelodyShown, vocalSelections, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
 import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../ace/aceLayerTask.js';
 import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
-import { writeLyrics } from '../lyrics/lyricist.js';
+import { drawInspiration } from '../lyrics/inspiration.js';
+import { LyricsFirstResultSchema, recentOpenings, TYPE_LABELS, writeLyricsFirst } from '../lyrics/lyricsFirst.js';
 import { defaultTitle } from '../routes/songs.js';
 import { checkSectionsGenerated, planSinging, SingError } from '../sing/plan.js';
 import { checkUnchanged, isPlainFileName, runSing, SingResultSchema, SONG_CHANGED, SongChangedError, TASK_FILE_STAGES } from '../sing/singTask.js';
@@ -494,13 +495,32 @@ export class BackgroundTasks {
       const model = this.deps.lyricModel;
       if (!model) throw new Error('the brain has no language model to write lyrics with (ASSISTANT_LLM_URL)');
       const input = parseSong(JSON.parse(task.input));
-      // The words fit the melody the generator writes for the song (applying them regenerates the vocal tracks).
-      const generated = orchestrate(generatorParams(input));
-      const sections = sungSections(generated).map((s) => s.name);
-      // A real title gives the lyrics their theme; the placeholder ("Bright Pop in C") does not.
-      const project = this.deps.store.getProject(task.ownerId, songIdOf(task));
-      const title = project && project.title !== defaultTitle(input.genre ?? '', input.key) ? project.title : undefined;
-      return await writeLyrics(generated, model, { sections, ...(title ? { title } : {}) });
+      // Lyrics first (docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md): the words come before the
+      // notes; applying them bends a rhythm to them (applyLyricsFirst). Per sung section type, one line per two bars
+      // of the melody the generator chose for it, in song order.
+      const params = generatorParams(input);
+      const selections = vocalSelections(params);
+      const types: { type: string; label: string; lines: number }[] = [];
+      for (const s of orchestrate(params).songStructure) {
+        const type = segmentType(s.name);
+        const melody = selections.get(type);
+        if (!melody || types.some((t) => t.type === type)) continue;
+        const label = TYPE_LABELS[type];
+        if (!label) throw new Error(`lyrics first: no name for the section type "${type}" to give the lyric writer`);
+        types.push({ type, label, lines: (melody.properties.end - melody.properties.start) / 2 });
+      }
+      if (types.length === 0) throw new Error('the song has no sung section to write lyrics for');
+      const songId = songIdOf(task);
+      const project = this.deps.store.getProject(task.ownerId, songId);
+      if (!project) throw new Error(`the owner has no project for song ${songId}`);
+      const lyrics = await writeLyricsFirst(model, {
+        types,
+        title: project.title,
+        genre: params.genre,
+        recentOpenings: recentOpenings(this.deps.store, task.ownerId, songId),
+        inspiration: drawInspiration(Math.random),
+      });
+      return { lyricsFirst: lyrics };
     }
     if (task.kind === 'sing') {
       const sing = this.deps.sing;
@@ -615,7 +635,11 @@ function songIdOf(task: TaskRow): string {
 
 /** The song with the task's result in it. */
 function resultInto(task: TaskRow, song: Song): Song {
-  if (task.kind === 'writeLyrics') return applyWrittenLyrics(song, WrittenLyricsSchema.parse(task.result));
+  if (task.kind === 'writeLyrics') {
+    // Lyrics first ({ lyricsFirst }), or words written to a melody (section → lines: tasks before 2026-11-27).
+    const first = LyricsFirstResultSchema.safeParse(task.result);
+    return first.success ? applyLyricsFirst(song, first.data.lyricsFirst) : applyWrittenLyrics(song, WrittenLyricsSchema.parse(task.result));
+  }
   if (task.kind === 'sing') {
     const result = SingResultSchema.parse(task.result);
     checkUnchanged(parseSong(JSON.parse(task.input)), song, result);

@@ -22,6 +22,13 @@ describe('cleanTitle', () => {
 });
 
 describe('songPrompt', () => {
+  it('asks for a short chart-pop title, not a poetic image', () => {
+    const prompt = songPrompt(orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'pop-title' }), []);
+    expect(prompt).toMatch(/chart-pop/u);
+    for (const s of ['Bad Idea', 'Kiss Me Back', 'Not Your Girl', 'Cinnamon Boulevard']) expect(prompt).toContain(s);
+    expect(prompt).not.toMatch(/Evocative/u);
+  });
+
   it('describes the song and lists the titles to avoid', () => {
     const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'titles' });
     const prompt = songPrompt(song, ['Still Water']);

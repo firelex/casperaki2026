@@ -27,6 +27,8 @@ export function fakeLyricModel(script: Readonly<Record<number, (messages: readon
       calls.push({ messages, thinking: options.thinking });
       const scripted = script[calls.length];
       if (scripted) return scripted(messages);
+      const firstAsk = messages.find((m) => m.role === 'user')!.content;
+      if (firstAsk.includes(LYRICS_FIRST_FORM)) return lyricsFirstAnswer(firstAsk, calls.length);
       if (messages[0]!.content.includes('careful editor')) return JSON.stringify({ problems: [] });
       if (messages.length > 2) return JSON.stringify({ lines: [] });
       return JSON.stringify(asVersions(fittingParts(messages[1]!.content)));
@@ -69,4 +71,33 @@ export function fittingParts(brief: string): Record<string, { text: string }[]> 
     parts[part]!.push({ text: [...Array.from({ length: count - 1 }, () => 'la'), word].join(' ') });
   }
   return parts;
+}
+
+// ---- lyrics first (lyricsFirst.ts): the whole song in parts, no melody to fit ----
+
+const LYRICS_FIRST_FORM = 'Answer with JSON only, in this form: {"sections"';
+const OPENERS = ['Summer', 'Morning', 'Silver', 'Golden', 'Maybe', 'Somewhere', 'Yesterday', 'Honey', 'Thunder', 'Window', 'Pocket', 'Candle'];
+const FREE_ENDS = ['heart', 'dream', 'soul', 'road', 'home', 'sun', 'time', 'life', 'world', 'hand', 'door', 'town', 'phone', 'car'];
+
+/** Lines that pass checkFreeLyrics: "<opener> la la <end>", ABCB rhymes from one family per part, every line-ending word
+ *  used once; the opening word changes with every call, so a song never starts like an earlier one. */
+function lyricsFirstAnswer(brief: string, call: number): string {
+  const form = JSON.parse(brief.slice(brief.indexOf(LYRICS_FIRST_FORM) + LYRICS_FIRST_FORM.length - '{"sections"'.length)) as { sections: { name: string; lines: string[] }[] };
+  let free = 0;
+  const sections = form.sections.map((s, p) => {
+    const family = FAMILIES[p % FAMILIES.length]!;
+    let rhyme = 0;
+    const n = s.lines.length;
+    const lines = s.lines.map((_, i) => {
+      // ABCB in fours; a leftover pair rhymes, a leftover three is ABA.
+      const inGroup = i % 4;
+      const groupSize = Math.min(4, n - (i - inGroup));
+      const rhymes = groupSize === 4 ? inGroup === 1 || inGroup === 3 : groupSize === 3 ? inGroup !== 1 : groupSize === 2;
+      const end = rhymes ? family[rhyme++]! : FREE_ENDS[free++]!;
+      const opener = p === 0 && i === 0 ? OPENERS[call % OPENERS.length]! : 'Oh';
+      return `${opener} la la ${end}`;
+    });
+    return { name: s.name, lines };
+  });
+  return JSON.stringify({ sections });
 }

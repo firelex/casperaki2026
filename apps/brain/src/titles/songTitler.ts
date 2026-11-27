@@ -119,8 +119,8 @@ export function songPrompt(song: Song, takenTitles: readonly string[]): string {
     '',
     'Rules:',
     ...(chorus ? ['- Take the title from the chorus words where a phrase in them makes a good title, as songs usually do.'] : []),
-    '- One to four words, in English, the way a real song in this style might be called.',
-    '- Evocative and specific: an image, a place, a feeling or a short phrase.',
+    '- A short chart-pop title, one to four words in English: a phrase someone would say or sing, like "Bad Idea", "Kiss Me Back" or "Not Your Girl".',
+    '- Not a poetic image or a place name like "Cinnamon Boulevard": the chorus is built on the title, so it must sound like something people say.',
     '- Do not mention the style, the key, the tempo or any instrument.',
     '- Do not use the title of a well-known existing song.',
   ];

@@ -10,6 +10,34 @@ import { checkFreeLyrics, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES, type FreeLyric
 import { z } from 'zod';
 
 import type { ChatMessage, ChatModel } from '../llm/chatModel.js';
+import type { SongsStore } from '../store.js';
+
+/** A finished Write lyrics task's result: the words per section type. */
+export const LyricsFirstResultSchema = z.object({ lyricsFirst: z.record(z.string().min(1), z.array(z.string().min(1)).min(1)) }).strict();
+
+/** The section types' names for the lyric writer. */
+export const TYPE_LABELS: Readonly<Record<string, string>> = { verse: 'Verse', preChorus: 'Pre-chorus', chorus: 'Chorus', bridge: 'Bridge' };
+
+/** How many of the owner's songs, most recently changed first, the new song's opening must not start like. */
+export const RECENT_SONGS = 50;
+
+/** The first sung line of each of the owner's most recently changed songs (other than `exceptSongId`) that has
+ *  written words. */
+export function recentOpenings(store: SongsStore, ownerId: string, exceptSongId: string): string[] {
+  const out: string[] = [];
+  for (const p of store.listProjects(ownerId)) {
+    if (out.length >= RECENT_SONGS) break;
+    if (p.songId === exceptSongId) continue;
+    const stored = store.get(p.songId);
+    if (!stored) throw new Error(`recent openings: the project "${p.title}" points at song ${p.songId}, which is not stored`);
+    const song = JSON.parse(stored.canonical) as { songStructure?: { name: string }[]; generator?: { params?: { params?: { lyrics?: Record<string, string[]> } } } };
+    const lyrics = song.generator?.params?.params?.lyrics;
+    if (!lyrics) continue;
+    const first = (song.songStructure ?? []).find((s) => lyrics[s.name]?.length);
+    if (first) out.push(lyrics[first.name]![0]!);
+  }
+  return out;
+}
 
 /** Answers from the model in all: the first draft and its repairs. */
 export const MAX_ROUNDS = 8;
