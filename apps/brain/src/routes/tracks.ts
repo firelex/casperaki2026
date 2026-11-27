@@ -14,7 +14,9 @@
 //       | { kind: 'applySung', result, sungOver, partial? }  a finished Sing (or, with partial, Transcribe melody) task's result put into the posted working copy (sungOver: the saved version, whose take fingerprints it keeps; partial: the result covers only its melody's sections)
 //       | { kind: 'applyAceLayer', result }  a finished ACE layer task's clips on their "ACE <Instrument>" track
 //       | { kind: 'applyLyrics', lyrics }  written lyrics (section → lines) on the vocal tracks (a finished Write
-//                                          lyrics task merged into unsaved edits)
+//                                          lyrics task merged into unsaved edits, tasks before 2026-11-27)
+//       | { kind: 'applyLyricsFirst', lyrics }  lyrics written first (section type → lines): a rhythm bent to them
+//       | { kind: 'newRhythm', section }   another rhythm bent to the words of every section of that type
 //     The edit is recorded in the song's generator block and only the edited
 //     track changes in the posted (working) song (for a new melody: every track
 //     of the sections of that type). Removing a track is a client-side edit.
@@ -47,7 +49,7 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { AceLayerResultSchema, applyAceLayer, applySungVocalsOver, applyWrittenLyrics, newMelody, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocalsOver, applyWrittenLyrics, newMelody, newRhythm, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 import { SingResultSchema } from '../sing/singTask.js';
@@ -59,6 +61,8 @@ const VocalEditSchema = z.union([
   z.object({ kind: z.literal('newMelody'), section: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('writeMelody') }).strict(),
   z.object({ kind: z.literal('applyLyrics'), lyrics: WrittenLyricsSchema }).strict(),
+  z.object({ kind: z.literal('applyLyricsFirst'), lyrics: z.record(z.string().min(1), z.array(z.string().min(1)).min(1)) }).strict(),
+  z.object({ kind: z.literal('newRhythm'), section: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('applySung'), result: SingResultSchema, sungOver: z.unknown(), partial: z.boolean().optional() }).strict(),
   z.object({ kind: z.literal('applyAceLayer'), result: AceLayerResultSchema }).strict(),
 ]);
@@ -109,10 +113,12 @@ export function createTracksRouter({ isSinging }: TracksRouterDeps): Router {
     if (!song) return;
     const op = body.data.op;
     const songId = body.data.songId;
-    if ((op.kind === 'newMelody' || op.kind === 'writeMelody') && songId !== undefined && isSinging(ownerOf(req), songId)) {
+    if ((op.kind === 'newMelody' || op.kind === 'newRhythm' || op.kind === 'writeMelody') && songId !== undefined && isSinging(ownerOf(req), songId)) {
       return res.status(409).json({ error: 'already_singing', message: 'Already singing' });
     }
     if (op.kind === 'newMelody') return run(res, () => ({ song: newMelody(song, segmentType(op.section)).song, track: 'Vocal' }));
+    if (op.kind === 'newRhythm') return run(res, () => ({ song: newRhythm(song, segmentType(op.section)), track: 'Vocal' }));
+    if (op.kind === 'applyLyricsFirst') return run(res, () => ({ song: applyLyricsFirst(song, op.lyrics), track: 'Vocal' }));
     if (op.kind === 'writeMelody') return run(res, () => ({ song: writeMelody(song), track: 'Vocal' }));
     if (op.kind === 'applyAceLayer') return run(res, () => ({ song: applyAceLayer(song, op.result), track: op.result.track }));
     if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));

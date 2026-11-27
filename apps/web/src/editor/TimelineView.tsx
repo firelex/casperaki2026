@@ -29,7 +29,7 @@ import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
 import { TASK_LABELS, tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { useTasks } from '../state/tasks';
-import { bytesToBase64, lyricsWritten, staleTakes, startOnSaved, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
+import { bytesToBase64, lyricsFirstType, lyricsWritten, staleTakes, startOnSaved, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
 import { hasNotes } from './audioOnlyTracks';
 import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
@@ -529,6 +529,8 @@ export function TimelineView() {
   const newPattern = (track: string) => void edits.run({ kind: 'newPattern', track }, `New pattern for ${track}`);
   /** A new melody for every section of the clicked section's type ("chorus2" → all choruses). */
   const newMelody = (section: string) => void edits.run({ kind: 'newMelody', section }, `Writing a new melody for all ${plural(section)}`, activeSong?.id);
+  /** Another rhythm bent to the words of every section of the clicked section's type (lyrics written first). */
+  const newRhythm = (section: string) => void edits.run({ kind: 'newRhythm', section }, `Bending a new rhythm to the words of all ${plural(section)}`, activeSong?.id);
   // The Vocal track's steps (docs/superpowers/specs/2026-11-25-vocal-tasks-design.md): Write melody is an edit; Write
   // lyrics a background task on the song (the Tasks menu shows it; its words go in when playback stops).
   const queryClient = useQueryClient();
@@ -817,6 +819,11 @@ export function TimelineView() {
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
               onNewMelody={t.name === LEAD_VOCAL_NAME ? (s) => newMelody(model.sections[s]!.name) : undefined}
+              onNewRhythm={
+                t.name === LEAD_VOCAL_NAME && viewSong
+                  ? (s) => (lyricsFirstType(viewSong, model.sections[s]!.name) ? () => newRhythm(model.sections[s]!.name) : undefined)
+                  : undefined
+              }
               vocal={
                 t.name === LEAD_VOCAL_NAME
                   ? {
@@ -1205,6 +1212,7 @@ function TrackMenu({
   onChangeSound,
   onNewPattern,
   onNewMelody,
+  onNewRhythm,
   vocal,
   onRemove,
   onAdd,
@@ -1227,6 +1235,8 @@ function TrackMenu({
   onNewPattern(): void;
   /** The lead vocal: a new melody for every section of the clicked section's type. */
   onNewMelody: ((section: number) => void) | undefined;
+  /** Per section: New rhythm, when its type's lyrics were written first. */
+  onNewRhythm: ((section: number) => (() => void) | undefined) | undefined;
   /** The lead vocal's steps: Write melody, Write lyrics (with why they cannot be done now). */
   vocal: VocalSteps | undefined;
   onRemove(): void;
@@ -1289,6 +1299,11 @@ function TrackMenu({
                 <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onNewMelody(section)}>
                   Change melody <span className="ml-auto pl-6 text-[12px] text-white/40">all {plural(sections[section]!.name)}</span>
                 </ContextMenuItem>
+                {onNewRhythm?.(section) ? (
+                  <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onNewRhythm(section)?.()}>
+                    New rhythm <span className="ml-auto pl-6 text-[12px] text-white/40">all {plural(sections[section]!.name)}</span>
+                  </ContextMenuItem>
+                ) : null}
                 <ContextMenuSeparator className="my-1 h-px bg-line" />
               </>
             ) : null}

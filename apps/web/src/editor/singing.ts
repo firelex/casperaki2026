@@ -5,6 +5,13 @@ import { SUNG_TAKE_KINDS, vocalTakeCanonical } from '@casperaki/song-schema/voca
 import type { BackgroundTask } from '../api/tasks';
 
 /** Whether the song has written lyrics (generator params: section → lines), as Sing needs them. */
+/** Whether the section's type has its lyrics written first: a rhythm bent to its words (generator params
+ *  `lyricRhythms`, docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md), so New rhythm applies to it. */
+export function lyricsFirstType(song: { readonly generator?: { readonly params?: unknown } }, section: string): boolean {
+  const recuts = (song.generator?.params as { params?: { lyricRhythms?: Record<string, unknown> } } | undefined)?.params?.lyricRhythms;
+  return recuts !== undefined && section.replace(/\d+$/u, '') in recuts;
+}
+
 export function lyricsWritten(song: { readonly generator?: { readonly params?: unknown } }): boolean {
   const lyrics = (song.generator?.params as { params?: { lyrics?: Record<string, readonly unknown[] | undefined> } } | undefined)?.params?.lyrics;
   return lyrics !== undefined && Object.values(lyrics).some((lines) => (lines?.length ?? 0) > 0);

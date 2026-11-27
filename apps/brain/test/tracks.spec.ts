@@ -3,7 +3,7 @@
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { orchestrate } from '@casperaki/arrangement';
+import { applyLyricsFirst, orchestrate, sungSections } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
@@ -38,6 +38,29 @@ describe('track editing routes', () => {
   let h: Harness;
   beforeEach(async () => { h = await boot(); });
   afterEach(async () => { await h.stop(); });
+
+  it('applies lyrics written first and bends a new rhythm to them', async () => {
+    const base = orchestrate({ genre: 'brightPop', key: 'C', bpm: 110, seed: 'a' });
+    const lyrics = {
+      verse: ['Saw your phone light up again', 'A name I do not know', 'You said it was nothing', 'But I could see it show'],
+      preChorus: ['Now I am walking fast', 'Hoping this will last', 'Do not wait for me', 'I am already past'],
+      chorus: ['You gotta feel it', 'Take me home tonight', 'Maybe I was wrong about you', 'Hold me till the light'],
+      bridge: ['Turn the corner lose the map', 'I do not want it back', 'Maybe it is nothing', 'But I like it like that'],
+    };
+    const applied = await post(`${h.url}/api/tracks/edit`, { song: base, op: { kind: 'applyLyricsFirst', lyrics } });
+    expect(applied.status).toBe(200);
+    const written = ((await applied.json()) as { song: Song }).song;
+    expect(JSON.stringify(written)).toBe(JSON.stringify(applyLyricsFirst(base, lyrics)));
+    const res = await post(`${h.url}/api/tracks/edit`, { song: written, op: { kind: 'newRhythm', section: 'chorus2' } });
+    expect(res.status).toBe(200);
+    const again = ((await res.json()) as { song: Song }).song;
+    const chorus = (s: Song) => sungSections(s).find((x) => x.name === 'chorus1')!;
+    expect(chorus(again).words).toEqual(chorus(written).words);
+    expect(JSON.stringify(again.arrangement.chorus1!.overrides.Vocal)).not.toBe(JSON.stringify(written.arrangement.chorus1!.overrides.Vocal));
+    const refused = await post(`${h.url}/api/tracks/edit`, { song: base, op: { kind: 'newRhythm', section: 'chorus1' } });
+    expect(refused.status).toBe(409);
+    expect(((await refused.json()) as { error: string }).error).toBe('no_lyrics');
+  });
 
   it('lists each track and the sounds per family', async () => {
     const res = await post(`${h.url}/api/tracks/options`, { song: song() });

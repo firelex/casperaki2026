@@ -58,6 +58,9 @@ export function mergeOp(kind: BackgroundTask['kind'], result: AppliedTask['resul
   if (kind === 'transcribe') return { kind: 'applySung', result, sungOver: saved, partial: true };
   if (kind === 'aceLayer') return { kind: 'applyAceLayer', result };
   if (kind === 'addSinger') throw new Error('Add a singer has no result to put into a song');
+  // Lyrics written first ({ lyricsFirst }: section type → lines), or words written to a melody (section → lines).
+  const first = (result as { lyricsFirst?: unknown } | null)?.lyricsFirst;
+  if (first !== undefined) return { kind: 'applyLyricsFirst', lyrics: first as Readonly<Record<string, readonly string[]>> };
   return { kind: 'applyLyrics', lyrics: result as Readonly<Record<string, readonly string[]>> };
 }
 
