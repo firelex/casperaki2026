@@ -574,3 +574,34 @@ export function attachWrittenLyrics(segment: VocalSegment, text: readonly string
 
 export type { LyricLine, LyricSlot };
 export { lyricLines, lyricSlots, rhymeScheme };
+
+/** One syllable as a line sings it on its notes (for the length rule, syllable-length.ts). */
+export interface SungLineSyllable {
+  /** The word it belongs to, as written. */
+  readonly word: string;
+  /** ARPAbet of the syllable, uppercase with stress digits. */
+  readonly phones: readonly string[];
+  /** Whether it is its word's last syllable. */
+  readonly endsWord: boolean;
+  /** How long it is sung, in beats: its note, and any held notes that carry it on. */
+  readonly beats: number;
+}
+
+/** The line's syllables as sung on these notes (the same choice of sung forms, held and split notes as the line check
+ *  makes), or undefined when the line does not fit the notes at all (unknown words or the syllable count). */
+export function sungLineSyllables(text: string, slots: LyricLine): SungLineSyllable[] | undefined {
+  const { words, unknown } = parseLine(text);
+  if (unknown.length > 0) return undefined;
+  const plan = planLine(words, slots);
+  if (!plan) return undefined;
+  const sung = sungNotes(slots, plan);
+  const parts = plan.words.flatMap(({ word, p }) => p.phones.map((phones, i) => ({ word, phones, endsWord: i === p.phones.length - 1 })));
+  if (parts.length !== sung.length) throw new Error(`sungLineSyllables: ${parts.length} syllables on ${sung.length} sung notes for "${text}"`);
+  return sung.map((n, k) => {
+    let beats = n.duration;
+    // Held notes right after this note's slot carry this syllable on (only the last syllable sung on a slot).
+    const lastOnSlot = sung[k + 1]?.slot !== n.slot;
+    if (lastOnSlot) for (let i = n.slot + 1; plan.held.has(i); i++) beats += slots[i]!.duration;
+    return { ...parts[k]!, beats };
+  });
+}
