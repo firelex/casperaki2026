@@ -13,6 +13,7 @@
 // the phrase bank.
 
 import { readFileSync } from 'node:fs';
+import nlp from 'compromise';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
@@ -115,6 +116,48 @@ export function pronounce(word: string): Pronunciation | undefined {
   return pronunciation(key, phones, splitWord(key, phones));
 }
 
+const StressShiftsSchema = z
+  .object({ $schemaVersion: z.literal(1), $source: z.string(), words: z.record(z.string(), z.object({ early: z.array(z.string()).min(2), late: z.array(z.string()).min(2) }).strict()) })
+  .strict();
+let shifts: ReadonlyMap<string, { readonly early: readonly string[]; readonly late: readonly string[] }> | undefined;
+
+/** Noun/verb stress-shift words with both their pronunciations (data/lyrics/stress-shifts.json, from the official CMU
+ *  dictionary by scripts/build-stress-shifts.mjs). */
+function stressShifts(): ReadonlyMap<string, { readonly early: readonly string[]; readonly late: readonly string[] }> {
+  if (shifts) return shifts;
+  const path = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data', 'lyrics', 'stress-shifts.json');
+  shifts = new Map(Object.entries(StressShiftsSchema.parse(JSON.parse(readFileSync(path, 'utf8'))).words));
+  return shifts;
+}
+
+const plain = (w: string) => w.toLowerCase().replace(/[‘’`]/gu, "'").replace(/[^a-z']/gu, '');
+
+/**
+ * The pronunciations of a line's words (wordsOf order; undefined for a word the dictionary does not know), read as a
+ * sentence (owner, 2026-11-27: "full of perfect" was sung per-FECT): a noun/verb stress-shift word sung as a verb takes
+ * its late stress ("I'll per-FECT it", "re-CORD the song"), as anything else its early one ("PER-fect", "a RE-cord").
+ * The part of speech comes from compromise, a part-of-speech tagger for English.
+ */
+export function pronounceLine(text: string): (Pronunciation | undefined)[] {
+  const words = wordsOf(text);
+  const table = stressShifts();
+  if (!words.some((w) => table.has(plain(w)))) return words.map((w) => pronounce(w));
+  const terms = nlp(text).terms().json() as { terms: { text: string; tags: string[] }[] }[];
+  const tagged = terms.map((t) => ({ word: plain(t.terms[0]!.text), verb: t.terms[0]!.tags.includes('Verb') }));
+  const seen = new Map<string, number>();
+  return words.map((w) => {
+    const key = plain(w);
+    const forms = table.get(key);
+    if (!forms) return pronounce(w);
+    const k = seen.get(key) ?? 0;
+    seen.set(key, k + 1);
+    const term = tagged.filter((t) => t.word === key)[k];
+    if (!term) throw new Error(`written lyrics: the tagger lost "${w}" in "${text}"`);
+    const phones = (term.verb ? forms.late : forms.early).map((x) => x.split(' '));
+    return pronunciation(key, phones, splitWord(key, phones));
+  });
+}
+
 /** The words of a line of text: split at spaces and dashes, punctuation dropped (apostrophes kept). */
 export function wordsOf(text: string): string[] {
   return text
@@ -180,8 +223,9 @@ function shortForm(key: string, p: Pronunciation): Pronunciation | undefined {
 function parseLine(text: string): { words: ParsedWord[]; unknown: string[] } {
   const words: ParsedWord[] = [];
   const unknown: string[] = [];
-  for (const word of wordsOf(text)) {
-    const p = pronounce(word);
+  const read = pronounceLine(text);
+  for (const [i, word] of wordsOf(text).entries()) {
+    const p = read[i];
     if (!p) {
       unknown.push(word);
       continue;

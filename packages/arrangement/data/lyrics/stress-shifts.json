@@ -1,0 +1,766 @@
+{
+ "$schemaVersion": 1,
+ "$source": "github.com/cmusphinx/cmudict cmudict.dict",
+ "words": {
+  "abstract": {
+   "early": [
+    "AE1",
+    "B S T R AE2 K T"
+   ],
+   "late": [
+    "AE0",
+    "B S T R AE1 K T"
+   ]
+  },
+  "accent": {
+   "early": [
+    "AE1",
+    "K S EH2 N T"
+   ],
+   "late": [
+    "AH0",
+    "K S EH1 N T"
+   ]
+  },
+  "addict": {
+   "early": [
+    "AE1",
+    "D IH2 K T"
+   ],
+   "late": [
+    "AH0",
+    "D IH1 K T"
+   ]
+  },
+  "address": {
+   "early": [
+    "AE1",
+    "D R EH2 S"
+   ],
+   "late": [
+    "AH0",
+    "D R EH1 S"
+   ]
+  },
+  "affix": {
+   "early": [
+    "AE1",
+    "F IH0 K S"
+   ],
+   "late": [
+    "AH0",
+    "F IH1 K S"
+   ]
+  },
+  "ally": {
+   "early": [
+    "AE1",
+    "L AY0"
+   ],
+   "late": [
+    "AH0",
+    "L AY1"
+   ]
+  },
+  "annex": {
+   "early": [
+    "AE1",
+    "N EH2 K S"
+   ],
+   "late": [
+    "AH0",
+    "N EH1 K S"
+   ]
+  },
+  "combat": {
+   "early": [
+    "K AA1",
+    "M B AE0 T"
+   ],
+   "late": [
+    "K AH0",
+    "M B AE1 T"
+   ]
+  },
+  "combine": {
+   "early": [
+    "K AA1",
+    "M B AY0 N"
+   ],
+   "late": [
+    "K AH0",
+    "M B AY1 N"
+   ]
+  },
+  "commune": {
+   "early": [
+    "K AA1",
+    "M Y UW0 N"
+   ],
+   "late": [
+    "K AH0",
+    "M Y UW1 N"
+   ]
+  },
+  "compact": {
+   "early": [
+    "K AA1",
+    "M P AE0 K T"
+   ],
+   "late": [
+    "K AH0",
+    "M P AE1 K T"
+   ]
+  },
+  "complex": {
+   "early": [
+    "K AA1",
+    "M P L EH0 K S"
+   ],
+   "late": [
+    "K AH0",
+    "M P L EH1 K S"
+   ]
+  },
+  "compound": {
+   "early": [
+    "K AA1",
+    "M P AW0 N D"
+   ],
+   "late": [
+    "K AH0",
+    "M P AW1 N D"
+   ]
+  },
+  "compress": {
+   "early": [
+    "K AA1",
+    "M P R EH0 S"
+   ],
+   "late": [
+    "K AH0",
+    "M P R EH1 S"
+   ]
+  },
+  "concert": {
+   "early": [
+    "K AA1",
+    "N S ER0 T"
+   ],
+   "late": [
+    "K AH0",
+    "N S ER1 T"
+   ]
+  },
+  "conduct": {
+   "early": [
+    "K AA1",
+    "N D AH0 K T"
+   ],
+   "late": [
+    "K AA0",
+    "N D AH1 K T"
+   ]
+  },
+  "conflict": {
+   "early": [
+    "K AA1",
+    "N F L IH0 K T"
+   ],
+   "late": [
+    "K AH0",
+    "N F L IH1 K T"
+   ]
+  },
+  "conscript": {
+   "early": [
+    "K AA1",
+    "N S K R IH2 P T"
+   ],
+   "late": [
+    "K AH0",
+    "N S K R IH1 P T"
+   ]
+  },
+  "console": {
+   "early": [
+    "K AA1",
+    "N S OW0 L"
+   ],
+   "late": [
+    "K AH0",
+    "N S OW1 L"
+   ]
+  },
+  "construct": {
+   "early": [
+    "K AA1",
+    "N S T R AH0 K T"
+   ],
+   "late": [
+    "K AH0",
+    "N S T R AH1 K T"
+   ]
+  },
+  "contest": {
+   "early": [
+    "K AA1",
+    "N T EH0 S T"
+   ],
+   "late": [
+    "K AH0",
+    "N T EH1 S T"
+   ]
+  },
+  "contract": {
+   "early": [
+    "K AA1",
+    "N T R AE2 K T"
+   ],
+   "late": [
+    "K AH0",
+    "N T R AE1 K T"
+   ]
+  },
+  "contrast": {
+   "early": [
+    "K AA1",
+    "N T R AE0 S T"
+   ],
+   "late": [
+    "K AH0",
+    "N T R AE1 S T"
+   ]
+  },
+  "converse": {
+   "early": [
+    "K AA1",
+    "N V ER0 S"
+   ],
+   "late": [
+    "K AH0",
+    "N V ER1 S"
+   ]
+  },
+  "convert": {
+   "early": [
+    "K AA1",
+    "N V ER0 T"
+   ],
+   "late": [
+    "K AH0",
+    "N V ER1 T"
+   ]
+  },
+  "convict": {
+   "early": [
+    "K AA1",
+    "N V IH0 K T"
+   ],
+   "late": [
+    "K AH0",
+    "N V IH1 K T"
+   ]
+  },
+  "decrease": {
+   "early": [
+    "D IY1",
+    "K R IY2 S"
+   ],
+   "late": [
+    "D IH0",
+    "K R IY1 S"
+   ]
+  },
+  "defect": {
+   "early": [
+    "D IY1",
+    "F EH0 K T"
+   ],
+   "late": [
+    "D IH0",
+    "F EH1 K T"
+   ]
+  },
+  "desert": {
+   "early": [
+    "D EH1",
+    "Z ER0 T"
+   ],
+   "late": [
+    "D IH0",
+    "Z ER1 T"
+   ]
+  },
+  "detail": {
+   "early": [
+    "D IY1",
+    "T EY0 L"
+   ],
+   "late": [
+    "D IH0",
+    "T EY1 L"
+   ]
+  },
+  "digest": {
+   "early": [
+    "D AY1",
+    "JH EH0 S T"
+   ],
+   "late": [
+    "D AY0",
+    "JH EH1 S T"
+   ]
+  },
+  "discharge": {
+   "early": [
+    "D IH1",
+    "S CH AA2 R JH"
+   ],
+   "late": [
+    "D IH0",
+    "S CH AA1 R JH"
+   ]
+  },
+  "discount": {
+   "early": [
+    "D IH1",
+    "S K AW0 N T"
+   ],
+   "late": [
+    "D IH0",
+    "S K AW1 N T"
+   ]
+  },
+  "escort": {
+   "early": [
+    "EH1",
+    "S K AO0 R T"
+   ],
+   "late": [
+    "EH0",
+    "S K AO1 R T"
+   ]
+  },
+  "excise": {
+   "early": [
+    "EH1",
+    "K S AY0 Z"
+   ],
+   "late": [
+    "EH0",
+    "K S AY1 S"
+   ]
+  },
+  "exploit": {
+   "early": [
+    "EH1",
+    "K S P L OY2 T"
+   ],
+   "late": [
+    "EH2",
+    "K S P L OY1 T"
+   ]
+  },
+  "extract": {
+   "early": [
+    "EH1",
+    "K S T R AE2 K T"
+   ],
+   "late": [
+    "IH0",
+    "K S T R AE1 K T"
+   ]
+  },
+  "ferment": {
+   "early": [
+    "F ER1",
+    "M EH0 N T"
+   ],
+   "late": [
+    "F ER0",
+    "M EH1 N T"
+   ]
+  },
+  "impact": {
+   "early": [
+    "IH1",
+    "M P AE0 K T"
+   ],
+   "late": [
+    "IH2",
+    "M P AE1 K T"
+   ]
+  },
+  "implant": {
+   "early": [
+    "IH1",
+    "M P L AE2 N T"
+   ],
+   "late": [
+    "IH2",
+    "M P L AE1 N T"
+   ]
+  },
+  "import": {
+   "early": [
+    "IH1",
+    "M P AO2 R T"
+   ],
+   "late": [
+    "IH2",
+    "M P AO1 R T"
+   ]
+  },
+  "impress": {
+   "early": [
+    "IH1",
+    "M P R EH2 S"
+   ],
+   "late": [
+    "IH2",
+    "M P R EH1 S"
+   ]
+  },
+  "imprint": {
+   "early": [
+    "IH1",
+    "M P R IH0 N T"
+   ],
+   "late": [
+    "IH2",
+    "M P R IH1 N T"
+   ]
+  },
+  "incense": {
+   "early": [
+    "IH1",
+    "N S EH2 N S"
+   ],
+   "late": [
+    "IH2",
+    "N S EH1 N S"
+   ]
+  },
+  "incline": {
+   "early": [
+    "IH1",
+    "N K L AY0 N"
+   ],
+   "late": [
+    "IH2",
+    "N K L AY1 N"
+   ]
+  },
+  "increase": {
+   "early": [
+    "IH1",
+    "N K R IY2 S"
+   ],
+   "late": [
+    "IH2",
+    "N K R IY1 S"
+   ]
+  },
+  "insert": {
+   "early": [
+    "IH1",
+    "N S ER2 T"
+   ],
+   "late": [
+    "IH2",
+    "N S ER1 T"
+   ]
+  },
+  "insult": {
+   "early": [
+    "IH1",
+    "N S AH2 L T"
+   ],
+   "late": [
+    "IH2",
+    "N S AH1 L T"
+   ]
+  },
+  "object": {
+   "early": [
+    "AA1",
+    "B JH EH0 K T"
+   ],
+   "late": [
+    "AH0",
+    "B JH EH1 K T"
+   ]
+  },
+  "perfect": {
+   "early": [
+    "P ER1",
+    "F IH2 K T"
+   ],
+   "late": [
+    "P ER0",
+    "F EH1 K T"
+   ]
+  },
+  "permit": {
+   "early": [
+    "P ER1",
+    "M IH2 T"
+   ],
+   "late": [
+    "P ER0",
+    "M IH1 T"
+   ]
+  },
+  "pervert": {
+   "early": [
+    "P ER1",
+    "V ER0 T"
+   ],
+   "late": [
+    "P ER0",
+    "V ER1 T"
+   ]
+  },
+  "present": {
+   "early": [
+    "P R EH1",
+    "Z AH0 N T"
+   ],
+   "late": [
+    "P R IY0",
+    "Z EH1 N T"
+   ]
+  },
+  "produce": {
+   "early": [
+    "P R OW1",
+    "D UW0 S"
+   ],
+   "late": [
+    "P R AH0",
+    "D UW1 S"
+   ]
+  },
+  "progress": {
+   "early": [
+    "P R AA1",
+    "G R EH2 S"
+   ],
+   "late": [
+    "P R AH0",
+    "G R EH1 S"
+   ]
+  },
+  "project": {
+   "early": [
+    "P R AA1",
+    "JH EH0 K T"
+   ],
+   "late": [
+    "P R AH0",
+    "JH EH1 K T"
+   ]
+  },
+  "protest": {
+   "early": [
+    "P R OW1",
+    "T EH2 S T"
+   ],
+   "late": [
+    "P R AH0",
+    "T EH1 S T"
+   ]
+  },
+  "rebel": {
+   "early": [
+    "R EH1",
+    "B AH0 L"
+   ],
+   "late": [
+    "R IH0",
+    "B EH1 L"
+   ]
+  },
+  "recall": {
+   "early": [
+    "R IY1",
+    "K AO2 L"
+   ],
+   "late": [
+    "R IH0",
+    "K AO1 L"
+   ]
+  },
+  "record": {
+   "early": [
+    "R EH1",
+    "K ER0 D"
+   ],
+   "late": [
+    "R AH0",
+    "K AO1 R D"
+   ]
+  },
+  "refill": {
+   "early": [
+    "R IY1",
+    "F IH0 L"
+   ],
+   "late": [
+    "R IY0",
+    "F IH1 L"
+   ]
+  },
+  "refund": {
+   "early": [
+    "R IY1",
+    "F AH2 N D"
+   ],
+   "late": [
+    "R IH0",
+    "F AH1 N D"
+   ]
+  },
+  "refuse": {
+   "early": [
+    "R EH1",
+    "F Y UW2 Z"
+   ],
+   "late": [
+    "R AH0",
+    "F Y UW1 Z"
+   ]
+  },
+  "reject": {
+   "early": [
+    "R IY1",
+    "JH EH0 K T"
+   ],
+   "late": [
+    "R IH0",
+    "JH EH1 K T"
+   ]
+  },
+  "retake": {
+   "early": [
+    "R IY1",
+    "T EY1 K"
+   ],
+   "late": [
+    "R IY0",
+    "T EY1 K"
+   ]
+  },
+  "rewrite": {
+   "early": [
+    "R IY1",
+    "R AY2 T"
+   ],
+   "late": [
+    "R IY0",
+    "R AY1 T"
+   ]
+  },
+  "segment": {
+   "early": [
+    "S EH1",
+    "G M AH0 N T"
+   ],
+   "late": [
+    "S EH2",
+    "G M EH1 N T"
+   ]
+  },
+  "subject": {
+   "early": [
+    "S AH1",
+    "B JH IH0 K T"
+   ],
+   "late": [
+    "S AH0",
+    "B JH EH1 K T"
+   ]
+  },
+  "survey": {
+   "early": [
+    "S ER1",
+    "V EY2"
+   ],
+   "late": [
+    "S ER0",
+    "V EY1"
+   ]
+  },
+  "suspect": {
+   "early": [
+    "S AH1",
+    "S P EH2 K T"
+   ],
+   "late": [
+    "S AH0",
+    "S P EH1 K T"
+   ]
+  },
+  "torment": {
+   "early": [
+    "T AO1",
+    "R M EH2 N T"
+   ],
+   "late": [
+    "T AO0",
+    "R M EH1 N T"
+   ]
+  },
+  "transfer": {
+   "early": [
+    "T R AE1",
+    "N S F ER0"
+   ],
+   "late": [
+    "T R AE0",
+    "N S F ER1"
+   ]
+  },
+  "transform": {
+   "early": [
+    "T R AE1",
+    "N S F AO0 R M"
+   ],
+   "late": [
+    "T R AE0",
+    "N S F AO1 R M"
+   ]
+  },
+  "transport": {
+   "early": [
+    "T R AE1",
+    "N S P AO0 R T"
+   ],
+   "late": [
+    "T R AE0",
+    "N S P AO1 R T"
+   ]
+  },
+  "upgrade": {
+   "early": [
+    "AH1",
+    "P G R EY1 D"
+   ],
+   "late": [
+    "AH0",
+    "P G R EY1 D"
+   ]
+  },
+  "upset": {
+   "early": [
+    "AH1",
+    "P S EH2 T"
+   ],
+   "late": [
+    "AH0",
+    "P S EH1 T"
+   ]
+  }
+ }
+}

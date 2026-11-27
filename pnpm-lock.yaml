@@ -237,6 +237,9 @@ importers:
       '@casperaki/song-schema':
         specifier: workspace:*
         version: link:../song-schema
+      compromise:
+        specifier: 14.21.0
+        version: 14.21.0
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -2093,6 +2096,11 @@ packages:
     resolution: {integrity: sha512-D3uMHtGc/fcO1Gt1/L7i1e33VOvD4A9hfQLP+6ewd+BvG/gQ84Yh4oftEhAdjSMgBgwGL+jsppT7JYNpo6MHHg==}
     engines: {node: '>= 10'}
 
+  compromise@14.21.0:
+    resolution: {integrity: sha512-b33R1jm4wbJ2I/PmhrMmQkmYs9T5pcQ/KwbwPHt63Q4FN4n7F+otgarsHV9NSV0ijuaw0RHHg/MyK+E4sFpSzg==}
+    engines: {node: '>=18'}
+    hasBin: true
+
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
@@ -2245,6 +2253,10 @@ packages:
 
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
+
+  efrt@2.9.0:
+    resolution: {integrity: sha512-ZMAvlcu4AfmtJ4K/0hs0uofVUZPSeLG/w4yOyZawQLl9YEy8iDKIxIIPsUAlS907clC7bgD17e73vi5unwNE/g==}
+    engines: {node: '>=12.0.0'}
 
   electron-to-chromium@1.5.368:
     resolution: {integrity: sha512-7RckJJK4uESJF9PxvfMWd3TGqIiieUTG4HxnKaKuIpGbcr+r2ZEB3g2gAhCP3Fqm42vJSzLfgab9eva/C4/XVw==}
@@ -3297,6 +3309,10 @@ packages:
     engines: {node: '>= 18.12.0'}
     peerDependencies:
       webpack: ^5.27.0
+
+  suffix-thumb@6.1.0:
+    resolution: {integrity: sha512-Lh1ZP+tj1TWnlw3RsR6eY/ARhZ3fIPrquE2Xts/wnGB7j1od2OZbCrWYsahkuaLqY7omsNKDUA6JITtE4elhfw==}
+    engines: {node: '>=18'}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -5440,6 +5456,11 @@ snapshots:
       normalize-path: 3.0.0
       readable-stream: 3.6.2
 
+  compromise@14.21.0:
+    dependencies:
+      efrt: 2.9.0
+      suffix-thumb: 6.1.0
+
   concat-map@0.0.1: {}
 
   concurrently@9.2.1:
@@ -5566,6 +5587,8 @@ snapshots:
       readable-stream: 2.3.8
 
   ee-first@1.1.1: {}
+
+  efrt@2.9.0: {}
 
   electron-to-chromium@1.5.368: {}
 
@@ -6667,6 +6690,8 @@ snapshots:
   style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
     dependencies:
       webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
+
+  suffix-thumb@6.1.0: {}
 
   supports-color@7.2.0:
     dependencies:

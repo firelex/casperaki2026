@@ -29,6 +29,7 @@
   "dependencies": {
     "@casperaki/music-theory": "workspace:*",
     "@casperaki/song-schema": "workspace:*",
+    "compromise": "14.21.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {

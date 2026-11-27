@@ -18,7 +18,7 @@ import { z } from 'zod';
 import { heardStress, type Stress } from './stress.js';
 import { lyricLines } from './lyric-lines.js';
 import { lengthFits, syllableLength, type SyllableLength } from './syllable-length.js';
-import { HOLD_BEATS, pronounce, wordsOf } from './written-lyrics.js';
+import { HOLD_BEATS, pronounceLine, wordsOf } from './written-lyrics.js';
 import { PrecedentSchema, type Precedent } from './precedents.js';
 
 /** A rhythm recut to a section's words: its notes (beats from the section start), over `bars` bars, and the pattern
@@ -104,8 +104,9 @@ interface Tail extends Note {
 }
 
 function syllablesOf(text: string): Syllable[] {
-  return wordsOf(text).flatMap((w) => {
-    const p = pronounce(w);
+  const read = pronounceLine(text);
+  return wordsOf(text).flatMap((w, k) => {
+    const p = read[k];
     if (!p) throw new Error(`recut: "${w}" is not in the pronunciation dictionary (line "${text}")`);
     return p.phones.map((phones, i) => {
       const endsWord = i === p.phones.length - 1;
