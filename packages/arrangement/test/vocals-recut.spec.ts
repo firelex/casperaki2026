@@ -104,7 +104,7 @@ const POP_LINES = [
   'Summer never ends with you', 'Drive me crazy every night', 'This is how we do it', 'Maybe I was wrong about you',
   // Runs of unstressed syllables across words (owner's Cinnamon Boulevard: CIN-na-mon BOU-le-vard).
   'Cinnamon boulevard that is where we are', 'Beautiful and dangerous', 'Happily ever after', 'Talking in the elevator',
-  'Electric daydream in town', 'Everybody knows it', 'Sweater in my drawer',
+  'Electric daydream in town', 'Everybody knows it', 'Sweater in my drawer', "We're on your roof at two a.m.",
   'Shake it off and let it go', 'You are the one I want', 'Better when you are gone', 'Tonight we own the city',
   'Bring the fire to the floor', 'I keep on falling for you', 'Watch me shine', 'Nobody does it like you',
 ];

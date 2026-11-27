@@ -65,8 +65,29 @@ function dictionary(): Map<string, readonly [readonly string[], readonly string[
   return dict;
 }
 
+/** Letters with dots between them ("a.m", "p.m.", "u.s.a"): an initialism, sung letter by letter. */
+const INITIALISM = /^[a-z](?:\.[a-z])+\.?$/u;
+
+/** An initialism's key ("a.m."), its entry added to the dictionary from the letters' own entries ("a." EY1, "m."
+ *  EH1 M): "two a.m." is sung "ay-em", never the word "am" (owner, 2026-11-27). Undefined when it is no initialism
+ *  or a letter has no entry. */
+function initialismKey(word: string): string | undefined {
+  const w = word.toLowerCase().replace(/\.$/u, '');
+  if (!INITIALISM.test(w)) return undefined;
+  const letters = w.split('.');
+  const key = `${letters.join('.')}.`;
+  const d = dictionary();
+  if (d.has(key)) return key;
+  const sounds = letters.map((l) => d.get(`${l}.`)?.[1]);
+  if (sounds.some((x) => x === undefined || x.length !== 1)) return undefined;
+  d.set(key, [letters.map((l) => `${l}.`), sounds.map((x) => x![0]!)]);
+  return key;
+}
+
 /** The word as the dictionary spells it, or undefined when it is not there. */
 function dictionaryKey(word: string): string | undefined {
+  const initialism = initialismKey(word);
+  if (initialism) return initialism;
   const w = word.toLowerCase().replace(/[‘’`]/gu, "'").replace(/[^a-z']/gu, '');
   const d = dictionary();
   for (const k of [w, w.replace(/^'+|'+$/gu, ''), w.replace(/'+$/u, '')]) if (k && d.has(k)) return k;
@@ -85,8 +106,12 @@ function pronunciation(key: string, phones: readonly (readonly string[])[], spli
 export function pronounce(word: string): Pronunciation | undefined {
   const key = dictionaryKey(word);
   if (!key) return undefined;
-  const [, phonemeSyllables] = dictionary().get(key)!;
+  const [written, phonemeSyllables] = dictionary().get(key)!;
   const phones = phonemeSyllables.map((s) => s.split(' '));
+  // An initialism is written letter by letter ("a.", "m."), a vowel letter's span its letter.
+  if (INITIALISM.test(key.replace(/\.$/u, ''))) {
+    return pronunciation(key, phones, { parts: written, vowels: written.map((part) => (/^[aeiouy]/u.test(part) ? { from: 0, to: 0 } : null)) });
+  }
   return pronunciation(key, phones, splitWord(key, phones));
 }
 

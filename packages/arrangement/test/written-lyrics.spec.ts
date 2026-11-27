@@ -319,3 +319,15 @@ describe('a hidden vocal melody (new songs) and Write melody', () => {
     for (const s of sungSections(song)) expect(s.words.map((w) => w.toLowerCase())).toEqual(lyrics[s.name]);
   });
 });
+
+describe('initialisms', () => {
+  it('"a.m." is sung as its letters, ay-em; "am" stays the word', async () => {
+    const { pronounce, wordsOf } = await import('../src/vocals/written-lyrics.js');
+    const [word] = wordsOf('a.m.');
+    expect(pronounce(word!)!.phones).toEqual([['EY1'], ['EH1', 'M']]);
+    expect(pronounce('A.M.')!.phones).toEqual([['EY1'], ['EH1', 'M']]);
+    expect(pronounce('p.m.')!.phones).toEqual([['P', 'IY1'], ['EH1', 'M']]);
+    expect(pronounce('am')!.phones).toEqual([['AE1', 'M']]);
+    expect(pronounce('d.j.')!.phones.length).toBe(2);
+  });
+});
