@@ -72,7 +72,7 @@ export const SMALL_WORDS: ReadonlySet<string> = new Set([
   'and', 'but', 'or', 'so', 'if', 'as', 'than', 'when', 'while',
 ]);
 /** What a rest between two words of a line costs: after a small word, which leads into the next ("the | candles"),
- *  and shorter than a beat (an eighth then an eighth rest sounds clipped; sung on, it is a quarter). */
+ *  and shorter than a beat. */
 const REST = { afterSmallWord: 12, short: 12 } as const;
 /** A note may move this far onto (or from) a pattern note and still count as that note moved. */
 const MAX_MOVE = 2;
@@ -354,6 +354,21 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
   throw new Error(`recut: no rhythm for ${what} (a bug: every line of 4 to 11 syllables has one)`);
 }
 
+/** A note shorter than a beat before a rest inside its line is sung on into the rest, up to a beat (owner,
+ *  2026-11-27: an eighth then a rest, "make a fuss | tonight", should be a quarter), where the length rule lets its
+ *  syllable last that long. The onsets stay, and the ear hears a stress at the onset: the stresses were laid on the
+ *  notes as found, and a note sung on into a rest does not weigh more. The line's last note stays as laid (the next
+ *  line's pickup rules read it). */
+function singOn(laid: readonly Note[], syl: readonly Syllable[], lineStart: number, bpm: number): Note[] {
+  return laid.map((n, i) => {
+    const next = laid[i + 1];
+    if (!next || n.s < lineStart || n.d >= Q) return n;
+    // A rest stays (an eighth at least): the words keep their breath.
+    const d = Math.min(Q, next.s - n.s - EIGHTH);
+    return d > n.d && lengthFits(syl[i]!.length, d / Q, bpm) ? { s: n.s, d } : n;
+  });
+}
+
 /** The rhythm recut to the section's lines (one line per LINE_BARS bars, in order). */
 export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: { readonly bpm: number; readonly bars: number }): RecutRhythm {
   if (lines.length * LINE_BARS !== opts.bars) {
@@ -367,7 +382,7 @@ export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: {
     const syl = syllablesOf(text);
     if (syl.length === 0) throw new Error(`recut: line ${i + 1} has no words`);
     const own = source.filter((n) => n.s >= lineStart && n.s < lineStart + LINE_STEPS);
-    const laid = recutLine(own, syl, lineStart, prev, opts.bpm, `line ${i + 1} "${text}" on "${rhythm.id}"`);
+    const laid = singOn(recutLine(own, syl, lineStart, prev, opts.bpm, `line ${i + 1} "${text}" on "${rhythm.id}"`), syl, lineStart, opts.bpm);
     notes.push(...laid);
     const last = laid.at(-1)!;
     const before = laid.at(-2);

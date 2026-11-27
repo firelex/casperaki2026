@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { loadBankIndex, loadPrecedentBank, type Precedent } from '../src/vocals/precedents.js';
 import { recutRhythm, SMALL_WORDS, type RecutRhythm } from '../src/vocals/recut.js';
 import { lyricLines } from '../src/vocals/lyric-lines.js';
-import { lineLengthProblems, lengthFits } from '../src/vocals/syllable-length.js';
+import { lineLengthProblems, lengthFits, syllableLength } from '../src/vocals/syllable-length.js';
 import { HOLD_BEATS, pronounce, sungLineSyllables } from '../src/vocals/written-lyrics.js';
 import { heardStress } from '../src/vocals/stress.js';
 
@@ -57,8 +57,9 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
   });
   // Rests inside a line (owner, 2026-11-27, "Got the cake and the candles lit": an eighth then a rest phrased
   // awkwardly): none after a small word, which leads into the next ("the | candles", "your | favorite"), and none
-  // shorter than a beat (an eighth then an eighth rest is sung on as a quarter).
+  // shorter than a beat as laid, and an eighth before a rest sung on as a quarter.
   const words = lines.map((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map(() => w.toLowerCase().replace(/[‘’`]/gu, "'"))));
+  const sylLength = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map((ph, i, all) => syllableLength(ph, i === all.length - 1))));
   let at = 0;
   words.forEach((line) => {
     for (let i = at; i < at + line.length - 1; i++) {
@@ -66,7 +67,10 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
       const rest = r.notes[i + 1]!.start - (n.start + n.duration);
       if (rest <= 1e-9) continue;
       const word = line[i - at]!;
-      if (!SMALL_WORDS.has(word) && rest >= 1) continue;
+      // A breath: a beat of rest as laid (a note sung on into it leaves half a beat at least), after a note of a
+      // beat, unless its syllable may not last a beat at this tempo.
+      const laidRest = r.notes[i + 1]!.start - n.start - Math.min(n.duration, 0.5);
+      if (!SMALL_WORDS.has(word) && laidRest >= 1 && rest >= 0.5 && (n.duration >= 1 || !lengthFits(sylLength[i]!, 1, bpm))) continue;
       if (exact) expect.fail(`a rest of ${rest} after "${word}" at ${n.start}`);
       restMisses++;
     }
@@ -77,8 +81,13 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
   // stressed note.
   const endsAt = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map((_, i, all) => i === all.length - 1)));
   const syllables = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => { const p = pronounce(w)!; return p.rhythm.map((st, i) => ({ word: w, st, byStress: p.rhythm[i - 1] === '+' || p.rhythm[i + 1] === '+' })); }));
+  // Stresses are heard on the notes as laid: a note sung on into a rest, up to a beat, weighs as an eighth.
+  const heard = r.notes.map((n, i) => {
+    const next = r.notes[i + 1];
+    return next && next.start > n.start + n.duration + 1e-9 && n.duration <= 1 ? { ...n, duration: 0.5 } : n;
+  });
   const grades = Array.from({ length: Math.ceil(r.bars) }, (_, bar) => {
-    const inBar = r.notes.filter((n) => Math.floor(n.start / 4 + 1e-9) === bar);
+    const inBar = heard.filter((n) => Math.floor(n.start / 4 + 1e-9) === bar);
     return inBar.map((n, i) => heardStress(n.start - bar * 4, n.duration, inBar[i - 1]?.duration, inBar[i + 1]?.duration));
   }).flat();
   syllables.forEach((y, i) => {
@@ -90,8 +99,8 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
     }
     else if (y.st === '-') {
       // Or an eighth on beat 2 or 4, no longer than the note before it, before a note on beat 1 or 3 ("EV-e-ry TIME").
-      const n = r.notes[i]!;
-      const before = r.notes[i - 1];
+      const n = heard[i]!;
+      const before = heard[i - 1];
       const inBar = n.start % 4;
       const weak = n.duration === 0.5 && (inBar === 1 || inBar === 3) && (!before || Math.floor(before.start / 4) !== Math.floor(n.start / 4) || n.duration <= before.duration) && r.notes[i + 1] !== undefined && r.notes[i + 1]!.start % 2 === 0;
       if (!weak) miss(g === '-', what);
@@ -100,8 +109,8 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
     // A weaker syllable is never longer than the stressed syllable next to it in its word.
     const next = syllables[i + 1];
     if (next && next.word === y.word && !endsAt[i]) {
-      if (y.st === '+' && next.st !== '+') miss(r.notes[i + 1]!.duration <= r.notes[i]!.duration, `${what}: its weak neighbour outweighs it`);
-      if (next.st === '+' && y.st !== '+') miss(r.notes[i]!.duration <= r.notes[i + 1]!.duration, `${what}: it outweighs its stressed neighbour`);
+      if (y.st === '+' && next.st !== '+') miss(heard[i + 1]!.duration <= heard[i]!.duration, `${what}: its weak neighbour outweighs it`);
+      if (next.st === '+' && y.st !== '+') miss(heard[i]!.duration <= heard[i + 1]!.duration, `${what}: it outweighs its stressed neighbour`);
     }
   });
   const sung = lyricLines(barsOf(r));
@@ -174,6 +183,17 @@ describe('the recut', () => {
     const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
     const lines = ['We drew it up on a Tuesday night', 'Two ghosts with a sheet and a flashlight', 'You swore that the glue gun would hold', "Now it's midnight and the tape won't fight"];
     expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
+  });
+
+  it('"You said don\'t make a fuss tonight": no eighth note before a rest (Electric Daydream, 128 bpm)', () => {
+    const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
+    const lines = ["You said don't make a fuss tonight", 'So I played it cool, acted like I forgot', "But your favorite cake's in the fridge", 'With a cheap little candle on top'];
+    // One stress is traded for the rests ("rite" of "favorite" on a quarter on beat 4).
+    restMisses = 0;
+    const out = recutRhythm(verse, lines, { bpm: 128, bars: 8 });
+    expect(expectSingable(out, lines, 128, false)).toBeLessThanOrEqual(1);
+    expect(restMisses).toBe(0);
+    for (const [at, d] of [[0.5, 1], [4, 1]] as const) expect(out.notes.find((n) => n.start === at)?.duration, `"said", "fuss" sung on as quarters`).toBe(d);
   });
 
   it('"Got the cake and the candles lit": no rest after "the" or "your", none shorter than a beat (Electric Daydream, 128 bpm)', () => {
