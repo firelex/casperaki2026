@@ -38,6 +38,7 @@ export function AppHeader({ compact = false }: { compact?: boolean }) {
           ) : null}
           <HeaderLink to="/sounds">Sounds</HeaderLink>
           <HeaderLink to="/singers">Singers</HeaderLink>
+          <HeaderLink to="/avatars" lit={pathname.startsWith('/avatars/')}>Avatars</HeaderLink>
           <HeaderLink to="/melodies">Melodies</HeaderLink>
           {user?.isAdmin ? <HeaderLink to="/suggestions">Suggestions</HeaderLink> : null}
         </nav>

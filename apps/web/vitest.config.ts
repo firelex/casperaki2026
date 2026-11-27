@@ -9,5 +9,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
+    // The video engine (@casperaki/video/avatar) is a git dependency whose pnpm folder name holds a "#", which
+    // vite-node reads as a URL fragment: bundle it once into vite's cache (a path without "#") instead.
+    deps: { optimizer: { ssr: { enabled: true, include: ['@casperaki/video/avatar'] } } },
   },
 });

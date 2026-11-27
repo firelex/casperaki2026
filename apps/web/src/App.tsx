@@ -16,6 +16,8 @@ const SuggestionsPage = lazy(() => import('./pages/SuggestionsPage').then((m) =>
 const MelodyLibraryPage = lazy(() => import('./pages/MelodyLibraryPage').then((m) => ({ default: m.MelodyLibraryPage })));
 const SoundLibraryPage = lazy(() => import('./pages/SoundLibraryPage').then((m) => ({ default: m.SoundLibraryPage })));
 const SingersPage = lazy(() => import('./pages/SingersPage').then((m) => ({ default: m.SingersPage })));
+const AvatarsPage = lazy(() => import('./pages/AvatarsPage').then((m) => ({ default: m.AvatarsPage })));
+const DressingRoomPage = lazy(() => import('./pages/DressingRoomPage').then((m) => ({ default: m.DressingRoomPage })));
 const CatalogPage = lazy(() => import('./pages/CatalogPage').then((m) => ({ default: m.CatalogPage })));
 const WasmTonePage = lazy(() => import('./pages/WasmTonePage').then((m) => ({ default: m.WasmTonePage })));
 const WasmRenderPage = lazy(() => import('./pages/WasmRenderPage').then((m) => ({ default: m.WasmRenderPage })));
@@ -28,6 +30,8 @@ const HumSongPage = lazy(() => import('./pages/HumSongPage').then((m) => ({ defa
  *   /                          → Projects   (home — listing + Create CTA)
  *   /sounds                    → Sounds (the sound library)
  *   /catalog                   → Sample catalog (admins: source names, audit)
+ *   /avatars                   → Avatars (the user's characters for music videos)
+ *   /avatars/new, /avatars/:id → the dressing room (a new avatar, or one to edit)
  *   /editor                    → redirect to Projects
  *   /editor/:songId            → redirect to Timeline tab
  *   /editor/:songId/sound      → redirects to the track view (the library is /sounds)
@@ -61,6 +65,9 @@ export function App() {
         {/* The sound library lists source names: admins only. */}
         <Route path="/sounds" element={<SoundLibraryPage />} />
         <Route path="/singers" element={<SingersPage />} />
+        <Route path="/avatars" element={<AvatarsPage />} />
+        <Route path="/avatars/new" element={<DressingRoomPage />} />
+        <Route path="/avatars/:avatarId" element={<DressingRoomPage />} />
         <Route path="/melodies" element={<MelodyLibraryPage />} />
         {user.isAdmin ? <Route path="/catalog" element={<CatalogPage />} /> : null}
         {/* Suggestions (admins): the pattern lab and the Pro-mode mix changes. */}
