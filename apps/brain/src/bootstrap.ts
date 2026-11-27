@@ -36,6 +36,9 @@ import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
 import { createSingersRouter, readSingers, singerVoice } from './routes/singers.js';
 import { UserSingers } from './singers/userSingers.js';
+import { createAvatarsRouter } from './routes/avatars.js';
+import { AvatarPacks } from './avatars/avatarPacks.js';
+import { UserAvatars } from './avatars/userAvatars.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { MelodyEdits } from './melodies/melodyEdits.js';
@@ -388,6 +391,17 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createSoundsRouter({ playback }));
   readSingers(config.singersDir); // fail at startup, naming the file, if the singers list is broken
   app.use(createSingersRouter({ dir: config.singersDir, ...(userSingers ? { users: userSingers } : {}), tasks }));
+  // Avatars: dressed from the part packs (BRAIN_AVATAR_PACKS_DIR), kept per user next to their singers.
+  const avatarPacks = config.avatarPacksDir ? new AvatarPacks(config.avatarPacksDir) : undefined;
+  avatarPacks?.list(); // fail at startup, naming the pack, if a manifest is broken
+  if (!config.avatarPacksDir) console.warn('[brain] BRAIN_AVATAR_PACKS_DIR not set — Avatars answer 503.');
+  app.use(
+    createAvatarsRouter({
+      ...(avatarPacks ? { packs: avatarPacks } : {}),
+      ...(config.singersDataDir ? { avatars: new UserAvatars(config.singersDataDir) } : {}),
+      checkSinger: (ownerId, singerId) => void singerVoice(config.singersDir, userSingers, ownerId, singerId),
+    }),
+  );
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).
   const commit = deps.commit;
   const melodyEdits = new MelodyEdits(

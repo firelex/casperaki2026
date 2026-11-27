@@ -49,6 +49,10 @@ const ConfigSchema = z.object({
    *  VOCALS_SERVICE_URL and BRAIN_TASK_FILES_DIR; unset → Add a singer answers 503 naming the settings and only the
    *  built-in singers are listed. */
   singersDataDir: z.string().min(1).optional(),
+  /** Avatars: the Character Studio part packs (a folder per pack with its manifest.json; outside git, the packs'
+   *  licence is unknown). Avatars need it and BRAIN_SINGERS_DATA_DIR (where each user's avatars are kept); unset →
+   *  the avatar routes answer 503 naming it. */
+  avatarPacksDir: z.string().min(1).optional(),
   renderStubSamplesDir: z.string().default('../engine-spike/samples'),
   sampleLibraryRoot: z.string().optional(),
   renderMix: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
@@ -142,6 +146,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     renderBin: env.BRAIN_RENDER_BIN,
     singersDir: env.BRAIN_SINGERS_DIR,
     singersDataDir: env.BRAIN_SINGERS_DATA_DIR || undefined,
+    avatarPacksDir: env.BRAIN_AVATAR_PACKS_DIR || undefined,
     renderStubSamplesDir: env.BRAIN_RENDER_STUB_SAMPLES_DIR,
     sampleLibraryRoot: env.CASPERAKI_SAMPLE_LIBRARY_ROOT,
     renderMix: env.BRAIN_RENDER_MIX,
