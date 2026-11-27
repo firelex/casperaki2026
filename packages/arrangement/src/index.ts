@@ -398,6 +398,9 @@ export { splitWord, contractSplit, type WordSplit } from './vocals/word-split.js
 export { MELODY_VARIANTS_PARAM, melodyVariantsOf } from './vocals/melody-variants.js';
 export { laneWordsOn, SUNG_MELODY_PARAM, SungMelodySchema, SungNoteSchema, sungMelodyOf, type SungMelody, type SungNote } from './vocals/sung-melody.js';
 export { applyLyricsFirst, newRhythm, type LyricsByType } from './edits/vocal-edits.js';
+export { checkFreeLyrics, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES, type FreeLyricsProblem } from './vocals/free-lyrics.js';
+export { LYRIC_RHYTHMS_PARAM, lyricRhythmsOf, RHYTHM_VARIANTS_PARAM, rhythmVariantsOf, type LyricRhythms } from './vocals/lyric-rhythms.js';
+export { lengthFits, lineLengthProblems, syllableLength, type SyllableLength } from './vocals/syllable-length.js';
 export { applySungVocals, applySungVocalsOver, applyWrittenLyrics, type ApplySungOptions, lyricsTargets, newMelody, paramsWithLyrics, sungSections, vocalMelodyShown, writeMelody, type NewMelody, type SungSection, type SungTake } from './edits/vocal-edits.js';
 export { VOCAL_MELODY_PARAM } from './vocals/vocal-melody.js';
 export { HOLD_BEATS } from './vocals/written-lyrics.js';
