@@ -37,8 +37,8 @@ adjusts a groove to a lyric.
 - The same premise or opening line in song after song.
 - A rhythm recut so hard it no longer sounds like the pattern it came from (mechanical, one note per syllable on a
   grid).
-- Silent fallbacks: a line that cannot be fitted is repaired (the model rewrites it, told why) or the task fails
-  with an error naming the line. Never a quiet substitute.
+- Silent fallbacks: the recut never gives up on a line or quietly substitutes anything; a line the lyric checks
+  reject goes back to the model with the reason, as today.
 
 ## The flow
 
@@ -83,8 +83,11 @@ that line's bars are adjusted until every syllable has a note it may be sung on,
 - **goal**: every syllable on a note whose grade (stress.ts: '+', '-', '0') accepts it and whose length it can carry;
   each line ends on a word end; notes held half a bar or more carry a word's end (owner's rule 2026-11-25).
 - **cost**: the fewest and smallest changes (a moved onset costs less than an added note; changes on strong beats
-  cost more), so the pattern's flow survives. A line that cannot be fitted within a change budget goes back to the
-  model to rewrite (told: too many syllables for the bar, a stressed syllable with nowhere to land, ...).
+  cost more), so the pattern's flow survives.
+- **the recut always succeeds (owner, 2026-11-27: "we can always make it so")**: there is no change budget and no
+  rejection. Any pattern can be bent to any line whose syllables fit the bars (the lyric checks keep the syllable
+  count in range): the cost only picks the best of the ways to do it. A recut that finds no way is a bug: an error
+  naming the line, never a substitute.
 
 **The length rule** (owner and Claude, 2026-11-27; thresholds in milliseconds, so it holds at any tempo; the numbers
 are a first guess to tune by ear):
@@ -147,8 +150,8 @@ without a situation. No version copied four words in a row from its inspiration.
 
 ## Calls made after the builder check (Claude's; the owner may overrule)
 
-- **New rhythm that cannot fit the kept words**: draw another random rhythm (up to 20 draws), never change the words;
-  after that, an error naming the section. New rhythm is a quick edit like Change melody, no model call.
+- **New rhythm**: one random draw, recut to the kept words (the recut always succeeds, step 3). A quick edit like
+  Change melody, no model call.
 - **Songs and sections without written words** keep today's behaviour exactly: Write melody and Change melody use the
   recipes as now (hookWhole included). The split (rhythm and melody drawn apart, both pattern ids recorded) applies to
   sections with written words. New rhythm is offered only on sections with words.
@@ -156,6 +159,8 @@ without a situation. No version copied four words in a row from its inspiration.
   chords are kept; its rhythm is the pattern that gets recut. From then on the section counts as split.
 - **Melody source weights**: a recipe is drawn by today's weights and only its melody side is used; the rhythm is
   drawn uniformly as in step 2. The bank index data does not change.
+- **A hummed chorus (owner, 2026-11-27)**: recut like any pattern. Its pitches (the hum) are kept, its rhythm is
+  bent to the words. Change melody still refuses it, as today.
 - **Sung takes**: new words or a new rhythm drop the section's sung melody, as a new melody does today.
 - **The situation list** ships as the model wrote it; the owner prunes it when convenient (it is data, any edit
   applies at once).
@@ -164,6 +169,6 @@ without a situation. No version copied four words in a row from its inspiration.
 
 ## Left to the builder
 
-The exact moves, their costs and the change budget; the syllable range per bar and tempo; the opening-line similarity
+The exact moves and their costs; the syllable range per bar and tempo; the opening-line similarity
 threshold; the length thresholds (start at 300 and 500 ms); how the recut handles a pattern with far fewer notes than
-the line has syllables (adding notes is a move; the budget decides when to ask for a rewrite instead).
+the line has syllables (adding and splitting notes are moves; it always fits).
