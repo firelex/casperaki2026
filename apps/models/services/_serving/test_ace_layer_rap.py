@@ -79,3 +79,15 @@ def test_sections_are_made_on_eight_bars_at_least():
     assert ace.window_seconds(128) == pytest.approx(15.0)
     assert ace.window_seconds(200) == 10.0
     assert ace.section_window(69.375, 76.875, 180, ace.window_seconds(128)) == (69.375, 84.375)
+
+
+def test_a_window_pulled_back_starts_the_section_on_its_first_line():
+    # 120 bpm: a line is 4 s; 4 s of window before the section: one line of lead-in.
+    assert ace.rap_lyrics("a\nb\nc", 16, 120, lead=4) == "[Verse]\nc\na\nb\nc"
+
+
+def test_rank_is_words_then_separation():
+    a = {"recall": 0.8, "vocal_db": -20.0, "backing_db": -30.0}
+    b = {"recall": 0.8, "vocal_db": -22.0, "backing_db": -50.0}
+    assert ace.rank(b) > ace.rank(a)
+    assert ace.rank({"recall": 0.9, "vocal_db": None, "backing_db": -20.0}) > ace.rank(a)

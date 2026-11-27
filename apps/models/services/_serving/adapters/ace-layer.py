@@ -223,14 +223,23 @@ def window_seconds(bpm: float) -> float:
     return max(MIN_SECONDS, MIN_WINDOW_BARS * 4 * 60 / bpm)
 
 
-def rap_lyrics(lines: str, seconds: float, bpm: float) -> str:
+def rap_lyrics(lines: str, seconds: float, bpm: float, lead: float = 0.0) -> str:
     """ACE's lyrics for one section's rap over `seconds` of song: its lines under one verse tag (a section is made on
-    its own), repeated to fill the stretch at one line per RAP_BARS_PER_LINE bars."""
+    its own), repeated to fill the stretch at one line per RAP_BARS_PER_LINE bars. `lead`: seconds of the window before
+    the section (a window pulled back at the song's end); the cycle is turned so the section starts on its first line."""
     own = [l.strip() for l in lines.strip().splitlines() if l.strip()]
     if not own:
         raise ValueError("ace-layer: a section's rap has no lines")
-    need = max(len(own), round(seconds / (RAP_BARS_PER_LINE * 4 * 60 / bpm)))
-    return "[Verse]\n" + "\n".join(own[i % len(own)] for i in range(need))
+    line_s = RAP_BARS_PER_LINE * 4 * 60 / bpm
+    need = max(len(own), round(seconds / line_s))
+    offset = round(lead / line_s)
+    return "[Verse]\n" + "\n".join(own[(i - offset) % len(own)] for i in range(need))
+
+
+def rank(score: dict) -> tuple[float, float]:
+    """How takes compare (as the picker's best_take): words heard, then vocal over what is left of the backing."""
+    v, k = score["vocal_db"], score["backing_db"]
+    return score["recall"], (-math.inf if v is None else v - (-math.inf if k is None else k))
 
 
 def pick_rap_take(takes: list[str], words: str, start: float, end: float, out: str) -> dict:
@@ -354,9 +363,10 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
             paths = []
             for k in range(made, made + n):
                 job.check_cancelled()
-                tensor, out_sr = _lego(handle, p, str(window), rap_lyrics(sec["lyrics"], we - ws, p["bpm"]), p["seed"] + 1000 * si + k, we - ws)
+                tensor, out_sr = _lego(handle, p, str(window), rap_lyrics(sec["lyrics"], we - ws, p["bpm"], sec["start"] - ws), p["seed"] + 1000 * si + k, we - ws)
                 path = d / f"take{k + 1}.wav"
-                sf.write(str(path), tensor.numpy().T, out_sr, subtype="FLOAT")
+                # ACE floors its length to whole latent frames (up to 40 ms short): exactly the window's length.
+                sf.write(str(path), fit_length(tensor.numpy(), int(round((we - ws) * out_sr))).T, out_sr, subtype="FLOAT")
                 paths.append(str(path))
             job.check_cancelled()
             picked_path = d / f"best_of_round{len(rounds) + 1}.wav"
@@ -364,7 +374,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
             scores = picked["takes"]
             rounds.append(scores)
             cand = {**scores[picked["best"]], "take": made + picked["best"] + 1}
-            if best is None or (cand["recall"], cand["vocal_db"] or -1e9) > (best["recall"], best["vocal_db"] or -1e9):
+            if best is None or rank(cand) > rank(best):
                 best, best_path = cand, picked_path
             made += n
         if best["recall"] < MIN_RAP_RECALL:
@@ -375,7 +385,11 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
         if vsr != sr:
             v = torchaudio.functional.resample(v, vsr, sr)
         a = int(round(sec["start"] * sr))
-        b = min(int(round(sec["end"] * sr)), part.shape[1], a + v.shape[1])
+        b = min(int(round(sec["end"] * sr)), part.shape[1])
+        if v.shape[1] < b - a - int(0.05 * sr):
+            raise RuntimeError(f"ace-layer: the picked vocal of {sec['name']} is {v.shape[1] / sr:.2f} s, its section "
+                               f"{(b - a) / sr:.2f} s")
+        b = min(b, a + v.shape[1])
         part[:, a:b] = v.numpy()[:, :b - a]
         step.done(f"take {best['take']} of {made}: {best['recall']:.0%} of the words heard: \"{best['heard']}\"",
                   {"takes": made, "recall": best["recall"], "seconds": round(time.time() - t, 1),

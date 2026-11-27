@@ -601,7 +601,11 @@ export class BackgroundTasks {
         now: clock,
         renderWav: (song) => ace.renderWav(task.ownerId, songIdOf(task), song, task.id),
         ...(this.deps.lyricModel ? { writeRapWords: (r: RapWordsRequest) => writeRapWords(this.deps.lyricModel!, r) } : {}),
-        title: this.deps.store.getProject(task.ownerId, songIdOf(task))?.title ?? '',
+        title: (() => {
+          const project = this.deps.store.getProject(task.ownerId, songIdOf(task));
+          if (!project) throw new Error(`the owner has no project for song ${songIdOf(task)}`);
+          return project.title;
+        })(),
       });
     }
     if (task.kind === 'addSinger') {

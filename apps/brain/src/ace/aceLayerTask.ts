@@ -282,7 +282,10 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
         else {
           if (!ctx.writeRapWords) throw new Error("the rap's words cannot be written: the brain has no language model (ASSISTANT_LLM_URL); write them in the dialog");
           written = await ctx.writeRapWords({
-            title: ctx.title ?? '',
+            title: (() => {
+              if (!ctx.title?.trim()) throw new Error("the rap's words cannot be written: the song has no title");
+              return ctx.title;
+            })(),
             style: options.words ?? '',
             songWords: songWordsOf(input),
             sections: unwritten.map((s) => ({ name: s.name, label: sectionLabel(s.name), lines: rapLineCount(s.bars) })),
