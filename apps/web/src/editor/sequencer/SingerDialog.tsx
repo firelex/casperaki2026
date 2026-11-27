@@ -26,6 +26,7 @@ export function SingerDialog({ preselected, onStart, onClose }: { preselected: s
               The singers could not be loaded: {singers.error instanceof Error ? singers.error.message : String(singers.error)}
             </p>
           ) : null}
+          {singers.isSuccess && list.length === 0 ? <p className="text-white/70">You have no singers: add one on the Singers page.</p> : null}
           {list.map((s) => (
             <label key={s.id} className={`flex flex-col gap-2 rounded-[10px] border p-3 ${selected === s.id ? 'border-white/50 bg-white/5' : 'border-line'}`}>
               <span className="flex items-center gap-3">

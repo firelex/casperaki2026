@@ -67,8 +67,8 @@ export function SingersPage() {
   );
 }
 
-/** One singer: its name, description, voice reference (and for the user's own: how it was chosen, the test line,
- *  Delete). */
+/** One singer: its name, description, voice reference, Delete (a built-in singer for this user only), and for the
+ *  user's own: how it was chosen and the test line. */
 export function SingerCard({ singer: s }: { singer: SingerInfo }) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
@@ -93,10 +93,9 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
           </h2>
           <p className="mt-1 text-[14px] text-white/75">{s.description}</p>
         </div>
-        {s.own ? (
-          confirming ? (
+        {confirming ? (
             <span className="flex shrink-0 items-center gap-2 text-[13px]">
-              Delete {s.name}?
+              {s.own ? `Delete ${s.name}?` : `Delete ${s.name} from your singers?`}
               <button type="button" className="rounded-full border border-err/60 px-3 py-1 text-err hover:border-err" onClick={() => void remove()}>
                 Delete
               </button>
@@ -108,8 +107,7 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
             <button type="button" className="shrink-0 rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60" onClick={() => setConfirming(true)}>
               Delete
             </button>
-          )
-        ) : null}
+          )}
       </div>
       <div className="flex flex-col gap-1">
         <span className="text-[12px] text-white/55">

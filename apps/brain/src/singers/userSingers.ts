@@ -5,6 +5,7 @@
 //   <dir>/<owner>/<singer id>/voice.wav   the voice reference SoulX-Singer sings in (about 10 s)
 //   <dir>/<owner>/<singer id>/voice.json  its description in SoulX-Singer's prompt format
 //   <dir>/<owner>/<singer id>/test_line.wav  a short line sung in the new voice
+//   <dir>/<owner>/hidden.json             the built-in singers the owner deleted (ids): gone for them only
 //
 // A singer is visible only to the owner who added it (the built-in singers, src/routes/singers.ts, to everyone).
 
@@ -121,6 +122,23 @@ export class UserSingers {
     this.write(ownerId, singers.filter((s) => s.id !== singerId));
     rmSync(this.dir(ownerId, singerId), { recursive: true, force: true });
     return true;
+  }
+
+  /** The ids of the built-in singers the owner deleted (their files stay: other owners still see them). */
+  hiddenBuiltIns(ownerId: string): Set<string> {
+    const file = join(this.root, ownerFolder(ownerId), 'hidden.json');
+    if (!existsSync(file)) return new Set();
+    return new Set(z.array(z.string().min(1)).parse(JSON.parse(readFileSync(file, 'utf8'))));
+  }
+
+  /** Deletes a built-in singer for the owner only. */
+  hideBuiltIn(ownerId: string, singerId: string): void {
+    const ids = [...this.hiddenBuiltIns(ownerId), singerId];
+    const file = join(this.root, ownerFolder(ownerId), 'hidden.json');
+    mkdirSync(join(file, '..'), { recursive: true });
+    const tmp = `${file}.part-${process.pid}`;
+    writeFileSync(tmp, `${JSON.stringify([...new Set(ids)], null, 1)}\n`);
+    renameSync(tmp, file);
   }
 
   /** Deletes the folder of a singer that never joined the list (its recording refused before the task started). */

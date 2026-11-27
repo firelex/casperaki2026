@@ -11,7 +11,8 @@
 //                                     -> 201 { task }  Add a singer (an addSinger task, src/singers/addSingerTask.ts);
 //                                        400 without the consent box ticked, for a recording over 5 minutes or one
 //                                        that is not audio; 503 when adding singers is not set up
-//   DELETE /api/singers/:id           -> { deleted: id }  one of the user's own singers (a built-in one: 403)
+//   DELETE /api/singers/:id           -> { deleted: id }  one of the user's own singers, or a built-in one for this
+//                                        user only (its files stay; 503 when adding singers is not set up)
 //
 // SingerJson: { id, name, description, source, previewUrl, own, testLineUrl?, reference?: { choice, startSeconds,
 // endSeconds, recordingStartSeconds, recordingEndSeconds, seconds }, transcription? } (the last three for own singers).
@@ -58,7 +59,7 @@ export function readSingers(dir: string): Singer[] {
 /** A singer's voice reference and its description, as absolute paths: a built-in singer (`dir`) or one of the
  *  owner's own (`users`, when adding singers is set up). An Error for an unknown singer. */
 export function singerVoice(dir: string, users: UserSingers | undefined, ownerId: string, id: string): { audio: string; meta: string } {
-  const builtIn = readSingers(dir).find((s) => s.id === id);
+  const builtIn = readSingers(dir).find((s) => s.id === id && !users?.hiddenBuiltIns(ownerId).has(id));
   if (builtIn) return { audio: join(resolve(dir), builtIn.audio), meta: join(resolve(dir), builtIn.meta) };
   const own = users?.get(ownerId, id);
   if (own) return { audio: join(users!.dir(ownerId, id), own.audio), meta: join(users!.dir(ownerId, id), own.meta) };
@@ -101,15 +102,20 @@ export interface SingersRouterDeps {
 export function createSingersRouter(deps: SingersRouterDeps): Router {
   const router = Router();
   const own = (owner: string) => deps.users?.list(owner) ?? [];
+  /** The built-in singers the owner has not deleted. */
+  const builtIns = (owner: string) => {
+    const hidden = deps.users?.hiddenBuiltIns(owner) ?? new Set<string>();
+    return readSingers(deps.dir).filter((s) => !hidden.has(s.id));
+  };
 
   router.get('/api/singers', (req, res) => {
-    const builtIn = readSingers(deps.dir).map((s) => ({ id: s.id, name: s.name, description: s.description, source: s.source, previewUrl: `/api/singers/${s.id}/preview`, own: false }));
+    const builtIn = builtIns(ownerOf(req)).map((s) => ({ id: s.id, name: s.name, description: s.description, source: s.source, previewUrl: `/api/singers/${s.id}/preview`, own: false }));
     res.json({ singers: [...builtIn, ...own(ownerOf(req)).map(ownJson)] });
   });
 
   router.get('/api/singers/:id/preview', (req, res) => {
     const owner = ownerOf(req);
-    const builtIn = readSingers(deps.dir).find((s) => s.id === req.params.id);
+    const builtIn = builtIns(owner).find((s) => s.id === req.params.id);
     res.setHeader('cache-control', 'private, max-age=3600');
     if (builtIn) return res.sendFile(join(resolve(deps.dir), builtIn.audio));
     const mine = own(owner).find((s) => s.id === req.params.id);
@@ -149,8 +155,10 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
 
   router.delete('/api/singers/:id', (req, res) => {
     const owner = ownerOf(req);
-    if (readSingers(deps.dir).some((s) => s.id === req.params.id)) {
-      return res.status(403).json({ error: 'built_in', message: 'The built-in singers cannot be deleted.' });
+    if (builtIns(owner).some((s) => s.id === req.params.id)) {
+      if (!deps.users) return res.status(503).json({ error: 'not_configured', message: 'Deleting a built-in singer needs BRAIN_SINGERS_DATA_DIR (where each user\'s singers are kept).' });
+      deps.users.hideBuiltIn(owner, req.params.id);
+      return res.json({ deleted: req.params.id });
     }
     if (!deps.users?.remove(owner, req.params.id)) return res.status(404).json({ error: 'not_found', message: `You have no added singer "${req.params.id}".` });
     return res.json({ deleted: req.params.id });

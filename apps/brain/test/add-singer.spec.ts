@@ -111,14 +111,22 @@ describe('Add a singer', () => {
     expect(users.list('someone-else')).toEqual([]);
     expect(singerVoice(BUILT_IN, users, 'someone-else', 'yue2_female_dry2').audio).toMatch(/yue2_female_dry2\.mp3$/u);
 
-    // Deleting it: gone from the list and the disk; a built-in singer cannot be deleted.
-    expect((await fetch(`${url}/api/singers/yue2_female_dry2`, { method: 'DELETE' })).status).toBe(403);
+    // Deleting it: gone from the list and the disk.
     const deleted = await fetch(`${url}/api/singers/${mine.id}`, { method: 'DELETE' });
     expect(deleted.status).toBe(200);
     expect(((await get('/api/singers')).body.singers as unknown[]).length).toBe(1);
     expect(existsSync(join(dir, 'singers', DEV_OWNER_ID, mine.id))).toBe(false);
     expect((await fetch(`${url}/api/singers/${mine.id}/preview`)).status).toBe(404);
     expect((await fetch(`${url}/api/singers/${mine.id}`, { method: 'DELETE' })).status).toBe(404);
+
+    // A built-in singer: deleted for this owner only (Sing cannot use it any more); its files stay for everyone else.
+    expect((await fetch(`${url}/api/singers/yue2_female_dry2`, { method: 'DELETE' })).status).toBe(200);
+    expect((await get('/api/singers')).body.singers).toEqual([]);
+    expect((await fetch(`${url}/api/singers/yue2_female_dry2/preview`)).status).toBe(404);
+    expect((await fetch(`${url}/api/singers/yue2_female_dry2`, { method: 'DELETE' })).status).toBe(404);
+    expect(() => singerVoice(BUILT_IN, users, DEV_OWNER_ID, 'yue2_female_dry2')).toThrow(/There is no singer/u);
+    expect(singerVoice(BUILT_IN, users, 'someone-else', 'yue2_female_dry2').audio).toMatch(/yue2_female_dry2\.mp3$/u);
+    expect(existsSync(join(BUILT_IN, 'yue2_female_dry2.mp3'))).toBe(true);
   });
 
   it('can be cancelled while it runs, then started again from the kept recording', async () => {
