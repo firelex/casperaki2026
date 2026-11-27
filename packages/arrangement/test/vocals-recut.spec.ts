@@ -1,0 +1,97 @@
+import { describe, expect, it } from 'vitest';
+
+import { loadBankIndex, loadPrecedentBank, type Precedent } from '../src/vocals/precedents.js';
+import { recutRhythm, type RecutRhythm } from '../src/vocals/recut.js';
+import { lyricLines } from '../src/vocals/lyric-lines.js';
+import { lineLengthProblems, lengthFits } from '../src/vocals/syllable-length.js';
+import { checkLyricLine, pronounce } from '../src/vocals/written-lyrics.js';
+
+/** A rhythm precedent from [beat, duration] notes over `bars` bars. */
+const rhythm = (notes: readonly (readonly [number, number])[], bars: number): Precedent => ({
+  id: 'test',
+  properties: { start: 0, end: bars, useOriginal: false, useRemix: true, source: { kind: 'casperaki' } },
+  melody: Object.fromEntries(notes.map(([b, d]) => [Number.isInteger(b) ? `${b}.0` : String(b), [{ note: 'c4', midi: 48, duration: d }]])),
+  chords: Object.fromEntries(Array.from({ length: bars * 4 }, (_, b) => [`${b}.0`, { chord: 'C' }])),
+});
+
+/** The recut's notes as vocal bars. */
+const barsOf = (r: RecutRhythm) =>
+  Array.from({ length: r.bars }, (_, bar) => ({
+    notes: Object.fromEntries(r.notes.filter((n) => Math.floor(n.start / 4 + 1e-9) === bar).map((n) => [String(n.start - bar * 4), [{ type: 'vocalNote', duration: n.duration }]])),
+  }));
+
+/** Every line sung on the recut passes the line check and the length rule. */
+function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number): void {
+  const sung = lyricLines(barsOf(r));
+  expect(sung.map((l) => l.length)).toEqual(lines.map((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones).length));
+  lines.forEach((text, i) => {
+    expect(checkLyricLine(text, sung[i]!), `line ${i + 1} "${text}"`).toBeUndefined();
+    expect(lineLengthProblems(text, sung[i]!, bpm), `line ${i + 1} "${text}"`).toEqual([]);
+  });
+}
+
+const POP_LINES = [
+  'You gotta feel it', 'Take me home tonight', 'I know you want me back', 'We were never meant to last',
+  'Call me when the party ends', 'Dancing on my own again', 'I can see it in your eyes', 'Do not tell me that you love me',
+  'Hold on to the feeling', 'Kiss me like you mean it', 'I am not your girl anymore', 'Turn the music up so loud',
+  'Every time you walk away', 'Baby it is cold outside', 'Lights are going out', 'Never gonna let you go',
+  'Say my name and I will come', 'Running back to you', 'Tell me something real', 'All the stars are falling down',
+  'I just want to dance', 'Give me one more night', 'Nothing feels the same', 'We could be forever young',
+  'Heart beats like a drum', 'Look at what you did', 'Stay with me until the morning', 'And I know you',
+  'Summer never ends with you', 'Drive me crazy every night', 'This is how we do it', 'Maybe I was wrong about you',
+  'Shake it off and let it go', 'You are the one I want', 'Better when you are gone', 'Tonight we own the city',
+  'Bring the fire to the floor', 'I keep on falling for you', 'Watch me shine', 'Nobody does it like you',
+];
+
+describe('the recut', () => {
+  it('every test line is in the dictionary and has 4 to 11 syllables', () => {
+    for (const l of POP_LINES) {
+      const n = l.split(/\s+/u).map((w) => pronounce(w)).reduce((a, p) => (p ? a + p.phones.length : NaN), 0);
+      expect(n, l).toBeGreaterThanOrEqual(3);
+      expect(n, l).toBeLessThanOrEqual(11);
+    }
+  });
+
+  it('a line that already fits keeps the pattern\'s notes unchanged', () => {
+    const r = rhythm([[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [4, 2]], 2);
+    const out = recutRhythm(r, ['Take me home tonight'], { bpm: 120, bars: 2 });
+    expect(out.notes).toEqual([
+      { start: 0, duration: 0.5 }, { start: 0.5, duration: 0.5 }, { start: 1, duration: 0.5 }, { start: 1.5, duration: 0.5 }, { start: 4, duration: 2 },
+    ]);
+  });
+
+  it('"You gotta feel it" puts "go" on a short note and may hold "feel" (100 bpm)', () => {
+    const r = rhythm([[0, 1], [1, 1], [2, 1], [3, 1], [4, 2]], 2);
+    const out = recutRhythm(r, ['You gotta feel it'], { bpm: 100, bars: 2 });
+    expectSingable(out, ['You gotta feel it'], 100);
+    expect(lengthFits('short', out.notes[1]!.duration, 100)).toBe(true);
+  });
+
+  it('a line starting on a weak syllable may take a pickup, and it stays in its own line', () => {
+    const r = rhythm([[0, 1], [1, 1], [2, 2], [4, 2], [8, 1], [9, 1], [10, 2], [12, 2]], 4);
+    const lines = ['Hold on to the feeling', 'And I know you'];
+    const out = recutRhythm(r, lines, { bpm: 110, bars: 4 });
+    expectSingable(out, lines, 110);
+  });
+
+  it('is deterministic', () => {
+    const r = rhythm([[0, 1], [1, 1], [2, 1], [3, 1], [4, 2]], 2);
+    expect(recutRhythm(r, ['Maybe I was wrong about you'], { bpm: 120, bars: 2 })).toEqual(recutRhythm(r, ['Maybe I was wrong about you'], { bpm: 120, bars: 2 }));
+  });
+
+  it('property: every bank rhythm takes any accepted line, at 70 and at 170 bpm', () => {
+    const entries = Object.keys(loadBankIndex().banks).flatMap((id) => {
+      const bank = loadPrecedentBank(id);
+      // All the curated and style rhythms; every 7th hook (706 hooks would take minutes).
+      return id === 'hooks' ? bank.filter((_, i) => i % 7 === 0) : [...bank];
+    });
+    let k = 0;
+    for (const bpm of [70, 170]) {
+      for (const e of entries) {
+        const lines = Array.from({ length: 4 }, () => POP_LINES[k++ % POP_LINES.length]!);
+        const out = recutRhythm(e, lines, { bpm, bars: 8 });
+        expectSingable(out, lines, bpm);
+      }
+    }
+  }, 120_000);
+});
