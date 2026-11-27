@@ -8,6 +8,7 @@ import { resolveColor } from './layout';
 import { beginRangeDrag, type BarRange } from './rangeDrag';
 import { ExportMenu, type ExportItem } from '../../export/ExportMenu';
 import { Score } from './Score';
+import { useNoteView } from './noteView';
 import { SelectionOverlay } from './Selection';
 
 /** Default row heights; vertical zoom scales them. */
@@ -112,7 +113,7 @@ export function ClipDetail({
   /** Selection in beats from the start of what's shown (the bar for drums, the section otherwise). */
   const [sel, setSel] = useState<BarRange | undefined>(undefined);
   /** Pitched tracks: piano roll or score. */
-  const [view, setView] = useState<'roll' | 'score'>('roll');
+  const [view, setView] = useNoteView('roll');
   const showScore = !track.isDrums && view === 'score';
   // Stable notes for the score (re-engraving only when the notes change).
   const scoreNotes = useMemo(

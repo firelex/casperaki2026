@@ -16,6 +16,7 @@ import {
 } from '../api/melodies';
 import { midiName } from '../editor/sequencerModel';
 import { Score } from '../editor/sequencer/Score';
+import { useNoteView } from '../editor/sequencer/noteView';
 import { scoreChordsOf } from '../hum/halfBars';
 import { HumChordRow, KEY_COL_W } from '../hum/HumChordRow';
 import { HumPianoRoll } from '../hum/HumPianoRoll';
@@ -363,7 +364,7 @@ function MelodyDetail({ bank, id, onDirty }: { bank: string; id: string; onDirty
   const entryKey = ['melody-library', 'entry', bank, id];
   const entry = useQuery({ queryKey: entryKey, queryFn: ({ signal }) => melodiesApi.entry(bank, id, signal), staleTime: Infinity });
   const [draft, setDraft] = useState<Draft | undefined>(undefined);
-  const [view, setView] = useState<'roll' | 'score'>('score');
+  const [view, setView] = useNoteView('score');
   const [playBeat, setPlayBeat] = useState<number | undefined>(undefined);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);

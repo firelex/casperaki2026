@@ -7,6 +7,7 @@ import { resolveColor } from './layout';
 import type { BarRange } from './rangeDrag';
 import { notesToAbc } from './notation';
 import { Score } from './Score';
+import { useNoteView } from './noteView';
 import { downloadScorePdf } from './scorePdf';
 import { ExportMenu, type ExportItem } from '../../export/ExportMenu';
 
@@ -47,7 +48,7 @@ export function TrackOverview({
   /** Export this track (MIDI, audio); the score PDF is added here. */
   exportItems: readonly ExportItem[];
 }) {
-  const [view, setView] = useState<'roll' | 'score'>('score');
+  const [view, setView] = useNoteView('score');
   const [grid, setGrid] = useState<Grid>(16);
   // Open with the whole song across the window.
   const [pxPerBeat, setPxPerBeat] = useState(() => Math.max(2, Math.min(240, (Math.min(1240, window.innerWidth - 32) - LABEL_W - 40) / (totalBars * BEATS_PER_BAR))));
