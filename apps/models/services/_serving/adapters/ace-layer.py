@@ -18,6 +18,14 @@ POST /generate params (all required, no others accepted):
   key_scale  "<note>[#|b] major|minor", e.g. "C major", "F# minor"
   seed       int
 Steps: read ("Read the song"), lego ("ACE writes the <track> part"), write ("Write the part").
+  sections   (optional, sung parts only, instead of lyrics) rap per section (docs/superpowers/specs/
+             2026-11-27-rap-vocals-design.md): [{name, start, end, lyrics}], seconds in the song, the section's lines.
+             Each section is made on its own stretch of the song (made MIN_SECONDS long at least), `takes` times, and
+             the take whose separated vocal raps the words most clearly is kept (svc-vocals' venv:
+             vocals/tools/pick_rap_take.py, BS-RoFormer + Whisper); rounds of `takes` until half the words are heard,
+             MAX_RAP_TAKES at most. The result is silent outside the sections.
+  takes      (with sections only) takes per round, 1..8
+Steps: read, lego (or one rap_<name> per section), write.
 Result file: layer.wav (32-bit float WAV). ACE-Step peak-normalises its output to -1 dBFS, so the part's level says
 nothing about how loud it should sit in the mix: the caller sets the clip's level.
 """
@@ -40,9 +48,17 @@ TRACKS = ("guitar", "strings", "brass", "woodwinds", "keyboard", "synth", "fx", 
 # Parts that sing: they may be given words (`lyrics`, ACE's lyrics format, e.g. "[Chorus]\n(oh yeah)\n(ooh)").
 VOCAL_TRACKS = ("backing_vocals", "vocals")
 PARAMS = ("src_wav", "track", "caption", "bpm", "key_scale", "seed")
-OPTIONAL_PARAMS = ("lyrics",)
+OPTIONAL_PARAMS = ("lyrics", "sections", "takes")
 MIN_SECONDS = 10.0   # acestep.constants.DURATION_MIN
 MAX_SECONDS = 600.0  # acestep.constants.DURATION_MAX (also the length of the model's silence latent: 15000 frames at 25 Hz)
+
+# Rap per section (spike 2026-11-27, apps/models/ace-vocal-tests/rap): a take raps 0-90 % of its words (mean 45 %), so
+# several are made and the clearest kept; fewer than half the words heard after MAX_RAP_TAKES fails the job.
+MIN_RAP_RECALL = 0.5
+MAX_RAP_TAKES = 12
+MAX_TAKES_PER_ROUND = 8
+VOCALS_PYTHON = SERVICES_DIR / "vocals" / ".venv" / "bin" / "python"
+PICK_TOOL = SERVICES_DIR / "vocals" / "tools" / "pick_rap_take.py"
 
 # The spike's settings (design doc, "What the spike showed").
 ACE_SETTINGS = dict(
@@ -137,6 +153,39 @@ def check_params(params) -> dict:
     if isinstance(seed, bool) or not isinstance(seed, int):
         raise ValueError(f"ace-layer: seed must be an integer, got {seed!r}")
 
+    sections = params.get("sections")
+    takes = params.get("takes")
+    if sections is not None:
+        if track not in VOCAL_TRACKS:
+            raise ValueError(f"ace-layer: sections are for sung parts ({list(VOCAL_TRACKS)}), not {track!r}")
+        if "lyrics" in params:
+            raise ValueError("ace-layer: give the words in each section's lyrics, not in lyrics, when sections are given")
+        if not isinstance(sections, list) or not sections:
+            raise ValueError(f"ace-layer: sections must be a non-empty list, got {sections!r}")
+        checked = []
+        for i, sec in enumerate(sections):
+            if not isinstance(sec, dict) or set(sec) != {"name", "start", "end", "lyrics"}:
+                raise ValueError(f"ace-layer: section {i} must be {{name, start, end, lyrics}}, got {sec!r}")
+            name, start, end, words = sec["name"], sec["start"], sec["end"], sec["lyrics"]
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError(f"ace-layer: section {i} has no name")
+            for k, v in (("start", start), ("end", end)):
+                if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) or v < 0:
+                    raise ValueError(f"ace-layer: section {name!r} {k} must be a number of seconds >= 0, got {v!r}")
+            if end <= start:
+                raise ValueError(f"ace-layer: section {name!r} ends ({end}) before it starts ({start})")
+            if not isinstance(words, str) or not words.strip():
+                raise ValueError(f"ace-layer: section {name!r} has no words (lyrics)")
+            checked.append({"name": name, "start": float(start), "end": float(end), "lyrics": words.strip()})
+        for a, b in zip(checked, checked[1:]):
+            if b["start"] < a["end"]:
+                raise ValueError(f"ace-layer: sections {a['name']!r} and {b['name']!r} overlap or are out of order")
+        if isinstance(takes, bool) or not isinstance(takes, int) or not 1 <= takes <= MAX_TAKES_PER_ROUND:
+            raise ValueError(f"ace-layer: takes must be an integer 1..{MAX_TAKES_PER_ROUND} with sections, got {takes!r}")
+        sections = checked
+    elif takes is not None:
+        raise ValueError("ace-layer: takes are only for sections")
+
     lyrics = params.get("lyrics")
     if lyrics is not None:
         if track not in VOCAL_TRACKS:
@@ -146,7 +195,44 @@ def check_params(params) -> dict:
 
     # ACE takes an integer bpm (GenerationParams.bpm: Optional[int]); the brain's tempo may be fractional.
     return {"src_wav": src, "track": track, "caption": caption.strip(), "bpm": int(round(bpm)),
-            "key_scale": key, "seed": seed, **({"lyrics": lyrics.strip()} if lyrics is not None else {})}
+            "key_scale": key, "seed": seed, **({"lyrics": lyrics.strip()} if lyrics is not None else {}),
+            **({"sections": sections, "takes": takes} if sections is not None else {})}
+
+
+def section_window(start: float, end: float, total: float, min_seconds: float = MIN_SECONDS) -> tuple[float, float]:
+    """The stretch of the song a section is made on: the section, made min_seconds long at least by taking more of the
+    song after it (or before it, at the song's end)."""
+    if total < min_seconds:
+        raise ValueError(f"ace-layer: the song is {total:.1f} s long; a section needs {min_seconds:.0f} s of song around it")
+    if end > total + 1e-6:
+        raise ValueError(f"ace-layer: a section ends at {end:.2f} s, after the song's end ({total:.2f} s)")
+    if end - start >= min_seconds:
+        return start, end
+    we = min(total, start + min_seconds)
+    return max(0.0, we - min_seconds), we
+
+
+def rap_lyrics(lines: str) -> str:
+    """ACE's lyrics for one section's rap: the lines under one verse tag (a section is made on its own)."""
+    return f"[Verse]\n{lines.strip()}"
+
+
+def pick_rap_take(takes: list[str], words: str, start: float, end: float, out: str) -> dict:
+    """Runs vocals/tools/pick_rap_take.py (svc-vocals' venv) on one section's takes: {"best", "takes": [scores]}."""
+    import json
+    import subprocess
+
+    for need in (VOCALS_PYTHON, PICK_TOOL):
+        if not need.exists():
+            raise RuntimeError(f"ace-layer: the rap picker needs {need}")
+    req = json.dumps({"takes": takes, "words": words, "start": start, "end": end, "out": out})
+    r = subprocess.run([str(VOCALS_PYTHON), str(PICK_TOOL)], input=req, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise RuntimeError(f"ace-layer: the rap picker failed ({r.returncode}): {r.stderr.strip()[-1500:]}")
+    lines = [l for l in r.stdout.splitlines() if l.strip()]
+    if not lines:
+        raise RuntimeError("ace-layer: the rap picker printed nothing")
+    return json.loads(lines[-1])
 
 
 def fit_length(audio, n: int):
@@ -201,13 +287,91 @@ def load(ctx):
     return {"dit": dit}
 
 
-def generate(handle, params, out_dir, job):
+def _lego(handle, p, src_wav: str, lyrics, seed: int, seconds: float):
+    """One lego run of p's track over src_wav (lyrics None: instrumental): the part as (2, samples) float, its rate."""
+    from acestep.inference import GenerationConfig, GenerationParams, generate_music
+
+    # A sung part with words sings them (not instrumental); every other part stays "[Instrumental]".
+    settings = {**ACE_SETTINGS, "lyrics": lyrics, "instrumental": False} if lyrics is not None else ACE_SETTINGS
+    gp = GenerationParams(**settings, src_audio=src_wav, instruction=lego_instruction(p["track"]),
+                          caption=p["caption"], bpm=p["bpm"], keyscale=p["key_scale"], seed=seed)
+    config = GenerationConfig(batch_size=1, use_random_seed=False, seeds=[seed], audio_format="wav")
+    result = generate_music(handle["dit"], None, gp, config, save_dir=None)
+    if not result.success:
+        raise RuntimeError(f"ace-layer: ACE-Step lego failed: {result.error}")
+    if len(result.audios) != 1:
+        raise RuntimeError(f"ace-layer: ACE-Step returned {len(result.audios)} audios, expected 1")
+    out = result.audios[0]
+    tensor, out_sr = out["tensor"], out["sample_rate"]
+    if tensor is None:
+        raise RuntimeError("ace-layer: ACE-Step returned no audio tensor")
+    tensor = tensor.detach().float().cpu()
+    if tensor.dim() != 2 or tensor.shape[0] != 2:
+        raise RuntimeError(f"ace-layer: ACE-Step audio has shape {tuple(tensor.shape)}, expected (2, samples)")
+    ace_seconds = tensor.shape[1] / out_sr
+    if abs(ace_seconds - seconds) > 1.0:
+        raise RuntimeError(f"ace-layer: ACE-Step returned {ace_seconds:.2f} s for {seconds:.2f} s of song")
+    return tensor, out_sr
+
+
+def _rap_sections(handle, p, src, sr, out_dir, job):
+    """Rap per section (module docstring, `sections`): the full-length part, silent outside the sections."""
     import numpy as np
     import soundfile as sf
     import torch
     import torchaudio
 
-    from acestep.inference import GenerationConfig, GenerationParams, generate_music
+    total = src.shape[0] / sr
+    part = np.zeros((2, src.shape[0]), dtype=np.float32)
+    for si, sec in enumerate(p["sections"]):
+        step = job.step(f"rap_{sec['name']}", f"ACE raps {sec['name']}")
+        ws, we = section_window(sec["start"], sec["end"], total)
+        d = Path(out_dir) / "rap" / sec["name"]
+        d.mkdir(parents=True, exist_ok=True)
+        window = d / "window.wav"
+        sf.write(str(window), src[int(round(ws * sr)):int(round(we * sr))], sr, subtype="FLOAT")
+        span = (sec["start"] - ws, sec["end"] - ws)
+        best, best_path, made, rounds = None, None, 0, []
+        t = time.time()
+        while made < MAX_RAP_TAKES and (best is None or best["recall"] < MIN_RAP_RECALL):
+            n = min(p["takes"], MAX_RAP_TAKES - made)
+            paths = []
+            for k in range(made, made + n):
+                job.check_cancelled()
+                tensor, out_sr = _lego(handle, p, str(window), rap_lyrics(sec["lyrics"]), p["seed"] + 1000 * si + k, we - ws)
+                path = d / f"take{k + 1}.wav"
+                sf.write(str(path), tensor.numpy().T, out_sr, subtype="FLOAT")
+                paths.append(str(path))
+            job.check_cancelled()
+            picked_path = d / f"best_of_round{len(rounds) + 1}.wav"
+            picked = pick_rap_take(paths, sec["lyrics"], span[0], span[1], str(picked_path))
+            scores = picked["takes"]
+            rounds.append(scores)
+            cand = {**scores[picked["best"]], "take": made + picked["best"] + 1}
+            if best is None or (cand["recall"], cand["vocal_db"] or -1e9) > (best["recall"], best["vocal_db"] or -1e9):
+                best, best_path = cand, picked_path
+            made += n
+        if best["recall"] < MIN_RAP_RECALL:
+            raise RuntimeError(f"ace-layer: ACE did not rap the words of {sec['name']} clearly in {made} takes (best: "
+                               f"{best['recall']:.0%} of the words heard, \"{best['heard'][:200]}\")")
+        vocal, vsr = sf.read(str(best_path), dtype="float32", always_2d=True)
+        v = torch.from_numpy(np.ascontiguousarray(vocal.T))
+        if vsr != sr:
+            v = torchaudio.functional.resample(v, vsr, sr)
+        a = int(round(sec["start"] * sr))
+        b = min(int(round(sec["end"] * sr)), part.shape[1], a + v.shape[1])
+        part[:, a:b] = v.numpy()[:, :b - a]
+        step.done(f"take {best['take']} of {made}: {best['recall']:.0%} of the words heard: \"{best['heard']}\"",
+                  {"takes": made, "recall": best["recall"], "seconds": round(time.time() - t, 1),
+                   **({"vocal_db": best["vocal_db"]} if best["vocal_db"] is not None else {}),
+                   **({"backing_db": best["backing_db"]} if best["backing_db"] is not None else {})})
+    return part
+
+
+def generate(handle, params, out_dir, job):
+    import numpy as np
+    import soundfile as sf
+    import torchaudio
 
     p = check_params(params)
     track = p["track"]
@@ -229,39 +393,24 @@ def generate(handle, params, out_dir, job):
               {"seconds": round(seconds, 3), "sample_rate": sr})
     job.check_cancelled()
 
-    # 2. ACE writes the part.
-    step = job.step("lego", f"ACE writes the {name} part")
-    # A sung part with words sings them (not instrumental); every other part stays "[Instrumental]".
-    settings = {**ACE_SETTINGS, "lyrics": p["lyrics"], "instrumental": False} if "lyrics" in p else ACE_SETTINGS
-    gp = GenerationParams(**settings, src_audio=p["src_wav"], instruction=lego_instruction(track),
-                          caption=p["caption"], bpm=p["bpm"], keyscale=p["key_scale"], seed=p["seed"])
-    config = GenerationConfig(batch_size=1, use_random_seed=False, seeds=[p["seed"]], audio_format="wav")
-    t = time.time()
-    result = generate_music(handle["dit"], None, gp, config, save_dir=None)
-    took = time.time() - t
-    if not result.success:
-        raise RuntimeError(f"ace-layer: ACE-Step lego failed: {result.error}")
-    if len(result.audios) != 1:
-        raise RuntimeError(f"ace-layer: ACE-Step returned {len(result.audios)} audios, expected 1")
-    out = result.audios[0]
-    tensor, out_sr = out["tensor"], out["sample_rate"]
-    if tensor is None:
-        raise RuntimeError("ace-layer: ACE-Step returned no audio tensor")
-    tensor = tensor.detach().float().cpu()
-    if tensor.dim() != 2 or tensor.shape[0] != 2:
-        raise RuntimeError(f"ace-layer: ACE-Step audio has shape {tuple(tensor.shape)}, expected (2, samples)")
-    ace_seconds = tensor.shape[1] / out_sr
-    if abs(ace_seconds - seconds) > 1.0:
-        raise RuntimeError(f"ace-layer: ACE-Step returned {ace_seconds:.2f} s for a {seconds:.2f} s song")
-    step.done(f"{minutes(seconds)} of {name} in {took:.1f} s",
-              {"seconds": round(seconds, 3), "generation_seconds": round(took, 1)})
-    job.check_cancelled()
+    if "sections" in p:
+        # 2. Rap per section (each its own step), placed in a silent track of the song's length.
+        part = _rap_sections(handle, p, src, sr, out_dir, job)
+    else:
+        # 2. ACE writes the part.
+        step = job.step("lego", f"ACE writes the {name} part")
+        t = time.time()
+        tensor, out_sr = _lego(handle, p, p["src_wav"], p.get("lyrics"), p["seed"], seconds)
+        took = time.time() - t
+        step.done(f"{minutes(seconds)} of {name} in {took:.1f} s",
+                  {"seconds": round(seconds, 3), "generation_seconds": round(took, 1)})
+        job.check_cancelled()
+        if out_sr != sr:
+            tensor = torchaudio.functional.resample(tensor, out_sr, sr)
+        part = fit_length(tensor.numpy(), n)
 
     # 3. Write the part: at the source's rate, exactly the source's length, stereo.
     step = job.step("write", "Write the part")
-    if out_sr != sr:
-        tensor = torchaudio.functional.resample(tensor, out_sr, sr)
-    part = fit_length(tensor.numpy(), n)
     if not np.any(part):
         raise RuntimeError("ace-layer: ACE-Step's part is silent")
     path = Path(out_dir) / "layer.wav"
