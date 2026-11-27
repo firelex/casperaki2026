@@ -146,6 +146,16 @@ describe('the recut', () => {
     expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
   });
 
+  it('holds a word that carries the meaning, not a small word before it ("don\'t give a frown": not "don\'t")', () => {
+    // The pattern's held note falls where "don't" would go.
+    const r = rhythm([[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [2, 0.5], [3, 2], [5, 0.5], [5.5, 0.5], [6, 1.5]], 2);
+    const line = "Electric daydream, don't give a frown";
+    const out = recutRhythm(r, [line], { bpm: 128, bars: 2 });
+    expectSingable(out, [line], 128);
+    const dont = out.notes[5]!;
+    expect(dont.duration, `"don't" at ${dont.start}`).toBeLessThan(1);
+  });
+
   it('is deterministic', () => {
     const r = rhythm([[0, 1], [1, 1], [2, 1], [3, 1], [4, 2]], 2);
     expect(recutRhythm(r, ['Maybe I was wrong about you'], { bpm: 120, bars: 2 })).toEqual(recutRhythm(r, ['Maybe I was wrong about you'], { bpm: 120, bars: 2 }));

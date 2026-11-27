@@ -1451,7 +1451,16 @@ export function drawRhythm(inputs: MergeInputs): Precedent {
 export function drapeOnRhythm(rhythm: Precedent, melodic: Precedent, maxNote: number): MergedPrecedent {
   const bars = (p: Precedent) => p.properties.end - p.properties.start;
   if (bars(rhythm) !== bars(melodic)) throw new Error(`vocals/precedents: the rhythm "${rhythm.id}" is ${bars(rhythm)} bars, the melody "${melodic.id}" ${bars(melodic)}`);
-  const draped = drapeAndPlace(rhythm, melodic, maxNote, undefined, true);
+  // The whole melody moves by octaves as one when that places it (owner, 2026-11-27: Electric Daydream's chorus, 57..65
+  // under a ceiling of 64, had its later lines dropped an octave by the note-by-note search and was sung with a leap);
+  // the note-by-note search only for a melody wider than the range.
+  const pitches = [...drapeInOrder(Object.keys(rhythm.melody).map(parseFloat), melodic).values()];
+  const low = Math.min(...pitches);
+  const high = Math.max(...pitches);
+  // The highest shift that fits, as wholeOctaveShift takes it.
+  const highest = Math.floor((maxNote - high) / 12) * 12;
+  const shift = low + highest >= MIN_NOTE ? highest : undefined;
+  const draped = drapeAndPlace(rhythm, melodic, maxNote, shift, true);
   if (!draped.ok) throw new Error(`vocals/precedents: the melody "${melodic.id}" on the rhythm "${rhythm.id}": ${draped.failure}`);
   return draped.merged;
 }

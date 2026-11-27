@@ -61,6 +61,25 @@ describe('a melody laid on a recut rhythm keeps its shape', () => {
   });
 });
 
+describe('a melody over the ceiling', () => {
+  it('moves by whole octaves as one, keeping its shape (Electric Daydream chorus: 57..65 under a ceiling of 64)', () => {
+    const notes = (pairs: readonly (readonly [number, number])[]) => Object.fromEntries(pairs.map(([b, m]) => [Number.isInteger(b) ? `${b}.0` : String(b), [{ note: 'x', midi: m, duration: 1 }]]));
+    const source = [[0, 64], [4, 60], [6, 57], [8, 65], [14, 64], [16, 62], [18, 60], [20, 59], [24, 57]] as const;
+    const melodic = {
+      id: 'm', properties: { start: 0, end: 8, useOriginal: false, useRemix: true, source: { kind: 'casperaki' as const } },
+      melody: notes(source),
+      chords: Object.fromEntries(Array.from({ length: 32 }, (_, b) => [`${b}.0`, { chord: 'C' }])),
+    };
+    const rhythm = { ...melodic, id: 'r', melody: notes(source.map(([b]) => [b, 0] as const)) };
+    const draped = drapeOnRhythm(rhythm, melodic, 64);
+    const midis = Object.keys(draped.melody).sort((a, b) => Number(a) - Number(b)).map((k) => draped.melody[k]![0]!.midi);
+    const shifts = midis.map((m, i) => m - source[i]![1]);
+    expect(new Set(shifts).size, `shifts ${shifts.join(' ')}`).toBe(1);
+    expect(Math.abs(shifts[0]! % 12)).toBe(0);
+    expect(Math.max(...midis)).toBeLessThanOrEqual(64);
+  });
+});
+
 describe('a note moved onto a chord tone', () => {
   it("stays within the melody's own range, so a narrow ceiling still places it", () => {
     // The melody's G (43) lands under F: F's tones nearest it are F (41) below the melody and A (45) inside it; the

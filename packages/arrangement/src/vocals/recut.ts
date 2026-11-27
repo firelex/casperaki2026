@@ -54,7 +54,23 @@ const EIGHTH = 2;
 const DURATIONS = [2, 4, 6, 8, 12, 16];
 const HOLD = HOLD_BEATS * Q;
 
-const COST = { length: 1, movePerStep: 2, moveBeatPerStep: 3, drop: 3, split: 3, add: 4 } as const;
+const COST = { length: 1, movePerStep: 2, moveBeatPerStep: 3, drop: 3, split: 3, add: 4, heldSmallWord: 3 } as const;
+/** Small words that carry no meaning of their own: pronouns, articles, auxiliaries and modals (and their
+ *  contractions), prepositions and conjunctions. Held a beat or more inside a line they sound wrong ("don't" held before
+ *  "give a frown", owner 2026-11-27), so holding one costs as much as dropping a pattern note: the search keeps a
+ *  pattern's long note on such a word only when moving it costs more. */
+const SMALL_WORDS: ReadonlySet<string> = new Set([
+  'a', 'an', 'the', 'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+  'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'us', 'them',
+  "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've", "we've", "they've", "i'll", "you'll",
+  "we'll", "they'll", "i'd", "you'd", "we'd", "they'd", "that's", "there's",
+  'am', 'is', 'are', 'was', 'were', 'be', 'been', 'do', 'does', 'did', 'have', 'has', 'had',
+  'can', 'could', 'will', 'would', 'shall', 'should', 'may', 'might', 'must',
+  "don't", "doesn't", "didn't", "can't", "won't", "isn't", "aren't", "wasn't", "weren't", "couldn't", "wouldn't",
+  "shouldn't", "haven't", "hasn't",
+  'to', 'of', 'in', 'on', 'at', 'by', 'for', 'with', 'from', 'up', 'down', 'out', 'off', 'into', 'onto', 'through',
+  'and', 'but', 'or', 'so', 'if', 'as', 'than', 'when', 'while',
+]);
 /** A note may move this far onto (or from) a pattern note and still count as that note moved. */
 const MAX_MOVE = 2;
 
@@ -64,6 +80,8 @@ interface Syllable {
   readonly byStress: boolean;
   /** A stressed syllable next to another of its word ("out-side", both stressed in the dictionary). */
   readonly twinStress: boolean;
+  /** One of SMALL_WORDS. */
+  readonly small: boolean;
   readonly length: SyllableLength;
   readonly endsWord: boolean;
 }
@@ -88,7 +106,8 @@ function syllablesOf(text: string): Syllable[] {
       const endsWord = i === p.phones.length - 1;
       const byStress = p.rhythm[i - 1] === '+' || p.rhythm[i + 1] === '+';
       const twinStress = p.rhythm[i] === '+' && byStress;
-      return { stress: p.rhythm[i]!, byStress, twinStress, length: syllableLength(phones, endsWord), endsWord };
+      const small = p.phones.length === 1 && SMALL_WORDS.has(w.toLowerCase().replace(/[‘’`]/gu, "'"));
+      return { stress: p.rhythm[i]!, byStress, twinStress, small, length: syllableLength(phones, endsWord), endsWord };
     });
   });
 }
@@ -310,8 +329,9 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
           if (!stressExact(last, st.pd, same ? d : undefined, s, syl[st.j - 1]!)) continue;
           pd = same ? last.d : undefined;
         }
+        const held = y.small && d >= Q && st.j < syl.length - 1 ? COST.heldSmallWord : 0;
         for (const p of placements(s, d, st.k)) {
-          const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost };
+          const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost + held };
           const nk = key(next);
           if (done.has(nk) || (best.get(nk) ?? Infinity) <= next.g) continue;
           best.set(nk, next.g);
