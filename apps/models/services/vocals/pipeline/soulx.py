@@ -56,7 +56,29 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
         start = float(n["start"])
         ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]), "word": str(n.get("word", "")),
                    "midi": int(n["midi"]), "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
+    # A word over several notes is given whole on each of them, its first note a note (type 2) and the rest its
+    # continuation (type 3), as in SoulX's own scores (example/audio/en_target.json: "beautiful" on two notes as
+    # en_B-Y-UW1-T-AH0-F-AH0-L twice, types 2 and 3). A syllable by itself ("Head-" as HH-EH1, "phones" as
+    # D-F-OW2-N-Z) is nothing SoulX was trained on, and it mispronounced them (owner, 2026-11-27). A note continues
+    # the word before it when that word's syllable ends in "-" or the note is held ("-").
+    words: list[list[dict]] = []
+    open_word = False  # the last sung syllable ("Head-") goes on into the next note
+    for x in ns:
+        if words and (open_word or x["word"] == "-"):
+            words[-1].append(x)
+        else:
+            words.append([x])
+        if x["word"] != "-":
+            open_word = x["word"].endswith("-")
+    for wi, w in enumerate(words):
+        phones = [p for x in w if x["word"] != "-" for p in x["phones"][3:].split("-")]
+        for k, x in enumerate(w):
+            x["phones"] = "en_" + "-".join(phones)
+            x["type"] = 2 if k == 0 else 3
+            x["wid"] = wi
     groups = phrase_groups(ns)
+    for g in groups:
+        g[0]["type"] = 2  # a phrase starts on a note of its own
     # Inside a word every note is sung up to the next one: a rest inside a word ("Ma- . ri-gold" in Marigold Static's
     # chorus) was sung as a gap (owner, 2026-11-25). A syllable that does not end its word is written with a "-"
     # ("Ma-"), a held note is "-" (it carries on the syllable before it). Between words the notes are sung as long as
@@ -75,9 +97,12 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
         phones = last["phones"][3:].split("-")
         end = min(last["end"], float(section_beats))
         if len(phones) > 1 and phones[-1] in ("S", "Z") and end - last["start"] >= 2 * sib_beats:
-            last["phones"] = "en_" + "-".join(phones[:-1])
+            for x in g:
+                if x["wid"] == last["wid"]:
+                    x["phones"] = "en_" + "-".join(phones[:-1])
             last["end"] = end - sib_beats
-            g.append({"bar": last["bar"], "start": end - sib_beats, "end": end, "midi": last["midi"], "phones": "en_S"})
+            g.append({"bar": last["bar"], "start": end - sib_beats, "end": end, "midi": last["midi"], "phones": "en_S",
+                      "type": 2, "wid": -1})
     out, prev_end = [], 0.0
     for gi, g in enumerate(groups):
         first = g[0]["start"] * beat_s
@@ -98,7 +123,7 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
             e = min(n["end"], nxt, section_beats, nxt_group)
             if e <= n["start"]:
                 raise ValueError(f"{section}: the note at beat {n['start']:g} has no length inside the section")
-            ph.append(n["phones"]); du.append((e - n["start"]) * beat_s); pi.append(n["midi"]); ty.append(2)
+            ph.append(n["phones"]); du.append((e - n["start"]) * beat_s); pi.append(n["midi"]); ty.append(n["type"])
             end = e * beat_s
         out.append({"start": first - (lead if lead >= MIN_REST_SEC else 0), "phoneme": ph, "duration": du,
                     "pitch": pi, "type": ty})

@@ -88,3 +88,28 @@ def test_between_words_the_written_rests_are_sung():
     p = soulx.phrases(notes, BPM, 16)[0]
     assert p["phoneme"][:4] == ["en_T-UW1", "<SP>", "en_G-OW1-S-T-S", "<SP>"]
     assert p["duration"][:4] == pytest.approx([0.25, 0.25, 0.25, 0.25])
+
+
+def test_a_word_over_several_notes_is_given_whole_on_each_as_soulx_was_trained():
+    """SoulX's own scores (example/audio/en_target.json) put a word's whole phonemes on each of its notes, the first a
+    note (type 2), the rest its continuation (type 3): "headphones" on "Head-" and "phones"."""
+    notes = [n(0, 0.5, 56, "Head-", ("hh", "eh1")), n(0.5, 0.5, 56, "phones", ("d", "f", "ow2", "n", "z")),
+             n(1, 1, 58, "you", ("y", "uw1"))]
+    p = soulx.phrases(notes, BPM, 16)[0]
+    assert p["phoneme"][:3] == ["en_HH-EH1-D-F-OW2-N-Z", "en_HH-EH1-D-F-OW2-N-Z", "en_Y-UW1"]
+    assert p["type"][:3] == [2, 3, 2]
+
+
+def test_a_held_note_is_its_syllable_continued():
+    """A held note ("-") continues its word (type 3), not a new start of it."""
+    notes = [n(0, 1, 60, "love", ("l", "ah1", "v")), n(1, 1, 62, "-", ("l", "ah1", "v")), n(2, 1, 64, "you", ("y", "uw1"))]
+    p = soulx.phrases(notes, BPM, 16)[0]
+    assert p["phoneme"] == ["en_L-AH1-V", "en_L-AH1-V", "en_Y-UW1"]
+    assert p["type"] == [2, 3, 2]
+
+
+def test_a_phrase_final_word_over_two_notes_sings_its_s_after_both():
+    notes = [n(0, 0.5, 56, "Head-", ("hh", "eh1")), n(0.5, 0.5, 56, "phones", ("d", "f", "ow2", "n", "z"))]
+    p = soulx.phrases(notes, BPM, 16)[0]
+    assert p["phoneme"] == ["en_HH-EH1-D-F-OW2-N", "en_HH-EH1-D-F-OW2-N", "en_S"]
+    assert p["type"] == [2, 3, 2]
