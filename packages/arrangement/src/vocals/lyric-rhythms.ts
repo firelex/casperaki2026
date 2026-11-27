@@ -1,5 +1,6 @@
 // Lyrics first (docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md): generator params `lyricRhythms`
-// (section type → the rhythm recut to its words, recut.ts) and `rhythmVariants` (section type → how many times New
+// (part → the rhythm recut to its words, recut.ts; a part is a section type, or a section with words of its own:
+// "verse2") and `rhythmVariants` (section type → how many times New
 // rhythm drew another; the draw is the stream `vocals/rhythm/<type>#v<n>`). `writeVocals` lays the type's melody on
 // its stored recut. Absent: no section is lyrics first (every song before 2026-11-27).
 

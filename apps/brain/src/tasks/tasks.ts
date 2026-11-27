@@ -20,7 +20,7 @@ import { join, resolve } from 'node:path';
 
 import { z } from 'zod';
 
-import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocals, applyWrittenLyrics, generatorParams, orchestrate, segmentType, sungSections, vocalMelodyShown, vocalSelections, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocals, applyWrittenLyrics, generatorParams, lyricsFirstParts, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
 import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../ace/aceLayerTask.js';
@@ -496,19 +496,17 @@ export class BackgroundTasks {
       if (!model) throw new Error('the brain has no language model to write lyrics with (ASSISTANT_LLM_URL)');
       const input = parseSong(JSON.parse(task.input));
       // Lyrics first (docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md): the words come before the
-      // notes; applying them bends a rhythm to them (applyLyricsFirst). Per sung section type, one line per two bars
-      // of the melody the generator chose for it, in song order.
+      // notes; applying them bends a rhythm to them (applyLyricsFirst). Per part (each verse, every other sung
+      // type once: lyricsFirstParts), one line per two bars of the melody the generator chose, in song order.
       const params = generatorParams(input);
-      const selections = vocalSelections(params);
-      const types: { type: string; label: string; lines: number }[] = [];
-      for (const s of orchestrate(params).songStructure) {
-        const type = segmentType(s.name);
-        const melody = selections.get(type);
-        if (!melody || types.some((t) => t.type === type)) continue;
+      const parts = lyricsFirstParts(params);
+      const types = parts.map(({ part, type, lines }) => {
         const label = TYPE_LABELS[type];
         if (!label) throw new Error(`lyrics first: no name for the section type "${type}" to give the lyric writer`);
-        types.push({ type, label, lines: (melody.properties.end - melody.properties.start) / 2 });
-      }
+        // Every verse its own words: "Verse 1", "Verse 2" (a song with one verse: "Verse").
+        const own = parts.filter((p) => p.type === type).length > 1;
+        return { type: part, label: own ? `${label} ${parts.filter((p) => p.type === type).findIndex((p) => p.part === part) + 1}` : label, lines };
+      });
       if (types.length === 0) throw new Error('the song has no sung section to write lyrics for');
       const songId = songIdOf(task);
       const project = this.deps.store.getProject(task.ownerId, songId);

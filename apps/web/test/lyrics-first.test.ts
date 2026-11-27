@@ -14,6 +14,12 @@ describe('lyrics first in the editor', () => {
     expect(lyricsFirstType(songWith({}), 'chorus1')).toBe(false);
   });
 
+  it('New rhythm is offered for a verse with words of its own (its rhythm stored by section)', () => {
+    const song = songWith({ lyricRhythms: { verse1: {}, verse2: {} } });
+    expect(lyricsFirstType(song, 'verse2')).toBe(true);
+    expect(lyricsFirstType(song, 'chorus1')).toBe(false);
+  });
+
   it('a finished Write lyrics task puts lyrics written first in with their own edit', () => {
     const saved = songWith({});
     expect(mergeOp('writeLyrics', { lyricsFirst: { chorus: ['a b c d'] } }, saved)).toEqual({ kind: 'applyLyricsFirst', lyrics: { chorus: ['a b c d'] } });

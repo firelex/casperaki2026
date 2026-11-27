@@ -46,7 +46,8 @@ export const MAX_ROUNDS = 10;
 export const REASONING_ROUNDS = 2;
 
 export interface LyricsFirstRequest {
-  /** Sung section types in song order: their label for the model and how many lines each needs. */
+  /** The parts in song order (`type`: a section type, or a section with words of its own such as "verse2"): their
+   *  label for the model and how many lines each needs. */
   readonly types: readonly { readonly type: string; readonly label: string; readonly lines: number }[];
   readonly title: string;
   /** Generator genre id ("brightPop"). */
@@ -68,13 +69,21 @@ const GENRE_LABELS: Readonly<Record<string, string>> = {
 
 const AnswerSchema = z.object({ sections: z.array(z.object({ name: z.string(), lines: z.array(z.string()) })) });
 
+/** What the model is told about parts that come round: the same words every time, except verses when there are
+ *  several (each its own). */
+function verses(r: LyricsFirstRequest): string {
+  const numbered = r.types.filter((t) => /^Verse \d+$/u.test(t.label)).map((t) => t.label);
+  if (numbered.length === 0) return 'Each part is sung every time it comes round in the song, so write it once.';
+  return `${numbered.join(', ')} are different verses: each one goes on with the story, with new lines and new details, and no line of one verse is repeated in another. Every other part is sung the same every time it comes round, so write it once.`;
+}
+
 function brief(r: LyricsFirstRequest): string {
   const genre = GENRE_LABELS[r.genre];
   if (!genre) throw new Error(`lyrics first: no description of the genre "${r.genre}" for the lyric writer`);
   const parts = r.types.map((t) => `${t.label} (${t.lines} lines)`).join(', ');
   return [
     `Write the lyrics of a contemporary ${genre} song called "${r.title}", the kind that is on the radio and streaming charts today.`,
-    `Parts, in this order: ${parts}. Each part is sung every time it comes round in the song, so write it once.`,
+    `Parts, in this order: ${parts}. ${verses(r)}`,
     "How today's chart pop lyrics are written:",
     '- Plain, conversational words, the way people talk and text now: contractions, everyday slang where it fits, mostly short words. Nothing poetic or old-fashioned.',
     `- Short, punchy lines: every line has ${MIN_LINE_SYLLABLES} to ${MAX_LINE_SYLLABLES} syllables, most of them 5 to 9.`,

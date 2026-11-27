@@ -40,8 +40,8 @@ export function lengthFits(kind: SyllableLength, durationBeats: number, bpm: num
 
 /** Syllables of the line sung longer than they may be (plain English, one entry each); empty when all fit. An error
  *  when the line does not fit its notes at all (the line check, checkLyricLine, says why). */
-export function lineLengthProblems(text: string, slots: LyricLine, bpm: number): string[] {
-  const sung = sungLineSyllables(text, slots);
+export function lineLengthProblems(text: string, slots: LyricLine, bpm: number, asWritten = false): string[] {
+  const sung = sungLineSyllables(text, slots, asWritten);
   if (!sung) throw new Error(`lineLengthProblems: "${text}" does not fit its ${slots.length} notes`);
   return sung.flatMap((s) => {
     const kind = syllableLength(s.phones, s.endsWord);

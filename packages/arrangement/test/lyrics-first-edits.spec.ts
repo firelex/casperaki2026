@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { Song } from '@casperaki/song-schema';
 
-import { applyLyricsFirst, checkLyricLine, checkSectionLyrics, generatorParams, lyricLines, newMelody, newRhythm, orchestrate, sungSections, TrackEditError } from '../src/index.js';
+import { applyLyricsFirst, generatorParams, lyricLines, newMelody, newRhythm, orchestrate, sungSections, TrackEditError, type LyricLine } from '../src/index.js';
+import { sungLineSyllables } from '../src/vocals/written-lyrics.js';
 import { LYRIC_RHYTHMS_PARAM } from '../src/vocals/lyric-rhythms.js';
 import { SUNG_MELODY_PARAM } from '../src/vocals/sung-melody.js';
 import { MELODY as HUM_MELODY, CHORDS as HUM_CHORDS } from './hum-fixture.js';
@@ -13,6 +14,11 @@ const LYRICS = {
   chorus: ['You gotta feel it', 'Take me home tonight', 'Maybe I was wrong about you', 'Hold me till the light'],
   bridge: ['Turn the corner lose the map', 'I do not want it back', 'Maybe it is nothing', 'But I like it like that'],
 };
+
+/** The lines that are not sung as written on the section's lyric lines (lyrics first: one syllable per note), by
+ *  line number; empty when every line is. */
+const notAsWritten = (lines: readonly LyricLine[], text: readonly string[]): number[] =>
+  lines.length !== text.length ? [-1] : text.flatMap((t, i) => (sungLineSyllables(t, lines[i]!, true) ? [] : [i + 1]));
 
 const lead = (song: Song, name: string) => JSON.stringify(song.arrangement[name]?.overrides.Vocal?.bars ?? null);
 const onsets = (song: Song, name: string) =>
@@ -31,7 +37,7 @@ describe('lyrics first', () => {
       const bars = written.arrangement[s.name]!.overrides.Vocal!.bars!;
       const lines = lyricLines(bars);
       const text = (LYRICS as Record<string, string[]>)[s.type]!;
-      expect(checkSectionLyrics(lines, Array.from({ length: lines.length }, (_, i) => text[i % text.length]!)), s.name).toEqual([]);
+      expect(notAsWritten(lines, Array.from({ length: lines.length }, (_, i) => text[i % text.length]!)), s.name).toEqual([]);
     }
   });
 
@@ -86,6 +92,58 @@ describe('lyrics first', () => {
   });
 });
 
+describe('lyrics first: every verse its own words', () => {
+  const song = orchestrate(PARAMS);
+  const verses = sungSections(song).filter((s) => s.type === 'verse').map((s) => s.name);
+  const VERSE_2 = ['Now your jacket on my chair', 'I miss you now and then', 'I tell myself I do not care', 'But I want you back again'];
+  const own: Record<string, readonly string[]> = { ...LYRICS };
+  delete own.verse;
+  const MORE = [
+    ['Walking home the long way round', 'Counting every car', 'Every light is on in town', 'I wonder where you are'],
+    ['Friday night and no one calls', 'I do not mind at all', 'Dancing in the empty hall', 'Watching shadows fall'],
+  ];
+  verses.forEach((v, i) => { own[v] = i === 0 ? LYRICS.verse : i === 1 ? VERSE_2 : MORE[(i - 2) % MORE.length]!; });
+  const written = applyLyricsFirst(song, own);
+  const linesOf = (sng: Song, name: string) => lyricLines(sng.arrangement[name]!.overrides.Vocal!.bars!);
+  const recuts = (sng: Song) => (generatorParams(sng).params as Record<string, Record<string, { pattern: string }>>)[LYRIC_RHYTHMS_PARAM]!;
+
+  it('the song has two verses to test with', () => {
+    expect(verses.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('each verse sings its own words', () => {
+    expect(notAsWritten(linesOf(written, verses[0]!), LYRICS.verse)).toEqual([]);
+    expect(notAsWritten(linesOf(written, verses[1]!), VERSE_2)).toEqual([]);
+    expect(sungSections(written).find((s) => s.name === verses[1])!.words).not.toEqual(sungSections(written).find((s) => s.name === verses[0])!.words);
+  });
+
+  it('the verses are cut from one rhythm pattern, each to its words', () => {
+    const r = recuts(written);
+    expect(r[verses[0]!]!.pattern).toBe(r[verses[1]!]!.pattern);
+    expect(r.verse).toBeUndefined();
+  });
+
+  it('New rhythm redraws one pattern for every verse; each keeps its words', () => {
+    const again = newRhythm(written, 'verse');
+    const r = recuts(again);
+    expect(r[verses[0]!]!.pattern).toBe(r[verses[1]!]!.pattern);
+    expect(r[verses[0]!]!.pattern).not.toBe(recuts(written)[verses[0]!]!.pattern);
+    expect(notAsWritten(linesOf(again, verses[1]!), VERSE_2)).toEqual([]);
+    expect(lead(again, 'chorus1')).toBe(lead(written, 'chorus1'));
+  });
+
+  it('Change melody keeps every verse its words and its rhythm', () => {
+    const made = newMelody(written, 'verse').song;
+    for (const v of verses.slice(0, 2)) expect(onsets(made, v), v).toBe(onsets(written, v));
+    expect(notAsWritten(linesOf(made, verses[1]!), VERSE_2)).toEqual([]);
+  });
+
+  it('words for a section the song does not have, or for a type and its sections at once, are refused', () => {
+    expect(() => applyLyricsFirst(song, { verse9: LYRICS.verse })).toThrow(/verse9/u);
+    expect(() => applyLyricsFirst(song, { verse: LYRICS.verse, [verses[0]!]: LYRICS.verse })).toThrow(TrackEditError);
+  });
+});
+
 describe('lyrics first on a section longer than its pattern', () => {
   it('a 12-bar chorus sings each line on the rhythm of the line its bars were copied from', () => {
     const lines = ['You gotta feel it', 'Take me home tonight', 'Maybe I was wrong about you', 'Hold me till the light'];
@@ -97,7 +155,7 @@ describe('lyrics first on a section longer than its pattern', () => {
       // Bars 9-12 repeat bars 5-8 (the pattern's lines 3 and 4), so lines 5 and 6 are lines 3 and 4 again.
       const words = (generatorParams(out).params as { lyrics: Record<string, string[]> }).lyrics.chorus1!;
       expect(words, seed).toEqual([...lines, lines[2], lines[3]]);
-      words.forEach((w, i) => expect(checkLyricLine(w, sung[i]!), `${seed} line ${i + 1}`).toBeUndefined());
+      expect(notAsWritten(sung, words), seed).toEqual([]);
     }
   });
 });

@@ -40,6 +40,19 @@ const REQUEST: LyricsFirstRequest = {
 };
 
 describe('the lyrics-first lyricist', () => {
+  it('asks for every verse on its own, each going on with the story, and answers by section', async () => {
+    const verse2 = ['Now your jacket on my chair', 'I want you back right now', 'I tell myself I do not care', 'But I do not know how'];
+    const model = scripted([JSON.stringify({ sections: [{ name: 'Verse 1', lines: GOOD.verse }, { name: 'Chorus', lines: GOOD.chorus }, { name: 'Verse 2', lines: verse2 }] })]);
+    const out = await writeLyricsFirst(model, {
+      ...REQUEST,
+      types: [{ type: 'verse1', label: 'Verse 1', lines: 4 }, { type: 'chorus', label: 'Chorus', lines: 4 }, { type: 'verse2', label: 'Verse 2', lines: 4 }],
+    });
+    expect(out).toEqual({ verse1: GOOD.verse, chorus: GOOD.chorus, verse2 });
+    const prompt = model.calls[0]!.messages.map((m) => m.content).join('\n');
+    expect(prompt).toContain('Verse 1 (4 lines), Chorus (4 lines), Verse 2 (4 lines)');
+    expect(prompt).toContain('Verse 1, Verse 2 are different verses: each one goes on with the story');
+  });
+
   it('asks once, without reasoning, with the title, the artist, the situation and each part', async () => {
     const model = scripted([answer(GOOD)]);
     const out = await writeLyricsFirst(model, REQUEST);

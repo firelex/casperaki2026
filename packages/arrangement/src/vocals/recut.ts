@@ -15,7 +15,7 @@
 
 import { z } from 'zod';
 
-import { gradeNote, heardStress, type Stress } from './stress.js';
+import { heardStress, type Stress } from './stress.js';
 import { lyricLines } from './lyric-lines.js';
 import { lengthFits, syllableLength, type SyllableLength } from './syllable-length.js';
 import { HOLD_BEATS, pronounce, wordsOf } from './written-lyrics.js';
@@ -137,25 +137,29 @@ const onBeatOneOrThree = (step: number) => step % (2 * Q) === 0;
 const grade = (n: Note, pd: number | undefined, nd: number | undefined): Stress =>
   heardStress((n.s % (BEATS_PER_BAR * Q)) / Q, n.d / Q, pd === undefined ? undefined : pd / Q, nd === undefined ? undefined : nd / Q);
 
-/** The recut makes its own notes, so it takes no note graded "either" for a syllable that has a stress (owner,
- *  2026-11-27: "a" on an off-beat quarter and "flashlight" as flash-LIGHT both passed the old check, which lets a
- *  '0' note take anything): a stressed syllable on a note graded stressed, an unstressed one on a note graded
- *  unstressed (as heard: stress.ts heardStress), and a syllable with a secondary stress never on a stressed note, nor
- *  a longer one, right next to its word's stressed syllable ("light" in "flashlight" would outweigh "flash"; "a" in "anymore" may take a beat). A one-syllable word
- *  marked '0' ("ghosts") takes any note. */
-function stressExact(n: Note, pd: number | undefined, nd: number | undefined, nextStart: number | undefined, y: Syllable): boolean {
+/** The recut makes its own notes, so it asks for the stresses as they are heard (owner, 2026-11-27: "a" on an
+ *  off-beat quarter and "flashlight" as flash-LIGHT both passed the old check, which lets a '0' note take anything):
+ *  a stressed syllable on a note heard stressed, an unstressed one on a note heard unstressed (stress.ts
+ *  heardStress), a syllable with a secondary stress not on a stressed note right next to its word's stressed
+ *  syllable ("light" in "flashlight" would outweigh "flash"; "a" in "anymore" may take a beat); a one-syllable word
+ *  marked '0' ("ghosts") takes any note. What is asked and not met costs more than any change to the rhythm, so the
+ *  recut meets it wherever a layout can: on the eighth grid some lines have none ("DAN-ge-rous" ending a line puts
+ *  "-rous" on a beat), and those take the layout that misses least. A syllable on a note heard the opposite way costs
+ *  STRESS.opposite, on a note heard as either STRESS.either. */
+const STRESS = { opposite: 12, either: 6 } as const;
+function stressCost(n: Note, pd: number | undefined, nd: number | undefined, nextStart: number | undefined, y: Syllable): number {
   const g = grade(n, pd, nd);
   // Two stressed syllables side by side in a word cannot both be heard stressed on an eighth grid when the first
-  // is short ("out-side"): either may take a note the ear hears as either, never one heard unstressed.
-  if (y.stress === '+') return g === '+' || (y.twinStress && g === '0');
-  if (y.stress === '-') return g === '-' || (gradeNote((n.s % (BEATS_PER_BAR * Q)) / Q, n.d / Q, pd === undefined ? undefined : pd / Q, nd === undefined ? undefined : nd / Q) === '0' && weakBeat(n, pd, nextStart));
-  return !y.byStress || g !== '+';
+  // is short ("out-side"): either may take a note the ear hears as either.
+  if (y.stress === '+') return g === '+' || (y.twinStress && g === '0') ? 0 : g === '-' ? STRESS.opposite : STRESS.either;
+  if (y.stress === '-') return g === '-' || weakBeat(n, pd, nextStart) ? 0 : g === '+' ? STRESS.opposite : STRESS.either;
+  return y.byStress && g === '+' ? STRESS.either : 0;
 }
 
 /** An eighth on beat 2 or 4, no longer than the note before it and followed by a note on beat 1 or 3, is weak against
  *  both: "EV-e-ry TIME" on 1, &, 2, 3. On an eighth grid two unstressed syllables in a row, sung straight through, put
- *  one of them on a beat, and this is the beat they take (when the old grade says either: it never takes a note
- *  the old check calls stressed). */
+ *  one of them on a beat, and this is the beat they take, even where the old grade calls the note stressed (the old
+ *  writer had sixteenths for "CIN-na-mon BOU-le-vard"; the eighth grid has only this). */
 function weakBeat(n: Note, pd: number | undefined, nextStart: number | undefined): boolean {
   const inBar = n.s % (BEATS_PER_BAR * Q);
   return n.d === EIGHTH && (inBar === Q || inBar === 3 * Q) && (pd === undefined || n.d <= pd) && nextStart !== undefined && nextStart % (2 * Q) === 0;
@@ -269,15 +273,14 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
       const last = st.last!;
       // A line of pickups only would be read as the end of the line before (lyric-lines.ts).
       if (last.s < lineStart) continue;
-      if (!stressExact(last, st.pd, undefined, undefined, syl[st.j - 1]!)) continue;
       // The tail stays out of the next line's pickup: long, early, or ending half a beat before the line's end. The
       // last line too: a longer section of the type plays the recut again, its first line right after.
       if (!(last.d > PICKUP_MAX || last.s < lineEnd - PICKUP_ZONE || last.s + last.d <= lineEnd - LEGATO_GAP)) continue;
-      // Final cost: the pattern notes after the last match are dropped. Pushed back as a finished state, so the
-      // cheapest finished layout comes out first.
-      const left = source.length - 1 - st.k;
-      if (left > 0) {
-        heap.push(cost + left * COST.drop, { ...st, j: syl.length + 1, k: source.length - 1, parent: st, g: cost + left * COST.drop });
+      // Final cost: the last note's stress, and the pattern notes after the last match dropped. Pushed back as a
+      // finished state, so the cheapest finished layout comes out first.
+      const extra = stressCost(last, st.pd, undefined, undefined, syl[st.j - 1]!) + (source.length - 1 - st.k) * COST.drop;
+      if (extra > 0) {
+        heap.push(cost + extra, { ...st, j: syl.length + 1, k: source.length - 1, parent: st, g: cost + extra });
         continue;
       }
       return notesOf(st);
@@ -312,10 +315,11 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
         const note = { s, d };
         // The note before it in its bar, and the grade of the last placed note now that its next is known.
         let pd: number | undefined;
+        let stress = 0;
         if (first) {
           if (prev && barOf(prev.s) === barOf(s)) {
             // A pickup in the previous line's last bar: that note's grade changes, and it must not join the pickup.
-            if (!stressExact(prev, prev.pd, d, s, prev.syllable)) continue;
+            stress += stressCost(prev, prev.pd, d, s, prev.syllable);
             if (!(prev.d > PICKUP_MAX || prev.s < lineStart - PICKUP_ZONE || s - (prev.s + prev.d) >= LEGATO_GAP)) continue;
             pd = prev.d;
           }
@@ -324,14 +328,14 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
           // Inside a word, a secondary stress next to the stressed syllable is never the longer of the two ("flash"
           // short and "light" held is heard flash-LIGHT).
           const before = syl[st.j - 1]!;
-          if (!before.endsWord && ((y.stress !== '+' && before.stress === '+' && d > last.d) || (y.stress === '+' && before.stress !== '+' && last.d > d))) continue;
+          if (!before.endsWord && ((y.stress !== '+' && before.stress === '+' && d > last.d) || (y.stress === '+' && before.stress !== '+' && last.d > d))) stress += STRESS.either;
           const same = barOf(last.s) === barOf(s);
-          if (!stressExact(last, st.pd, same ? d : undefined, s, syl[st.j - 1]!)) continue;
+          stress += stressCost(last, st.pd, same ? d : undefined, s, syl[st.j - 1]!);
           pd = same ? last.d : undefined;
         }
         const held = y.small && d >= Q && st.j < syl.length - 1 ? COST.heldSmallWord : 0;
         for (const p of placements(s, d, st.k)) {
-          const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost + held };
+          const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost + held + stress };
           const nk = key(next);
           if (done.has(nk) || (best.get(nk) ?? Infinity) <= next.g) continue;
           best.set(nk, next.g);
@@ -340,7 +344,7 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
       }
     }
   }
-  throw new Error(`recut: no rhythm for ${what} (a bug: every line the lyric checks accept has one)`);
+  throw new Error(`recut: no rhythm for ${what} (a bug: every line of 4 to 11 syllables has one)`);
 }
 
 /** The rhythm recut to the section's lines (one line per LINE_BARS bars, in order). */

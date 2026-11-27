@@ -197,7 +197,7 @@ export function newMelody(working: Song, type: string): NewMelody {
   const variants = melodyVariantsOf(params.params);
   // Lyrics first: the type keeps its words and its recut rhythm; only the melody laid on it changes (a melody of
   // another length than the recut is passed over).
-  const recut = lyricRhythmsOf(params.params)[type];
+  const recut = recutOfType(lyricRhythmsOf(params.params), type);
   const lyrics = Object.fromEntries(Object.entries(writtenLyricsOf(params.params)).filter(([name]) => recut !== undefined || segmentType(name) !== type));
   const before = vocalSignature(current, type);
   // A sung melody of the type would stay on the lead whatever the variant (it replaces the lead's notes), so a new
@@ -331,10 +331,32 @@ export function applySungVocalsOver(working: Song, sung: { melody: SungMelody; t
 
 // ---- lyrics first (docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md) ----------------------------
 
-/** Lyrics written first: per section type, the lines for one pattern length of it (one line per two bars). */
+/** Lyrics written first, by part: a section type whose sections all sing the same words ("chorus"), or one section
+ *  that has words of its own ("verse2": every verse tells its own part of the story, owner 2026-11-27); the lines for
+ *  one pattern length of the type (one line per two bars). */
 export type LyricsByType = Readonly<Record<string, readonly string[]>>;
 
 const LINE_BARS = 2;
+/** Section types whose every section has words of its own; the others sing the same words every time. */
+export const OWN_WORDS_TYPES: ReadonlySet<string> = new Set(['verse']);
+
+/** The parts the lyrics of a song are written in, in song order: a part per sung section of a type in
+ *  OWN_WORDS_TYPES ("verse1", "verse2"), a part per other sung type ("chorus"); each with its section type and how many
+ *  lines it needs (one per two bars of the melody chosen for the type). */
+export function lyricsFirstParts(params: GenerateParams): { readonly part: string; readonly type: string; readonly lines: number }[] {
+  const selections = vocalSelections(params);
+  const generated = orchestrate(params);
+  const out: { part: string; type: string; lines: number }[] = [];
+  for (const s of generated.songStructure) {
+    const type = segmentType(s.name);
+    const melody = selections.get(type);
+    if (!melody || !generated.arrangement[s.name]?.overrides[LEAD_VOCAL_TRACK]) continue;
+    const part = OWN_WORDS_TYPES.has(type) ? s.name : type;
+    if (out.some((x) => x.part === part)) continue;
+    out.push({ part, type, lines: (melody.properties.end - melody.properties.start) / LINE_BARS });
+  }
+  return out;
+}
 
 /** For each lyric line of a section of `sectionBars` bars, the line of the `patternBars`-bar pattern it sings: the
  *  generator lays the pattern over a longer section by repeating it and copying its last bars into what is left
@@ -352,27 +374,44 @@ function patternLineOf(patternBars: number, sectionBars: number): number[] {
   });
 }
 
-/** The type's lines for every section of it (a longer section sings them as its bars repeat the pattern), by section
- *  name. */
-function linesBySection(generated: Song, type: string, lines: readonly string[]): WrittenLyrics {
-  const patternBars = lines.length * LINE_BARS;
-  return Object.fromEntries(
-    generated.songStructure
-      .filter((s) => segmentType(s.name) === type && generated.arrangement[s.name]?.overrides[LEAD_VOCAL_TRACK])
-      .map((s) => [s.name, patternLineOf(patternBars, s.bars.length).map((k) => lines[k]!)]),
-  );
+/** The sung sections of `generated` the part's words go to: the section itself, or every section of the type. */
+function sectionsOfPart(generated: Song, part: string): Song['songStructure'] {
+  return generated.songStructure.filter((s) => (s.name === part || segmentType(s.name) === part) && generated.arrangement[s.name]?.overrides[LEAD_VOCAL_TRACK]);
 }
 
-function withRhythms(params: GenerateParams, recuts: Readonly<Record<string, RecutRhythm>>, variants?: Readonly<Record<string, number>>): GenerateParams {
-  const inner: Record<string, unknown> = { ...(params.params ?? {}), [LYRIC_RHYTHMS_PARAM]: { ...lyricRhythmsOf(params.params), ...recuts } };
+/** The part's lines for each of its sections (a longer section sings them as its bars repeat the pattern), by
+ *  section name. */
+function linesBySection(generated: Song, part: string, lines: readonly string[]): WrittenLyrics {
+  const patternBars = lines.length * LINE_BARS;
+  return Object.fromEntries(sectionsOfPart(generated, part).map((s) => [s.name, patternLineOf(patternBars, s.bars.length).map((k) => lines[k]!)]));
+}
+
+/** The stored recut parts of a type: the type itself, or its sections with words of their own. */
+function partsOfType(recuts: Readonly<Record<string, RecutRhythm>>, type: string): string[] {
+  return Object.keys(recuts).filter((part) => part === type || (part !== segmentType(part) && segmentType(part) === type));
+}
+
+/** The type's recut rhythm, whichever of its parts holds it (all its parts are cut from one pattern to the same
+ *  length). */
+export function recutOfType(recuts: Readonly<Record<string, RecutRhythm>>, type: string): RecutRhythm | undefined {
+  const part = partsOfType(recuts, type)[0];
+  return part === undefined ? undefined : recuts[part];
+}
+
+/** The params with the recuts of `types` replaced by `recuts` (a type's parts all go: words per type or per section,
+ *  never both). */
+function withRhythms(params: GenerateParams, types: ReadonlySet<string>, recuts: Readonly<Record<string, RecutRhythm>>, variants?: Readonly<Record<string, number>>): GenerateParams {
+  const kept = Object.fromEntries(Object.entries(lyricRhythmsOf(params.params)).filter(([part]) => !types.has(segmentType(part))));
+  const inner: Record<string, unknown> = { ...(params.params ?? {}), [LYRIC_RHYTHMS_PARAM]: { ...kept, ...recuts } };
   if (variants) inner[RHYTHM_VARIANTS_PARAM] = { ...rhythmVariantsOf(params.params), ...variants };
   return withInner(params, inner);
 }
 
 /**
  * Lyrics first: per type, the current rhythm (the pattern its stored recut came from, else the rhythm of the melody
- * the generator chose; a hummed chorus: the hum) recut to the lines; the recut and the words recorded (a longer
- * section repeats the lines), the type's sung melody dropped, the vocal tracks of those sections regenerated.
+ * the generator chose; a hummed chorus: the hum) recut to each part's lines; the recuts and the words recorded (a
+ * longer section repeats the lines), the type's sung melody dropped, the vocal tracks of those sections regenerated.
+ * A part is a type or one of its sections (lyricsFirstParts); a type's words come all per type or all per section.
  */
 export function applyLyricsFirst(working: Song, lyrics: LyricsByType): Song {
   const base = generatorParams(working);
@@ -380,39 +419,61 @@ export function applyLyricsFirst(working: Song, lyrics: LyricsByType): Song {
   const selections = vocalSelections(shown);
   const generated = orchestrate(shown);
   const stored = lyricRhythmsOf(shown.params);
+  const byType = new Map<string, string[]>();
+  for (const part of Object.keys(lyrics)) {
+    const type = segmentType(part);
+    if (sectionsOfPart(generated, part).length === 0) throw new TrackEditError(400, 'not_sung', `The song has no sung ${part} section.`);
+    byType.set(type, [...(byType.get(type) ?? []), part]);
+  }
   const recuts: Record<string, RecutRhythm> = {};
   let written: WrittenLyrics = {};
-  for (const [type, lines] of Object.entries(lyrics)) {
+  for (const [type, parts] of byType) {
     const melody = selections.get(type);
     if (!melody) throw new TrackEditError(400, 'not_sung', `The song has no sung ${type} section.`);
+    if (parts.includes(type) && parts.length > 1) throw new TrackEditError(400, 'mixed_parts', `Words for the ${type} come for every ${type} or for each one, not both.`);
+    if (!parts.includes(type)) {
+      const missing = sectionsOfPart(generated, type).map((s) => s.name).filter((name) => !parts.includes(name));
+      if (missing.length > 0) throw new TrackEditError(400, 'missing_part', `Words for ${missing.join(', ')} are missing: every ${type} needs its own.`);
+    }
     const bars = melody.properties.end - melody.properties.start;
-    if (lines.length * LINE_BARS !== bars) throw new TrackEditError(400, 'line_count', `The ${type} needs ${bars / LINE_BARS} lines (one per ${LINE_BARS} bars), not ${lines.length}.`);
-    recuts[type] = recutRhythm(stored[type]?.source ?? melody.rhythmic, lines, { bpm: shown.bpm, bars });
-    written = { ...written, ...linesBySection(generated, type, lines) };
+    const source = recutOfType(stored, type)?.source ?? melody.rhythmic;
+    for (const part of parts) {
+      const lines = lyrics[part]!;
+      if (lines.length * LINE_BARS !== bars) throw new TrackEditError(400, 'line_count', `The ${part} needs ${bars / LINE_BARS} lines (one per ${LINE_BARS} bars), not ${lines.length}.`);
+      recuts[part] = recutRhythm(source, lines, { bpm: shown.bpm, bars });
+      written = { ...written, ...linesBySection(generated, part, lines) };
+    }
   }
-  const types = new Set(Object.keys(lyrics));
-  return applyVocalParams(working, paramsWithoutSung(withRhythms(paramsWithLyrics(base, written), recuts), types), types);
+  const types = new Set(byType.keys());
+  return applyVocalParams(working, paramsWithoutSung(withRhythms(paramsWithLyrics(base, written), types, recuts), types), types);
 }
 
 /**
- * New rhythm: another random rhythm (the type's next rhythm variant, its own stream) recut to the type's words, the
- * first that changes the lead; words, melody and chords kept, the type's sung melody dropped. Only for a type with
- * lyrics-first words.
+ * New rhythm: another random rhythm (the type's next rhythm variant, its own stream) recut to the words of each of
+ * the type's parts, the first that changes the lead; words, melody and chords kept, the type's sung melody dropped.
+ * Only for a type with lyrics-first words.
  */
 export function newRhythm(working: Song, type: string): Song {
   const params = generatorParams(working);
-  const recut = lyricRhythmsOf(params.params)[type];
-  if (!recut) throw new TrackEditError(409, 'no_lyrics', 'Write lyrics first: a new rhythm is bent to the words.');
+  const stored = lyricRhythmsOf(params.params);
+  const parts = partsOfType(stored, type);
+  if (parts.length === 0) throw new TrackEditError(409, 'no_lyrics', 'Write lyrics first: a new rhythm is bent to the words.');
   const current = orchestrate(params);
-  const first = current.songStructure.find((s) => segmentType(s.name) === type && current.arrangement[s.name]?.overrides[LEAD_VOCAL_TRACK]);
-  const words = first ? writtenLyricsOf(params.params)[first.name] : undefined;
-  if (!first || !words) throw new TrackEditError(409, 'no_lyrics', 'Write lyrics first: a new rhythm is bent to the words.');
-  const lines = words.slice(0, recut.bars / LINE_BARS);
+  const written = writtenLyricsOf(params.params);
+  const linesOf = (part: string): string[] => {
+    const first = sectionsOfPart(current, part)[0];
+    const words = first ? written[first.name] : undefined;
+    if (!first || !words) throw new TrackEditError(409, 'no_lyrics', 'Write lyrics first: a new rhythm is bent to the words.');
+    return words.slice(0, stored[part]!.bars / LINE_BARS);
+  };
+  const lines = Object.fromEntries(parts.map((part) => [part, linesOf(part)]));
+  const bars = stored[parts[0]!]!.bars;
   const before = vocalSignature(current, type);
   const variants = rhythmVariantsOf(params.params);
   for (let v = (variants[type] ?? 0) + 1, tries = 0; tries < MELODY_TRIES; v++, tries++) {
-    const rhythm = drawRhythm({ desiredPatternLength: recut.bars, segmentType: type, genre: params.genre, tempo: params.bpm, rng: createRng(`${params.seed}/vocals/rhythm/${type}#v${v}`) });
-    const next = paramsWithoutSung(withRhythms(params, { [type]: recutRhythm(rhythm, lines, { bpm: params.bpm, bars: recut.bars }) }, { [type]: v }), new Set([type]));
+    const rhythm = drawRhythm({ desiredPatternLength: bars, segmentType: type, genre: params.genre, tempo: params.bpm, rng: createRng(`${params.seed}/vocals/rhythm/${type}#v${v}`) });
+    const recuts = Object.fromEntries(parts.map((part) => [part, recutRhythm(rhythm, lines[part]!, { bpm: params.bpm, bars })]));
+    const next = paramsWithoutSung(withRhythms(params, new Set([type]), recuts, { [type]: v }), new Set([type]));
     if (vocalSignature(orchestrate(next), type) === before) continue;
     return applyVocalParams(working, next, new Set([type]));
   }

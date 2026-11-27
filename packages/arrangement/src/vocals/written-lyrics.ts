@@ -291,6 +291,17 @@ function planLine(words: readonly ParsedWord[], slots: LyricLine): LinePlan | un
   return (clean ?? best).plan;
 }
 
+/** The line sung as written (lyrics first: the rhythm was cut to these words, one note per syllable in the
+ *  dictionary's full form): no word shortened, no note held or split; undefined when the counts differ. */
+function planAsWritten(words: readonly ParsedWord[], slots: LyricLine): LinePlan | undefined {
+  const v = variant(words, 0);
+  const syllables = syllablesOf(v);
+  return syllables.length === slots.length ? { words: v, syllables, held: new Set(), split: new Set() } : undefined;
+}
+
+/** The plan for a line: as written (lyrics first), or the old planner's (words fitted to a melody). */
+const planFor = (words: readonly ParsedWord[], slots: LyricLine, asWritten: boolean) => (asWritten ? planAsWritten(words, slots) : planLine(words, slots));
+
 function sungNotes(slots: LyricLine, plan: LinePlan): SungNote[] {
   const out: SungNote[] = [];
   slots.forEach((s, i) => {
@@ -502,10 +513,10 @@ export function checkSectionLyrics(lines: readonly LyricLine[], text: readonly s
 export const HELD_SYLLABLE = '-';
 
 /** What the line's notes sing: per sung note its start, length and syllable (an error naming the line otherwise). */
-function fitLine(text: string, slots: LyricLine, where: string): { start: number; duration: number; slot: number; syl: SungSyllable }[] {
+function fitLine(text: string, slots: LyricLine, where: string, asWritten: boolean): { start: number; duration: number; slot: number; syl: SungSyllable }[] {
   const { words, unknown } = parseLine(text);
   if (unknown.length > 0) throw new Error(`${where}: words not in the pronunciation dictionary: ${unknown.join(', ')}`);
-  const plan = planLine(words, slots);
+  const plan = planFor(words, slots, asWritten);
   if (!plan) throw new Error(`${where}: "${text}" does not fit its ${slots.length} notes`);
   const sung = sungNotes(slots, plan);
   const out: { start: number; duration: number; slot: number; syl: SungSyllable }[] = sung.map((n, k) => ({ start: n.start, duration: n.duration, slot: n.slot, syl: plan.syllables[k]! }));
@@ -526,8 +537,9 @@ export const beatKey = (start: number) => {
 };
 
 /** The segment with the written lines sung on its notes (an error when a line does not fit its notes). A split note
- *  becomes two notes; the second half is a copy of it. */
-export function attachWrittenLyrics(segment: VocalSegment, text: readonly string[]): VocalSegment {
+ *  becomes two notes; the second half is a copy of it. `asWritten`: lyrics first, one syllable per note as the
+ *  rhythm was cut (planAsWritten). */
+export function attachWrittenLyrics(segment: VocalSegment, text: readonly string[], asWritten = false): VocalSegment {
   const lines = lyricLines(segment.bars);
   if (text.length !== lines.length) {
     throw new Error(`written lyrics for ${segment.segmentName}: ${text.length} lines written for ${lines.length} lyric lines of its melody`);
@@ -548,7 +560,7 @@ export function attachWrittenLyrics(segment: VocalSegment, text: readonly string
     return { ...bar, notes };
   });
   lines.forEach((slots, i) => {
-    const fitted = fitLine(text[i]!, slots, `written lyrics for ${segment.segmentName}, line ${i + 1}`);
+    const fitted = fitLine(text[i]!, slots, `written lyrics for ${segment.segmentName}, line ${i + 1}`, asWritten);
     fitted.forEach((f, k) => {
       const slot = slots[f.slot]!;
       const ev = original.get(Math.round(slot.start * 1e6));
@@ -589,10 +601,10 @@ export interface SungLineSyllable {
 
 /** The line's syllables as sung on these notes (the same choice of sung forms, held and split notes as the line check
  *  makes), or undefined when the line does not fit the notes at all (unknown words or the syllable count). */
-export function sungLineSyllables(text: string, slots: LyricLine): SungLineSyllable[] | undefined {
+export function sungLineSyllables(text: string, slots: LyricLine, asWritten = false): SungLineSyllable[] | undefined {
   const { words, unknown } = parseLine(text);
   if (unknown.length > 0) return undefined;
-  const plan = planLine(words, slots);
+  const plan = planFor(words, slots, asWritten);
   if (!plan) return undefined;
   const sung = sungNotes(slots, plan);
   const parts = plan.words.flatMap(({ word, p }) => p.phones.map((phones, i) => ({ word, phones, endsWord: i === p.phones.length - 1 })));

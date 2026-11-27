@@ -108,10 +108,12 @@ export function writeVocals(
     if (!merged) continue;
     // Lyrics first: the type's melody laid on the rhythm its words bent (lyric-rhythms.ts); the draws are unchanged,
     // so nothing else moves.
-    const recut = lyricRhythms[segmentType];
+    // A section with words of its own ("verse2") has its own recut; the others share their type's.
+    const part = segment.name in lyricRhythms ? segment.name : segmentType;
+    const recut = lyricRhythms[part];
     if (recut) {
-      if (!laidOn.has(segmentType)) laidOn.set(segmentType, drapeOnRhythm(recutAsPrecedent(recut), merged.melodic, merged.properties.maxNote));
-      merged = laidOn.get(segmentType)!;
+      if (!laidOn.has(part)) laidOn.set(part, drapeOnRhythm(recutAsPrecedent(recut), merged.melodic, merged.properties.maxNote));
+      merged = laidOn.get(part)!;
     }
     sung.set(segment.name, { merged, type: segmentType });
   }
@@ -158,7 +160,7 @@ export function writeVocals(
       sungMelody[s.segmentName]
         ? attachSungMelody(s, sungMelody[s.segmentName]!)
         : written[s.segmentName]
-          ? attachWrittenLyrics(s, written[s.segmentName]!)
+          ? attachWrittenLyrics(s, written[s.segmentName]!, s.segmentName in lyricRhythms || baseType(s.segmentName) in lyricRhythms)
           : s,
     ),
   };

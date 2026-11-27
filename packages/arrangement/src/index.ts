@@ -398,7 +398,7 @@ export { gradeNote, gradeBar, legacyDuration, stressFits, wordRhythm, UNSTRESSED
 export { splitWord, contractSplit, type WordSplit } from './vocals/word-split.js';
 export { MELODY_VARIANTS_PARAM, melodyVariantsOf } from './vocals/melody-variants.js';
 export { laneWordsOn, SUNG_MELODY_PARAM, SungMelodySchema, SungNoteSchema, sungMelodyOf, type SungMelody, type SungNote } from './vocals/sung-melody.js';
-export { applyLyricsFirst, newRhythm, type LyricsByType } from './edits/vocal-edits.js';
+export { applyLyricsFirst, lyricsFirstParts, newRhythm, OWN_WORDS_TYPES, recutOfType, type LyricsByType } from './edits/vocal-edits.js';
 export { checkFreeLyrics, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES, type FreeLyricsProblem } from './vocals/free-lyrics.js';
 export { LYRIC_RHYTHMS_PARAM, lyricRhythmsOf, RHYTHM_VARIANTS_PARAM, rhythmVariantsOf, type LyricRhythms } from './vocals/lyric-rhythms.js';
 export { lengthFits, lineLengthProblems, syllableLength, type SyllableLength } from './vocals/syllable-length.js';
