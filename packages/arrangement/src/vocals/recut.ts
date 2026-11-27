@@ -1,6 +1,6 @@
 // The recut: a rhythm pattern bent to written lines (docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md,
 // step 3). The pattern is laid over the section (tiled as melodies are tiled) and cut into lines of LINE_BARS bars,
-// one per written line. Each line gets, one note per syllable, the cheapest layout on a sixteenth grid that the
+// one per written line. Each line gets, one note per syllable, the cheapest layout on an eighth grid that the
 // lyric check accepts: every syllable on a note whose grade (stress.ts) takes it, no note longer than the syllable may
 // be sung (syllable-length.ts), a note held for HOLD_BEATS or more only on a word's end, and the lines read back as
 // the same lines (lyric-lines.ts moves short legato notes at a line's end into the next line as its pickup; the
@@ -48,7 +48,10 @@ const LEGATO_GAP = 0.5 * Q;
 const PICKUP_ZONE = 2 * Q;
 /** The longest rest between two notes of a line the search tries. */
 const MAX_REST = 4 * Q;
-const DURATIONS = [1, 2, 3, 4, 6, 8, 12, 16];
+/** Notes start on an eighth and last whole eighths (owner, 2026-11-27: sixteenths sang too fast, and a quarter
+ *  straight into a sixteenth jumped). */
+const EIGHTH = 2;
+const DURATIONS = [2, 4, 6, 8, 12, 16];
 const HOLD = HOLD_BEATS * Q;
 
 const COST = { length: 1, movePerStep: 2, moveBeatPerStep: 3, drop: 3, split: 3, add: 4 } as const;
@@ -178,7 +181,7 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
   const lineEnd = lineStart + LINE_STEPS;
   // Longest first: on equal cost the longer note wins (an added note fills its time rather than clipping to a
   // sixteenth).
-  const durs = [...new Set([...DURATIONS, ...source.map((n) => n.d)])].sort((a, b) => b - a);
+  const durs = [...new Set([...DURATIONS, ...source.map((n) => n.d).filter((d) => d % EIGHTH === 0)])].sort((a, b) => b - a);
   const fitsLength = (y: Syllable, d: number) => lengthFits(y.length, d / Q, bpm) && (d < HOLD || y.endsWord);
   // The cost of placing a note: matched to a pattern note after k (moved, re-lengthened, the ones between dropped)
   // or added.
@@ -243,7 +246,8 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
       from = st.last!.s + st.last!.d;
       to = Math.min(lineEnd - 1, from + MAX_REST);
     }
-    for (let s = Math.max(from, prev ? prev.s + prev.d : 0); s <= to; s++) {
+    const start = Math.max(from, prev ? prev.s + prev.d : 0);
+    for (let s = Math.ceil(start / EIGHTH) * EIGHTH; s <= to; s += EIGHTH) {
       const pickup = s < lineStart;
       // A word is sung straight through: after a syllable that does not end its word, the next starts as it ends.
       if (!first && !syl[st.j - 1]!.endsWord && s !== st.last!.s + st.last!.d) continue;

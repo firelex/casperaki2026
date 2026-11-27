@@ -33,6 +33,12 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number): 
   const twice = lyricLines(barsOf(repeated(r, 2))).map((l) => l.length);
   const once = lyricLines(barsOf(r)).map((l) => l.length);
   expect(twice, 'played twice').toEqual([...once, ...once]);
+  // Never faster than an eighth (owner, 2026-11-27: sixteenths sang too fast): every note starts on an eighth and
+  // lasts at least one.
+  r.notes.forEach((n) => {
+    expect((n.start * 2) % 1, `note at ${n.start} on the eighth grid`).toBe(0);
+    expect((n.duration * 2) % 1, `note at ${n.start} lasts whole eighths`).toBe(0);
+  });
   const ends = lines.flatMap((l) => l.split(/\s+/u).flatMap((w) => pronounce(w)!.phones.map((_, i, all) => i === all.length - 1)));
   r.notes.forEach((n, i) => {
     if (!ends[i]) expect(r.notes[i + 1]!.start, `syllable ${i + 1} runs into the next of its word`).toBeCloseTo(n.start + n.duration, 9);

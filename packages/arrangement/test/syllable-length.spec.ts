@@ -32,6 +32,12 @@ describe('the length rule', () => {
     expect(lengthFits('any', 8, 60)).toBe(true);
   });
 
+  it('an eighth, the shortest note sung, suits every syllable at any tempo', () => {
+    expect(lengthFits('short', 0.5, 70)).toBe(true); // 429 ms
+    expect(lengthFits('medium', 0.5, 50)).toBe(true); // 600 ms
+    expect(lengthFits('short', 1, 170)).toBe(false); // a quarter, 353 ms
+  });
+
   it('names a syllable held too long in a line', () => {
     // you gotta feel it: "go" held two beats at 110 bpm (1091 ms).
     const line = slots([[0, 0.5], [0.5, 2], [2.5, 0.5], [3, 2], [5, 0.5]]);

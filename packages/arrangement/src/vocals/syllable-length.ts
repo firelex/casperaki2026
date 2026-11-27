@@ -11,6 +11,8 @@ export type SyllableLength = 'short' | 'medium' | 'any';
 
 /** Under this long: a short note. */
 export const SHORT_MS = 300;
+/** The shortest note sung, in beats (an eighth; owner, 2026-11-27: sixteenths sang too fast). */
+export const SHORTEST_BEATS = 0.5;
 /** Under this long: a short-to-medium note. */
 export const MEDIUM_MS = 500;
 
@@ -30,6 +32,8 @@ export function syllableLength(phones: readonly string[], endsWord: boolean): Sy
 /** Whether a note of `durationBeats` at `bpm` suits a syllable of this length. */
 export function lengthFits(kind: SyllableLength, durationBeats: number, bpm: number): boolean {
   if (kind === 'any') return true;
+  // An eighth is the shortest note sung (recut.ts), so it suits every syllable at any tempo.
+  if (durationBeats <= SHORTEST_BEATS) return true;
   const ms = (durationBeats * 60000) / bpm;
   return ms < (kind === 'short' ? SHORT_MS : MEDIUM_MS);
 }
