@@ -86,6 +86,13 @@ export const tasksApi = {
       kind: 'aceLayer', songId, song, instrument: 'adlibs', lyrics, voice, sections,
       ...(style.trim() ? { words: style.trim() } : {}),
     }),
+  /** Add rap vocals: ACE raps in `style` over `sections`; `rapWords` holds the words the user wrote (the other
+   *  sections' words are written by the brain). */
+  startRap: (songId: string, song: Song, style: string, sections: readonly string[], rapWords: Record<string, string>) =>
+    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', {
+      kind: 'aceLayer', songId, song, instrument: 'rap', sections,
+      ...(style.trim() ? { words: style.trim() } : {}), ...(Object.keys(rapWords).length ? { rapWords } : {}),
+    }),
   apply: (id: string) => defaultBrainClient.post<AppliedTask>(`/api/tasks/${encodeURIComponent(id)}/apply`, {}),
   cancel: (id: string) => defaultBrainClient.post<{ task: BackgroundTask }>(`/api/tasks/${encodeURIComponent(id)}/cancel`, {}),
   /** Where a step's file ("<stage>/<name>") is served. */

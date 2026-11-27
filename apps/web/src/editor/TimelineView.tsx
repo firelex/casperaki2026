@@ -34,6 +34,7 @@ import { hasNotes } from './audioOnlyTracks';
 import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { AceLayerDialog } from './sequencer/AceLayerDialog';
+import { RapDialog } from './sequencer/RapDialog';
 import { AdlibsDialog } from './sequencer/AdlibsDialog';
 import { SingerDialog } from './sequencer/SingerDialog';
 import { useSession } from '../state/session';
@@ -607,6 +608,24 @@ export function TimelineView() {
       setTaskError(`Add ad-libs failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
+  /** Add rap vocals: ACE raps over the sections the user picks (docs/superpowers/specs/2026-11-27-rap-vocals-design.md). */
+  const [rapping, setRapping] = useState(false);
+  const rapItem: AceLayerItem & { label: string; hint: string } = {
+    label: 'Add rap vocals…',
+    disabled: Boolean(aceTask),
+    hint: aceTask ? 'an ACE layer is being made' : '',
+    onSelect: () => setRapping(true),
+  };
+  const addRap = async (style: string, chosen: string[], words: Record<string, string>) => {
+    setRapping(false);
+    setTaskError(undefined);
+    try {
+      await onSaved((songId, song) => tasksApi.startRap(songId, song, style, chosen, words));
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Add rap vocals failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
   const selectionMenu: SelectionActions = { ...selectionBase, aceLayer: aceLayerItem };
   const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
   /** Sing asks which singer first (SingerDialog), preselecting the one this song last sang with. */
@@ -838,6 +857,7 @@ export function TimelineView() {
               onRemove={() => edits.removeTrack(t.name)}
               aceLayer={aceLayerItem}
               adlibs={adlibItem}
+              rap={rapItem}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
                 setDialog({ kind: 'add', sections: s === undefined ? model.sections.map((x) => x.name) : [model.sections[s]!.name] })
@@ -991,6 +1011,9 @@ export function TimelineView() {
       {choosingSinger ? <SingerDialog preselected={lastSinger} onClose={() => setChoosingSinger(false)} onStart={(id) => void startSing(id)} /> : null}
       {adlibbing ? (
         <AdlibsDialog sections={adlibSections} onClose={() => setAdlibbing(false)} onStart={(l, st, v) => void addAdlibs(l, st, v)} />
+      ) : null}
+      {rapping ? (
+        <RapDialog sections={model.sections.map((s) => ({ name: s.name, bars: s.bars }))} onClose={() => setRapping(false)} onStart={(st, ch, w) => void addRap(st, ch, w)} />
       ) : null}
       {layering ? (
         <AceLayerDialog
@@ -1218,6 +1241,7 @@ function TrackMenu({
   onAdd,
   aceLayer,
   adlibs,
+  rap,
   onOverview,
   children,
 }: {
@@ -1245,6 +1269,8 @@ function TrackMenu({
   aceLayer: AceLayerItem;
   /** Add ad-libs… (the final chorus(es); disabled with why). */
   adlibs: AceLayerItem & { label: string; hint: string };
+  /** Add rap vocals… (disabled while the song's ACE layer task runs). */
+  rap: AceLayerItem & { label: string; hint: string };
   /** Whole-track piano roll / score (pitched tracks). */
   onOverview: (() => void) | undefined;
   children: ReactNode;
@@ -1279,6 +1305,9 @@ function TrackMenu({
             </ContextMenuItem>
             <ContextMenuItem className={ITEM} disabled={adlibs.disabled} onSelect={adlibs.onSelect}>
               {adlibs.label} <MenuHint text={adlibs.hint} />
+            </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={rap.disabled} onSelect={rap.onSelect}>
+              {rap.label} <MenuHint text={rap.hint} />
             </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>

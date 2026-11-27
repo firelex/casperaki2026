@@ -9,7 +9,7 @@ import { join } from 'node:path';
 
 import { z } from 'zod';
 
-import { AceLayerResultSchema, type AceLayerResult } from '@casperaki/arrangement';
+import { AceLayerResultSchema, writtenLyricsOf, type AceLayerResult } from '@casperaki/arrangement';
 import {
   ACE_INSTRUMENT_CAPTIONS,
   ACE_INSTRUMENT_LABELS,
@@ -17,6 +17,7 @@ import {
   ACE_INSTRUMENTS,
   aceTrackName,
   aceTrackOf,
+  rapLineCount,
   vocalTakeFingerprint,
   type Song,
 } from '@casperaki/song-schema';
@@ -25,6 +26,7 @@ import type { TaskJobs, TaskStep } from '../store.js';
 import { integratedLoudnessOf } from '../audio/loudness.js';
 import { CancelledError, followJob, wavSeconds, writeAtomic } from '../sing/singTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
+import type { RapWordsRequest } from './rapWords.js';
 
 export const AceLayerOptionsSchema = z
   .object({
@@ -45,14 +47,23 @@ export const AceLayerOptionsSchema = z
     /** Ad-libs only: the words ACE sings (under every chorus), and the voice (ACE's backing_vocals or vocals track). */
     lyrics: z.string().trim().min(1).max(1000).optional(),
     voice: z.enum(ACE_ADLIB_VOICES).optional(),
+    /** Rap only: the words of the sections the user wrote them for (section name → its lines, one per line of text);
+     *  the other sections' words are written by the language model. */
+    rapWords: z.record(z.string().min(1), z.string().trim().min(1).max(1000)).optional(),
     seed: z.number().int().min(0),
   })
   .strict()
+  .refine((o) => o.instrument !== 'rap' || o.sections !== undefined, 'rap needs the sections it goes in')
+  .refine((o) => o.instrument !== 'rap' || (o.range === undefined && o.sectionKinds === undefined), 'rap is chosen by section, not by a selection or section kinds')
+  .refine((o) => (o.rapWords === undefined) || o.instrument === 'rap', 'only rap takes rap words')
+  .refine((o) => !o.rapWords || Object.keys(o.rapWords).every((n) => o.sections?.includes(n)), 'rap words are only for the sections the rap goes in')
   .refine((o) => (o.instrument === 'adlibs') === (o.lyrics !== undefined), 'ad-libs need their words, and only ad-libs take words')
   .refine((o) => (o.instrument === 'adlibs') === (o.voice !== undefined), 'ad-libs need a voice, and only ad-libs take one');
 export type AceLayerOptions = z.infer<typeof AceLayerOptionsSchema>;
 
 const BEATS_PER_BAR = 4;
+/** Rap: ACE takes per round for each section (svc-ace keeps the clearest; spike 2026-11-27). */
+export const RAP_TAKES = 4;
 /** The level a layer is brought to, as the sample library's tonal samples are (~-24 LUFS integrated): the engine's
  *  per-instrument levels (mix-config.json) assume it, so the layer sits in the mix like its instrument would. */
 export const ACE_LAYER_LUFS = -24;
@@ -114,6 +125,8 @@ export function keyScale(key: string): string {
 /** What ACE is asked to play: the instrument's description, the user's words, the tempo and the key. */
 export function aceCaption(song: Song, options: AceLayerOptions): string {
   const words = options.words?.trim();
+  // Rap: the user's style ("male rap vocals, confident hip hop flow") first, then "a cappella, dry, …".
+  if (options.instrument === 'rap') return [...(words ? [words] : []), ACE_INSTRUMENT_CAPTIONS.rap, `${song.bpm} bpm`, keyScale(song.key)].join(', ');
   return [ACE_INSTRUMENT_CAPTIONS[options.instrument], ...(words ? [words] : []), `${song.bpm} bpm`, keyScale(song.key)].join(', ');
 }
 
@@ -138,6 +151,34 @@ export function trackNames(song: Song): string[] {
   return [...new Set(names)];
 }
 
+const SECTION_LABELS: Readonly<Record<string, string>> = { intro: 'Intro', verse: 'Verse', preChorus: 'Pre-chorus', chorus: 'Chorus', bridge: 'Bridge', outro: 'Outro' };
+
+/** A section as people call it: "verse2" → "Verse 2", "preChorus1" → "Pre-chorus 1". */
+export function sectionLabel(name: string): string {
+  const kind = sectionKind(name);
+  const label = SECTION_LABELS[kind];
+  if (!label) throw new Error(`the section "${name}" is of a kind (${kind}) with no name for people`);
+  const n = name.slice(kind.length);
+  return n ? `${label} ${n}` : label;
+}
+
+/** The song's sung words, each section's once, in song order (for the rap's writer). */
+export function songWordsOf(song: Song): string[] {
+  const lyrics = writtenLyricsOf((song.generator?.params as { params?: Record<string, unknown> } | undefined)?.params);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of song.songStructure) {
+    const lines = lyrics[s.name];
+    if (!lines || seen.has(lines.join('\n'))) continue;
+    seen.add(lines.join('\n'));
+    out.push(...lines);
+  }
+  return out;
+}
+
+/** The lines of a user's rap words (empty lines dropped). */
+export const rapLinesOf = (text: string) => text.split('\n').map((l) => l.trim()).filter(Boolean);
+
 export interface AceLayerContext {
   readonly taskId: string;
   /** The song as it was when the task started. */
@@ -157,22 +198,28 @@ export interface AceLayerContext {
   readonly now: () => string;
   /** Renders the song (its mix as the user hears it, unmastered): the WAV's path. */
   readonly renderWav: (song: Song) => Promise<string>;
+  /** Rap: writes the words of the sections the user left empty (the language model), or undefined without one. */
+  readonly writeRapWords?: (request: RapWordsRequest) => Promise<Record<string, string[]>>;
+  /** The song's title (for the rap's writer). */
+  readonly title?: string;
 }
 
-type BrainStepId = 'render' | 'clips';
-const LABELS: Record<BrainStepId, string> = { render: 'Render the song', clips: 'Cut the part into one clip per section and store them' };
+type BrainStepId = 'render' | 'words' | 'clips';
+const LABELS: Record<BrainStepId, string> = { render: 'Render the song', words: "Write the rap's words", clips: 'Cut the part into one clip per section and store them' };
 
 class StepLog {
   private brain: Record<BrainStepId, TaskStep> = {
     render: { id: 'render', label: LABELS.render, state: 'waiting' },
+    words: { id: 'words', label: LABELS.words, state: 'waiting' },
     clips: { id: 'clips', label: LABELS.clips, state: 'waiting' },
   };
   private ace: TaskStep[] = [];
   private last = '';
-  constructor(private readonly ctx: AceLayerContext) {}
+  /** withWords: the task writes words (rap with sections left empty). */
+  constructor(private readonly ctx: AceLayerContext, private readonly withWords: boolean) {}
 
   private publish(): void {
-    const steps = [this.brain.render, ...this.ace, this.brain.clips];
+    const steps = [this.brain.render, ...(this.withWords ? [this.brain.words] : []), ...this.ace, this.brain.clips];
     const key = JSON.stringify(steps);
     if (key === this.last) return;
     this.last = key;
@@ -205,10 +252,12 @@ class StepLog {
 /** Runs the ACE layer task: its result (the layer's clips, stored). */
 export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult> {
   const { input, options } = ctx;
-  const log = new StepLog(ctx);
+  const covered = coveredSections(input, options.range, options.sectionKinds, options.sections);
+  const rap = options.instrument === 'rap';
+  const unwritten = rap ? covered.filter((s) => !options.rapWords?.[s.name]) : [];
+  const log = new StepLog(ctx, unwritten.length > 0);
   if (ctx.jobs === null) rmSync(ctx.filesDir, { recursive: true, force: true });
   mkdirSync(ctx.filesDir, { recursive: true });
-  const covered = coveredSections(input, options.range, options.sectionKinds, options.sections);
   const track = aceTrackName(options.instrument, trackNames(input));
   const caption = aceCaption(input, options);
   const secPerBar = (BEATS_PER_BAR * 60) / input.bpm;
@@ -219,6 +268,36 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
     const seconds = wavSeconds(readFileSync(path), 'the render');
     return { value: path, text: `${fmt(seconds)} rendered`, numbers: { seconds } };
   });
+
+  // Rap: every section's lines, the user's or written now (kept in the task folder, so a resumed task raps the same).
+  let rapWords: Record<string, string[]> | undefined;
+  if (rap) {
+    const wordsPath = join(ctx.filesDir, 'rap-words.json');
+    const given = Object.fromEntries(Object.entries(options.rapWords ?? {}).map(([n, t]) => [n, rapLinesOf(t)]));
+    if (unwritten.length === 0) rapWords = given;
+    else
+      rapWords = await log.run('words', async () => {
+        let written: Record<string, string[]>;
+        if (existsSync(wordsPath)) written = z.record(z.string(), z.array(z.string().min(1)).min(1)).parse(JSON.parse(readFileSync(wordsPath, 'utf8')));
+        else {
+          if (!ctx.writeRapWords) throw new Error("the rap's words cannot be written: the brain has no language model (ASSISTANT_LLM_URL); write them in the dialog");
+          written = await ctx.writeRapWords({
+            title: ctx.title ?? '',
+            style: options.words ?? '',
+            songWords: songWordsOf(input),
+            sections: unwritten.map((s) => ({ name: s.name, label: sectionLabel(s.name), lines: rapLineCount(s.bars) })),
+          });
+          writeAtomic(wordsPath, Buffer.from(JSON.stringify(written, null, 1)));
+        }
+        const missing = unwritten.filter((s) => !written[s.name]?.length);
+        if (missing.length) throw new Error(`the rap's words have no lines for ${missing.map((s) => s.name).join(', ')}`);
+        return {
+          value: { ...given, ...written },
+          text: unwritten.map((s) => `${sectionLabel(s.name)}:\n${written[s.name]!.join('\n')}`).join('\n\n'),
+          numbers: { sections: unwritten.length },
+        };
+      });
+  }
 
   let jobs: TaskJobs;
   if (ctx.jobs?.ace === undefined) {
@@ -232,6 +311,12 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
         key_scale: keyScale(input.key),
         seed: options.seed,
         ...(options.lyrics !== undefined ? { lyrics: aceLyrics(input, options.lyrics) } : {}),
+        ...(rapWords
+          ? {
+              takes: RAP_TAKES,
+              sections: covered.map((s) => ({ name: s.name, start: s.startBar * secPerBar, end: (s.startBar + s.bars) * secPerBar, lyrics: rapWords![s.name]!.join('\n') })),
+            }
+          : {}),
       }),
     };
     ctx.setJobs(jobs);

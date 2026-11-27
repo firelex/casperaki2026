@@ -23,6 +23,7 @@ import { z } from 'zod';
 import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocals, applyWrittenLyrics, generatorParams, lyricsFirstParts, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
+import { writeRapWords, type RapWordsRequest } from '../ace/rapWords.js';
 import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../ace/aceLayerTask.js';
 import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
@@ -278,9 +279,13 @@ export class BackgroundTasks {
       }
       if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_layering', 'An ACE layer is already being made for this song.');
       try {
-        coveredSections(song, ace.range, ace.sectionKinds, ace.sections);
+        const covered = coveredSections(song, ace.range, ace.sectionKinds, ace.sections);
         keyScale(song.key);
+        if (ace.instrument === 'rap' && !this.deps.lyricModel && covered.some((s) => !ace.rapWords?.[s.name])) {
+          throw new TaskError(503, 'no_lyric_model', "The rap's words cannot be written: the brain has no language model (ASSISTANT_LLM_URL). Write the words for every section.");
+        }
       } catch (err) {
+        if (err instanceof TaskError) throw err;
         throw new TaskError(422, 'cannot_layer', err instanceof Error ? err.message : String(err));
       }
     }
@@ -595,6 +600,8 @@ export class BackgroundTasks {
         },
         now: clock,
         renderWav: (song) => ace.renderWav(task.ownerId, songIdOf(task), song, task.id),
+        ...(this.deps.lyricModel ? { writeRapWords: (r: RapWordsRequest) => writeRapWords(this.deps.lyricModel!, r) } : {}),
+        title: this.deps.store.getProject(task.ownerId, songIdOf(task))?.title ?? '',
       });
     }
     if (task.kind === 'addSinger') {

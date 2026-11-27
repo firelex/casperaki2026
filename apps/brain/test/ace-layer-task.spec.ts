@@ -9,9 +9,11 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { applyAceLayer, orchestrate } from '@casperaki/arrangement';
-import { finalChoruses, vocalTakeFingerprint } from '@casperaki/song-schema';
+import { finalChoruses, rapLineCount, vocalTakeFingerprint } from '@casperaki/song-schema';
 
-import { ACE_LAYER_LUFS, aceCaption, aceLyrics, AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
+import type { RapWordsRequest } from '../src/ace/rapWords.js';
+
+import { ACE_LAYER_LUFS, RAP_TAKES, aceCaption, aceLyrics, AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
 import { integratedLoudness } from '../src/audio/loudness.js';
 import type { ServiceResult, VocalsClient } from '../src/sing/vocalsClient.js';
 import type { TaskJobs, TaskStep } from '../src/store.js';
@@ -46,7 +48,7 @@ function fakeClient() {
   return { client: client as unknown as VocalsClient, submitted };
 }
 
-async function run(options: AceLayerOptions) {
+async function run(options: AceLayerOptions, extra: Partial<Parameters<typeof runAceLayer>[0]> = {}) {
   const { client, submitted } = fakeClient();
   const render = join(dir, 'render.wav');
   writeFileSync(render, toneWav(songSeconds));
@@ -67,6 +69,7 @@ async function run(options: AceLayerOptions) {
     setSteps: (s) => (steps = s),
     now: () => new Date().toISOString(),
     renderWav: async () => render,
+    ...extra,
   });
   return { result, submitted, steps, jobs };
 }
@@ -161,5 +164,59 @@ describe('the ACE layer task', () => {
     expect(() => coveredSections(SONG, { startBar: 10_000, endBar: 10_004 })).toThrow(/outside the song/u);
     expect(() => keyScale('H')).toThrow(/not a key ACE understands/u);
     expect(keyScale('F#m')).toBe('F# minor');
+  });
+});
+
+describe('rap (ACE layer)', () => {
+  const verses = SONG.songStructure.filter((s) => sectionKind(s.name) === 'verse').map((s) => s.name);
+  const startOf = (name: string) => {
+    let bar = 0;
+    for (const s of SONG.songStructure) {
+      if (s.name === name) return { start: bar * SEC_PER_BAR, end: (bar + s.bars.length) * SEC_PER_BAR, bars: s.bars.length };
+      bar += s.bars.length;
+    }
+    throw new Error(name);
+  };
+
+  it("raps the user's words where given and has the rest written, per section, several takes each", async () => {
+    expect(verses.length).toBeGreaterThan(1);
+    const [mine, theirs] = verses as [string, string];
+    const asked: RapWordsRequest[] = [];
+    const writeRapWords = async (r: RapWordsRequest) => {
+      asked.push(r);
+      return Object.fromEntries(r.sections.map((s) => [s.name, Array.from({ length: s.lines }, (_, i) => `written line ${i + 1}`)]));
+    };
+    const options: AceLayerOptions = { instrument: 'rap', words: 'female rap vocals', sections: [mine, theirs], rapWords: { [mine]: ' one \n\n two ' }, seed: 9 };
+    const { result, submitted, steps } = await run(options, { writeRapWords, title: 'Night Drive' });
+    expect(asked).toEqual([{ title: 'Night Drive', style: 'female rap vocals', songWords: [], sections: [{ name: theirs, label: `Verse ${theirs.slice(5)}`, lines: rapLineCount(startOf(theirs).bars) }] }]);
+    expect(submitted).toHaveLength(1);
+    const sent = submitted[0]!;
+    expect(sent).toMatchObject({ track: 'vocals', takes: RAP_TAKES, seed: 9 });
+    expect(sent).not.toHaveProperty('lyrics');
+    expect(String(sent['caption'])).toMatch(/^female rap vocals, rap vocals, a cappella/u);
+    expect(sent['sections']).toEqual([
+      { name: mine, start: startOf(mine).start, end: startOf(mine).end, lyrics: 'one\ntwo' },
+      { name: theirs, start: startOf(theirs).start, end: startOf(theirs).end, lyrics: Array.from({ length: rapLineCount(startOf(theirs).bars) }, (_, i) => `written line ${i + 1}`).join('\n') },
+    ]);
+    expect(steps.map((s) => s.id.replace(/^ace\./u, ''))).toEqual(['render', 'words', 'lego', 'clips']);
+    expect(steps.find((s) => s.id === 'words')!.text).toContain('written line 1');
+    expect(result.track).toBe('ACE Rap');
+    expect(result.takes.map((t) => t.segment)).toEqual([mine, theirs]);
+  });
+
+  it('writes nothing when every section has words, and needs a writer when one has none', async () => {
+    const [v] = verses as [string];
+    const { steps } = await run({ instrument: 'rap', sections: [v], rapWords: { [v]: 'a\nb' }, seed: 1 });
+    expect(steps.map((s) => s.id)).not.toContain('words');
+    await expect(run({ instrument: 'rap', sections: [v], seed: 1 })).rejects.toThrow(/no language model/u);
+  });
+
+  it('rap is chosen by section, and only rap takes rap words (for its own sections)', () => {
+    const [v, w] = verses as [string, string];
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'rap', seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'rap', sections: [v], range: { startBar: 0, endBar: 4 }, seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'guitar', rapWords: { [v]: 'x' }, seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'rap', sections: [v], rapWords: { [w]: 'x' }, seed: 1 }).success).toBe(false);
+    expect(AceLayerOptionsSchema.safeParse({ instrument: 'rap', sections: [v], rapWords: { [v]: 'x' }, seed: 1 }).success).toBe(true);
   });
 });

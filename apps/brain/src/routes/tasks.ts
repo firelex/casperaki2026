@@ -7,6 +7,7 @@
 //                                     file, any format ffmpeg reads, at most 10 MB decoded; 413 when larger), sung or
 //                                     hummed along from the section's first beat; hasBacking: music plays behind the voice
 //   POST /api/tasks { kind: 'aceLayer', songId, song, instrument, words?, range?: { startBar, endBar }, sectionKinds?: [kind],
+//                     rapWords?: { section: lines } (instrument 'rap': the sections' words, the others written),
 //                                     sections?: [name], lyrics?, voice? }  (instrument 'adlibs': lyrics and voice required)
 //                                  -> 201 { task }   Add ACE layer: one instrument part played over the song by ACE-Step,
 //                                     for the whole song or the selected bars (src/ace/aceLayerTask.ts)
@@ -49,7 +50,7 @@ const StartBody = z.union([
     })
     .strict(),
   // The ACE layer's own options (instrument, words, range) are checked by the task (AceLayerOptionsSchema).
-  z.object({ kind: z.literal('aceLayer'), songId: z.string().min(1), song: z.unknown(), instrument: z.string(), words: z.string().optional(), range: z.unknown().optional(), sectionKinds: z.unknown().optional(), sections: z.unknown().optional(), lyrics: z.unknown().optional(), voice: z.unknown().optional() }).strict(),
+  z.object({ kind: z.literal('aceLayer'), songId: z.string().min(1), song: z.unknown(), instrument: z.string(), words: z.string().optional(), range: z.unknown().optional(), sectionKinds: z.unknown().optional(), sections: z.unknown().optional(), lyrics: z.unknown().optional(), voice: z.unknown().optional(), rapWords: z.unknown().optional() }).strict(),
 ]);
 
 /** A task as pages see it; `title` is its song's (an Add a singer task, on no song, is titled with the singer's name). */
@@ -106,9 +107,9 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
       );
     }
     if (b.kind === 'aceLayer') {
-      const { instrument, words, range, sectionKinds, sections, lyrics, voice } = b;
+      const { instrument, words, range, sectionKinds, sections, lyrics, voice, rapWords } = b;
       return answer(res, () =>
-        res.status(201).json({ task: titled(owner, tasks.startAceLayer(owner, b.songId, song, { instrument, ...(words !== undefined ? { words } : {}), ...(range !== undefined ? { range } : {}), ...(sectionKinds !== undefined ? { sectionKinds } : {}), ...(sections !== undefined ? { sections } : {}), ...(lyrics !== undefined ? { lyrics } : {}), ...(voice !== undefined ? { voice } : {}) } as Parameters<BackgroundTasks['startAceLayer']>[3])) }),
+        res.status(201).json({ task: titled(owner, tasks.startAceLayer(owner, b.songId, song, { instrument, ...(words !== undefined ? { words } : {}), ...(range !== undefined ? { range } : {}), ...(sectionKinds !== undefined ? { sectionKinds } : {}), ...(sections !== undefined ? { sections } : {}), ...(lyrics !== undefined ? { lyrics } : {}), ...(voice !== undefined ? { voice } : {}), ...(rapWords !== undefined ? { rapWords } : {}) } as Parameters<BackgroundTasks['startAceLayer']>[3])) }),
       );
     }
     if (b.kind === 'sing') return answer(res, () => res.status(201).json({ task: titled(owner, tasks.startSing(owner, b.songId, song, b.singerId)) }));
