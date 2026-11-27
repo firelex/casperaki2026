@@ -10,7 +10,7 @@ import { openSongsStore } from '../src/store.js';
 
 const GOOD = {
   verse: ['Saw your phone light up again', 'A name I do not know', 'You said it was nothing', 'But I could see it show'],
-  chorus: ['Cinnamon Boulevard that is where we are', 'Dancing in the summer heat', 'Cinnamon Boulevard that is where we are', 'Moving to the beat'],
+  chorus: ['Cinnamon Boulevard that is where we are', 'Dancing in the summer heat', 'Cinnamon Boulevard that is where we are', 'Moving to the summer beat'],
 };
 const answer = (parts: Record<string, string[]>) =>
   JSON.stringify({ sections: Object.entries(parts).map(([type, lines]) => ({ name: type === 'verse' ? 'Verse' : 'Chorus', lines })) });

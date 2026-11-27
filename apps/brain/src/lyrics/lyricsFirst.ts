@@ -92,6 +92,7 @@ function brief(r: LyricsFirstRequest): string {
     '- Direct emotion and attitude: confident, cheeky, hurt, defiant, giddy or in love. Say what you feel.',
     '- A pre-chorus builds tension toward the chorus; a bridge turns the story or the feeling.',
     '- Use only common English words: no made-up words, no numbers written as digits. The singer may be a man or a woman, so never say what the singer is (no "girl", "boy", "man", "woman" about the singer).',
+    'Same shape twice: in the verses and the chorus, lines 3 and 4 are sung to the same rhythm as lines 1 and 2. So line 3 has the same number of syllables as line 1 (one more or one fewer at most), and line 4 the same as line 2, with the stressed syllables in about the same places. The bridge and the pre-chorus are free.',
     'Rhymes: in each group of 4 lines, line 4 rhymes with line 2 (lines 1 and 3 need not rhyme); in a group of 2 lines, the two lines rhyme; in a group of 3, line 3 rhymes with line 1. Near rhymes are fine, as in real pop. A word may end two lines of the song only when it is a word of the title or the whole line is repeated.',
     `Write it the way ${r.inspiration.artist} writes: their attitude, their kind of hook and their everyday wording. Write completely new lines; do not reuse any of their actual lyrics.`,
     `The song is about: ${r.inspiration.situation}.`,

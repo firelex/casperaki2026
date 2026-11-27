@@ -4,6 +4,7 @@
 // a word of the title or the whole line repeats (owner, 2026-11-27), and an opening that does not start like one of
 // the owner's recent songs. Messages are plain English for the language model.
 
+import { segmentType } from '../arrangement-polish/segment-type.js';
 import { rhymeScheme } from './lyric-lines.js';
 import { pronounce, wordsOf, wordsRhyme } from './written-lyrics.js';
 
@@ -13,6 +14,13 @@ export const MAX_LINE_SYLLABLES = 11;
  *  is in it. */
 const SAME_START_WORDS = 3;
 const OVERLAP_SHARE = 0.6;
+
+/** Section types whose lines 3 and 4 are sung to the rhythm of lines 1 and 2 (owner, 2026-11-27: good songwriting
+ *  repeats the shape of the first couplet in the second, in verses and choruses; a bridge breaks it). The recut
+ *  follows it (recut.ts, `echo`); the words must then have about as many syllables, line for line. */
+export const ECHO_TYPES: ReadonlySet<string> = new Set(['verse', 'chorus']);
+/** How many syllables an echoing line may differ from the line it echoes. */
+const ECHO_SLACK = 1;
 
 export interface FreeLyricsProblem {
   /** Section type. */
@@ -41,6 +49,7 @@ export function checkFreeLyrics(
       problems.push({ type, line: -1, message: `This part needs exactly ${count} lines, but ${lines?.length ?? 0} were written.` });
       continue;
     }
+    const counted: (number | undefined)[] = [];
     lines.forEach((text, i) => {
       const words = wordsOf(text);
       const unknown = words.filter((w) => !pronounce(w));
@@ -54,8 +63,21 @@ export function checkFreeLyrics(
         const spelled = words.map((w) => pronounce(w)!.syllables.join('-').toLowerCase()).join(' ');
         const fix = n > MAX_LINE_SYLLABLES ? `remove at least ${n - MAX_LINE_SYLLABLES} syllable${n - MAX_LINE_SYLLABLES === 1 ? '' : 's'}` : `add at least ${MIN_LINE_SYLLABLES - n}`;
         problems.push({ type, line: i, message: `It has ${n} syllables (${spelled}); every line must have ${MIN_LINE_SYLLABLES} to ${MAX_LINE_SYLLABLES}: ${fix}.` });
+        return;
       }
+      counted[i] = n;
     });
+    // Lines 3 and 4 of each group of 4 are sung to the rhythm of lines 1 and 2.
+    if (ECHO_TYPES.has(segmentType(type))) {
+      lines.forEach((text, i) => {
+        if (i % 4 < 2) return;
+        const a = counted[i - 2];
+        const b = counted[i];
+        if (a === undefined || b === undefined || Math.abs(a - b) <= ECHO_SLACK) return;
+        const spelled = wordsOf(text).map((w) => pronounce(w)!.syllables.join('-').toLowerCase()).join(' ');
+        problems.push({ type, line: i, message: `This line is sung to the same rhythm as line ${i - 1}, so it needs about as many syllables: line ${i - 1} has ${a}, this line has ${b} (${spelled}). Give it ${a - ECHO_SLACK} to ${a + ECHO_SLACK} syllables, with the stressed syllables in about the same places as in line ${i - 1}.` });
+      });
+    }
     // Rhymes (ABCB): each line with the first line of its rhyme group.
     const scheme = rhymeScheme(lines.length);
     scheme.forEach((letter, i) => {

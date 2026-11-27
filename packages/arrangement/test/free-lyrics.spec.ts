@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkFreeLyrics, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES } from '../src/vocals/free-lyrics.js';
+import { checkFreeLyrics, ECHO_TYPES, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES } from '../src/vocals/free-lyrics.js';
 
-const CHORUS = ['Cinnamon Boulevard that is where we are', 'Dancing in the summer heat', 'Cinnamon Boulevard that is where we are', 'Moving to the beat'];
+const CHORUS = ['Cinnamon Boulevard that is where we are', 'Dancing in the summer heat', 'Cinnamon Boulevard that is where we are', 'Moving to the summer beat'];
 const VERSE = ['Saw your phone light up again', 'A name I do not know', 'You said it was nothing', 'But I could see it show'];
 const counts = { verse: 4, chorus: 4 };
 
@@ -41,7 +41,7 @@ describe('checks for lyrics written first', () => {
   });
 
   it('a word ends two different lines only when it is a title word or the lines are the same', () => {
-    const night = ['Running through the city night', 'A name I do not know', 'Waiting for the night', 'But I could see it show'];
+    const night = ['Running through the city night', 'A name I do not know', 'Waiting for the summer night', 'But I could see it show'];
     const p = checkFreeLyrics({ verse: night, chorus: CHORUS }, counts, 'Cinnamon Boulevard', []);
     expect(p.some((x) => /night/u.test(x.message))).toBe(true);
     expect(checkFreeLyrics({ verse: night, chorus: CHORUS }, counts, 'Night Moves', [])).toEqual([]);
@@ -56,6 +56,19 @@ describe('checks for lyrics written first', () => {
   it('lines that do not rhyme where they must are named', () => {
     const bad = ['Saw your phone light up again', 'A name I do not know', 'You said it was nothing', 'But I could feel it then'];
     expect(checkFreeLyrics({ verse: bad, chorus: CHORUS }, counts, 'Cinnamon Boulevard', []).some((x) => x.type === 'verse' && x.line === 3)).toBe(true);
+  });
+
+  it('in verses and choruses, lines 3 and 4 have about as many syllables as lines 1 and 2 (sung to their rhythm)', () => {
+    expect([...ECHO_TYPES]).toEqual(['verse', 'chorus']);
+    // Line 3 of 4 syllables after a line 1 of 7; line 4 of 7 after a line 2 of 6 (one off: fine).
+    const verse = ['Saw your phone light up again', 'A name I do not know', 'You lied to me', 'But I can still see the show'];
+    const p = checkFreeLyrics({ verse, chorus: CHORUS }, counts, 'Cinnamon Boulevard', []);
+    expect(p.map((x) => [x.type, x.line])).toEqual([['verse', 2]]);
+    expect(p[0]!.message).toContain('line 1 has 7');
+    expect(p[0]!.message).toContain('6 to 8 syllables');
+    // Each verse its own part ("verse2") is a verse too; a bridge is free.
+    expect(checkFreeLyrics({ verse2: verse }, { verse2: 4 }, 'Cinnamon Boulevard', []).map((x) => x.line)).toEqual([2]);
+    expect(checkFreeLyrics({ bridge: verse }, { bridge: 4 }, 'Cinnamon Boulevard', [])).toEqual([]);
   });
 
   it('the line count of each part', () => {

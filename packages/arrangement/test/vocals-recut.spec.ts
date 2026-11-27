@@ -31,6 +31,8 @@ const repeated = (r: RecutRhythm, times: number): RecutRhythm => ({
 /** Every line sung on the recut passes the line check and the length rule; a word is sung straight through (no rest
  *  between its syllables); and the recut played twice reads back as the lines twice. */
 /** Returns how many syllables miss their stress; with `exact` (the default) there must be none. */
+const syllablesIn = (lines: readonly string[]) => lines.reduce((a, l) => a + l.split(/\s+/u).reduce((b, w) => b + pronounce(w)!.phones.length, 0), 0);
+
 /** Rests the property test lets through (counted apart from stress misses). */
 let restMisses = 0;
 function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, exact = true): number {
@@ -202,6 +204,33 @@ describe('the recut', () => {
     expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
   });
 
+  it('with echo, lines 3 and 4 are sung to the rhythm lines 1 and 2 got (verses and choruses)', () => {
+    const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
+    const pair = ['Got the cake and the candles lit', 'Your favorite song on repeat'];
+    const lines = [...pair, ...pair];
+    const out = recutRhythm(verse, lines, { bpm: 128, bars: 8, echo: true });
+    expectSingable(out, lines, 128);
+    const n = syllablesIn(pair);
+    const first = out.notes.slice(0, n);
+    const second = out.notes.slice(n).map((x) => ({ start: x.start - 16, duration: x.duration }));
+    expect(second).toEqual(first);
+    // Without echo, the pattern's bars 5 to 8 differ from its bars 1 to 4.
+    const free = recutRhythm(verse, lines, { bpm: 128, bars: 8 });
+    expect(free.notes.slice(n).map((x) => ({ start: x.start - 16, duration: x.duration }))).not.toEqual(free.notes.slice(0, n));
+  });
+
+  it('with echo, a line 3 of other words keeps most of line 1\'s onsets', () => {
+    const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
+    const lines = ["You said don't make a fuss tonight", 'So I played it cool, acted like I forgot', "But your favorite cake's in the fridge", 'With a cheap little candle on top'];
+    const out = recutRhythm(verse, lines, { bpm: 128, bars: 8, echo: true });
+    expectSingable(out, lines, 128, false);
+    const [a, b, c, d] = lines.map((l) => syllablesIn([l]));
+    const on = (from: number, count: number, shift: number) => new Set(out.notes.slice(from, from + count).map((x) => x.start - shift));
+    const shared = (x: Set<number>, y: Set<number>) => [...x].filter((v) => y.has(v)).length / Math.max(x.size, y.size);
+    expect(shared(on(0, a!, 0), on(a! + b!, c!, 16))).toBeGreaterThanOrEqual(0.6);
+    expect(shared(on(a!, b!, 0), on(a! + b! + c!, d!, 16))).toBeGreaterThanOrEqual(0.6);
+  });
+
   it('holds a word that carries the meaning, not a small word before it ("don\'t give a frown": not "don\'t")', () => {
     // The pattern's held note falls where "don't" would go.
     const r = rhythm([[0, 0.5], [0.5, 0.5], [1, 0.5], [1.5, 0.5], [2, 0.5], [3, 2], [5, 0.5], [5.5, 0.5], [6, 1.5]], 2);
@@ -237,7 +266,8 @@ describe('the recut', () => {
     for (const bpm of [70, 170]) {
       for (const e of entries) {
         const lines = Array.from({ length: 4 }, () => POP_LINES[k++ % POP_LINES.length]!);
-        const out = recutRhythm(e, lines, { bpm, bars: 8 });
+        // At 170 bpm with echo: lines 3 and 4 recut from lines 1 and 2.
+        const out = recutRhythm(e, lines, { bpm, bars: 8, echo: bpm === 170 });
         misses += expectSingable(out, lines, bpm, false);
         syllables += out.notes.length;
       }

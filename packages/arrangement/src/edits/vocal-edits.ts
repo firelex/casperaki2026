@@ -16,6 +16,7 @@ import { orchestrate, vocalSelections } from '../orchestrate/index.js';
 import { LYRIC_RHYTHMS_PARAM, lyricRhythmsOf, RHYTHM_VARIANTS_PARAM, rhythmVariantsOf } from '../vocals/lyric-rhythms.js';
 import { drawRhythm, expandMergedToSegment, type MergedPrecedent } from '../vocals/precedents.js';
 import { recutRhythm, type RecutRhythm } from '../vocals/recut.js';
+import { ECHO_TYPES } from '../vocals/free-lyrics.js';
 import { lyricLines, type LyricLine } from '../vocals/lyric-lines.js';
 import { MELODY_VARIANTS_PARAM, melodyVariantsOf } from '../vocals/melody-variants.js';
 import { SUNG_MELODY_PARAM, SungMelodySchema, sungMelodyOf, type SungMelody } from '../vocals/sung-melody.js';
@@ -440,7 +441,7 @@ export function applyLyricsFirst(working: Song, lyrics: LyricsByType): Song {
     for (const part of parts) {
       const lines = lyrics[part]!;
       if (lines.length * LINE_BARS !== bars) throw new TrackEditError(400, 'line_count', `The ${part} needs ${bars / LINE_BARS} lines (one per ${LINE_BARS} bars), not ${lines.length}.`);
-      recuts[part] = recutRhythm(source, lines, { bpm: shown.bpm, bars });
+      recuts[part] = recutRhythm(source, lines, { bpm: shown.bpm, bars, echo: ECHO_TYPES.has(type) });
       written = { ...written, ...linesBySection(generated, part, lines) };
     }
   }
@@ -472,7 +473,7 @@ export function newRhythm(working: Song, type: string): Song {
   const variants = rhythmVariantsOf(params.params);
   for (let v = (variants[type] ?? 0) + 1, tries = 0; tries < MELODY_TRIES; v++, tries++) {
     const rhythm = drawRhythm({ desiredPatternLength: bars, segmentType: type, genre: params.genre, tempo: params.bpm, rng: createRng(`${params.seed}/vocals/rhythm/${type}#v${v}`) });
-    const recuts = Object.fromEntries(parts.map((part) => [part, recutRhythm(rhythm, lines[part]!, { bpm: params.bpm, bars })]));
+    const recuts = Object.fromEntries(parts.map((part) => [part, recutRhythm(rhythm, lines[part]!, { bpm: params.bpm, bars, echo: ECHO_TYPES.has(type) })]));
     const next = paramsWithoutSung(withRhythms(params, new Set([type]), recuts, { [type]: v }), new Set([type]));
     if (vocalSignature(orchestrate(next), type) === before) continue;
     return applyVocalParams(working, next, new Set([type]));

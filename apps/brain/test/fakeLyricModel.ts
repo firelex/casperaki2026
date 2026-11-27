@@ -80,7 +80,7 @@ const LYRICS_FIRST_FORM = 'Answer with JSON only, in this form: {"sections"';
 const OPENING_WORDS = ['summer', 'morning', 'silver', 'golden', 'maybe', 'honey', 'thunder', 'window', 'pocket', 'candle', 'river', 'ocean', 'meadow', 'yellow', 'garden', 'mirror', 'velvet', 'harbor', 'winter', 'paper', 'shadow', 'thunder', 'button', 'lemon', 'pillow', 'rocket', 'ribbon', 'tiger', 'wonder', 'basket', 'kitten', 'pepper'];
 const FREE_ENDS = ['heart', 'dream', 'soul', 'road', 'home', 'sun', 'time', 'life', 'world', 'hand', 'door', 'town', 'phone', 'car'];
 
-/** Lines that pass checkFreeLyrics: "Oh la la <end>" (the song's first line: four words of its own), ABCB rhymes from one family per part, every line-ending word
+/** Lines that pass checkFreeLyrics: "Oh la la <end>" (the song's first line: two words of its own), ABCB rhymes from one family per part, every line-ending word
  *  used once; the opening changes with every call. */
 function lyricsFirstAnswer(brief: string, call: number): string {
   const form = JSON.parse(brief.slice(brief.indexOf(LYRICS_FIRST_FORM) + LYRICS_FIRST_FORM.length - '{"sections"'.length)) as { sections: { name: string; lines: string[] }[] };
@@ -95,7 +95,8 @@ function lyricsFirstAnswer(brief: string, call: number): string {
       const groupSize = Math.min(4, n - (i - inGroup));
       const rhymes = groupSize === 4 ? inGroup === 1 || inGroup === 3 : groupSize === 3 ? inGroup !== 1 : groupSize === 2;
       const end = rhymes ? family[rhyme++]! : FREE_ENDS[free++]!;
-      if (p === 0 && i === 0) return Array.from({ length: 4 }, (_, k) => OPENING_WORDS[(call * 4 + k) % OPENING_WORDS.length]!).join(' ');
+      // Two words of two syllables: as long as "Oh la la <end>", which line 3 echoes.
+      if (p === 0 && i === 0) return Array.from({ length: 2 }, (_, k) => OPENING_WORDS[(call * 2 + k) % OPENING_WORDS.length]!).join(' ');
       return `Oh la la ${end}`;
     });
     return { name: s.name, lines };

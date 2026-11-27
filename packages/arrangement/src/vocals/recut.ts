@@ -370,19 +370,27 @@ function singOn(laid: readonly Note[], syl: readonly Syllable[], lineStart: numb
 }
 
 /** The rhythm recut to the section's lines (one line per LINE_BARS bars, in order). */
-export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: { readonly bpm: number; readonly bars: number }): RecutRhythm {
+export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: { readonly bpm: number; readonly bars: number; readonly echo?: boolean }): RecutRhythm {
   if (lines.length * LINE_BARS !== opts.bars) {
     throw new Error(`recut: ${lines.length} lines for ${opts.bars} bars (one line per ${LINE_BARS} bars)`);
   }
   const source = laidOut(rhythm, opts.bars);
   const notes: Note[] = [];
+  // Each line as the search laid it (before singOn), for the lines that echo it.
+  const asLaid: Note[][] = [];
   let prev: Tail | undefined;
   lines.forEach((text, i) => {
     const lineStart = i * LINE_STEPS;
     const syl = syllablesOf(text);
     if (syl.length === 0) throw new Error(`recut: line ${i + 1} has no words`);
-    const own = source.filter((n) => n.s >= lineStart && n.s < lineStart + LINE_STEPS);
-    const laid = singOn(recutLine(own, syl, lineStart, prev, opts.bpm, `line ${i + 1} "${text}" on "${rhythm.id}"`), syl, lineStart, opts.bpm);
+    // With echo (verses and choruses, free-lyrics.ts ECHO_TYPES), lines 3 and 4 of each group of 4 are recut from the
+    // rhythm lines 1 and 2 got, pickups too: the same words come out on the same notes, other words on the nearest.
+    const own = opts.echo && i % 4 >= 2
+      ? asLaid[i - 2]!.map((n) => ({ s: n.s + 2 * LINE_STEPS, d: n.d }))
+      : source.filter((n) => n.s >= lineStart && n.s < lineStart + LINE_STEPS);
+    const raw = recutLine(own, syl, lineStart, prev, opts.bpm, `line ${i + 1} "${text}" on "${rhythm.id}"`);
+    asLaid.push(raw);
+    const laid = singOn(raw, syl, lineStart, opts.bpm);
     notes.push(...laid);
     const last = laid.at(-1)!;
     const before = laid.at(-2);

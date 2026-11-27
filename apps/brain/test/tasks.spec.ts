@@ -115,7 +115,7 @@ describe('background tasks', () => {
     const sung = sungSections(saved);
     expect(sung.length).toBeGreaterThan(0);
     // Lyrics first: the fake's words ("<opener> la la <end>"), sung on a rhythm recut to them and recorded.
-    for (const s of sung) for (const w of s.words) expect(w.toLowerCase()).toMatch(/^(oh la la \w+|\w+ \w+ \w+ \w+)$/u);
+    for (const s of sung) for (const w of s.words) expect(w.toLowerCase()).toMatch(/^(oh la la \w+|\w+ \w+)$/u);
     const savedSong = (await send('GET', `${h.url}/api/songs/${newId}`)).body.song as Song;
     expect(Object.keys((savedSong.generator!.params as { params: { lyricRhythms: Record<string, unknown> } }).params.lyricRhythms).length).toBeGreaterThan(0);
     expect((await send('POST', `${h.url}/api/tasks/${task.id}/apply`)).status).toBe(409);
