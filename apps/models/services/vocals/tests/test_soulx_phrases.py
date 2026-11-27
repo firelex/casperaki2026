@@ -44,9 +44,10 @@ def test_a_phrase_last_note_is_sung_into_the_rest_after_it():
     # A long rest: one beat more, no more.
     ph = soulx.phrases([n(0, 1, 60), n(8, 1, 62)], BPM, 16)
     assert ph[0]["duration"] == pytest.approx([2 * 0.5])
-    # A rest that short does not split phrases: the note is simply sung up to the next one (legato).
+    # A rest that short does not split phrases, and between two words it stays a rest.
     ph = soulx.phrases([n(0, 1, 60), n(1.4, 1, 62)], BPM, 16)
-    assert ph[0]["duration"][0] == pytest.approx(1.4 * 0.5) and "<SP>" not in ph[0]["phoneme"]
+    assert len(ph) == 1 and ph[0]["phoneme"] == ["en_L-AA1", "<SP>", "en_L-AA1"]
+    assert ph[0]["duration"][:2] == pytest.approx([0.5, 0.4 * 0.5])
 
 
 def test_a_phrase_final_s_or_z_is_sung_as_its_own_short_s():
@@ -63,9 +64,27 @@ def test_a_phrase_final_s_or_z_is_sung_as_its_own_short_s():
     assert p["duration"][3] == pytest.approx(soulx.SIBILANT_S)
 
 
-def test_inside_a_phrase_every_note_is_sung_up_to_the_next():
-    """Marigold Static's chorus rhythm: "Ma-" (1 beat), half a beat of rest, "ri-" (half), "gold" (1): no gap inside."""
-    notes = [n(0, 1, 60, "ma", ("m", "aa1")), n(1.5, 0.5, 62, "ri", ("r", "ih0")), n(2, 1, 64, "gold", ("g", "ow1", "l", "d"))]
+def test_inside_a_word_every_note_is_sung_up_to_the_next():
+    """Marigold Static's chorus rhythm: "Ma-" (1 beat), half a beat of rest, "ri-" (half), "gold" (1): no gap inside
+    the word (a syllable that does not end its word is written with a "-")."""
+    notes = [n(0, 1, 60, "Ma-", ("m", "aa1")), n(1.5, 0.5, 62, "ri-", ("r", "ih0")), n(2, 1, 64, "gold", ("g", "ow1", "l", "d"))]
     p = soulx.phrases(notes, BPM, 16)[0]
     assert "<SP>" not in p["phoneme"]
     assert p["duration"][:2] == pytest.approx([1.5 * 0.5, 0.5 * 0.5])
+
+
+def test_a_held_note_carries_on_its_syllable_without_a_gap():
+    """A held note ("-") goes on singing the syllable before it: no rest before it."""
+    notes = [n(0, 1, 60, "love", ("l", "ah1", "v")), n(1.5, 1, 62, "-", ("l", "ah1", "v")), n(3, 1, 64, "you", ("y", "uw1"))]
+    p = soulx.phrases(notes, BPM, 16)[0]
+    assert p["phoneme"][:2] == ["en_L-AH1-V", "en_L-AH1-V"]
+    assert p["duration"][0] == pytest.approx(1.5 * 0.5)
+
+
+def test_between_words_the_written_rests_are_sung():
+    """Notes are sung as long as they are written (owner, 2026-11-27: no more lengthening): "two ghosts with" on
+    half-beat notes with half-beat rests between the words keeps its rests."""
+    notes = [n(0, 0.5, 60, "Two", ("t", "uw1")), n(1, 0.5, 62, "ghosts", ("g", "ow1", "s", "t", "s")), n(2, 0.5, 64, "with", ("w", "ih1", "dh"))]
+    p = soulx.phrases(notes, BPM, 16)[0]
+    assert p["phoneme"][:4] == ["en_T-UW1", "<SP>", "en_G-OW1-S-T-S", "<SP>"]
+    assert p["duration"][:4] == pytest.approx([0.25, 0.25, 0.25, 0.25])

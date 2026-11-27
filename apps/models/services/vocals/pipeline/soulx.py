@@ -54,14 +54,17 @@ def phrases(notes, bpm, section_beats, *, section: str = "section"):
         if not n.get("phonemes"):
             raise ValueError(f"{section}: the note at beat {n['start']:g} has no phonemes")
         start = float(n["start"])
-        ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]),
+        ns.append({"bar": int(start // 4), "start": start, "end": start + float(n["duration"]), "word": str(n.get("word", "")),
                    "midi": int(n["midi"]), "phones": "en_" + "-".join(p.upper() for p in n["phonemes"])})
     groups = phrase_groups(ns)
-    # Inside a phrase every note is sung up to the next one (legato): a rest shorter than SPLIT_REST_BEATS between two
-    # notes, even inside a word ("Ma- . ri-gold" in Marigold Static's chorus), was sung as a gap (owner, 2026-11-25).
+    # Inside a word every note is sung up to the next one: a rest inside a word ("Ma- . ri-gold" in Marigold Static's
+    # chorus) was sung as a gap (owner, 2026-11-25). A syllable that does not end its word is written with a "-"
+    # ("Ma-"), a held note is "-" (it carries on the syllable before it). Between words the notes are sung as long as
+    # they are written, rests and all (owner, 2026-11-27: the rhythms are made to fit the words now, so no lengthening).
     for g in groups:
         for a, b in zip(g, g[1:]):
-            a["end"] = max(a["end"], b["start"])
+            if a["word"].endswith("-") or b["word"] == "-":
+                a["end"] = max(a["end"], b["start"])
     sib_beats = SIBILANT_S / beat_s
     for gi, g in enumerate(groups):
         nxt = groups[gi + 1][0]["start"] if gi + 1 < len(groups) else float(section_beats)
