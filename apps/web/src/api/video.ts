@@ -78,7 +78,7 @@ export const videoApi = {
    *  tracks measured for the saved version. */
   start: (
     songId: string,
-    opts: { style: VideoStyle; orientation: VideoOrientation; quality: VideoQuality; artist: string; console?: ConsoleBody; avatarIds?: readonly string[] },
+    opts: { style: VideoStyle; orientation: VideoOrientation; quality: VideoQuality; artist: string; console?: ConsoleBody; avatarIds?: readonly string[]; storyboard?: readonly { scene: string; avatarIds: readonly string[]; camera: string }[] },
   ) =>
     defaultBrainClient.post<VideoStatus>(`/api/songs/${encodeURIComponent(songId)}/video`, {
       style: opts.style,
@@ -86,6 +86,6 @@ export const videoApi = {
       quality: opts.quality,
       artist: opts.artist,
       ...(opts.console ? { console: opts.console } : {}),
-      ...(opts.avatarIds ? { avatars: { avatarIds: opts.avatarIds } } : {}),
+      ...(opts.avatarIds ? { avatars: { avatarIds: opts.avatarIds, ...(opts.storyboard ? { storyboard: opts.storyboard } : {}) } } : {}),
     }),
 };

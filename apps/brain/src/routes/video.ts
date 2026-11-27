@@ -3,7 +3,8 @@
 //        style 'cartoon' (default): planned by a language model. style 'console': a 3D mixing desk; `console` carries
 //        the tracks the browser measured and the song version they belong to (409 song_changed for another version).
 //        style 'avatars': the user's avatars on a 3D dance floor; `console` as for the console style (the lead vocal's
-//        level drives the lead's lip sync) and `avatars: { avatarIds }` (1 to 5 of the user's avatars).
+//        level drives the lead's lip sync) and `avatars: { avatarIds, storyboard? }` (1 to 5 of the user's avatars;
+//        storyboard: per section { scene, avatarIds, camera }, docs/superpowers/specs/2026-11-27-avatar-scenes-storyboard-design.md).
 //   GET  /api/songs/:id/video                          → { jobs: { cartoon: {...}, console: {...}, avatars: {...} } }
 //   GET  /api/songs/:id/video/<job>.mp4 (cartoon: landscape, portrait, landscape-preview, portrait-preview;
 //        console: console-<format>; avatars: avatars-<format>) → the video (?download=1: as an attachment)
@@ -35,7 +36,14 @@ const StartBody = z
     /** Console and avatars styles: the measured tracks, checked with the engine's schema (parseConsoleBody). */
     console: z.unknown().optional(),
     /** Avatars style only: which of the user's avatars dance, in order. */
-    avatars: z.object({ avatarIds: z.array(z.string().min(1)) }).strict().optional(),
+    avatars: z
+      .object({
+        avatarIds: z.array(z.string().min(1)),
+        /** One entry per section of the saved song: scene, which of the avatars, camera (checked by the service). */
+        storyboard: z.array(z.object({ scene: z.string().min(1), avatarIds: z.array(z.string().min(1)), camera: z.string().min(1) }).strict()).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine((b) => (b.style === 'console' || b.style === 'avatars') === (b.console !== undefined), {
@@ -82,7 +90,7 @@ export function createVideoRouter({ store, videos, ownerOf, plannerConfigured }:
         style === 'console'
           ? videos.start({ ...common, style, console: parseConsoleBody(body.data.console) })
           : style === 'avatars'
-            ? videos.start({ ...common, style, console: parseConsoleBody(body.data.console), avatarIds: body.data.avatars!.avatarIds })
+            ? videos.start({ ...common, style, console: parseConsoleBody(body.data.console), avatarIds: body.data.avatars!.avatarIds, ...(body.data.avatars!.storyboard ? { storyboard: body.data.avatars!.storyboard } : {}) })
             : videos.start({ ...common, style });
       return res.status(202).json(statusJson(s));
     } catch (err) {

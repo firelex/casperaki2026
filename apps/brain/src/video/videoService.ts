@@ -19,7 +19,8 @@ import type { RenderService } from '../render/renderService.js';
 import type { SongsStore } from '../store.js';
 import type { Planner } from './planner.js';
 import { songVersionKey } from '../render/songVersion.js';
-import { songToAvatarInput, songToConsoleInput, songToVideoInput, VideoInputError, type ConsoleBody, type VideoAvatar } from './videoInput.js';
+import { AVATAR_CAMERAS, AVATAR_SCENES } from '@casperaki/video';
+import { checkStoryboard, songTiming, songToAvatarInput, songToConsoleInput, songToVideoInput, VideoInputError, type ConsoleBody, type VideoAvatar, type VideoStoryboardEntry } from './videoInput.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -98,7 +99,7 @@ const AUDIO_TIMEOUT_MS = 30 * 60_000;
 export type StartArgs = { ownerId: string; songId: string; format: VideoFormat; title: string; artist: string } & (
   | { style: 'cartoon' }
   | { style: 'console'; console: ConsoleBody }
-  | { style: 'avatars'; console: ConsoleBody; avatarIds: readonly string[] }
+  | { style: 'avatars'; console: ConsoleBody; avatarIds: readonly string[]; storyboard?: readonly VideoStoryboardEntry[] }
 );
 
 export class VideoBusyError extends Error {
@@ -152,6 +153,12 @@ export class VideoService {
     if (args.style === 'avatars') {
       if (!this.deps.avatars) throw new VideoInputError(503, 'avatars_not_configured', 'Avatar videos are not set up: BRAIN_AVATAR_PACKS_DIR and BRAIN_SINGERS_DATA_DIR are needed.');
       this.deps.avatars.resolve(args.ownerId, args.songId, args.avatarIds);
+      if (args.storyboard) {
+        const stored = this.deps.store.get(args.songId);
+        if (!stored) throw new Error(`song ${args.songId} is not in the store`);
+        const { sections } = songTiming(parseSong(JSON.parse(stored.canonical)));
+        checkStoryboard(args.storyboard, sections, args.avatarIds, AVATAR_SCENES.map((x) => x.id), AVATAR_CAMERAS.map((x) => x.id));
+      }
     }
     mkdirSync(this.dirFor(args.songId), { recursive: true });
     const status: VideoStatus = { songId: args.songId, style: args.style, format: args.format, state: 'queued', queuedAt: new Date().toISOString() };
@@ -196,7 +203,7 @@ export class VideoService {
         if (args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) throw new Error(SONG_CHANGED_MESSAGE);
         const { versionKey: _versionKey, ...tracks } = args.console;
         const avatars = this.deps.avatars!.resolve(args.ownerId, args.songId, args.avatarIds);
-        const input = songToAvatarInput({ title: args.title, artist: args.artist, song, audio, body: tracks, avatars });
+        const input = songToAvatarInput({ title: args.title, artist: args.artist, song, audio, body: tracks, avatars, ...(args.storyboard ? { storyboard: args.storyboard } : {}) });
         writeFileSync(join(this.dirFor(args.songId), `avatars-input-${args.format}.json`), JSON.stringify(input));
         stepStart = new Date().toISOString();
         step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scene, building the avatars)' });

@@ -219,6 +219,34 @@ export function songToConsoleInput(args: {
   });
 }
 
+/** One section of a dance floor video's storyboard: where it happens, which of the video's avatars are in it (the
+ *  user's avatar ids) and how it is filmed (the engine's AVATAR_SCENES and AVATAR_CAMERAS ids). */
+export interface VideoStoryboardEntry {
+  readonly scene: string;
+  readonly avatarIds: readonly string[];
+  readonly camera: string;
+}
+
+/** The engine's id for one of the user's avatars (letters and digits: it seeds the avatar's dance moves). */
+export const engineAvatarId = (id: string): string => id.replace(/[^a-zA-Z0-9]/gu, '');
+
+/** Throws VideoInputError(400) naming the problem unless the storyboard has one entry per section, each with a known
+ *  scene and camera and at least one of the video's avatars (none twice). */
+export function checkStoryboard(storyboard: readonly VideoStoryboardEntry[], sections: readonly { name: string }[], avatarIds: readonly string[], scenes: readonly string[], cameras: readonly string[]): void {
+  if (storyboard.length !== sections.length) {
+    throw new VideoInputError(400, 'invalid_storyboard', `The storyboard has ${storyboard.length} sections, the song ${sections.length}: open the Video tab again.`);
+  }
+  storyboard.forEach((e, i) => {
+    const where = `Storyboard, ${sections[i]!.name}`;
+    if (!scenes.includes(e.scene)) throw new VideoInputError(400, 'invalid_storyboard', `${where}: there is no scene "${e.scene}".`);
+    if (!cameras.includes(e.camera)) throw new VideoInputError(400, 'invalid_storyboard', `${where}: there is no camera "${e.camera}".`);
+    if (e.avatarIds.length === 0) throw new VideoInputError(400, 'invalid_storyboard', `${where}: choose at least one avatar.`);
+    if (new Set(e.avatarIds).size !== e.avatarIds.length) throw new VideoInputError(400, 'invalid_storyboard', `${where}: an avatar is listed twice.`);
+    const stranger = e.avatarIds.find((id) => !avatarIds.includes(id));
+    if (stranger) throw new VideoInputError(400, 'invalid_storyboard', `${where}: the avatar "${stranger}" is not one of the video's avatars.`);
+  });
+}
+
 /** One of the user's avatars in a video: its name, recipe, and whether it is the lead (sings the song). */
 export interface VideoAvatar {
   readonly id: string;
@@ -237,6 +265,8 @@ export function songToAvatarInput(args: {
   audio: VideoAudio;
   body: Omit<ConsoleBody, 'versionKey'>;
   avatars: readonly VideoAvatar[];
+  /** Per section (checked with checkStoryboard); absent: every section in the club, everyone, automatic camera. */
+  storyboard?: readonly VideoStoryboardEntry[];
 }): AvatarVideoInput {
   const { binSeconds } = args.body;
   const bins = Math.round(args.audio.durationSeconds / binSeconds);
@@ -255,6 +285,7 @@ export function songToAvatarInput(args: {
     binSeconds,
     master: fitted(args.body.master),
     voice: fitted(voice),
-    avatars: args.avatars.map((a) => ({ id: a.id.replace(/[^a-zA-Z0-9]/gu, ''), name: a.name, recipe: a.recipe, sings: a.sings })),
+    avatars: args.avatars.map((a) => ({ id: engineAvatarId(a.id), name: a.name, recipe: a.recipe, sings: a.sings })),
+    ...(args.storyboard ? { storyboard: args.storyboard.map((e) => ({ scene: e.scene, avatars: e.avatarIds.map(engineAvatarId), camera: e.camera })) } : {}),
   });
 }

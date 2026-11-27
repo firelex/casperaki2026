@@ -9,6 +9,8 @@ import { livePlayer } from '../audio/livePlayer';
 import { useSession } from '../state/session';
 import { LEAD_VOCAL_NAME } from '../types/song';
 import { buildConsoleBody, measureTracks } from './consoleVideoData';
+import { AvatarStoryboardEditor } from './AvatarStoryboardEditor';
+import { sectionLabel, storyboardFor, type StoryboardEntry } from './avatarStoryboard';
 import { colorHex } from './sequencer/layout';
 import { BEATS_PER_BAR, buildSequencerModel } from './sequencerModel';
 
@@ -49,6 +51,11 @@ export function MusicVideoView() {
   const [picked, setPicked] = useState<readonly string[] | undefined>(undefined);
   const avatars = useQuery({ queryKey: avatarsQueryKey, queryFn: ({ signal }) => avatarsApi.list(signal), enabled: style === 'avatars' });
   const avatarIds = picked ?? (avatars.data?.avatars ?? []).slice(0, MAX_AVATARS).map((a) => a.id);
+  /** Avatars style: the storyboard as edited (undefined: today's video, club, everyone, automatic camera). */
+  const [edited, setEdited] = useState<readonly StoryboardEntry[] | undefined>(undefined);
+  const sections = storyboardSections(viewSong);
+  const chosenAvatars = avatarIds.map((id) => avatars.data?.avatars.find((a) => a.id === id)).filter((a): a is NonNullable<typeof a> => a !== undefined);
+  const board = storyboardFor(edited, sections.length, avatarIds);
   const togglePick = (id: string) =>
     setPicked(avatarIds.includes(id) ? avatarIds.filter((x) => x !== id) : avatarIds.length >= MAX_AVATARS ? avatarIds : [...avatarIds, id]);
   const format: VideoFormat = quality === 'preview' ? `${orientation}-preview` : orientation;
@@ -81,7 +88,7 @@ export function MusicVideoView() {
           leadVocal: model.tracks.some((t) => t.name === LEAD_VOCAL_NAME) ? LEAD_VOCAL_NAME : undefined,
           hex: colorHex,
         });
-        return await videoApi.start(songId, { ...opts, console: body, ...(style === 'avatars' ? { avatarIds } : {}) });
+        return await videoApi.start(songId, { ...opts, console: body, ...(style === 'avatars' ? { avatarIds, storyboard: board } : {}) });
       } finally {
         setMeasuring(undefined);
       }
@@ -265,6 +272,9 @@ export function MusicVideoView() {
           ) : (
             <VideoPanel job={job} style={style} orientation={orientation} preview={quality === 'preview'} title={viewSong?.title ?? 'Music video'} />
           )}
+          {style === 'avatars' && chosenAvatars.length > 0 && sections.length > 0 ? (
+            <AvatarStoryboardEditor sections={sections} board={board} avatars={chosenAvatars} onChange={setEdited} />
+          ) : null}
         </section>
       </div>
     </div>
@@ -387,3 +397,17 @@ function useNow(ms: number): number {
   return now;
 }
 
+
+/** The saved song's sections with their times, as the storyboard lists them. */
+function storyboardSections(song: { bpm: number; songStructure: readonly { name: string; lengthInBars?: number; bars: readonly unknown[] }[] } | undefined): { label: string; seconds: string }[] {
+  if (!song) return [];
+  const secPerBar = (BEATS_PER_BAR * 60) / song.bpm;
+  const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;
+  let bar = 0;
+  return song.songStructure.map((seg) => {
+    const bars = seg.lengthInBars ?? seg.bars.length;
+    const out = { label: sectionLabel(seg.name), seconds: `${clock(bar * secPerBar)}–${clock((bar + bars) * secPerBar)}` };
+    bar += bars;
+    return out;
+  });
+}

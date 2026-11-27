@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { UserAvatars } from '../src/avatars/userAvatars.js';
 import { videoAvatars } from '../src/avatars/videoAvatars.js';
 import type { SongsStore } from '../src/store.js';
+import { checkStoryboard } from '../src/video/videoInput.js';
 
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 const recipe = { pack: 'drophunter', parts: { body: '0', eyes: 'regulareyes' }, textures: {}, colors: {} };
@@ -49,5 +50,27 @@ describe('videoAvatars', () => {
     expect(() => videoAvatars(store, avatars, 'me', 's1', [kai.id, kai.id])).toThrow(/chosen twice/u);
     expect(() => videoAvatars(store, avatars, 'me', 's1', ['a-000000000000'])).toThrow(/no avatar "a-000000000000"/u);
     expect(() => videoAvatars(store, avatars, 'someone-else', 's1', [kai.id])).toThrow(/no avatar/u);
+  });
+});
+
+describe('checkStoryboard', () => {
+  const sections = [{ name: 'Intro' }, { name: 'Chorus 1' }];
+  const scenes = ['club', 'stage'];
+  const cameras = ['auto', 'wide'];
+  const ok = [
+    { scene: 'club', avatarIds: ['a-1'], camera: 'auto' },
+    { scene: 'stage', avatarIds: ['a-1', 'a-2'], camera: 'wide' },
+  ];
+  it('accepts one entry per section with known scenes, cameras and the video’s avatars', () => {
+    expect(() => checkStoryboard(ok, sections, ['a-1', 'a-2'], scenes, cameras)).not.toThrow();
+  });
+  it('refuses the wrong length, unknown scene or camera, no avatars, repeats and strangers, naming the section', () => {
+    const bad = (sb: typeof ok, m: RegExp) => expect(() => checkStoryboard(sb, sections, ['a-1', 'a-2'], scenes, cameras)).toThrow(m);
+    bad([ok[0]!], /1 sections, the song 2/u);
+    bad([ok[0]!, { ...ok[1]!, scene: 'moon' }], /Chorus 1: there is no scene "moon"/u);
+    bad([{ ...ok[0]!, camera: 'drone' }, ok[1]!], /Intro: there is no camera "drone"/u);
+    bad([{ ...ok[0]!, avatarIds: [] }, ok[1]!], /Intro: choose at least one avatar/u);
+    bad([{ ...ok[0]!, avatarIds: ['a-1', 'a-1'] }, ok[1]!], /listed twice/u);
+    bad([{ ...ok[0]!, avatarIds: ['a-9'] }, ok[1]!], /"a-9" is not one of the video's avatars/u);
   });
 });
