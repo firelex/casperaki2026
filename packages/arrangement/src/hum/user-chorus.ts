@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { ChordSymbolSchema } from '@casperaki/song-schema';
 
 import { keyOffsetFromC, transposeChordSymbol } from '../vocals/fit.js';
-import type { MergedPrecedent } from '../vocals/precedents.js';
+import type { MergedPrecedent, Precedent } from '../vocals/precedents.js';
 import { LEGACY_INDEX_TO_MIDI, MAX_NOTE } from '../vocals/range.js';
 
 export const USER_CHORUS_BARS = 8;
@@ -65,6 +65,14 @@ export function userChorusPrecedent(chorus: UserChorus, songKey: string): Merged
     chords[beatKey(beat)] = { chord: transposeChordSymbol(symbol, -keyOffset) };
   }
   const notes = Object.values(melody).map((v) => v[0]!.midi);
+  // The hum as a bank entry: its own rhythm and its own melody (lyrics first recuts its rhythm, keeping its pitches).
+  const hum: Precedent = {
+    id: 'user',
+    properties: { name: 'user chorus', start: 0, end: USER_CHORUS_BARS, useOriginal: true, useRemix: false, source: { kind: 'casperaki' } },
+    // Bank notes carry a written name; nothing reads it, and the hum has none of its own.
+    melody: Object.fromEntries(Object.entries(melody).map(([k, v]) => [k, v.map((n) => ({ ...n, note: `midi ${n.midi}` }))])),
+    chords,
+  };
   return {
     rhythmicPrecedentId: 'user',
     rhythmicPrecedentName: 'user chorus',
@@ -81,5 +89,7 @@ export function userChorusPrecedent(chorus: UserChorus, songKey: string): Merged
     },
     melody,
     chords,
+    rhythmic: hum,
+    melodic: hum,
   };
 }

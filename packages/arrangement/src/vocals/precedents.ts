@@ -840,6 +840,10 @@ export interface MergedPrecedent {
   readonly chords: Readonly<Record<string, { readonly chord: string }>>;
   /** How the melody was made, when the bank index has recipes for the section (see "selection: recipes"). */
   readonly recipe?: Recipe;
+  /** The entries it was made from, as shaped for the section (a whole hook: the hook both times), so a melody can be
+   *  laid on another rhythm (drapeOnRhythm) or a rhythm kept under another melody. */
+  readonly rhythmic: Precedent;
+  readonly melodic: Precedent;
 }
 
 const MAX_MERGE_RETRIES = 6; // legacy: `if (safety++ > 5) throw`
@@ -1017,7 +1021,7 @@ interface BankPlan {
   readonly why: string;
 }
 
-function planBank(rule: GenreSegmentRule, bankId: string, inputs: MergeInputs): BankPlan {
+function planBank(rule: GenreSegmentRule, bankId: string, inputs: Omit<MergeInputs, 'rng'>): BankPlan {
   const index = loadBankIndex();
   const bank = tempoBank(bankId, inputs.tempo);
   const isHooks = index.hooks !== undefined && bankId === index.hooks.bank;
@@ -1102,7 +1106,7 @@ function remixInBank(plan: BankPlan, inputs: MergeInputs): MergedPrecedent {
   return mergeMixedHooks(remix.entries, remix.maxNote, inputs);
 }
 
-function where(inputs: MergeInputs): string {
+function where(inputs: Omit<MergeInputs, 'rng'>): string {
   return `${inputs.genre}/${inputs.segmentType} at ${inputs.tempo} bpm`;
 }
 
@@ -1198,7 +1202,7 @@ function selectByRecipe(rule: GenreSegmentRule, bankIds: readonly string[], weig
 }
 
 /** The hooks of the section and tempo flagged useRemix (the pool for mixing, as melody or as rhythm). */
-function remixableHooks(plan: BankPlan, inputs: MergeInputs): readonly Precedent[] {
+function remixableHooks(plan: BankPlan, inputs: Omit<MergeInputs, 'rng'>): readonly Precedent[] {
   const ofSection = (e: Precedent) => e.properties.type !== undefined && TYPE_TO_SEGMENT[e.properties.type] === inputs.segmentType;
   return tempoBank(plan.bankId, inputs.tempo).filter((e) => {
     const p = e.properties as unknown as { tempoMin: number; tempoMax: number };
@@ -1331,6 +1335,8 @@ function drapeAndPlace(
       },
       melody: merged.melody,
       chords: merged.chords,
+      rhythmic: rhythmicPrecedent,
+      melodic: melodicPrecedent,
     },
   };
 }
@@ -1400,4 +1406,45 @@ export function expandMergedToSegment(
     }
   }
   return out;
+}
+
+// ---- a rhythm on its own (lyrics first) ----
+//
+// With written words, the rhythm and the melody are drawn apart (docs/superpowers/specs/
+// 2026-11-27-lyrics-first-singing-design.md): the rhythm uniformly from every rhythm the recipes draw rhythms from,
+// the melody as before (selectMergedPrecedent, its `melodic`), then the melody laid on the rhythm the words bent.
+
+/** Every rhythm for the section: the rule's style rhythmic bank (its useRemix entries that suit the tempo), the
+ *  hooks written for the section that suit the tempo and may be remixed, and, for a rule with no rhythmic bank (the
+ *  legacy merge then takes its rhythm from the melodic bank), the melodic banks' useRemix entries. Only entries that
+ *  can be shaped to the section's length (pickHelperPrecedent's window). An error when there is none. */
+export function rhythmPool(inputs: Omit<MergeInputs, 'rng'>): readonly Precedent[] {
+  const rule = lookupRule(inputs);
+  if (!rule) throw new Error(`vocals/precedents: no rhythm for ${inputs.genre}/${inputs.segmentType}: the bank index has no rule for it`);
+  const index = loadBankIndex();
+  const bankIds = typeof rule.melodic === 'string' ? [rule.melodic] : rule.melodic;
+  const hooksId = index.hooks?.bank;
+  const pool: Precedent[] = [...(styleRhythms(rule, inputs.tempo) ?? [])];
+  if (hooksId !== undefined && bankIds.includes(hooksId)) pool.push(...remixableHooks(planBank(rule, hooksId, inputs), inputs));
+  if (!rule.rhythmic) for (const id of bankIds.filter((b) => b !== hooksId)) pool.push(...remixable(tempoBank(id, inputs.tempo)));
+  const desired = inputs.desiredPatternLength;
+  const lengths = pool.map((e) => e.properties.end - e.properties.start);
+  // pickHelperPrecedent's choice: entries no longer than the section and at least half of it; if every entry is
+  // longer, any (it is cut).
+  const shaped = lengths.some((l) => desired >= l) ? pool.filter((_, i) => desired >= lengths[i]! && desired <= 2 * lengths[i]!) : pool;
+  if (shaped.length === 0) throw new Error(`vocals/precedents: no rhythm of a length for ${desired} bars (${where(inputs)})`);
+  return shaped;
+}
+
+/** One rhythm drawn uniformly from rhythmPool, shaped to the section's length. */
+export function drawRhythm(inputs: MergeInputs): Precedent {
+  return pickHelperPrecedent(rhythmPool(inputs), { desiredPatternLength: inputs.desiredPatternLength }, inputs.rng);
+}
+
+/** The melody's pitches (and its chords) laid on this rhythm and placed up to maxNote. An error when it cannot be
+ *  placed (no redraw: the caller chose both). */
+export function drapeOnRhythm(rhythm: Precedent, melodic: Precedent, maxNote: number): MergedPrecedent {
+  const draped = drapeAndPlace(rhythm, melodic, maxNote, undefined);
+  if (!draped.ok) throw new Error(`vocals/precedents: the melody "${melodic.id}" on the rhythm "${rhythm.id}": ${draped.failure}`);
+  return draped.merged;
 }
