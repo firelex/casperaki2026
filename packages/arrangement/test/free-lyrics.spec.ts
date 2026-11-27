@@ -19,6 +19,14 @@ describe('checks for lyrics written first', () => {
     expect(p[0]!.message).toMatch(/4 to 11/u);
   });
 
+  it('a line too long is spelled out syllable by syllable, with how many to remove', () => {
+    const long = ['Maybe the cake gets cut and we slip out the door', ...VERSE.slice(1)];
+    const p = checkFreeLyrics({ verse: long, chorus: CHORUS }, counts, 'Cinnamon Boulevard', []);
+    expect(p[0]!.message).toContain('12 syllables');
+    expect(p[0]!.message).toContain('may-be');
+    expect(p[0]!.message).toMatch(/remove at least 1 syllable/u);
+  });
+
   it('names a word the dictionary does not know', () => {
     const p = checkFreeLyrics({ verse: ['Saw your phone light up zxqvy', ...VERSE.slice(1)], chorus: CHORUS }, counts, 'Cinnamon Boulevard', []);
     expect(p.some((x) => x.line === 0 && /zxqvy/u.test(x.message))).toBe(true);

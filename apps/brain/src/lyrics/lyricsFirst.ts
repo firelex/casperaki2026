@@ -3,7 +3,7 @@
 // drawn artist writes and about a drawn situation (inspiration.ts). The code checks them (@casperaki/arrangement
 // checkFreeLyrics: dictionary words, 4 to 11 syllables a line, ABCB rhymes, rhyme words used once unless they are in
 // the title or the line repeats, an opening unlike the owner's recent songs) and sends what is wrong back, naming the
-// lines, up to MAX_ROUNDS answers in all, all without reasoning (about 1.5 s each). Still wrong after that: an error
+// lines, up to MAX_ROUNDS answers in all, without reasoning (about 1.5 s each) but for the last REASONING_ROUNDS. Still wrong after that: an error
 // naming the lines. The arrangement then bends a rhythm to the words (applyLyricsFirst).
 
 import { checkFreeLyrics, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES, type FreeLyricsProblem, type LyricsByType } from '@casperaki/arrangement';
@@ -41,6 +41,9 @@ export function recentOpenings(store: SongsStore, ownerId: string, exceptSongId:
 
 /** Answers from the model in all: the first draft and its repairs. */
 export const MAX_ROUNDS = 8;
+/** The last answers may reason (half a minute or more each), as the melody-first writer's last repairs do: for a
+ *  line the model could not fix quickly (a syllable count, a rhyme). */
+export const REASONING_ROUNDS = 2;
 
 export interface LyricsFirstRequest {
   /** Sung section types in song order: their label for the model and how many lines each needs. */
@@ -119,7 +122,7 @@ export async function writeLyricsFirst(model: ChatModel, r: LyricsFirstRequest):
   const counts = Object.fromEntries(r.types.map((t) => [t.type, t.lines]));
   let wrong = '';
   for (let round = 1; round <= MAX_ROUNDS; round++) {
-    const text = await model.complete(messages, { thinking: false });
+    const text = await model.complete(messages, { thinking: round > MAX_ROUNDS - REASONING_ROUNDS });
     const parsed = parse(text, r);
     if (typeof parsed === 'string') {
       wrong = parsed;

@@ -39,3 +39,38 @@ describe('a rhythm drawn on its own', () => {
     }
   });
 });
+
+describe('a melody laid on a recut rhythm keeps its shape', () => {
+  it("per two-bar line, the draped pitches climb and fall as the melody's own notes there do", () => {
+    // A melody that rises through a line and falls through the next, on a rhythm bunched into each line's first bar.
+    const notes = (pairs: readonly (readonly [number, number])[]) => Object.fromEntries(pairs.map(([b, m]) => [Number.isInteger(b) ? `${b}.0` : String(b), [{ note: 'x', midi: m, duration: 1 }]]));
+    const melodic = {
+      id: 'm', properties: { start: 0, end: 4, useOriginal: false, useRemix: true, source: { kind: 'casperaki' as const } },
+      melody: notes([[0, 48], [2, 50], [4, 52], [6, 53], [8, 55], [10, 53], [12, 52], [14, 50]]),
+      chords: Object.fromEntries(Array.from({ length: 16 }, (_, b) => [`${b}.0`, { chord: 'C' }])),
+    };
+    const rhythm = { ...melodic, id: 'r', melody: notes([[0, 0], [0.5, 0], [1, 0], [1.5, 0], [8, 0], [8.5, 0], [9, 0], [9.5, 0]]) };
+    const draped = drapeOnRhythm(rhythm, melodic, 76);
+    const midis = Object.keys(draped.melody).sort((a, b) => Number(a) - Number(b)).map((k) => draped.melody[k]![0]!.midi);
+    expect(midis).toHaveLength(8);
+    const up = midis.slice(0, 4);
+    const down = midis.slice(4);
+    expect(up).toEqual([...up].sort((a, b) => a - b));
+    expect(down).toEqual([...down].sort((a, b) => b - a));
+    expect(Math.max(...up) - Math.min(...up)).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('a note moved onto a chord tone', () => {
+  it("stays within the melody's own range, so a narrow ceiling still places it", () => {
+    // The melody's G (43) lands under F: F's tones nearest it are F (41) below the melody and A (45) inside it; the
+    // narrow verse ceiling (55) has no octave for a 41 among these notes.
+    const notes = (pairs: readonly (readonly [number, number])[]) => Object.fromEntries(pairs.map(([b, m]) => [Number.isInteger(b) ? `${b}.0` : String(b), [{ note: 'x', midi: m, duration: 1 }]]));
+    const chords = Object.fromEntries(Array.from({ length: 16 }, (_, b) => [`${b}.0`, { chord: b < 9 ? 'C' : 'F' }]));
+    const melodic = { id: 'm', properties: { start: 0, end: 4, useOriginal: false, useRemix: true, source: { kind: 'casperaki' as const } }, melody: notes([[0, 45], [4, 45], [8, 43], [10, 43], [12, 45]]), chords };
+    const rhythm = { ...melodic, id: 'r', melody: notes([[0, 0], [4, 0], [9.5, 0], [10, 0], [12, 0]]) };
+    const midis = Object.values(drapeOnRhythm(rhythm, melodic, 55).melody).map((v) => v[0]!.midi);
+    expect(midis).toHaveLength(5);
+    expect(Math.min(...midis)).toBeGreaterThanOrEqual(43);
+  });
+});

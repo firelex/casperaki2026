@@ -5,7 +5,7 @@ import { ARTISTS, drawInspiration, situations } from '../src/lyrics/inspiration.
 import { applyLyricsFirst, orchestrate } from '@casperaki/arrangement';
 import { canonicalStringifySong } from '@casperaki/song-schema';
 
-import { MAX_ROUNDS, recentOpenings, writeLyricsFirst, type LyricsFirstRequest } from '../src/lyrics/lyricsFirst.js';
+import { MAX_ROUNDS, REASONING_ROUNDS, recentOpenings, writeLyricsFirst, type LyricsFirstRequest } from '../src/lyrics/lyricsFirst.js';
 import { openSongsStore } from '../src/store.js';
 
 const GOOD = {
@@ -72,6 +72,8 @@ describe('the lyrics-first lyricist', () => {
     const model = scripted([answer(bad)]);
     await expect(writeLyricsFirst(model, REQUEST)).rejects.toThrow(/Verse, line 4/u);
     expect(model.calls).toHaveLength(MAX_ROUNDS);
+    // The last REASONING_ROUNDS answers may reason (a line the model could not fix quickly).
+    expect(model.calls.map((c) => c.thinking)).toEqual(Array.from({ length: MAX_ROUNDS }, (_, i) => i >= MAX_ROUNDS - REASONING_ROUNDS));
   });
 
   it('an answer that is not the asked form is sent back as such', async () => {

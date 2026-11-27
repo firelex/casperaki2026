@@ -74,6 +74,12 @@ describe('the recut', () => {
     expectSingable(out, lines, 110);
   });
 
+  it('every line keeps at least one note in its own bars (a line all pickups would join the line before)', () => {
+    // Short lines after a busy one on the dance rhythms at 126 bpm (found by a sweep over seeds: "4/4/8").
+    const lines = ['Oh la la heart', 'Oh la la day', 'Oh la la dream', 'Oh la la way'];
+    for (const e of loadPrecedentBank('rhythmic-dance')) expectSingable(recutRhythm(e, lines, { bpm: 126, bars: 8 }), lines, 126);
+  });
+
   it('is deterministic', () => {
     const r = rhythm([[0, 1], [1, 1], [2, 1], [3, 1], [4, 2]], 2);
     expect(recutRhythm(r, ['Maybe I was wrong about you'], { bpm: 120, bars: 2 })).toEqual(recutRhythm(r, ['Maybe I was wrong about you'], { bpm: 120, bars: 2 }));

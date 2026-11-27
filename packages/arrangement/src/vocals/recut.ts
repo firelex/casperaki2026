@@ -213,6 +213,8 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
     if (st.j === syl.length) {
       // The line is laid; its last note's grade with nothing after it in the line.
       const last = st.last!;
+      // A line of pickups only would be read as the end of the line before (lyric-lines.ts).
+      if (last.s < lineStart) continue;
       if (!stressFits(grade(last, st.pd, undefined), syl[st.j - 1]!.stress)) continue;
       // The tail stays out of the next line's pickup: long, early, or ending half a beat before the line's end.
       if (!isLast && !(last.d > PICKUP_MAX || last.s < lineEnd - PICKUP_ZONE || last.s + last.d <= lineEnd - LEGATO_GAP)) continue;

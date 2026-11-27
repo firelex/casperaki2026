@@ -1243,9 +1243,8 @@ function drapeAndPlace(
   melodicPrecedent: Precedent,
   maxNote: number,
   octaveShift: number | undefined,
-  /** Every rhythm note gets a pitch (lyrics first: each note carries a syllable). Where the legacy lookup finds none
-   *  (no melody note or chord near it), the melody's note nearest in time, the earlier on a tie. */
-  everyNote = false,
+  /** Lyrics first: the pitches follow the melody's notes in order, line by line (drapeInOrder), not by time. */
+  inOrder = false,
 ): DrapeResult {
   const merged: {
     melody: Record<string, { midi: number; duration: number }[]>;
@@ -1258,6 +1257,7 @@ function drapeAndPlace(
   let lastMidi = firstMelodicEntry?.[0]?.midi ?? 50;
 
   const rhythmicBeatStrings = Object.keys(rhythmicPrecedent.melody);
+  const ordered = inOrder ? drapeInOrder(rhythmicBeatStrings.map(parseFloat), melodicPrecedent) : undefined;
   for (let i = 0; i < rhythmicBeatStrings.length; i++) {
     const rhythmicBeatString = rhythmicBeatStrings[i]!;
     const notes = rhythmicPrecedent.melody[rhythmicBeatString]!;
@@ -1265,19 +1265,15 @@ function drapeAndPlace(
     if (rhythmicBeat >= rhythmicPrecedent.properties.end * 4) break;
     if (rhythmicBeat < rhythmicPrecedent.properties.start * 4) continue;
 
-    const close = getClosestNoteForBeat(
-      rhythmicBeat,
-      rhythmicBeat,
-      rhythmicPrecedent,
-      melodicPrecedent,
-      lastMidi,
-    );
-    if (!close && everyNote) {
-      const nearest = melodicBeats.reduce((best, b) => (Math.abs(parseFloat(b) - rhythmicBeat) < Math.abs(parseFloat(best) - rhythmicBeat) ? b : best));
-      merged.melody[getBeatString(rhythmicBeat)] = [{ midi: melodicPrecedent.melody[nearest]![0]!.midi, duration: notes[0]!.duration }];
-      lastMidi = merged.melody[getBeatString(rhythmicBeat)]![0]!.midi;
-      continue;
-    }
+    const close = ordered
+      ? { midi: ordered.get(rhythmicBeat)! }
+      : getClosestNoteForBeat(
+          rhythmicBeat,
+          rhythmicBeat,
+          rhythmicPrecedent,
+          melodicPrecedent,
+          lastMidi,
+        );
     if (!close) continue;
     merged.melody[getBeatString(rhythmicBeat)] = [
       { midi: close.midi, duration: notes[0]!.duration },
@@ -1458,4 +1454,58 @@ export function drapeOnRhythm(rhythm: Precedent, melodic: Precedent, maxNote: nu
   const draped = drapeAndPlace(rhythm, melodic, maxNote, undefined, true);
   if (!draped.ok) throw new Error(`vocals/precedents: the melody "${melodic.id}" on the rhythm "${rhythm.id}": ${draped.failure}`);
   return draped.merged;
+}
+
+/** Beats per lyric line (lyric-lines.ts LINE_BARS bars). */
+const LINE_BEATS = 8;
+
+/**
+ * Lyrics first: the melody draped over a rhythm bent to the words keeps its shape. Per two-bar line, the rhythm's
+ * notes take the melody's notes of that line in order, spread evenly over them (note k of n takes melody note
+ * round(k·(m−1)/(n−1)) of m), so the line climbs and falls as the melody does wherever the words put the notes.
+ * A line where the melody has no note takes the melody's note nearest in time. A note that lands under another chord
+ * than the melody note it took, and is not a tone of that chord, moves to the nearest tone of it within the melody's
+ * own range (the nearest anywhere when the range holds none), so the melody can still be placed in the singer's range.
+ * Every rhythm note gets a pitch (each carries a syllable).
+ */
+function drapeInOrder(rhythmBeats: readonly number[], melodic: Precedent): Map<number, number> {
+  const mel = Object.entries(melodic.melody)
+    .map(([k, v]) => ({ beat: parseFloat(k), midi: v[0]!.midi }))
+    .sort((a, b) => a.beat - b.beat);
+  if (mel.length === 0) throw new Error(`vocals/precedents: the melody "${melodic.id}" has no notes to lay on a rhythm`);
+  const chordAt = (beat: number) => melodic.chords[getBeatString(Math.floor(beat))]?.chord;
+  const low = Math.min(...mel.map((n) => n.midi));
+  const high = Math.max(...mel.map((n) => n.midi));
+  const out = new Map<number, number>();
+  const beats = [...rhythmBeats].sort((a, b) => a - b);
+  const lines = new Map<number, number[]>();
+  for (const b of beats) lines.set(Math.floor(b / LINE_BEATS), [...(lines.get(Math.floor(b / LINE_BEATS)) ?? []), b]);
+  for (const [line, own] of lines) {
+    const inLine = mel.filter((n) => Math.floor(n.beat / LINE_BEATS) === line);
+    own.forEach((b, k) => {
+      const source = inLine.length > 0
+        ? inLine[own.length === 1 ? 0 : Math.round((k * (inLine.length - 1)) / (own.length - 1))]!
+        : mel.reduce((best, n) => (Math.abs(n.beat - b) < Math.abs(best.beat - b) ? n : best));
+      const here = chordAt(b);
+      let midi = source.midi;
+      if (here && here !== chordAt(source.beat) && !chordHas(here, midi)) midi = chordToneWithin(here, midi, low, high);
+      out.set(b, midi);
+    });
+  }
+  return out;
+}
+
+/** Whether the pitch is a tone of the chord (root, third, fifth, as nearestChordToneMidi reads chords). */
+function chordHas(chordSymbol: string, midi: number): boolean {
+  return nearestChordToneMidi(chordSymbol, midi) === midi;
+}
+
+/** The chord's tone nearest `midi` among those within [low, high]; the nearest anywhere when none is. */
+function chordToneWithin(chordSymbol: string, midi: number, low: number, high: number): number {
+  let best: number | undefined;
+  for (let m = low; m <= high; m++) {
+    if (!chordHas(chordSymbol, m)) continue;
+    if (best === undefined || Math.abs(m - midi) < Math.abs(best - midi)) best = m;
+  }
+  return best ?? nearestChordToneMidi(chordSymbol, midi);
 }

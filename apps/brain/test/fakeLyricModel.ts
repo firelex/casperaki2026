@@ -76,11 +76,12 @@ export function fittingParts(brief: string): Record<string, { text: string }[]> 
 // ---- lyrics first (lyricsFirst.ts): the whole song in parts, no melody to fit ----
 
 const LYRICS_FIRST_FORM = 'Answer with JSON only, in this form: {"sections"';
-const OPENERS = ['Summer', 'Morning', 'Silver', 'Golden', 'Maybe', 'Somewhere', 'Yesterday', 'Honey', 'Thunder', 'Window', 'Pocket', 'Candle'];
+/** Two-syllable words for the song's first line, four per call, so no song starts like an earlier one. */
+const OPENING_WORDS = ['summer', 'morning', 'silver', 'golden', 'maybe', 'honey', 'thunder', 'window', 'pocket', 'candle', 'river', 'ocean', 'meadow', 'yellow', 'garden', 'mirror', 'velvet', 'harbor', 'winter', 'paper', 'shadow', 'thunder', 'button', 'lemon', 'pillow', 'rocket', 'ribbon', 'tiger', 'wonder', 'basket', 'kitten', 'pepper'];
 const FREE_ENDS = ['heart', 'dream', 'soul', 'road', 'home', 'sun', 'time', 'life', 'world', 'hand', 'door', 'town', 'phone', 'car'];
 
-/** Lines that pass checkFreeLyrics: "<opener> la la <end>", ABCB rhymes from one family per part, every line-ending word
- *  used once; the opening word changes with every call, so a song never starts like an earlier one. */
+/** Lines that pass checkFreeLyrics: "Oh la la <end>" (the song's first line: four words of its own), ABCB rhymes from one family per part, every line-ending word
+ *  used once; the opening changes with every call. */
 function lyricsFirstAnswer(brief: string, call: number): string {
   const form = JSON.parse(brief.slice(brief.indexOf(LYRICS_FIRST_FORM) + LYRICS_FIRST_FORM.length - '{"sections"'.length)) as { sections: { name: string; lines: string[] }[] };
   let free = 0;
@@ -94,8 +95,8 @@ function lyricsFirstAnswer(brief: string, call: number): string {
       const groupSize = Math.min(4, n - (i - inGroup));
       const rhymes = groupSize === 4 ? inGroup === 1 || inGroup === 3 : groupSize === 3 ? inGroup !== 1 : groupSize === 2;
       const end = rhymes ? family[rhyme++]! : FREE_ENDS[free++]!;
-      const opener = p === 0 && i === 0 ? OPENERS[call % OPENERS.length]! : 'Oh';
-      return `${opener} la la ${end}`;
+      if (p === 0 && i === 0) return Array.from({ length: 4 }, (_, k) => OPENING_WORDS[(call * 4 + k) % OPENING_WORDS.length]!).join(' ');
+      return `Oh la la ${end}`;
     });
     return { name: s.name, lines };
   });

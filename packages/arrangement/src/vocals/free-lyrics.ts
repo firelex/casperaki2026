@@ -50,7 +50,10 @@ export function checkFreeLyrics(
       }
       const n = words.reduce((a, w) => a + pronounce(w)!.phones.length, 0);
       if (n < MIN_LINE_SYLLABLES || n > MAX_LINE_SYLLABLES) {
-        problems.push({ type, line: i, message: `It has ${n} syllables; every line must have ${MIN_LINE_SYLLABLES} to ${MAX_LINE_SYLLABLES}.` });
+        // Spelled out as sung (the model miscounts otherwise), with how far off it is.
+        const spelled = words.map((w) => pronounce(w)!.syllables.join('-').toLowerCase()).join(' ');
+        const fix = n > MAX_LINE_SYLLABLES ? `remove at least ${n - MAX_LINE_SYLLABLES} syllable${n - MAX_LINE_SYLLABLES === 1 ? '' : 's'}` : `add at least ${MIN_LINE_SYLLABLES - n}`;
+        problems.push({ type, line: i, message: `It has ${n} syllables (${spelled}); every line must have ${MIN_LINE_SYLLABLES} to ${MAX_LINE_SYLLABLES}: ${fix}.` });
       }
     });
     // Rhymes (ABCB): each line with the first line of its rhyme group.
