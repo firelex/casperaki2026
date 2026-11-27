@@ -3,7 +3,7 @@
 // and done without being applied, the new singer listed with its voice reference, test line and reference choice,
 // visible only to its owner, usable by Sing, and deleted.
 
-import { existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -135,12 +135,20 @@ describe('Add a singer', () => {
     expect(task).toMatchObject({ state: 'failed', message: 'Cancelled' });
     expect(((await get('/api/singers')).body.singers as unknown[]).length).toBe(1);
 
+    // Files an earlier run got as far as (as when it was stopped after its reference): the retry's own replace them.
+    const stale = join(dir, 'files', id, 'singer');
+    mkdirSync(stale, { recursive: true });
+    writeFileSync(join(stale, 'voice.wav'), 'from the earlier run');
+
     svc.release('add_singer');
     expect((await fetch(`${url}/api/tasks/${id}/retry`, { method: 'POST' })).status).toBe(200);
     await tasks.idle();
     task = ((await get('/api/tasks')).body.tasks as Array<Record<string, any>>).find((t) => t.id === id)!;
     expect(task.state).toBe('done');
     expect(svc.jobs).toHaveLength(2);
+    expect(svc.fileFetches).toContain(`${svc.jobs[1]!.id}/voice.wav`);
+    const singerId = task.singerId as string;
+    expect(readFileSync(join(dir, 'singers', DEV_OWNER_ID, singerId, 'voice.wav'), 'utf8')).not.toBe('from the earlier run');
     expect(((await get('/api/singers')).body.singers as Array<{ name: string }>).map((s) => s.name)).toEqual(['Singer 1', 'My voice']);
   });
 

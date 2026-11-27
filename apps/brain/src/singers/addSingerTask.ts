@@ -6,7 +6,7 @@
 // singer's files and adds it to the owner's list.
 
 import { execFile } from 'node:child_process';
-import { copyFileSync, existsSync } from 'node:fs';
+import { copyFileSync, existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { z } from 'zod';
@@ -115,6 +115,9 @@ export async function runAddSinger(ctx: AddSingerContext): Promise<{ singerId: s
   if (ctx.jobs?.addSinger !== undefined) job = ctx.jobs.addSinger;
   else {
     if (ctx.signal.aborted) throw new CancelledError();
+    // A new job (a first run or a Retry): an earlier run's step files must go, or followJob (which skips files it
+    // already has, for resuming the same job) keeps them in place of this job's.
+    rmSync(join(ctx.filesDir, SINGER_FILES_STAGE), { recursive: true, force: true });
     job = await ctx.client.submit({ stage: ADD_SINGER_STAGE, upload, separate: options.separate, reference: options.reference });
     ctx.setJobs({ addSinger: job });
   }
