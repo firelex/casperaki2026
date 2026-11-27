@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Casperaki workbench UI — modern React scaffold driving the brain (POST /api/songs/generate). Successor to casperaki-fe-rory.",
+  "description": "Casperaki workbench UI \u2014 modern React scaffold driving the brain (POST /api/songs/generate). Successor to casperaki-fe-rory.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -26,7 +26,10 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.17.0",
-    "svg2pdf.js": "^2.9.0"
+    "svg2pdf.js": "^2.9.0",
+    "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a",
+    "three": "^0.187.0",
+    "@pixiv/three-vrm": "^3.6.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
@@ -36,6 +39,7 @@
     "tailwindcss": "^4.3.0",
     "typescript": "~5.8.3",
     "vite": "^7.3.5",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "@types/three": "^0.187.0"
   }
 }

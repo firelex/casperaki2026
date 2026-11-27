@@ -30,8 +30,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/song-schema
       '@casperaki/video':
-        specifier: git+https://github.com/firelex/casperaki-video.git#22968a4a3ff6d9cc7b2f431da855a1e2fd7de6b1
-        version: git+https://git@github.com:firelex/casperaki-video.git#22968a4a3ff6d9cc7b2f431da855a1e2fd7de6b1(@types/react@19.2.17)(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)
+        specifier: git+https://github.com/firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a
+        version: git+https://git@github.com:firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a(@types/react@19.2.17)(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)
       better-sqlite3:
         specifier: ^11.3.0
         version: 11.10.0
@@ -167,9 +167,15 @@ importers:
       '@casperaki/song-schema':
         specifier: workspace:*
         version: link:../../packages/song-schema
+      '@casperaki/video':
+        specifier: git+https://github.com/firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a
+        version: git+https://git@github.com:firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a(@types/react@19.2.17)(lightningcss@1.32.0)(typescript@5.8.3)
       '@fontsource-variable/archivo':
         specifier: ^5.3.0
         version: 5.3.0
+      '@pixiv/three-vrm':
+        specifier: ^3.6.0
+        version: 3.6.0(three@0.187.0)
       '@tanstack/react-query':
         specifier: ^5.101.0
         version: 5.101.0(react@19.2.7)
@@ -203,6 +209,9 @@ importers:
       svg2pdf.js:
         specifier: ^2.9.0
         version: 2.9.0(jspdf@4.2.1)
+      three:
+        specifier: ^0.187.0
+        version: 0.187.0
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.0
@@ -213,6 +222,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.0
         version: 19.2.3(@types/react@19.2.17)
+      '@types/three':
+        specifier: ^0.187.0
+        version: 0.187.0
       '@vitejs/plugin-react':
         specifier: ^4.7.0
         version: 4.7.0(vite@7.3.5(@types/node@22.19.20)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.51.4)(tsx@4.22.4))
@@ -430,9 +442,12 @@ packages:
     resolution: {integrity: sha512-4zBIxpPzowiZpusoFkyGVwakdRJUyuH5PxQ/PrqghfdFWWasvnCdPfQXHrenDai+gyLARulZjZowCOj6fjT4pA==}
     engines: {node: '>=6.9.0'}
 
-  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#22968a4a3ff6d9cc7b2f431da855a1e2fd7de6b1':
-    resolution: {commit: 22968a4a3ff6d9cc7b2f431da855a1e2fd7de6b1, repo: git@github.com:firelex/casperaki-video.git, type: git}
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a':
+    resolution: {commit: 1895542aeaedf9dad1110017466f85b3bf57567a, repo: git@github.com:firelex/casperaki-video.git, type: git}
     version: 0.1.0
+
+  '@dimforge/rapier3d-compat@0.12.0':
+    resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
 
   '@emnapi/core@1.11.3':
     resolution: {integrity: sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg==}
@@ -1098,6 +1113,65 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
+  '@pixiv/three-vrm-core@3.6.0':
+    resolution: {integrity: sha512-7EkJVfcUQ6HSqktL0i1GgAW2x35HRF0d3KdGvgRWItkbt1E0rSmgyIG18FvoxMlLsZEsEPGp7UuB0oLAoyL9qA==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/three-vrm-materials-hdr-emissive-multiplier@3.6.0':
+    resolution: {integrity: sha512-m/rES9X+X/8Jrt8R7Kwh6V7pPoekCwv+N/bRPPmznYra3wEdWUbdTADjt6WTBGjBYbNb3idYPIVcxymgyPZYsw==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/three-vrm-materials-mtoon@3.6.0':
+    resolution: {integrity: sha512-DpWxYLDg8hbKxvlkOTakT7QJ6mzxAcVex7uUv438m42R1su7mQBto0YxzlZnh2Q1syrTgCPfFCsohCVJbVfLMQ==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/three-vrm-materials-v0compat@3.6.0':
+    resolution: {integrity: sha512-DBNJisrz73C1uNC8p1MDSKrzPdkBNZOPHB7SRpR5m9ekXV27TSWrevVSOAR73gjiztiaGB9bLg1AdDujMnhg5A==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/three-vrm-node-constraint@3.6.0':
+    resolution: {integrity: sha512-UBNMJL5yIEsZEmmYGUiszLjCNb3IOfa0IHLsx0g5yd3DM2i3oCgvQuiDaHBCn4yHPfHEEzOxNTr61eZnQ6hqUg==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/three-vrm-springbone@3.6.0':
+    resolution: {integrity: sha512-PkHGvy8o9E+cuV2qxQFS4XkxempopKyOINdLqEtFIhb4a9MWNiSpm7klw7zCgrjI2SsjCo9rX8Mki9cqFS4MqA==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/three-vrm@3.6.0':
+    resolution: {integrity: sha512-jqQACZ6f+VAy/h+WLi8FPWh9Z6yZxQcM5jf9mWTZxaEzYoG7RXA99A7wBP2d4Rwy7yLzASSdjSXGS2fO4K0WLQ==}
+    peerDependencies:
+      three: '>=0.137'
+
+  '@pixiv/types-vrm-0.0@3.6.0':
+    resolution: {integrity: sha512-dOdYg18m8Ag63DD2d12/PtzIRZmwrHF/tiBVo0hAqKDzw476Q+AGSgVWStC+SERrTS86KvwfA46MDSnyq7fcMw==}
+
+  '@pixiv/types-vrmc-materials-hdr-emissive-multiplier-1.0@3.6.0':
+    resolution: {integrity: sha512-rsWBLSG5f6ImaAZ3yNv8uLIBchrUvh2/SKq7c/W4dDAUYKINxynogTxSG20sMwciMAQy4OSoKmrhiEmECnFCew==}
+
+  '@pixiv/types-vrmc-materials-mtoon-1.0@3.6.0':
+    resolution: {integrity: sha512-W5Kr4VsGJPTaWoRFRjQIgn9hgKIBkYdjkQ8x8PeCjSF4VlLeWKlQTDekWa1e0yQ//zBmmgYz/5t71OxmcAfuDg==}
+
+  '@pixiv/types-vrmc-node-constraint-1.0@3.6.0':
+    resolution: {integrity: sha512-Ng6HZZdOcQgZ2tFHZ0TZV+H1mwMdw6SEp5mi2ui+sXn18n/qx7lFV0x/d822xZUsGcFQYTMhVxEx52zc/Ypnig==}
+
+  '@pixiv/types-vrmc-springbone-1.0@3.6.0':
+    resolution: {integrity: sha512-tNIc0iqLxdVoFcZ+WkNcxJAu5NmTNztryEnSlhW6in8Gzo58SQDGnI4YJfBmilGF04ddHyFmCV893mllEO239A==}
+
+  '@pixiv/types-vrmc-springbone-extended-collider-1.0@3.6.0':
+    resolution: {integrity: sha512-qrgG4IrN8yLMacH81q7inG5Er5LEja2IIqhe0jUK5StBUCJ9Ah/JU7TclYlJU1djiLKS89OIkpHQ2rjO8Ecd0A==}
+
+  '@pixiv/types-vrmc-springbone-limit-1.0@3.6.0':
+    resolution: {integrity: sha512-8bozTGbNbwI7I5EzHXmqlQA0+OQPPaLdHswO1sYdlYE1ZNEuy4s4rLg4dQMu7lo+4eo01IYvcnjjHCMQxuikxw==}
+
+  '@pixiv/types-vrmc-vrm-1.0@3.6.0':
+    resolution: {integrity: sha512-VnEAm+efvrjSclGYZqETXfuIQ3VJjbivsOxGT2M0qOMz6ZdlB66cI8w+NvO7DtM3xymu2+FhCKsVYCWP1+BYjw==}
+
   '@react-three/fiber@9.8.2':
     resolution: {integrity: sha512-6s0ejw0bT1myQ/aLLugcil8/zBmNnnHw/AISWF1yfDLOxfX3yYaTS+0IkpJITEnm/SSMLtxje6CJDt0i5Wu1Sw==}
     peerDependencies:
@@ -1670,6 +1744,9 @@ packages:
   '@tonejs/midi@2.0.28':
     resolution: {integrity: sha512-RII6YpInPsOZ5t3Si/20QKpNqB1lZ2OCFJSOzJxz38YdY/3zqDr3uaml4JuCWkdixuPqP1/TBnXzhQ39csyoVg==}
 
+  '@tweenjs/tween.js@23.1.3':
+    resolution: {integrity: sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==}
+
   '@tybys/wasm-util@0.10.5':
     resolution: {integrity: sha512-dOGOPxlaNV+G046mZzN+9C0dAcQZeSKcXiVaM0TYy/LM4ttTmgSBDxYfovcYI8Em3+eAbiAYpvWLOv8+ZVRJKA==}
 
@@ -1763,6 +1840,12 @@ packages:
 
   '@types/serve-static@1.15.10':
     resolution: {integrity: sha512-tRs1dB+g8Itk72rlSI2ZrW6vZg0YrLI81iQSTkMmOqnqCaNr/8Ek4VwWcN5vZgCYWbg/JJSGBlUaYGAOP73qBw==}
+
+  '@types/stats.js@0.17.4':
+    resolution: {integrity: sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==}
+
+  '@types/three@0.187.0':
+    resolution: {integrity: sha512-v+vKNarUtk4n2QRZ4+CN5ygMM0ARUjXjIQl0R/unMUfmStFeVqGbgqarbrpoGTXRZoulSH16ePrVJVxPJEbMUA==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -2794,6 +2877,9 @@ packages:
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
 
+  meshoptimizer@1.1.1:
+    resolution: {integrity: sha512-oRFNWJRDA/WTrVj7NWvqa5HqE1t9MYDj2VaWirQCzCCrAd2GHrqR/sQezCxiWATPNlKTcRaPRHPJwIRoPBAp5g==}
+
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
@@ -3408,6 +3494,11 @@ packages:
   text-segmentation@1.0.3:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
 
+  three-mesh-bvh@0.10.0:
+    resolution: {integrity: sha512-QHKCD67pgd7YkAcPa4rvuPJjeUm1shFKcFSW8QqnJ0t2uhwi+yyadLpDWI8t0VQsivfFjhVCYvf6rVk9Z0R1gQ==}
+    peerDependencies:
+      three: '>= 0.159.0'
+
   three@0.187.0:
     resolution: {integrity: sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA==}
 
@@ -3859,8 +3950,9 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#22968a4a3ff6d9cc7b2f431da855a1e2fd7de6b1(@types/react@19.2.17)(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)':
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a(@types/react@19.2.17)(lightningcss@1.32.0)(postcss@8.5.15)(typescript@5.8.3)':
     dependencies:
+      '@pixiv/three-vrm': 3.6.0(three@0.187.0)
       '@react-three/fiber': 9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)
       '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/cli': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)
@@ -3871,6 +3963,7 @@ snapshots:
       react-dom: 19.3.1(react@19.3.1)
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       three: 0.187.0
+      three-mesh-bvh: 0.10.0(three@0.187.0)
       zod: 4.6.7
     transitivePeerDependencies:
       - '@minify-html/node'
@@ -3900,6 +3993,52 @@ snapshots:
       - uglify-js
       - utf-8-validate
       - webpack-cli
+
+  '@casperaki/video@git+https://git@github.com:firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a(@types/react@19.2.17)(lightningcss@1.32.0)(typescript@5.8.3)':
+    dependencies:
+      '@pixiv/three-vrm': 3.6.0(three@0.187.0)
+      '@react-three/fiber': 9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)
+      '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/cli': 4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)
+      '@remotion/google-fonts': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/renderer': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/three': 4.0.545(@react-three/fiber@9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(remotion@4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(three@0.187.0)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      three: 0.187.0
+      three-mesh-bvh: 0.10.0(three@0.187.0)
+      zod: 4.6.7
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@module-federation/runtime-tools'
+      - '@remotion/video-matting'
+      - '@remotion/whisper-webgpu'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/helpers'
+      - '@swc/html'
+      - '@types/react'
+      - bufferutil
+      - clean-css
+      - cssnano
+      - csso
+      - expo
+      - expo-asset
+      - expo-file-system
+      - expo-gl
+      - html-minifier-terser
+      - immer
+      - lightningcss
+      - postcss
+      - react-native
+      - supports-color
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
+  '@dimforge/rapier3d-compat@0.12.0': {}
 
   '@emnapi/core@1.11.3':
     dependencies:
@@ -4284,6 +4423,68 @@ snapshots:
       '@tybys/wasm-util': 0.10.5
     optional: true
 
+  '@pixiv/three-vrm-core@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/types-vrm-0.0': 3.6.0
+      '@pixiv/types-vrmc-vrm-1.0': 3.6.0
+      three: 0.187.0
+
+  '@pixiv/three-vrm-materials-hdr-emissive-multiplier@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/types-vrmc-materials-hdr-emissive-multiplier-1.0': 3.6.0
+      three: 0.187.0
+
+  '@pixiv/three-vrm-materials-mtoon@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/types-vrm-0.0': 3.6.0
+      '@pixiv/types-vrmc-materials-mtoon-1.0': 3.6.0
+      three: 0.187.0
+
+  '@pixiv/three-vrm-materials-v0compat@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/types-vrm-0.0': 3.6.0
+      '@pixiv/types-vrmc-materials-mtoon-1.0': 3.6.0
+      three: 0.187.0
+
+  '@pixiv/three-vrm-node-constraint@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/types-vrmc-node-constraint-1.0': 3.6.0
+      three: 0.187.0
+
+  '@pixiv/three-vrm-springbone@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/types-vrm-0.0': 3.6.0
+      '@pixiv/types-vrmc-springbone-1.0': 3.6.0
+      '@pixiv/types-vrmc-springbone-extended-collider-1.0': 3.6.0
+      '@pixiv/types-vrmc-springbone-limit-1.0': 3.6.0
+      three: 0.187.0
+
+  '@pixiv/three-vrm@3.6.0(three@0.187.0)':
+    dependencies:
+      '@pixiv/three-vrm-core': 3.6.0(three@0.187.0)
+      '@pixiv/three-vrm-materials-hdr-emissive-multiplier': 3.6.0(three@0.187.0)
+      '@pixiv/three-vrm-materials-mtoon': 3.6.0(three@0.187.0)
+      '@pixiv/three-vrm-materials-v0compat': 3.6.0(three@0.187.0)
+      '@pixiv/three-vrm-node-constraint': 3.6.0(three@0.187.0)
+      '@pixiv/three-vrm-springbone': 3.6.0(three@0.187.0)
+      three: 0.187.0
+
+  '@pixiv/types-vrm-0.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-materials-hdr-emissive-multiplier-1.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-materials-mtoon-1.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-node-constraint-1.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-springbone-1.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-springbone-extended-collider-1.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-springbone-limit-1.0@3.6.0': {}
+
+  '@pixiv/types-vrmc-vrm-1.0@3.6.0': {}
+
   '@react-three/fiber@9.8.2(@types/react@19.2.17)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)':
     dependencies:
       '@babel/runtime': 7.29.15
@@ -4311,14 +4512,49 @@ snapshots:
       '@remotion/timeline-utils': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@rspack/core': 2.3.0
       '@rspack/plugin-react-refresh': 2.0.2(@rspack/core@2.3.0)(react-refresh@0.18.0)
-      css-loader: 7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
+      css-loader: 7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
       esbuild: 0.28.1
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       react-refresh: 0.18.0
       remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
+      style-loader: 4.0.0(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
       webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@module-federation/runtime-tools'
+      - '@remotion/video-matting'
+      - '@remotion/whisper-webgpu'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/helpers'
+      - '@swc/html'
+      - bufferutil
+      - clean-css
+      - cssnano
+      - csso
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
+  '@remotion/bundler@4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@remotion/studio': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/studio-shared': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/timeline-utils': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@rspack/core': 2.3.0
+      '@rspack/plugin-react-refresh': 2.0.2(@rspack/core@2.3.0)(react-refresh@0.18.0)
+      css-loader: 7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0))
+      esbuild: 0.28.1
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      react-refresh: 0.18.0
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      style-loader: 4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0))
+      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)
     transitivePeerDependencies:
       - '@minify-html/node'
       - '@module-federation/runtime-tools'
@@ -4353,6 +4589,49 @@ snapshots:
       '@remotion/studio': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/studio-protocol': 4.0.545
       '@remotion/studio-server': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)
+      '@remotion/studio-shared': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      dotenv: 17.3.1
+      mediabunny: 1.66.0
+      minimist: 1.2.6
+      prompts: 2.4.2
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      semver: 7.5.3
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@module-federation/runtime-tools'
+      - '@remotion/video-matting'
+      - '@remotion/whisper-webgpu'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/helpers'
+      - '@swc/html'
+      - bufferutil
+      - clean-css
+      - cssnano
+      - csso
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - supports-color
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
+  '@remotion/cli@4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)':
+    dependencies:
+      '@babel/parser': 7.24.1
+      '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/codemods': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/licensing': 4.0.545
+      '@remotion/media-utils': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/player': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/renderer': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/studio': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/studio-protocol': 4.0.545
+      '@remotion/studio-server': 4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)
       '@remotion/studio-shared': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       dotenv: 17.3.1
       mediabunny: 1.66.0
@@ -4513,6 +4792,48 @@ snapshots:
       '@babel/parser': 7.24.1
       '@babel/types': 7.24.0
       '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(postcss@8.5.15)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/codemods': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/renderer': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@remotion/studio-protocol': 4.0.545
+      '@remotion/studio-shared': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@svgr/core': 8.1.0(typescript@5.8.3)
+      '@svgr/plugin-jsx': 8.1.0(@svgr/core@8.1.0(typescript@5.8.3))
+      kiwi-schema: 0.5.0
+      memfs: 3.4.3
+      open: 8.4.2
+      recast: 0.23.21
+      remotion: 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      semver: 7.5.3
+      zod: 4.6.7
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@module-federation/runtime-tools'
+      - '@remotion/video-matting'
+      - '@remotion/whisper-webgpu'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/helpers'
+      - '@swc/html'
+      - bufferutil
+      - clean-css
+      - cssnano
+      - csso
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - react
+      - react-dom
+      - supports-color
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
+  '@remotion/studio-server@4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.8.3)':
+    dependencies:
+      '@babel/parser': 7.24.1
+      '@babel/types': 7.24.0
+      '@remotion/bundler': 4.0.545(lightningcss@1.32.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/codemods': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/renderer': 4.0.545(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@remotion/studio-protocol': 4.0.545
@@ -4933,6 +5254,8 @@ snapshots:
       array-flatten: 3.0.0
       midi-file: 1.2.4
 
+  '@tweenjs/tween.js@23.1.3': {}
+
   '@tybys/wasm-util@0.10.5':
     dependencies:
       tslib: 2.8.1
@@ -5051,6 +5374,17 @@ snapshots:
       '@types/http-errors': 2.0.5
       '@types/node': 22.19.20
       '@types/send': 0.17.6
+
+  '@types/stats.js@0.17.4': {}
+
+  '@types/three@0.187.0':
+    dependencies:
+      '@dimforge/rapier3d-compat': 0.12.0
+      '@tweenjs/tween.js': 23.1.3
+      '@types/stats.js': 0.17.4
+      '@types/webxr': 0.5.24
+      fflate: 0.8.3
+      meshoptimizer: 1.1.1
 
   '@types/trusted-types@2.0.7':
     optional: true
@@ -5518,7 +5852,7 @@ snapshots:
       utrie: 1.0.2
     optional: true
 
-  css-loader@7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
+  css-loader@7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.15)
       postcss: 8.5.15
@@ -5530,7 +5864,21 @@ snapshots:
       semver: 7.8.2
     optionalDependencies:
       '@rspack/core': 2.3.0
-      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
+      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)
+
+  css-loader@7.1.4(@rspack/core@2.3.0)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+    dependencies:
+      icss-utils: 5.1.0(postcss@8.5.15)
+      postcss: 8.5.15
+      postcss-modules-extract-imports: 3.1.0(postcss@8.5.15)
+      postcss-modules-local-by-default: 4.2.0(postcss@8.5.15)
+      postcss-modules-scope: 3.2.1(postcss@8.5.15)
+      postcss-modules-values: 4.0.0(postcss@8.5.15)
+      postcss-value-parser: 4.2.0
+      semver: 7.8.2
+    optionalDependencies:
+      '@rspack/core': 2.3.0
+      webpack: 5.105.0(lightningcss@1.32.0)(postcss@8.5.15)
 
   cssesc@3.0.0: {}
 
@@ -6180,6 +6528,8 @@ snapshots:
 
   merge-stream@2.0.0: {}
 
+  meshoptimizer@1.1.1: {}
+
   methods@1.1.2: {}
 
   midi-file@1.2.4: {}
@@ -6534,14 +6884,23 @@ snapshots:
 
   scheduler@0.28.0: {}
 
-  schema-utils@4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
+  schema-utils@4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)):
     dependencies:
       '@types/json-schema': 7.0.15
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
       ajv-keywords: 5.1.0(ajv@8.20.0)
     optionalDependencies:
-      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
+      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)
+
+  schema-utils@4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+    dependencies:
+      '@types/json-schema': 7.0.15
+      ajv: 8.20.0
+      ajv-formats: 3.0.1(ajv@8.20.0)
+      ajv-keywords: 5.1.0(ajv@8.20.0)
+    optionalDependencies:
+      webpack: 5.105.0(lightningcss@1.32.0)(postcss@8.5.15)
 
   semver@6.3.1: {}
 
@@ -6687,9 +7046,13 @@ snapshots:
 
   strip-json-comments@2.0.1: {}
 
-  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
+  style-loader@4.0.0(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)):
     dependencies:
-      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
+      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)
+
+  style-loader@4.0.0(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+    dependencies:
+      webpack: 5.105.0(lightningcss@1.32.0)(postcss@8.5.15)
 
   suffix-thumb@6.1.0: {}
 
@@ -6739,15 +7102,37 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
 
-  terser-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)):
+  terser-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
-      schema-utils: 4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
+      schema-utils: 4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
       terser: 5.51.4
-      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)
+      webpack: 5.105.0(lightningcss@1.32.0)(postcss@8.5.15)
     optionalDependencies:
       esbuild: 0.28.1
+      lightningcss: 1.32.0
+      postcss: 8.5.15
+
+  terser-webpack-plugin@5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0))
+      terser: 5.51.4
+      webpack: 5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)
+    optionalDependencies:
+      esbuild: 0.28.1
+      lightningcss: 1.32.0
+
+  terser-webpack-plugin@5.6.1(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      terser: 5.51.4
+      webpack: 5.105.0(lightningcss@1.32.0)(postcss@8.5.15)
+    optionalDependencies:
       lightningcss: 1.32.0
       postcss: 8.5.15
 
@@ -6762,6 +7147,10 @@ snapshots:
     dependencies:
       utrie: 1.0.2
     optional: true
+
+  three-mesh-bvh@0.10.0(three@0.187.0):
+    dependencies:
+      three: 0.187.0
 
   three@0.187.0: {}
 
@@ -6937,6 +7326,47 @@ snapshots:
 
   webpack-sources@3.7.1: {}
 
+  webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0):
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.19.0
+      acorn-import-phases: 1.0.4(acorn@8.19.0)
+      browserslist: 4.28.2
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.23.0
+      es-module-lexer: 2.3.2
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.2
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0))
+      tapable: 2.3.3
+      terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0))
+      watchpack: 2.6.4
+      webpack-sources: 3.7.1
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+
   webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15):
     dependencies:
       '@types/eslint-scope': 3.7.7
@@ -6959,9 +7389,50 @@ snapshots:
       loader-runner: 4.3.2
       mime-types: 2.1.35
       neo-async: 2.6.2
-      schema-utils: 4.8.5(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
+      schema-utils: 4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
       tapable: 2.3.3
-      terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15))
+      terser-webpack-plugin: 5.6.1(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      watchpack: 2.6.4
+      webpack-sources: 3.7.1
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+
+  webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15):
+    dependencies:
+      '@types/eslint-scope': 3.7.7
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.19.0
+      acorn-import-phases: 1.0.4(acorn@8.19.0)
+      browserslist: 4.28.2
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.23.0
+      es-module-lexer: 2.3.2
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.2
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 4.8.5(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
+      tapable: 2.3.3
+      terser-webpack-plugin: 5.6.1(lightningcss@1.32.0)(postcss@8.5.15)(webpack@5.105.0(lightningcss@1.32.0)(postcss@8.5.15))
       watchpack: 2.6.4
       webpack-sources: 3.7.1
     transitivePeerDependencies:

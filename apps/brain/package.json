@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Casperaki procedural generation brain — emits canonical song.json via @casperaki/song-schema. Phase 3 shell.",
+  "description": "Casperaki procedural generation brain \u2014 emits canonical song.json via @casperaki/song-schema. Phase 3 shell.",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
@@ -17,7 +17,7 @@
     "@casperaki/music-theory": "workspace:*",
     "@casperaki/song-edit": "workspace:*",
     "@casperaki/song-schema": "workspace:*",
-    "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#22968a4a3ff6d9cc7b2f431da855a1e2fd7de6b1",
+    "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#1895542aeaedf9dad1110017466f85b3bf57567a",
     "better-sqlite3": "^11.3.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
