@@ -20,9 +20,10 @@ POST /generate params (all required, no others accepted):
 Steps: read ("Read the song"), lego ("ACE writes the <track> part"), write ("Write the part").
   sections   (optional, sung parts only, instead of lyrics) rap per section (docs/superpowers/specs/
              2026-11-27-rap-vocals-design.md): [{name, start, end, lyrics}], seconds in the song, the section's lines.
-             Each section is made on its own stretch of the song (made MIN_SECONDS long at least), `takes` times, and
+             Each section is made on its own stretch of the song (made MIN_WINDOW_BARS long at least, its lines repeated
+             to fill it), `takes` times, and
              the take whose separated vocal raps the words most clearly is kept (svc-vocals' venv:
-             vocals/tools/pick_rap_take.py, BS-RoFormer + Whisper); rounds of `takes` until half the words are heard,
+             vocals/tools/pick_rap_take.py, BS-RoFormer + Whisper); rounds of `takes` until 40 % of the words are heard,
              MAX_RAP_TAKES at most. The result is silent outside the sections.
   takes      (with sections only) takes per round, 1..8
 Steps: read, lego (or one rap_<name> per section), write.
@@ -54,7 +55,12 @@ MAX_SECONDS = 600.0  # acestep.constants.DURATION_MAX (also the length of the mo
 
 # Rap per section (spike 2026-11-27, apps/models/ace-vocal-tests/rap): a take raps 0-90 % of its words (mean 45 %), so
 # several are made and the clearest kept; fewer than half the words heard after MAX_RAP_TAKES fails the job.
-MIN_RAP_RECALL = 0.5
+MIN_RAP_RECALL = 0.4  # failed takes heard 0-33 % of their words, good ones 47-100 % (Whisper misses some rap)
+# A section is made on 8 bars of song at least: over 4 bars (10 s at 128 bpm) ACE gave no voice at all in 12 takes,
+# over 8 bars (the section, then the song after it) it rapped (Electric Daydream's bridge, 2026-11-27). The section's
+# lines are repeated to fill the window (one line per RAP_BARS_PER_LINE bars); only the section's stretch is kept.
+MIN_WINDOW_BARS = 8
+RAP_BARS_PER_LINE = 2
 MAX_RAP_TAKES = 12
 MAX_TAKES_PER_ROUND = 8
 VOCALS_PYTHON = SERVICES_DIR / "vocals" / ".venv" / "bin" / "python"
@@ -212,9 +218,19 @@ def section_window(start: float, end: float, total: float, min_seconds: float = 
     return max(0.0, we - min_seconds), we
 
 
-def rap_lyrics(lines: str) -> str:
-    """ACE's lyrics for one section's rap: the lines under one verse tag (a section is made on its own)."""
-    return f"[Verse]\n{lines.strip()}"
+def window_seconds(bpm: float) -> float:
+    """The least stretch of song a section is made on: MIN_WINDOW_BARS bars (4 beats), and MIN_SECONDS."""
+    return max(MIN_SECONDS, MIN_WINDOW_BARS * 4 * 60 / bpm)
+
+
+def rap_lyrics(lines: str, seconds: float, bpm: float) -> str:
+    """ACE's lyrics for one section's rap over `seconds` of song: its lines under one verse tag (a section is made on
+    its own), repeated to fill the stretch at one line per RAP_BARS_PER_LINE bars."""
+    own = [l.strip() for l in lines.strip().splitlines() if l.strip()]
+    if not own:
+        raise ValueError("ace-layer: a section's rap has no lines")
+    need = max(len(own), round(seconds / (RAP_BARS_PER_LINE * 4 * 60 / bpm)))
+    return "[Verse]\n" + "\n".join(own[i % len(own)] for i in range(need))
 
 
 def pick_rap_take(takes: list[str], words: str, start: float, end: float, out: str) -> dict:
@@ -325,7 +341,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
     part = np.zeros((2, src.shape[0]), dtype=np.float32)
     for si, sec in enumerate(p["sections"]):
         step = job.step(f"rap_{sec['name']}", f"ACE raps {sec['name']}")
-        ws, we = section_window(sec["start"], sec["end"], total)
+        ws, we = section_window(sec["start"], sec["end"], total, window_seconds(p["bpm"]))
         d = Path(out_dir) / "rap" / sec["name"]
         d.mkdir(parents=True, exist_ok=True)
         window = d / "window.wav"
@@ -338,7 +354,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
             paths = []
             for k in range(made, made + n):
                 job.check_cancelled()
-                tensor, out_sr = _lego(handle, p, str(window), rap_lyrics(sec["lyrics"]), p["seed"] + 1000 * si + k, we - ws)
+                tensor, out_sr = _lego(handle, p, str(window), rap_lyrics(sec["lyrics"], we - ws, p["bpm"]), p["seed"] + 1000 * si + k, we - ws)
                 path = d / f"take{k + 1}.wav"
                 sf.write(str(path), tensor.numpy().T, out_sr, subtype="FLOAT")
                 paths.append(str(path))

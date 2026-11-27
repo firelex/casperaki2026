@@ -68,5 +68,14 @@ def test_section_window_is_the_section_or_ten_seconds_of_song_around_it():
         ace.section_window(0, 5, 8)
 
 
-def test_rap_lyrics_puts_the_lines_under_one_verse_tag():
-    assert ace.rap_lyrics(" a\nb ") == "[Verse]\na\nb"
+def test_rap_lyrics_fill_the_window_with_the_sections_lines():
+    # 120 bpm: a bar is 2 s, a line 4 s.
+    assert ace.rap_lyrics(" a\nb ", 8, 120) == "[Verse]\na\nb"
+    assert ace.rap_lyrics("a\n\nb", 16, 120) == "[Verse]\na\nb\na\nb"
+    assert ace.rap_lyrics("a\nb\nc\nd", 8, 120) == "[Verse]\na\nb\nc\nd"
+
+
+def test_sections_are_made_on_eight_bars_at_least():
+    assert ace.window_seconds(128) == pytest.approx(15.0)
+    assert ace.window_seconds(200) == 10.0
+    assert ace.section_window(69.375, 76.875, 180, ace.window_seconds(128)) == (69.375, 84.375)
