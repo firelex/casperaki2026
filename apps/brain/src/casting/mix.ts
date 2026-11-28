@@ -16,17 +16,25 @@ export interface SoundtrackFiles {
   readonly entrance: string;
   /** Each line's gain (linear), by line id: its speaker's, evening the voices out. */
   readonly gains: ReadonlyMap<string, number>;
-  /** The applause after the song, and the music under the verdicts. */
+  /** The applause after the song, and the music under the verdicts, each with the gain (linear) that brings it to its
+   *  level (APPLAUSE_LUFS, BED_LUFS: the generated files' own loudness varies by 15 dB). */
   readonly applause: string;
+  readonly applauseGain: number;
   readonly verdictBed: string;
+  readonly bedGain: number;
 }
 
-/** The applause's level, and how long it dies away once the judges start talking. */
-const APPLAUSE_GAIN = 0.8;
+/** The applause's loudness (a little under the voices' -16), and how long it dies away once the judges start talking. */
+export const APPLAUSE_LUFS = -18;
 const APPLAUSE_FADE = 2.5;
-/** The verdict music: quiet under the voices, fading in after the applause and out at the end. */
-const BED_GAIN = 0.18;
+/** The verdict music's loudness: quiet under the voices; it fades in after the applause and out at the end. */
+export const BED_LUFS = -31;
 const BED_FADE = 2;
+
+/** The gain (linear) bringing a file to `targetLufs`. */
+export function gainTo(ffmpegBin: string, file: string, targetLufs: number): number {
+  return 10 ** ((targetLufs - loudness(ffmpegBin, [file])) / 20);
+}
 
 /** One of `files`, fixed by `key` (each script gets its own applause and verdict music, the same every time). */
 export function pickFor(files: readonly string[], key: string, what: string): string {
@@ -129,11 +137,11 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   const firstVerdict = timeline.lines.find((l) => l.startSeconds >= verdicts.startSeconds);
   if (!firstVerdict) throw new Error('casting soundtrack: the verdicts have no lines');
   const applauseLen = firstVerdict.startSeconds - timeline.applauseStartSeconds + APPLAUSE_FADE;
-  graph.push(`[3:a]${stereo},atrim=0:${applauseLen.toFixed(3)},volume=${APPLAUSE_GAIN},afade=t=out:st=${(applauseLen - APPLAUSE_FADE).toFixed(3)}:d=${APPLAUSE_FADE},adelay=${ms(timeline.applauseStartSeconds)}:all=1[applause]`);
+  graph.push(`[3:a]${stereo},atrim=0:${applauseLen.toFixed(3)},volume=${files.applauseGain.toFixed(4)},afade=t=out:st=${(applauseLen - APPLAUSE_FADE).toFixed(3)}:d=${APPLAUSE_FADE},adelay=${ms(timeline.applauseStartSeconds)}:all=1[applause]`);
   // The verdict music under the talk: in after the applause, out at the end (looped if the verdicts outlast it).
   const bedStart = firstVerdict.startSeconds;
   const bedLen = verdicts.endSeconds - bedStart;
-  graph.push(`[4:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${bedLen.toFixed(3)},volume=${BED_GAIN},afade=t=in:d=${BED_FADE},afade=t=out:st=${Math.max(0, bedLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(bedStart)}:all=1[bed]`);
+  graph.push(`[4:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${bedLen.toFixed(3)},volume=${files.bedGain.toFixed(4)},afade=t=in:d=${BED_FADE},afade=t=out:st=${Math.max(0, bedLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(bedStart)}:all=1[bed]`);
   const all = ['music', 'door', 'song', 'applause', 'bed', ...voiceLabels];
   graph.push(`${all.map((a) => `[${a}]`).join('')}amix=inputs=${all.length}:normalize=0:duration=longest,alimiter=limit=0.95,apad,atrim=0:${timeline.durationSeconds.toFixed(3)}[out]`);
   try {
