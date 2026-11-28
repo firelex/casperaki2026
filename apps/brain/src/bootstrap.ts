@@ -52,12 +52,12 @@ import { SessionBundleRepo } from './auth/SessionBundleRepo.js';
 import { OidcClient } from './auth/OidcClient.js';
 import { attachSession, requireSession } from './auth/middleware.js';
 import { RenderService } from './render/renderService.js';
-import { renderAvatarVideo, renderConsoleVideo, renderVideo } from '@casperaki/video';
+import { renderAvatarVideo } from '@casperaki/video';
 import { videoAvatars } from './avatars/videoAvatars.js';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
-import { DeepSeekPlanner } from './video/planner.js';
+import { removeOldVideos } from './video/oldVideos.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
 import { VideoService } from './video/videoService.js';
@@ -231,7 +231,11 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const avatarPacks = config.avatarPacksDir ? new AvatarPacks(config.avatarPacksDir) : undefined;
   avatarPacks?.list(); // fail at startup, naming the pack, if a manifest is broken
   const userAvatars = config.singersDataDir ? new UserAvatars(config.singersDataDir) : undefined;
-  // Music videos next to the renders: <rendersDir>/../videos.
+  // Music videos next to the renders: <rendersDir>/../videos. The console and cartoon videos' old files go once.
+  if (renders && !deps.videos) {
+    const { removed } = removeOldVideos(join(dirname(resolve(config.rendersDir)), 'videos'));
+    if (removed) console.log(`[brain] removed ${removed} old cartoon/console video files`);
+  }
   const videos =
     deps.videos ??
     (renders
@@ -239,9 +243,6 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           config: { videosDir: join(dirname(resolve(config.rendersDir)), 'videos'), ffmpegBin: config.ffmpegBin, renderConcurrency: config.videoRenderConcurrency },
           store,
           renders,
-          planner: new DeepSeekPlanner(plannerEndpoint(config)),
-          renderVideo,
-          renderConsoleVideo,
           renderAvatarVideo,
           ...(avatarPacks && userAvatars
             ? { avatars: { packsDir: avatarPacks.root, ...(config.danceClipsDir ? { clipsDir: config.danceClipsDir } : {}), resolve: (ownerId: string, songId: string, ids: readonly string[]) => videoAvatars(store, userAvatars, ownerId, songId, ids) } }
@@ -429,7 +430,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   app.use(createMelodyLibraryRouter({ library: new MelodyLibrary(melodyEdits, deps.melodyLibraryDir) }));
   const assistantEp = assistantEndpoint(config);
   app.use(createAssistantRouter({ store, ownerOf, llm: deps.assistantLlm ?? (assistantEp ? new OpenAiCompatibleLlm(assistantEp) : undefined) }));
-  app.use(createVideoRouter({ store, videos, ownerOf, plannerConfigured: Boolean(deps.videos || plannerEndpoint(config)) }));
+  app.use(createVideoRouter({ store, videos, ownerOf }));
   app.use(
     createPatternsRouter({
       store,
@@ -533,7 +534,7 @@ function requireMixConfig(path: string | undefined): string {
   return resolve(path);
 }
 
-/** The scene planner's endpoint when both its URL and model are set; one without the other is a configuration error. */
+/** The assistant's endpoint when both its URL and model are set; one without the other is a configuration error. */
 function assistantEndpoint(config: BrainConfig): { baseUrl: string; model: string; apiKey?: string } | undefined {
   const { assistantLlmUrl: baseUrl, assistantLlmModel: model, assistantLlmKey: apiKey } = config;
   if (!baseUrl && !model) return undefined;
@@ -541,9 +542,3 @@ function assistantEndpoint(config: BrainConfig): { baseUrl: string; model: strin
   return { baseUrl, model, ...(apiKey ? { apiKey } : {}) };
 }
 
-function plannerEndpoint(config: BrainConfig): { baseUrl: string; model: string; apiKey?: string } | undefined {
-  const { videoPlannerUrl: baseUrl, videoPlannerModel: model, videoPlannerKey: apiKey } = config;
-  if (!baseUrl && !model) return undefined;
-  if (!baseUrl || !model) throw new Error('VIDEO_PLANNER_URL and VIDEO_PLANNER_MODEL must be set together (brain.env).');
-  return { baseUrl, model, ...(apiKey ? { apiKey } : {}) };
-}

@@ -71,8 +71,6 @@ const ConfigSchema = z.object({
   /** casperaki_engine/config/mix-config.json; required for in-browser playback. */
   mixConfigPath: z.string().optional(),
   // --- Music videos (src/video/) ---
-  /** DeepSeek API key for the video scene planner; videos fail loudly without it. */
-  /** The music-video scene planner: an OpenAI-compatible endpoint (the B200 DeepSeek via its tunnel) and model. */
   /** Python of the Beat This! environment (hum lab beat tracking). */
   beatThisPython: z.string().min(1).optional(),
   /** Where the hum lab keeps recordings sent with a meant tempo (test data for apps/models/hum-beats). */
@@ -97,9 +95,6 @@ const ConfigSchema = z.object({
    *  are kept in. Both or neither (without them songs get no artwork). */
   artworkServiceUrl: z.string().url().optional(),
   artworkDir: z.string().min(1).optional(),
-  videoPlannerUrl: z.string().url().optional(),
-  videoPlannerModel: z.string().min(1).optional(),
-  videoPlannerKey: z.string().min(1).optional(),
   /** The song assistant's model: an OpenAI-compatible endpoint with tool calling (both or neither). */
   assistantLlmUrl: z.string().url().optional(),
   assistantLlmModel: z.string().min(1).optional(),
@@ -175,9 +170,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     aceServiceUrl: env.ACE_SERVICE_URL || undefined,
     artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,
     artworkDir: env.BRAIN_ARTWORK_DIR || undefined,
-    videoPlannerUrl: env.VIDEO_PLANNER_URL || undefined,
-    videoPlannerModel: env.VIDEO_PLANNER_MODEL || undefined,
-    videoPlannerKey: env.VIDEO_PLANNER_KEY || undefined,
     assistantLlmUrl: env.ASSISTANT_LLM_URL || undefined,
     assistantLlmModel: env.ASSISTANT_LLM_MODEL || undefined,
     assistantLlmKey: env.ASSISTANT_LLM_KEY || undefined,

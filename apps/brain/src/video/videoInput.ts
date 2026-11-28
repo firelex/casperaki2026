@@ -1,7 +1,7 @@
 // A Casperaki song as the music-video engine (@casperaki/video) sees it: the
-// engine never reads a Casperaki song; this adapter builds its VideoInput.
+// engine never reads a Casperaki song; this adapter builds its AvatarVideoInput.
 
-import { AvatarVideoInputSchema, catalog, ConsoleInputObjectSchema, ConsoleInputSchema, VideoInputSchema, type AvatarVideoInput, type ConsoleInput, type VideoInput } from '@casperaki/video';
+import { AvatarVideoInputSchema, type AvatarVideoInput } from '@casperaki/video';
 import { z } from 'zod';
 import type { Song } from '@casperaki/song-schema';
 
@@ -43,7 +43,7 @@ interface SungNote {
  * capitalises every syllable), one line per 4-bar block from each section's
  * start (the lyric bank's rhyme lines), so a banner carries a sentence.
  */
-export function lyricLines(song: Song): VideoInput['lyrics'] {
+export function lyricLines(song: Song): AvatarVideoInput['lyrics'] {
   const secPerBeat = 60 / song.bpm;
   // Sung syllables in order, each tagged with its line: 4-bar blocks from each
   // section's start, the lyric bank's rhyme lines.
@@ -71,7 +71,7 @@ export function lyricLines(song: Song): VideoInput['lyrics'] {
     barStart += bars;
   }
 
-  const lines: VideoInput['lyrics'] = [];
+  const lines: AvatarVideoInput['lyrics'] = [];
   let words: string[] = [];
   let pending = ''; // a syllable ending in "-" waiting for the rest of its word
   let lineStart: number | undefined;
@@ -114,7 +114,7 @@ export interface VideoAudio {
 }
 
 /** The song's timing as the video engines see it: tempo, bars and sections in seconds. */
-export function songTiming(song: Song): Pick<VideoInput, 'bpm' | 'firstBeatSeconds' | 'beatsPerBar' | 'sections'> {
+export function songTiming(song: Song): Pick<AvatarVideoInput, 'bpm' | 'firstBeatSeconds' | 'beatsPerBar' | 'sections'> {
   const secPerBar = (BEATS_PER_BAR * 60) / song.bpm;
   let bar = 0;
   const sections = song.songStructure.map((seg) => {
@@ -126,98 +126,34 @@ export function songTiming(song: Song): Pick<VideoInput, 'bpm' | 'firstBeatSecon
   return { bpm: song.bpm, firstBeatSeconds: 0, beatsPerBar: BEATS_PER_BAR, sections };
 }
 
-/** The engine's VideoInput for a song (validated by the engine's own schema). */
-export function songToVideoInput(args: { title: string; artist: string; song: Song; audio: VideoAudio }): VideoInput {
-  const { song } = args;
-  const genres = Object.keys(catalog.GENRES);
-  if (!song.genre || !genres.includes(song.genre)) {
-    throw new VideoInputError(400, 'unsupported_genre', `Music videos are made for the styles ${genres.join(', ')}; this song is "${song.genre ?? 'without a style'}".`);
-  }
-  return VideoInputSchema.parse({
-    title: args.title,
-    artist: args.artist,
-    genre: song.genre,
-    audio: { path: args.audio.path, durationSeconds: args.audio.durationSeconds },
-    ...songTiming(song),
-    lyrics: lyricLines(song),
-    cast: [],
-  });
-}
+/** The levels the browser measured for one version of the song (src/editor/trackLevels.ts): the master's and each
+ *  track's peak level per bin of binSeconds, with the track's role (the lead vocal's drive the singer's mouth). */
+const MeasuredLevelsSchema = z
+  .object({
+    versionKey: z.string().regex(/^[0-9a-f]{16}$/u, 'a version key is 16 hex digits'),
+    binSeconds: z.number().positive(),
+    master: z.array(z.number().min(0)).min(1),
+    tracks: z.array(z.object({ name: z.string().min(1), role: z.string().min(1), levels: z.array(z.number().min(0)) }).strict()),
+  })
+  .strict();
+export type MeasuredLevels = z.infer<typeof MeasuredLevelsSchema>;
 
-/** The tracks the browser measured (the engine's schema, without the song fields the brain adds: title, artist,
- *  audio, timing and lyrics). The engine's zod (v4) is not the brain's (v3): this schema stays the engine's. */
-const ConsoleTracksSchema = ConsoleInputObjectSchema.omit({
-  title: true,
-  artist: true,
-  audio: true,
-  bpm: true,
-  firstBeatSeconds: true,
-  beatsPerBar: true,
-  sections: true,
-  lyrics: true,
-});
-const VersionKeySchema = z.object({ versionKey: z.string().regex(/^[0-9a-f]{16}$/u, 'a version key is 16 hex digits') });
-
-/** What the browser sends for a console video: the version of the song it measured, and the tracks. */
-export type ConsoleBody = ReturnType<typeof ConsoleTracksSchema.parse> & { versionKey: string };
-
-/** Parses the browser's console data; throws VideoInputError(400) naming the first problem. */
-export function parseConsoleBody(raw: unknown): ConsoleBody {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) throw new VideoInputError(400, 'invalid_body', 'console: the measured tracks are missing');
-  const { versionKey, ...tracks } = raw as Record<string, unknown>;
-  const key = VersionKeySchema.safeParse({ versionKey });
-  if (!key.success) throw new VideoInputError(400, 'invalid_body', `console.versionKey: ${key.error.issues[0]!.message}`);
-  const parsed = ConsoleTracksSchema.safeParse(tracks);
+/** Parses the browser's measured levels; throws VideoInputError(400) naming the first problem. */
+export function parseMeasuredLevels(raw: unknown): MeasuredLevels {
+  const parsed = MeasuredLevelsSchema.safeParse(raw);
   if (!parsed.success) {
     const issue = parsed.error.issues[0]!;
-    throw new VideoInputError(400, 'invalid_body', `console.${issue.path.join('.')}: ${issue.message}`);
+    throw new VideoInputError(400, 'invalid_body', `levels${issue.path.length ? `.${issue.path.join('.')}` : ''}: ${issue.message}`);
   }
   const bins = parsed.data.master.length;
   const uneven = parsed.data.tracks.find((t) => t.levels.length !== bins);
-  if (uneven) throw new VideoInputError(400, 'invalid_body', `console: track "${uneven.name}" has ${uneven.levels.length} levels, the master ${bins}; every track is measured over the same bins`);
-  return { ...parsed.data, versionKey: key.data.versionKey };
+  if (uneven) throw new VideoInputError(400, 'invalid_body', `levels: track "${uneven.name}" has ${uneven.levels.length} levels, the master ${bins}; every track is measured over the same bins`);
+  return parsed.data;
 }
 
-/** The engine's ConsoleInput for a song and the tracks measured for it (any genre). */
 /** How far the measured levels' length may differ from the exported audio's: the browser renders the song itself to
  *  measure it, and the export's MP3 is a little longer or shorter (encoder padding, effect tails). */
 export const LEVELS_LENGTH_TOLERANCE_SECONDS = 2;
-
-/** The engine's ConsoleInput for a song and the tracks measured for it (any genre). Levels within
- *  LEVELS_LENGTH_TOLERANCE_SECONDS of the audio are fitted to its length: trimmed, or extended with silence (nothing
- *  was measured to play there); a larger difference is left for the engine's check to refuse. */
-export function songToConsoleInput(args: {
-  title: string;
-  artist: string;
-  song: Song;
-  audio: VideoAudio;
-  body: Omit<ConsoleBody, 'versionKey'>;
-  /** The song's Pro-mode changes per strip (the mixer keys them by the strip's name): fader trim and sends, dB. */
-  overrides: Readonly<Record<string, { volumeDb?: number; reverb?: number; delay?: number; chorus?: number }>>;
-}): ConsoleInput {
-  const { binSeconds } = args.body;
-  const bins = Math.round(args.audio.durationSeconds / binSeconds);
-  const measured = args.body.master.length * binSeconds;
-  const fit = Math.abs(measured - args.audio.durationSeconds) <= LEVELS_LENGTH_TOLERANCE_SECONDS;
-  const fitted = (levels: readonly number[]) =>
-    fit ? Array.from({ length: bins }, (_, i) => (i < levels.length ? levels[i]! : 0)) : [...levels];
-  const tracks = args.body.tracks.map((t) => {
-    const o = args.overrides[t.name] ?? {};
-    const sends = { reverb: o.reverb ?? t.sends.reverb, delay: o.delay ?? t.sends.delay, chorus: o.chorus ?? t.sends.chorus };
-    return { ...t, sends, levels: fitted(t.levels), ...(o.volumeDb !== undefined ? { trimDb: o.volumeDb } : {}) };
-  });
-  const master = fitted(args.body.master);
-  return ConsoleInputSchema.parse({
-    title: args.title,
-    artist: args.artist,
-    audio: { path: args.audio.path, durationSeconds: args.audio.durationSeconds },
-    ...songTiming(args.song),
-    lyrics: lyricLines(args.song),
-    binSeconds,
-    tracks,
-    master,
-  });
-}
 
 /** One section of a dance floor video's storyboard: where it happens, which of the video's avatars are in it (the
  *  user's avatar ids) and how it is filmed (the engine's AVATAR_SCENES and AVATAR_CAMERAS ids). */
@@ -256,26 +192,27 @@ export interface VideoAvatar {
 }
 
 /** The engine's AvatarVideoInput: the song's timing and words, the master's level and the lead vocal's (the loudest
- *  lead-vocal strip per bin; silence when the song has none), both fitted to the audio as for the console, and the
+ *  lead-vocal strip per bin; silence when the song has none), both fitted to the audio (within LEVELS_LENGTH_TOLERANCE_SECONDS; a larger difference is
+ *  left for the engine's check to refuse), and the
  *  avatars (ids made letters and digits: the engine seeds each one's dance moves with it). */
 export function songToAvatarInput(args: {
   title: string;
   artist: string;
   song: Song;
   audio: VideoAudio;
-  body: Omit<ConsoleBody, 'versionKey'>;
+  levels: Omit<MeasuredLevels, 'versionKey'>;
   avatars: readonly VideoAvatar[];
   /** Per section (checked with checkStoryboard); absent: every section in the club, everyone, automatic camera. */
   storyboard?: readonly VideoStoryboardEntry[];
 }): AvatarVideoInput {
-  const { binSeconds } = args.body;
+  const { binSeconds } = args.levels;
   const bins = Math.round(args.audio.durationSeconds / binSeconds);
-  const measured = args.body.master.length * binSeconds;
+  const measured = args.levels.master.length * binSeconds;
   const fit = Math.abs(measured - args.audio.durationSeconds) <= LEVELS_LENGTH_TOLERANCE_SECONDS;
   const fitted = (levels: readonly number[]) =>
     fit ? Array.from({ length: bins }, (_, i) => (i < levels.length ? levels[i]! : 0)) : [...levels];
-  const leads = args.body.tracks.filter((t) => t.role === 'leadVocal');
-  const voice = args.body.master.map((_, i) => leads.reduce((m, t) => Math.max(m, t.levels[i] ?? 0), 0));
+  const leads = args.levels.tracks.filter((t) => t.role === 'leadVocal');
+  const voice = args.levels.master.map((_, i) => leads.reduce((m, t) => Math.max(m, t.levels[i] ?? 0), 0));
   return AvatarVideoInputSchema.parse({
     title: args.title,
     artist: args.artist,
@@ -283,7 +220,7 @@ export function songToAvatarInput(args: {
     ...songTiming(args.song),
     lyrics: lyricLines(args.song),
     binSeconds,
-    master: fitted(args.body.master),
+    master: fitted(args.levels.master),
     voice: fitted(voice),
     avatars: args.avatars.map((a) => ({ id: engineAvatarId(a.id), name: a.name, recipe: a.recipe, sings: a.sings })),
     ...(args.storyboard ? { storyboard: args.storyboard.map((e) => ({ scene: e.scene, avatars: e.avatarIds.map(engineAvatarId), camera: e.camera })) } : {}),
