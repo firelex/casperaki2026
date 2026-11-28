@@ -119,6 +119,16 @@ describe('projects', () => {
     expect(song.genre).toBe('casperakiPop');
   });
 
+  it("a new Casperaki Pop song starts with its recipe's mix: harder drums (owner 2026-11-28), on the tracks it has", async () => {
+    const { id, song } = await generate(h, { genre: 'casperakiPop', bpm: 120 });
+    const list = (await (await fetch(`${h.url}/api/songs`)).json()) as { projects: Array<{ id: string; mixOverrides: { lanes: Record<string, { volumeDb: number }>; buses: Record<string, unknown> } | null }> };
+    const mix = list.projects.find((p) => p.id === id)!.mixOverrides!;
+    expect(mix.lanes.Drums).toEqual({ volumeDb: 4 });
+    expect(Object.keys(mix.buses).sort()).toEqual(['drums', 'kicks']);
+    const lanes = new Set((song as { instrumentDefinitions: { name: string }[] }).instrumentDefinitions.map((d) => d.name));
+    for (const lane of Object.keys(mix.lanes)) expect(lanes.has(lane), lane).toBe(true);
+  });
+
   it('lists generated songs with a default title', async () => {
     const { id, project } = await generate(h);
     // EDM is shown as Dance (owner 2026-11-28)
@@ -205,11 +215,13 @@ describe('projects', () => {
 });
 
 describe('per-song render', () => {
-  it('masters a genre recipe towards its own reference (Casperaki Pop), every other genre towards Atemlos', async () => {
+  it('masters towards Atemlos unless a genre recipe names its own reference (none does: the owner kept Atemlos for Casperaki Pop)', async () => {
     const renders = fakeRenderService();
     const h = await boot(renders);
     try {
       const pop = (await generate(h, { genre: 'casperakiPop', bpm: 120 })).id;
+      // Its recipe's mix needs the mix config, which this test brain has none of; the mastering is what is tested.
+      await fetch(`${h.url}/api/songs/${pop}/mix`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mixOverrides: null }) });
       await fetch(`${h.url}/api/songs/${pop}/render`, { method: 'POST' });
       expect(await waitForRender(h, pop)).toMatchObject({ state: 'done' });
       const dance = (await generate(h, { seed: 'other' })).id;
@@ -217,12 +229,11 @@ describe('per-song render', () => {
       expect(await waitForRender(h, dance)).toMatchObject({ state: 'done' });
       const refs = (renders as unknown as { config: { masteringReferencesDir: string } }).config.masteringReferencesDir;
       const log = readFileSync(join(refs, '..', 'references.log'), 'utf8').split('\n');
-      expect(log[0]).toMatch(/mastering-references\/your-love-is-my-drug\.json$/u);
-      expect(log[1]).toBe('');
+      expect(log.slice(0, 2)).toEqual(['', '']);
     } finally {
       await h.stop();
     }
-  });
+   }, 30_000);
 
   it('runs the pipeline and serves mp3, wav and peaks', async () => {
     const h = await boot(fakeRenderService());

@@ -11,7 +11,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { orchestrate, VOCAL_MELODY_PARAM, type GenerateParams } from '@casperaki/arrangement';
-import { applyMixOverrides, canonicalStringifySong, formatGenreTempoRange, genreLabel, GenreSchema, isBpmInGenreTempoRange, isEmptyMixOverrides, MixOverridesSchema, parseSong, pruneMixOverrides, SongGenreSchema } from '@casperaki/song-schema';
+import { applyMixOverrides, canonicalStringifySong, formatGenreTempoRange, genreLabel, genreRecipe, GenreSchema, isBpmInGenreTempoRange, isEmptyMixOverrides, MixOverridesSchema, parseSong, pruneMixOverrides, SongGenreSchema } from '@casperaki/song-schema';
 import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
@@ -121,6 +121,12 @@ export async function generateProject(
     createdAt: existing?.createdAt ?? at,
     updatedAt: at,
   });
+  // A new song of a genre recipe with a mix (Casperaki Pop: harder drums) starts with it, on the tracks it has.
+  const recipeMix = existing ? undefined : genreRecipe(params.genre)?.mix;
+  if (recipeMix) {
+    const mix = pruneMixOverrides(recipeMix, songLaneNames(song));
+    if (!isEmptyMixOverrides(mix)) store.setProjectMix({ ownerId: owner, songId: id, mixOverrides: mix, updatedAt: at });
+  }
   const naming = placeholder !== undefined ? onPlaceholderTitle?.({ ownerId: owner, songId: id, song, placeholderTitle: placeholder }) : undefined;
   // The artwork is drawn for the song's title, so it starts once naming is over.
   artwork?.start(owner, id, naming ?? Promise.resolve());

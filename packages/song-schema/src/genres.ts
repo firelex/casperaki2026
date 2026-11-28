@@ -7,6 +7,7 @@
 import { z } from 'zod';
 
 import { GENRE_TEMPO_RANGES, GenreSchema, registerDerivedGenre, type Genre, type GenreTempoRange } from './schemas/common.js';
+import type { MixOverrides } from './schemas/mix-overrides.js';
 
 /** Lanes a recipe can make play in every section (selection/index.ts maps them to its lane specs). */
 export const ALWAYS_PLAYING_LANES = ['electricGuitarClean'] as const;
@@ -32,6 +33,9 @@ export interface GenreRecipe {
   /** The track mastering matches the song to instead of Atemlos: the name of its data file (the brain's
    *  mastering references directory, `<name>.json`, made by casperaki_master_reference). */
   readonly masteringReference?: string;
+  /** The mix a new song of the genre starts with (its Pro-mode mix: lane trims by track name, kept only for the
+   *  tracks the song has; bus plugin settings). */
+  readonly mix?: MixOverrides;
 }
 
 export const GENRE_RECIPES = {
@@ -50,9 +54,14 @@ export const GENRE_RECIPES = {
     // part of every Casperaki song".
     guitarPatterns: ['Funk', 'R&B'],
     hiHats: 'authored-urban-trap-hats',
-    // Owner 2026-11-28: Dr. Luke drums "hit much harder"; mastering matched every song to Atemlos, which evened that
-    // out. Casperaki Pop is mastered towards "Your Love Is My Drug" (the owner's pick).
-    masteringReference: 'your-love-is-my-drug',
+    // Owner 2026-11-28: Dr. Luke drums "hit much harder". Of four A/B masters he chose "harder drums and Atemlos
+    // master" (not the "Your Love Is My Drug" reference): the drums +4 dB, the pad and synths -2 dB, keys -1 dB, the
+    // kick bus's Thunder 0.41 -> 0.65 and its output 0.53 -> 0.62, the drum bus's Pyewacket input 0.83 -> 1.0 and its
+    // output 0.5 -> 0.6 (slots of casperaki_engine/config/mix-config.json's rack chains).
+    mix: {
+      lanes: { Drums: { volumeDb: 4 }, Pad: { volumeDb: -2 }, Synths: { volumeDb: -2 }, PluckedSynths: { volumeDb: -2 }, Keys: { volumeDb: -1 } },
+      buses: { kicks: { '1': [0.65, 1], '3': [0.62] }, drums: { '1': [1, 0.499824703, 0.455113977], '3': [0.6] } },
+    },
   },
 } as const satisfies Record<string, GenreRecipe>;
 
