@@ -15,6 +15,8 @@ SOULX_SINGER_MODEL = MODELS / "Soul-AILab__SoulX-Singer" / "model.pt"
 SOULX_SVC_MODEL = MODELS / "Soul-AILab__SoulX-Singer" / "model-svc.pt"
 SOULX_RMVPE = MODELS / "Soul-AILab__SoulX-Singer-Preprocess" / "rmvpe" / "rmvpe.pt"
 BS_ROFORMER_WEIGHTS = MODELS / "viperx__bs-roformer-ep317-sdr12.9755"
+# De-reverb for Add a singer (pipeline/dereverb.py): anvuew's room-reverb BS-RoFormer (huggingface.co/anvuew/dereverb_room).
+DEREVERB_ROOM_WEIGHTS = MODELS / "anvuew__dereverb_room"
 
 # The voice of the owner's approved demo (2026-11-25): a dry female voice prompt with its SoulX metadata (the sung
 # phonemes, notes and timing of the recording). Copied from the SoulX repo's example/audio/yue2_female_dry2.*.
@@ -26,7 +28,7 @@ VOICE_META = SERVICE_DIR / "voices" / f"{VOICE}.json"
 # Add a singer (pipeline/add_singer.py): two steps run as their own processes, each in the venv its models need, by
 # explicit python path. Our scripts for them are in this service's tools/ folder.
 TOOLS_DIR = SERVICE_DIR / "tools"
-# SoulX-Singer-Preprocess (vocal separation and de-reverb, lyric and note transcription): run with cwd = SOULX_REPO
+# SoulX-Singer-Preprocess (vocal separation, lyric and note transcription): run with cwd = SOULX_REPO
 # (its model paths are relative to it: pretrained_models/SoulX-Singer-Preprocess -> /mnt/d/casperaki-models/soulx-preprocess).
 SOULX_PREPROCESS_PYTHON = SHARED_SERVICES / "soulx-singer" / ".venv-preprocess" / "bin" / "python"
 # Resemble Enhance (the enhancer): its venv was built for the vocal cleanup experiments (torch 2.10 cu128).

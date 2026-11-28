@@ -10,7 +10,8 @@ Steps, in order (one model on the graphics card at a time: each model step loads
 SoulX-Singer-Preprocess steps in processes of their own, in their own venvs, by explicit python
 path: pipeline.paths):
 - decode: the upload read with ffmpeg (44.1 kHz; stereo when it is to be separated, mono otherwise);
-- separate (only with "separate"): SoulX-Singer-Preprocess's karaoke separation and de-reverb (tools/soulx_preprocess.py);
+- separate (only with "separate"): SoulX-Singer-Preprocess's karaoke separation (tools/soulx_preprocess.py);
+- dereverb: always, the room taken out (anvuew's room-reverb model, pipeline/dereverb.py);
   (no compression or Resemble Enhance: the owner, 2026-11-26: those are for recordings sung into a song, not for a
   singer's voice, which is taken as it is);
 - silence: the silences cut, always (pipeline/voice_cut.py);
@@ -25,7 +26,7 @@ path: pipeline.paths):
 
 Writes add_singer.json = {"audio": "voice.wav", "meta": "voice.json", "testLine": "test_line.wav",
 "reference": {"choice", "startSeconds", "endSeconds" (in the cut voice), "recordingStartSeconds",
-"recordingEndSeconds" (in the recording as uploaded, or its separated vocal), "seconds"}, "transcription":
+"recordingEndSeconds" (in the recording as uploaded, or its separated vocal: de-reverb keeps the timing), "seconds"}, "transcription":
 "words" | "la", "heard" (the words heard), "testLinePitch": {"notes", "within", "medianErrorSemitones"}}.
 """
 from __future__ import annotations
@@ -42,6 +43,7 @@ import numpy as np
 import soundfile as sf
 
 from . import levels, paths, voice_cut, voice_meta
+from .dereverb import dereverb
 
 STAGE = "add_singer"
 REQUIRED = ("upload", "separate", "reference")
@@ -241,7 +243,20 @@ def run(params: dict, out_dir, job):
                                    "separate", str(voice_path), str(out / "vocals.wav")], paths.SOULX_REPO, job,
                                   "Vocal separation", out / "separate.log"))
         voice_path = out / "vocals.wav"
-        st.done("the lead vocal, without its reverb", {"seconds": res["seconds"]}, ["vocals.wav"])
+        st.done("the lead vocal", {"seconds": res["seconds"]}, ["vocals.wav"])
+
+    # Every upload loses its room (owner 2026-11-28: anvuew's room-reverb model, pipeline/dereverb.py).
+    job.check_cancelled()
+    st = job.step("dereverb", "Take out the room's reverb")
+    v, vsr = sf.read(voice_path, always_2d=True)
+    v = v.mean(axis=1).astype(np.float32)
+    try:
+        dry = dereverb(v, vsr, _device())
+    finally:
+        _release()
+    sf.write(out / "dry.wav", dry, vsr, subtype="FLOAT")
+    voice_path = out / "dry.wav"
+    st.done(f"{len(dry) / vsr:.1f} s", {"seconds": round(len(dry) / vsr, 2)}, ["dry.wav"])
 
     job.check_cancelled()
     st = job.step("silence", "Cut the silences")

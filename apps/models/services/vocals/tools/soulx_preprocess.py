@@ -5,8 +5,10 @@ SoulX-Singer clone (pipeline.paths.SOULX_REPO), whose model paths are relative t
 models are the only ones on the graphics card while it runs. Three commands:
 
   separate <in.wav> <out.wav>
-      The lead vocal of a full song: the karaoke Mel-Band RoFormer separation, then the de-reverb Mel-Band RoFormer
-      (both SoulX-Singer-Preprocess's, preprocess/tools/vocal_separation). Writes the dry lead vocal (mono, 44.1 kHz).
+      The lead vocal of a full song: the karaoke Mel-Band RoFormer separation (SoulX-Singer-Preprocess's,
+      preprocess/tools/vocal_separation). Writes the lead vocal (mono, 44.1 kHz); the add-singer stage then takes its
+      reverb out with anvuew's room model (pipeline/dereverb.py; SoulX's own de-reverb model left the owner's test
+      recordings almost unchanged, 2026-11-28).
       Prints {"sample_rate", "seconds"}.
 
   words <reference.wav> <out.json>
@@ -51,9 +53,9 @@ def separate(src: str, dest: str) -> None:
     from preprocess.tools.vocal_separation.model import VocalSeparator
 
     sep = VocalSeparator(sep_model_path=SEP_MODEL, sep_config_path=SEP_CONFIG, der_model_path=DER_MODEL,
-                         der_config_path=DER_CONFIG, use_der=True, device="cuda", verbose=False)
+                         der_config_path=DER_CONFIG, use_der=False, device="cuda", verbose=False)
     out = sep.process(src, verbose=False)
-    y = np.asarray(out.vocals_dereverbed, dtype=np.float32)
+    y = np.asarray(out.vocals, dtype=np.float32)
     y = y.mean(axis=0) if y.ndim == 2 else y
     sf.write(dest, y, out.sample_rate, subtype="FLOAT")
     print(json.dumps({"sample_rate": int(out.sample_rate), "seconds": round(len(y) / out.sample_rate, 3)}), flush=True)
