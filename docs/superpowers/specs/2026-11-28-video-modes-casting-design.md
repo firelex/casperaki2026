@@ -166,7 +166,7 @@ Ice is the heart of the panel: Love sometimes persuades Ice to reconsider.
 comments, laugh, disagree and sometimes change their minds. Humour comes from their personalities and from specific
 musical details of the song. They must sometimes be genuinely surprised: now and then Ice gives twelve points to a
 song everyone expects him to hate, Bob delivers a devastating criticism, Nicky is moved to tears, Love loses her
-temper. The sample lines show the voice; the writer does not reuse them word for word in every video **(my call)**.
+temper. The sample lines show the voice; the writer does not reuse them word for word in every video **(my call)**. The judges may mention real artists and bands in passing ("the next ABBA"), as real panels do; they never imitate them (owner, 2026-11-28: "That's fine").
 
 ### The narrator
 
