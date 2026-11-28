@@ -8,6 +8,7 @@ import { resolveColor } from './layout';
 import { beginRangeDrag, type BarRange } from './rangeDrag';
 import { ExportMenu, type ExportItem } from '../../export/ExportMenu';
 import { Score } from './Score';
+import { lyricOrder, stepLyric, syllablesInOrder } from './lyricEdit';
 import { useNoteView } from './noteView';
 import { SelectionOverlay } from './Selection';
 
@@ -58,6 +59,7 @@ export function ClipDetail({
   onDrumSound,
   notesFromSong,
   pianoName,
+  onEditLyrics,
 }: {
   track: SeqTrack;
   clip: SeqClip;
@@ -89,6 +91,8 @@ export function ClipDetail({
   notesFromSong?: boolean;
   /** Sung parts: the piano the preview plays them on, once known. */
   pianoName?: string | undefined;
+  /** The lead vocal: its words edited note by note (every note's syllable, in time order). */
+  onEditLyrics?: ((syllables: string[]) => void) | undefined;
   /** Drums: the kit (each drum's sound), or why it could not be read. */
   drumKit?: { kit: readonly DrumKitRow[] } | { error: string } | undefined;
   /** Drums: replace one drum's sound (`reset`: back to the style's own). */
@@ -302,6 +306,8 @@ export function ClipDetail({
               color={color}
               head={previewBeat}
               keyH={Math.round(KEY_ROW_BASE * vZoom)}
+              {...(onEditLyrics ? { onEditLyrics } : {})}
+              busy={busy}
               {...selectionProps}
             />
           ) : (
@@ -315,7 +321,7 @@ export function ClipDetail({
           {track.isDrums
             ? 'Click a cell to add or remove a hit. Undo with Ctrl+Z. Fills at the ends of sections come on top of this bar. Space plays and pauses.'
             : notesFromSong
-              ? `The sung melody as written, with its words. Play uses a piano${pianoName ? ` (${pianoName})` : ''}: the playback engine does not sing yet, so this part is silent when the song plays.`
+              ? `The sung melody as written, with its words.${onEditLyrics ? ' Click a word to change it: Tab goes to the next note, Enter saves (every chorus sings the same words), Esc throws the changes away.' : ''} Play uses a piano${pianoName ? ` (${pianoName})` : ''}: the playback engine does not sing yet, so this part is silent when the song plays.`
               : 'The notes the playback engine plays (chords as it voices them). Parts with pitches are written by the generator: ask for a new pattern or another sound to change them. Space plays and pauses.'}
         </p>
 
@@ -735,10 +741,15 @@ export function PianoRoll({
   color,
   head,
   keyH: KEY_ROW_H,
+  onEditLyrics,
+  busy,
   ...selection
 }: SelectionProps & {
   /** Height of one key row (vertical zoom). */
   keyH: number;
+  /** The lead vocal: click a word to change it, Tab to the next note, Enter saves, Esc undoes. */
+  onEditLyrics?: (syllables: string[]) => void;
+  busy?: boolean;
   notes: SeqNote[];
   beats: number;
   grid: Grid;
@@ -756,6 +767,23 @@ export function PianoRoll({
   const height = rows * KEY_ROW_H;
   const gridW = beats * pxPerBeat;
   const isBlack = (p: number) => [1, 3, 6, 8, 10].includes(((p % 12) + 12) % 12);
+  // Words being edited: the note whose word is open, and what was typed per note.
+  const order = useMemo(() => lyricOrder(notes), [notes]);
+  const [editing, setEditing] = useState<number | undefined>(undefined);
+  const [draft, setDraft] = useState<Record<number, string>>({});
+  useEffect(() => {
+    setEditing(undefined);
+    setDraft({});
+  }, [notes]);
+  const changed = Object.entries(draft).some(([i, w]) => w !== notes[Number(i)]?.label);
+  const save = () => {
+    setEditing(undefined);
+    if (changed && onEditLyrics) onEditLyrics(syllablesInOrder(notes, order, draft));
+  };
+  const cancel = () => {
+    setEditing(undefined);
+    setDraft({});
+  };
   return (
     <Selectable beats={beats} pxPerBeat={pxPerBeat} grid={grid} {...selection}>
       <div className="flex">
@@ -779,7 +807,15 @@ export function PianoRoll({
           {notes.map((n, i) => (
             <span
               key={i}
-              className="absolute overflow-hidden whitespace-nowrap rounded-[2px] border border-black/50 border-l-[3px] border-l-white px-0.5 text-[8px] leading-[10px] text-black/80"
+              {...(onEditLyrics && n.label !== undefined && !busy
+                ? {
+                    onPointerDown: (e: React.PointerEvent) => e.stopPropagation(),
+                    onClick: () => setEditing(i),
+                    role: 'button',
+                    'aria-label': `Change the word ${draft[i] ?? n.label}`,
+                  }
+                : {})}
+              className={`absolute overflow-hidden whitespace-nowrap rounded-[2px] border border-black/50 border-l-[3px] border-l-white px-0.5 text-[8px] leading-[10px] ${draft[i] !== undefined && draft[i] !== n.label ? 'text-black font-semibold underline' : 'text-black/80'} ${onEditLyrics && n.label !== undefined ? 'cursor-text' : ''}`}
               style={{
                 left: n.start * pxPerBeat,
                 // A gap before the next note, so every onset is visible.
@@ -791,9 +827,41 @@ export function PianoRoll({
               }}
               title={`${midiName(n.pitch!)}${n.label ? ` (${n.label})` : ''}, ${+n.length.toFixed(3)} beat${n.length === 1 ? '' : 's'}${n.velocity !== undefined ? `, velocity ${n.velocity}` : ''}`}
             >
-              {n.label && n.kind !== 'chord' ? n.label : ''}
+              {n.label && n.kind !== 'chord' ? (draft[i] ?? n.label) : ''}
             </span>
           ))}
+          {editing !== undefined && notes[editing] ? (
+            <input
+              autoFocus
+              value={draft[editing] ?? notes[editing]!.label ?? ''}
+              onChange={(e) => setDraft({ ...draft, [editing]: e.target.value })}
+              onFocus={(e) => e.target.select()}
+              onPointerDown={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === 'Tab') {
+                  e.preventDefault();
+                  setEditing(stepLyric(order, editing, e.shiftKey ? -1 : 1));
+                } else if (e.key === 'Enter') {
+                  e.preventDefault();
+                  save();
+                } else if (e.key === 'Escape') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  cancel();
+                }
+                // Space plays in this window: typed here, it is a space.
+                e.stopPropagation();
+              }}
+              aria-label="The note's syllable"
+              className="absolute z-20 rounded-[3px] border border-white bg-[#101114] px-1 text-[11px] text-white outline-none"
+              style={{
+                left: notes[editing]!.start * pxPerBeat,
+                top: (high - notes[editing]!.pitch!) * KEY_ROW_H - 2,
+                width: Math.max(64, notes[editing]!.length * pxPerBeat),
+                height: Math.max(18, KEY_ROW_H + 4),
+              }}
+            />
+          ) : null}
           <Playhead head={head} pxPerBeat={pxPerBeat} />
         </div>
       </div>

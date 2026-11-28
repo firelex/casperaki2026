@@ -40,6 +40,8 @@ export type TrackEdit =
   | { readonly kind: 'setRapLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> }
   /** Every take of a track in a section muted or unmuted (right-click a clip). */
   | { readonly kind: 'setTakesMuted'; readonly track: string; readonly segment: string; readonly muted: boolean }
+  /** The lead's words in a section edited note by note: every lead note's syllable in time order. */
+  | { readonly kind: 'editLyrics'; readonly section: string; readonly syllables: readonly string[] }
   /** A finished Sing task's result (the apply response's `result`) put into the working copy. */
   | {
       readonly kind: 'applySung';

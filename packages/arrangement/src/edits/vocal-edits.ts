@@ -22,7 +22,7 @@ import { lyricLines, type LyricLine } from '../vocals/lyric-lines.js';
 import { MELODY_VARIANTS_PARAM, melodyVariantsOf } from '../vocals/melody-variants.js';
 import { SUNG_MELODY_PARAM, SungMelodySchema, sungMelodyOf, type SungMelody } from '../vocals/sung-melody.js';
 import { VOCAL_MELODY_PARAM, vocalMelodyShownIn } from '../vocals/vocal-melody.js';
-import { WRITTEN_LYRICS_PARAM, writtenLyricsOf, type WrittenLyrics } from '../vocals/written-lyrics.js';
+import { pronounce, sungLineSyllables, wordsOf as wordsOfLine, WRITTEN_LYRICS_PARAM, writtenLyricsOf, type WrittenLyrics } from '../vocals/written-lyrics.js';
 import { generatorParams, spliceTrack, TrackEditError } from './track-edits.js';
 
 export const LEAD_VOCAL_TRACK = 'Vocal';
@@ -519,4 +519,55 @@ export function newRhythm(working: Song, type: string): Song {
     return applyVocalParams(working, next, new Set([type]));
   }
   throw new TrackEditError(409, 'no_other_rhythm', `No other ${type} rhythm changes this song.`);
+}
+
+// ---- lyrics edited on the notes (owner 2026-11-28: the piano roll's words editable, Tab to the next note) ---------
+
+/** The words of one lyric line from its notes' syllables as the editor shows them: a syllable ending in "-" runs on into
+ *  the next ("Hel-", "lo" → "Hello"); a held note ("-") sings nothing new. */
+function lineFromSyllables(syllables: readonly string[]): string {
+  const words: string[] = [];
+  let open = false;
+  for (const raw of syllables) {
+    const s = raw.trim();
+    if (s === HELD) continue;
+    const runsOn = s.endsWith('-');
+    const text = runsOn ? s.slice(0, -1) : s;
+    if (open) words[words.length - 1] += text.toLowerCase();
+    else words.push(text);
+    open = runsOn;
+  }
+  return words.join(' ');
+}
+const HELD = '-';
+
+/**
+ * The song with the lead's words in `section` changed note by note: `syllables` is every lead note's syllable in order
+ * (as the piano roll shows them, "Hel-" "lo", "-" for a held note). The section's lines are rebuilt from them and put
+ * into every section that sings the same words: a verse alone (its words are its own), every chorus (one set of words:
+ * owner 2026-11-28, "all choruses - important to preserve the link"). Lines that still fit their notes keep the notes
+ * (applyWrittenLyrics); otherwise the rhythm is recut to the words (applyLyricsFirst). The backing vocals follow (they
+ * are regenerated from the lead). Unknown words, an empty note or a wrong count throw.
+ */
+export function editLyricSyllables(working: Song, section: string, syllables: readonly string[]): Song {
+  const bars = working.arrangement[section]?.overrides?.['Vocal']?.bars;
+  if (!bars) throw new TrackEditError(400, 'no_lead', `${section} has no lead vocal to edit the words of`);
+  const lines = lyricLines(bars as Parameters<typeof lyricLines>[0]);
+  const count = lines.reduce((a, l) => a + l.length, 0);
+  if (syllables.length !== count) throw new TrackEditError(400, 'wrong_count', `${section} has ${count} notes, but ${syllables.length} syllables were given`);
+  const empty = syllables.findIndex((s) => !s.trim());
+  if (empty >= 0) throw new TrackEditError(400, 'empty_syllable', `note ${empty + 1} of ${section} has no syllable`);
+  let at = 0;
+  const text = lines.map((l) => {
+    const line = lineFromSyllables(syllables.slice(at, at + l.length));
+    at += l.length;
+    return line;
+  });
+  const unknown = text.flatMap((t) => wordsOfLine(t).filter((w) => !pronounce(w)));
+  if (unknown.length) throw new TrackEditError(400, 'unknown_words', `these words are not in the dictionary: ${[...new Set(unknown)].join(', ')}`);
+  const type = segmentType(section);
+  const sameWords = OWN_WORDS_TYPES.has(type) ? [section] : sungSections(working).filter((s) => s.type === type).map((s) => s.name);
+  const fits = text.every((t, i) => sungLineSyllables(t, lines[i]!, true) !== undefined);
+  if (fits) return applyWrittenLyrics(working, Object.fromEntries(sameWords.map((n) => [n, text])));
+  return applyLyricsFirst(working, { [OWN_WORDS_TYPES.has(type) ? section : type]: text });
 }

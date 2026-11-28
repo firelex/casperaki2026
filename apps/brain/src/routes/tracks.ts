@@ -15,6 +15,7 @@
 //       | { kind: 'applyAceLayer', result }  a finished ACE layer task's clips on their "ACE <Instrument>" track
 //       | { kind: 'setRapLyrics', lyrics }  the rap's words of some sections (section → lines)
 //       | { kind: 'setTakesMuted', track, segment, muted }  every take of a track in a section muted or unmuted
+//       | { kind: 'editLyrics', section, syllables }  the lead's words edited note by note (every chorus, the backings follow)
 //       | { kind: 'applyLyrics', lyrics }  written lyrics (section → lines) on the vocal tracks (a finished Write
 //                                          lyrics task merged into unsaved edits, tasks before 2026-11-27)
 //       | { kind: 'applyLyricsFirst', lyrics }  lyrics written first (section type → lines): a rhythm bent to them
@@ -51,7 +52,7 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applyRapLyrics, setTakesMuted, applySungVocalsOver, applyWrittenLyrics, newMelody, newRhythm, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applyRapLyrics, editLyricSyllables, setTakesMuted, applySungVocalsOver, applyWrittenLyrics, newMelody, newRhythm, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 import { SingResultSchema } from '../sing/singTask.js';
@@ -71,6 +72,8 @@ const VocalEditSchema = z.union([
   // and a take (one track, one section) muted or unmuted.
   z.object({ kind: z.literal('setRapLyrics'), lyrics: z.record(z.string().min(1), z.array(z.string())) }).strict(),
   z.object({ kind: z.literal('setTakesMuted'), track: z.string().min(1), segment: z.string().min(1), muted: z.boolean() }).strict(),
+  // The lead's words in a section edited note by note (every lead note's syllable, in order).
+  z.object({ kind: z.literal('editLyrics'), section: z.string().min(1), syllables: z.array(z.string()).min(1) }).strict(),
 ]);
 /** songId: the saved project the working song belongs to (a new melody waits while the project is being sung). */
 const EditBody = z.object({ song: z.unknown(), songId: z.string().min(1).optional(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
@@ -119,7 +122,7 @@ export function createTracksRouter({ isSinging }: TracksRouterDeps): Router {
     if (!song) return;
     const op = body.data.op;
     const songId = body.data.songId;
-    if ((op.kind === 'newMelody' || op.kind === 'newRhythm' || op.kind === 'writeMelody') && songId !== undefined && isSinging(ownerOf(req), songId)) {
+    if ((op.kind === 'newMelody' || op.kind === 'newRhythm' || op.kind === 'writeMelody' || op.kind === 'editLyrics') && songId !== undefined && isSinging(ownerOf(req), songId)) {
       return res.status(409).json({ error: 'already_singing', message: 'Already singing' });
     }
     if (op.kind === 'newMelody') return run(res, () => ({ song: newMelody(song, segmentType(op.section)).song, track: 'Vocal' }));
@@ -129,6 +132,7 @@ export function createTracksRouter({ isSinging }: TracksRouterDeps): Router {
     if (op.kind === 'applyAceLayer') return run(res, () => ({ song: applyAceLayer(song, op.result), track: op.result.track }));
     if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));
     if (op.kind === 'setRapLyrics') return run(res, () => ({ song: applyRapLyrics(song, op.lyrics), track: 'Vocal' }));
+    if (op.kind === 'editLyrics') return run(res, () => ({ song: editLyricSyllables(song, op.section, op.syllables), track: 'Vocal' }));
     if (op.kind === 'setTakesMuted') return run(res, () => ({ song: setTakesMuted(song, op.track, op.segment, op.muted), track: op.track }));
     if (op.kind === 'applySung') return run(res, () => ({ song: applySungVocalsOver(song, op.result, parseSong(op.sungOver), { partial: op.partial === true }), track: 'Vocal' }));
     return run(res, () => editTrack(song, op));

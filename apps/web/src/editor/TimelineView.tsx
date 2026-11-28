@@ -1188,6 +1188,11 @@ export function TimelineView() {
                 : undefined
           }
           notesFromSong={detailTrack.isVocal}
+          onEditLyrics={
+            detailTrack.name === LEAD_VOCAL_NAME
+              ? (syllables) => void edits.run({ kind: 'editLyrics', section: model.sections[detail.section]!.name, syllables }, `Changing the words of ${model.sections[detail.section]!.name}`, activeSong?.id)
+              : undefined
+          }
           pianoName={detailTrack.isVocal ? previewPiano : undefined}
           soundName={detailSound}
           drumKit={drumKit.data ?? (drumKit.isError ? { error: drumKit.error.message } : undefined)}
