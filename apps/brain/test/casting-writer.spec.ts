@@ -39,7 +39,7 @@ describe('the song facts', () => {
     expect(f.tempoWord).toBe('fast');
     expect(f.quotes.length).toBeGreaterThan(0);
     expect(f.quotes.length).toBeLessThanOrEqual(4);
-    const chorus = songTiming(song).sections.find((s) => /chorus/iu.test(s.name))!;
+    const chorus = songTiming(song).sections.find((s) => /^chorus\b/iu.test(s.name))!;
     expect(f.sections).toContain(chorus.name);
     expect(f).toMatchObject({ singerName: 'Kesha', singerDescription: 'bright pop voice', avatarName: 'Mia' });
   });
@@ -74,6 +74,7 @@ const PLANS: Record<string, Plan> = {
   verdicts: {
     beats: ['reactions', 'votes'],
     turns: [
+      { speaker: 'Ice', intent: 'a first dry remark' },
       { speaker: 'Bob', intent: 'raves' },
       { speaker: 'Nicky', intent: 'teases Bob' },
       { speaker: 'Love', intent: 'praises the melody' },
@@ -116,7 +117,7 @@ describe('the writer', () => {
     expect(script.verdicts[0]).toMatchObject({ delivery: 'warm', gesture: 'nod' });
     // The narrator is never seen: no gesture.
     expect(script.backstage.every((l) => l.gesture === 'none')).toBe(true);
-    expect(calls).toHaveLength(3 + 5 + 6 + 5);
+    expect(calls).toHaveLength(3 + 5 + 6 + 6);
     // Each line is written seeing the conversation so far.
     const lastTurn = calls.at(-1)!.map((m) => m.content).join('\n');
     expect(lastTurn).toContain('Bob:');
@@ -149,9 +150,9 @@ describe('the writer', () => {
     await expect(run(chat)).rejects.toThrow(/backstage.*"Ice"/);
   });
   it('refuses verdicts where a judge has no turn, or Ice does not speak last', async () => {
-    const noLove = { ...PLANS.verdicts!, turns: PLANS.verdicts!.turns.filter((t) => t.speaker !== 'Love') };
+    const noLove = { ...PLANS.verdicts!, turns: PLANS.verdicts!.turns.map((t) => (t.speaker === 'Love' ? { ...t, speaker: 'Nicky' } : t)) };
     await expect(run(fakeModel({ plan: { verdicts: noLove } }).chat)).rejects.toThrow(/Love/);
-    const iceFirst = { ...PLANS.verdicts!, turns: [...PLANS.verdicts!.turns].reverse() };
+    const iceFirst = { ...PLANS.verdicts!, turns: [...PLANS.verdicts!.turns.filter((t) => t.speaker !== 'Love'), { speaker: 'Love', intent: 'last word' }] };
     await expect(run(fakeModel({ plan: { verdicts: iceFirst } }).chat)).rejects.toThrow(/Ice.*last/);
   });
   it('needs a vote turn for every judge, Ice\'s last, each vote said plainly; a judge voting no is unconvinced throughout', async () => {
@@ -164,8 +165,8 @@ describe('the writer', () => {
     const { chat: c2, calls: k2 } = fakeModel({ plan: { verdicts: bobTwice } });
     await run(c2);
     expect(k2.filter((c) => c[0]!.content.includes('spoken by Bob') && c[0]!.content.includes('This is your vote turn'))).toHaveLength(1);
-    // Bob's vote turn (the first verdicts turn: 5 backstage + 6 banter before it) says no although his vote is yes.
-    await expect(run(fakeModel({ turn: (n) => (n === 12 ? { text: 'Sorry, it is a no from me.', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/verdicts, turn 1 \(Bob\).*yes/);
+    // Bob's vote turn (the second verdicts turn: 5 backstage + 6 banter + Ice's remark before it) says no although his vote is yes.
+    await expect(run(fakeModel({ turn: (n) => (n === 13 ? { text: 'Sorry, it is a no from me.', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/verdicts, turn 2 \(Bob\).*yes/);
   });
   it('refuses an empty line or an unknown gesture, naming the turn', async () => {
     await expect(run(fakeModel({ turn: (n) => (n === 7 ? { text: ' ', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/banter, turn 2/);
@@ -179,5 +180,27 @@ describe('the writer', () => {
     const { chat, calls } = fakeModel({ turn: (n) => (n === 2 ? (ac.abort(), undefined) : undefined) });
     await expect(run(chat, ac.signal)).rejects.toThrow(/cancel/i);
     expect(calls.length).toBe(3);
+  });
+});
+
+describe('review fixes', () => {
+  it('counts only sections named chorus as a chorus, not a pre-chorus', async () => {
+    const { isChorus } = await import('../src/casting/facts.js');
+    expect(isChorus('Chorus')).toBe(true);
+    expect(isChorus('Chorus 2')).toBe(true);
+    expect(isChorus('Pre-chorus')).toBe(false);
+    expect(isChorus('Post-chorus')).toBe(false);
+    expect(isChorus('Verse 1')).toBe(false);
+  });
+  it('refuses a singer named like someone in the cast', async () => {
+    const { chat } = fakeModel();
+    await expect(run(chat, undefined, { ...facts, singerName: 'nicky' })).rejects.toThrow(/singer.*"nicky".*same name/i);
+    await expect(run(chat, undefined, { ...facts, singerName: 'Narrator' })).rejects.toThrow(/same name/i);
+  });
+  it('refuses a plan with too many or too few turns before writing any line', async () => {
+    const many = { beats: ['x'], turns: Array.from({ length: 25 }, () => ({ speaker: 'Narrator', intent: 'x' })) };
+    const { chat, calls } = fakeModel({ plan: { backstage: many } });
+    await expect(run(chat)).rejects.toThrow(/backstage plan has 25 turns.*4 to 7/);
+    expect(calls).toHaveLength(1);
   });
 });

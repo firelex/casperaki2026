@@ -39,8 +39,8 @@ import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAdd
 import { buildAvatar, type AvatarBuildDeps } from '../avatars/avatarBuildTask.js';
 import type { UserAvatars } from '../avatars/userAvatars.js';
 import { songSinger } from '../avatars/videoAvatars.js';
-import { verdictVotes } from '../casting/cast.js';
-import { castingFacts } from '../casting/facts.js';
+import { castNames, verdictVotes } from '../casting/cast.js';
+import { castingFacts, isChorus } from '../casting/facts.js';
 import { SCENES, writeScript, type SceneId } from '../casting/writer.js';
 import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
@@ -406,13 +406,16 @@ export class BackgroundTasks {
     if (singerId === undefined) throw new TaskError(400, 'not_sung', "Sing this song with one of your avatars' singers first.");
     if (avatar.singerId !== singerId) throw new TaskError(400, 'wrong_singer', `${avatar.name} does not have the voice that sang this song: choose the avatar whose singer sang it.`);
     const song = parseSong(JSON.parse(stored.canonical));
-    if (!songTiming(song).sections.some((x) => /chorus/iu.test(x.name))) throw new TaskError(400, 'no_chorus', 'The song has no chorus, which a casting performance ends with.');
+    if (!songTiming(song).sections.some((x) => isChorus(x.name))) throw new TaskError(400, 'no_chorus', 'The song has no chorus, which a casting performance ends with.');
     if (store.runningTask(ownerId, songId, 'castingScript')) throw new TaskError(409, 'already_running', 'A casting script for this song is already being written.');
     let singer: { name: string; description: string | null };
     try {
       singer = c.findSinger(ownerId, singerId);
     } catch (err) {
       throw new TaskError(400, 'unknown_singer', err instanceof Error ? err.message : String(err));
+    }
+    if (castNames().includes(singer.name.trim().toLowerCase())) {
+      throw new TaskError(400, 'name_clash', `The singer is called "${singer.name}", like someone in the casting cast (the narrator and the judges Ice, Nicky, Love and Bob): rename the singer first.`);
     }
     const options = CastingOptionsSchema.parse({ avatarId: avatar.id, outcome: outcome.data, title: project.title, singerName: singer.name, singerDescription: singer.description, avatarName: avatar.name });
     const id = randomUUID();

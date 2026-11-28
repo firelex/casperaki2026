@@ -32,7 +32,7 @@ function fakeChat(): ChatModel & { calls: number } {
       const line = (extra = '') => JSON.stringify({ text: `Well this is a fine moment for everyone here today and I have to say it really is quite something${extra}.`, delivery: 'warm', gesture: 'nod' });
       if (system.startsWith('You plan')) {
         if (system.includes('backstage')) return JSON.stringify({ beats: ['b'], turns: Array.from({ length: 5 }, () => ({ speaker: 'Narrator', intent: 'x' })) });
-        if (system.includes('judges react')) return JSON.stringify({ beats: ['v'], turns: ['Bob', 'Nicky', 'Love', 'Ice'].map((s) => ({ speaker: s, intent: 'votes' })) });
+        if (system.includes('judges react')) return JSON.stringify({ beats: ['v'], turns: ['Ice', 'Bob', 'Nicky', 'Kesha', 'Love', 'Ice'].map((s) => ({ speaker: s, intent: 'votes' })) });
         return JSON.stringify({ beats: ['t'], turns: ['Bob', 'Ice', 'Love', 'Kesha', 'Nicky', 'Ice'].map((s) => ({ speaker: s, intent: 'talk' })) });
       }
       const vote = /say plainly, with the word "(yes|no)"/u.exec(system)?.[1];
@@ -156,5 +156,20 @@ describe('the casting routes', () => {
     } finally {
       await s.close();
     }
+  });
+});
+
+describe('a singer named like a judge', () => {
+  it('cannot be cast until renamed', () => {
+    sung('nicky-singer');
+    const t2 = new BackgroundTasks({
+      store,
+      events: new EventHub(),
+      hash: hashCanonical,
+      clock: () => new Date().toISOString(),
+      casting: { chat, avatars, findSinger: () => ({ name: 'Nicky', description: null }) },
+    });
+    const mia = avatar('nicky-singer');
+    refused(() => t2.startCastingScript('me', songId, { avatarId: mia.id, outcome: 'fourYes' }), 400, 'name_clash');
   });
 });

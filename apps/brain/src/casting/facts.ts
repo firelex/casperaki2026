@@ -22,10 +22,15 @@ export interface CastingFacts {
 }
 
 /** `title`: the project's title (songs keep theirs with the project). */
+/** Whether a section (by its display name) is a chorus: "Chorus", "Chorus 2" — not "Pre-chorus" or "Post-chorus". */
+export function isChorus(name: string): boolean {
+  return /^chorus\b/iu.test(name.trim());
+}
+
 export function castingFacts(song: Song, title: string, singer: { name: string; description: string | null }, avatarName: string): CastingFacts {
   const { sections } = songTiming(song);
   const lines = lyricLines(song);
-  const chorus = sections.find((s) => /chorus/iu.test(s.name));
+  const chorus = sections.find((s) => isChorus(s.name));
   const inChorus = chorus ? lines.filter((l) => l.startSeconds >= chorus.startSeconds && l.startSeconds < chorus.endSeconds) : [];
   const quotes = (inChorus.length > 0 ? inChorus : lines).slice(0, 4).map((l) => l.text);
   if (!title.trim()) throw new Error('casting: the song has no title; give it one first');

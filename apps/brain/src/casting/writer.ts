@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import type { ChatMessage, ChatModel } from '../llm/chatModel.js';
 import { CancelledError } from '../sing/singTask.js';
-import { JUDGES, JURY_DYNAMIC, JURY_RULES, NARRATOR_PROFILE, type JudgeId, type Outcome, type Vote } from './cast.js';
+import { castNames, JUDGES, JURY_DYNAMIC, JURY_RULES, NARRATOR_PROFILE, type JudgeId, type Outcome, type Vote } from './cast.js';
 import type { CastingFacts } from './facts.js';
 
 export const GESTURES = ['nod', 'shakeHead', 'laugh', 'leanBack', 'leanIn', 'point', 'clap', 'handsUp', 'shrug', 'none'] as const;
@@ -74,7 +74,7 @@ function singerProfile(facts: CastingFacts): string {
 }
 
 function songText(facts: CastingFacts): string {
-  const quotes = facts.quotes.length > 0 ? `Some of its words (from the first chorus):\n${facts.quotes.map((q) => `  "${q}"`).join('\n')}` : 'The song has no words yet: do not quote or invent any lyrics.';
+  const quotes = facts.quotes.length > 0 ? `Some of its words:\n${facts.quotes.map((q) => `  "${q}"`).join('\n')}` : 'The song has no words yet: do not quote or invent any lyrics.';
   return (
     `The song: "${facts.title}"${facts.genre ? `, ${facts.genre}` : ''}, ${facts.tempoWord}. ` +
     `Its sections in order: ${facts.sections.join(', ')}. It was written for the contestant to sing.\n${quotes}`
@@ -135,6 +135,9 @@ export async function writeScript(
   signal: AbortSignal,
   onLine?: (scene: SceneId, line: ScriptLine) => void,
 ): Promise<CastingScript> {
+  if (castNames().includes(facts.singerName.trim().toLowerCase())) {
+    throw new Error(`casting writer: the singer "${facts.singerName}" has the same name as someone in the cast: rename the singer`);
+  }
   const n = names(facts);
   const byName = new Map(Object.entries(n).map(([id, name]) => [name.toLowerCase(), id as Speaker]));
   const said: { speaker: Speaker; text: string }[] = [];
@@ -167,6 +170,9 @@ export async function writeScript(
       ]),
       `the ${scene} plan`,
     );
+    if (plan.turns.length < minTurns || plan.turns.length > maxTurns) {
+      throw new Error(`casting writer: the ${scene} plan has ${plan.turns.length} turns; it must have ${minTurns} to ${maxTurns}`);
+    }
     const turns = plan.turns.map((t, i) => {
       const speaker = byName.get(t.speaker.trim().toLowerCase());
       if (!speaker || !speakersOf(scene).includes(speaker)) throw new Error(`casting writer: the ${scene} plan gives turn ${i + 1} to "${t.speaker}", who is not in the scene (${allowed.join(', ')})`);

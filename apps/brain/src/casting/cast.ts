@@ -70,3 +70,8 @@ export function verdictVotes(outcome: Outcome, songId: string): Record<JudgeId, 
   const no = JUDGES[hashString(`casting-no:${songId}`) % JUDGES.length]!.id;
   return Object.fromEntries(JUDGES.map((j) => [j.id, j.id === no ? 'no' : 'yes'])) as Record<JudgeId, Vote>;
 }
+
+/** The names of the cast besides the singer (lower case): a singer called one of these cannot be cast. */
+export function castNames(): string[] {
+  return ['narrator', ...JUDGES.map((j) => j.name.toLowerCase())];
+}
