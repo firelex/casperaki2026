@@ -61,3 +61,53 @@ describe('speaking the lines', () => {
     await expect(speakLines({ client, filesDir: dir, pollMs: 5, signal: new AbortController().signal, jobs: null, setJobs: () => undefined, setSteps: () => undefined }, lineVoices(script, singerVoice))).rejects.toThrow(/out of memory/);
   });
 });
+
+// ---- the timeline
+import { layOut, type CastingTimeline } from '../src/casting/timeline.js';
+
+describe('the timeline', () => {
+  const spoken = new Map(lineVoices(script, singerVoice).map((r, i) => [r.id, { seconds: 2 + (i % 3), levels: [0.1, 0.5, 0.2] }]));
+  const sections = [
+    { name: 'Intro', startSeconds: 0, endSeconds: 8 },
+    { name: 'Verse 1', startSeconds: 8, endSeconds: 24 },
+    { name: 'Pre-chorus', startSeconds: 24, endSeconds: 32 },
+    { name: 'Chorus 1', startSeconds: 32, endSeconds: 48 },
+    { name: 'Verse 2', startSeconds: 48, endSeconds: 64 },
+  ];
+  const t: CastingTimeline = layOut({ script, spoken, sections, exportSeconds: 120, entranceSeconds: 14.544, binSeconds: 0.05, scriptTaskId: 'task-1' });
+  it('runs backstage, door, talk, performance, verdicts, end to end', () => {
+    expect(t.segments.map((s) => s.kind)).toEqual(['backstage', 'door', 'talk', 'performance', 'verdicts']);
+    for (let i = 1; i < t.segments.length; i++) expect(t.segments[i]!.startSeconds).toBeCloseTo(t.segments[i - 1]!.endSeconds, 6);
+    expect(t.segments[0]!.startSeconds).toBe(0);
+    expect(t.durationSeconds).toBeCloseTo(t.segments.at(-1)!.endSeconds, 6);
+    expect(t.scriptTaskId).toBe('task-1');
+  });
+  it('gives the stage door the whole entrance music', () => {
+    const door = t.segments[1]!;
+    expect(door.endSeconds - door.startSeconds).toBeCloseTo(14.544, 6);
+  });
+  it('performs the song to the end of its first chorus (not the pre-chorus), then fades 3 s', () => {
+    const perf = t.segments[3]!;
+    expect(t.performance).toMatchObject({ songFromSeconds: 0, songToSeconds: 48, fadeSeconds: 3, videoStartSeconds: perf.startSeconds });
+    expect(perf.endSeconds - perf.startSeconds).toBeCloseTo(51, 6);
+  });
+  it('places every line inside its segment, in order, never overlapping', () => {
+    expect(t.lines).toHaveLength(9);
+    const kinds = ['backstage', 'backstage', 'talk', 'talk', 'talk', 'verdicts', 'verdicts', 'verdicts', 'verdicts'];
+    t.lines.forEach((l, i) => {
+      const seg = t.segments.find((s) => s.kind === kinds[i])!;
+      expect(l.startSeconds).toBeGreaterThanOrEqual(seg.startSeconds);
+      expect(l.endSeconds).toBeLessThanOrEqual(seg.endSeconds);
+      if (i > 0 && kinds[i - 1] === kinds[i]) expect(l.startSeconds).toBeGreaterThanOrEqual(t.lines[i - 1]!.endSeconds + 0.35 - 1e-9);
+    });
+    expect(t.lines[0]).toMatchObject({ speaker: 'narrator', gesture: 'nod', levels: [0.1, 0.5, 0.2], id: 'backstage-1' });
+    // The backstage music plays a moment before the narrator starts.
+    expect(t.lines[0]!.startSeconds).toBeCloseTo(1.5, 6);
+  });
+  it('refuses a song whose export ends before the first chorus does, naming both', () => {
+    expect(() => layOut({ script, spoken, sections, exportSeconds: 40, entranceSeconds: 14.544, binSeconds: 0.05, scriptTaskId: 'x' })).toThrow(/48.*40/);
+  });
+  it('refuses a song without a chorus', () => {
+    expect(() => layOut({ script, spoken, sections: sections.filter((s) => !s.name.startsWith('Chorus')), exportSeconds: 120, entranceSeconds: 14.544, binSeconds: 0.05, scriptTaskId: 'x' })).toThrow(/chorus/);
+  });
+});
