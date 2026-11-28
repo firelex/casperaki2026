@@ -57,7 +57,6 @@ import { videoAvatars } from './avatars/videoAvatars.js';
 import { createVideoRouter } from './routes/video.js';
 import { createLabRouter } from './routes/lab.js';
 import { createHumRouter } from './routes/hum.js';
-import { removeOldVideos } from './video/oldVideos.js';
 import { OpenAiCompatibleLlm, type AssistantLlm } from './assistant/llm.js';
 import { createAssistantRouter } from './assistant/route.js';
 import { VideoService } from './video/videoService.js';
@@ -231,11 +230,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const avatarPacks = config.avatarPacksDir ? new AvatarPacks(config.avatarPacksDir) : undefined;
   avatarPacks?.list(); // fail at startup, naming the pack, if a manifest is broken
   const userAvatars = config.singersDataDir ? new UserAvatars(config.singersDataDir) : undefined;
-  // Music videos next to the renders: <rendersDir>/../videos. The console and cartoon videos' old files go once.
-  if (renders && !deps.videos) {
-    const { removed } = removeOldVideos(join(dirname(resolve(config.rendersDir)), 'videos'));
-    if (removed) console.log(`[brain] removed ${removed} old cartoon/console video files`);
-  }
+  // Music videos next to the renders: <rendersDir>/../videos.
   const videos =
     deps.videos ??
     (renders

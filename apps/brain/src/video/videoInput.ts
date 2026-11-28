@@ -133,7 +133,7 @@ const MeasuredLevelsSchema = z
     versionKey: z.string().regex(/^[0-9a-f]{16}$/u, 'a version key is 16 hex digits'),
     binSeconds: z.number().positive(),
     master: z.array(z.number().min(0)).min(1),
-    tracks: z.array(z.object({ name: z.string().min(1), role: z.string().min(1), levels: z.array(z.number().min(0)) }).strict()),
+    tracks: z.array(z.object({ name: z.string().min(1), role: z.enum(['track', 'leadVocal', 'effects']), levels: z.array(z.number().min(0)) }).strict()),
   })
   .strict();
 export type MeasuredLevels = z.infer<typeof MeasuredLevelsSchema>;

@@ -187,6 +187,14 @@ describe('avatar music videos', () => {
     expect((await post(`${h.url}/api/songs/${id}/video`, noAvatars)).status).toBe(400);
   });
 
+  it('refuses a track role it does not know, naming it, rather than leave the singer silent', async () => {
+    const { id, key } = await songOf(h);
+    const body = levelsBody(key);
+    const res = await post(`${h.url}/api/songs/${id}/video`, request(key, { levels: { ...body, tracks: [body.tracks[0], { ...body.tracks[1], role: 'lead' }] } }));
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { message: string }).message).toMatch(/levels\.tracks\.1\.role/u);
+  });
+
   it('refuses a stale version key with 409 song_changed', async () => {
     const { id } = await songOf(h);
     const res = await post(`${h.url}/api/songs/${id}/video`, request('0123456789abcdef'));
