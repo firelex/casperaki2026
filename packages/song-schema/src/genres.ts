@@ -28,8 +28,14 @@ export interface GenreRecipe {
   readonly alwaysPlays: readonly AlwaysPlayingLane[];
   /** The guitar's patterns: only Virtual Guitarist pattern families of these names ("Funk" → "…-Funk-03"). */
   readonly guitarPatterns?: readonly string[];
-  /** Every section's hi-hats from this drum style (laid over the section's own kick, snare and the rest). */
-  readonly hiHats?: string;
+  /** The hi-hats of these section types from this drum style (laid over the section's own kick, snare and the rest);
+   *  other sections keep their own. */
+  readonly hiHats?: { readonly style: string; readonly sectionTypes: readonly string[] };
+  /** Section types whose parts are fixed: these tracks (drums, bass, or lanes the recipe always plays) and, with
+   *  plusOne, one more of the song's other tracks (drawn once per song; never another always-playing lane). */
+  readonly sectionParts?: Readonly<Record<string, { readonly keep: readonly ('drums' | 'bass' | AlwaysPlayingLane)[]; readonly plusOne: boolean }>>;
+  /** Section types in which every track of the song plays. */
+  readonly fullSections?: readonly string[];
   /** The track mastering matches the song to instead of Atemlos: the name of its data file (the brain's
    *  mastering references directory, `<name>.json`, made by casperaki_master_reference). */
   readonly masteringReference?: string;
@@ -56,12 +62,17 @@ export const GENRE_RECIPES = {
     guitarPatterns: ['Funk', 'R&B'],
     // The hip-hop generator's hats (8ths with 16th doubles and rolls; owner 2026-11-28: the trap hi-hat is "not always
     // on every sixteenth note - we have it in hip hop"), not the authored trap-hats line of straight 16ths.
-    hiHats: 'urban',
+    // Verses only (owner 2026-11-28: "we can't have it in all segments"); the other sections keep Bright Pop's hats.
+    hiHats: { style: 'urban', sectionTypes: ['verse'] },
     // Owner 2026-11-28: Dr. Luke drums "hit much harder". Of four A/B masters (standard or harder drums, Atemlos or "Your
     // Love Is My Drug" as the mastering reference) he chose harder drums mastered towards "Your Love Is My Drug"
     // ("let's go for harder ylimd for Casperaki pop"). The mix: the drums +4 dB, the pad and synths -2 dB, keys -1 dB, the
     // kick bus's Thunder 0.41 -> 0.65 and its output 0.53 -> 0.62, the drum bus's Pyewacket input 0.83 -> 1.0 and its
     // output 0.5 -> 0.6 (slots of casperaki_engine/config/mix-config.json's rack chains).
+    // Owner 2026-11-28: "more instrument variety between verse and chorus" -> lean verse (drums, bass, the guitar and
+    // one more part), full chorus (adds the plucked synth, pad and lead synths).
+    sectionParts: { verse: { keep: ['drums', 'bass', 'electricGuitarClean'], plusOne: true } },
+    fullSections: ['chorus'],
     masteringReference: 'your-love-is-my-drug',
     mix: {
       lanes: { Drums: { volumeDb: 4 }, Pad: { volumeDb: -2 }, Synths: { volumeDb: -2 }, PluckedSynths: { volumeDb: -2 }, Keys: { volumeDb: -1 } },

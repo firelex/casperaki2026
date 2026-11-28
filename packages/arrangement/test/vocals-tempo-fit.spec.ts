@@ -127,3 +127,20 @@ describe('the real banks', () => {
     }
   });
 });
+
+describe('the shipped tempo fit (owner 2026-11-28: "normal busy lines - not whole and half notes everywhere")', () => {
+  it('a 120 bpm verse sings normal busy lines: at least 3 notes a bar on average across songs', async () => {
+    const { orchestrate } = await import('../src/index.js');
+    const perBar: number[] = [];
+    for (let i = 0; i < 8; i++) {
+      const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 120, seed: `busy-${i}` });
+      const v = s.arrangement['verse1']?.overrides['Vocal'] as { bars: { notes: Record<string, unknown[]> }[] } | undefined;
+      if (!v) continue;
+      const n = v.bars.reduce((a, b) => a + Object.values(b.notes).reduce((x, evs) => x + evs.length, 0), 0);
+      perBar.push(n / v.bars.length);
+    }
+    expect(perBar.length).toBeGreaterThan(4);
+    const mean = perBar.reduce((a, b) => a + b, 0) / perBar.length;
+    expect(mean, JSON.stringify(perBar)).toBeGreaterThanOrEqual(3);
+  });
+});

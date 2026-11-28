@@ -563,6 +563,8 @@ private:
 
             // Final note state per group, keyed (localChannel, absStep) -> velocity.
             std::array<std::map<std::pair<int, int>, int>, 4> hitMaps;
+            // The legacy app's hip-hop drum style (its softer off-beat curve) is Urban's.
+            const bool hipHopDrums = song_.value("genre", std::string()) == "urban";
 
             // Drums.h::applyPattern — tile each sub-instrument's grid across
             // [startBar,endBar), routing to its group's clip and applying setNote
@@ -587,7 +589,7 @@ private:
                         for (int i = 0; i < (int)s.size(); ++i) {
                             const int step = currentBar * 32 + i;
                             if (step < 0 || step >= numSteps) continue;
-                            if (s[i] == 'x')      hitMaps[g][{ch, step}] = 127;
+                            if (s[i] == 'x')      hitMaps[g][{ch, step}] = legacyDrumVelocity(step, hipHopDrums);
                             else if (s[i] == '0') hitMaps[g].erase({ch, step});
                         }
                     }

@@ -765,8 +765,10 @@ export function selectInstruments(
   }
   // A genre recipe's lanes that play in every section (Casperaki Pop: a clean electric guitar) are essential too.
   const always = (ctx.recipe?.alwaysPlays ?? []).map((lane) => ALWAYS_PLAYING_SPECS[lane]);
-  for (const spec of always) {
+  const alwaysNames = new Map<AlwaysPlayingLane, string>();
+  for (const [k, spec] of always.entries()) {
     const name = builder.add(spec, true);
+    if (name) alwaysNames.set(ctx.recipe!.alwaysPlays[k]!, name);
     if (!name) throw new Error(`selectInstruments: no candidates for the always-playing lane "${spec.token}" (genre "${genre}")`);
     essentialLaneNames.push(name);
   }
@@ -813,7 +815,41 @@ export function selectInstruments(
   });
 
   const instruments = builder.lanes;
-  return loop ? { instruments, segments, loop } : { instruments, segments };
+  const recipeSegments = recipeSectionParts(ctx, segments, instruments.map((l) => l.lane), essentialLaneNames, alwaysNames, rng.fork('recipe/sections'));
+  return loop ? { instruments, segments: recipeSegments, loop } : { instruments, segments: recipeSegments };
+}
+
+/** A genre recipe's fixed section parts (Casperaki Pop: a lean verse, a full chorus; owner 2026-11-28 "more instrument
+ *  variety between verse and chorus"). The extra part of a section type is drawn once per song. */
+function recipeSectionParts(
+  ctx: GeneratorContext,
+  segments: readonly SegmentActivity[],
+  allLanes: readonly string[],
+  essentialLaneNames: readonly string[],
+  alwaysNames: ReadonlyMap<AlwaysPlayingLane, string>,
+  rng: Rng,
+): SegmentActivity[] {
+  const parts = ctx.recipe?.sectionParts ?? {};
+  const full = new Set(ctx.recipe?.fullSections ?? []);
+  const nameOf = (k: 'drums' | 'bass' | AlwaysPlayingLane): string => {
+    const n = k === 'drums' ? essentialLaneNames[0] : k === 'bass' ? essentialLaneNames[1] : alwaysNames.get(k);
+    if (!n) throw new Error(`selectInstruments: the recipe keeps "${k}" in a section but the song has no such track`);
+    return n;
+  };
+  const extraByType = new Map<string, string | undefined>();
+  return segments.map((seg) => {
+    const type = segmentType(seg.segmentName);
+    if (full.has(type)) return { ...seg, activeLanes: [...allLanes] };
+    const rule = parts[type];
+    if (!rule) return { ...seg };
+    const keep = rule.keep.map(nameOf);
+    if (rule.plusOne && !extraByType.has(type)) {
+      const others = allLanes.filter((l) => !keep.includes(l) && ![...alwaysNames.values()].includes(l));
+      extraByType.set(type, others.length > 0 ? rng.fork(type).pick(others) : undefined);
+    }
+    const extra = rule.plusOne ? extraByType.get(type) : undefined;
+    return { ...seg, activeLanes: extra ? [...keep, extra] : keep };
+  });
 }
 
 /** Pick a deterministic percussion-loop catalog row at the song bpm, per the

@@ -5,7 +5,8 @@
 // -rest"). Each sub-instrument's pattern string ("x0--0x..", 32 steps/bar after
 // retainCharacters("0x-")) is tiled across the segment's bars and routed to one
 // of the four step clips by its instrumentGroup (Drums.h:225-240). Velocity is
-// the channel default (127) — no RNG — so step hits assert exact.
+// by the hit's place in the bar, as the legacy app played it (legacyDrumVelocity below) — no RNG — so step hits
+// assert exact.
 //
 // Two faithfulness notes carried from the original:
 //   - Pattern application is setNote semantics: 'x' sets a hit, '0' CLEARS one.
@@ -121,6 +122,20 @@ inline int drumPatternBarsCount(const json& patternObj) {
     if (pp.empty()) return 0;
     const std::string first = retainStepChars(asStr(pp.begin().value()));
     return (int)std::ceil(first.size() / 32.0);
+}
+
+// A drum hit's velocity by its place in the bar, as the legacy app played it (casperaki2-engine-js
+// api/v1.0/services/tracks/drumTrack.js:183-210; owner 2026-11-28 "change the engine to match legacy behavior"):
+// the bar's first step 100, the middle of the bar 87 (hip-hop 90), the other beats 75 (80), every step between
+// beats 50 (70). Scaled so the bar's first step keeps the engine's full 127. `stepInSegment` counts 32 steps a bar.
+inline int legacyDrumVelocity(int stepInSegment, bool hipHop) {
+    const int s = ((stepInSegment % 32) + 32) % 32;
+    int legacy;
+    if (s == 0) legacy = 100;
+    else if (s == 16) legacy = hipHop ? 90 : 87;
+    else if (s % 8 == 0) legacy = hipHop ? 80 : 75;
+    else legacy = hipHop ? 70 : 50;
+    return (int)std::lround(127.0 * legacy / 100.0);
 }
 
 } // namespace casperaki

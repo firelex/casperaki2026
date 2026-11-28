@@ -93,6 +93,7 @@ target_compile_definitions(mixconfig_test PRIVATE
     MIXCONFIG_JSON_PATH="${CMAKE_CURRENT_SOURCE_DIR}/../../../../../casperaki_engine/config/mix-config.json")
 
 # Instrument lanes: names, per-lane meters, live lane gain (mute/solo).
+add_executable(drum_velocity_test test/drum_velocity_test.cpp)
 add_executable(lanes_test test/lanes_test.cpp)
 target_link_libraries(lanes_test PRIVATE aw_fx)
 target_compile_definitions(lanes_test PRIVATE
@@ -127,6 +128,7 @@ add_test(NAME audio_clips_test COMMAND audio_clips_test)
 add_test(NAME noise_source_test COMMAND noise_source_test)
 add_test(NAME mixconfig_test COMMAND mixconfig_test)
 add_test(NAME lanes_test COMMAND lanes_test)
+add_test(NAME drum_velocity_test COMMAND drum_velocity_test)
 add_test(NAME arpeggio_test COMMAND arpeggio_test)
 add_test(NAME transition_pattern_test COMMAND transition_pattern_test)
 add_test(NAME matchering_test COMMAND matchering_test

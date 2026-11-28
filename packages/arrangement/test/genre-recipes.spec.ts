@@ -51,48 +51,71 @@ describe('Casperaki Pop', () => {
     expect(() => selectVirtualGuitaristPattern(createRng('x'), 'brightPop', 110, ['Nope'])).toThrow(/Nope/u);
   });
 
-  it('every section has the trap hi-hats (16ths with rolls) over its own kick and snare (owner 2026-11-28)', () => {
-    const ctx = { params: { genre: 'brightPop', key: 'C', bpm: 110, seed: 'hats' }, rng: createRng('hats'), recipe: GENRE_RECIPES.casperakiPop };
-    const trap = selectDrumBlueprint(ctx.rng.fork('patterns/drums/hiHats'), 'brightPop', [GENRE_RECIPES.casperakiPop.hiHats]);
+  it('the verses take the hip-hop generator\'s hi-hats over their own kick and snare; the other sections keep their own hats (owner 2026-11-28: "we can\'t have it in all segments")', () => {
+    const recipe = GENRE_RECIPES.casperakiPop;
+    const mk = () => ({ params: { genre: 'brightPop', key: 'C', bpm: 110, seed: 'hats' }, rng: createRng('hats'), recipe });
+    const plain = () => ({ params: { genre: 'brightPop', key: 'C', bpm: 110, seed: 'hats' }, rng: createRng('hats') });
+    const hip = selectDrumBlueprint(createRng('hats').fork('patterns/drums/hiHats'), 'brightPop', [recipe.hiHats.style]);
     const hatsOf = (bars: { notes?: Record<string, { note: number }[]> }[]) =>
       bars.flatMap((b, i) => Object.entries(b.notes ?? {}).flatMap(([beat, evs]) => evs.filter((e) => e.note === 42).map(() => i * 4 + Number(beat)))).sort((a, b) => a - b);
-    const want = (trap.blueprint as Record<string, number[]>).hiHatClosed1!.filter((t) => t < 8).sort((a, b) => a - b);
-    for (const name of ['verse1', 'chorus1']) {
-      const seg = { name, bars: Array.from({ length: 4 }, () => ({ chords: ['C', 'C', 'C', 'C'] })) } as never;
-      const pat = generateDrumPattern(ctx as never, seg, ['drums'])!;
-      expect(hatsOf(pat.bars as never).filter((t) => t < 8), name).toEqual(want);
-      // its own kick is there too
-      expect(pat.bars.some((b) => Object.values(b.notes ?? {}).some((evs) => (evs as { note: number }[]).some((e) => e.note === 36))), name).toBe(true);
-    }
+    const seg = (name: string) => ({ name, bars: Array.from({ length: 4 }, () => ({ chords: ['C', 'C', 'C', 'C'] })) }) as never;
+    const want = (hip.blueprint as Record<string, number[]>).hiHatClosed1!.filter((t) => t < 8).sort((a, b) => a - b);
+    const verse = generateDrumPattern(mk() as never, seg('verse1'), ['drums'])!;
+    expect(hatsOf(verse.bars as never).filter((t) => t < 8)).toEqual(want);
+    expect(verse.bars.some((b) => Object.values(b.notes ?? {}).some((evs) => (evs as { note: number }[]).some((e) => e.note === 36)))).toBe(true);
+    // a chorus plays its own (Bright Pop) hats, exactly as without the recipe's hats
+    const chorus = generateDrumPattern(mk() as never, seg('chorus1'), ['drums'])!;
+    const own = generateDrumPattern({ ...plain(), recipe: { ...recipe, hiHats: undefined } } as never, seg('chorus1'), ['drums'])!;
+    expect(hatsOf(chorus.bars as never)).toEqual(hatsOf(own.bars as never));
   });
 
-  it('the legacy section variety never takes the verses\' hip-hop groove or any section\'s trap hats (owner 2026-11-28: "not sure it always gets that hip hop rhythm in the verse")', () => {
+  it('the legacy section variety never takes the verses\' hip-hop groove or their hi-hats (owner 2026-11-28: "not sure it always gets that hip hop rhythm in the verse")', () => {
     const HATS = new Set([42, 44, 46]);
     const notesOf = (pat: { bars: { notes?: Record<string, { note?: number }[]> }[] }) =>
       pat.bars.flatMap((b) => Object.values(b.notes ?? {}).flat().map((e) => e.note));
     for (let i = 0; i < 12; i++) {
       const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 105, seed: `groove-${i}` });
-      const drums = 'Drums';
-      for (const seg of s.songStructure) {
-        const pat = s.arrangement[seg.name]!.overrides[drums] as never;
+      for (const seg of s.songStructure.filter((x) => x.name.startsWith('verse'))) {
+        const pat = s.arrangement[seg.name]!.overrides['Drums'] as never;
         if (!pat) continue;
         const notes = notesOf(pat);
-        if (notes.length === 0) continue; // a deliberate drop-out
         expect(notes.some((n) => HATS.has(n!)), `${i} ${seg.name} has hi-hats`).toBe(true);
+        expect(notes.some((n) => n === 36 || n === 35), `${i} ${seg.name} has its kick`).toBe(true);
       }
     }
   });
 
-  it('a bouncy plucked synth plays in every section, and every guitar is a clean electric, never acoustic or distorted (owner 2026-11-28)', () => {
+  it('a bouncy plucked synth plays in every section but the verses, and every guitar is a clean electric, never acoustic or distorted (owner 2026-11-28)', () => {
     for (let i = 0; i < 12; i++) {
       const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 105, seed: `roster-${i}` });
       const types = s.instrumentDefinitions.map((d) => [d.name, String(d.instrumentGroup), String(d.lowLevelType)] as const);
       const pluck = types.find(([, , low]) => low === 'synthsPlucked');
       expect(pluck, `${i}: ${JSON.stringify(types)}`).toBeDefined();
-      for (const seg of s.songStructure) expect(Object.keys(s.arrangement[seg.name]!.overrides), `${i} ${seg.name}`).toContain(pluck![0]);
+      // every section but the lean verses (see "lean verse, full chorus")
+      for (const seg of s.songStructure.filter((x) => !x.name.startsWith('verse'))) expect(Object.keys(s.arrangement[seg.name]!.overrides), `${i} ${seg.name}`).toContain(pluck![0]);
       for (const [name, group, low] of types) {
         if (!/guitar/iu.test(group) && !/guitar/iu.test(low)) continue;
         expect(ELECTRIC_CLEAN, `${i} ${name} ${low}`).toContain(low);
+      }
+    }
+  });
+
+  it('lean verse, full chorus: a verse plays drums, bass, the guitar and one more part (never the plucked synth); a chorus plays every part of the song (owner 2026-11-28: "more instrument variety between verse and chorus")', () => {
+    const parts = (s: ReturnType<typeof orchestrate>, sec: string) =>
+      Object.keys(s.arrangement[sec]!.overrides).filter((k) => !/^(Vocal|Backing vocals)/u.test(k) && k !== 'Loop').sort();
+    for (let i = 0; i < 10; i++) {
+      const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 110, seed: `variety-${i}` });
+      const guitar = s.instrumentDefinitions.find((d) => ELECTRIC_CLEAN.includes(String(d.lowLevelType)))!.name;
+      const pluck = s.instrumentDefinitions.find((d) => d.lowLevelType === 'synthsPlucked')!.name;
+      const song = s.instrumentDefinitions.map((d) => d.name).filter((n) => !/^(Vocal|Backing vocals)/u.test(n) && n !== 'Loop').sort();
+      for (const seg of s.songStructure) {
+        const p = parts(s, seg.name);
+        if (seg.name.startsWith('verse')) {
+          expect(p, `${i} ${seg.name}`).toEqual(expect.arrayContaining(['Bass', 'Drums', guitar]));
+          expect(p.length, `${i} ${seg.name} ${p}`).toBe(4);
+          expect(p, `${i} ${seg.name}`).not.toContain(pluck);
+        }
+        if (seg.name.startsWith('chorus')) expect(p, `${i} ${seg.name}`).toEqual(song);
       }
     }
   });

@@ -54,9 +54,12 @@ export function generateDrumPattern(
   const selection = preview ? selectPreviewDrumBlueprint(rng, preview) : selectDrumBlueprint(rng, ctx.params.genre, styles);
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
-  // A genre recipe's hi-hats (Casperaki Pop: trap hats) replace the section's own, the same in every section (one
-  // draw per song); the rest of its kit plays on.
-  const hats = ctx.recipe?.hiHats ? selectDrumBlueprint(ctx.rng.fork('patterns/drums/hiHats'), ctx.params.genre, [ctx.recipe.hiHats]) : undefined;
+  // A genre recipe's hi-hats (Casperaki Pop: the hip-hop hats, verses only) replace those sections' own, the same in
+  // each (one draw per song); the rest of their kit plays on.
+  const recipeHats = ctx.recipe?.hiHats;
+  const hats = recipeHats?.sectionTypes.includes(segmentType(segment.name))
+    ? selectDrumBlueprint(ctx.rng.fork('patterns/drums/hiHats'), ctx.params.genre, [recipeHats.style])
+    : undefined;
   const layers = hats
     ? [
         { sel: selection, keep: (lane: string) => !HAT_LANES.has(lane) },

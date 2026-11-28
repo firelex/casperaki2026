@@ -298,6 +298,8 @@ export function addThinPartners(input: ThinPartnerInput): ThinPartnerResult {
     const target = firstThin(patterns, tried, motionExempt);
     if (!target) break;
     tried.add(`${target.type}:${target.kind}`);
+    // A genre recipe fixes this section type's parts (Casperaki Pop's lean verse): no partner, no track switched on.
+    if (ctx.recipe?.sectionParts?.[target.type]) continue;
     const lanes = patterns.segments[target.index]!.lanes;
     const before = measureSection(lanes);
 
