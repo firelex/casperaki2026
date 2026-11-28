@@ -54,7 +54,7 @@ const EIGHTH = 2;
 const DURATIONS = [2, 4, 6, 8, 12, 16];
 const HOLD = HOLD_BEATS * Q;
 
-const COST = { length: 1, movePerStep: 2, moveBeatPerStep: 3, drop: 3, split: 3, add: 4, heldSmallWord: 3 } as const;
+const COST = { length: 1, movePerStep: 2, moveBeatPerStep: 3, drop: 3, split: 3, add: 4, heldSmallWord: 3, heldSmallWordLong: 9 } as const;
 /** Small words that carry no meaning of their own: pronouns, articles, auxiliaries and modals (and their
  *  contractions), prepositions and conjunctions. Held a beat or more inside a line they sound wrong ("don't" held before
  *  "give a frown", owner 2026-11-27), so holding one costs as much as dropping a pattern note: the search keeps a
@@ -72,8 +72,10 @@ export const SMALL_WORDS: ReadonlySet<string> = new Set([
   'and', 'but', 'or', 'so', 'if', 'as', 'than', 'when', 'while',
 ]);
 /** What a rest between two words of a line costs: after a small word, which leads into the next ("the | candles"),
- *  and shorter than a beat. */
-const REST = { afterSmallWord: 12, short: 12 } as const;
+ *  shorter than a beat, and after a word whose end cannot be held (a short vowel, "pick", "up") where the line runs
+ *  on: no comma or other mark after it (owner 2026-11-28, Pick Me Up: "a long pause after 'pick', it's mid-phrase and
+ *  the word doesn't end on a long vowel"). */
+const REST = { afterSmallWord: 12, short: 12, unheld: 12 } as const;
 /** A note may move this far onto (or from) a pattern note and still count as that note moved. */
 const MAX_MOVE = 2;
 
@@ -89,6 +91,8 @@ interface Syllable {
   readonly lean: '+' | '-' | undefined;
   readonly length: SyllableLength;
   readonly endsWord: boolean;
+  /** The line marks a break after its word (a comma, a full stop, a dash …): a breath is welcome there. */
+  readonly breakAfter: boolean;
 }
 
 interface Note {
@@ -103,8 +107,21 @@ interface Tail extends Note {
   readonly pd: number | undefined;
 }
 
+/** Per word of the line (as wordsOf reads it), whether the line marks a break after it. */
+function breaksAfterWords(text: string): boolean[] {
+  const out: boolean[] = [];
+  const parts = text.replace(/[‘’`]/gu, "'").split(/(\s+|[-–—/]+)/u);
+  parts.forEach((part, i) => {
+    if (!/[A-Za-z]/u.test(part)) return;
+    out.push(/[,;:.!?)]["']?$/u.test(part) || /[–—]/u.test(parts[i + 1] ?? ''));
+  });
+  return out;
+}
+
 function syllablesOf(text: string): Syllable[] {
   const read = pronounceLine(text);
+  const breaks = breaksAfterWords(text);
+  if (breaks.length !== wordsOf(text).length) throw new Error(`recut: the line "${text}" splits into ${wordsOf(text).length} words but ${breaks.length} were marked`);
   return wordsOf(text).flatMap((w, k) => {
     const p = read[k];
     if (!p) throw new Error(`recut: "${w}" is not in the pronunciation dictionary (line "${text}")`);
@@ -114,7 +131,7 @@ function syllablesOf(text: string): Syllable[] {
       const twinStress = p.rhythm[i] === '+' && byStress;
       const small = p.phones.length === 1 && SMALL_WORDS.has(w.toLowerCase().replace(/[‘’`]/gu, "'"));
       const lean = p.phones.length === 1 && p.rhythm[0] === '0' ? (small ? '-' : '+') : undefined;
-      return { stress: p.rhythm[i]!, byStress, twinStress, small, lean, length: syllableLength(phones, endsWord), endsWord };
+      return { stress: p.rhythm[i]!, byStress, twinStress, small, lean, length: syllableLength(phones, endsWord), endsWord, breakAfter: endsWord && breaks[k]! };
     });
   });
 }
@@ -343,11 +360,15 @@ function recutLine(source: readonly Note[], syl: readonly Syllable[], lineStart:
           stress += stressCost(last, st.pd, same ? d : undefined, s, syl[st.j - 1]!);
           pd = same ? last.d : undefined;
         }
-        const held = y.small && d >= Q && st.j < syl.length - 1 ? (COST.heldSmallWord * d) / Q : 0;
+        // Held two beats or more it stalls the line (owner 2026-11-28, Pick Me Up: "pick me—— up").
+        const held = y.small && d >= Q && st.j < syl.length - 1 ? (COST.heldSmallWord * d) / Q + (d >= 2 * Q ? COST.heldSmallWordLong : 0) : 0;
         // A rest between words of a line is a breath of a beat or more, and never after a small word (owner,
         // 2026-11-27: "Got the cake and the candles lit" phrased awkwardly, an eighth then a rest, "the | candles").
         const gap = first ? 0 : s - (st.last!.s + st.last!.d);
-        const rest = gap > 0 ? (syl[st.j - 1]!.small ? REST.afterSmallWord : 0) + (gap < Q ? REST.short : 0) : 0;
+        const was = first ? undefined : syl[st.j - 1]!;
+        const rest = gap > 0 && was
+          ? (was.small ? REST.afterSmallWord : 0) + (gap < Q ? REST.short : 0) + (was.length !== 'any' && !was.breakAfter ? REST.unheld : 0)
+          : 0;
         for (const p of placements(s, d, st.k)) {
           const next: State = { j: st.j + 1, last: note, pd, k: p.k, parent: st, g: cost + p.cost + held + stress + rest };
           const nk = key(next);
@@ -377,6 +398,23 @@ function singOn(laid: readonly Note[], syl: readonly Syllable[], lineStart: numb
   });
 }
 
+/** A line's last note shorter than a beat is sung on to a beat (owner 2026-11-28, Pick Me Up: "act and back, being the
+ *  last note should get a quarter note"), whatever its vowel, where the next note leaves room: half a beat of rest
+ *  before it stays, so the note still reads as its own line's end (lyric-lines.ts), and the section's end. */
+function lineEndsSungOn(notes: readonly Note[], lineEnds: readonly number[], bars: number): Note[] {
+  const out = [...notes];
+  for (const i of lineEnds) {
+    const n = out[i]!;
+    if (n.d >= Q) continue;
+    const next = out[i + 1];
+    // (The section's end too: the section repeats, or the next one starts.)
+    const room = (next ? next.s : bars * BEATS_PER_BAR * Q) - LEGATO_GAP - n.s;
+    const d = Math.min(Q, room);
+    if (d > n.d) out[i] = { s: n.s, d };
+  }
+  return out;
+}
+
 /** The rhythm recut to the section's lines (one line per LINE_BARS bars, in order). */
 export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: { readonly bpm: number; readonly bars: number; readonly echo?: boolean }): RecutRhythm {
   if (lines.length * LINE_BARS !== opts.bars) {
@@ -386,6 +424,7 @@ export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: {
   const notes: Note[] = [];
   // Each line as the search laid it (before singOn), for the lines that echo it.
   const asLaid: Note[][] = [];
+  const lineEnds: number[] = [];
   let prev: Tail | undefined;
   lines.forEach((text, i) => {
     const lineStart = i * LINE_STEPS;
@@ -400,11 +439,12 @@ export function recutRhythm(rhythm: Precedent, lines: readonly string[], opts: {
     asLaid.push(raw);
     const laid = singOn(raw, syl, lineStart, opts.bpm);
     notes.push(...laid);
+    lineEnds.push(notes.length - 1);
     const last = laid.at(-1)!;
     const before = laid.at(-2);
     prev = { ...last, syllable: syl.at(-1)!, pd: before && barOf(before.s) === barOf(last.s) ? before.d : undefined };
   });
-  const out: RecutRhythm = { pattern: String(rhythm.id), source: rhythm, bars: opts.bars, notes: notes.map((n) => ({ start: n.s / Q, duration: n.d / Q })) };
+  const out: RecutRhythm = { pattern: String(rhythm.id), source: rhythm, bars: opts.bars, notes: lineEndsSungOn(notes, lineEnds, opts.bars).map((n) => ({ start: n.s / Q, duration: n.d / Q })) };
   // The lines must read back as written (a bug otherwise).
   const read = lyricLines(recutBars(out));
   const counts = lines.map((l) => syllablesOf(l).length);

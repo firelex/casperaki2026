@@ -1,0 +1,374 @@
+{
+ "chords": {
+  "0.0": {
+   "chord": "Dm7"
+  },
+  "1.0": {
+   "chord": "Dm7"
+  },
+  "10.0": {
+   "chord": "Fmaj9"
+  },
+  "11.0": {
+   "chord": "Fmaj9"
+  },
+  "12.0": {
+   "chord": "Dm7"
+  },
+  "13.0": {
+   "chord": "Dm7"
+  },
+  "14.0": {
+   "chord": "C"
+  },
+  "15.0": {
+   "chord": "C"
+  },
+  "16.0": {
+   "chord": "Fmaj9"
+  },
+  "17.0": {
+   "chord": "Fmaj9"
+  },
+  "18.0": {
+   "chord": "Fmaj9"
+  },
+  "19.0": {
+   "chord": "Fmaj9"
+  },
+  "2.0": {
+   "chord": "C"
+  },
+  "20.0": {
+   "chord": "Dm7"
+  },
+  "21.0": {
+   "chord": "Dm7"
+  },
+  "22.0": {
+   "chord": "Dm7"
+  },
+  "23.0": {
+   "chord": "Dm7"
+  },
+  "24.0": {
+   "chord": "Fmaj9"
+  },
+  "25.0": {
+   "chord": "Fmaj9"
+  },
+  "26.0": {
+   "chord": "Fmaj9"
+  },
+  "27.0": {
+   "chord": "Fmaj9"
+  },
+  "28.0": {
+   "chord": "Dm7"
+  },
+  "29.0": {
+   "chord": "Dm7"
+  },
+  "3.0": {
+   "chord": "C"
+  },
+  "30.0": {
+   "chord": "C"
+  },
+  "31.0": {
+   "chord": "C"
+  },
+  "4.0": {
+   "chord": "Fmaj9"
+  },
+  "5.0": {
+   "chord": "Fmaj9"
+  },
+  "6.0": {
+   "chord": "Fmaj9"
+  },
+  "7.0": {
+   "chord": "Fmaj9"
+  },
+  "8.0": {
+   "chord": "Fmaj9"
+  },
+  "9.0": {
+   "chord": "Fmaj9"
+  }
+ },
+ "id": "8",
+ "melody": {
+  "0.5": [
+   {
+    "duration": 0.5,
+    "midi": 48,
+    "note": "c4"
+   }
+  ],
+  "1.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "1.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "10.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "10.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "12.0": [
+   {
+    "duration": 1,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "13.5": [
+   {
+    "duration": 1.5,
+    "midi": 48,
+    "note": "c4"
+   }
+  ],
+  "16.5": [
+   {
+    "duration": 0.5,
+    "midi": 48,
+    "note": "c4"
+   }
+  ],
+  "17.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "17.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "18.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "18.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "2.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "2.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "20.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "20.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "21.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "21.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "22.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "22.5": [
+   {
+    "duration": 0.5,
+    "midi": 52,
+    "note": "e4"
+   }
+  ],
+  "24.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "25.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "25.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "26.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "26.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "28.0": [
+   {
+    "duration": 1.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "29.5": [
+   {
+    "duration": 1.5,
+    "midi": 48,
+    "note": "c4"
+   }
+  ],
+  "4.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "4.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "5.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "5.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "6.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "6.5": [
+   {
+    "duration": 0.5,
+    "midi": 52,
+    "note": "e4"
+   }
+  ],
+  "8.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "9.0": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ],
+  "9.5": [
+   {
+    "duration": 0.5,
+    "midi": 50,
+    "note": "d4"
+   }
+  ]
+ },
+ "properties": {
+  "busyness": 4.5,
+  "end": 8,
+  "highestNote": 52,
+  "key": "C",
+  "lowestNote": 48,
+  "medianNote": 50,
+  "name": "Birthday",
+  "originalKey": "C",
+  "source": {
+   "kind": "song",
+   "title": "Birthday"
+  },
+  "start": 0,
+  "tempo": "126",
+  "type": "Verse",
+  "useOriginal": false,
+  "useRemix": true
+ }
+}

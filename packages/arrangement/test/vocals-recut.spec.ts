@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import { loadBankIndex, loadPrecedentBank, type Precedent } from '../src/vocals/precedents.js';
@@ -85,10 +87,11 @@ function expectSingable(r: RecutRhythm, lines: readonly string[], bpm: number, e
   // stressed note.
   const endsAt = lines.flatMap((l) => wordsOf(l).flatMap((w) => pronounce(w)!.phones.map((_, i, all) => i === all.length - 1)));
   const syllables = lines.flatMap((l) => wordsOf(l).flatMap((w) => { const p = pronounce(w)!; return p.rhythm.map((st, i) => ({ word: w, st, byStress: p.rhythm[i - 1] === '+' || p.rhythm[i + 1] === '+' })); }));
-  // Stresses are heard on the notes as laid: a note sung on into a rest, up to a beat, weighs as an eighth.
+  // Stresses are heard on the notes as laid: a note sung on into a rest, up to a beat, weighs as an eighth (the
+  // section's last note too: the section ends in a rest or the next section).
   const heard = r.notes.map((n, i) => {
     const next = r.notes[i + 1];
-    return next && next.start > n.start + n.duration + 1e-9 && n.duration <= 1 ? { ...n, duration: 0.5 } : n;
+    return (!next || next.start > n.start + n.duration + 1e-9) && n.duration <= 1 ? { ...n, duration: 0.5 } : n;
   });
   const grades = Array.from({ length: Math.ceil(r.bars) }, (_, bar) => {
     const inBar = heard.filter((n) => Math.floor(n.start / 4 + 1e-9) === bar);
@@ -211,7 +214,37 @@ describe('the recut', () => {
   it('"Got the cake and the candles lit": no rest after "the" or "your", none shorter than a beat (Electric Daydream, 128 bpm)', () => {
     const verse = loadPrecedentBank('hooks').find((p) => String(p.id) === '25-fast-edm-04')!;
     const lines = ['Got the cake and the candles lit', 'Your favorite song on repeat', 'Checked my phone about a hundred times', "But you're still not on my street"];
-    expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128);
+    // One stress is traded for no pause after "favorite" mid-phrase (owner 2026-11-28, Pick Me Up): "rite" a little
+    // strong.
+    restMisses = 0;
+    expect(expectSingable(recutRhythm(verse, lines, { bpm: 128, bars: 8 }), lines, 128, false)).toBeLessThanOrEqual(1);
+    expect(restMisses).toBe(0);
+  });
+
+  // Owner 2026-11-28, Pick Me Up's chorus: "why is there such a long pause after 'pick', it's mid-phrase and the word
+  // doesn't end on a long vowel. Also, act and back, being the last note should get a quarter note."
+  it('"Pick me up, pick me up": no rest after a word that cannot be held, but at a comma; each line ends on a quarter (Pick Me Up, 120 bpm)', () => {
+    const source = JSON.parse(readFileSync(new URL('./fixtures/recut/pick-me-up-chorus-source.json', import.meta.url), 'utf8')) as Precedent;
+    const lines = ['Pick me up, pick me up', "I'm caught in the act", 'Pick me up, pick me up', "There's no turning back"];
+    const out = recutRhythm(source, lines, { bpm: 120, bars: 8, echo: true });
+    expectSingable(out, lines, 120);
+    const counts = lines.map((l) => wordsOf(l).flatMap((w) => pronounce(w)!.phones).length);
+    let at = 0;
+    lines.forEach((line, li) => {
+      // the line's words as written (commas kept), one per syllable
+      const tokens = line.split(/\s+/u).flatMap((t) => pronounce(wordsOf(t)[0]!)!.phones.map(() => t));
+      const notes = out.notes.slice(at, at + counts[li]!);
+      // one syllable a word in these lines: a rest after a word only where the line has a comma
+      notes.slice(0, -1).forEach((n, i) => {
+        const rest = notes[i + 1]!.start - (n.start + n.duration);
+        if (rest > 1e-9) expect(tokens[i], `a rest of ${rest} beats after "${tokens[i]}" in line ${li + 1}`).toMatch(/,$/u);
+      });
+      expect(notes.at(-1)!.duration, `the last note of line ${li + 1} ("${tokens.at(-1)}")`).toBeGreaterThanOrEqual(1);
+      // and no small word stalls the line ("pick me—— up")
+      const sylWords = wordsOf(line).flatMap((w) => pronounce(w)!.phones.map(() => w.toLowerCase()));
+      notes.forEach((n, i) => { if (SMALL_WORDS.has(sylWords[i]!)) expect(n.duration, `"${sylWords[i]}" in line ${li + 1}`).toBeLessThan(2); });
+      at += counts[li]!;
+    });
   });
 
   it('"You laughed", "I\'m done": the content word, not the small word, on the stronger note (Electric Daydream, 128 bpm)', () => {
@@ -227,7 +260,8 @@ describe('the recut', () => {
     const pair = ['Got the cake and the candles lit', 'Your favorite song on repeat'];
     const lines = [...pair, ...pair];
     const out = recutRhythm(verse, lines, { bpm: 128, bars: 8, echo: true });
-    expectSingable(out, lines, 128);
+    // The trade above, in both couplets.
+    expect(expectSingable(out, lines, 128, false)).toBeLessThanOrEqual(2);
     const n = syllablesIn(pair);
     const first = out.notes.slice(0, n);
     const second = out.notes.slice(n).map((x) => ({ start: x.start - 16, duration: x.duration }));
@@ -294,8 +328,8 @@ describe('the recut', () => {
     // Only lines the eighth grid cannot sing exactly miss (a stressed-unstressed-unstressed ending: DAN-ge-rous).
     console.log(`stress misses: ${misses} of ${syllables} syllables; awkward rests: ${restMisses}; small words over content words: ${leanMisses}`);
     // Avoiding awkward rests (3375 without the rule, 2026-11-27) costs some stresses: 114 misses before, about 290
-    // after.
-    expect(misses / syllables).toBeLessThan(0.015);
+    // after; no pause after a word that cannot be held mid-phrase and line ends on a quarter (2026-11-28) about 310.
+    expect(misses / syllables).toBeLessThan(0.016);
     expect(restMisses / syllables).toBeLessThan(0.005);
   }, 120_000);
 });

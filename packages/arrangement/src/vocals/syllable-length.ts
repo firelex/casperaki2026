@@ -13,6 +13,8 @@ export type SyllableLength = 'short' | 'medium' | 'any';
 export const SHORT_MS = 300;
 /** The shortest note sung, in beats (an eighth; owner, 2026-11-27: sixteenths sang too fast). */
 export const SHORTEST_BEATS = 0.5;
+/** A line's last syllable may last this long whatever its vowel (recut.ts lineEndsSungOn). */
+export const LINE_END_BEATS = 1;
 /** Under this long: a short-to-medium note. */
 export const MEDIUM_MS = 500;
 
@@ -43,9 +45,12 @@ export function lengthFits(kind: SyllableLength, durationBeats: number, bpm: num
 export function lineLengthProblems(text: string, slots: LyricLine, bpm: number, asWritten = false): string[] {
   const sung = sungLineSyllables(text, slots, asWritten);
   if (!sung) throw new Error(`lineLengthProblems: "${text}" does not fit its ${slots.length} notes`);
-  return sung.flatMap((s) => {
+  return sung.flatMap((s, i) => {
     const kind = syllableLength(s.phones, s.endsWord);
     if (lengthFits(kind, s.beats, bpm)) return [];
+    // A line's last syllable may last a beat, whatever its vowel (owner 2026-11-28: "being the last note should get
+    // a quarter note").
+    if (i === sung.length - 1 && s.beats <= LINE_END_BEATS) return [];
     const ms = Math.round((s.beats * 60000) / bpm);
     const vowel = s.phones.find((p) => /\d$/u.test(p))!.replace(/\d$/u, '').toLowerCase();
     const why = kind === 'short' ? 'it does not end its word' : 'its vowel is short';
