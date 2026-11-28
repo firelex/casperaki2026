@@ -20,11 +20,11 @@ import { join, resolve } from 'node:path';
 
 import { z } from 'zod';
 
-import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocals, applyWrittenLyrics, generatorParams, lyricsFirstParts, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
-import { canonicalStringifySong, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
+import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applyRapLyrics, applySungVocals, applyWrittenLyrics, generatorParams, lyricsFirstParts, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { canonicalStringifySong, parseSong, rapLineCount, type MixOverrides, type Song } from '@casperaki/song-schema';
 
-import { writeRapWords, type RapWordsRequest } from '../ace/rapWords.js';
-import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, type AceLayerOptions } from '../ace/aceLayerTask.js';
+import { writeRapWords } from '../ace/rapWords.js';
+import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, sectionLabel, songWordsOf, type AceLayerOptions } from '../ace/aceLayerTask.js';
 import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
 import { drawInspiration } from '../lyrics/inspiration.js';
@@ -142,15 +142,33 @@ export interface TranscribeStart {
   readonly hasBacking: boolean;
 }
 
-/** Sing's options: the singer it sings with. */
-export const SingOptionsSchema = z.object({ singerId: z.string().min(1) }).strict();
+/** Sing's options: the singer it sings with, and the sections it sings (none: every section with a melody; a sing
+ *  started before sections could be chosen). */
+export const SingOptionsSchema = z.object({ singerId: z.string().min(1), sections: z.array(z.string().min(1)).min(1).optional() }).strict();
 export type SingOptions = z.infer<typeof SingOptionsSchema>;
 
 /** The singer of a sing task (one started before singers could be chosen has none: an error saying to sing again). */
-function singOptionsOf(task: TaskRow): string {
+function singOptionsOf(task: TaskRow): SingOptions {
   const parsed = SingOptionsSchema.safeParse(task.options);
   if (!parsed.success) throw new Error('this sing was started before a singer could be chosen: sing again');
-  return parsed.data.singerId;
+  return parsed.data;
+}
+
+/** Write rap lyrics' options (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): the rap's style and the
+ *  sections to write words for. */
+export const WriteRapLyricsOptionsSchema = z
+  .object({ style: z.string().trim().min(1).max(200), sections: z.array(z.string().min(1)).min(1) })
+  .strict()
+  .refine((o) => new Set(o.sections).size === o.sections.length, 'each section once');
+export type WriteRapLyricsOptions = z.infer<typeof WriteRapLyricsOptionsSchema>;
+export const WriteRapLyricsResultSchema = z.object({ rapLyrics: z.record(z.string(), z.array(z.string().min(1)).min(1)) }).strict();
+
+/** The checks of a start or retry that depend on the task's options. */
+interface StartOptions {
+  readonly transcribe?: TranscribeOptions;
+  readonly ace?: AceLayerOptions;
+  readonly sing?: SingOptions;
+  readonly rapLyrics?: WriteRapLyricsOptions;
 }
 
 export interface SingDeps {
@@ -186,7 +204,7 @@ export class BackgroundTasks {
     if (kind === 'sing') throw new Error('start: Sing needs its singer (startSing)');
     if ((kind === 'transcribe') !== (transcribe !== undefined)) throw new Error(`start: a ${kind} task ${transcribe ? 'takes no' : 'needs a'} recording`);
     const options: TranscribeOptions | undefined = transcribe ? { segment: transcribe.segment, recording: 'upload', hasBacking: transcribe.hasBacking } : undefined;
-    this.checkCanStart(ownerId, songId, kind, song, options);
+    this.checkCanStart(ownerId, songId, kind, song, options ? { transcribe: options } : {});
     const id = randomUUID();
     if (transcribe) {
       // checkCanStart made sure the folder is set
@@ -200,7 +218,7 @@ export class BackgroundTasks {
   }
 
   /** Starts Sing on the owner's project `songId` from the posted working song, with the chosen singer. */
-  startSing(ownerId: string, songId: string, song: Song, singerId: string): TaskRow {
+  startSing(ownerId: string, songId: string, song: Song, singerId: string, sections?: readonly string[]): TaskRow {
     const { store } = this.deps;
     if (!this.deps.sing) throw new TaskError(503, 'no_vocal_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
     try {
@@ -208,8 +226,10 @@ export class BackgroundTasks {
     } catch (err) {
       throw new TaskError(400, 'unknown_singer', err instanceof Error ? err.message : String(err));
     }
-    const options: SingOptions = { singerId };
-    this.checkCanStart(ownerId, songId, 'sing', song);
+    const parsed = SingOptionsSchema.safeParse({ singerId, ...(sections ? { sections: [...sections] } : {}) });
+    if (!parsed.success) throw new TaskError(400, 'invalid_options', parsed.error.issues[0]?.message ?? 'invalid options');
+    const options = parsed.data;
+    this.checkCanStart(ownerId, songId, 'sing', song, { sing: options });
     const id = randomUUID();
     store.insertTask({ id, ownerId, songId, kind: 'sing', input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), options });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
@@ -222,12 +242,26 @@ export class BackgroundTasks {
     const parsed = AceLayerOptionsSchema.safeParse({ ...request, seed: randomInt(0, 2 ** 31 - 1) });
     if (!parsed.success) throw new TaskError(400, 'invalid_options', parsed.error.issues[0]?.message ?? 'invalid options');
     const options = parsed.data;
-    this.checkCanStart(ownerId, songId, 'aceLayer', song, undefined, options);
+    this.checkCanStart(ownerId, songId, 'aceLayer', song, { ace: options });
     const id = randomUUID();
     const { store } = this.deps;
     store.insertTask({ id, ownerId, songId, kind: 'aceLayer', input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), options });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
     this.enqueue(ownerId, id, 'aceLayer');
+    return store.getTask(ownerId, id)!;
+  }
+
+  /** Starts Write rap lyrics on the owner's project `songId` from the posted working song. */
+  startWriteRapLyrics(ownerId: string, songId: string, song: Song, request: WriteRapLyricsOptions): TaskRow {
+    const parsed = WriteRapLyricsOptionsSchema.safeParse(request);
+    if (!parsed.success) throw new TaskError(400, 'invalid_options', parsed.error.issues[0]?.message ?? 'invalid options');
+    const options = parsed.data;
+    this.checkCanStart(ownerId, songId, 'writeRapLyrics', song, { rapLyrics: options });
+    const id = randomUUID();
+    const { store } = this.deps;
+    store.insertTask({ id, ownerId, songId, kind: 'writeRapLyrics', input: canonicalStringifySong(song, 2), startedAt: this.deps.clock(), options });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
+    this.enqueue(ownerId, id, 'writeRapLyrics');
     return store.getTask(ownerId, id)!;
   }
 
@@ -269,8 +303,9 @@ export class BackgroundTasks {
   }
 
   /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
-  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, options?: TranscribeOptions, ace?: AceLayerOptions): void {
+  private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, o: StartOptions): void {
     const { store } = this.deps;
+    const { transcribe: options, ace } = o;
     if (!store.getProject(ownerId, songId)) throw new TaskError(404, 'not_found', 'There is no such song.');
     if (kind === 'aceLayer') {
       if (!ace) throw new Error('checkCanStart: an ACE layer task without its options');
@@ -279,11 +314,8 @@ export class BackgroundTasks {
       }
       if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_layering', 'An ACE layer is already being made for this song.');
       try {
-        const covered = coveredSections(song, ace.range, ace.sectionKinds, ace.sections);
+        coveredSections(song, ace.range, ace.sectionKinds, ace.sections);
         keyScale(song.key);
-        if (ace.instrument === 'rap' && !this.deps.lyricModel && covered.some((s) => !ace.rapWords?.[s.name])) {
-          throw new TaskError(503, 'no_lyric_model', "The rap's words cannot be written: the brain has no language model (ASSISTANT_LLM_URL). Write the words for every section.");
-        }
       } catch (err) {
         if (err instanceof TaskError) throw err;
         throw new TaskError(422, 'cannot_layer', err instanceof Error ? err.message : String(err));
@@ -303,11 +335,19 @@ export class BackgroundTasks {
         throw new TaskError(503, 'no_vocals_service', 'Sing is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
       }
       try {
-        planSinging(song);
+        planSinging(song, o.sing?.sections);
       } catch (err) {
         if (err instanceof SingError) throw new TaskError(422, 'cannot_sing', err.message);
         throw err;
       }
+    }
+    if (kind === 'writeRapLyrics') {
+      const r = o.rapLyrics;
+      if (!r) throw new Error('checkCanStart: a write rap lyrics task without its options');
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_running', "The rap's lyrics of this song are already being written.");
+      if (!this.deps.lyricModel) throw new TaskError(503, 'no_lyric_model', "The rap's lyrics cannot be written: the brain has no language model (ASSISTANT_LLM_URL).");
+      const unknown = r.sections.filter((n) => !song.songStructure.some((s) => s.name === n));
+      if (unknown.length) throw new TaskError(400, 'unknown_section', `The song has no section ${unknown.map((n) => `"${n}"`).join(', ')}.`);
     }
     if (kind === 'transcribe') {
       if (!options) throw new Error('checkCanStart: a transcribe task without its options');
@@ -353,8 +393,12 @@ export class BackgroundTasks {
       songIdOf(task),
       task.kind,
       parseSong(JSON.parse(task.input)),
-      task.kind === 'transcribe' ? TranscribeOptionsSchema.parse(task.options) : undefined,
-      task.kind === 'aceLayer' ? AceLayerOptionsSchema.parse(task.options) : undefined,
+      {
+        ...(task.kind === 'transcribe' ? { transcribe: TranscribeOptionsSchema.parse(task.options) } : {}),
+        ...(task.kind === 'aceLayer' ? { ace: AceLayerOptionsSchema.parse(task.options) } : {}),
+        ...(task.kind === 'sing' ? { sing: singOptionsOf(task) } : {}),
+        ...(task.kind === 'writeRapLyrics' ? { rapLyrics: WriteRapLyricsOptionsSchema.parse(task.options) } : {}),
+      },
     );
     store.setTaskSteps(id, []);
     store.setTaskJobs(id, null);
@@ -525,6 +569,21 @@ export class BackgroundTasks {
       });
       return { lyricsFirst: lyrics };
     }
+    if (task.kind === 'writeRapLyrics') {
+      const model = this.deps.lyricModel;
+      if (!model) throw new Error("the brain has no language model to write the rap's lyrics with (ASSISTANT_LLM_URL)");
+      const input = parseSong(JSON.parse(task.input));
+      const o = WriteRapLyricsOptionsSchema.parse(task.options);
+      const project = this.deps.store.getProject(task.ownerId, songIdOf(task));
+      if (!project) throw new Error(`the owner has no project for song ${songIdOf(task)}`);
+      const sections = o.sections.map((name) => {
+        const sec = input.songStructure.find((s) => s.name === name);
+        if (!sec) throw new Error(`the song has no section "${name}"`);
+        return { name, label: sectionLabel(name), lines: rapLineCount(sec.bars.length) };
+      });
+      const rapLyrics = await writeRapWords(model, { title: project.title, style: o.style, songWords: songWordsOf(input), sections });
+      return { rapLyrics };
+    }
     if (task.kind === 'sing') {
       const sing = this.deps.sing;
       if (!sing) throw new Error('the brain is not set up to sing (VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR, BRAIN_VOCAL_TAKES_DIR)');
@@ -548,7 +607,8 @@ export class BackgroundTasks {
         },
         now: clock,
         levelVocals: (song) => sing.levelVocals(task.ownerId, songIdOf(task), song, task.id),
-        voice: sing.singerVoice(task.ownerId, singOptionsOf(task)),
+        voice: sing.singerVoice(task.ownerId, singOptionsOf(task).singerId),
+        ...(singOptionsOf(task).sections ? { sections: singOptionsOf(task).sections! } : {}),
       });
     }
     if (task.kind === 'transcribe') {
@@ -600,12 +660,6 @@ export class BackgroundTasks {
         },
         now: clock,
         renderWav: (song) => ace.renderWav(task.ownerId, songIdOf(task), song, task.id),
-        ...(this.deps.lyricModel ? { writeRapWords: (r: RapWordsRequest) => writeRapWords(this.deps.lyricModel!, r) } : {}),
-        title: (() => {
-          const project = this.deps.store.getProject(task.ownerId, songIdOf(task));
-          if (!project) throw new Error(`the owner has no project for song ${songIdOf(task)}`);
-          return project.title;
-        })(),
       });
     }
     if (task.kind === 'addSinger') {
@@ -652,8 +706,10 @@ function resultInto(task: TaskRow, song: Song): Song {
   if (task.kind === 'sing') {
     const result = SingResultSchema.parse(task.result);
     checkUnchanged(parseSong(JSON.parse(task.input)), song, result);
-    return applySungVocals(song, result);
+    // Sing covers the sections it sang: the other sections keep their takes.
+    return applySungVocals(song, result, { partial: true });
   }
+  if (task.kind === 'writeRapLyrics') return applyRapLyrics(song, WriteRapLyricsResultSchema.parse(task.result).rapLyrics);
   if (task.kind === 'transcribe') {
     const result = SingResultSchema.parse(task.result);
     const { segment } = TranscribeOptionsSchema.parse(task.options);

@@ -146,12 +146,19 @@ export function backingShift(line: readonly number[], lead: readonly number[], w
   return best;
 }
 
-/** Who sings what (see the file comment). Throws SingError without a melody, without written lyrics for every sung
+/** Who sings what (see the file comment): every section with a melody, or only those of `only` (the sections the
+ *  user chose). Throws SingError without a melody, for a chosen section that has none, without written lyrics for every sung
  *  section, with a sung section the generator does not make (`checkSectionsGenerated`), or with a backing line no
  *  octave puts in the singable range. */
-export function planSinging(song: Song): SingPlan {
-  const sung = vocalMelodyShown(song) ? sungSections(song) : [];
-  if (sung.length === 0) throw new SingError('Write a melody first');
+export function planSinging(song: Song, only?: readonly string[]): SingPlan {
+  const all = vocalMelodyShown(song) ? sungSections(song) : [];
+  if (all.length === 0) throw new SingError('Write a melody first');
+  if (only !== undefined) {
+    if (only.length === 0) throw new SingError('Choose a section to sing');
+    const missing = only.filter((n) => !all.some((s) => s.name === n));
+    if (missing.length) throw new SingError(`${missing.join(', ')} ${missing.length === 1 ? 'has' : 'have'} no melody to sing`);
+  }
+  const sung = only === undefined ? all : all.filter((s) => only.includes(s.name));
   checkSectionsGenerated(
     song,
     sung.map((s) => s.name),
@@ -163,7 +170,8 @@ export function planSinging(song: Song): SingPlan {
 
   // Beats from each sung section's end to the next sung note (null: none after).
   const structure = song.songStructure;
-  const sungNames = new Set(sung.map((s) => s.name));
+  // The rest after a section runs to the next section with a melody, sung now or not.
+  const sungNames = new Set(all.map((s) => s.name));
   const restAfterOf = (name: string): number | null => {
     let beats = 0;
     for (const next of structure.slice(structure.findIndex((x) => x.name === name) + 1)) {

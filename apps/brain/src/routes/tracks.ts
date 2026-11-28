@@ -13,6 +13,8 @@
 //       | { kind: 'writeMelody' }          the vocal tracks show the melody the generator chose (new songs start empty)
 //       | { kind: 'applySung', result, sungOver, partial? }  a finished Sing (or, with partial, Transcribe melody) task's result put into the posted working copy (sungOver: the saved version, whose take fingerprints it keeps; partial: the result covers only its melody's sections)
 //       | { kind: 'applyAceLayer', result }  a finished ACE layer task's clips on their "ACE <Instrument>" track
+//       | { kind: 'setRapLyrics', lyrics }  the rap's words of some sections (section → lines)
+//       | { kind: 'setTakesMuted', track, segment, muted }  every take of a track in a section muted or unmuted
 //       | { kind: 'applyLyrics', lyrics }  written lyrics (section → lines) on the vocal tracks (a finished Write
 //                                          lyrics task merged into unsaved edits, tasks before 2026-11-27)
 //       | { kind: 'applyLyricsFirst', lyrics }  lyrics written first (section type → lines): a rhythm bent to them
@@ -49,7 +51,7 @@ import {
   TrackEditRequestSchema,
   trackOptions,
 } from '@casperaki/arrangement';
-import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applySungVocalsOver, applyWrittenLyrics, newMelody, newRhythm, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
+import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applyRapLyrics, setTakesMuted, applySungVocalsOver, applyWrittenLyrics, newMelody, newRhythm, segmentType, writeMelody, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { contentHash, parseSong, type Song } from '@casperaki/song-schema';
 
 import { SingResultSchema } from '../sing/singTask.js';
@@ -65,6 +67,10 @@ const VocalEditSchema = z.union([
   z.object({ kind: z.literal('newRhythm'), section: z.string().min(1) }).strict(),
   z.object({ kind: z.literal('applySung'), result: SingResultSchema, sungOver: z.unknown(), partial: z.boolean().optional() }).strict(),
   z.object({ kind: z.literal('applyAceLayer'), result: AceLayerResultSchema }).strict(),
+  // Rap like singing (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): the rap's words of some sections,
+  // and a take (one track, one section) muted or unmuted.
+  z.object({ kind: z.literal('setRapLyrics'), lyrics: z.record(z.string().min(1), z.array(z.string())) }).strict(),
+  z.object({ kind: z.literal('setTakesMuted'), track: z.string().min(1), segment: z.string().min(1), muted: z.boolean() }).strict(),
 ]);
 /** songId: the saved project the working song belongs to (a new melody waits while the project is being sung). */
 const EditBody = z.object({ song: z.unknown(), songId: z.string().min(1).optional(), op: z.union([TrackEditRequestSchema, VocalEditSchema]) }).strict();
@@ -122,6 +128,8 @@ export function createTracksRouter({ isSinging }: TracksRouterDeps): Router {
     if (op.kind === 'writeMelody') return run(res, () => ({ song: writeMelody(song), track: 'Vocal' }));
     if (op.kind === 'applyAceLayer') return run(res, () => ({ song: applyAceLayer(song, op.result), track: op.result.track }));
     if (op.kind === 'applyLyrics') return run(res, () => ({ song: applyWrittenLyrics(song, op.lyrics), track: 'Vocal' }));
+    if (op.kind === 'setRapLyrics') return run(res, () => ({ song: applyRapLyrics(song, op.lyrics), track: 'Vocal' }));
+    if (op.kind === 'setTakesMuted') return run(res, () => ({ song: setTakesMuted(song, op.track, op.segment, op.muted), track: op.track }));
     if (op.kind === 'applySung') return run(res, () => ({ song: applySungVocalsOver(song, op.result, parseSong(op.sungOver), { partial: op.partial === true }), track: 'Vocal' }));
     return run(res, () => editTrack(song, op));
   });

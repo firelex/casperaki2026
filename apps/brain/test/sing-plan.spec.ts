@@ -152,6 +152,20 @@ describe('planSinging on song a31c5ba0', () => {
     expect(() => planSinging(song)).toThrow(new SingError('Write lyrics first'));
   });
 
+  it('the chosen sections only: their lyrics needed, the rest left alone; an unknown or unsung one an error', () => {
+    const song = withLyrics(fresh());
+    const params = (song.generator as unknown as { params: { params: { lyrics: Record<string, string[]> } } }).params.params;
+    delete params.lyrics['verse3'];
+    const plan = planSinging(song, ['verse1', 'chorus1']);
+    expect(plan.sections.map((s) => s.segment)).toEqual(['verse1', 'chorus1']);
+    expect(plan.reuses).toEqual([]);
+    // the rest after verse1 runs to the next section with a melody (verse2), sung now or not
+    expect(plan.sections[0]!.restAfter).toBe(planSinging(withLyrics(fresh())).sections[0]!.restAfter);
+    expect(() => planSinging(song, ['verse3'])).toThrow(new SingError('Write lyrics first'));
+    expect(() => planSinging(song, ['intro1', 'nowhere'])).toThrow(new SingError('intro1, nowhere have no melody to sing'));
+    expect(() => planSinging(song, [])).toThrow(new SingError('Choose a section to sing'));
+  });
+
   it('a lead note without phonemes: an error naming where', () => {
     const song = withLyrics(fresh());
     let first = true;

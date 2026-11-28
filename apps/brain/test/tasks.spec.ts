@@ -188,3 +188,58 @@ describe('background tasks', () => {
     model.release();
   });
 });
+
+/** A model that writes rap: every part asked for gets distinct rhyming couplets from a pool. */
+function rapModel(): ChatModel {
+  const pool = [
+    'I walk the city streets until the morning light',
+    'I never stop the beat, I keep it burning bright',
+    'We ride the night together and we never fall',
+    'We hear the music calling and we give it all',
+    'The neon signs are glowing on the rainy road',
+    'We carry every dream and never drop the load',
+    'My heart is like a drum that beats inside my chest',
+    'I give it everything and never take a rest',
+  ];
+  return {
+    async complete(messages) {
+      const brief = messages.find((m) => m.role === 'user')!.content;
+      const form = JSON.parse(brief.slice(brief.indexOf('in this form: ') + 'in this form: '.length)) as { sections: { name: string; lines: string[] }[] };
+      let i = 0;
+      return JSON.stringify({ sections: form.sections.map((s) => ({ name: s.name, lines: s.lines.map(() => pool[i++ % pool.length]!) })) });
+    },
+  };
+}
+
+describe('Write rap lyrics (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md)', () => {
+  let h: Harness | undefined;
+  afterEach(async () => {
+    await h?.tasks.idle();
+    await h?.stop();
+    h = undefined;
+  });
+
+  it("writes the chosen sections' rap words in the background and applies them into the song", async () => {
+    h = await boot(rapModel());
+    const { id, working } = await songWithMelody(h);
+    const verse = working.songStructure.find((s) => s.name.startsWith('verse'))!;
+    const started = await send('POST', `${h.url}/api/tasks`, { kind: 'writeRapLyrics', songId: id, song: working, style: 'male rap vocals', sections: [verse.name] });
+    expect(started.status).toBe(201);
+    expect(started.body.task).toMatchObject({ kind: 'writeRapLyrics', state: 'running' });
+    await h.tasks.idle();
+    const applied = await send('POST', `${h.url}/api/tasks/${(started.body.task as TaskJson).id}/apply`);
+    expect(applied.status).toBe(200);
+    const saved = (await send('GET', `${h.url}/api/songs/${applied.body.songId as string}`)).body.song as Song;
+    const rap = (saved.generator!.params as { params: { rapLyrics: Record<string, string[]> } }).params.rapLyrics;
+    expect(Object.keys(rap)).toEqual([verse.name]);
+    expect(rap[verse.name]).toHaveLength(Math.round(verse.bars.length / 2));
+  });
+
+  it('refuses an unknown section', async () => {
+    h = await boot(rapModel());
+    const { id, working } = await songWithMelody(h);
+    const r = await send('POST', `${h.url}/api/tasks`, { kind: 'writeRapLyrics', songId: id, song: working, style: 'male rap vocals', sections: ['nowhere'] });
+    expect(r.status).toBe(400);
+    expect(r.body.message).toBe('The song has no section "nowhere".');
+  });
+});

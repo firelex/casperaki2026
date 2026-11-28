@@ -7,11 +7,14 @@
 //                                     file, any format ffmpeg reads, at most 10 MB decoded; 413 when larger), sung or
 //                                     hummed along from the section's first beat; hasBacking: music plays behind the voice
 //   POST /api/tasks { kind: 'aceLayer', songId, song, instrument, words?, range?: { startBar, endBar }, sectionKinds?: [kind],
-//                     rapWords?: { section: lines } (instrument 'rap': the sections' words, the others written),
+//                     rapWords?: { section: lines } (instrument 'rap': every section's words; 'words' its style),
 //                                     sections?: [name], lyrics?, voice? }  (instrument 'adlibs': lyrics and voice required)
 //                                  -> 201 { task }   Add ACE layer: one instrument part played over the song by ACE-Step,
 //                                     for the whole song or the selected bars (src/ace/aceLayerTask.ts)
-//   POST /api/tasks { kind: 'sing', songId, song, singerId } -> 201 { task }   Sing with a singer (GET /api/singers)
+//   POST /api/tasks { kind: 'sing', songId, song, singerId, sections? } -> 201 { task }   Sing with a singer (GET
+//                                     /api/singers), the chosen sections only (none: every section with a melody)
+//   POST /api/tasks { kind: 'writeRapLyrics', songId, song, style, sections } -> 201 { task }   the rap's words of those
+//                                     sections, written by the language model (result { rapLyrics: section → lines })
 //   POST /api/tasks/:id/apply      -> { task, songId, result } a ready result saved into the song (its new id);
 //                                     result: what the task made (writeLyrics: section → lines)
 //   POST /api/tasks/:id/retry      -> { task }                a failed task started again
@@ -19,7 +22,7 @@
 //   GET  /api/tasks/:id/files/:stage/:name -> a file a step of the task made (step.files lists "<stage>/<name>")
 //
 // TaskJson: { id, kind, songId (null for a task on no song), title, state, message?, startedAt, finishedAt?,
-// steps: TaskStep[], singerId? } (TaskStep: src/store.ts; kinds: writeLyrics, sing, transcribe, aceLayer, addSinger:
+// steps: TaskStep[], singerId? } (TaskStep: src/store.ts; kinds: writeLyrics, writeRapLyrics, sing, transcribe, aceLayer, addSinger:
 // started by POST /api/singers, src/routes/singers.ts, titled with the singer's name; done when the singer is stored).
 
 import { Router, type Response } from 'express';
@@ -38,7 +41,8 @@ const KEEP_MS = 24 * 3600_000;
 
 const StartBody = z.union([
   z.object({ kind: z.literal('writeLyrics'), songId: z.string().min(1), song: z.unknown() }).strict(),
-  z.object({ kind: z.literal('sing'), songId: z.string().min(1), song: z.unknown(), singerId: z.string().min(1) }).strict(),
+  z.object({ kind: z.literal('sing'), songId: z.string().min(1), song: z.unknown(), singerId: z.string().min(1), sections: z.array(z.string().min(1)).min(1).optional() }).strict(),
+  z.object({ kind: z.literal('writeRapLyrics'), songId: z.string().min(1), song: z.unknown(), style: z.string(), sections: z.array(z.string().min(1)).min(1) }).strict(),
   z
     .object({
       kind: z.literal('transcribe'),
@@ -112,7 +116,8 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
         res.status(201).json({ task: titled(owner, tasks.startAceLayer(owner, b.songId, song, { instrument, ...(words !== undefined ? { words } : {}), ...(range !== undefined ? { range } : {}), ...(sectionKinds !== undefined ? { sectionKinds } : {}), ...(sections !== undefined ? { sections } : {}), ...(lyrics !== undefined ? { lyrics } : {}), ...(voice !== undefined ? { voice } : {}), ...(rapWords !== undefined ? { rapWords } : {}) } as Parameters<BackgroundTasks['startAceLayer']>[3])) }),
       );
     }
-    if (b.kind === 'sing') return answer(res, () => res.status(201).json({ task: titled(owner, tasks.startSing(owner, b.songId, song, b.singerId)) }));
+    if (b.kind === 'sing') return answer(res, () => res.status(201).json({ task: titled(owner, tasks.startSing(owner, b.songId, song, b.singerId, b.sections)) }));
+    if (b.kind === 'writeRapLyrics') return answer(res, () => res.status(201).json({ task: titled(owner, tasks.startWriteRapLyrics(owner, b.songId, song, { style: b.style, sections: b.sections })) }));
     return answer(res, () => res.status(201).json({ task: titled(owner, tasks.start(owner, b.songId, b.kind, song)) }));
   });
 

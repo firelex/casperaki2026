@@ -106,6 +106,8 @@ export interface SingContext {
   readonly now: () => string;
   /** The singer's voice reference and its description (absolute paths), sent to the vocals service. */
   readonly voice: { audio: string; meta: string };
+  /** The sections to sing (the user's choice); none: every section with a melody. */
+  readonly sections?: readonly string[];
   /** Renders the sung song (vocals alone and in full) and works out its vocal level (src/sing/vocalLevel.ts). */
   readonly levelVocals: (song: Song) => Promise<VocalLevel>;
 }
@@ -255,7 +257,7 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
   mkdirSync(ctx.filesDir, { recursive: true });
 
   const plan = await log.run('plan', async () => {
-    const value = planSinging(input);
+    const value = planSinging(input, ctx.sections);
     return { value, ...describePlan(value) };
   });
 
@@ -280,7 +282,7 @@ export async function runSing(ctx: SingContext): Promise<SingResult> {
   });
   const melody = melodyOf(plan);
   const vocalLevel = await log.run('level', async () => {
-    const value = await ctx.levelVocals(applySungVocals(input, { melody, takes }));
+    const value = await ctx.levelVocals(applySungVocals(input, { melody, takes }, { partial: true }));
     const d = value.vocalsLufs - value.backingLufs;
     return {
       value,
