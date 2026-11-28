@@ -194,6 +194,17 @@ describe('the writer', () => {
     await run(chat);
     expect(calls[0]![0]!.content).toContain('Say the name Kesha in the first turn');
   });
+  it('makes Ice genuinely funny, and lets nobody react to a vote not yet said', async () => {
+    const { chat, calls } = fakeModel();
+    await run(chat);
+    const ice = calls.filter((c) => c[0]!.content.startsWith('You write one line') && c[0]!.content.includes('spoken by Ice'));
+    expect(ice.length).toBeGreaterThan(0);
+    for (const c of ice) expect(c[0]!.content).toMatch(/Ice is the funniest person on the panel/);
+    const bob = calls.find((c) => c[0]!.content.startsWith('You write one line') && c[0]!.content.includes('spoken by Bob'))!;
+    expect(bob[0]!.content).not.toMatch(/funniest person/);
+    const verdictLine = calls.find((c) => c[0]!.content.includes('This is your vote turn'))!;
+    expect(verdictLine[0]!.content).toMatch(/Never refer to a judge's vote before that judge has said it/);
+  });
   it('refuses an empty line or an unknown gesture, naming the turn', async () => {
     await expect(run(fakeModel({ turn: (n) => (n === 7 ? { text: ' ', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/banter, turn 2/);
     await expect(run(fakeModel({ turn: (n) => (n === 6 ? { text: 'Hi.', delivery: 'x', gesture: 'moonwalk' } : undefined) }).chat)).rejects.toThrow(/banter, turn 1/);

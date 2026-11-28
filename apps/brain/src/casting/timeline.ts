@@ -34,6 +34,8 @@ export interface CastingTimeline {
  *  fewer) by someone other than the last speaker sometimes cuts in, up to 0.25 s before the line before ends. */
 const NARRATOR_GAP = [0.3, 0.6] as const;
 const TALK_GAP = [0.2, 0.75] as const;
+/** Right after the fanfare the exchange moves quickly (the owner: "the judges need to speak faster"). */
+const MEETING_GAP = [0.1, 0.45] as const;
 const OVERLAP = [-0.25, -0.05] as const;
 /** The share of short interjections that cut in. */
 const CUT_IN_CHANCE = 0.5;
@@ -50,8 +52,9 @@ const between = ([lo, hi]: readonly [number, number], u: number) => lo + (hi - l
 export const MUSIC_LEAD = 1.5;
 /** Air at the start and end of a talking segment: the judges start talking soon after the singer reaches them. */
 export const AIR = 0.4;
-/** A breath before the song starts: the singer collects herself after the judge's invitation. */
-export const PERFORMANCE_LEAD = 1.5;
+/** A second of silence before the song starts (the talk's music has faded to zero by then; the owner: "a second of
+ *  silence, then we go"). */
+export const PERFORMANCE_LEAD = 1;
 /** The song fades out over this long after its first chorus. */
 export const PERFORMANCE_FADE = 3;
 /** The applause has this long on its own before the first verdict line comes in over it. */
@@ -93,7 +96,7 @@ export function layOut(args: {
         const u = unitHash(`${args.scriptTaskId}:${id}:gap`);
         const cutIn =
           l.speaker !== 'narrator' && l.speaker !== prev.speaker && l.text.split(/\s+/u).filter(Boolean).length <= INTERJECTION_WORDS && unitHash(`${args.scriptTaskId}:${id}:cut`) < CUT_IN_CHANCE;
-        t += l.speaker === 'narrator' ? between(NARRATOR_GAP, u) : cutIn ? between(OVERLAP, u) : between(TALK_GAP, u);
+        t += l.speaker === 'narrator' ? between(NARRATOR_GAP, u) : cutIn ? between(OVERLAP, u) : between(scene === 'banter' ? MEETING_GAP : TALK_GAP, u);
       }
       lines.push({ id, speaker: l.speaker, text: l.text, gesture: l.gesture, startSeconds: t, endSeconds: t + got.seconds, levels: got.levels });
       t += got.seconds;
@@ -107,7 +110,8 @@ export function layOut(args: {
       segments.push({ kind: 'door', startSeconds: t, endSeconds: t + args.entranceSeconds });
       t += args.entranceSeconds;
     } else if (scene === 'banter') {
-      speak('banter', AIR, AIR);
+      // The judge speaks the moment the fanfare ends.
+      speak('banter', 0, AIR);
       segments.push({ kind: 'performance', startSeconds: t, endSeconds: t + PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE });
       t += PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE;
     } else speak('verdicts', APPLAUSE_LEAD, END_TAIL);

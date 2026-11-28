@@ -236,6 +236,10 @@ export async function writeScript(
                   : `Most important: in this scene ${who} did NOT like the performance and votes no. Whatever ${who} is usually like, ${who} is not enthusiastic about this song: no praise that sounds like a yes.\n\n`
                 : '') +
               `Who ${who} is: ${profile}\n\n` +
+              (turn.speaker === 'ice'
+                ? "Ice is the funniest person on the panel (the owner wants him funnier): every line of his is short, dry and genuinely funny, with a sharp, unexpected comparison or put-down; never a plain line such as 'go on' or 'well done' on its own.\n\n"
+                : '') +
+              (scene === 'verdicts' ? "Never refer to a judge's vote before that judge has said it (react only to what has been said so far).\n\n" : '') +
               (turn.speaker !== 'narrator' && turn.speaker !== 'singer' ? `The sample lines in that description show the voice; never copy them.\n\n` : '') +
               `${sceneText(scene, facts, outcome, votes)}\n\nThe scene's beats: ${plan.beats.join('; ')}.\n\n` +
               (scene === 'verdicts' && turn.speaker !== 'narrator' && turn.speaker !== 'singer'

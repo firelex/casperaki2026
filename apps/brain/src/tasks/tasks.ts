@@ -486,8 +486,9 @@ export class BackgroundTasks {
     for (const f of Object.values(CASTING_MUSIC)) {
       if (!existsSync(join(c.musicDir, f))) throw new TaskError(503, 'music_missing', `The casting music "${f}" is missing from ${c.musicDir}.`);
     }
-    for (const folder of [CASTING_APPLAUSE_DIR, CASTING_BEDS_DIR]) {
-      if (wavsIn(join(c.musicDir, folder)).length === 0) throw new TaskError(503, 'music_missing', `There are no WAV files in ${join(c.musicDir, folder)}.`);
+    // One applause clip; two music beds (one under the meeting, another under the verdicts).
+    for (const [folder, needed] of [[CASTING_APPLAUSE_DIR, 1], [CASTING_BEDS_DIR, 2]] as const) {
+      if (wavsIn(join(c.musicDir, folder)).length < needed) throw new TaskError(503, 'music_missing', `${join(c.musicDir, folder)} needs at least ${needed} WAV file${needed > 1 ? 's' : ''}.`);
     }
     if (store.runningTask(ownerId, songId, 'castingSoundtrack')) throw new TaskError(409, 'already_running', 'A casting soundtrack for this song is already being made.');
     // The singer's reference says the exact line their speaking voice was chosen with: it reproduces that voice.
@@ -1000,6 +1001,7 @@ export class BackgroundTasks {
       const gains = new Map(timeline.lines.map((l) => [l.id, perSpeaker.get(l.speaker)!]));
       const applause = pickFor(wavsIn(join(c.musicDir, CASTING_APPLAUSE_DIR)), scriptTask.id, 'applause');
       const verdictBed = pickFor(wavsIn(join(c.musicDir, CASTING_BEDS_DIR)), scriptTask.id, 'verdict music');
+      const talkBed = pickFor(wavsIn(join(c.musicDir, CASTING_BEDS_DIR)).filter((f) => f !== verdictBed), scriptTask.id, 'meeting music');
       mixSoundtrack(
         timeline,
         {
@@ -1007,13 +1009,15 @@ export class BackgroundTasks {
           applause: join(c.musicDir, CASTING_APPLAUSE_DIR, applause),
           applauseGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_APPLAUSE_DIR, applause), APPLAUSE_LUFS),
           verdictBed: join(c.musicDir, CASTING_BEDS_DIR, verdictBed),
-          bedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, verdictBed), BED_LUFS), lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
+          bedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, verdictBed), BED_LUFS),
+          talkBed: join(c.musicDir, CASTING_BEDS_DIR, talkBed),
+          talkBedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, talkBed), BED_LUFS), lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
         join(outDir, 'casting.wav'),
         c.ffmpegBin,
       );
       own.mix = { ...own.mix, state: 'done', finishedAt: clock(), text: `${timeline.durationSeconds.toFixed(0)} s`, files: ['soundtrack/casting.wav'] };
       publish();
-      return { ...timeline, music: { applause, verdictBed } };
+      return { ...timeline, music: { applause, verdictBed, talkBed } };
     }
     if (task.kind === 'castingScript') {
       const c = this.deps.casting;

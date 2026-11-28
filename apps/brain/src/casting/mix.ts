@@ -22,6 +22,9 @@ export interface SoundtrackFiles {
   readonly applauseGain: number;
   readonly verdictBed: string;
   readonly bedGain: number;
+  /** The music under the meeting after the fanfare (fading to zero before the song's second of silence). */
+  readonly talkBed: string;
+  readonly talkBedGain: number;
 }
 
 /** The applause's loudness (a little under the voices' -16), and how long it dies away once the judges start talking. */
@@ -51,6 +54,8 @@ const MUSIC_CROSSFADE = 0.3;
 /** The narrator sits into the music rather than cutting through it (the owner: "too compressed, cuts a tad too much
  *  through"): about 3 dB down, the music ducking gently under it. */
 const NARRATION_GAIN = 0.7;
+/** The judges in the meeting after the fanfare sit a little softer (the owner: "also a bit softer"): about 2 dB. */
+const MEETING_GAIN = 0.8;
 
 /** Integrated loudness (LUFS) of several files played one after another (a speaker's lines). */
 export function loudness(ffmpegBin: string, files: readonly string[]): number {
@@ -101,8 +106,9 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   };
   const backstage = seg('backstage');
   const door = seg('door');
+  const talk = seg('talk');
   const ms = (s: number) => Math.round(s * 1000);
-  const inputs: string[] = ['-i', files.poised, '-i', files.entrance, '-i', files.song, '-i', files.applause, '-i', files.verdictBed];
+  const inputs: string[] = ['-i', files.poised, '-i', files.entrance, '-i', files.song, '-i', files.applause, '-i', files.verdictBed, '-i', files.talkBed];
   const graph: string[] = [];
   const stereo = 'aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo';
   const narration: string[] = [];
@@ -115,7 +121,8 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
     const isNarration = l.startSeconds < backstage.endSeconds;
     const gain = files.gains.get(l.id);
     if (gain === undefined) throw new Error(`casting soundtrack: the line ${l.id} has no gain`);
-    graph.push(`[${5 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
+    const inMeeting = l.startSeconds >= talk.startSeconds && l.startSeconds < talk.endSeconds;
+    graph.push(`[${6 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : inMeeting ? MEETING_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
     if (isNarration) narration.push(label);
     voices.push(label);
   });
@@ -142,7 +149,10 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   const bedStart = firstVerdict.startSeconds;
   const bedLen = verdicts.endSeconds - bedStart;
   graph.push(`[4:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${bedLen.toFixed(3)},volume=${files.bedGain.toFixed(4)},afade=t=in:d=${BED_FADE},afade=t=out:st=${Math.max(0, bedLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(bedStart)}:all=1[bed]`);
-  const all = ['music', 'door', 'song', 'applause', 'bed', ...voiceLabels];
+  // Music under the meeting: in with the talk, faded to zero by its end (then the song's second of silence).
+  const talkLen = talk.endSeconds - talk.startSeconds;
+  graph.push(`[5:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${talkLen.toFixed(3)},volume=${files.talkBedGain.toFixed(4)},afade=t=in:d=${Math.min(BED_FADE, talkLen / 3).toFixed(3)},afade=t=out:st=${Math.max(0, talkLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(talk.startSeconds)}:all=1[talkbed]`);
+  const all = ['music', 'door', 'song', 'applause', 'bed', 'talkbed', ...voiceLabels];
   graph.push(`${all.map((a) => `[${a}]`).join('')}amix=inputs=${all.length}:normalize=0:duration=longest,alimiter=limit=0.95,apad,atrim=0:${timeline.durationSeconds.toFixed(3)}[out]`);
   try {
     execFileSync(ffmpegBin, ['-loglevel', 'error', '-y', ...inputs, '-filter_complex', graph.join(';'), '-map', '[out]', '-ar', '48000', '-c:a', 'pcm_s16le', outPath], { stdio: ['ignore', 'pipe', 'pipe'] });
