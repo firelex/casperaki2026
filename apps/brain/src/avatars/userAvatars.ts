@@ -37,7 +37,15 @@ const AnimeAvatarSchema = z
   .strict();
 
 /** Realistic: a MakeHuman design, built by the avatar builder into <owner>/avatars/<id>.vrm. */
-const RealisticAvatarSchema = z.object({ style: z.literal('realistic'), design: RealisticDesignSchema, ...Common }).strict();
+const RealisticAvatarSchema = z
+  .object({
+    style: z.literal('realistic'),
+    design: RealisticDesignSchema,
+    /** The assets it is made of that must be credited (CC-BY), from its build. */
+    credits: z.array(z.object({ name: z.string(), author: z.string(), licence: z.string() }).strict()),
+    ...Common,
+  })
+  .strict();
 
 export const UserAvatarSchema = z.preprocess(
   (v) => (v && typeof v === 'object' && !('style' in v) ? { ...v, style: 'anime' } : v),
@@ -85,7 +93,7 @@ export class UserAvatars {
   }
 
   /** Saves a realistic avatar: its design, and the person built from it (copied from `vrmFrom`) as <id>.vrm. */
-  saveRealistic(ownerId: string, fields: { name: string; design: RealisticDesign; singerId: string | null }, vrmFrom: string, portrait: Buffer, now: string, id?: string): UserAvatar {
+  saveRealistic(ownerId: string, fields: { name: string; design: RealisticDesign; credits: { name: string; author: string; licence: string }[]; singerId: string | null }, vrmFrom: string, portrait: Buffer, now: string, id?: string): UserAvatar {
     return this.store(ownerId, { style: 'realistic', ...fields }, portrait, now, id, (avatarId) => {
       const vrm = this.vrmPath(ownerId, avatarId);
       mkdirSync(join(vrm, '..'), { recursive: true });

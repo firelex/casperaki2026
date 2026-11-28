@@ -73,6 +73,12 @@ export function AvatarsPage() {
   );
 }
 
+/** The line crediting a realistic avatar's CC-BY assets, or undefined when there is nothing to credit. */
+export function creditLine(credits: AvatarInfo['credits']): string | undefined {
+  if (!credits || credits.length === 0) return undefined;
+  return `Credits (CC-BY): ${credits.map((c) => `${c.name} by ${c.author}`).join('; ')}`;
+}
+
 /** Where Edit goes: the dressing room of the avatar's style. */
 export function avatarEditPath(a: Pick<AvatarInfo, 'id' | 'style'>): string {
   return a.style === 'realistic' ? `/avatars/realistic/${encodeURIComponent(a.id)}` : `/avatars/${encodeURIComponent(a.id)}`;
@@ -101,6 +107,7 @@ export function AvatarCard({ avatar: a, singers }: { avatar: AvatarInfo; singers
       <div className="flex flex-col gap-2 p-4">
         <h2 className="truncate text-[16px] font-semibold">{a.name}</h2>
         <p className="text-[12px] text-white/45">{a.style === 'realistic' ? 'Realistic' : 'Anime'}</p>
+        {creditLine(a.credits) ? <p className="text-[11px] leading-snug text-white/40">{creditLine(a.credits)}</p> : null}
         <p className="truncate text-[13px] text-white/60">{voiceText(a.singerId, singers)}</p>
         {confirming ? (
           <span className="flex flex-wrap items-center gap-2 text-[13px]">

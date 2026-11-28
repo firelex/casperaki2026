@@ -35,7 +35,10 @@ def build(design: dict, library: dict, out_dir: Path, blender: str, log=print) -
     if r.returncode != 0 or not vrm.is_file() or not report.is_file():
         tail = "\n".join((r.stdout + r.stderr).strip().splitlines()[-8:])
         raise RuntimeError(f"avatar-builder: Blender failed (exit {r.returncode}):\n{tail}")
-    rewrite_glb_json(str(vrm), lambda g: fix_alpha(g, hair_names=[hair_id]))
+    garments = [a for a in assets if "slot" in a]
+    see_through = [g["id"] for g in garments if g.get("transparent") and g["slot"] == "glasses"]
+    cutouts = [hair_id] + [g["id"] for g in garments if g.get("transparent") and g["slot"] != "glasses"]
+    rewrite_glb_json(str(vrm), lambda g: fix_alpha(g, cutouts=cutouts, see_through=see_through))
     jpeg_solid_textures(str(vrm))
     rep = json.loads(report.read_text())
     credits = [{"name": a.get("name", a["id"]), "author": a["author"], "licence": a["licence"], **({"credit": a["credit"]} if a.get("credit") else {})} for a in assets]

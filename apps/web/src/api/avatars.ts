@@ -27,6 +27,8 @@ export interface AvatarInfo {
   /** Realistic avatars: the design, and the URL of the built person. */
   readonly design?: RealisticDesign;
   readonly vrmUrl?: string;
+  /** Realistic avatars: the CC-BY assets they use, to credit. */
+  readonly credits?: readonly { readonly name: string; readonly author: string; readonly licence: string }[];
   readonly singerId: string | null;
   readonly portraitUrl: string;
   readonly createdAt: string;

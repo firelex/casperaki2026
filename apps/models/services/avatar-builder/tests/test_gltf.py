@@ -5,7 +5,7 @@ def test_cutouts_and_solids():
     g = {"materials": [{"name": "Human.long01", "alphaMode": "BLEND"}, {"name": "Human.eyebrow003", "alphaMode": "BLEND"},
                        {"name": "Human.eyelashes01", "alphaMode": "BLEND"}, {"name": "Human.body", "alphaMode": "BLEND"},
                        {"name": "Human.elvs_jeans_bootcut", "alphaMode": "BLEND", "alphaCutoff": 0.3}]}
-    fix_alpha(g, hair_names=["long01"])
+    fix_alpha(g, cutouts=["long01"], see_through=[])
     modes = {m["name"]: (m["alphaMode"], m.get("alphaCutoff")) for m in g["materials"]}
     assert modes["Human.long01"] == ("MASK", 0.5)
     assert modes["Human.eyebrow003"] == ("MASK", 0.5)
@@ -57,3 +57,17 @@ def test_solid_textures_become_jpeg_and_other_data_is_kept(tmp_path):
     assert b[v[2]["byteOffset"]:v[2]["byteOffset"] + v[2]["byteLength"]] == other
     assert all(x["byteOffset"] % 4 == 0 for x in v)
     assert len(b) - 3 <= g["buffers"][0]["byteLength"] <= len(b)
+
+
+def test_see_through_assets_keep_their_transparency():
+    g = {"materials": [{"name": "Human.punkduck_glasses_modern_form", "alphaMode": "BLEND"}, {"name": "Human.punkduck_lace_dress", "alphaMode": "BLEND"},
+                       {"name": "Human.body", "alphaMode": "BLEND"}]}
+    fix_alpha(g, cutouts=["punkduck_lace_dress"], see_through=["punkduck_glasses_modern_form"])
+    modes = {m["name"]: m["alphaMode"] for m in g["materials"]}
+    assert modes == {"Human.punkduck_glasses_modern_form": "BLEND", "Human.punkduck_lace_dress": "MASK", "Human.body": "OPAQUE"}
+
+
+def test_the_library_marks_see_through_assets(library):
+    glasses = {c["id"]: c for c in library["clothes"]}
+    assert glasses["punkduck_glasses_modern_form"]["transparent"] is True
+    assert glasses["elvs_jeans_bootcut"]["transparent"] is False

@@ -30,7 +30,7 @@ import { AvatarRecipeSchema, checkRecipe } from '@casperaki/video/avatar';
 import { z } from 'zod';
 
 import type { AvatarPacks } from '../avatars/avatarPacks.js';
-import { builtVrm } from '../avatars/avatarBuildTask.js';
+import { builtVrm, type AvatarBuildResult } from '../avatars/avatarBuildTask.js';
 import { publicLibrary, type RealisticDesign, type RealisticLibrary } from '../avatars/realisticDesign.js';
 import { AVATAR_BUILD_NOT_SET_UP, TaskError, type BackgroundTasks } from '../tasks/tasks.js';
 import type { TaskRow } from '../store.js';
@@ -231,12 +231,14 @@ export function createAvatarsRouter(deps: AvatarsRouterDeps): Router {
         return res.status(400).json({ error: 'unknown_singer', message: (err as Error).message });
       }
     }
-    const design = (deps.realistic!.tasks.get(owner, buildTaskId)!.options as { design: RealisticDesign }).design;
+    const built = deps.realistic!.tasks.get(owner, buildTaskId)!;
+    const design = (built.options as { design: RealisticDesign }).design;
+    const credits = (built.result as AvatarBuildResult).credits.filter((c) => c.licence === 'CC-BY');
     const png = Buffer.from(portrait.slice(portrait.indexOf(',') + 1), 'base64');
     if (png.length > MAX_PORTRAIT_BYTES) return res.status(400).json({ error: 'invalid_portrait', message: 'The portrait is larger than 2 MB.' });
     let avatar: UserAvatar;
     try {
-      avatar = deps.avatars!.saveRealistic(owner, { name, design, singerId }, file, png, now(), id);
+      avatar = deps.avatars!.saveRealistic(owner, { name, design, credits, singerId }, file, png, now(), id);
     } catch (err) {
       if ((err as Error).message.startsWith('avatars: the portrait')) return res.status(400).json({ error: 'invalid_portrait', message: 'The portrait is not a PNG.' });
       throw err;

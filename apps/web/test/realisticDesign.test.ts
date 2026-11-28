@@ -57,3 +57,14 @@ describe('the video style switch', () => {
     expect(stylesOf([{ id: 'a', style: 'anime' as const }])).toEqual(['anime']);
   });
 });
+
+describe('an avatar card\'s credits', () => {
+  it('names each CC-BY asset and author once, or nothing', async () => {
+    const { creditLine } = await import('../src/pages/AvatarsPage');
+    expect(creditLine(undefined)).toBeUndefined();
+    expect(creditLine([])).toBeUndefined();
+    expect(creditLine([{ name: 'Bootcut jeans', author: 'elvs', licence: 'CC-BY' }, { name: 'Black cocktail dress', author: 'punkduck', licence: 'CC-BY' }])).toBe(
+      'Credits (CC-BY): Bootcut jeans by elvs; Black cocktail dress by punkduck',
+    );
+  });
+});

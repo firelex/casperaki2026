@@ -152,7 +152,7 @@ describe('saving a realistic avatar', () => {
     const task = await built();
     const res = await send('POST', '/api/avatars/realistic', { name: 'Mia', singerId: null, buildTaskId: task.id, portrait });
     expect(res.status).toBe(201);
-    expect(res.body.avatar).toMatchObject({ style: 'realistic', name: 'Mia', design: design() });
+    expect(res.body.avatar).toMatchObject({ style: 'realistic', name: 'Mia', design: design(), credits: [{ name: 'Bootcut jeans', author: 'elvs', licence: 'CC-BY' }] });
     const vrm = await fetch(`${url}/api/avatars/${res.body.avatar.id}/vrm`);
     expect(Buffer.from(await vrm.arrayBuffer())).toEqual(VRM_BYTES);
     const listed = (await send('GET', '/api/avatars')).body.avatars;
@@ -164,6 +164,33 @@ describe('saving a realistic avatar', () => {
     const failed = await built();
     expect((await send('POST', '/api/avatars/realistic', { name: 'Mia', singerId: null, buildTaskId: failed.id, portrait })).status).toBe(400);
     expect((await send('POST', '/api/avatars/realistic', { name: 'Mia', singerId: null, buildTaskId: '00000000-0000-0000-0000-000000000000', portrait })).status).toBe(404);
+  });
+});
+
+describe('whose build, and when', () => {
+  it('refuses a build that is still running, and another user\'s build', async () => {
+    await boot(env());
+    const res = await send('POST', '/api/avatars/realistic/builds', { design: design() });
+    const running = await send('POST', '/api/avatars/realistic', { name: 'Mia', singerId: null, buildTaskId: res.body.task.id, portrait });
+    expect(running.status).toBe(400);
+    expect(running.body.error).toBe('build_not_done');
+    await tasks.idle();
+    // The same build, asked for as someone else: their tasks are looked up only among their own.
+    const store = (tasks as any).deps.store;
+    const other = store.getTask('someone-else', res.body.task.id);
+    expect(other).toBeUndefined();
+  });
+  it('keeps anime and realistic saves apart', async () => {
+    await boot(env());
+    const task = await built();
+    const real = (await send('POST', '/api/avatars/realistic', { name: 'Mia', singerId: null, buildTaskId: task.id, portrait })).body.avatar;
+    const recipe = { pack: 'p', parts: { body: 'b' }, textures: {}, colors: {} };
+    const asAnime = await send('PUT', `/api/avatars/${real.id}`, { name: 'Mia', recipe, singerId: null, portrait });
+    expect(asAnime.status).toBe(400);
+    expect(asAnime.body.error).toBe('wrong_style');
+    const anime = (await send('POST', '/api/avatars', { name: 'Ani', recipe, singerId: null, portrait })).body.avatar;
+    const asRealistic = await send('PUT', `/api/avatars/realistic/${anime.id}`, { name: 'Ani', singerId: null, buildTaskId: task.id, portrait });
+    expect(asRealistic.status).toBe(404);
   });
 });
 
@@ -181,8 +208,15 @@ describe('admins only', () => {
     });
     const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
     try {
-      for (const [method, path] of [['GET', '/api/avatars/realistic/library'], ['POST', '/api/avatars/realistic/builds'], ['POST', '/api/avatars/realistic']] as const) {
-        const res = await fetch(`${base}${path}`, { method, headers: { 'content-type': 'application/json' }, ...(method === 'POST' ? { body: '{}' } : {}) });
+      const paths = [
+        ['GET', '/api/avatars/realistic/library'],
+        ['POST', '/api/avatars/realistic/builds'],
+        ['GET', '/api/avatars/realistic/builds/00000000-0000-0000-0000-000000000000/vrm'],
+        ['POST', '/api/avatars/realistic'],
+        ['PUT', '/api/avatars/realistic/a-000000000001'],
+      ] as const;
+      for (const [method, path] of paths) {
+        const res = await fetch(`${base}${path}`, { method, headers: { 'content-type': 'application/json' }, ...(method !== 'GET' ? { body: '{}' } : {}) });
         expect(res.status, path).toBe(403);
         expect(((await res.json()) as any).error).toBe('admin_only');
       }
@@ -211,7 +245,7 @@ describe('one style per video', () => {
     const anime = avatars.save('u1', { style: 'anime', name: 'A', recipe, singerId: null }, Buffer.from(PNG_1PX, 'base64'), 't');
     const vrm = join(dir, 'person.vrm');
     writeFileSync(vrm, VRM_BYTES);
-    const real = avatars.saveRealistic('u1', { name: 'R', design: design() as never, singerId: null }, vrm, Buffer.from(PNG_1PX, 'base64'), 't');
+    const real = avatars.saveRealistic('u1', { name: 'R', design: design() as never, credits: [], singerId: null }, vrm, Buffer.from(PNG_1PX, 'base64'), 't');
     const store = openSongsStore({ path: ':memory:' });
     expect(() => videoAvatars(store, avatars, 'u1', 's1', [anime.id, real.id])).toThrow(VideoInputError);
     try {

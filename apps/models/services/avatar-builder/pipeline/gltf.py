@@ -9,10 +9,15 @@ import struct
 CUTOUT_WORDS = ("hair", "eyebrow", "eyelash")
 
 
-def fix_alpha(gltf: dict, hair_names: list[str]) -> None:
+def fix_alpha(gltf: dict, cutouts: list[str], see_through: list[str]) -> None:
+    """Hair, eyebrows, eyelashes and the `cutouts` assets (by id in the material name) are drawn or not per pixel
+    (MASK); the `see_through` assets (glasses' lenses) stay alpha-blended; everything else is solid."""
     for m in gltf.get("materials", []):
         name = m["name"].lower()
-        if any(w in name for w in CUTOUT_WORDS) or any(h.lower() in name for h in hair_names):
+        if any(a.lower() in name for a in see_through):
+            m["alphaMode"] = "BLEND"
+            m.pop("alphaCutoff", None)
+        elif any(w in name for w in CUTOUT_WORDS) or any(a.lower() in name for a in cutouts):
             m["alphaMode"] = "MASK"
             m["alphaCutoff"] = 0.5
         else:

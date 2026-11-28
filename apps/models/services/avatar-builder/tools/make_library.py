@@ -68,6 +68,16 @@ def header_of(z: zipfile.ZipFile, member: str) -> dict:
     return out
 
 
+def see_through(z: zipfile.ZipFile, folder: str) -> bool:
+    """Whether an asset's material (the .mhmat files in its folder) is transparent: glasses' lenses, lace, fringes."""
+    for m in z.namelist():
+        if m.startswith(folder) and m.endswith(".mhmat"):
+            for line in z.read(m).decode("utf-8", "replace").splitlines():
+                if line.strip().lower() == "transparent true":
+                    return True
+    return False
+
+
 def main(downloads: Path) -> dict:
     lib: dict[str, list] = {"skins": [], "hair": [], "eyebrows": [], "eyes": [], "clothes": []}
     zips = sorted(downloads.glob("*.zip")) + sorted((downloads / "community").glob("*.zip"))
@@ -102,7 +112,7 @@ def main(downloads: Path) -> dict:
                     slot, covers = system_slot(p[1]) if system else PACK_SLOT[pack]
                     h = header_of(z, m)
                     lib["clothes"].append({"id": p[1], "name": readable(p[1]), "path": f"{p[1]}/{p[2]}", "slot": slot, "covers": covers, "licence": lic,
-                                           "author": h["author"] or author_of(p[1], system), "credit": h["credit"]})
+                                           "author": h["author"] or author_of(p[1], system), "credit": h["credit"], "transparent": see_through(z, f"clothes/{p[1]}/")})
     styles = {h["id"]: h for h in lib["hair"]}
     for style, colour in hair_colours:
         if style not in styles:
