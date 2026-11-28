@@ -19,6 +19,9 @@ export interface Voice {
   readonly seed: number;
   /** The words the voice's reference says. */
   readonly referenceText: string;
+  /** A recording of a real person saying referenceText (a file in the judge-voices folder); absent: the reference is
+   *  generated from the description and seed. */
+  readonly referenceAudio?: string;
   /** Faster than the others by this factor (pitch kept); absent: the usual pace. */
   readonly tempo?: number;
 }
@@ -29,6 +32,8 @@ export interface LineRequest {
   readonly instruction: string;
   readonly seed: number;
   readonly reference_text: string;
+  /** Absolute path of the recorded reference, when the voice has one. */
+  readonly reference_audio?: string;
   /** The line's delivery note, steering the copied voice. */
   readonly direction?: string;
   readonly tempo?: number;
@@ -42,12 +47,15 @@ function voiceOf(speaker: Speaker, singer: Voice): Voice {
   return JUDGES.find((j) => j.id === speaker)!.voice;
 }
 
-/** The speech service's request for every line of the script, in order. */
-export function lineVoices(script: CastingScript, singer: Voice): LineRequest[] {
+/** The folder (in BRAIN_CASTING_MUSIC_DIR) holding the judges' recorded references. */
+export const JUDGE_VOICES_DIR = 'judge-voices';
+
+/** The speech service's request for every line of the script, in order; recorded references are in voicesDir. */
+export function lineVoices(script: CastingScript, singer: Voice, voicesDir: string): LineRequest[] {
   return SCENES.flatMap((scene) =>
     script[scene].map((l, i) => {
       const v = voiceOf(l.speaker, singer);
-      return { id: `${scene}-${i + 1}`, text: l.text, instruction: v.description, seed: v.seed, reference_text: v.referenceText, ...(l.delivery.trim() ? { direction: l.delivery.trim() } : {}), ...(v.tempo !== undefined ? { tempo: v.tempo } : {}) };
+      return { id: `${scene}-${i + 1}`, text: l.text, instruction: v.description, seed: v.seed, reference_text: v.referenceText, ...(v.referenceAudio !== undefined ? { reference_audio: join(voicesDir, v.referenceAudio) } : {}), ...(l.delivery.trim() ? { direction: l.delivery.trim() } : {}), ...(v.tempo !== undefined ? { tempo: v.tempo } : {}) };
     }),
   );
 }

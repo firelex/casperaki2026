@@ -24,12 +24,12 @@ const singerVoice = { description: 'A young woman with a bright voice', seed: 33
 
 describe('the voices', () => {
   it('gives every line its speaker\'s voice, in script order with unique ids', () => {
-    const reqs = lineVoices(script, singerVoice);
+    const reqs = lineVoices(script, singerVoice, '/voices');
     expect(reqs.map((r) => r.id)).toEqual(['backstage-1', 'backstage-2', 'banter-1', 'banter-2', 'banter-3', 'verdicts-1', 'verdicts-2', 'verdicts-3', 'verdicts-4']);
     const ice = JUDGES.find((j) => j.id === 'ice')!.voice;
     expect(reqs[0]).toMatchObject({ instruction: NARRATOR_VOICE.description, seed: NARRATOR_VOICE.seed, reference_text: NARRATOR_VOICE.referenceText, text: 'This is Kesha, and tonight is her night.' });
     expect(reqs[3]).toMatchObject({ instruction: singerVoice.description, seed: 33, reference_text: "Hi, I'm Kesha." });
-    expect(reqs[4]).toMatchObject({ instruction: ice.description, seed: ice.seed, reference_text: ice.referenceText, tempo: 1.15 });
+    expect(reqs[4]).toMatchObject({ instruction: ice.description, seed: ice.seed, reference_text: ice.referenceText, reference_audio: '/voices/ice.wav', tempo: 1.15 });
     expect(ice.description).toMatch(/gravelly London/);
     expect(reqs[2]).not.toHaveProperty('tempo');
     // Every line is copied from its voice's reference, its delivery note steering the copy (the description stays the voice's).
@@ -50,7 +50,7 @@ describe('speaking the lines', () => {
   });
   it('has the speech service speak them and keeps each line\'s file and length', async () => {
     const client = new VocalsClient(speech.url, 'speech service');
-    const spoken = await speakLines({ client, filesDir: dir, pollMs: 5, signal: new AbortController().signal, jobs: null, setJobs: () => undefined, setSteps: () => undefined }, lineVoices(script, singerVoice));
+    const spoken = await speakLines({ client, filesDir: dir, pollMs: 5, signal: new AbortController().signal, jobs: null, setJobs: () => undefined, setSteps: () => undefined }, lineVoices(script, singerVoice, '/voices'));
     expect(speech.jobs[0]!.params['stage']).toBe('lines');
     expect([...spoken.keys()]).toHaveLength(9);
     const first = spoken.get('backstage-1')!;
@@ -60,7 +60,7 @@ describe('speaking the lines', () => {
   it('fails with the speech service\'s message', async () => {
     const client = new VocalsClient(speech.url, 'speech service');
     speech.fail('Breeze ran out of memory');
-    await expect(speakLines({ client, filesDir: dir, pollMs: 5, signal: new AbortController().signal, jobs: null, setJobs: () => undefined, setSteps: () => undefined }, lineVoices(script, singerVoice))).rejects.toThrow(/out of memory/);
+    await expect(speakLines({ client, filesDir: dir, pollMs: 5, signal: new AbortController().signal, jobs: null, setJobs: () => undefined, setSteps: () => undefined }, lineVoices(script, singerVoice, '/voices'))).rejects.toThrow(/out of memory/);
   });
 });
 
@@ -68,7 +68,7 @@ describe('speaking the lines', () => {
 import { layOut, type CastingTimeline } from '../src/casting/timeline.js';
 
 describe('the timeline', () => {
-  const spoken = new Map(lineVoices(script, singerVoice).map((r, i) => [r.id, { seconds: 2 + (i % 3), levels: [0.1, 0.5, 0.2] }]));
+  const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r, i) => [r.id, { seconds: 2 + (i % 3), levels: [0.1, 0.5, 0.2] }]));
   const sections = [
     { name: 'Intro', startSeconds: 0, endSeconds: 8 },
     { name: 'Verse 1', startSeconds: 8, endSeconds: 24 },
@@ -143,7 +143,7 @@ describe('the mix', () => {
     expect(Math.min(...levels)).toBeGreaterThan(0);
   });
   it('makes one 48 kHz file as long as the timeline, with the lines, the music and the song in place', () => {
-    const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
+    const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
     const sections = [{ name: 'Verse', startSeconds: 0, endSeconds: 4 }, { name: 'Chorus', startSeconds: 4, endSeconds: 8 }];
     const t = layOut({ script, spoken, sections, exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
     const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
@@ -155,7 +155,7 @@ describe('the mix', () => {
     expect(Number(info.format.duration)).toBeCloseTo(t.durationSeconds, 1);
   });
   it('fails naming a missing music file', () => {
-    const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
+    const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
     const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 4 }], exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
     const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
     expect(() => mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: join(dir, 'Poised and Ready.mp3'), entrance: tone('e.mp3', 3, 550), applause: tone('ap.wav', 8, 880), applauseGain: 1, verdictBed: tone('vb.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, join(dir, 'o.wav'), 'ffmpeg')).toThrow(/Poised and Ready\.mp3/);
@@ -194,6 +194,8 @@ describe('the castingSoundtrack task', () => {
     tone(join(dir, 'music', 'applause', 'applause-01.wav'), 8);
     tone(join(dir, 'music', 'verdict-beds', 'bed-01.wav'), 60);
     tone(join(dir, 'music', 'verdict-beds', 'bed-02.wav'), 60);
+    mkdirSync(join(dir, 'music', 'judge-voices'));
+    tone(join(dir, 'music', 'judge-voices', 'ice.wav'), 4);
     tone(join(dir, 'song.mp3'), 400);
     store = openSongsStore({ path: ':memory:' });
     const canonical = canonicalStringifySong(song, 2);
@@ -256,6 +258,12 @@ describe('the castingSoundtrack task', () => {
     written(mia.id);
     rmSync(join(dir, 'music', 'The Grand Entrance.mp3'));
     refused(() => tasks.startCastingSoundtrack('me', songId), 503, 'music_missing');
+  });
+  it("fails naming a judge's missing recorded voice", () => {
+    const mia = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'kesha' }, PNG, 't');
+    written(mia.id);
+    rmSync(join(dir, 'music', 'judge-voices', 'ice.wav'));
+    refused(() => tasks.startCastingSoundtrack('me', songId), 503, 'voice_missing');
   });
   it('speaks the script, lays it out and mixes one file, recording which script it came from', async () => {
     const mia = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'kesha' }, PNG, 't');
@@ -325,7 +333,7 @@ describe('natural timing', () => {
     ...script,
     banter: [talk('ice', long), talk('nicky', 'Oh please.'), talk('ice', long), talk('bob', 'Ah, stop it.'), talk('love', long), talk('singer', long)],
   };
-  const spoken = new Map(lineVoices(chatty, singerVoice).map((r) => [r.id, { seconds: 2.5, levels: [0.2] }]));
+  const spoken = new Map(lineVoices(chatty, singerVoice, '/voices').map((r) => [r.id, { seconds: 2.5, levels: [0.2] }]));
   const sections = [{ name: 'Chorus', startSeconds: 0, endSeconds: 8 }];
   const lay = (id: string) => layOut({ script: chatty, spoken, sections, exportSeconds: 20, entranceSeconds: 13, binSeconds: 0.05, scriptTaskId: id });
   const gaps = (t: CastingTimeline, kind: string) => t.lines.filter((_, i) => i > 0).map((l, i) => ({ l, prev: t.lines[i]! })).filter(({ l, prev }) => {
@@ -355,7 +363,7 @@ describe('natural timing', () => {
 
 describe('applause and the verdict music', () => {
   it('leaves the applause room before the first verdict, after the song', () => {
-    const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.2] }]));
+    const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r) => [r.id, { seconds: 1, levels: [0.2] }]));
     const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 8 }], exportSeconds: 20, entranceSeconds: 13, binSeconds: 0.05, scriptTaskId: 'x' });
     const verdicts = t.segments.find((s) => s.kind === 'verdicts')!;
     const firstVerdict = t.lines.find((l) => l.startSeconds >= verdicts.startSeconds)!;
@@ -378,7 +386,7 @@ describe('applause and the verdict music', () => {
         execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `sine=frequency=${hz}:duration=${seconds}`, p]);
         return p;
       };
-      const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
+      const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
       const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 4 }], exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
       const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
       const out = join(dir, 'o.wav');
@@ -393,7 +401,7 @@ describe('applause and the verdict music', () => {
 
 describe('right after the fanfare', () => {
   it('the judge starts at once, and the exchange moves quickly', () => {
-    const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.2] }]));
+    const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r) => [r.id, { seconds: 1, levels: [0.2] }]));
     const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 8 }], exportSeconds: 20, entranceSeconds: 13, binSeconds: 0.05, scriptTaskId: 'x' });
     const talk = t.segments.find((x) => x.kind === 'talk')!;
     const lines = t.lines.filter((l) => l.startSeconds >= talk.startSeconds && l.endSeconds <= talk.endSeconds);

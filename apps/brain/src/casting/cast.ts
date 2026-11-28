@@ -13,14 +13,15 @@ export interface Judge {
   /** The approved speaking voice: a description for the speech model and its seed. */
   /** The approved voice: a description, its seed, the words of its approved take (the reference), and, optionally, how
    *  much faster it speaks than the others (Ice: the owner chose ice-gravel-7, "but faster"). */
-  readonly voice: { readonly description: string; readonly seed: number; readonly referenceText: string; readonly tempo?: number };
+  readonly voice: { readonly description: string; readonly seed: number; readonly referenceText: string; readonly referenceAudio?: string; readonly tempo?: number };
 }
 
 /** What each judge's reference says: the words of the take the owner approved (~/casperaki-data/voicetest: nicky,
  *  love2-7, bob2-21; Ice: ~/casperaki-data/casting/ice-takes/ice-gravel-7, the same words), so the speech service's reference (the same description, seed and words) IS that take, and every
  *  line is copied from it. */
 const APPROVED_TAKE_TEXT = {
-  ice: "Right. Well. That was certainly a choice. I'm not saying it was the wrong choice, but it was a choice.",
+  // Ice is a real person's recording (a friend of the owner's, consented): <BRAIN_CASTING_MUSIC_DIR>/judge-voices/ice.wav.
+  ice: "The tv company hired some. Um, when we went to New York, it all kicked off in New York, they go really, really stroppy, and I was critical to some people, and they were waiting for me outside with base",
   nicky: 'Okay, okay, hold on, Ice. Baby, that chorus? That chorus was everything. You owned that stage.',
   love: "Oh, don't listen to him, darling. He hasn't smiled since about nineteen ninety eight.",
   bob: 'Ah, would you stop. Sure, I thought it was lovely. A bit of nerves at the start, but you grew into it.',
@@ -32,7 +33,7 @@ export const JUDGES: readonly Judge[] = [
     name: 'Ice',
     profile:
       'Ice, the ruthless music mogul. 58, British, head judge. Brutally honest, arrogant, dry, intimidating, occasionally hilarious. Decades in the industry; believes he can recognise a hit within fifteen seconds. No patience for mediocrity, long introductions, pretentious lyrics or songs without a memorable chorus. Rarely raises his voice: a quiet, devastating observation does more. Interrupts songs that take too long to get going. Genuinely loves finding great music, and his turn from bored cynic to enthusiastic supporter is dramatic. Signature: slowly takes off his sunglasses before a brutal verdict. Sample lines: "I\'ve heard better melodies from my microwave." "That was three minutes of my life I\'m not getting back." "Hang on. Stop. Stop. Who wrote that chorus?" "I hate to admit this, but that was absolutely brilliant." "Bob, please. We\'re judging music, not adopting puppies." With the others: constantly argues with Bob, dismisses Nicky\'s obsession with trends, secretly respects Love\'s musical instincts.',
-    voice: { description: 'A man in his late fifties with a low, slightly gravelly London accent, blunt and confident, sardonic, speaking slowly', seed: 7, referenceText: APPROVED_TAKE_TEXT.ice, tempo: 1.15 },
+    voice: { description: 'A man in his late fifties with a low, slightly gravelly London accent, blunt and confident, sardonic, speaking slowly', seed: 7, referenceText: APPROVED_TAKE_TEXT.ice, referenceAudio: 'ice.wav', tempo: 1.15 },
   },
   {
     id: 'nicky',

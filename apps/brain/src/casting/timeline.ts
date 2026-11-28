@@ -86,7 +86,7 @@ export function layOut(args: {
   if (songTo + PERFORMANCE_FADE > args.exportSeconds) {
     throw new Error(`casting: the song's first chorus ends at ${songTo.toFixed(1)} s (plus a ${PERFORMANCE_FADE} s fade), but its export is only ${args.exportSeconds.toFixed(1)} s long`);
   }
-  const requests = lineVoices(args.script, { description: 'x', seed: 0, referenceText: 'x' });
+  const requests = lineVoices(args.script, { description: 'x', seed: 0, referenceText: 'x' }, '/');
   const segments: { kind: SegmentKind; startSeconds: number; endSeconds: number }[] = [];
   const lines: CastingTimeline['lines'][number][] = [];
   let t = 0;

@@ -40,11 +40,11 @@ import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAdd
 import { buildAvatar, type AvatarBuildDeps } from '../avatars/avatarBuildTask.js';
 import type { UserAvatars } from '../avatars/userAvatars.js';
 import { songSinger } from '../avatars/videoAvatars.js';
-import { castNames, verdictVotes } from '../casting/cast.js';
+import { castNames, JUDGES, verdictVotes } from '../casting/cast.js';
 import { castingFacts, isChorus } from '../casting/facts.js';
 import { SCENES, writeScript, type CastingScript, type SceneId } from '../casting/writer.js';
 import { layOut } from '../casting/timeline.js';
-import { lineVoices, speakLines } from '../casting/voices.js';
+import { JUDGE_VOICES_DIR, lineVoices, speakLines } from '../casting/voices.js';
 import { APPLAUSE_LUFS, audibleSeconds, BED_LUFS, gainTo, TALK_BED_LUFS, mixSoundtrack, pickFor, speakerGains } from '../casting/mix.js';
 import { wavLevels } from '../routes/renders.js';
 import { songTiming } from '../video/videoInput.js';
@@ -506,6 +506,11 @@ export class BackgroundTasks {
     if (!voice) throw new TaskError(400, 'no_speaking_voice', `Make ${o.singerName}'s speaking voice on the Singers page first.`);
     for (const f of Object.values(CASTING_MUSIC)) {
       if (!existsSync(join(c.musicDir, f))) throw new TaskError(503, 'music_missing', `The casting music "${f}" is missing from ${c.musicDir}.`);
+    }
+    for (const j of JUDGES) {
+      if (j.voice.referenceAudio === undefined) continue;
+      const f = join(c.musicDir, JUDGE_VOICES_DIR, j.voice.referenceAudio);
+      if (!existsSync(f)) throw new TaskError(503, 'voice_missing', `${j.name}'s recorded voice is missing: ${f}.`);
     }
     // One applause clip; two music beds (one under the meeting, another under the verdicts).
     for (const [folder, needed] of [[CASTING_APPLAUSE_DIR, 1], [CASTING_BEDS_DIR, 2]] as const) {
@@ -994,7 +999,7 @@ export class BackgroundTasks {
       };
       const spoken = await speakLines(
         { client: c.client, filesDir, pollMs: c.pollMs, signal, jobs: task.jobs, setJobs: (jobs) => store.setTaskJobs(task.id, jobs), setSteps: (steps) => ((voiceSteps = steps), publish()) },
-        lineVoices(script, o.singerVoice),
+        lineVoices(script, o.singerVoice, join(resolve(c.musicDir), JUDGE_VOICES_DIR)),
       );
       own.export = { ...own.export, state: 'running', startedAt: clock() };
       publish();

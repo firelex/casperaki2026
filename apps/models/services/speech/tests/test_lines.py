@@ -26,6 +26,9 @@ def test_refuses_bad_lines(tmp_path, given, message):
     ([line(direction="dry")], "direction"),
     ([line(reference_text="  ")], "reference_text"),
     ([line(reference_text="Hello there.", direction=5)], "direction"),
+    ([line(reference_audio="/tmp/ice.wav")], "reference_audio needs"),
+    ([line(reference_text="Hi.", reference_audio="ice.wav")], "absolute"),
+    ([line(reference_text="Hi.", reference_audio="/nowhere/ice.wav")], "no reference_audio"),
 ])
 def test_refuses_bad_references(tmp_path, given, message):
     with pytest.raises(ValueError, match=message):
@@ -66,3 +69,32 @@ def test_copies_each_line_from_one_reference_per_voice(tmp_path, monkeypatch):
     assert copied[0]["ref_text"] == "Right then, let us begin."
     assert copied[0]["ref_audio"] == copied[1]["ref_audio"] != copied[2]["ref_audio"]
     assert all((tmp_path / f"{g['id']}.wav").is_file() for g in given)
+
+
+def test_copies_lines_from_a_recorded_reference(tmp_path, monkeypatch):
+    """A line with reference_audio is copied from that recording; no reference is generated for it."""
+    import numpy as np
+    import soundfile as sf
+
+    from pipeline import breeze
+
+    calls = []
+
+    class FakeBreeze:
+        def speak(self, text, instruction, seed, out, ref_audio=None, ref_text=None):
+            calls.append({"text": text, "instruction": instruction, "ref_audio": ref_audio, "ref_text": ref_text})
+            out.parent.mkdir(parents=True, exist_ok=True)
+            sf.write(out, 0.2 * np.sin(np.linspace(0, 2000, 24000)), 24000)
+            return out
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(breeze, "Breeze", FakeBreeze)
+    rec = tmp_path / "ice.wav"
+    sf.write(rec, 0.2 * np.sin(np.linspace(0, 2000, 24000)), 24000)
+    ice = {"instruction": "A dry English man.", "seed": 7, "reference_text": "They were waiting outside.", "reference_audio": str(rec)}
+    lines.run({"stage": "lines", "lines": [{"id": "ice-1", "text": "No.", "direction": "withering", **ice}, {"id": "ice-2", "text": "Yes.", **ice}]}, str(tmp_path / "out"), None)
+    assert [c["text"] for c in calls] == ["No.", "Yes."]
+    assert all(c["ref_audio"] == rec and c["ref_text"] == "They were waiting outside." for c in calls)
+    assert calls[0]["instruction"] == "withering"
