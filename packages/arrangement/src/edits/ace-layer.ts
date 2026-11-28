@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { applyRapLyrics, muteUnderRap } from './rap.js';
+import { applyRapLyrics, isRapClip, muteUnderRap } from './rap.js';
 
 import {
   ACE_INSTRUMENTS,
@@ -64,11 +64,11 @@ export function applyAceLayer(song: Song, result: AceLayerResult): Song {
   const rap = layer.instrument === 'rap';
   if (rap && layer.track !== RAP_TRACK) throw new Error(`applyAceLayer: rap goes on the "${RAP_TRACK}" track, not "${layer.track}"`);
   const sections = new Set(layer.takes.map((t) => t.segment));
+  // Rap replaces the clips of its sections on any rap track (an earlier "ACE Rap" one too, or both would play).
   const onTrack = (a: AIArtifact) =>
-    a.kind === ACE_LAYER_KIND &&
-    a.attachedTo.scope === 'segment' &&
-    a.attachedTo.instrument === layer.track &&
-    (!rap || sections.has(a.attachedTo.segment));
+    rap
+      ? isRapClip(a) && a.attachedTo.scope === 'segment' && sections.has(a.attachedTo.segment)
+      : a.kind === ACE_LAYER_KIND && a.attachedTo.scope === 'segment' && a.attachedTo.instrument === layer.track;
   const artifacts: AIArtifact[] = layer.takes.map((t) => ({
     id: `${ACE_LAYER_KIND}:${t.segment}:${layer.track}:${t.sha256.slice(0, 8)}`,
     kind: ACE_LAYER_KIND,

@@ -104,3 +104,10 @@ def test_rank_is_words_then_separation():
     b = {"recall": 0.8, "vocal_db": -22.0, "backing_db": -50.0}
     assert ace.rank(b) > ace.rank(a)
     assert ace.rank({"recall": 0.9, "vocal_db": None, "backing_db": -20.0}) > ace.rank(a)
+
+
+def test_sections_are_timed_at_the_songs_exact_tempo(wav):
+    # 128.4 bpm: 8 bars are 14.95 s; ACE takes a whole bpm (128), the section timing keeps the exact one.
+    p = ace.check_params(rap(wav, bpm=128.4, sections=[{"name": "v", "start": 0, "end": 8 * 240 / 128.4, "lyrics": "x"}]))
+    assert p["bpm"] == 128 and p["tempo"] == 128.4
+    assert not ace.is_short(0, 8 * 240 / 128.4, p["tempo"])

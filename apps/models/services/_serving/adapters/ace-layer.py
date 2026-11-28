@@ -210,8 +210,9 @@ def check_params(params) -> dict:
         if not isinstance(lyrics, str) or not lyrics.strip():
             raise ValueError(f"ace-layer: lyrics must be a non-empty string, got {lyrics!r}")
 
-    # ACE takes an integer bpm (GenerationParams.bpm: Optional[int]); the brain's tempo may be fractional.
-    return {"src_wav": src, "track": track, "caption": caption.strip(), "bpm": int(round(bpm)),
+    # ACE takes an integer bpm (GenerationParams.bpm: Optional[int]); the brain's tempo may be fractional, and the
+    # sections are timed at it: `tempo` keeps it exact.
+    return {"src_wav": src, "track": track, "caption": caption.strip(), "bpm": int(round(bpm)), "tempo": float(bpm),
             "key_scale": key, "seed": seed, **({"lyrics": lyrics.strip()} if lyrics is not None else {}),
             **({"sections": sections, "takes": takes, "lego_caption": params["lego_caption"].strip()} if sections is not None else {})}
 
@@ -412,11 +413,11 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
     part = np.zeros((2, src.shape[0]), dtype=np.float32)
     for si, sec in enumerate(p["sections"]):
         step = job.step(f"rap_{sec['name']}", f"ACE raps {sec['name']}")
-        short = is_short(sec["start"], sec["end"], p["bpm"])
+        short = is_short(sec["start"], sec["end"], p["tempo"])
         if short:
-            ws, we = section_window(sec["start"], sec["end"], total, window_seconds(p["bpm"]))
+            ws, we = section_window(sec["start"], sec["end"], total, window_seconds(p["tempo"]))
         else:
-            ws, we = rap_window(sec["start"], sec["end"], total, p["bpm"])
+            ws, we = rap_window(sec["start"], sec["end"], total, p["tempo"])
         d = Path(out_dir) / "rap" / sec["name"]
         d.mkdir(parents=True, exist_ok=True)
         window = d / "window.wav"
@@ -432,7 +433,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
                 seed = p["seed"] + 1000 * si + k
                 if short:
                     tensor, out_sr = _lego(handle, {**p, "caption": p["lego_caption"]}, str(window),
-                                           lego_rap_lyrics(sec["lyrics"], we - ws, p["bpm"], sec["start"] - ws), seed, we - ws)
+                                           lego_rap_lyrics(sec["lyrics"], we - ws, p["tempo"], sec["start"] - ws), seed, we - ws)
                 else:
                     tensor, out_sr = _repaint(handle, p, str(window), rap_lyrics(sec["lyrics"]), seed, we - ws, span[0], span[1])
                 path = d / f"take{k + 1}.wav"

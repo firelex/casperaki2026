@@ -7,6 +7,7 @@ import {
   applyAceLayer,
   applyRapLyrics,
   applySungVocals,
+  applySungVocalsOver,
   muteUnderRap,
   orchestrate,
   rapLyricsOf,
@@ -108,5 +109,33 @@ describe('setTakesMuted and muteUnderRap', () => {
 
   it('muteUnderRap leaves sections without rap alone', () => {
     expect(muteUnderRap(sungAll, [s1])).toEqual(sungAll);
+  });
+});
+
+describe('review fixes 2026-11-28', () => {
+  it('rapping a section again on a song rapped before (its clips on "ACE Rap") replaces the old clip there', () => {
+    const old = applyAceLayer(base, { ...rap([s1, s2], 'e', 'Rap'), track: 'Rap' });
+    // the same clips as an 11-27 song had them: on "ACE Rap"
+    const legacy = { ...old, aiArtifacts: old.aiArtifacts.map((a) => (a.attachedTo.scope === 'segment' ? { ...a, attachedTo: { ...a.attachedTo, instrument: 'ACE Rap' } } : a)) } as Song;
+    const again = applyAceLayer(legacy, rap([s1], 'f'));
+    const clips = again.aiArtifacts.filter((a) => a.attachedTo.scope === 'segment').map((a) => `${a.attachedTo.instrument}@${(a.attachedTo as { segment: string }).segment}`);
+    expect(clips.sort()).toEqual([`ACE Rap@${s2}`, `Rap@${s1}`].sort());
+  });
+
+  it('a muted rap clip is no rap: Sing there is not muted', () => {
+    const rapped = setTakesMuted(applyAceLayer(sungAll, rap([s1])), RAP_TRACK, s1, true);
+    expect(rapSections(rapped)).toEqual([]);
+    const resung = applySungVocals(rapped, { melody: { [s1]: melodyOf(s1) }, takes: [take(s1, 'Vocal', 'd')] }, { partial: true });
+    expect(takeOf(resung, s1, 'Vocal').muted).toBeUndefined();
+  });
+
+  it('a Sing landing into unsaved edits keeps their mute toggles', () => {
+    const saved = applyAceLayer(sungAll, rap([s1]));
+    const working = setTakesMuted(saved, 'Vocal', s1, false); // unmuted by hand, not saved
+    const result = { melody: { [s2]: melodyOf(s2) }, takes: [take(s2, 'Vocal', 'd')] };
+    const savedSung = applySungVocals(saved, result, { partial: true });
+    const merged = applySungVocalsOver(working, result, savedSung, { partial: true });
+    expect(takeOf(merged, s1, 'Vocal').muted).toBeUndefined();
+    expect(takeOf(merged, s1, 'Backing vocals 1').muted).toBe(true);
   });
 });

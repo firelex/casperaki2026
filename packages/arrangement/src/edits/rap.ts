@@ -47,13 +47,14 @@ export function applyRapLyrics(song: Song, lyrics: Readonly<Record<string, reado
   });
 }
 
-const isRapClip = (a: AIArtifact) => a.kind === ACE_LAYER_KIND && a.attachedTo.scope === 'segment' && aceInstrumentOfTrack(a.attachedTo.instrument ?? '') === 'rap';
+/** A clip on a rap track ("Rap", or "ACE Rap" on songs rapped before 2026-11-28), muted or not. */
+export const isRapClip = (a: AIArtifact): boolean => a.kind === ACE_LAYER_KIND && a.attachedTo.scope === 'segment' && aceInstrumentOfTrack(a.attachedTo.instrument ?? '') === 'rap';
 const isSungTake = (a: AIArtifact) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) && a.attachedTo.scope === 'segment';
 const segmentOf = (a: AIArtifact) => (a.attachedTo.scope === 'segment' ? a.attachedTo.segment : undefined);
 
-/** The sections with a rap clip, in song order. */
+/** The sections with a rap clip that plays (not muted), in song order. */
 export function rapSections(song: Song): string[] {
-  const rapped = new Set(song.aiArtifacts.filter(isRapClip).map(segmentOf));
+  const rapped = new Set(song.aiArtifacts.filter((a) => isRapClip(a) && a.muted !== true).map(segmentOf));
   return song.songStructure.map((s) => s.name).filter((n) => rapped.has(n));
 }
 

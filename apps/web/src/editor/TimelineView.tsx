@@ -632,7 +632,8 @@ export function TimelineView() {
     setWritingRap(false);
     setTaskError(undefined);
     try {
-      await tasksApi.startWriteRapLyrics(activeSong.id, viewSong, style, chosen);
+      // On the saved song (unsaved edits saved first), like Sing and Rap: its sections are the project's.
+      await onSaved((songId, song) => tasksApi.startWriteRapLyrics(songId, song, style, chosen));
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
       setTaskError(`Write rap lyrics failed: ${err instanceof Error ? err.message : String(err)}`);

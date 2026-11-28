@@ -360,7 +360,14 @@ export function applySungVocals(working: Song, sung: { melody: SungMelody; takes
 export function applySungVocalsOver(working: Song, sung: { melody: SungMelody; takes: readonly SungTake[] }, saved: Song, opts: ApplySungOptions = {}): Song {
   const merged = applySungVocals(working, sung, opts);
   const isSung = (a: AIArtifact) => (SUNG_TAKE_KINDS as readonly string[]).includes(a.kind);
-  return parseSong({ ...merged, aiArtifacts: [...merged.aiArtifacts.filter((a) => !isSung(a)), ...saved.aiArtifacts.filter(isSung)] });
+  // A take the working copy already had keeps its unsaved mute or unmute; the new takes come as saved.
+  const before = new Map(working.aiArtifacts.filter(isSung).map((a) => [a.id, a.muted === true]));
+  const takes = saved.aiArtifacts.filter(isSung).map((a) => {
+    if (!before.has(a.id)) return a;
+    const { muted: _saved, ...rest } = a;
+    return before.get(a.id) ? { ...rest, muted: true } : rest;
+  });
+  return parseSong({ ...merged, aiArtifacts: [...merged.aiArtifacts.filter((a) => !isSung(a)), ...takes] });
 }
 
 // ---- lyrics first (docs/superpowers/specs/2026-11-27-lyrics-first-singing-design.md) ----------------------------
