@@ -34,8 +34,9 @@ export interface GenreRecipe {
   /** Section types whose parts are fixed: these tracks (drums, bass, or lanes the recipe always plays) and, with
    *  plusOne, one more of the song's other tracks (drawn once per song; never another always-playing lane). */
   readonly sectionParts?: Readonly<Record<string, { readonly keep: readonly ('drums' | 'bass' | AlwaysPlayingLane)[]; readonly plusOne: boolean }>>;
-  /** Section types in which every track of the song plays. */
-  readonly fullSections?: readonly string[];
+  /** Section types that play more tracks than another (chorus: 'verse'): their own rotating draw, topped up with the
+   *  song's other tracks when it comes out no bigger. */
+  readonly busierThan?: Readonly<Record<string, string>>;
   /** The track mastering matches the song to instead of Atemlos: the name of its data file (the brain's
    *  mastering references directory, `<name>.json`, made by casperaki_master_reference). */
   readonly masteringReference?: string;
@@ -70,9 +71,10 @@ export const GENRE_RECIPES = {
     // kick bus's Thunder 0.41 -> 0.65 and its output 0.53 -> 0.62, the drum bus's Pyewacket input 0.83 -> 1.0 and its
     // output 0.5 -> 0.6 (slots of casperaki_engine/config/mix-config.json's rack chains).
     // Owner 2026-11-28: "more instrument variety between verse and chorus" -> lean verse (drums, bass, the guitar and
-    // one more part), full chorus (adds the plucked synth, pad and lead synths).
+    // one more part), and a chorus with more parts than the verse, rotating as the patterns do ("as long as we have
+    // more in the chorus than in the verse").
     sectionParts: { verse: { keep: ['drums', 'bass', 'electricGuitarClean'], plusOne: true } },
-    fullSections: ['chorus'],
+    busierThan: { chorus: 'verse' },
     masteringReference: 'your-love-is-my-drug',
     mix: {
       lanes: { Drums: { volumeDb: 4 }, Pad: { volumeDb: -2 }, Synths: { volumeDb: -2 }, PluckedSynths: { volumeDb: -2 }, Keys: { volumeDb: -1 } },

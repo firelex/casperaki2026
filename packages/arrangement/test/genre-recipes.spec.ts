@@ -100,9 +100,10 @@ describe('Casperaki Pop', () => {
     }
   });
 
-  it('lean verse, full chorus: a verse plays drums, bass, the guitar and one more part (never the plucked synth); a chorus plays every part of the song (owner 2026-11-28: "more instrument variety between verse and chorus")', () => {
+  it('lean verse, full chorus: a verse plays drums, bass, the guitar and one more part (never the plucked synth); a chorus has more parts than the verse, rotating as the patterns do (owner 2026-11-28: "as long as we have more in the chorus than in the verse")', () => {
     const parts = (s: ReturnType<typeof orchestrate>, sec: string) =>
       Object.keys(s.arrangement[sec]!.overrides).filter((k) => !/^(Vocal|Backing vocals)/u.test(k) && k !== 'Loop').sort();
+    let notFull = 0;
     for (let i = 0; i < 10; i++) {
       const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 110, seed: `variety-${i}` });
       const guitar = s.instrumentDefinitions.find((d) => ELECTRIC_CLEAN.includes(String(d.lowLevelType)))!.name;
@@ -115,9 +116,15 @@ describe('Casperaki Pop', () => {
           expect(p.length, `${i} ${seg.name} ${p}`).toBe(4);
           expect(p, `${i} ${seg.name}`).not.toContain(pluck);
         }
-        if (seg.name.startsWith('chorus')) expect(p, `${i} ${seg.name}`).toEqual(song);
+      }
+      // the chorus has more parts than the verse, drawn as the patterns rotate (not every part of the song every time)
+      const verseCount = parts(s, s.songStructure.find((x) => x.name.startsWith('verse'))!.name).length;
+      for (const seg of s.songStructure.filter((x) => x.name.startsWith('chorus'))) {
+        expect(parts(s, seg.name).length, `${i} ${seg.name}`).toBeGreaterThan(verseCount);
+        if (parts(s, seg.name).length < song.length) notFull++;
       }
     }
+    expect(notFull, 'some choruses rotate parts out').toBeGreaterThan(0);
   });
 
   it('a base genre is generated as before (no recipe)', () => {

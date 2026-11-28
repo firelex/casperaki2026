@@ -830,25 +830,42 @@ function recipeSectionParts(
   rng: Rng,
 ): SegmentActivity[] {
   const parts = ctx.recipe?.sectionParts ?? {};
-  const full = new Set(ctx.recipe?.fullSections ?? []);
+  const busier = ctx.recipe?.busierThan ?? {};
   const nameOf = (k: 'drums' | 'bass' | AlwaysPlayingLane): string => {
     const n = k === 'drums' ? essentialLaneNames[0] : k === 'bass' ? essentialLaneNames[1] : alwaysNames.get(k);
     if (!n) throw new Error(`selectInstruments: the recipe keeps "${k}" in a section but the song has no such track`);
     return n;
   };
-  const extraByType = new Map<string, string | undefined>();
-  return segments.map((seg) => {
-    const type = segmentType(seg.segmentName);
-    if (full.has(type)) return { ...seg, activeLanes: [...allLanes] };
-    const rule = parts[type];
-    if (!rule) return { ...seg };
+  // Fixed sections first (one set of parts per section type, its extra part drawn once per song).
+  const fixedByType = new Map<string, string[]>();
+  for (const [type, rule] of Object.entries(parts)) {
     const keep = rule.keep.map(nameOf);
-    if (rule.plusOne && !extraByType.has(type)) {
-      const others = allLanes.filter((l) => !keep.includes(l) && ![...alwaysNames.values()].includes(l));
-      extraByType.set(type, others.length > 0 ? rng.fork(type).pick(others) : undefined);
+    const others = allLanes.filter((l) => !keep.includes(l) && ![...alwaysNames.values()].includes(l));
+    const extra = rule.plusOne && others.length > 0 ? rng.fork(type).pick(others) : undefined;
+    fixedByType.set(type, extra ? [...keep, extra] : keep);
+  }
+  const fixed = segments.map((seg) => {
+    const lanes = fixedByType.get(segmentType(seg.segmentName));
+    return lanes ? { ...seg, activeLanes: [...lanes] } : { ...seg };
+  });
+  // A busier section type keeps its own (rotating) draw; topped up with tracks it lacks, at random, until it has
+  // more than the section type it must beat (the most that type has in any of its sections).
+  const most = (type: string) => Math.max(0, ...fixed.filter((s) => segmentType(s.segmentName) === type).map((s) => s.activeLanes.length));
+  const topUpByType = new Map<string, string[]>();
+  return fixed.map((seg) => {
+    const type = segmentType(seg.segmentName);
+    const than = busier[type];
+    if (!than) return seg;
+    let added = topUpByType.get(type);
+    if (!added) {
+      added = [];
+      const pool = allLanes.filter((l) => !seg.activeLanes.includes(l));
+      const r = rng.fork(`busier/${type}`);
+      while (seg.activeLanes.length + added.length <= most(than) && pool.length > 0) added.push(pool.splice(r.int(0, pool.length - 1), 1)[0]!);
+      if (seg.activeLanes.length + added.length <= most(than)) throw new Error(`selectInstruments: a ${type} cannot have more tracks than the ${than} (the song has ${allLanes.length})`);
+      topUpByType.set(type, added);
     }
-    const extra = rule.plusOne ? extraByType.get(type) : undefined;
-    return { ...seg, activeLanes: extra ? [...keep, extra] : keep };
+    return { ...seg, activeLanes: [...seg.activeLanes, ...added.filter((l) => !seg.activeLanes.includes(l))] };
   });
 }
 
