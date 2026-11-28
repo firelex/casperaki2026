@@ -37,6 +37,12 @@ import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, Tran
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAddSinger, type AddSingerOptions } from '../singers/addSingerTask.js';
 import { buildAvatar, type AvatarBuildDeps } from '../avatars/avatarBuildTask.js';
+import type { UserAvatars } from '../avatars/userAvatars.js';
+import { songSinger } from '../avatars/videoAvatars.js';
+import { verdictVotes } from '../casting/cast.js';
+import { castingFacts } from '../casting/facts.js';
+import { SCENES, writeScript, type SceneId } from '../casting/writer.js';
+import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
 import { makeSpeakingVoice, SpeakingVoiceOptionsSchema, type SpeakingSinger, type SpeakingVoiceDeps } from '../singers/speakingVoiceTask.js';
 import { newSingerId, type ReferenceChoice, type UserSingers } from '../singers/userSingers.js';
@@ -91,7 +97,30 @@ export interface BackgroundTasksDeps {
   /** Realistic avatars' builds: the avatar builder, the curated library and the builds' files folder; without it,
    *  building answers 503. */
   readonly avatarBuild?: AvatarBuildDeps;
+  /** Casting scripts: the language model, the users' avatars and how to find a singer of the owner's (its name and
+   *  what was written about the voice); without it, casting scripts answer 503. */
+  readonly casting?: CastingDeps;
 }
+
+export interface CastingDeps {
+  readonly chat: ChatModel;
+  readonly avatars: UserAvatars;
+  readonly findSinger: (ownerId: string, singerId: string) => { name: string; description: string | null };
+}
+
+const CastingOptionsSchema = z
+  .object({
+    avatarId: z.string().min(1),
+    outcome: z.enum(['fourYes', 'threeOne', 'notThisTime']),
+    title: z.string().min(1),
+    singerName: z.string().min(1),
+    singerDescription: z.string().nullable(),
+    avatarName: z.string().min(1),
+  })
+  .strict();
+export const CASTING_NOT_SET_UP = "Casting scripts are not set up: the brain needs the assistant's language model (ASSISTANT_LLM_URL) and BRAIN_SINGERS_DATA_DIR.";
+/** Kinds on a song whose result goes into nothing: done when written, not ready to apply. */
+const NOTHING_TO_APPLY: ReadonlySet<TaskKind> = new Set(['castingScript']);
 
 export interface AddSingerDeps {
   readonly client: VocalsClient;
@@ -360,6 +389,39 @@ export class BackgroundTasks {
     return this.deps.store.getTask(ownerId, id)!;
   }
 
+  /** Starts writing a casting script for the owner's song, performed by one of their avatars (its singer must have
+   *  sung the song's latest finished Sing), with the outcome the user chose. */
+  startCastingScript(ownerId: string, songId: string, start: { avatarId: unknown; outcome: unknown }): TaskRow {
+    const c = this.deps.casting;
+    if (!c) throw new TaskError(503, 'no_casting', CASTING_NOT_SET_UP);
+    const { store } = this.deps;
+    const project = store.getProject(ownerId, songId);
+    const stored = project ? store.get(songId) : undefined;
+    if (!project || !stored) throw new TaskError(404, 'not_found', 'There is no such song.');
+    const outcome = z.enum(['fourYes', 'threeOne', 'notThisTime']).safeParse(start.outcome);
+    if (!outcome.success) throw new TaskError(400, 'invalid_outcome', 'Choose the outcome: fourYes, threeOne or notThisTime.');
+    const avatar = typeof start.avatarId === 'string' ? c.avatars.get(ownerId, start.avatarId) : undefined;
+    if (!avatar) throw new TaskError(400, 'unknown_avatar', `You have no avatar "${String(start.avatarId)}".`);
+    const singerId = songSinger(store, ownerId, songId);
+    if (singerId === undefined) throw new TaskError(400, 'not_sung', "Sing this song with one of your avatars' singers first.");
+    if (avatar.singerId !== singerId) throw new TaskError(400, 'wrong_singer', `${avatar.name} does not have the voice that sang this song: choose the avatar whose singer sang it.`);
+    const song = parseSong(JSON.parse(stored.canonical));
+    if (!songTiming(song).sections.some((x) => /chorus/iu.test(x.name))) throw new TaskError(400, 'no_chorus', 'The song has no chorus, which a casting performance ends with.');
+    if (store.runningTask(ownerId, songId, 'castingScript')) throw new TaskError(409, 'already_running', 'A casting script for this song is already being written.');
+    let singer: { name: string; description: string | null };
+    try {
+      singer = c.findSinger(ownerId, singerId);
+    } catch (err) {
+      throw new TaskError(400, 'unknown_singer', err instanceof Error ? err.message : String(err));
+    }
+    const options = CastingOptionsSchema.parse({ avatarId: avatar.id, outcome: outcome.data, title: project.title, singerName: singer.name, singerDescription: singer.description, avatarName: avatar.name });
+    const id = randomUUID();
+    store.insertTask({ id, ownerId, songId, kind: 'castingScript', input: stored.canonical, startedAt: this.deps.clock(), options });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
+    this.enqueue(ownerId, id, 'castingScript');
+    return store.getTask(ownerId, id)!;
+  }
+
   private checkNoSpeakingVoiceRunning(ownerId: string, singerId: string): void {
     // A speakingVoice task, or Add a singer (whose last steps make the new singer's voice), for this singer.
     const running = this.deps.store
@@ -464,6 +526,8 @@ export class BackgroundTasks {
         throw new TaskError(409, 'singer_gone', err instanceof Error ? err.message : String(err));
       }
       this.checkNoSpeakingVoiceRunning(ownerId, o.singerId);
+    } else if (task.kind === 'castingScript') {
+      if (!this.deps.casting) throw new TaskError(503, 'no_casting', CASTING_NOT_SET_UP);
     } else if (task.kind === 'avatarBuild') {
       if (!this.deps.avatarBuild) throw new TaskError(503, 'no_avatar_builder', AVATAR_BUILD_NOT_SET_UP);
     } else if (task.kind === 'addSinger') {
@@ -606,10 +670,10 @@ export class BackgroundTasks {
       const now = store.getTask(ownerId, id);
       // Gone, or cancelled meanwhile.
       if (!now || now.state !== 'running') return;
-      // A task on no song (Add a singer) has nothing to apply: it is done.
-      if (now.songId === null) {
+      // A task on no song (Add a singer), or of a kind whose result goes into nothing, is done.
+      if (now.songId === null || NOTHING_TO_APPLY.has(now.kind)) {
         store.setTaskState(id, { state: 'done', result, message: null, finishedAt: clock() });
-        events.publish(ownerId, { type: 'task', taskId: id, songId: null, state: 'done' });
+        events.publish(ownerId, { type: 'task', taskId: id, songId: now.songId, state: 'done' });
         return;
       }
       // The song was deleted meanwhile: the task goes with it.
@@ -803,6 +867,46 @@ export class BackgroundTasks {
         now: clock,
       });
       return { singerId: o.singerId, seed: voice.seed };
+    }
+    if (task.kind === 'castingScript') {
+      const c = this.deps.casting;
+      if (!c) throw new Error(CASTING_NOT_SET_UP);
+      const { store, events, clock } = this.deps;
+      const o = CastingOptionsSchema.parse(task.options);
+      const song = parseSong(JSON.parse(task.input));
+      const facts = castingFacts(song, o.title, { name: o.singerName, description: o.singerDescription }, o.avatarName);
+      const labels: Record<SceneId, string> = { backstage: 'Backstage (narrator)', banter: 'The judges meet the singer', verdicts: 'The verdicts' };
+      const lines: Record<SceneId, number> = { backstage: 0, banter: 0, verdicts: 0 };
+      let current: SceneId = 'backstage';
+      const started: Partial<Record<SceneId, string>> = { backstage: clock() };
+      const finished: Partial<Record<SceneId, string>> = {};
+      const publish = () => {
+        const steps: TaskStep[] = SCENES.map((sc) => ({
+          id: sc,
+          label: labels[sc],
+          state: finished[sc] ? 'done' : sc === current ? 'running' : 'waiting',
+          ...(started[sc] ? { startedAt: started[sc] } : {}),
+          ...(finished[sc] ? { finishedAt: finished[sc] } : {}),
+          ...(lines[sc] ? { text: `${lines[sc]} lines` } : {}),
+        }));
+        const now = store.getTask(task.ownerId, task.id);
+        if (!now || now.state !== 'running') return;
+        store.setTaskSteps(task.id, steps);
+        events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: task.songId, state: 'running' });
+      };
+      publish();
+      const script = await writeScript(c.chat, facts, o.outcome, verdictVotes(o.outcome, songIdOf(task)), signal, (scene) => {
+        if (scene !== current) {
+          finished[current] = clock();
+          current = scene;
+          started[scene] = clock();
+        }
+        lines[scene] += 1;
+        publish();
+      });
+      finished[current] = clock();
+      publish();
+      return script;
     }
     if (task.kind === 'avatarBuild') {
       const ab = this.deps.avatarBuild;

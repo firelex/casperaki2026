@@ -38,6 +38,7 @@ import { createSingersRouter, readSingers, singerVoice, speakingSinger } from '.
 import { SpeakingVoices } from './singers/speakingVoice.js';
 import { UserSingers } from './singers/userSingers.js';
 import { createAvatarsRouter } from './routes/avatars.js';
+import { createCastingRouter } from './routes/casting.js';
 import { AvatarPacks } from './avatars/avatarPacks.js';
 import { UserAvatars } from './avatars/userAvatars.js';
 import { sweepOldBuilds } from './avatars/avatarBuildTask.js';
@@ -404,10 +405,24 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
     sweep();
     setInterval(sweep, 60 * 60 * 1000).unref();
   }
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), ...(avatarBuild ? { avatarBuild } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  // Casting scripts (src/casting): the assistant's language model writes them; the performer is one of the user's avatars.
+  const casting =
+    lyricModel && userAvatars
+      ? {
+          chat: lyricModel,
+          avatars: userAvatars,
+          findSinger: (ownerId: string, singerId: string) => {
+            const s = speakingSinger(config.singersDir, userSingers, ownerId, singerId);
+            return { name: s.name, description: s.description.trim() ? s.description : null };
+          },
+        }
+      : undefined;
+  if (!casting) console.warn('[brain] ASSISTANT_LLM_URL (with BRAIN_SINGERS_DATA_DIR) not set — casting scripts answer 503.');
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), ...(avatarBuild ? { avatarBuild } : {}), ...(casting ? { casting } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
+  app.use(createCastingRouter({ store, tasks, ownerOf, isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true) }));
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(
     createHumRouter({
