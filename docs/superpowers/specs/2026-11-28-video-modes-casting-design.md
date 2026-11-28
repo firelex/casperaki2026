@@ -255,7 +255,10 @@ substitute).
 
 - **Backstage**: three small sets, built in code like the existing scenes.
 - **Stage door**: a door in the backstage set and the matching door at the side of the stage, a cut between them.
-- **Judges' table**: four chairs (and a long desk) in front of the existing stage scene, facing it.
+- **Judges' desk**: the four judges sit at a long **Casperaki-branded desk** (the logo on its front panel, facing the
+  camera from the audience side) in front of the stage, facing the singer (owner, 2026-11-28). Judges are the realistic
+  VRM people (`tools/build_judges.py`); the singer is the user's anime avatar (owner: "the mix of realistic judges and
+  avatar singers actually works").
 - Walking, sitting, talking and reactions from the casting clips (above).
 - Every backstage set has the stage door; the set and the singer's pose (seated or standing) are picked per video
   from the song (varies between songs, the same on a re-render) **(my call)**. The narrator talks about the singer and
