@@ -15,7 +15,7 @@ import { isTakeFresh, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
-import { laneNotes } from '../src/sing/plan.js';
+import { lanePitches, laneNotes } from '../src/sing/plan.js';
 import { humNotesOnGrid, laneOctaveShift } from '../src/sing/transcribeTask.js';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
@@ -195,7 +195,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     for (const other of others) expect(sungMelody[other]).toEqual((generatorParams(song).params?.['sungMelody'] as Record<string, unknown>)[other]);
   });
 
-  it('without written lyrics: pitch-only notes from the hum service, carrying the lane\'s words', async () => {
+  it('without written lyrics: pitch-only notes from the hum service, without words (the lane has none yet)', async () => {
     const h = await boot(openSongsStore({ path: ':memory:' }));
     const { id, song } = await songOf(h, 'sing-b', false);
     const verse = sungSections(song).find((s) => s.type === 'verse')!.name;
@@ -214,7 +214,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const applied = await send('POST', `${h.url}/api/tasks/${taskId}/apply`);
     expect(applied.status).toBe(200);
     const after = (await send('GET', `${h.url}/api/songs/${applied.body.songId as string}`)).body.song as Song;
-    const laneMidis = lane(song, verse).map((x) => x.midi);
+    const laneMidis = lanePitches(song, verse, 'Vocal').map((x) => x.midi);
     const shift = laneOctaveShift([72, 74, 76], laneMidis);
     const pitchOnly = [
       { start: 0, duration: 1, midi: 72 + shift },
@@ -222,10 +222,9 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
       { start: 4, duration: 2, midi: 76 + shift },
     ];
     const bars = song.arrangement[verse]!.overrides['Vocal']!.bars!;
-    expect(lane(after, verse)).toEqual(laneWordsOn(verse, bars, pitchOnly));
-    // the words are the lane's own (its first line's first three)
-    expect(lane(after, verse).map((x) => x.word)).toEqual(lane(song, verse).slice(0, 3).map((x) => x.word));
-    for (const other of others) expect(lane(after, other)).toEqual(lane(song, other));
+    expect(laneWordsOn(verse, bars, pitchOnly)).toEqual(pitchOnly);
+    expect(lanePitches(after, verse, 'Vocal')).toEqual(pitchOnly);
+    for (const other of others) expect(lanePitches(after, other, 'Vocal')).toEqual(lanePitches(song, other, 'Vocal'));
   });
 
   it('with backing and no lyrics: the vocals service separates the voice, the hum service reads it', async () => {
@@ -261,7 +260,7 @@ describe('the Transcribe melody task', { timeout: 60_000 }, () => {
     const made = await songOf(h, 'sing-a', true);
     let { id, song } = made;
     const verse = sungSections(song).find((s) => s.type === 'verse')!.name;
-    const laneMidis = lane(song, verse).map((x) => x.midi);
+    const laneMidis = lanePitches(song, verse, 'Vocal').map((x) => x.midi);
     for (const offset of [-12, 0]) {
       svc.setTranscribeMidi((i) => laneMidis[i]! + offset);
       const t = (await startTranscribe(h, id, song, verse)).body.task as TaskJson;

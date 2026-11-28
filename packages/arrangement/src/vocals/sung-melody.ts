@@ -22,12 +22,13 @@ export const SungNoteSchema = z
     start: z.number().min(0),
     duration: z.number().positive(),
     midi: z.number().int().min(0).max(127),
-    /** fullWord convention: "Un-" continues into the next syllable. */
-    word: z.string().min(1),
-    /** Vocaloid phonemes, lowercase with stress digits. */
-    phonemes: z.array(z.string().min(1)),
+    /** fullWord convention: "Un-" continues into the next syllable. Absent before lyrics are written. */
+    word: z.string().min(1).optional(),
+    /** Vocaloid phonemes, lowercase with stress digits. Absent exactly when the word is. */
+    phonemes: z.array(z.string().min(1)).optional(),
   })
-  .strict();
+  .strict()
+  .refine((n) => (n.word === undefined) === (n.phonemes === undefined), { message: 'a sung note has a word and its phonemes, or neither' });
 export type SungNote = z.infer<typeof SungNoteSchema>;
 
 /** Section name (as the generator names it) → the notes sung there. */
@@ -64,8 +65,7 @@ export function attachSungMelody(segment: VocalSegment, notes: readonly SungNote
       type: 'vocalNote',
       note: MidiNoteSchema.parse(n.midi),
       duration: n.duration,
-      fullWord: n.word,
-      vocaloidPhonemes: [...n.phonemes],
+      ...(n.word !== undefined && { fullWord: n.word, vocaloidPhonemes: [...n.phonemes!] }),
       ...(endOfPhrase ? { endOfPhrase: true } : {}),
     };
     (bar.notes[BarBeatSchema.parse(beatKey(n.start))] ??= []).push(ev);
@@ -78,11 +78,11 @@ const BARS_PER_LINE = 4;
 
 /**
  * Pitch-only notes (a recording transcribed without written lyrics: beats from the section start, lane register) with
- * the words the section's Vocal lane has now (`laneBars`; without written lyrics, the phrase bank's), attached the
- * way the generator attaches the phrase bank's words (`applyLyricsToSegments` over `buildVocalScaffolding`): per
- * 4-bar line, one syllable per note in order, the line's syllables cycled when the notes outnumber them (and only the
- * first ones used when they are fewer). Errors name the section: a note outside it, two notes starting together, a
- * lane note without a word, notes in a 4-bar line where the lane has no words.
+ * the words the section's Vocal lane has now (`laneBars`), attached with `applyLyricsToSegments` over
+ * `buildVocalScaffolding`: per 4-bar line, one syllable per note in order, the line's syllables cycled when the notes
+ * outnumber them (and only the first ones used when they are fewer). A lane without words (lyrics not written yet)
+ * leaves the notes without words. Errors name the section: a note outside it, two notes starting together, a lane note
+ * with a word but no phonemes (or the reverse), notes in a 4-bar line where a lane with words has none.
  */
 export function laneWordsOn(section: string, laneBars: VocalBarsLike, notes: readonly { start: number; duration: number; midi: number }[]): SungNote[] {
   // The lane's syllables, per 4-bar line, in order.
@@ -93,8 +93,10 @@ export function laneWordsOn(section: string, laneBars: VocalBarsLike, notes: rea
       for (const ev of bar.notes?.[key] ?? []) {
         const e = ev as { type?: string; fullWord?: string; vocaloidPhonemes?: string[] };
         if (e.type !== 'vocalNote') continue;
+        // A note before lyrics are written has neither.
+        if (e.fullWord === undefined && e.vocaloidPhonemes === undefined) continue;
         if (!e.fullWord || !e.vocaloidPhonemes || e.vocaloidPhonemes.length === 0) {
-          throw new Error(`${section} bar ${barIndex + 1} beat ${key}: a Vocal lane note without a word or phonemes`);
+          throw new Error(`${section} bar ${barIndex + 1} beat ${key}: a Vocal lane note with a word but no phonemes, or phonemes but no word`);
         }
         (laneLines[Math.floor(barIndex / BARS_PER_LINE)] ??= []).push({ fullWord: e.fullWord, vocaloidPhonemes: [...e.vocaloidPhonemes] });
       }
@@ -112,7 +114,8 @@ export function laneWordsOn(section: string, laneBars: VocalBarsLike, notes: rea
   const segment: VocalSegment = { segmentName: section, bars };
   const scaffolding = buildVocalScaffolding({ segments: [segment] });
   const anyWords = laneLines.find((l) => l !== undefined && l.length > 0);
-  if (!anyWords) throw new Error(`${section}: the Vocal lane has no words`);
+  // Lyrics not written yet: the notes stay without words.
+  if (!anyWords) return [...notes].sort((a, b) => a.start - b.start).map((n) => ({ start: n.start, duration: n.duration, midi: MidiNoteSchema.parse(n.midi) }));
   const lines: PhrasePlanLine[] = scaffolding[0]!.lines.map((line, l) => {
     const words = laneLines[l] ?? [];
     if (line.length > 0 && words.length === 0) {

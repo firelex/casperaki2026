@@ -205,7 +205,7 @@ describe('orchestrate (brightPop vertical slice)', () => {
     }
   });
 
-  it('vocal override notes all carry fullWord + non-empty phonemes; absent from non-sung segments', () => {
+  it('vocal override notes carry no words before lyrics are written; absent from non-sung segments', () => {
     const song = orchestrate(POP_PARAMS);
     // Sung segment-types: verse / preChorus / chorus / bridge.
     // Non-sung: intro / outro / break.
@@ -225,8 +225,8 @@ describe('orchestrate (brightPop vertical slice)', () => {
             noteCount++;
             expect(ev.type).toBe('vocalNote');
             if (ev.type === 'vocalNote') {
-              expect(ev.fullWord && ev.fullWord.length).toBeGreaterThan(0);
-              expect(ev.vocaloidPhonemes && ev.vocaloidPhonemes.length).toBeGreaterThan(0);
+              expect(ev.fullWord).toBeUndefined();
+              expect(ev.vocaloidPhonemes).toBeUndefined();
             }
           }
         }

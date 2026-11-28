@@ -44,6 +44,13 @@ describe('sungMelody param', () => {
     }
   });
 
+  it('wordless sung notes stay wordless on the lead', () => {
+    const song = orchestrate({ ...PARAMS, params: { sungMelody: { [chorus]: melody[chorus]!.map(({ word: _w, phonemes: _p, ...n }) => n) } } });
+    const lead = notesOf(song, chorus, 'Vocal');
+    expect(lead.map((n) => n.start)).toEqual([0, 1, 2.5, 5]);
+    for (const n of lead) expect(n.ev.fullWord).toBeUndefined();
+  });
+
   it('keeps the chords', () => {
     expect(song.songStructure.map((s) => s.bars.map((b) => b.chords))).toEqual(base.songStructure.map((s) => s.bars.map((b) => b.chords)));
   });
@@ -87,7 +94,7 @@ describe('newMelody after Sing', () => {
 
   it('keeps the sung melody of the other types', () => {
     const verse = sungSections(base).map((s) => s.name).find((n) => n.startsWith('verse'))!;
-    const verseSung = notesOf(base, verse, 'Vocal').map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note, word: n.ev.fullWord!, phonemes: ['l', 'aa1'] }));
+    const verseSung = notesOf(base, verse, 'Vocal').map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note, word: 'La', phonemes: ['l', 'aa1'] }));
     const sung = applySungVocals(base, { melody: { ...melody, [verse]: verseSung }, takes: [] });
     const out = newMelody(sung, 'chorus');
     expect(Object.keys((out.song.generator!.params.params as { sungMelody: object }).sungMelody)).toEqual([verse]);
@@ -120,7 +127,7 @@ describe('applySungVocals with partial (Transcribe melody: one section, no takes
     const sections = sungSections(base).map((s) => s.name);
     const verse = sections.find((n) => n.startsWith('verse'))!;
     const verseSung = notesOf(base, verse, 'Vocal').map((n) => ({
-      start: n.start, duration: n.ev.duration, midi: n.ev.note, word: n.ev.fullWord!, phonemes: ['l', 'aa1'],
+      start: n.start, duration: n.ev.duration, midi: n.ev.note, word: 'La', phonemes: ['l', 'aa1'],
     }));
     const sung = applySungVocals(base, { melody: { ...melody, [verse]: verseSung }, takes: [take(chorus, 'Vocal', 'a'), take(verse, 'Vocal', 'b')] });
     const transcribed = verseSung.map((n, i) => ({ ...n, midi: n.midi + (i % 2 ? 2 : 0) }));
@@ -140,7 +147,7 @@ describe('applySungVocals with partial (Transcribe melody: one section, no takes
   it('applySungVocalsOver passes partial on', () => {
     const verse = sungSections(base).map((s) => s.name).find((n) => n.startsWith('verse'))!;
     const sung = applySungVocals(base, { melody, takes: [take(chorus, 'Vocal', 'a')] });
-    const verseNotes = notesOf(base, verse, 'Vocal').map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note, word: n.ev.fullWord!, phonemes: ['l', 'aa1'] }));
+    const verseNotes = notesOf(base, verse, 'Vocal').map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note, word: 'La', phonemes: ['l', 'aa1'] }));
     const result = { melody: { [verse]: verseNotes }, takes: [] };
     const saved = applySungVocals(sung, result, { partial: true });
     const merged = applySungVocalsOver(sung, result, saved, { partial: true });
@@ -150,9 +157,31 @@ describe('applySungVocals with partial (Transcribe melody: one section, no takes
 
 describe('laneWordsOn (pitch-only notes take the lane\'s words, as the generator attaches phrase-bank words)', () => {
   const verse = sungSections(base).map((s) => s.name).find((n) => n.startsWith('verse'))!;
-  const bars = BARS(base, verse, 'Vocal');
-  const lane = notesOf(base, verse, 'Vocal');
+  // The lane with words on it (a new song's melody has none until Write lyrics): "w0", "w1", … in order.
+  let k = 0;
+  const bars = BARS(base, verse, 'Vocal').map((b) => ({
+    ...b,
+    notes: Object.fromEntries(
+      Object.entries(b.notes ?? {}).map(([beat, evs]) => [beat, (evs ?? []).map((e) => ({ ...e, fullWord: `w${k}`, vocaloidPhonemes: ['w', `iy${k++ % 2}`] }))]),
+    ),
+  })) as unknown as ReturnType<typeof BARS>;
+  const lane = bars.flatMap((b, bi) =>
+    Object.entries(b.notes ?? {}).flatMap(([beat, evs]) =>
+      (evs ?? []).map((e) => ({ start: bi * 4 + Number.parseFloat(beat), ev: e as { note: number; duration: number; fullWord?: string } })),
+    ),
+  );
   const ev = (n: (typeof lane)[number]) => n.ev as unknown as { fullWord: string; vocaloidPhonemes: string[] };
+
+  it('a lane without words leaves the notes without words', () => {
+    const wordless = BARS(base, verse, 'Vocal');
+    const notes = lane.map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note }));
+    const out = laneWordsOn(verse, wordless, notes);
+    expect(out.map((n) => [n.start, n.duration, n.midi])).toEqual(notes.map((n) => [n.start, n.duration, n.midi]));
+    for (const n of out) {
+      expect(n.word).toBeUndefined();
+      expect(n.phonemes).toBeUndefined();
+    }
+  });
 
   it('one word per note in order when the counts match', () => {
     const notes = lane.map((n) => ({ start: n.start, duration: n.ev.duration, midi: n.ev.note + 1 }));

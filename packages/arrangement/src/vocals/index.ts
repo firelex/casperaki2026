@@ -1,29 +1,10 @@
-// Step 17c — syllable-aware lyric attach.
+// The vocal melody: the precedent dispatcher's notes, marked at their phrase ends (`buildVocalScaffolding`, the legacy
+// `Lyricist._extractMelodyFromSong` walk: endOfPhrase on the last note of every bar). Until lyrics are written the
+// notes carry no words (owner 2026-11-28: "just leave out the lyrics until we've written them"; the phrase bank's
+// stand-in lines, two per section type, were looped over the busier melodies and broken mid-word). Written lyrics,
+// lyrics written first and a sung melody put words on their sections.
 //
-// The pre-17c slice (still visible in the 17b commit) generated vocal
-// notes via the precedent dispatcher and then cycled a single hard-coded
-// 8-word brightPop phrase across every emitted note. Step 17c replaces
-// that placeholder with the legacy `Lyricist` data flow:
-//
-//   1. Generate the vocal melody (precedent dispatcher — 17b, unchanged).
-//   2. `buildVocalScaffolding(result)` — ports the
-//      `Lyricist._extractMelodyFromSong` walk; emits per-segment lists of
-//      4-bar rhyme-lines, each line a flat list of per-note
-//      `{ syllableType, endOfPhrase, … }` records.
-//   3. `selectSeedPhrasePlan({ scaffolding, genre, rng })` — Path A
-//      deterministic phrase author (53af §3a/§4a). Pre-syllabifies each
-//      chosen phrase via the trimmed `data/lyrics/syllables.json` bank.
-//      Same-segmentType reuse mirrors legacy `Lyricist._insertLyricsIntoSong`
-//      (lyricist.js:340-356): `verse1 / verse2` share, `chorus1..N` share.
-//   4. `applyLyricsToSegments(result, scaffolding, plan)` — walks the
-//      generated note grid in order and attaches one syllable token per
-//      note. `endOfPhrase` is taken from the scaffolding (legacy: last
-//      note of every bar).
-//
-// Determinism: still ONE rng fork (`ctx.rng.fork('vocals')`), shared
-// between the precedent dispatcher and the seed-phrase picker. The
-// picker draws one `rng.pick` per rhyme-line per UNIQUE segmentType —
-// reused segments consume no further draws (matches legacy reuse).
+// Determinism: ONE rng fork (`ctx.rng.fork('vocals')`), used by the precedent dispatcher only.
 
 import { ChordSymbolSchema, type SongStructure } from '@casperaki/song-schema';
 import { parseChord } from '@casperaki/music-theory';
@@ -35,7 +16,6 @@ import {
   generateBackings,
 } from './backing.js';
 import { userChorusOf, userChorusPrecedent } from '../hum/user-chorus.js';
-import { selectSeedPhrasePlan } from './lyrics-source/seed.js';
 import { drapeOnRhythm, expandMergedToSegment, selectMergedPrecedent, type MergedPrecedent } from './precedents.js';
 import { lyricRhythmsOf } from './lyric-rhythms.js';
 import { recutAsPrecedent } from './recut.js';
@@ -43,7 +23,7 @@ import { buildVocalScaffolding } from './scaffolding.js';
 import { buildContour } from './contour.js';
 import { LEGACY_INDEX_TO_MIDI, MAX_NOTE, MIN_NOTE } from './range.js';
 import { fitRange, keyOffsetFromC, mergedChordBars, refitNonChorus, sectionTransposition, transposeChordSymbol } from './fit.js';
-import { applyLyricsToSegments } from './syllabify.js';
+import { markPhraseEnds } from './syllabify.js';
 import { attachSungMelody, sungMelodyOf } from './sung-melody.js';
 import { attachWrittenLyrics, writtenLyricsOf } from './written-lyrics.js';
 import { melodyVariantsOf } from './melody-variants.js';
@@ -134,17 +114,11 @@ export function writeVocals(
     if (s) skeleton.push(buildSegmentSkeleton(segment, s.merged, s.type, keyOffset));
   }
 
-  // Phase 2 — lyric scaffolding + seed-phrase pick + per-note attach.
+  // Phase 2 — the phrase ends (lyric scaffolding); no words until lyrics are written (owner 2026-11-28).
   const skeletonResult: VocalResult = { segments: skeleton };
-  const scaffolding = buildVocalScaffolding(skeletonResult);
-  const plan = selectSeedPhrasePlan({
-    scaffolding,
-    genre: ctx.params.genre,
-    rng,
-  });
-  const { result: bankResult } = applyLyricsToSegments(skeletonResult, scaffolding, plan);
+  const bankResult = markPhraseEnds(skeletonResult, buildVocalScaffolding(skeletonResult));
   // Written lyrics (generator params `lyrics`, see written-lyrics.ts) replace the phrase bank's words in their
-  // sections; the phrase bank's words are only the first pass the brain hands to the lyricist.
+  // sections.
   const written = writtenLyricsOf(ctx.params.params);
   for (const name of Object.keys(written)) {
     if (!bankResult.segments.some((s) => s.segmentName === name)) throw new Error(`written lyrics: the song has no sung section "${name}"`);

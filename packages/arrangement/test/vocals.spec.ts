@@ -78,18 +78,17 @@ describe('generateVocalMelody (brightPop)', () => {
     }
   });
 
-  it('every vocal note carries fullWord + a non-empty vocaloidPhonemes list', () => {
+  // Owner 2026-11-28: no stand-in words ("just leave out the lyrics until we've written them"): before Write lyrics, the
+  // melody's notes carry no words.
+  it('without written lyrics no vocal note carries a word or phonemes', () => {
     const { result } = generate('lyrics-check');
     let noteCount = 0;
     forEachEvent(result, (ev) => {
       noteCount++;
       expect(ev.type).toBe('vocalNote');
       if (ev.type === 'vocalNote') {
-        expect(ev.fullWord).toBeDefined();
-        expect(ev.fullWord!.length).toBeGreaterThan(0);
-        expect(ev.vocaloidPhonemes).toBeDefined();
-        expect(ev.vocaloidPhonemes!.length).toBeGreaterThan(0);
-        for (const p of ev.vocaloidPhonemes!) expect(p.length).toBeGreaterThan(0);
+        expect(ev.fullWord).toBeUndefined();
+        expect(ev.vocaloidPhonemes).toBeUndefined();
       }
     });
     expect(noteCount).toBeGreaterThan(0);
@@ -245,49 +244,6 @@ describe('generateVocalMelody (brightPop)', () => {
     const generated = `${stableStringify(generate(seed).result, 2)}\n`;
     const golden = await readFile(vocalsGoldenPath('brightPop', seed), 'utf8');
     expect(generated).toBe(golden);
-  });
-
-  // ─── Step 17c — syllable-aware lyric attach ───────────────────────────
-
-  it('emits multi-syllable words: at least one trailing-"-" syllable token in the song', () => {
-    // Step 17c: words like "walking" / "golden" / "tonight" syllabify to
-    // 2+ syllable tokens; the non-final syllable carries a trailing "-".
-    // Pre-17c brightPop fixture was all-monosyllabic so no "-" tokens
-    // appeared — this test pins that we are no longer doing that.
-    const { result } = generate('multisyllable-check');
-    let dashCount = 0;
-    forEachEvent(result, (ev) => {
-      if (ev.type === 'vocalNote' && ev.fullWord && ev.fullWord.endsWith('-')) {
-        dashCount++;
-      }
-    });
-    expect(dashCount).toBeGreaterThan(0);
-  });
-
-  it('seed-phrase picks vary across seeds (chorus first-syllable differs for at least one seed pair)', () => {
-    // Per-line rng.pick from the genre×segmentType phrase pool means
-    // different seeds land on different phrase choices, surfacing as
-    // different first-syllable fullWord tokens on the first chorus
-    // segment. Run a handful of seeds and assert we see more than one
-    // distinct first-token across the song's chorus segments.
-    const seeds = ['seed-a', 'seed-b', 'seed-c', 'seed-d', 'seed-e'];
-    const firstTokens = new Set<string>();
-    for (const seed of seeds) {
-      const { result } = generate(seed);
-      const chorus = result.segments.find((s) => s.segmentName.startsWith('chorus'));
-      if (!chorus) continue;
-      for (const bar of chorus.bars) {
-        const keys = Object.keys(bar.notes).sort((a, b) => parseFloat(a) - parseFloat(b));
-        if (keys.length === 0) continue;
-        const events = bar.notes[keys[0]!]!;
-        const ev = events[0];
-        if (ev && ev.type === 'vocalNote' && ev.fullWord) {
-          firstTokens.add(ev.fullWord);
-          break;
-        }
-      }
-    }
-    expect(firstTokens.size, `expected more than one chorus first-token across ${seeds.length} seeds, saw ${[...firstTokens].join('|')}`).toBeGreaterThan(1);
   });
 
   it('endOfPhrase fires on the LAST note of every bar that has notes (legacy invariant)', () => {

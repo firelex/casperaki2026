@@ -40,7 +40,7 @@ const melodyOf = (section: string) =>
     Object.entries(b.notes ?? {}).flatMap(([beat, evs]) =>
       (evs ?? []).map((e) => {
         const ev = e as { note: number; duration: number; fullWord?: string };
-        return { start: bi * 4 + Number.parseFloat(beat), duration: ev.duration, midi: ev.note, word: ev.fullWord!, phonemes: ['l', 'aa1'] };
+        return { start: bi * 4 + Number.parseFloat(beat), duration: ev.duration, midi: ev.note, word: 'La', phonemes: ['l', 'aa1'] };
       }),
     ),
   );

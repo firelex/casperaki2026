@@ -11,7 +11,7 @@
 //     the first beat at 0 s). A recording with music behind the voice (`hasBacking`) first goes through the vocals
 //     service's stage for the voice alone (BS-RoFormer); a clean recording is read as it is.
 //   words       with lyrics: the found notes take the lane's words and phonemes in order (one per note); without:
-//     the lane's words (the phrase bank's) are attached as the generator attaches them (laneWordsOn).
+//     the notes stay without words, as the lane is until lyrics are written (laneWordsOn).
 // Notes come back in the lane's register: the transcription (at sung pitch; pitch-only notes snapped to the song's key,
 // as the vocals stage snaps its own) moved by the whole octaves (-24..+24) that put its median nearest the median of
 // the section's Vocal-lane notes (`laneOctaveShift`; a tie goes to the higher), so anyone's voice lands where the
@@ -28,7 +28,7 @@ import { parseKey, scalePitchClasses } from '@casperaki/music-theory';
 import type { Song } from '@casperaki/song-schema';
 
 import type { TaskJobs, TaskStep } from '../store.js';
-import { laneNotes } from './plan.js';
+import { laneNotes, lanePitches } from './plan.js';
 import { CancelledError, followJob, wavSeconds, writeAtomic, type SingResult } from './singTask.js';
 import { JobLostError, type VocalsClient } from './vocalsClient.js';
 
@@ -239,7 +239,10 @@ export async function runTranscribe(ctx: TranscribeContext): Promise<SingResult>
   const inputDir = join(ctx.filesDir, 'input');
   if (ctx.jobs === null) rmSync(join(ctx.filesDir, 'transcribe'), { recursive: true, force: true });
   const beats = sectionBeats(input, segment);
-  const lane = laneNotes(input, segment, LEAD_TRACK);
+  // With lyrics the found notes take the lane's words; without, only its pitches count (its register), and the lane
+  // has no words until lyrics are written (owner 2026-11-28).
+  const laneWords = needs.hum ? undefined : laneNotes(input, segment, LEAD_TRACK);
+  const lane = laneWords ?? lanePitches(input, segment, LEAD_TRACK);
   if (lane.length === 0) throw new Error(`${segment} has no notes in the Vocal lane`);
 
   const wav = await log.run('recording', async () => {
@@ -323,10 +326,11 @@ export async function runTranscribe(ctx: TranscribeContext): Promise<SingResult>
       value = laneWordsOn(segment, bars, notes);
     } else {
       if (notes.length !== lane.length) throw new Error(`${segment}: the vocal service found ${notes.length} notes for the lane's ${lane.length}`);
-      value = notes.map((n, i) => ({ ...n, word: lane[i]!.word, phonemes: [...lane[i]!.phonemes] }));
+      if (!laneWords) throw new Error(`${segment}: the vocal service sent notes for a section without lyrics`);
+      value = notes.map((n, i) => ({ ...n, word: laneWords[i]!.word, phonemes: [...laneWords[i]!.phonemes!] }));
     }
     const moved = shift === 0 ? 'as sung' : `moved ${shift > 0 ? 'up' : 'down'} ${Math.abs(shift) / 12} octave${Math.abs(shift) === 12 ? '' : 's'} to the lane`;
-    return { value, text: `${value.length} notes with the ${pitchOnly ? "lane's" : 'written'} words, ${moved}`, numbers: { notes: value.length, octaveShift: shift } };
+    return { value, text: `${value.length} notes${pitchOnly ? '' : ' with the written words'}, ${moved}`, numbers: { notes: value.length, octaveShift: shift } };
   });
   return { melody: { [segment]: melody }, takes: [] };
 }

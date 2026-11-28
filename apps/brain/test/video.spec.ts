@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { orchestrate } from '@casperaki/arrangement';
+import { applyLyricsFirst, orchestrate } from '@casperaki/arrangement';
 import { parseSong } from '@casperaki/song-schema';
 import type { AvatarRenderRequest } from '@casperaki/video';
 import { songVersionKey } from '../src/render/songVersion.js';
@@ -26,7 +26,12 @@ const recipe = { pack: 'drophunter', parts: { body: '0', eyes: 'regulareyes' }, 
 const track = (name: string, role: string, levels: number[]) => ({ name, role, levels });
 
 describe('songToAvatarInput', () => {
-  const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'avatar-input-1' });
+  // Written lyrics: a new song's melody has no words until they are written.
+  const song = applyLyricsFirst(orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'avatar-input-1' }), {
+    verse: ['Met you at the corner store', 'A name I do not know', 'You said it was nothing', 'But I could see it show'],
+    preChorus: ['Now I am walking fast', 'Hoping this will last', 'Do not wait for me', 'I am already past'],
+    chorus: ['Hold me closer in the light', 'We could stay up all the night', 'Every heartbeat feels so right', 'Hold me closer hold me tight'],
+  });
   const audio = { path: '/tmp/x.mp3', durationSeconds: 1 };
   it('takes the lead vocal level as the loudest lead-vocal strip per bin, the song timing and words, and letters-and-digits ids', () => {
     const levels = { binSeconds: 0.5, tracks: [track('Bass', 'track', [0.9, 0.9]), track('Lead', 'leadVocal', [0.2, 0]), track('Lead 2', 'leadVocal', [0.1, 0.4])], master: [0.7, 0.8] };

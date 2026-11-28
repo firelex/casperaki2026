@@ -84,8 +84,9 @@ export function laneNotes(song: Song, segment: string, track: string): SungNote[
   });
 }
 
-/** A lane's vocal notes in a section, pitch and timing only (backing lanes carry the lead's words, not their own). */
-function lanePitches(song: Song, segment: string, track: string): BackingNote[] {
+/** A lane's vocal notes in a section, pitch and timing only (backing lanes carry the lead's words, not their own; a
+ *  melody before its lyrics are written has none). */
+export function lanePitches(song: Song, segment: string, track: string): BackingNote[] {
   return laneEvents(song, segment, track).map(({ start, e }) => ({ start, duration: e.duration, midi: e.note }));
 }
 

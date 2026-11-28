@@ -235,6 +235,36 @@ export function applyLyricsToSegments(
   };
 }
 
+/** The notes as they are, without words, each marked endOfPhrase where the scaffolding says (legacy: the last note of
+ *  every bar). A melody before its lyrics are written (owner 2026-11-28: "just leave out the lyrics until we've written
+ *  them"; the phrase bank's two stand-in lines a section type looped over the notes, broken mid-word). */
+export function markPhraseEnds(result: VocalResult, scaffolding: VocalScaffolding): VocalResult {
+  if (result.segments.length !== scaffolding.length) {
+    throw new Error(`markPhraseEnds: scaffolding length ${scaffolding.length} does not match ${result.segments.length} segments`);
+  }
+  return {
+    segments: result.segments.map((segment, s) => {
+      const ends = new Set<string>();
+      for (const line of scaffolding[s]!.lines) for (const n of line) if (n.endOfPhrase) ends.add(`${n.barIndex}|${n.beat}`);
+      return {
+        segmentName: segment.segmentName,
+        bars: segment.bars.map((bar, barIndex) => {
+          const notes: VocalBar['notes'] = {};
+          const keys = Object.keys(bar.notes).map((k) => ({ key: k, beat: parseFloat(k) })).sort((a, b) => a.beat - b.beat);
+          for (const { key, beat } of keys) {
+            notes[BarBeatSchema.parse(formatBarBeat(beat))] = bar.notes[BarBeatSchema.parse(key)]!.map((ev): VocalNoteEvent => {
+              if (ev.type !== 'vocalNote') return ev;
+              const { fullWord: _w, vocaloidPhonemes: _p, endOfPhrase: _e, ...rest } = ev;
+              return { ...rest, ...(ends.has(`${barIndex}|${beat}`) && { endOfPhrase: true }) };
+            });
+          }
+          return { notes };
+        }),
+      };
+    }),
+  };
+}
+
 function attachSegment(
   segment: VocalSegment,
   scaffolding: SegmentScaffolding,
