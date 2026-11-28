@@ -29,7 +29,8 @@ describe('the voices', () => {
     const ice = JUDGES.find((j) => j.id === 'ice')!.voice;
     expect(reqs[0]).toMatchObject({ instruction: NARRATOR_VOICE.description, seed: NARRATOR_VOICE.seed, reference_text: NARRATOR_VOICE.referenceText, text: 'This is Kesha, and tonight is her night.' });
     expect(reqs[3]).toMatchObject({ instruction: singerVoice.description, seed: 33, reference_text: "Hi, I'm Kesha." });
-    expect(reqs[4]).toMatchObject({ instruction: ice.description, seed: ice.seed, reference_text: ice.referenceText, reference_audio: '/voices/ice.wav', tempo: 1.15 });
+    expect(reqs[4]).toMatchObject({ instruction: ice.description, seed: ice.seed, reference_text: ice.referenceText, reference_audio: '/voices/ice.wav' });
+    expect(reqs[4]).not.toHaveProperty('tempo');
     expect(ice.description).toMatch(/gravelly London/);
     expect(reqs[2]).not.toHaveProperty('tempo');
     // Every line is copied from its voice's reference, its delivery note steering the copy (the description stays the voice's).

@@ -33,7 +33,7 @@ export const JUDGES: readonly Judge[] = [
     name: 'Ice',
     profile:
       'Ice, the ruthless music mogul. 58, British, head judge. Brutally honest, arrogant, dry, intimidating, occasionally hilarious. Decades in the industry; believes he can recognise a hit within fifteen seconds. No patience for mediocrity, long introductions, pretentious lyrics or songs without a memorable chorus. Rarely raises his voice: a quiet, devastating observation does more. Interrupts songs that take too long to get going. Genuinely loves finding great music, and his turn from bored cynic to enthusiastic supporter is dramatic. Signature: slowly takes off his sunglasses before a brutal verdict. Sample lines: "I\'ve heard better melodies from my microwave." "That was three minutes of my life I\'m not getting back." "Hang on. Stop. Stop. Who wrote that chorus?" "I hate to admit this, but that was absolutely brilliant." "Bob, please. We\'re judging music, not adopting puppies." With the others: constantly argues with Bob, dismisses Nicky\'s obsession with trends, secretly respects Love\'s musical instincts.',
-    voice: { description: 'A man in his late fifties with a low, slightly gravelly London accent, blunt and confident, sardonic, speaking slowly', seed: 7, referenceText: APPROVED_TAKE_TEXT.ice, referenceAudio: 'ice.wav', tempo: 1.15 },
+    voice: { description: 'A man in his late fifties with a low, slightly gravelly London accent, blunt and confident, sardonic, speaking slowly', seed: 7, referenceText: APPROVED_TAKE_TEXT.ice, referenceAudio: 'ice.wav' },
   },
   {
     id: 'nicky',
