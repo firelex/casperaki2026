@@ -187,6 +187,7 @@ describe('rap (ACE layer)', () => {
     expect(sent).toMatchObject({ track: 'vocals', takes: RAP_TAKES, seed: 9 });
     expect(sent).not.toHaveProperty('lyrics');
     expect(sent['caption']).toBe(`${SONG.genre} song with female rap vocals, rap verse over the beat, ${SONG.bpm} bpm, ${keyScale(SONG.key)}`);
+    expect(String(sent['lego_caption'])).toMatch(/^female rap vocals, rap vocals, a cappella/u);
     expect(sent['sections']).toEqual([
       { name: v1, start: startOf(v1).start, end: startOf(v1).end, lyrics: 'one\ntwo' },
       { name: v2, start: startOf(v2).start, end: startOf(v2).end, lyrics: 'three\nfour' },
