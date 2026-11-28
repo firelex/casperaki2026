@@ -105,9 +105,67 @@ Fixed characters, the same in every video.
 | Love | Australian, blonde, forties, sassy, teases Ice | "A woman in her forties with a bright Australian accent, very sassy and cheeky, confident, a knowing eye-roll in her voice, teasing with attitude", seed 7 |
 | Bob | Irish man, fifties, kind, easygoing, charming | "An Irish man in his fifties with a soft Dublin accent, a light, fairly high-pitched tenor voice with a little rasp, kind, easygoing and charming", seed 21 |
 
-Their looks: four avatar recipes from the packs, stored with the engine (not in any user's library), dressed to fit
-**(my call)**: Ice dark jacket, Nicky bold colours, Love blonde hair, Bob casual. Each judge's character profile for the
-writer (what they care about, how they tease, what they never say) is written once and kept with the brain's prompts.
+Their looks: replaced by `2026-11-28-realistic-avatars-design.md` (realistic as approved, `~/apps/blender/judges-final.json`,
+and an anime version; the casting video takes the singer's style). The voices above were made for the earlier ages;
+Bob (now 66) and Nicky (now 35) may be re-made to match **(my call, offered to the owner)**.
+
+#### The jury profiles (the owner's, 2026-11-28)
+
+The owner's profiles named real TV judges as inspiration. Those names and likenesses are left out on purpose: the
+characters are original, built from the personalities only (no real person's name, look or catchphrase).
+
+**Ice, the ruthless music mogul.** 58, British, head judge. Brutally honest, arrogant, dry, intimidating, occasionally
+hilarious. Decades in the industry; believes he can recognise a hit within fifteen seconds. No patience for mediocrity,
+long introductions, pretentious lyrics or songs without a memorable chorus. Rarely raises his voice: a quiet,
+devastating observation does more. Interrupts songs that take too long to get going. Genuinely loves finding great
+music, and his turn from bored cynic to enthusiastic supporter is dramatic. Signature: slowly takes off his sunglasses
+before a brutal verdict. Sample lines: "I've heard better melodies from my microwave." "That was three minutes of my
+life I'm not getting back." "Hang on. Stop. Stop. Who wrote that chorus?" "I hate to admit this, but that was
+absolutely brilliant." "Bob, please. We're judging music, not adopting puppies." With the others: constantly argues
+with Bob, dismisses Nicky's obsession with trends, secretly respects Love's musical instincts.
+
+**Bob, the lovable Irish optimist.** 66, Irish, the people's judge. Cheerful, sentimental, excitable, mischievous,
+hilariously enthusiastic. Loves almost everything and sees potential nobody else can. Every competent performer
+reminds him of a legend; knows the pop groups of the 1980s and 1990s by heart and thinks nearly every promising
+contestant could be an international star. Easily offended when Ice attacks his favourites. Genuine enthusiasm,
+sometimes spectacularly questionable judgement. Signature: leaps up for standing ovations that barely deserve polite
+applause. Sample lines: "You're going to be absolutely massive!" "Ice, you wouldn't recognise a hit if it hit you in
+the face!" "I'm telling you, this could be the next ABBA!" "You've got the look, you've got the sound, you've got
+everything!" "I don't care what anyone says. Twelve points!" With the others: Ice's favourite target; Love often
+defends him; Nicky finds his references hopelessly dated.
+
+**Nicky, the pop diva.** 35, American, the trendsetter. Outrageous, sharp-tongued, flamboyant, unpredictable, fiercely
+competitive. Obsessed with originality, charisma, hooks and commercial appeal; no patience for predictable
+arrangements, dated production or singers without personality. Fast, sarcastic, sometimes outrageous humour; delivers a
+one-liner, then bursts out laughing at it. Fiercely protective of singers she thinks have real star quality. Unlike
+Ice, who judges songs as products, she cares about cultural relevance: music people will dance to, share and remember.
+Inspects her nails while others talk; can show complete contempt with one raised eyebrow. Signature: turns away from
+the stage when unimpressed, swivels back when something catches her. Sample lines: "Baby, that chorus needs a
+personality transplant." "I'm sorry, are we making a hit record or waiting for an elevator?" "That beat? Delicious.
+Those lyrics? Criminal." "Ice, darling, your musical taste expired in 2007." "Okay, superstar! NOW we're talking!"
+With the others: challenges Ice's authority, mercilessly teases Bob, competes with Love for most fashionable judge.
+
+**Love, the glamorous pop perfectionist.** 46, Australian, the musical mentor. Warm, sophisticated, emotionally
+intelligent, perfectionist, surprisingly formidable. The most musically thoughtful judge: melody, harmony,
+arrangement, vocal phrasing, emotional honesty. A great pop song must make people feel something; she is visibly moved
+when one does. Usually diplomatic, but sharp-tongued when another judge says something unfair or silly. Her criticism
+is specific and constructive (change a chord, simplify a chorus, drop a needless layer). Takes notes. Signature: closes
+her eyes in beautiful passages, sometimes tearful. Sample lines: "There's something genuinely beautiful about that
+melody." "I loved the verse, but you've completely lost me in the chorus." "Bob, darling, not everything needs to be
+compared to Westlife." "Ice, you might have a bank account, but you clearly don't have a heart." "That final key change
+gave me goosebumps." With the others: mediates between Ice and Bob, enjoys Nicky's theatrics, the only judge Ice
+consistently listens to.
+
+**The dynamic.** An ensemble, not four separate reviews. Ice vs Bob is the central comedy: Ice thinks Bob has terrible
+taste, Bob thinks Ice has forgotten how to enjoy music. Ice vs Nicky is generational: timeless songwriting against
+cultural relevance. Nicky vs Love is a friendly rivalry: attitude and originality against melody and feeling. Love vs
+Ice is the heart of the panel: Love sometimes persuades Ice to reconsider.
+
+**Rules for the writer.** Never four generic reviews in a row. They interrupt each other, react to unexpected
+comments, laugh, disagree and sometimes change their minds. Humour comes from their personalities and from specific
+musical details of the song. They must sometimes be genuinely surprised: now and then Ice gives twelve points to a
+song everyone expects him to hate, Bob delivers a devastating criticism, Nicky is moved to tears, Love loses her
+temper. The sample lines show the voice; the writer does not reuse them word for word in every video **(my call)**.
 
 ### The narrator
 
