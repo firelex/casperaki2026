@@ -14,14 +14,38 @@ export interface SoundtrackFiles {
   readonly song: string;
   readonly poised: string;
   readonly entrance: string;
+  /** Each line's gain (linear), by line id: its speaker's, evening the voices out. */
+  readonly gains: ReadonlyMap<string, number>;
 }
 
-/** The backstage music's level under the narration, and how long it fades out before the door. */
+/** The backstage music's level under the narration. */
 const MUSIC_GAIN = 0.5;
-const MUSIC_FADE = 2;
+/** The backstage music runs this far into the fanfare, fading out under it. */
+const MUSIC_CROSSFADE = 0.3;
 /** The narrator sits into the music rather than cutting through it (the owner: "too compressed, cuts a tad too much
  *  through"): about 3 dB down, the music ducking gently under it. */
 const NARRATION_GAIN = 0.7;
+
+/** Integrated loudness (LUFS) of several files played one after another (a speaker's lines). */
+export function loudness(ffmpegBin: string, files: readonly string[]): number {
+  if (files.length === 0) throw new Error('casting soundtrack: no files to measure');
+  for (const f of files) if (!existsSync(f)) throw new Error(`casting soundtrack: the file is missing: ${f}`);
+  const inputs = files.flatMap((f) => ['-i', f]);
+  const concat = `${files.map((_, i) => `[${i}:a]aresample=48000,aformat=channel_layouts=mono[a${i}]`).join(';')};${files.map((_, i) => `[a${i}]`).join('')}concat=n=${files.length}:v=0:a=1,ebur128=framelog=quiet[out]`;
+  const res = spawnSync(ffmpegBin, ['-hide_banner', '-nostats', ...inputs, '-filter_complex', concat, '-map', '[out]', '-f', 'null', '-'], { encoding: 'utf8' });
+  if (res.status !== 0) throw new Error(`casting soundtrack: cannot measure loudness: ${(res.stderr ?? '').trim().split('\n').slice(-2).join(' ')}`);
+  const m = /Integrated loudness:\s*I:\s*(-?[\d.]+) LUFS/u.exec(res.stderr ?? '');
+  if (!m) throw new Error('casting soundtrack: ffmpeg gave no loudness');
+  return Number(m[1]);
+}
+
+/** One gain per speaker (linear) bringing all their lines together to `targetLufs`: every voice at one loudness, each
+ *  line keeping its own rise and fall. */
+export function speakerGains(ffmpegBin: string, linesBySpeaker: ReadonlyMap<string, readonly string[]>, targetLufs: number): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const [speaker, files] of linesBySpeaker) out.set(speaker, 10 ** ((targetLufs - loudness(ffmpegBin, files)) / 20));
+  return out;
+}
 
 /** How long an audio file is heard: its length without the silence at its end (quieter than -45 dB for 0.3 s or more). */
 export function audibleSeconds(ffmpegBin: string, path: string): number {
@@ -63,15 +87,18 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
     inputs.push('-i', file);
     const label = `l${i}`;
     const isNarration = l.startSeconds < backstage.endSeconds;
-    graph.push(`[${3 + i}:a]${stereo}${isNarration ? `,volume=${NARRATION_GAIN}` : ''},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
+    const gain = files.gains.get(l.id);
+    if (gain === undefined) throw new Error(`casting soundtrack: the line ${l.id} has no gain`);
+    graph.push(`[${3 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
     if (isNarration) narration.push(label);
     voices.push(label);
   });
   // The narration also drives the music's ducking.
   const voiceLabels = voices.map((v) => (narration.includes(v) ? `${v}a` : v));
   for (const n of narration) graph.push(`[${n}]asplit=2[${n}a][${n}b]`);
+  // The backstage music plays at full level up to the fanfare and crosses into it (no dip before the stage door).
   const musicLen = backstage.endSeconds - backstage.startSeconds;
-  graph.push(`[0:a]${stereo},atrim=0:${musicLen.toFixed(3)},volume=${MUSIC_GAIN},afade=t=out:st=${Math.max(0, musicLen - MUSIC_FADE).toFixed(3)}:d=${MUSIC_FADE}[poised]`);
+  graph.push(`[0:a]${stereo},atrim=0:${(musicLen + MUSIC_CROSSFADE).toFixed(3)},volume=${MUSIC_GAIN},afade=t=out:st=${musicLen.toFixed(3)}:d=${MUSIC_CROSSFADE}[poised]`);
   if (narration.length > 0) {
     graph.push(`${narration.map((n) => `[${n}b]`).join('')}amix=inputs=${narration.length}:normalize=0[duck]`);
     graph.push('[poised][duck]sidechaincompress=threshold=0.05:ratio=3:attack=30:release=600[music]');

@@ -45,7 +45,7 @@ import { castingFacts, isChorus } from '../casting/facts.js';
 import { SCENES, writeScript, type CastingScript, type SceneId } from '../casting/writer.js';
 import { layOut } from '../casting/timeline.js';
 import { lineVoices, speakLines } from '../casting/voices.js';
-import { audibleSeconds, mixSoundtrack } from '../casting/mix.js';
+import { audibleSeconds, mixSoundtrack, speakerGains } from '../casting/mix.js';
 import { wavLevels } from '../routes/renders.js';
 import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
@@ -131,6 +131,8 @@ export interface CastingSoundtrackDeps {
   readonly exportSong: (ownerId: string, songId: string) => Promise<{ path: string; seconds: number }>;
 }
 export const CASTING_MUSIC = { poised: 'Poised and Ready.mp3', entrance: 'The Grand Entrance.mp3' } as const;
+/** Every voice's loudness in the soundtrack (LUFS), the narrator then sitting 3 dB lower. */
+export const CASTING_VOICE_LUFS = -16;
 /** The mouth levels' bin length (seconds). */
 export const CASTING_BIN_SECONDS = 0.05;
 export const CASTING_SOUNDTRACK_NOT_SET_UP = 'Casting soundtracks are not set up: the brain needs SPEECH_SERVICE_URL, BRAIN_CASTING_MUSIC_DIR, BRAIN_TASK_FILES_DIR, BRAIN_SINGERS_DATA_DIR and rendering.';
@@ -982,9 +984,14 @@ export class BackgroundTasks {
       });
       const outDir = join(filesDir, 'soundtrack');
       mkdirSync(outDir, { recursive: true });
+      // Every voice at one loudness: one gain per speaker from all their lines (each line still rising and falling).
+      const bySpeaker = new Map<string, string[]>();
+      for (const l of timeline.lines) bySpeaker.set(l.speaker, [...(bySpeaker.get(l.speaker) ?? []), spoken.get(l.id)!.file]);
+      const perSpeaker = speakerGains(c.ffmpegBin, bySpeaker, CASTING_VOICE_LUFS);
+      const gains = new Map(timeline.lines.map((l) => [l.id, perSpeaker.get(l.speaker)!]));
       mixSoundtrack(
         timeline,
-        { lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
+        { gains, lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
         join(outDir, 'casting.wav'),
         c.ffmpegBin,
       );

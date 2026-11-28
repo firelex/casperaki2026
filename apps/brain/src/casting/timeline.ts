@@ -27,8 +27,23 @@ export interface CastingTimeline {
   readonly scriptTaskId: string;
 }
 
-/** Between two lines of one segment (natural turn-taking). */
-export const LINE_GAP = 0.35;
+/** Pauses between two lines of one segment, varied so the talk does not tick like a clock (the owner: "they speak
+ *  robotically at fixed intervals"): the narrator 0.3-0.6 s; people 0.2-0.75 s, and a short interjection (8 words or
+ *  fewer) by someone other than the last speaker sometimes cuts in, up to 0.25 s before the line before ends. */
+const NARRATOR_GAP = [0.3, 0.6] as const;
+const TALK_GAP = [0.2, 0.75] as const;
+const OVERLAP = [-0.25, -0.05] as const;
+/** The share of short interjections that cut in. */
+const CUT_IN_CHANCE = 0.5;
+const INTERJECTION_WORDS = 8;
+
+/** A number from 0 to 1 fixed by `key` (the same script always gets the same timing). */
+function unitHash(key: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193) >>> 0;
+  return h / 4294967296;
+}
+const between = ([lo, hi]: readonly [number, number], u: number) => lo + (hi - lo) * u;
 /** The backstage music before the narrator starts. */
 export const MUSIC_LEAD = 1.5;
 /** Air at the start and end of a talking segment: the judges start talking soon after the singer reaches them. */
@@ -67,7 +82,13 @@ export function layOut(args: {
       const id = requests[k++]!.id;
       const got = args.spoken.get(id);
       if (!got) throw new Error(`casting: the line ${id} was not spoken`);
-      if (i > 0) t += LINE_GAP;
+      if (i > 0) {
+        const prev = args.script[scene][i - 1]!;
+        const u = unitHash(`${args.scriptTaskId}:${id}:gap`);
+        const cutIn =
+          l.speaker !== 'narrator' && l.speaker !== prev.speaker && l.text.split(/\s+/u).filter(Boolean).length <= INTERJECTION_WORDS && unitHash(`${args.scriptTaskId}:${id}:cut`) < CUT_IN_CHANCE;
+        t += l.speaker === 'narrator' ? between(NARRATOR_GAP, u) : cutIn ? between(OVERLAP, u) : between(TALK_GAP, u);
+      }
       lines.push({ id, speaker: l.speaker, text: l.text, gesture: l.gesture, startSeconds: t, endSeconds: t + got.seconds, levels: got.levels });
       t += got.seconds;
     });

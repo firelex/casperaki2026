@@ -98,7 +98,8 @@ describe('the timeline', () => {
       const seg = t.segments.find((s) => s.kind === kinds[i])!;
       expect(l.startSeconds).toBeGreaterThanOrEqual(seg.startSeconds);
       expect(l.endSeconds).toBeLessThanOrEqual(seg.endSeconds);
-      if (i > 0 && kinds[i - 1] === kinds[i]) expect(l.startSeconds).toBeGreaterThanOrEqual(t.lines[i - 1]!.endSeconds + 0.35 - 1e-9);
+      // Lines follow each other; a quick interjection may overlap the line before by a quarter of a second at most.
+      if (i > 0 && kinds[i - 1] === kinds[i]) expect(l.startSeconds).toBeGreaterThanOrEqual(t.lines[i - 1]!.endSeconds - 0.25 - 1e-9);
     });
     expect(t.lines[0]).toMatchObject({ speaker: 'narrator', gesture: 'nod', levels: [0.1, 0.5, 0.2], id: 'backstage-1' });
     // The backstage music plays a moment before the narrator starts.
@@ -143,7 +144,7 @@ describe('the mix', () => {
     const t = layOut({ script, spoken, sections, exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
     const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
     const out = join(dir, 'casting.wav');
-    mixSoundtrack(t, { lines, song: tone('song.mp3', 12, 220), poised: tone('poised.mp3', 30, 330), entrance: tone('entrance.mp3', 3, 550) }, out, 'ffmpeg');
+    mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: tone('poised.mp3', 30, 330), entrance: tone('entrance.mp3', 3, 550) }, out, 'ffmpeg');
     const probe = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=sample_rate:format=duration', '-of', 'json', out]).toString();
     const info = JSON.parse(probe) as { streams: { sample_rate: string }[]; format: { duration: string } };
     expect(info.streams[0]!.sample_rate).toBe('48000');
@@ -153,7 +154,7 @@ describe('the mix', () => {
     const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
     const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 4 }], exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
     const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
-    expect(() => mixSoundtrack(t, { lines, song: tone('song.mp3', 12, 220), poised: join(dir, 'Poised and Ready.mp3'), entrance: tone('e.mp3', 3, 550) }, join(dir, 'o.wav'), 'ffmpeg')).toThrow(/Poised and Ready\.mp3/);
+    expect(() => mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: join(dir, 'Poised and Ready.mp3'), entrance: tone('e.mp3', 3, 550) }, join(dir, 'o.wav'), 'ffmpeg')).toThrow(/Poised and Ready\.mp3/);
   });
 });
 
@@ -282,5 +283,63 @@ describe('the stage door music', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('voices at one loudness', () => {
+  it('measures each speaker over all their lines and evens them out', async () => {
+    const { loudness, speakerGains } = await import('../src/casting/mix.js');
+    const dir = mkdtempSync(join(tmpdir(), 'casting-lufs-'));
+    try {
+      const tone = (name: string, volume: number) => {
+        const p = join(dir, name);
+        execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', '-af', `volume=${volume}`, p]);
+        return p;
+      };
+      const quiet = [tone('q1.wav', 0.05), tone('q2.wav', 0.05)];
+      const loud = [tone('l1.wav', 0.4)];
+      expect(loudness('ffmpeg', loud) - loudness('ffmpeg', quiet)).toBeCloseTo(18, 0);
+      const gains = speakerGains('ffmpeg', new Map([['bob', quiet], ['ice', loud]]), -16);
+      // After the gains both stand at -16 LUFS.
+      expect(loudness('ffmpeg', quiet) + 20 * Math.log10(gains.get('bob')!)).toBeCloseTo(-16, 0);
+      expect(loudness('ffmpeg', loud) + 20 * Math.log10(gains.get('ice')!)).toBeCloseTo(-16, 0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('natural timing', () => {
+  const talk = (speaker: string, text: string) => line(speaker, text);
+  const long = 'Well I have to say that was really something quite special for a first audition.';
+  const chatty: CastingScript = {
+    ...script,
+    banter: [talk('ice', long), talk('nicky', 'Oh please.'), talk('ice', long), talk('bob', 'Ah, stop it.'), talk('love', long), talk('singer', long)],
+  };
+  const spoken = new Map(lineVoices(chatty, singerVoice).map((r) => [r.id, { seconds: 2.5, levels: [0.2] }]));
+  const sections = [{ name: 'Chorus', startSeconds: 0, endSeconds: 8 }];
+  const lay = (id: string) => layOut({ script: chatty, spoken, sections, exportSeconds: 20, entranceSeconds: 13, binSeconds: 0.05, scriptTaskId: id });
+  const gaps = (t: CastingTimeline, kind: string) => t.lines.filter((_, i) => i > 0).map((l, i) => ({ l, prev: t.lines[i]! })).filter(({ l, prev }) => {
+    const seg = t.segments.find((s) => s.kind === kind)!;
+    return l.startSeconds >= seg.startSeconds && prev.startSeconds >= seg.startSeconds && l.endSeconds <= seg.endSeconds;
+  }).map(({ l, prev }) => ({ gap: l.startSeconds - prev.endSeconds, text: l.text, speaker: l.speaker, prevSpeaker: prev.speaker }));
+  it('varies the pauses between lines, the same way for the same script', () => {
+    const g = gaps(lay('script-a'), 'talk');
+    expect(new Set(g.map((x) => x.gap.toFixed(3))).size).toBeGreaterThan(2);
+    expect(gaps(lay('script-a'), 'talk')).toEqual(g);
+  });
+  it('lets a short interjection by someone else almost overlap the line before, and only that', () => {
+    const all = ['a', 'b', 'c', 'd', 'e', 'f'].flatMap((k) => gaps(lay(`script-${k}`), 'talk'));
+    const overlaps = all.filter((x) => x.gap < 0);
+    expect(overlaps.length).toBeGreaterThan(0);
+    for (const o of overlaps) {
+      expect(o.text.split(' ').length).toBeLessThanOrEqual(8);
+      expect(o.speaker).not.toBe(o.prevSpeaker);
+      expect(o.gap).toBeGreaterThanOrEqual(-0.25 - 1e-9);
+    }
+    for (const x of all) expect(x.gap).toBeLessThanOrEqual(0.75 + 1e-9);
+  });
+  it('never overlaps the narrator', () => {
+    for (const k of ['a', 'b', 'c']) for (const x of gaps(lay(`script-${k}`), 'backstage')) expect(x.gap).toBeGreaterThanOrEqual(0.3 - 1e-9);
   });
 });
