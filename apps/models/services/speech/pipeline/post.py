@@ -10,9 +10,13 @@ import soundfile as sf
 CHAIN = "atempo=1.1,acompressor=threshold=-20dB:ratio=4:attack=5:release=80:makeup=4,loudnorm=I=-16:TP=-1.5:LRA=7"
 
 
-def finish(raw: Path, out: Path) -> float:
-    """Finishes `raw` into `out`; returns its length in seconds."""
+def finish(raw: Path, out: Path, tempo: float = 1.0) -> float:
+    """Finishes `raw` into `out`; returns its length in seconds. `tempo`: a voice spoken faster still (e.g. 1.15 on top
+    of the 1.1 every line gets), pitch kept."""
+    if not 0.7 <= tempo <= 1.6:
+        raise ValueError(f"speech: a tempo must be 0.7 to 1.6, got {tempo}")
     out.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", CHAIN, "-ar", "48000", "-ac", "1", str(out)],
+    chain = CHAIN.replace("atempo=1.1", f"atempo={1.1 * tempo:.4f}", 1)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", str(raw), "-af", chain, "-ar", "48000", "-ac", "1", str(out)],
                    check=True)
     return sf.info(out).duration

@@ -19,6 +19,8 @@ export interface Voice {
   readonly seed: number;
   /** The words the voice's reference says. */
   readonly referenceText: string;
+  /** Faster than the others by this factor (pitch kept); absent: the usual pace. */
+  readonly tempo?: number;
 }
 export interface LineRequest {
   /** "<scene>-<n>", n from 1 in the scene. */
@@ -29,6 +31,7 @@ export interface LineRequest {
   readonly reference_text: string;
   /** The line's delivery note, steering the copied voice. */
   readonly direction?: string;
+  readonly tempo?: number;
 }
 
 export const VOICES_STAGE = 'voices';
@@ -44,7 +47,7 @@ export function lineVoices(script: CastingScript, singer: Voice): LineRequest[] 
   return SCENES.flatMap((scene) =>
     script[scene].map((l, i) => {
       const v = voiceOf(l.speaker, singer);
-      return { id: `${scene}-${i + 1}`, text: l.text, instruction: v.description, seed: v.seed, reference_text: v.referenceText, ...(l.delivery.trim() ? { direction: l.delivery.trim() } : {}) };
+      return { id: `${scene}-${i + 1}`, text: l.text, instruction: v.description, seed: v.seed, reference_text: v.referenceText, ...(l.delivery.trim() ? { direction: l.delivery.trim() } : {}), ...(v.tempo !== undefined ? { tempo: v.tempo } : {}) };
     }),
   );
 }
