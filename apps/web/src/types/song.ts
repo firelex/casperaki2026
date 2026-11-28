@@ -28,12 +28,12 @@ import type {
   SongStructure,
 } from '@casperaki/song-schema';
 
-/** The genres a new song can have, in the order the tiles show them: each base genre, a genre recipe after its base
- *  (Casperaki Pop after Bright pop). */
-export const CANONICAL_GENRES: readonly SongGenre[] = GenreSchema.options.flatMap((g) => [
-  g,
-  ...(Object.entries(GENRE_RECIPES) as [SongGenre, { base: string }][]).filter(([, r]) => r.base === g).map(([k]) => k),
-]);
+/** The base genres, as the style picker shows them first. */
+export const BASE_GENRES: readonly SongGenre[] = GenreSchema.options;
+/** The genre recipes (Casperaki Pop), shown in a section of their own below the base genres (owner 2026-11-28). */
+export const RECIPE_GENRES: readonly SongGenre[] = Object.keys(GENRE_RECIPES) as SongGenre[];
+/** The genres a new song can have, in the order the tiles show them: the base genres, then the recipes. */
+export const CANONICAL_GENRES: readonly SongGenre[] = [...BASE_GENRES, ...RECIPE_GENRES];
 
 /** Instrument families the engine adapter currently understands. */
 export const TONAL_FAMILIES = ['Drums', 'Bass', 'Keys', 'Pad'] as const;

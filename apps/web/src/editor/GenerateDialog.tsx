@@ -6,7 +6,7 @@ import { BrainError } from '../api/client';
 import { songsApi, songsQueryKeys, type GeneratedSong } from '../api/songs';
 import { useSession } from '../state/session';
 import { GENRE_BLURBS, GENRE_LABELS } from '../types/genres';
-import { CANONICAL_GENRES } from '../types/song';
+import { BASE_GENRES, RECIPE_GENRES } from '../types/song';
 
 /**
  * "New song" dialog: pick a genre, optionally a title, tempo and key, and
@@ -93,6 +93,30 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
     setBpm(genreTempoRange(g).defaultBpm);
   };
 
+  // One genre tile of the picker.
+  const tile = (g: SongGenre) => {
+    const selected = g === genre;
+    return (
+      <label
+        key={g}
+        className={`flex cursor-pointer flex-col gap-1 rounded-[10px] border px-3 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-white/70 ${
+          selected ? 'border-accent bg-accent/10' : 'border-line bg-panel-2/60 hover:border-line-2'
+        }`}
+      >
+        <input
+          type="radio"
+          name="genre"
+          value={g}
+          checked={selected}
+          onChange={() => pickGenre(g)}
+          className="sr-only"
+        />
+        <span className="text-[15px] font-semibold text-white">{GENRE_LABELS[g]}</span>
+        <span className="text-[12px] leading-snug text-white/55">{GENRE_BLURBS[g]}</span>
+      </label>
+    );
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
@@ -126,28 +150,12 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
           <fieldset>
             <legend className="mb-3 text-[14px] font-semibold text-white">Genre</legend>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {CANONICAL_GENRES.map((g) => {
-                const selected = g === genre;
-                return (
-                  <label
-                    key={g}
-                    className={`flex cursor-pointer flex-col gap-1 rounded-[10px] border px-3 py-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-white/70 ${
-                      selected ? 'border-accent bg-accent/10' : 'border-line bg-panel-2/60 hover:border-line-2'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="genre"
-                      value={g}
-                      checked={selected}
-                      onChange={() => pickGenre(g)}
-                      className="sr-only"
-                    />
-                    <span className="text-[15px] font-semibold text-white">{GENRE_LABELS[g]}</span>
-                    <span className="text-[12px] leading-snug text-white/55">{GENRE_BLURBS[g]}</span>
-                  </label>
-                );
-              })}
+              {BASE_GENRES.map(tile)}
+            </div>
+            {/* The genre recipes in a section of their own, below the base genres (owner 2026-11-28). */}
+            <h3 className="mb-3 mt-5 text-[14px] font-semibold text-white">Casperaki styles</h3>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {RECIPE_GENRES.map(tile)}
             </div>
           </fieldset>
 

@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 
 import {
   buildSegmentDetail,
+  BASE_GENRES,
   CANONICAL_GENRES,
+  RECIPE_GENRES,
   distinctChordCount,
   extractLyricLines,
   generatorView,
@@ -18,6 +20,14 @@ describe('song view helpers', () => {
   it('exposes the canonical genre vocabulary (no `pop` alias)', () => {
     expect(CANONICAL_GENRES).toContain('brightPop');
     expect(CANONICAL_GENRES).not.toContain('pop');
+  });
+
+  // Owner 2026-11-28: "move Casperaki pop into a separate section below the bright pop, etc. in the style picker".
+  it('lists the base styles, then the recipe styles (shown in a section of their own)', () => {
+    expect(BASE_GENRES).toContain('brightPop');
+    expect(BASE_GENRES).not.toContain('casperakiPop');
+    expect(RECIPE_GENRES).toEqual(['casperakiPop']);
+    expect(CANONICAL_GENRES).toEqual([...BASE_GENRES, ...RECIPE_GENRES]);
   });
 
   it('summarises structure with active instruments per segment', () => {
