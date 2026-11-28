@@ -36,6 +36,8 @@ import type { VocalLevel } from '../sing/vocalLevel.js';
 import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAddSinger, type AddSingerOptions } from '../singers/addSingerTask.js';
+import { buildAvatar, type AvatarBuildDeps } from '../avatars/avatarBuildTask.js';
+import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
 import { makeSpeakingVoice, SpeakingVoiceOptionsSchema, type SpeakingSinger, type SpeakingVoiceDeps } from '../singers/speakingVoiceTask.js';
 import { newSingerId, type ReferenceChoice, type UserSingers } from '../singers/userSingers.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
@@ -86,6 +88,9 @@ export interface BackgroundTasksDeps {
   /** Singers' speaking voices: the speech service, the voices' folder, the language model, and how to find a singer
    *  of the owner's (an Error for an unknown one); without it, making speaking voices answers 503. */
   readonly speakingVoice?: SpeakingVoiceDeps & { readonly findSinger: (ownerId: string, singerId: string) => SpeakingSinger };
+  /** Realistic avatars' builds: the avatar builder, the curated library and the builds' files folder; without it,
+   *  building answers 503. */
+  readonly avatarBuild?: AvatarBuildDeps;
 }
 
 export interface AddSingerDeps {
@@ -113,6 +118,7 @@ export interface AddSingerStart {
 /** The user-facing refusals of Add a singer. */
 export const NO_CONSENT = 'Tick "I have the right to use this voice" to add a singer: only voices you may use can become singers.';
 export const SPEAKING_NOT_SET_UP = "Speaking voices are not set up: the brain needs SPEECH_SERVICE_URL, the assistant's language model (ASSISTANT_LLM_URL), BRAIN_TASK_FILES_DIR and BRAIN_SINGERS_DATA_DIR.";
+export const AVATAR_BUILD_NOT_SET_UP = "Realistic avatars are not set up: the brain needs AVATAR_BUILDER_URL, AVATAR_LIBRARY_FILE, BRAIN_TASK_FILES_DIR and BRAIN_SINGERS_DATA_DIR.";
 export const ADD_SINGER_NOT_SET_UP = 'Adding singers is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_SINGERS_DATA_DIR.';
 
 /** "4 min 5 s" */
@@ -333,6 +339,27 @@ export class BackgroundTasks {
     return this.deps.store.getTask(ownerId, id)!;
   }
 
+  /** Starts building a realistic avatar from `design` (checked against the library first: 400 naming the problem). */
+  startAvatarBuild(ownerId: string, design: unknown): TaskRow {
+    const ab = this.deps.avatarBuild;
+    if (!ab) throw new TaskError(503, 'no_avatar_builder', AVATAR_BUILD_NOT_SET_UP);
+    const parsed = RealisticDesignSchema.safeParse(design);
+    if (!parsed.success) {
+      const i = parsed.error.issues[0]!;
+      throw new TaskError(400, 'invalid_design', `design.${i.path.join('.')}: ${i.message}`);
+    }
+    try {
+      checkDesign(parsed.data, ab.library);
+    } catch (err) {
+      throw new TaskError(400, 'invalid_design', err instanceof Error ? err.message : String(err));
+    }
+    const id = randomUUID();
+    this.deps.store.insertTask({ id, ownerId, songId: null, kind: 'avatarBuild', input: '', startedAt: this.deps.clock(), options: { design: parsed.data } });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: null, state: 'running' });
+    this.enqueue(ownerId, id, 'avatarBuild');
+    return this.deps.store.getTask(ownerId, id)!;
+  }
+
   private checkNoSpeakingVoiceRunning(ownerId: string, singerId: string): void {
     // A speakingVoice task, or Add a singer (whose last steps make the new singer's voice), for this singer.
     const running = this.deps.store
@@ -437,6 +464,8 @@ export class BackgroundTasks {
         throw new TaskError(409, 'singer_gone', err instanceof Error ? err.message : String(err));
       }
       this.checkNoSpeakingVoiceRunning(ownerId, o.singerId);
+    } else if (task.kind === 'avatarBuild') {
+      if (!this.deps.avatarBuild) throw new TaskError(503, 'no_avatar_builder', AVATAR_BUILD_NOT_SET_UP);
     } else if (task.kind === 'addSinger') {
       const a = this.deps.addSinger;
       if (!a) throw new TaskError(503, 'no_singer_service', ADD_SINGER_NOT_SET_UP);
@@ -539,7 +568,9 @@ export class BackgroundTasks {
             ? this.deps.addSinger?.filesDir
             : task.kind === 'speakingVoice'
               ? this.deps.speakingVoice?.filesDir
-              : this.deps.sing?.filesDir;
+              : task.kind === 'avatarBuild'
+                ? this.deps.avatarBuild?.filesDir
+                : this.deps.sing?.filesDir;
     if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
     const path = join(resolve(filesDir), id, stage, name);
     if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
@@ -772,6 +803,26 @@ export class BackgroundTasks {
         now: clock,
       });
       return { singerId: o.singerId, seed: voice.seed };
+    }
+    if (task.kind === 'avatarBuild') {
+      const ab = this.deps.avatarBuild;
+      if (!ab) throw new Error(AVATAR_BUILD_NOT_SET_UP);
+      const { store, events } = this.deps;
+      const o = z.object({ design: RealisticDesignSchema }).parse(task.options) as { design: RealisticDesign };
+      return await buildAvatar({
+        design: o.design,
+        deps: ab,
+        filesDir: join(resolve(ab.filesDir), task.id),
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: null, state: 'running' });
+        },
+      });
     }
     throw new Error(`unknown task kind ${String(task.kind)}`);
   }

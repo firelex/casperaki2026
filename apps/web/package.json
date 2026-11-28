@@ -27,7 +27,7 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.17.0",
     "svg2pdf.js": "^2.9.0",
-    "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#b8d3ce365c8d8fc89ec9d51b736d412babced528",
+    "@casperaki/video": "git+https://github.com/firelex/casperaki-video.git#8eaa07654be2c1a98b523be3e54ff7789333f53e",
     "three": "^0.187.0",
     "@pixiv/three-vrm": "^3.6.0",
     "zod": "^4.6.7",

@@ -89,6 +89,9 @@ const ConfigSchema = z.object({
   /** Singers' speaking voices (and casting's speech): the speech service (svc-speech, Breeze TTS 2) as a base URL.
    *  Unset → making speaking voices answers 503 naming it, and Add a singer makes none. */
   speechServiceUrl: z.string().url().optional(),
+  /** Realistic avatars: the avatar builder (apps/models/services/avatar-builder) and its curated library. */
+  avatarBuilderUrl: z.string().url().optional(),
+  avatarLibraryFile: z.string().min(1).optional(),
   taskFilesDir: z.string().min(1).optional(),
   /** ACE layer: the ace service (svc-ace, the ace-layer adapter on the serving harness) as a base URL. Needs
    *  BRAIN_TASK_FILES_DIR, BRAIN_VOCAL_TAKES_DIR and per-song rendering. Unset → ACE layer answers 503. */
@@ -169,6 +172,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
     vocalsServiceUrl: env.VOCALS_SERVICE_URL || undefined,
     speechServiceUrl: env.SPEECH_SERVICE_URL || undefined,
+    avatarBuilderUrl: env.AVATAR_BUILDER_URL || undefined,
+    avatarLibraryFile: env.AVATAR_LIBRARY_FILE || undefined,
     taskFilesDir: env.BRAIN_TASK_FILES_DIR || undefined,
     aceServiceUrl: env.ACE_SERVICE_URL || undefined,
     artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,

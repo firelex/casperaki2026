@@ -1,4 +1,4 @@
-// The avatars a dance floor video shows: the owner's avatars by id, in the order chosen, and the lead: the first of
+// The avatars a dance floor video shows (all of one style): the owner's avatars by id, in the order chosen, and the lead: the first of
 // them whose voice is the singer of the song's latest finished Sing (it sings the song). Without such an avatar
 // nobody sings and all dance.
 
@@ -28,7 +28,11 @@ export function videoAvatars(store: SongsStore, avatars: UserAvatars, ownerId: s
     if (!a) throw new VideoInputError(400, 'unknown_avatar', `You have no avatar "${id}".`);
     return a;
   });
+  // One style per video (anime and realistic side by side clash).
+  if (new Set(chosen.map((a) => a.style)).size > 1) throw new VideoInputError(400, 'mixed_styles', 'A video uses avatars of one style: all anime or all realistic.');
   const singer = songSinger(store, ownerId, songId);
   const lead = singer === undefined ? -1 : chosen.findIndex((a) => a.singerId === singer);
-  return chosen.map((a, i) => ({ id: a.id, name: a.name, recipe: a.recipe, sings: i === lead }));
+  return chosen.map((a, i) =>
+    a.style === 'anime' ? { id: a.id, name: a.name, recipe: a.recipe, sings: i === lead } : { id: a.id, name: a.name, vrm: avatars.vrmPath(ownerId, a.id), sings: i === lead },
+  );
 }

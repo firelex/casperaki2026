@@ -2,31 +2,47 @@
 //
 //   <dir>/<owner>/avatars.json               the owner's avatars (UserAvatar[]), oldest first
 //   <dir>/<owner>/avatars/<avatar id>.png    its portrait (taken from the dressing room's 3D view)
+//   <dir>/<owner>/avatars/<avatar id>.vrm    a realistic avatar's built person
 //
-// An avatar is a recipe (pack, parts, colours: @casperaki/video/avatar), not a 3D file, and may carry one of the
-// owner's singers (its voice). Seen only by its owner.
+// An anime avatar is a recipe (pack, parts, colours: @casperaki/video/avatar); a realistic one a MakeHuman design and
+// the VRM file built from it. Either may carry one of the owner's singers (its voice). Seen only by its owner.
 
 import { randomBytes } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { AvatarRecipeSchema, type AvatarRecipe } from '@casperaki/video/avatar';
 import { z } from 'zod';
 
 import { ownerFolder } from '../singers/userSingers.js';
+import { RealisticDesignSchema, type RealisticDesign } from './realisticDesign.js';
 
-export const UserAvatarSchema = z
+const Common = {
+  id: z.string().regex(/^a-[0-9a-f]{12}$/u),
+  name: z.string().min(1).max(60),
+  /** One of the owner's singers (built-in or their own), or none. */
+  singerId: z.string().min(1).nullable(),
+  createdAt: z.string().min(1),
+  updatedAt: z.string().min(1),
+};
+
+/** Anime: a recipe of Character Studio pack parts. Avatars stored before styles existed have no `style`: anime. */
+const AnimeAvatarSchema = z
   .object({
-    id: z.string().regex(/^a-[0-9a-f]{12}$/u),
-    name: z.string().min(1).max(60),
+    style: z.literal('anime'),
     // The video engine's schema (its own zod version): checked through it.
     recipe: z.custom<AvatarRecipe>((v) => AvatarRecipeSchema.safeParse(v).success, 'not an avatar recipe'),
-    /** One of the owner's singers (built-in or their own), or none. */
-    singerId: z.string().min(1).nullable(),
-    createdAt: z.string().min(1),
-    updatedAt: z.string().min(1),
+    ...Common,
   })
   .strict();
+
+/** Realistic: a MakeHuman design, built by the avatar builder into <owner>/avatars/<id>.vrm. */
+const RealisticAvatarSchema = z.object({ style: z.literal('realistic'), design: RealisticDesignSchema, ...Common }).strict();
+
+export const UserAvatarSchema = z.preprocess(
+  (v) => (v && typeof v === 'object' && !('style' in v) ? { ...v, style: 'anime' } : v),
+  z.discriminatedUnion('style', [AnimeAvatarSchema, RealisticAvatarSchema]),
+);
 export type UserAvatar = z.infer<typeof UserAvatarSchema>;
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -49,6 +65,10 @@ export class UserAvatars {
     return join(this.root, ownerFolder(ownerId), 'avatars', `${id}.png`);
   }
 
+  vrmPath(ownerId: string, id: string): string {
+    return this.portraitPath(ownerId, id).replace(/\.png$/u, '.vrm');
+  }
+
   list(ownerId: string): UserAvatar[] {
     const file = this.listFile(ownerId);
     if (!existsSync(file)) return [];
@@ -60,12 +80,28 @@ export class UserAvatars {
   }
 
   /** Saves a new avatar (or replaces one, keeping its id and creation time) with its portrait. */
-  save(ownerId: string, fields: Pick<UserAvatar, 'name' | 'recipe' | 'singerId'>, portrait: Buffer, now: string, id?: string): UserAvatar {
+  save(ownerId: string, fields: { style: 'anime'; name: string; recipe: AvatarRecipe; singerId: string | null }, portrait: Buffer, now: string, id?: string): UserAvatar {
+    return this.store(ownerId, fields, portrait, now, id, () => undefined);
+  }
+
+  /** Saves a realistic avatar: its design, and the person built from it (copied from `vrmFrom`) as <id>.vrm. */
+  saveRealistic(ownerId: string, fields: { name: string; design: RealisticDesign; singerId: string | null }, vrmFrom: string, portrait: Buffer, now: string, id?: string): UserAvatar {
+    return this.store(ownerId, { style: 'realistic', ...fields }, portrait, now, id, (avatarId) => {
+      const vrm = this.vrmPath(ownerId, avatarId);
+      mkdirSync(join(vrm, '..'), { recursive: true });
+      copyFileSync(vrmFrom, `${vrm}.part-${process.pid}`);
+      renameSync(`${vrm}.part-${process.pid}`, vrm);
+    });
+  }
+
+  private store(ownerId: string, fields: Record<string, unknown>, portrait: Buffer, now: string, id: string | undefined, files: (id: string) => void): UserAvatar {
     if (portrait.length > MAX_PORTRAIT_BYTES || !portrait.subarray(0, 8).equals(PNG)) throw new Error('avatars: the portrait is not a PNG of at most 2 MB');
     const avatars = this.list(ownerId);
     const old = id ? avatars.find((a) => a.id === id) : undefined;
     if (id && !old) throw new Error(`avatars: there is no avatar ${id}`);
+    if (old && old.style !== fields['style']) throw new Error(`avatars: ${id} is ${old.style}; it cannot become ${String(fields['style'])}`);
     const avatar = UserAvatarSchema.parse({ id: old?.id ?? `a-${randomBytes(6).toString('hex')}`, ...fields, createdAt: old?.createdAt ?? now, updatedAt: now });
+    files(avatar.id);
     const png = this.portraitPath(ownerId, avatar.id);
     mkdirSync(join(png, '..'), { recursive: true });
     writeFileSync(`${png}.part-${process.pid}`, portrait);
@@ -80,6 +116,7 @@ export class UserAvatars {
     if (!avatars.some((a) => a.id === id)) return false;
     this.write(ownerId, avatars.filter((a) => a.id !== id));
     rmSync(this.portraitPath(ownerId, id), { force: true });
+    rmSync(this.vrmPath(ownerId, id), { force: true });
     return true;
   }
 

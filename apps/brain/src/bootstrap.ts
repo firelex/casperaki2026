@@ -40,6 +40,8 @@ import { UserSingers } from './singers/userSingers.js';
 import { createAvatarsRouter } from './routes/avatars.js';
 import { AvatarPacks } from './avatars/avatarPacks.js';
 import { UserAvatars } from './avatars/userAvatars.js';
+import { sweepOldBuilds } from './avatars/avatarBuildTask.js';
+import { loadRealisticLibrary } from './avatars/realisticDesign.js';
 import { createMelodyLibraryRouter } from './routes/melodyLibrary.js';
 import { MelodyLibrary } from './melodies/melodyLibrary.js';
 import { MelodyEdits } from './melodies/melodyEdits.js';
@@ -390,7 +392,19 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       ? { client: sing.client, filesDir: config.taskFilesDir!, singers: userSingers, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS, ...(speaking ? { speaking } : {}) }
       : undefined;
   const speakingVoice = speaking ? { ...speaking, findSinger: (ownerId: string, singerId: string) => speakingSinger(config.singersDir, userSingers, ownerId, singerId) } : undefined;
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  // Realistic avatars (src/avatars/avatarBuildTask.ts): the avatar builder and its curated library (read now: a bad
+  // library stops the brain), builds kept a day in <BRAIN_TASK_FILES_DIR>/avatar-builds.
+  const avatarBuild =
+    config.avatarBuilderUrl && config.avatarLibraryFile && config.taskFilesDir && userAvatars
+      ? { client: new VocalsClient(config.avatarBuilderUrl, 'avatar builder'), library: loadRealisticLibrary(config.avatarLibraryFile), filesDir: join(config.taskFilesDir, 'avatar-builds'), pollMs: deps.singPollMs ?? SING_POLL_MS }
+      : undefined;
+  if (!avatarBuild) console.warn('[brain] AVATAR_BUILDER_URL and AVATAR_LIBRARY_FILE (with BRAIN_TASK_FILES_DIR, BRAIN_SINGERS_DATA_DIR) not set — realistic avatars answer 503.');
+  if (avatarBuild) {
+    const sweep = () => sweepOldBuilds(avatarBuild.filesDir, Date.now());
+    sweep();
+    setInterval(sweep, 60 * 60 * 1000).unref();
+  }
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), ...(avatarBuild ? { avatarBuild } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
@@ -415,6 +429,10 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
       ...(avatarPacks ? { packs: avatarPacks } : {}),
       ...(userAvatars ? { avatars: userAvatars } : {}),
       checkSinger: (ownerId, singerId) => void singerVoice(config.singersDir, userSingers, ownerId, singerId),
+      isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true),
+      ...(avatarBuild
+        ? { realistic: { library: avatarBuild.library, buildsDir: avatarBuild.filesDir, tasks: { startAvatarBuild: (o: string, d: unknown) => tasks.startAvatarBuild(o, d), get: (o: string, id: string) => store.getTask(o, id) } } }
+        : {}),
     }),
   );
   // Melody library edits: loaded now and handed to the generator, so songs use them (a bad file stops the brain).

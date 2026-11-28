@@ -183,11 +183,13 @@ export function checkStoryboard(storyboard: readonly VideoStoryboardEntry[], sec
   });
 }
 
-/** One of the user's avatars in a video: its name, recipe, and whether it is the lead (sings the song). */
+/** One of the user's avatars in a video: its name, what it is made of, and whether it is the lead (sings the song). */
 export interface VideoAvatar {
   readonly id: string;
   readonly name: string;
-  readonly recipe: AvatarVideoInput['avatars'][number]['recipe'];
+  /** Anime: its recipe; realistic: the absolute path of its VRM file. Exactly one. */
+  readonly recipe?: AvatarVideoInput['avatars'][number]['recipe'];
+  readonly vrm?: string;
   readonly sings: boolean;
 }
 
@@ -223,7 +225,7 @@ export function songToAvatarInput(args: {
     binSeconds,
     master: fitted(args.levels.master),
     voice: fitted(voice),
-    avatars: args.avatars.map((a) => ({ id: engineAvatarId(a.id), name: a.name, recipe: a.recipe, sings: a.sings })),
+    avatars: args.avatars.map((a) => ({ id: engineAvatarId(a.id), name: a.name, ...(a.vrm !== undefined ? { vrm: a.vrm } : { recipe: a.recipe! }), sings: a.sings })),
     ...(args.storyboard ? { storyboard: args.storyboard.map((e) => ({ scene: e.scene, avatars: e.avatarIds.map(engineAvatarId), camera: e.camera })) } : {}),
   });
 }
