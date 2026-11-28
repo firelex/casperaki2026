@@ -25,7 +25,7 @@
 // endSeconds, recordingStartSeconds, recordingEndSeconds, seconds }, transcription? } (the last three for own singers).
 
 import express, { Router, type Request, type Response } from 'express';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { z } from 'zod';
@@ -99,15 +99,19 @@ function speakingJson(voice: SpeakingVoice | undefined, id: string) {
   };
 }
 
-function ownJson(s: UserSinger) {
+/** A file's address with its version (its last change): a file made again gets a new address, so a browser does not
+ *  keep playing its copy of the old one (owner 2026-11-28: test lines sung again still sounded cut off). */
+const versioned = (url: string, file: string) => `${url}?v=${Math.round(statSync(file).mtimeMs)}`;
+
+function ownJson(s: UserSinger, dir: string) {
   return {
     id: s.id,
     name: s.name,
     description: s.description,
     source: s.source,
-    previewUrl: `/api/singers/${s.id}/preview`,
+    previewUrl: versioned(`/api/singers/${s.id}/preview`, join(dir, s.audio)),
     own: true,
-    testLineUrl: `/api/singers/${s.id}/test-line`,
+    testLineUrl: versioned(`/api/singers/${s.id}/test-line`, join(dir, s.testLine)),
     reference: s.reference,
     transcription: s.transcription,
   };
@@ -152,7 +156,7 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
     const owner = ownerOf(req);
     const speaking = (id: string, builtIn: boolean) => speakingJson(deps.voices?.get(owner, id, builtIn), id);
     const builtIn = builtIns(owner).map((s) => ({ id: s.id, name: s.name, description: s.description, source: s.source, previewUrl: `/api/singers/${s.id}/preview`, own: false, speaking: speaking(s.id, true) }));
-    res.json({ singers: [...builtIn, ...own(owner).map((s) => ({ ...ownJson(s), speaking: speaking(s.id, false) }))] });
+    res.json({ singers: [...builtIn, ...own(owner).map((s) => ({ ...ownJson(s, deps.users!.dir(owner, s.id)), speaking: speaking(s.id, false) }))] });
   });
 
   router.get('/api/singers/:id/preview', (req, res) => {

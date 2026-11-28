@@ -3,7 +3,7 @@
 // and done without being applied, the new singer listed with its voice reference, test line and reference choice,
 // visible only to its owner, usable by Sing, and deleted.
 
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -111,6 +111,14 @@ describe('Add a singer', () => {
       expect((await res.arrayBuffer()).byteLength).toBeGreaterThan(44);
     }
     expect(readdirSync(join(dir, 'singers', DEV_OWNER_ID, mine.id)).sort()).toEqual(['original.wav', 'test_line.wav', 'voice.json', 'voice.wav']);
+    // A file made again gets a new address, so a browser that played the old one does not keep playing it (owner
+    // 2026-11-28: test lines sung again still sounded cut off: Chrome's copy of the old file).
+    const later = new Date(Date.now() + 5000);
+    utimesSync(join(dir, 'singers', DEV_OWNER_ID, mine.id, 'test_line.wav'), later, later);
+    const again = ((await get('/api/singers')).body.singers as Array<Record<string, any>>)[1]!;
+    expect(again.testLineUrl).not.toBe(mine.testLineUrl);
+    expect(again.previewUrl).toBe(mine.previewUrl);
+    expect((await fetch(`${url}${again.testLineUrl}`)).status).toBe(200);
 
     // Sing can sing with it; another owner cannot see it.
     const users = new UserSingers(join(dir, 'singers'));
