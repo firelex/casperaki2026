@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSequencerModel, noteToMidi } from '../src/editor/sequencerModel';
+import { buildSequencerModel, noteToMidi, RAP_COLOR } from '../src/editor/sequencerModel';
 import { makeFixtureSong } from './fixture';
 
 describe('sequencer model', () => {
@@ -110,7 +110,11 @@ describe('the Rap track shows its words (owner 2026-11-28: "we should have a tex
     const g = song.generator as unknown as { params: Record<string, unknown> };
     const withWords = { ...song, generator: { ...song.generator, params: { ...g.params, params: { ...((g.params.params as object) ?? {}), rapLyrics: { [second]: ['one', 'two'] } } } } } as typeof song;
     const rap = buildSequencerModel(withWords).tracks.find((t) => t.name === 'Rap')!;
-    expect(rap).toMatchObject({ audioOnly: true, wordsOnly: true });
+    expect(rap).toMatchObject({ audioOnly: true, wordsOnly: true, color: RAP_COLOR });
+    // below the vocals (owner 2026-11-28: "Move the rap track up below the vocals and color it dark golden")
+    const names = buildSequencerModel(withWords).tracks.map((t) => t.name);
+    const lastVocal = Math.max(...names.map((n, i) => (/vocal|ad-lib/iu.test(n) ? i : -1)));
+    expect(names.indexOf('Rap')).toBe(lastVocal + 1);
     expect(rap.clips.map((c) => [c.section, c.text, c.wordsOnly])).toEqual([[1, ['one', 'two'], true]]);
     // rapped in the first section too: the track has audio; that clip has no words of its own to show
     const rapped = { ...withWords, aiArtifacts: [{

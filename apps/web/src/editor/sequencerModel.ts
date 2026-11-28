@@ -195,6 +195,7 @@ function eventNotes(ev: RawEvent, start: number): SeqNote[] {
 /** Track order: lead vocal, backing vocals, then the rhythm section, harmony and melody. */
 function trackRank(name: string): number {
   const k = name.toLowerCase();
+  if (k === 'rap' || k === 'ace rap' || /^ace rap \d+$/u.test(k)) return -0.4; // rap right below the vocals
   if (k.includes('ad-lib')) return -0.5; // ad-libs (sung or ACE) sit with the vocals, after the backings
   if (k.includes('backing')) return -1;
   if (k.includes('vocal')) return -2;
@@ -209,9 +210,13 @@ function trackRank(name: string): number {
   return 7;
 }
 
+/** The Rap track's colour: dark golden (owner 2026-11-28). */
+export const RAP_COLOR = '#b8860b';
+
 /** Same colours as the rest of the editor. */
 export function trackColor(name: string): string {
   const k = name.toLowerCase();
+  if (k === 'rap' || k === 'ace rap' || /^ace rap \d+$/u.test(k)) return RAP_COLOR;
   if (k.startsWith('drum')) return 'var(--color-c0)';
   if (k.startsWith('bass')) return 'var(--color-c1)';
   if (k.startsWith('key')) return 'var(--color-c2)';
