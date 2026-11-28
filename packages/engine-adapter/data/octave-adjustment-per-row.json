@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedFrom": {
-    "method": "post-slice c3 slot pYIN — legacy-faithful",
+    "method": "post-slice c3 slot pYIN \u2014 legacy-faithful",
     "catalogContentHash": "baa174e1dd10d4411d8f9710882dfa4bfcc5a0415cc4044102fa8c99cee4b047",
     "auditContentHash": "6eedfe76eeede708821854166dcfd1dd5da7f715209b4049a755154395b23773",
     "sampleLibraryRoot": "/mnt/d/Scissero Dropbox/Mathias Strasser/datigator-instruments/instruments",
@@ -504,18 +504,15 @@
       "matchedPath": "basses/bassesSynthDistorted/basses - bassesSynthDistorted - brightPop - serum - BA Brooks 1.mp3",
       "slotNote": "c3",
       "slotType": "longNote",
-      "sliceStart": 16.5,
-      "sliceEnd": 20.5,
+      "sliceStart": 24.5,
+      "sliceEnd": 28.5,
       "expectedHz": 130.81,
-      "detectedHz": 46.1,
-      "ratioOctaves": -1.505,
+      "detectedHz": 65.4,
+      "ratioOctaves": -1.0,
       "voicedFraction": 0.993920972644377,
-      "adjustment": 2,
+      "adjustment": 1,
       "adjustmentReliable": true,
-      "legacyYinVotes": {
-        "2": 166,
-        "1": 4
-      }
+      "note": "Corrected 2026-11-28: the recording starts on F# (multisampleMetadata.json firstNote), so the c3 slot is cut from 24.5 s (C2, 65.4 Hz, one octave below the expected 130.81 Hz). The classifier had read the 16.5 s slice, which holds F#1, and rounded -1.505 octaves to 2: the bass played an octave high."
     },
     "5b48216a4c4cff3d": {
       "family": "basses",
