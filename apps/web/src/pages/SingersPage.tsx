@@ -10,6 +10,7 @@ import {
   referenceText,
   singersApi,
   singersQueryKey,
+  speakingDescriptionProblem,
   type AddSingerForm,
   type ReferenceChoice,
   type SingerInfo,
@@ -38,6 +39,11 @@ export function SingersPage() {
   useEffect(() => {
     if (made && singers.data) void queryClient.invalidateQueries({ queryKey: singersQueryKey });
   }, [made, singers.data, queryClient]);
+  // A speaking voice made since: load the singers again.
+  const spoken = (tasks ?? []).filter((t) => t.kind === 'speakingVoice' && t.state === 'done').map((t) => t.id).join();
+  useEffect(() => {
+    if (spoken) void queryClient.invalidateQueries({ queryKey: singersQueryKey });
+  }, [spoken, queryClient]);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-bg text-white">
@@ -122,6 +128,7 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
           <audio controls preload="none" src={s.testLineUrl} className="w-full" aria-label={`${s.name}: test line`} />
         </div>
       ) : null}
+      <SpeakingVoiceSection singer={s} />
       <p className="text-[12px] text-white/45">{s.source}</p>
       {error ? (
         <p className="text-[13px] text-err" role="alert">
@@ -129,6 +136,116 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
         </p>
       ) : null}
     </section>
+  );
+}
+
+/** The voice the singer speaks in (casting videos): listen to it, try another of its candidate voices, describe it
+ *  yourself, or make it (again) from the singing. */
+export function SpeakingVoiceSection({ singer: s }: { singer: SingerInfo }) {
+  const queryClient = useQueryClient();
+  const { data: tasks } = useTasks();
+  const [panel, setPanel] = useState<'none' | 'others' | 'describe'>('none');
+  const [description, setDescription] = useState('');
+  const [error, setError] = useState<string | undefined>(undefined);
+  const mine = (tasks ?? []).filter((t) => t.kind === 'speakingVoice' && t.singerId === s.id);
+  const making = mine.some((t) => t.state === 'running');
+  const failed = mine.find((t) => t.state === 'failed');
+  const v = s.speaking;
+
+  const make = async (own?: string) => {
+    setError(undefined);
+    try {
+      await singersApi.makeSpeakingVoice(s.id, own);
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+      setPanel('none');
+      setDescription('');
+    } catch (err) {
+      setError(`Could not make the speaking voice: ${message(err)}`);
+    }
+  };
+  const choose = async (seed: number) => {
+    setError(undefined);
+    try {
+      await singersApi.chooseSpeakingVoice(s.id, seed);
+      await queryClient.invalidateQueries({ queryKey: singersQueryKey });
+    } catch (err) {
+      setError(`Could not change the speaking voice: ${message(err)}`);
+    }
+  };
+  const button = 'rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60 disabled:opacity-40';
+  const problem = speakingDescriptionProblem(description);
+
+  return (
+    <div className="flex flex-col gap-2 rounded-[10px] border border-white/10 p-3">
+      <span className="text-[12px] text-white/55">
+        Speaking voice
+        {v ? ` · ${v.madeBy === 'matched' ? 'matched to the singing' : 'from your description'}: ${v.description}` : ''}
+      </span>
+      {v ? <audio controls preload="none" src={v.sampleUrl} className="w-full" aria-label={`${s.name}: speaking voice`} /> : null}
+      {making ? <p className="text-[13px] text-white/70">Making the speaking voice…</p> : null}
+      {!making && failed && !v ? (
+        <p className="text-[13px] text-err" role="alert">
+          The speaking voice could not be made: {failed.message ?? 'no reason given'}
+        </p>
+      ) : null}
+      {!making ? (
+        <div className="flex flex-wrap gap-2">
+          {v ? (
+            v.candidates.length > 1 ? (
+              <button type="button" className={button} onClick={() => setPanel(panel === 'others' ? 'none' : 'others')}>
+                Try another voice
+              </button>
+            ) : null
+          ) : (
+            <button type="button" className={button} onClick={() => void make()}>
+              Make a speaking voice
+            </button>
+          )}
+          <button type="button" className={button} onClick={() => setPanel(panel === 'describe' ? 'none' : 'describe')}>
+            Describe it yourself
+          </button>
+          {v ? (
+            <button type="button" className={button} onClick={() => void make()}>
+              Make it again from the singing
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+      {panel === 'others' && v ? (
+        <ul className="flex flex-col gap-2">
+          {v.candidates.map((c) => (
+            <li key={c.seed} className="flex items-center gap-2">
+              <audio controls preload="none" src={c.url} className="min-w-0 flex-1" aria-label={`${s.name}: voice ${c.seed}`} />
+              <span className="w-[64px] text-[12px] text-white/55">{c.score === null ? '' : `${Math.round(c.score * 100)}% alike`}</span>
+              <button type="button" className={button} disabled={c.seed === v.seed} onClick={() => void choose(c.seed)}>
+                {c.seed === v.seed ? 'In use' : 'Use this one'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {panel === 'describe' ? (
+        <div className="flex flex-col gap-2">
+          <textarea
+            className="min-h-[64px] rounded-[8px] border border-white/20 bg-transparent p-2 text-[14px]"
+            placeholder="For example: a woman in her thirties, warm and slightly husky, relaxed"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            aria-label={`${s.name}: describe the speaking voice`}
+          />
+          <div>
+            <button type="button" className={button} disabled={problem !== undefined} title={problem} onClick={() => void make(description)}>
+              Save
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {error ? (
+        <p className="text-[13px] text-err" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
 

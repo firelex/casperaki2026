@@ -22,7 +22,7 @@ import type { AceAdlibVoice, AceInstrument } from '@casperaki/song-schema/ace-la
 
 import { defaultBrainClient } from './client';
 
-export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger';
+export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger' | 'speakingVoice';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task (sing records every one), as the brain stores it. */
@@ -101,4 +101,4 @@ export const tasksApi = {
 };
 
 /** What a task does, in words ("Write lyrics"). */
-export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', writeRapLyrics: 'Write rap lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer', addSinger: 'Add a singer' };
+export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', writeRapLyrics: 'Write rap lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer', addSinger: 'Add a singer', speakingVoice: 'Speaking voice' };

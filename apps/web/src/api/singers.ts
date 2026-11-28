@@ -39,6 +39,25 @@ export interface SingerInfo {
   readonly reference?: SingerReference;
   /** Own singers: how the voice reference was transcribed (its words, or "la la la"). */
   readonly transcription?: 'words' | 'la';
+  /** The voice the singer speaks in (casting videos), or null when it has none yet. */
+  readonly speaking: SpeakingVoiceInfo | null;
+}
+
+/** A singer's speaking voice: described from the singing and the closest of several candidates kept ("matched"), or
+ *  the user's own description ("described"). */
+export interface SpeakingVoiceInfo {
+  readonly description: string;
+  readonly madeBy: 'matched' | 'described';
+  readonly seed: number;
+  readonly sampleUrl: string;
+  readonly candidates: readonly { readonly seed: number; readonly score: number | null; readonly url: string }[];
+}
+
+/** Why a speaking-voice description cannot be sent (in words for the user), or undefined when it can. */
+export function speakingDescriptionProblem(description: string): string | undefined {
+  if (!description.trim()) return 'Describe the voice.';
+  if (description.trim().length > 300) return 'Describe the voice in at most 300 characters.';
+  return undefined;
 }
 
 /** What the Add a singer form sends. */
@@ -108,4 +127,10 @@ export const singersApi = {
     return body as { task: BackgroundTask };
   },
   remove: (id: string) => defaultBrainClient.delete<{ deleted: string }>(`/api/singers/${encodeURIComponent(id)}`),
+  /** Makes the singer's speaking voice: from the singing (no description) or from the user's own description. */
+  makeSpeakingVoice: (id: string, description?: string) =>
+    defaultBrainClient.post<{ task: BackgroundTask }>(`/api/singers/${encodeURIComponent(id)}/speaking-voice`, description === undefined ? {} : { description: description.trim() }),
+  /** Makes another of the singer's candidate voices its speaking voice. */
+  chooseSpeakingVoice: (id: string, seed: number) =>
+    defaultBrainClient.post<{ speaking: SpeakingVoiceInfo }>(`/api/singers/${encodeURIComponent(id)}/speaking-voice/choose`, { seed }),
 };

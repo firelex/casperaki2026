@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, vi } from 'vitest';
 
-import { addSingerProblem, extensionOf, referenceText, singersApi, type AddSingerForm, type SingerInfo } from '../src/api/singers';
+import { addSingerProblem, extensionOf, referenceText, singersApi, speakingDescriptionProblem, type AddSingerForm, type SingerInfo } from '../src/api/singers';
 import { TASK_LABELS, type BackgroundTask } from '../src/api/tasks';
 import { taskPage } from '../src/layout/TasksMenu';
 import { AddSingerPanel, SingerCard } from '../src/pages/SingersPage';
@@ -74,6 +74,7 @@ const own: SingerInfo = {
   testLineUrl: '/api/singers/u-0123456789ab/test-line',
   reference: { choice: 'best', startSeconds: 2.94, endSeconds: 11.94, recordingStartSeconds: 5.22, recordingEndSeconds: 14.22, seconds: 9.12 },
   transcription: 'la',
+  speaking: null,
 };
 
 describe('the Singers page', () => {
@@ -88,8 +89,8 @@ describe('the Singers page', () => {
   });
 
   it('shows a built-in singer without test line, with Delete (for this user only)', () => {
-    const out = html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false } }));
-    expect(out).not.toMatch(/Test line|yours/u);
+    const out = html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false, speaking: null } }));
+    expect(out).not.toMatch(/Test line|>yours</u);
     expect(out).toMatch(/>Delete</u);
   });
 });
@@ -101,5 +102,48 @@ describe('Add a singer tasks', () => {
     expect(taskPage(t)).toBe('/singers');
     expect(taskPage({ ...t, kind: 'sing', songId: 'abc' })).toBe('/editor/abc/timeline');
     expect(() => mergeOp('addSinger', {}, {} as never)).toThrow(/no result/u);
+  });
+});
+
+describe('speaking voices on the Singers page', () => {
+  const speaking: NonNullable<SingerInfo['speaking']> = {
+    description: 'A young woman with a bright, fairly high speaking voice.',
+    madeBy: 'matched',
+    seed: 11,
+    sampleUrl: '/api/singers/u-0123456789ab/speaking-sample?v=1',
+    candidates: [
+      { seed: 7, score: 0.5, url: '/api/singers/u-0123456789ab/speaking-candidates/7?v=1' },
+      { seed: 11, score: 0.9, url: '/api/singers/u-0123456789ab/speaking-candidates/11?v=1' },
+    ],
+  };
+
+  it('plays the speaking voice with its description, and offers the other candidates and describing it yourself', () => {
+    const out = html(createElement(SingerCard, { singer: { ...own, speaking } }));
+    expect(out).toMatch(/Speaking voice/u);
+    expect(out).toMatch(/bright, fairly high speaking voice/u);
+    expect(out).toMatch(/src="\/api\/singers\/u-0123456789ab\/speaking-sample\?v=1"/u);
+    expect(out).toMatch(/Try another voice/u);
+    expect(out).toMatch(/Describe it yourself/u);
+  });
+
+  it('offers to make one when the singer has none', () => {
+    const out = html(createElement(SingerCard, { singer: { ...own, speaking: null } }));
+    expect(out).toMatch(/Make a speaking voice/u);
+    expect(out).not.toMatch(/speaking-sample/u);
+  });
+
+  it('will not send a blank description', () => {
+    expect(speakingDescriptionProblem('   ')).toBe('Describe the voice.');
+    expect(speakingDescriptionProblem('x'.repeat(301))).toMatch(/300 characters/u);
+    expect(speakingDescriptionProblem('A man in his forties, deep and calm.')).toBeUndefined();
+  });
+
+  it('speaking-voice tasks open the Singers page and have no result to put into a song', () => {
+    const t: BackgroundTask = { id: 't', kind: 'speakingVoice', songId: null, title: 'Karla: speaking voice', state: 'running', startedAt: 'x' };
+    expect(TASK_LABELS.speakingVoice).toBe('Speaking voice');
+    expect(taskPage(t)).toBe('/singers');
+    expect(() => mergeOp('speakingVoice', {}, {} as never)).toThrow(/no result/u);
+    expect(typeof singersApi.makeSpeakingVoice).toBe('function');
+    expect(typeof singersApi.chooseSpeakingVoice).toBe('function');
   });
 });
