@@ -1,3 +1,4 @@
+import { togglesFollow } from './shortcuts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
@@ -222,6 +223,16 @@ export function TimelineView() {
     : MAX_ROW_H;
   const rowH = Math.max(18, Math.min(220, Math.round(fittedRowH * vZoom)));
   const [follow, setFollow] = useState(true);
+  // F toggles Follow playhead (owner 2026-11-28).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!togglesFollow({ code: e.code, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey, repeat: e.repeat, target: e.target as HTMLElement | null })) return;
+      e.preventDefault();
+      setFollow((f) => !f);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
   const [mixerOpen, setMixerOpen] = useState(() => readPref('casperaki.mixerOpen', true));
   // Mixer height as a share of the view (default 40 %: tracks 60 / mixer 40); drag the
   // divider to change it, remembered as a share so it fits any window.
@@ -778,7 +789,7 @@ export function TimelineView() {
           </ToolButton>
           <label className="ml-3 flex cursor-pointer items-center gap-2 text-white/70">
             <input type="checkbox" checked={follow} onChange={(e) => setFollow(e.target.checked)} className="accent-[#ff0000]" />
-            Follow playhead
+            Follow playhead (F)
           </label>
           <button
             type="button"

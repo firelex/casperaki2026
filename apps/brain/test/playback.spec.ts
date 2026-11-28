@@ -8,6 +8,9 @@ import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { applyLyricsFirst, orchestrate, wordlessMelodyAsPiano } from '@casperaki/arrangement';
+import { canonicalStringifySong, parseSong } from '@casperaki/song-schema';
+
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import { fakePlayback } from './fakePlayback.js';
@@ -23,9 +26,9 @@ interface Harness {
   stop: () => Promise<void>;
 }
 
-async function boot(probe?: string): Promise<Harness> {
+async function boot(probe?: string, playback = fakePlayback(probe ? { probe } : {})): Promise<Harness> {
   const store = openSongsStore({ path: ':memory:' });
-  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: fakePlayback(probe ? { probe } : {}) });
+  const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback });
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -147,6 +150,37 @@ describe('in-browser playback', () => {
 
     expect((await fetch(`${h.url}/api/playback/samples/${'0'.repeat(24)}.ogg`)).status).toBe(404);
     expect((await fetch(`${h.url}/api/playback/samples/..%2F..%2Fetc.ogg`)).status).toBe(404);
+  });
+
+  // Owner 2026-11-28: a melody without lyrics plays on the detail view's piano with the rest of the song.
+  it('plays a melody without lyrics on the preview piano, on the Vocal track, and one with lyrics as it is', async () => {
+    await h.stop();
+    const service = fakePlayback();
+    const lowered: string[] = [];
+    const envelope = service.envelope.bind(service);
+    service.envelope = (id, canonical) => {
+      lowered.push(canonical);
+      return envelope(id, canonical);
+    };
+    h = await boot(undefined, service);
+    const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 110, seed: 'playback-piano' });
+    const play = async (s: unknown) => {
+      const res = await fetch(`${h.url}/api/playback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ song: s }) });
+      expect(res.status).toBe(200);
+      return (await res.json()) as Payload;
+    };
+    const piano = await play(song);
+    const asPiano = wordlessMelodyAsPiano(parseSong(song));
+    expect(asPiano.instrumentDefinitions.find((d) => d.name === 'Vocal')!.lowLevelType).toBe('keysAcousticPiano');
+    expect(lowered.at(-1)).toBe(canonicalStringifySong(asPiano, 2));
+    // the version is the song's own (the video checks levels against the saved song)
+    expect(piano.versionKey).toBe(songVersionKey(canonicalStringifySong(parseSong(song), 2), piano.mixConfig));
+    const withWords = applyLyricsFirst(song, {
+      verse: ['Met you at the corner store', 'A name I do not know', 'You said it was nothing', 'But I could see it show'],
+      chorus: ['Hold me closer in the light', 'We could stay up all the night', 'Every heartbeat feels so right', 'Hold me closer hold me tight'],
+    });
+    await play(withWords);
+    expect(lowered.at(-1)).toBe(canonicalStringifySong(parseSong(withWords), 2));
   });
 
   it('refuses a saved song the caller does not own', async () => {

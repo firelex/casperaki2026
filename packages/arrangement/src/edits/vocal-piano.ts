@@ -8,6 +8,7 @@ import { loadValidatedCatalog, type ValidatedCatalogEntry } from '../catalog/val
 import { instrumentDefinitionFromCatalog } from '../orchestrate/index.js';
 import { familySoundPool } from '../selection/index.js';
 import { TrackEditError } from './track-edits.js';
+import { LEAD_VOCAL_TRACK } from './vocal-edits.js';
 
 const PIANO = 'keysAcousticPiano';
 const LANE = 'Keys';
@@ -64,4 +65,55 @@ export function vocalAsPiano(song: Song, track: string): { song: Song; piano: Va
   if (notes === 0) throw new TrackEditError(400, 'no_notes', `${track} has no sung notes here.`);
   const out = parseSong({ ...song, arrangement, instrumentDefinitions: [instrumentDefinitionFromCatalog(LANE, piano)] });
   return { song: out, piano };
+}
+
+/**
+ * The song as playback plays it while its melody has no lyrics (owner 2026-11-28: the piano the detail view plays
+ * the vocal on, "over the song with the rest of the instruments"): the lead track, keeping its name (its mixer strip,
+ * mute and solo), plays its notes on `previewPiano`, without the vocal effects; everything else as it is. `song`
+ * itself when the lead has no notes or any note carries a word (lyrics written: the takes sing it).
+ */
+export function wordlessMelodyAsPiano(song: Song): Song {
+  if (!song.instrumentDefinitions.some((d) => d.name === LEAD_VOCAL_TRACK)) return song;
+  let notes = 0;
+  for (const payload of Object.values(song.arrangement)) {
+    for (const bar of payload.overrides?.[LEAD_VOCAL_TRACK]?.bars ?? []) {
+      for (const events of Object.values(bar.notes ?? {})) {
+        for (const e of events ?? []) {
+          const ev = e as { type: string; fullWord?: string };
+          if (ev.type !== 'vocalNote') continue;
+          if (ev.fullWord !== undefined) return song;
+          notes++;
+        }
+      }
+    }
+  }
+  if (notes === 0) return song;
+  if (!song.genre) throw new Error('wordlessMelodyAsPiano: the song has no style to pick a piano for');
+  const piano = previewPiano(baseGenre(song.genre));
+  const arrangement: Song['arrangement'] = {};
+  for (const [name, payload] of Object.entries(song.arrangement)) {
+    const part = payload.overrides?.[LEAD_VOCAL_TRACK];
+    if (!part) {
+      arrangement[name] = payload;
+      continue;
+    }
+    const bars = (part.bars ?? []).map((bar) => ({
+      ...bar,
+      notes: Object.fromEntries(
+        Object.entries(bar.notes ?? {}).map(([beat, events]) => [
+          beat,
+          (events ?? []).map((e) => {
+            const ev = e as { type: string; note: unknown; duration: number };
+            if (ev.type !== 'vocalNote' || typeof ev.note !== 'number') return e;
+            return { type: 'note', note: ev.note, duration: ev.duration };
+          }),
+        ]),
+      ),
+    }));
+    const { [LEAD_VOCAL_TRACK]: _fx, ...signalProcessors } = payload.signalProcessors ?? {};
+    arrangement[name] = { ...payload, overrides: { ...payload.overrides, [LEAD_VOCAL_TRACK]: { ...part, bars } }, signalProcessors } as typeof payload;
+  }
+  const instrumentDefinitions = song.instrumentDefinitions.map((d) => (d.name === LEAD_VOCAL_TRACK ? instrumentDefinitionFromCatalog(LEAD_VOCAL_TRACK, piano) : d));
+  return parseSong({ ...song, arrangement, instrumentDefinitions });
 }

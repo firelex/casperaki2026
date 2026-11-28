@@ -13,6 +13,8 @@ import { z } from 'zod';
 
 import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
+import { wordlessMelodyAsPiano } from '@casperaki/arrangement';
+
 import { masteringReferenceData } from '../render/playbackService.js';
 import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
 import { songVersionKey } from '../render/songVersion.js';
@@ -28,9 +30,10 @@ export interface PlaybackRouterDeps {
 // mixOverrides: the editor's Pro-mode mix for a song not saved yet (a saved song's comes from its project).
 const PlayBodySchema = z.object({ song: z.unknown(), mixOverrides: MixOverridesSchema.optional() }).strict();
 
-/** Lower a song and list its samples: the body of every playback response. */
-export async function playbackPayload(service: PlaybackService, songId: string, canonical: string, mixOverrides?: MixOverrides | null) {
-  const env = await service.envelope(songId, canonical);
+/** Lower a song and list its samples: the body of every playback response. `played`: what the engine plays when it
+ *  is not the song itself (a melody without lyrics on the piano); the version key is always the song's. */
+export async function playbackPayload(service: PlaybackService, songId: string, canonical: string, mixOverrides?: MixOverrides | null, played: string = canonical) {
+  const env = await service.envelope(songId, played);
   const mixConfig = mixOverrides ? applyMixOverrides(service.mixConfig, mixOverrides) : service.mixConfig;
   const samples = service.plan(songId).map((e) => ({
     key: e.key,
@@ -72,8 +75,12 @@ export function createPlaybackRouter({ store, playback, ownerOf }: PlaybackRoute
       message: 'In-browser playback is off: CASPERAKI_SAMPLE_LIBRARY_ROOT is not set on the brain.',
     });
 
+  // A melody without lyrics plays on the preview piano with the rest of the song (owner 2026-11-28); in-browser
+  // playback only: exports and renders play the song as it is.
   const respond = async (res: Response, service: PlaybackService, songId: string, canonical: string, mixOverrides?: MixOverrides | null) => {
-    res.json(await playbackPayload(service, songId, canonical, mixOverrides));
+    const song = parseSong(JSON.parse(canonical));
+    const played = wordlessMelodyAsPiano(song);
+    res.json(await playbackPayload(service, songId, canonical, mixOverrides, played === song ? canonical : canonicalStringifySong(played, 2)));
   };
 
   router.get('/api/songs/:id/playback', async (req, res) => {

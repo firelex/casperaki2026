@@ -346,7 +346,7 @@ export {
   type TrackOptions,
 } from './edits/track-edits.js';
 export { addSection, nextSectionName } from './edits/add-section.js';
-export { previewPiano, vocalAsPiano } from './edits/vocal-piano.js';
+export { previewPiano, vocalAsPiano, wordlessMelodyAsPiano } from './edits/vocal-piano.js';
 export {
   finalChordRootForSegment,
   isSwappableTransition,
