@@ -25,6 +25,8 @@ export interface CastingTimeline {
   readonly performance: { readonly songFromSeconds: 0; readonly songToSeconds: number; readonly fadeSeconds: number; readonly videoStartSeconds: number };
   /** The castingScript task the lines come from. */
   readonly scriptTaskId: string;
+  /** Where the applause starts: as the song begins to fade. */
+  readonly applauseStartSeconds: number;
 }
 
 /** Pauses between two lines of one segment, varied so the talk does not tick like a clock (the owner: "they speak
@@ -52,6 +54,8 @@ export const AIR = 0.4;
 export const PERFORMANCE_LEAD = 1.5;
 /** The song fades out over this long after its first chorus. */
 export const PERFORMANCE_FADE = 3;
+/** The applause has this long on its own before the first verdict line comes in over it. */
+export const APPLAUSE_LEAD = 2.5;
 /** The video ends this long after the last verdict. */
 export const END_TAIL = 1.5;
 
@@ -106,7 +110,7 @@ export function layOut(args: {
       speak('banter', AIR, AIR);
       segments.push({ kind: 'performance', startSeconds: t, endSeconds: t + PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE });
       t += PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE;
-    } else speak('verdicts', AIR, END_TAIL);
+    } else speak('verdicts', APPLAUSE_LEAD, END_TAIL);
   }
   const perf = segments.find((s) => s.kind === 'performance')!;
   return {
@@ -116,5 +120,6 @@ export function layOut(args: {
     lines,
     performance: { songFromSeconds: 0, songToSeconds: songTo, fadeSeconds: PERFORMANCE_FADE, videoStartSeconds: perf.startSeconds + PERFORMANCE_LEAD },
     scriptTaskId: args.scriptTaskId,
+    applauseStartSeconds: perf.startSeconds + PERFORMANCE_LEAD + songTo,
   };
 }

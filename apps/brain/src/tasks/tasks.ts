@@ -16,7 +16,7 @@
 
 import { randomInt, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
 import { z } from 'zod';
@@ -45,7 +45,7 @@ import { castingFacts, isChorus } from '../casting/facts.js';
 import { SCENES, writeScript, type CastingScript, type SceneId } from '../casting/writer.js';
 import { layOut } from '../casting/timeline.js';
 import { lineVoices, speakLines } from '../casting/voices.js';
-import { audibleSeconds, mixSoundtrack, speakerGains } from '../casting/mix.js';
+import { audibleSeconds, mixSoundtrack, pickFor, speakerGains } from '../casting/mix.js';
 import { wavLevels } from '../routes/renders.js';
 import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
@@ -131,6 +131,12 @@ export interface CastingSoundtrackDeps {
   readonly exportSong: (ownerId: string, songId: string) => Promise<{ path: string; seconds: number }>;
 }
 export const CASTING_MUSIC = { poised: 'Poised and Ready.mp3', entrance: 'The Grand Entrance.mp3' } as const;
+/** Folders in the music folder: applause clips after the song, music beds under the verdicts (one of each per video). */
+export const CASTING_APPLAUSE_DIR = 'applause';
+export const CASTING_BEDS_DIR = 'verdict-beds';
+function wavsIn(dir: string): string[] {
+  return existsSync(dir) ? readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.wav')) : [];
+}
 /** Every voice's loudness in the soundtrack (LUFS), the narrator then sitting 3 dB lower. */
 export const CASTING_VOICE_LUFS = -16;
 /** The mouth levels' bin length (seconds). */
@@ -479,6 +485,9 @@ export class BackgroundTasks {
     if (!voice) throw new TaskError(400, 'no_speaking_voice', `Make ${o.singerName}'s speaking voice on the Singers page first.`);
     for (const f of Object.values(CASTING_MUSIC)) {
       if (!existsSync(join(c.musicDir, f))) throw new TaskError(503, 'music_missing', `The casting music "${f}" is missing from ${c.musicDir}.`);
+    }
+    for (const folder of [CASTING_APPLAUSE_DIR, CASTING_BEDS_DIR]) {
+      if (wavsIn(join(c.musicDir, folder)).length === 0) throw new TaskError(503, 'music_missing', `There are no WAV files in ${join(c.musicDir, folder)}.`);
     }
     if (store.runningTask(ownerId, songId, 'castingSoundtrack')) throw new TaskError(409, 'already_running', 'A casting soundtrack for this song is already being made.');
     // The singer's reference says the exact line their speaking voice was chosen with: it reproduces that voice.
@@ -989,15 +998,17 @@ export class BackgroundTasks {
       for (const l of timeline.lines) bySpeaker.set(l.speaker, [...(bySpeaker.get(l.speaker) ?? []), spoken.get(l.id)!.file]);
       const perSpeaker = speakerGains(c.ffmpegBin, bySpeaker, CASTING_VOICE_LUFS);
       const gains = new Map(timeline.lines.map((l) => [l.id, perSpeaker.get(l.speaker)!]));
+      const applause = pickFor(wavsIn(join(c.musicDir, CASTING_APPLAUSE_DIR)), scriptTask.id, 'applause');
+      const verdictBed = pickFor(wavsIn(join(c.musicDir, CASTING_BEDS_DIR)), scriptTask.id, 'verdict music');
       mixSoundtrack(
         timeline,
-        { gains, lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
+        { gains, applause: join(c.musicDir, CASTING_APPLAUSE_DIR, applause), verdictBed: join(c.musicDir, CASTING_BEDS_DIR, verdictBed), lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
         join(outDir, 'casting.wav'),
         c.ffmpegBin,
       );
       own.mix = { ...own.mix, state: 'done', finishedAt: clock(), text: `${timeline.durationSeconds.toFixed(0)} s`, files: ['soundtrack/casting.wav'] };
       publish();
-      return timeline;
+      return { ...timeline, music: { applause, verdictBed } };
     }
     if (task.kind === 'castingScript') {
       const c = this.deps.casting;

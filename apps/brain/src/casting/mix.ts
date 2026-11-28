@@ -16,6 +16,24 @@ export interface SoundtrackFiles {
   readonly entrance: string;
   /** Each line's gain (linear), by line id: its speaker's, evening the voices out. */
   readonly gains: ReadonlyMap<string, number>;
+  /** The applause after the song, and the music under the verdicts. */
+  readonly applause: string;
+  readonly verdictBed: string;
+}
+
+/** The applause's level, and how long it dies away once the judges start talking. */
+const APPLAUSE_GAIN = 0.8;
+const APPLAUSE_FADE = 2.5;
+/** The verdict music: quiet under the voices, fading in after the applause and out at the end. */
+const BED_GAIN = 0.18;
+const BED_FADE = 2;
+
+/** One of `files`, fixed by `key` (each script gets its own applause and verdict music, the same every time). */
+export function pickFor(files: readonly string[], key: string, what: string): string {
+  if (files.length === 0) throw new Error(`casting soundtrack: there is no ${what} to choose from`);
+  let h = 0x811c9dc5;
+  for (const ch of `${what}:${key}`) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
+  return [...files].sort()[h % files.length]!;
 }
 
 /** The backstage music's level under the narration. */
@@ -65,7 +83,7 @@ export function audibleSeconds(ffmpegBin: string, path: string): number {
 }
 
 export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles, outPath: string, ffmpegBin: string): void {
-  for (const [what, p] of [['backstage music', files.poised], ['stage door music', files.entrance], ['song', files.song]] as const) {
+  for (const [what, p] of [['backstage music', files.poised], ['stage door music', files.entrance], ['song', files.song], ['applause', files.applause], ['verdict music', files.verdictBed]] as const) {
     if (!existsSync(p)) throw new Error(`casting soundtrack: the ${what} file is missing: ${p}`);
   }
   const seg = (kind: string) => {
@@ -76,7 +94,7 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   const backstage = seg('backstage');
   const door = seg('door');
   const ms = (s: number) => Math.round(s * 1000);
-  const inputs: string[] = ['-i', files.poised, '-i', files.entrance, '-i', files.song];
+  const inputs: string[] = ['-i', files.poised, '-i', files.entrance, '-i', files.song, '-i', files.applause, '-i', files.verdictBed];
   const graph: string[] = [];
   const stereo = 'aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo';
   const narration: string[] = [];
@@ -89,7 +107,7 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
     const isNarration = l.startSeconds < backstage.endSeconds;
     const gain = files.gains.get(l.id);
     if (gain === undefined) throw new Error(`casting soundtrack: the line ${l.id} has no gain`);
-    graph.push(`[${3 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
+    graph.push(`[${5 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
     if (isNarration) narration.push(label);
     voices.push(label);
   });
@@ -106,7 +124,17 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   graph.push(`[1:a]${stereo},atrim=0:${(door.endSeconds - door.startSeconds).toFixed(3)},adelay=${ms(door.startSeconds)}:all=1[door]`);
   const { songToSeconds, fadeSeconds, videoStartSeconds } = timeline.performance;
   graph.push(`[2:a]${stereo},atrim=0:${(songToSeconds + fadeSeconds).toFixed(3)},afade=t=out:st=${songToSeconds.toFixed(3)}:d=${fadeSeconds},adelay=${ms(videoStartSeconds)}:all=1[song]`);
-  const all = ['music', 'door', 'song', ...voiceLabels];
+  // The applause rises as the song fades and dies away once the first verdict comes in over it.
+  const verdicts = seg('verdicts');
+  const firstVerdict = timeline.lines.find((l) => l.startSeconds >= verdicts.startSeconds);
+  if (!firstVerdict) throw new Error('casting soundtrack: the verdicts have no lines');
+  const applauseLen = firstVerdict.startSeconds - timeline.applauseStartSeconds + APPLAUSE_FADE;
+  graph.push(`[3:a]${stereo},atrim=0:${applauseLen.toFixed(3)},volume=${APPLAUSE_GAIN},afade=t=out:st=${(applauseLen - APPLAUSE_FADE).toFixed(3)}:d=${APPLAUSE_FADE},adelay=${ms(timeline.applauseStartSeconds)}:all=1[applause]`);
+  // The verdict music under the talk: in after the applause, out at the end (looped if the verdicts outlast it).
+  const bedStart = firstVerdict.startSeconds;
+  const bedLen = verdicts.endSeconds - bedStart;
+  graph.push(`[4:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${bedLen.toFixed(3)},volume=${BED_GAIN},afade=t=in:d=${BED_FADE},afade=t=out:st=${Math.max(0, bedLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(bedStart)}:all=1[bed]`);
+  const all = ['music', 'door', 'song', 'applause', 'bed', ...voiceLabels];
   graph.push(`${all.map((a) => `[${a}]`).join('')}amix=inputs=${all.length}:normalize=0:duration=longest,alimiter=limit=0.95,apad,atrim=0:${timeline.durationSeconds.toFixed(3)}[out]`);
   try {
     execFileSync(ffmpegBin, ['-loglevel', 'error', '-y', ...inputs, '-filter_complex', graph.join(';'), '-map', '[out]', '-ar', '48000', '-c:a', 'pcm_s16le', outPath], { stdio: ['ignore', 'pipe', 'pipe'] });
