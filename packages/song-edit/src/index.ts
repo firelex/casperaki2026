@@ -23,6 +23,10 @@
 // pure Zod. The subpath is declared in @casperaki/song-schema's
 // `exports` field, so this is a supported entry point.
 import { parseSong } from '@casperaki/song-schema/parse';
+import { RAP_TRACK } from '@casperaki/song-schema/ace-layer';
+
+/** Where the rap's words live in the generator params (as @casperaki/arrangement's RAP_LYRICS_PARAM). */
+const RAP_LYRICS_PARAM = 'rapLyrics';
 import type {
   Arrangement,
   Segment,
@@ -349,9 +353,21 @@ function removeTrack(song: Song, track: string): Song {
   // Audio clips on the track (sung takes, ad-libs, ACE layers) go with it.
   const onTrack = (a: Song['aiArtifacts'][number]) => a.attachedTo.scope === 'segment' && a.attachedTo.instrument === track;
   if (song.aiArtifacts.some(onTrack)) found = true;
+  // The Rap track shows the rap's words before anything is rapped (docs/superpowers/specs/
+  // 2026-11-28-rap-like-singing-design.md): removing it removes them too.
+  const block = song.generator?.params as { params?: Record<string, unknown> } | undefined;
+  const rapWords = track === RAP_TRACK && block?.params?.[RAP_LYRICS_PARAM] !== undefined;
+  if (rapWords) found = true;
   if (!found) throw new Error(`track '${track}' is not in this song`);
+  const generator = rapWords
+    ? (() => {
+        const { [RAP_LYRICS_PARAM]: _gone, ...inner } = block!.params!;
+        return { ...song.generator!, params: { ...(song.generator!.params as Record<string, unknown>), params: inner } };
+      })()
+    : song.generator;
   return {
     ...song,
+    ...(generator ? { generator } : {}),
     arrangement,
     instrumentDefinitions: song.instrumentDefinitions.filter((d) => d.name !== track),
     aiArtifacts: song.aiArtifacts.filter((a) => !onTrack(a)),

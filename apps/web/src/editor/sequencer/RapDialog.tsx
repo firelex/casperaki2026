@@ -185,3 +185,39 @@ export function RapDialog({
     </Shell>
   );
 }
+
+/** A Rap track clip opened: the section's rap words, to read and change (saved into the song). */
+export function RapWordsDialog({
+  section,
+  lines,
+  onSave,
+  onClose,
+}: {
+  section: string;
+  lines: readonly string[];
+  onSave(lines: string[]): void;
+  onClose(): void;
+}) {
+  const [text, setText] = useState(lines.join('\n'));
+  const kept = text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return (
+    <Shell
+      title={`Rap words: ${rapSectionLabel(section)}`}
+      description="The words Rap… raps in this section. Change them here, then Rap… again to hear them."
+      start={{ label: 'Save', disabled: kept.length === 0, onClick: () => onSave(kept) }}
+      onClose={onClose}
+    >
+      <textarea
+        value={text}
+        rows={Math.min(Math.max(lines.length, 4), 12)}
+        maxLength={1000}
+        onChange={(e) => setText(e.target.value)}
+        aria-label={`Rap words of ${rapSectionLabel(section)}`}
+        className="rounded-[8px] border border-line bg-transparent px-3 py-2 font-mono text-[13px] text-white"
+      />
+    </Shell>
+  );
+}

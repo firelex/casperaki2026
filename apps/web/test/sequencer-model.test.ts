@@ -102,3 +102,24 @@ describe('muted clips (docs/superpowers/specs/2026-11-28-rap-like-singing-design
     expect(rap.clips.map((c) => [c.section, c.muted ?? false])).toEqual([[0, true], [1, false]]);
   });
 });
+
+describe('the Rap track shows its words (owner 2026-11-28: "we should have a text track so I can open this and see")', () => {
+  it('rap words alone make a words-only Rap track, one clip per section with words, the lines on it', () => {
+    const { song } = makeFixtureSong();
+    const [first, second] = song.songStructure.map((s) => s.name) as [string, string];
+    const g = song.generator as unknown as { params: Record<string, unknown> };
+    const withWords = { ...song, generator: { ...song.generator, params: { ...g.params, params: { ...((g.params.params as object) ?? {}), rapLyrics: { [second]: ['one', 'two'] } } } } } as typeof song;
+    const rap = buildSequencerModel(withWords).tracks.find((t) => t.name === 'Rap')!;
+    expect(rap).toMatchObject({ audioOnly: true, wordsOnly: true });
+    expect(rap.clips.map((c) => [c.section, c.text, c.wordsOnly])).toEqual([[1, ['one', 'two'], true]]);
+    // rapped in the first section too: the track has audio; that clip has no words of its own to show
+    const rapped = { ...withWords, aiArtifacts: [{
+      id: `ace-step-conditioned:${first}:Rap:a`, kind: 'ace-step-conditioned', modelId: 'ace', modelVersion: 'repaint',
+      output: { uri: `vocal-take:${'a'.repeat(64)}.ogg`, sha256: 'a'.repeat(64), durationSeconds: 8 },
+      attachedTo: { scope: 'segment', segment: first, instrument: 'Rap' },
+    }] } as typeof song;
+    const both = buildSequencerModel(rapped).tracks.find((t) => t.name === 'Rap')!;
+    expect(both.wordsOnly).toBeUndefined();
+    expect(both.clips.map((c) => [c.section, c.text ?? null, c.wordsOnly ?? false])).toEqual([[0, null, false], [1, ['one', 'two'], true]]);
+  });
+});

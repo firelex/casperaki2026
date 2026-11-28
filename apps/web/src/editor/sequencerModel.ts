@@ -6,10 +6,11 @@
  */
 
 import type { Song } from '@casperaki/song-schema';
+import { RAP_TRACK } from '@casperaki/song-schema/ace-layer';
 
 import { LEAD_VOCAL_NAME } from '../types/song';
 import { audioOnlyTracks } from './audioOnlyTracks';
-import { takeKey } from './singing';
+import { rapLyricsIn, takeKey } from './singing';
 import { sectionColor } from './sectionColor';
 
 export const BEATS_PER_BAR = 4;
@@ -48,6 +49,10 @@ export interface SeqClip {
   readonly stale?: boolean;
   /** Every take of the clip is muted (by the user, or under a rap): drawn greyed, silent. */
   readonly muted?: boolean;
+  /** Words to show on the clip (the Rap track: the section's rap words). */
+  readonly text?: readonly string[];
+  /** Words only, nothing rapped there yet: drawn faint. */
+  readonly wordsOnly?: boolean;
 }
 
 export interface SeqTrack {
@@ -58,6 +63,8 @@ export interface SeqTrack {
   readonly isVocal: boolean;
   /** Only sung audio, no instrument and no notes (ad-libs): its clips are the takes. */
   readonly audioOnly?: boolean;
+  /** No audio at all yet (the Rap track after Write rap lyrics, before Rap): no mixer strip. */
+  readonly wordsOnly?: boolean;
   readonly clips: readonly SeqClip[];
   /** Pitch range over all notes (for vertical placement); null when no pitched notes. */
   readonly pitchRange: { readonly low: number; readonly high: number } | null;
@@ -287,6 +294,21 @@ export function buildSequencerModel(song: Song, stale: ReadonlySet<string> = new
     );
   }
 
+  // The rap's words (Write rap lyrics) on the Rap track, rapped or not yet (owner 2026-11-28: "we should have a text
+  // track so I can open this and see").
+  const rapWords = rapLyricsIn(song);
+  const worded = sections.map((s, si) => ({ si, lines: rapWords[s.name] })).filter((x) => x.lines?.length);
+  if (worded.length > 0) {
+    const rapped = clipsByTrack.get(RAP_TRACK) ?? [];
+    const merged = new Map(rapped.map((c) => [c.section, c as SeqClip]));
+    for (const { si, lines } of worded) {
+      const had = merged.get(si);
+      merged.set(si, { ...(had ?? { section: si, startBar: sections[si]!.startBar, bars: sections[si]!.bars, notes: [] }), text: lines!, ...(had ? {} : { wordsOnly: true }) });
+    }
+    clipsByTrack.set(RAP_TRACK, [...merged.values()].sort((a, b) => a.section - b.section));
+    audioOnly.add(RAP_TRACK);
+  }
+
   // Clips whose takes are all muted (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md).
   const takesOf = new Map<string, boolean[]>();
   for (const a of song.aiArtifacts) {
@@ -309,6 +331,7 @@ export function buildSequencerModel(song: Song, stale: ReadonlySet<string> = new
         isDrums: name.toLowerCase().startsWith('drum'),
         isVocal: name.toLowerCase().includes('vocal'),
         ...(audioOnly.has(name) ? { audioOnly: true } : {}),
+        ...(clips.length > 0 && clips.every((c) => c.wordsOnly) ? { wordsOnly: true } : {}),
         clips,
         pitchRange: pitches.length ? { low: Math.min(...pitches), high: Math.max(...pitches) } : null,
       };

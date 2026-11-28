@@ -445,6 +445,16 @@ describe('removeTrack', () => {
     expect(state.working.aiArtifacts.map((a) => a.id)).toContain('c2');
   });
 
+  it('removes the Rap track with its rap words, even before anything is rapped', () => {
+    const song = makeValidSong();
+    const segment = song.songStructure[0]!.name;
+    const g = song.generator as unknown as { params: Record<string, unknown> };
+    const words = { ...song, generator: { ...song.generator, params: { ...g.params, params: { rapLyrics: { [segment]: ['one'] }, lyrics: { [segment]: ['la'] } } } } } as typeof song;
+    const state = applyCommand(initEditState(words), { kind: 'removeTrack', track: 'Rap' });
+    expect(state.lastError).toBeUndefined();
+    expect((state.working.generator!.params as { params: Record<string, unknown> }).params).toEqual({ lyrics: { [segment]: ['la'] } });
+  });
+
   it('reports a track that is not in the song', () => {
     const state = applyCommand(initEditState(makeValidSong()), { kind: 'removeTrack', track: 'Nope' });
     expect(state.lastError).toMatch(/not in this song/);

@@ -90,7 +90,8 @@ export function TrackCanvas({
       const w = Math.max(2, clip.bars * px - 2);
       // A take sung over something that has since changed is greyed (not sung).
       const clipColor = clip.stale || clip.muted ? '#8a8d96' : color;
-      g.globalAlpha = 0.2 * alpha;
+      // Words only (the Rap track before anything is rapped): a faint body and a dashed outline.
+      g.globalAlpha = (clip.wordsOnly ? 0.07 : 0.2) * alpha;
       g.fillStyle = clipColor;
       roundRect(g, x, top, w, clipH, 3);
       g.fill();
@@ -102,8 +103,27 @@ export function TrackCanvas({
       g.globalAlpha = (clip.section === selectedSection ? 1 : 0.5) * alpha;
       g.strokeStyle = clip.section === selectedSection ? '#ffffff' : clipColor;
       g.lineWidth = clip.section === selectedSection ? 1.5 : 1;
+      if (clip.wordsOnly) g.setLineDash([4, 3]);
       roundRect(g, x + 0.5, top + 0.5, w - 1, clipH - 1, 3);
       g.stroke();
+      g.setLineDash([]);
+      // The clip's words (the rap's lines), as many as fit.
+      if (clip.text && w > 36 && innerH >= 10) {
+        g.globalAlpha = (clip.wordsOnly ? 0.75 : 0.9) * alpha;
+        g.fillStyle = 'rgba(255,255,255,0.9)';
+        g.font = '10px Archivo, system-ui, sans-serif';
+        g.textBaseline = 'top';
+        g.save();
+        g.beginPath();
+        g.rect(x + 4, innerTop, w - 8, innerH);
+        g.clip();
+        const lineH = 12;
+        const rows = Math.max(1, Math.floor(innerH / lineH));
+        // Few rows: the lines run on, " / " between them; enough rows: one line each.
+        const shown = rows >= clip.text.length ? clip.text : [clip.text.join(' / ')];
+        shown.slice(0, rows).forEach((line, i) => g.fillText(line, x + 5, innerTop + i * lineH));
+        g.restore();
+      }
       if (headerH && w > 36) {
         g.globalAlpha = alpha;
         g.fillStyle = 'rgba(255,255,255,0.92)';

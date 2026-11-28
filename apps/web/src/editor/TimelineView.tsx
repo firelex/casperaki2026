@@ -34,7 +34,7 @@ import { hasNotes } from './audioOnlyTracks';
 import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { AceLayerDialog } from './sequencer/AceLayerDialog';
-import { RapDialog, WriteRapLyricsDialog } from './sequencer/RapDialog';
+import { RapDialog, RapWordsDialog, WriteRapLyricsDialog } from './sequencer/RapDialog';
 import { AdlibsDialog } from './sequencer/AdlibsDialog';
 import { SingerDialog } from './sequencer/SingerDialog';
 import { useSession } from '../state/session';
@@ -522,6 +522,14 @@ export function TimelineView() {
   const openDetail = (track: SeqTrack, section: number) => {
     if (track.clips.some((c) => c.section === section)) setDialog({ kind: 'detail', track: track.name, section });
   };
+  /** A Rap track clip with words opens them (RapWordsDialog). */
+  const [rapWordsOpen, setRapWordsOpen] = useState<{ section: string; lines: readonly string[] } | undefined>(undefined);
+  /** Open: the notes of a note track's clip, or the words of a Rap clip. */
+  const openClip = (track: SeqTrack, section: number) => {
+    const clip = track.clips.find((c) => c.section === section);
+    if (clip?.text) setRapWordsOpen({ section: model!.sections[section]!.name, lines: clip.text });
+    else if (hasNotes(track)) openDetail(track, section);
+  };
 
   const detail = dialog?.kind === 'detail' ? dialog : undefined;
   const detailTrack = detail ? model.tracks.find((t) => t.name === detail.track) : undefined;
@@ -869,7 +877,7 @@ export function TimelineView() {
               editable={editable(t.name)}
               soundChangeable={canChangeSound(t.name)}
               busy={Boolean(edits.busy) || !edits.options.data}
-              onOpen={(s) => openDetail(t, s)}
+              onOpen={(s) => openClip(t, s)}
               onLoop={(s) => loopSection(model.sections[s]!)}
               onChangeSound={() => setDialog({ kind: 'sound', track: t.name })}
               onNewPattern={() => newPattern(t.name)}
@@ -951,8 +959,8 @@ export function TimelineView() {
                   }
                   onDoubleClick={(e) => {
                     const s = sectionIndexAt(barFromEvent(e));
-                    // An audio-only track (ad-libs) has no notes to open.
-                    if (s >= 0 && hasNotes(t)) openDetail(t, s);
+                    // An audio-only track (ad-libs) has no notes to open; a Rap clip opens its words.
+                    if (s >= 0) openClip(t, s);
                   }}
                   title="Drag to select a range · double-click a clip to open it · right-click for more"
                 >
@@ -1041,7 +1049,7 @@ export function TimelineView() {
             aria-label="Drag to resize the mixer (double-click: default, large, hidden)"
             title="Drag to resize the mixer. Double-click: default → large → hidden. X shows/hides it; Shift+X: tracks or mixer full view"
           />
-          <Mixer tracks={model.tracks} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} fetchPayload={fetchPayload} />
+          <Mixer tracks={model.tracks.filter((t) => !t.wordsOnly)} mix={mix} meters={meters} error={mixError ?? (mix ? undefined : metersError)} seconds={currentSeconds} playing={playing} muted={live.muted} solo={live.solo} soundNames={soundNames} onOpenDevice={setDevice} pro={pro} liveKey={liveKey} fetchPayload={fetchPayload} />
         </div>
       ) : null}
 
@@ -1050,6 +1058,17 @@ export function TimelineView() {
       ) : null}
       {adlibbing ? (
         <AdlibsDialog sections={adlibSections} onClose={() => setAdlibbing(false)} onStart={(l, st, v) => void addAdlibs(l, st, v)} />
+      ) : null}
+      {rapWordsOpen ? (
+        <RapWordsDialog
+          section={rapWordsOpen.section}
+          lines={rapWordsOpen.lines}
+          onClose={() => setRapWordsOpen(undefined)}
+          onSave={(lines) => {
+            setRapWordsOpen(undefined);
+            void edits.run({ kind: 'setRapLyrics', lyrics: { [rapWordsOpen.section]: lines } }, `Saving the rap words of ${rapWordsOpen.section}`);
+          }}
+        />
       ) : null}
       {writingRap && viewSong ? (
         <WriteRapLyricsDialog
@@ -1372,7 +1391,7 @@ function TrackMenu({
         ) : null}
         {section !== undefined ? (
           <>
-            {hasNotes(track) ? (
+            {hasNotes(track) || track.clips.find((c) => c.section === section)?.text ? (
               <ContextMenuItem className={ITEM} onSelect={() => onOpen(section)}>
                 Open <span className="ml-auto pl-6 text-[12px] text-white/40">Double-click</span>
               </ContextMenuItem>
