@@ -28,7 +28,7 @@ export const WET_SENDS = { reverb: -14, delay: -24, chorus: -100 } as const;
 
 /** Up to two audioClips instruments per vocal track that has fresh takes: `<track>` (dry, YuE2 takes) and
  *  `<track> wet` (SoulX takes, with reverb and delay). The lead "Vocal" comes first, then the other tracks in the
- *  order their takes appear; dry before wet. The wet lane name has no parentheses because the mixer's baseName
+ *  order their takes appear; dry before wet. Muted takes are left out. The wet lane name has no parentheses because the mixer's baseName
  *  strips a trailing "(...)". Takes that no longer match the song's chords and words are left out. */
 export function buildVocalClipsInsts(
   song: Song,
@@ -39,6 +39,7 @@ export function buildVocalClipsInsts(
       ((SUNG_TAKE_KINDS as readonly string[]).includes(a.kind) || a.kind === ACE_LAYER_KIND) &&
       a.attachedTo.scope === 'segment' &&
       a.attachedTo.instrument &&
+      a.muted !== true &&
       isTakeFresh(song, a),
   );
   const trackOf = (a: (typeof takes)[number]) => (a.attachedTo as { instrument: string }).instrument;

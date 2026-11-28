@@ -65,6 +65,13 @@ describe('sung vocal takes lowered to an audioClips instrument', () => {
     expect(DRY_SENDS).toEqual({ reverb: -14, delay: -24, chorus: -100 });
   });
 
+  it('a muted take plays nothing; its track keeps its other clips', () => {
+    const song = { ...base(), aiArtifacts: [{ ...take('verse1'), muted: true }, take('chorus1')] } as Song;
+    expect(clipsInst(lower(song, '/t'))!.clips).toEqual([clip('chorus1')]);
+    const all = { ...base(), aiArtifacts: [{ ...take('verse1'), muted: true }] } as Song;
+    expect(clipsInst(lower(all, '/t'))).toBeUndefined();
+  });
+
   it('a take whose fingerprint no longer matches plays nothing', () => {
     const stale = { ...base(), aiArtifacts: [take('verse1', 'Vocal', 'soulx-vocal', 'e'.repeat(64))] } as Song;
     expect(clipsInsts(lower(stale, '/t'))).toEqual([]);

@@ -406,3 +406,4 @@ export { applySungVocals, applySungVocalsOver, applyWrittenLyrics, type ApplySun
 export { VOCAL_MELODY_PARAM } from './vocals/vocal-melody.js';
 export { HOLD_BEATS } from './vocals/written-lyrics.js';
 export { ACE_MODEL_ID, AceLayerResultSchema, applyAceLayer, type AceLayerResult } from './edits/ace-layer.js';
+export { applyRapLyrics, muteUnderRap, RAP_LYRICS_PARAM, rapLyricsOf, rapSections, setTakesMuted } from './edits/rap.js';

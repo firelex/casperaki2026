@@ -5,11 +5,14 @@
 
 import { z } from 'zod';
 
+import { muteUnderRap } from './rap.js';
+
 import {
   ACE_INSTRUMENTS,
   ACE_LAYER_KIND,
   aceInstrumentOfTrack,
   parseSong,
+  RAP_TRACK,
   Sha256Schema,
   type AIArtifact,
   type Song,
@@ -53,17 +56,27 @@ export function applyAceLayer(song: Song, result: AceLayerResult): Song {
   for (const t of layer.takes) {
     if (!song.songStructure.some((s) => s.name === t.segment)) throw new Error(`applyAceLayer: the song has no section "${t.segment}"`);
   }
-  const onTrack = (a: AIArtifact) => a.kind === ACE_LAYER_KIND && a.attachedTo.scope === 'segment' && a.attachedTo.instrument === layer.track;
+  // Rap (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md) lands on "Rap" and replaces only the clips of
+  // its own sections; the sung takes there are muted. Any other layer replaces its track's clips.
+  const rap = layer.instrument === 'rap';
+  if (rap && layer.track !== RAP_TRACK) throw new Error(`applyAceLayer: rap goes on the "${RAP_TRACK}" track, not "${layer.track}"`);
+  const sections = new Set(layer.takes.map((t) => t.segment));
+  const onTrack = (a: AIArtifact) =>
+    a.kind === ACE_LAYER_KIND &&
+    a.attachedTo.scope === 'segment' &&
+    a.attachedTo.instrument === layer.track &&
+    (!rap || sections.has(a.attachedTo.segment));
   const artifacts: AIArtifact[] = layer.takes.map((t) => ({
     id: `${ACE_LAYER_KIND}:${t.segment}:${layer.track}:${t.sha256.slice(0, 8)}`,
     kind: ACE_LAYER_KIND,
     modelId: ACE_MODEL_ID,
-    modelVersion: 'lego',
+    modelVersion: rap ? 'repaint' : 'lego',
     seed: layer.seed,
     prompt: layer.caption,
     conditioning: { hashes: [t.fingerprint] },
     output: { uri: `vocal-take:${t.sha256}.ogg`, sha256: t.sha256, durationSeconds: t.durationSeconds },
     attachedTo: { scope: 'segment', segment: t.segment, instrument: layer.track },
   }));
-  return parseSong({ ...song, aiArtifacts: [...song.aiArtifacts.filter((a) => !onTrack(a)), ...artifacts] });
+  const out = parseSong({ ...song, aiArtifacts: [...song.aiArtifacts.filter((a) => !onTrack(a)), ...artifacts] });
+  return rap ? muteUnderRap(out, [...sections]) : out;
 }

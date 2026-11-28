@@ -13,6 +13,7 @@ import { userChorusOf } from '../hum/user-chorus.js';
 import { createRng } from '@casperaki/music-theory';
 
 import { orchestrate, vocalSelections } from '../orchestrate/index.js';
+import { rapSections } from './rap.js';
 import { LYRIC_RHYTHMS_PARAM, lyricRhythmsOf, RHYTHM_VARIANTS_PARAM, rhythmVariantsOf } from '../vocals/lyric-rhythms.js';
 import { drawRhythm, expandMergedToSegment, type MergedPrecedent } from '../vocals/precedents.js';
 import { recutRhythm, type RecutRhythm } from '../vocals/recut.js';
@@ -345,7 +346,10 @@ export function applySungVocals(working: Song, sung: { melody: SungMelody; takes
       attachedTo: { scope: 'segment', segment: t.segment, instrument: t.track },
     };
   });
-  return parseSong({ ...song, aiArtifacts: [...kept, ...artifacts] });
+  // New takes in a section with rap are muted (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md).
+  const rapped = new Set(rapSections(song));
+  const placed = artifacts.map((a) => (a.attachedTo.scope === 'segment' && rapped.has(a.attachedTo.segment) ? { ...a, muted: true } : a));
+  return parseSong({ ...song, aiArtifacts: [...kept, ...placed] });
 }
 
 /**

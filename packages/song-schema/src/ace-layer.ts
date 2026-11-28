@@ -105,8 +105,13 @@ export function aceTrackName(instrument: AceInstrument, taken: readonly string[]
   for (let n = 2; ; n++) if (!taken.includes(`${base} ${n}`)) return `${base} ${n}`;
 }
 
-/** The instrument of an ACE layer track ("ACE Guitar 2" → guitar), or undefined for any other track. */
+/** The track rap lands on (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md); songs rapped before
+ *  2026-11-28 have theirs on "ACE Rap". */
+export const RAP_TRACK = 'Rap';
+
+/** The instrument of an ACE layer track ("ACE Guitar 2" → guitar; "Rap" → rap), or undefined for any other track. */
 export function aceInstrumentOfTrack(track: string): AceInstrument | undefined {
+  if (track === RAP_TRACK) return 'rap';
   const m = /^ACE (.+?)(?: \d+)?$/u.exec(track);
   if (!m) return undefined;
   return ACE_INSTRUMENTS.find((i) => ACE_INSTRUMENT_LABELS[i] === m[1]);

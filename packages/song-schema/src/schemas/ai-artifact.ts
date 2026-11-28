@@ -48,6 +48,9 @@ export const AIArtifactSchema = z
     output: AIArtifactOutputSchema,
     attachedTo: AIArtifactAttachmentSchema,
     createdAt: z.string().optional(),
+    /** Muted by the user or under a rap (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): shown, but left
+     *  out of playback, render and export. Absent when the take plays. */
+    muted: z.boolean().optional(),
   })
   .strict();
 export type AIArtifact = z.infer<typeof AIArtifactSchema>;
