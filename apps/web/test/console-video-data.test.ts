@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { LaneMeters, ResolvedMixLane } from '../src/audio/livePlayer';
-import { buildMeasuredLevels, measureTracks } from '../src/editor/trackLevels';
+import { buildConsoleBody, measureTracks } from '../src/editor/consoleVideoData';
 import type { SequencerModel, SeqTrack } from '../src/editor/sequencerModel';
 
 const part = (lane: string, extra: Partial<ResolvedMixLane> = {}): ResolvedMixLane => ({
@@ -61,31 +61,77 @@ const meters = (over: Partial<LaneMeters> = {}): LaneMeters => ({
   ...over,
 });
 
-const args = (m = meters()) => ({ model, meters: m, leadVocal: 'Vocal' });
+const args = (m = meters()) => ({ model, meters: m, secondsPerBar: 2, leadVocal: 'Vocal', hex: (css: string) => css });
 
-describe('buildMeasuredLevels', () => {
-  it('makes one strip of a vocal track and its wet lane, the louder of both per bin', () => {
-    const body = buildMeasuredLevels(args());
+describe('buildConsoleBody', () => {
+  it("makes one strip of a vocal track and its wet lane, the louder of both per bin", () => {
+    const body = buildConsoleBody(args());
     const vocal = body.tracks.find((t) => t.name === 'Vocal')!;
     expect(vocal.levels).toEqual([0.5, 0.6, 0.1].map((v) => Math.fround(v)).map((v) => Number(v.toFixed(4))));
     expect(body.tracks.map((t) => t.name)).toEqual(['Bass', 'Vocal', 'Riser']);
   });
 
-  it('gives every strip its role and nothing more: the lead vocal, a track, or an effects strip', () => {
-    const body = buildMeasuredLevels(args());
-    expect(body.tracks.map((t) => [t.name, t.role])).toEqual([['Bass', 'track'], ['Vocal', 'leadVocal'], ['Riser', 'effects']]);
-    expect(Object.keys(body.tracks[0]!).sort()).toEqual(['levels', 'name', 'role']);
+  it('follows the mixer: mixed target volumes give null, automation from the first part that has it', () => {
+    const body = buildConsoleBody(args());
+    const vocal = body.tracks.find((t) => t.name === 'Vocal')!;
+    expect(vocal.volumeDb).toBeNull();
+    expect(vocal.lowPassAutomation).toEqual({ t0: 0, step: 1, values: [500, 20000] });
+    const bass = body.tracks.find((t) => t.name === 'Bass')!;
+    expect(bass.volumeDb).toBe(-6);
+    expect(bass.volumeAutomation).toEqual({ t0: 0, step: 1, values: [-10, 0] });
+    expect(bass.bus).toBe('bass');
+  });
+
+  it('leaves parts without a resolved volume out of the target volume, as the mixer does', () => {
+    const m = meters();
+    const lanes = m.mix.lanes.map((l) => (l.lane === 'Vocal wet' ? { ...l, volumeDb: null } : l));
+    const vocal = buildConsoleBody(args({ ...m, mix: { ...m.mix, lanes } })).tracks.find((t) => t.name === 'Vocal')!;
+    expect(vocal.volumeDb).toBe(-3);
+  });
+
+  it("sends each strip's send levels: its first part's, as the mixer shows them", () => {
+    const m = meters();
+    const lanes = m.mix.lanes.map((l) => (l.lane === 'Vocal' ? { ...l, sendsDb: { reverb: -14, delay: -24, chorus: null } } : l));
+    const vocal = buildConsoleBody(args({ ...m, mix: { ...m.mix, lanes } })).tracks.find((t) => t.name === 'Vocal')!;
+    expect(vocal.sends).toEqual({ reverb: -14, delay: -24, chorus: null });
+  });
+
+  it('makes a lane with no track row an effects strip without a colour', () => {
+    const riser = buildConsoleBody(args()).tracks.find((t) => t.name === 'Riser')!;
+    expect(riser.role).toBe('effects');
+    expect(riser.color).toBeUndefined();
+    expect(riser.clips).toEqual([]);
+  });
+
+  it('gives the lead vocal its role', () => {
+    const body = buildConsoleBody(args());
+    expect(body.tracks.find((t) => t.name === 'Vocal')!.role).toBe('leadVocal');
+    expect(body.tracks.find((t) => t.name === 'Bass')!.role).toBe('track');
+  });
+
+  it('turns bars and beats into seconds', () => {
+    const bass = buildConsoleBody(args()).tracks.find((t) => t.name === 'Bass')!;
+    expect(bass.clips[0]).toMatchObject({ section: 'chorus', startSeconds: 8, endSeconds: 12 });
+    expect(bass.clips[0]!.notes[0]).toEqual({ startSeconds: 8.5, lengthSeconds: 0.5, pitch: 40, velocity: 90 });
+    const vocal = buildConsoleBody(args()).tracks.find((t) => t.name === 'Vocal')!;
+    expect(vocal.clips[0]!.notes[0]!.velocity).toBeNull();
   });
 
   it('carries the master, the bin size and the version key', () => {
-    const body = buildMeasuredLevels(args());
+    const body = buildConsoleBody(args());
     expect(body.master).toEqual([0.7, 0.8, 0.9].map((v) => Number(Math.fround(v).toFixed(4))));
     expect(body.binSeconds).toBe(0.5);
     expect(body.versionKey).toBe('0123456789abcdef');
   });
 
   it('refuses levels that are not finished measuring', () => {
-    expect(() => buildMeasuredLevels(args(meters({ done: false, doneBins: 1 })))).toThrow(/not finished/);
+    expect(() => buildConsoleBody(args(meters({ done: false, doneBins: 1 })))).toThrow(/not finished/);
+  });
+
+  it("refuses a track colour that doesn't resolve", () => {
+    expect(() =>
+      buildConsoleBody({ ...args(), hex: () => { throw new Error('CSS colour --x is not defined'); } }),
+    ).toThrow(/not defined/);
   });
 });
 
