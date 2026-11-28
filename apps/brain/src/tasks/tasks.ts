@@ -15,8 +15,9 @@
 // song, so it has nothing to apply: it is done when the singer is stored).
 
 import { randomInt, randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
 import { z } from 'zod';
 
@@ -41,7 +42,11 @@ import type { UserAvatars } from '../avatars/userAvatars.js';
 import { songSinger } from '../avatars/videoAvatars.js';
 import { castNames, verdictVotes } from '../casting/cast.js';
 import { castingFacts, isChorus } from '../casting/facts.js';
-import { SCENES, writeScript, type SceneId } from '../casting/writer.js';
+import { SCENES, writeScript, type CastingScript, type SceneId } from '../casting/writer.js';
+import { layOut } from '../casting/timeline.js';
+import { lineVoices, speakLines } from '../casting/voices.js';
+import { mixSoundtrack } from '../casting/mix.js';
+import { wavLevels } from '../routes/renders.js';
 import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
 import { makeSpeakingVoice, SpeakingVoiceOptionsSchema, type SpeakingSinger, type SpeakingVoiceDeps } from '../singers/speakingVoiceTask.js';
@@ -100,6 +105,8 @@ export interface BackgroundTasksDeps {
   /** Casting scripts: the language model, the users' avatars and how to find a singer of the owner's (its name and
    *  what was written about the voice); without it, casting scripts answer 503. */
   readonly casting?: CastingDeps;
+  /** Casting soundtracks: the speech service, the music and the song export; without it, they answer 503. */
+  readonly castingSoundtrack?: CastingSoundtrackDeps;
 }
 
 export interface CastingDeps {
@@ -107,6 +114,29 @@ export interface CastingDeps {
   readonly avatars: UserAvatars;
   readonly findSinger: (ownerId: string, singerId: string) => { name: string; description: string | null };
 }
+
+export interface CastingSoundtrackDeps {
+  /** The speech service. */
+  readonly client: VocalsClient;
+  /** Where soundtrack tasks keep their files (BRAIN_TASK_FILES_DIR). */
+  readonly filesDir: string;
+  readonly pollMs: number;
+  readonly ffmpegBin: string;
+  /** BRAIN_CASTING_MUSIC_DIR: "Poised and Ready.mp3" and "The Grand Entrance.mp3". */
+  readonly musicDir: string;
+  readonly avatars: UserAvatars;
+  /** The singer's speaking voice (description and seed), or undefined when it has none yet. */
+  readonly singerVoice: (ownerId: string, singerId: string) => { description: string; seed: number } | undefined;
+  /** The owner's song exported with its mix, and its length. */
+  readonly exportSong: (ownerId: string, songId: string) => Promise<{ path: string; seconds: number }>;
+}
+export const CASTING_MUSIC = { poised: 'Poised and Ready.mp3', entrance: 'The Grand Entrance.mp3' } as const;
+/** The mouth levels' bin length (seconds). */
+export const CASTING_BIN_SECONDS = 0.05;
+export const CASTING_SOUNDTRACK_NOT_SET_UP = 'Casting soundtracks are not set up: the brain needs SPEECH_SERVICE_URL, BRAIN_CASTING_MUSIC_DIR, BRAIN_TASK_FILES_DIR, BRAIN_SINGERS_DATA_DIR and rendering.';
+const CastingSoundtrackOptionsSchema = z
+  .object({ scriptTaskId: z.string().min(1), singerVoice: z.object({ description: z.string().min(1), seed: z.number().int() }).strict() })
+  .strict();
 
 const CastingOptionsSchema = z
   .object({
@@ -120,7 +150,7 @@ const CastingOptionsSchema = z
   .strict();
 export const CASTING_NOT_SET_UP = "Casting scripts are not set up: the brain needs the assistant's language model (ASSISTANT_LLM_URL) and BRAIN_SINGERS_DATA_DIR.";
 /** Kinds on a song whose result goes into nothing: done when written, not ready to apply. */
-const NOTHING_TO_APPLY: ReadonlySet<TaskKind> = new Set(['castingScript']);
+const NOTHING_TO_APPLY: ReadonlySet<TaskKind> = new Set(['castingScript', 'castingSoundtrack']);
 
 export interface AddSingerDeps {
   readonly client: VocalsClient;
@@ -425,6 +455,32 @@ export class BackgroundTasks {
     return store.getTask(ownerId, id)!;
   }
 
+  /** Starts making the casting soundtrack of the owner's song from its latest finished casting script. */
+  startCastingSoundtrack(ownerId: string, songId: string): TaskRow {
+    const c = this.deps.castingSoundtrack;
+    if (!c) throw new TaskError(503, 'no_casting', CASTING_SOUNDTRACK_NOT_SET_UP);
+    const { store } = this.deps;
+    const stored = store.getProject(ownerId, songId) ? store.get(songId) : undefined;
+    if (!stored) throw new TaskError(404, 'not_found', 'There is no such song.');
+    const script = latestDone(store, ownerId, songId, 'castingScript');
+    if (!script) throw new TaskError(400, 'no_script', 'Write the casting script first.');
+    const o = CastingOptionsSchema.parse(script.options);
+    const avatar = c.avatars.get(ownerId, o.avatarId);
+    if (!avatar || avatar.singerId === null) throw new TaskError(400, 'avatar_gone', `The avatar the script was written for is gone or has no voice: write the script again.`);
+    const voice = c.singerVoice(ownerId, avatar.singerId);
+    if (!voice) throw new TaskError(400, 'no_speaking_voice', `Make ${o.singerName}'s speaking voice on the Singers page first.`);
+    for (const f of Object.values(CASTING_MUSIC)) {
+      if (!existsSync(join(c.musicDir, f))) throw new TaskError(503, 'music_missing', `The casting music "${f}" is missing from ${c.musicDir}.`);
+    }
+    if (store.runningTask(ownerId, songId, 'castingSoundtrack')) throw new TaskError(409, 'already_running', 'A casting soundtrack for this song is already being made.');
+    const options = CastingSoundtrackOptionsSchema.parse({ scriptTaskId: script.id, singerVoice: { description: voice.description, seed: voice.seed } });
+    const id = randomUUID();
+    store.insertTask({ id, ownerId, songId, kind: 'castingSoundtrack', input: stored.canonical, startedAt: this.deps.clock(), options });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
+    this.enqueue(ownerId, id, 'castingSoundtrack');
+    return store.getTask(ownerId, id)!;
+  }
+
   private checkNoSpeakingVoiceRunning(ownerId: string, singerId: string): void {
     // A speakingVoice task, or Add a singer (whose last steps make the new singer's voice), for this singer.
     const running = this.deps.store
@@ -529,6 +585,8 @@ export class BackgroundTasks {
         throw new TaskError(409, 'singer_gone', err instanceof Error ? err.message : String(err));
       }
       this.checkNoSpeakingVoiceRunning(ownerId, o.singerId);
+    } else if (task.kind === 'castingSoundtrack') {
+      if (!this.deps.castingSoundtrack) throw new TaskError(503, 'no_casting', CASTING_SOUNDTRACK_NOT_SET_UP);
     } else if (task.kind === 'castingScript') {
       if (!this.deps.casting) throw new TaskError(503, 'no_casting', CASTING_NOT_SET_UP);
     } else if (task.kind === 'avatarBuild') {
@@ -637,7 +695,9 @@ export class BackgroundTasks {
               ? this.deps.speakingVoice?.filesDir
               : task.kind === 'avatarBuild'
                 ? this.deps.avatarBuild?.filesDir
-                : this.deps.sing?.filesDir;
+                : task.kind === 'castingSoundtrack'
+                  ? this.deps.castingSoundtrack?.filesDir
+                  : this.deps.sing?.filesDir;
     if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
     const path = join(resolve(filesDir), id, stage, name);
     if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
@@ -871,6 +931,58 @@ export class BackgroundTasks {
       });
       return { singerId: o.singerId, seed: voice.seed };
     }
+    if (task.kind === 'castingSoundtrack') {
+      const c = this.deps.castingSoundtrack;
+      if (!c) throw new Error(CASTING_SOUNDTRACK_NOT_SET_UP);
+      const { store, events, clock } = this.deps;
+      const o = CastingSoundtrackOptionsSchema.parse(task.options);
+      const scriptTask = store.getTask(task.ownerId, o.scriptTaskId);
+      if (!scriptTask || scriptTask.state !== 'done') throw new Error('the casting script this soundtrack was made from is gone: write it again');
+      const script = scriptTask.result as CastingScript;
+      const filesDir = join(resolve(c.filesDir), task.id);
+      let voiceSteps: TaskStep[] = [];
+      const own: Record<'export' | 'mix', TaskStep> = {
+        export: { id: 'export', label: 'Export the song', state: 'waiting' },
+        mix: { id: 'mix', label: 'Mix the soundtrack', state: 'waiting' },
+      };
+      const publish = () => {
+        const now = store.getTask(task.ownerId, task.id);
+        if (!now || now.state !== 'running') return;
+        store.setTaskSteps(task.id, [...voiceSteps, own.export, own.mix]);
+        events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: task.songId, state: 'running' });
+      };
+      const spoken = await speakLines(
+        { client: c.client, filesDir, pollMs: c.pollMs, signal, jobs: task.jobs, setJobs: (jobs) => store.setTaskJobs(task.id, jobs), setSteps: (steps) => ((voiceSteps = steps), publish()) },
+        lineVoices(script, o.singerVoice),
+      );
+      own.export = { ...own.export, state: 'running', startedAt: clock() };
+      publish();
+      const exported = await c.exportSong(task.ownerId, songIdOf(task));
+      own.export = { ...own.export, state: 'done', finishedAt: clock(), text: `${exported.seconds.toFixed(0)} s` };
+      own.mix = { ...own.mix, state: 'running', startedAt: clock() };
+      publish();
+      const song = parseSong(JSON.parse(task.input));
+      const timeline = layOut({
+        script,
+        spoken: new Map([...spoken].map(([id, v]) => [id, { seconds: v.seconds, levels: wavLevels(v.file, CASTING_BIN_SECONDS) }])),
+        sections: songTiming(song).sections,
+        exportSeconds: exported.seconds,
+        entranceSeconds: probeSecondsSync(c.ffmpegBin, join(c.musicDir, CASTING_MUSIC.entrance)),
+        binSeconds: CASTING_BIN_SECONDS,
+        scriptTaskId: scriptTask.id,
+      });
+      const outDir = join(filesDir, 'soundtrack');
+      mkdirSync(outDir, { recursive: true });
+      mixSoundtrack(
+        timeline,
+        { lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
+        join(outDir, 'casting.wav'),
+        c.ffmpegBin,
+      );
+      own.mix = { ...own.mix, state: 'done', finishedAt: clock(), text: `${timeline.durationSeconds.toFixed(0)} s`, files: ['soundtrack/casting.wav'] };
+      publish();
+      return timeline;
+    }
     if (task.kind === 'castingScript') {
       const c = this.deps.casting;
       if (!c) throw new Error(CASTING_NOT_SET_UP);
@@ -969,4 +1081,21 @@ function resultInto(task: TaskRow, song: Song): Song {
   }
   if (task.kind === 'aceLayer') return applyAceLayer(song, AceLayerResultSchema.parse(task.result));
   throw new Error(`unknown task kind ${String(task.kind)}`);
+}
+
+/** The owner's latest finished task of a kind on a song, or undefined. */
+function latestDone(store: SongsStore, ownerId: string, songId: string, kind: TaskKind): TaskRow | undefined {
+  return store
+    .listTasks(ownerId, '')
+    .filter((t) => t.kind === kind && t.songId === songId && t.state === 'done')
+    .sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? ''))[0];
+}
+
+/** An audio file's length in seconds (ffprobe next to the configured ffmpeg). */
+function probeSecondsSync(ffmpegBin: string, path: string): number {
+  const ffprobe = ffmpegBin.includes('/') ? join(dirname(ffmpegBin), 'ffprobe') : 'ffprobe';
+  const out = execFileSync(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path]).toString().trim();
+  const seconds = Number(out);
+  if (!(seconds > 0)) throw new Error(`casting: cannot tell the length of ${path} (ffprobe said "${out}")`);
+  return seconds;
 }

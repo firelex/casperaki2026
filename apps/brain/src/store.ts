@@ -93,7 +93,7 @@ export interface MixDismissal {
 
 /** A background task (src/tasks/tasks.ts), on a song (its song follows the project when saves move it) or, for
  *  addSinger (a new singer made from a recording), on no song. */
-export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger' | 'speakingVoice' | 'avatarBuild' | 'castingScript';
+export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger' | 'speakingVoice' | 'avatarBuild' | 'castingScript' | 'castingSoundtrack';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task as the Tasks page lists it (the brain's own steps and a model service's, in the order they run). */
@@ -559,7 +559,7 @@ interface TaskDbRow {
   options: string | null;
 }
 
-const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'writeRapLyrics', 'sing', 'transcribe', 'aceLayer', 'addSinger', 'speakingVoice', 'avatarBuild', 'castingScript'];
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'writeRapLyrics', 'sing', 'transcribe', 'aceLayer', 'addSinger', 'speakingVoice', 'avatarBuild', 'castingScript', 'castingSoundtrack'];
 /** The song_id of a task on no song. */
 const NO_SONG = '';
 const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];

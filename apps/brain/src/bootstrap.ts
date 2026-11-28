@@ -418,7 +418,26 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
         }
       : undefined;
   if (!casting) console.warn('[brain] ASSISTANT_LLM_URL (with BRAIN_SINGERS_DATA_DIR) not set — casting scripts answer 503.');
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), ...(avatarBuild ? { avatarBuild } : {}), ...(casting ? { casting } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  // Casting soundtracks (src/casting): the speech service speaks the script, the song's export and the music are mixed.
+  const castingSoundtrack =
+    config.speechServiceUrl && config.castingMusicDir && config.taskFilesDir && userAvatars && speakingVoices && videos
+      ? {
+          client: new VocalsClient(config.speechServiceUrl, 'speech service'),
+          filesDir: config.taskFilesDir,
+          pollMs: deps.singPollMs ?? SING_POLL_MS,
+          ffmpegBin: config.ffmpegBin,
+          musicDir: config.castingMusicDir,
+          avatars: userAvatars,
+          singerVoice: (ownerId: string, singerId: string) => {
+            const s = speakingSinger(config.singersDir, userSingers, ownerId, singerId);
+            const v = speakingVoices.get(ownerId, singerId, s.builtIn);
+            return v ? { description: v.description, seed: v.seed } : undefined;
+          },
+          exportSong: (ownerId: string, songId: string) => videos.exportSong(ownerId, songId),
+        }
+      : undefined;
+  if (!castingSoundtrack) console.warn('[brain] SPEECH_SERVICE_URL, BRAIN_CASTING_MUSIC_DIR (with BRAIN_TASK_FILES_DIR, BRAIN_SINGERS_DATA_DIR, rendering) not set — casting soundtracks answer 503.');
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), ...(avatarBuild ? { avatarBuild } : {}), ...(casting ? { casting } : {}), ...(castingSoundtrack ? { castingSoundtrack } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));

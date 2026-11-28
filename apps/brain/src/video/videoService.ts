@@ -217,6 +217,15 @@ export class VideoService {
 
   /** The song's mastered export (MP3) with its mix (`mixConfig`: Pro-mode, or undefined for the standard mix);
    *  the render service re-exports when the mix differs from its last export. */
+  /** The owner's song as saved, exported with its mix (reused when the export exists), and its length. */
+  async exportSong(ownerId: string, songId: string): Promise<{ path: string; seconds: number }> {
+    const stored = this.deps.store.get(songId);
+    if (!stored) throw new Error(`song ${songId} is not in the store`);
+    const path = await this.exportedMix(songId, stored.canonical, this.deps.songMix(ownerId, songId), () => undefined);
+    const seconds = await (this.deps.probeSeconds ?? ((p: string) => this.probeSeconds(p)))(path);
+    return { path, seconds };
+  }
+
   private async exportedMix(songId: string, canonical: string, mixConfig: string | undefined, report: (detail: string) => void): Promise<string> {
     const renders = this.deps.renders;
     // enqueue reuses an export of the same mix (done or on its way) and re-exports for a different one.

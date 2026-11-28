@@ -13,7 +13,7 @@
 // is process-local. The future render-job architecture is sketched in
 // docs/54c-ui-render-artifact.md.
 
-import { createReadStream, promises as fsp, statSync } from 'node:fs';
+import { createReadStream, promises as fsp, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -252,6 +252,36 @@ async function computePeaksFromWav(path: string, bins: number): Promise<Computed
     peaks,
     rms,
   };
+}
+
+/** A WAV file's loudness (RMS over all channels, 0..1) per bin of `binSeconds` from its start: a spoken line's mouth
+ *  levels (casting). Throws for a file that is not a WAV this module reads. */
+export function wavLevels(path: string, binSeconds: number): number[] {
+  if (!(binSeconds > 0)) throw new Error(`wavLevels: binSeconds must be positive, got ${binSeconds}`);
+  const buf = readFileSync(path);
+  const { sampleRate, channels, bitsPerSample, audioFormat, dataStart, dataSize } = parseWavHeader(buf);
+  const reader = readerFor(audioFormat, bitsPerSample);
+  if (!reader) throw new Error(`wavLevels: ${path}: unsupported wav format=${audioFormat} bits=${bitsPerSample}`);
+  const bytesPerSample = bitsPerSample / 8;
+  const frameCount = Math.floor(dataSize / (bytesPerSample * channels));
+  const perBin = sampleRate * binSeconds;
+  const bins = Math.ceil(frameCount / perBin - 1e-9);
+  const out: number[] = [];
+  for (let b = 0; b < bins; b++) {
+    const from = Math.floor(b * perBin);
+    const to = Math.min(frameCount, Math.floor((b + 1) * perBin));
+    let sum = 0;
+    let n = 0;
+    for (let f = from; f < to; f++) {
+      for (let c = 0; c < channels; c++) {
+        const v = reader(buf, dataStart + (f * channels + c) * bytesPerSample);
+        sum += v * v;
+        n++;
+      }
+    }
+    out.push(round(n > 0 ? Math.min(1, Math.sqrt(sum / n)) : 0, 5));
+  }
+  return out;
 }
 
 interface ParsedWavHeader {

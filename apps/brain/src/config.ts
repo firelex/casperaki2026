@@ -56,6 +56,8 @@ const ConfigSchema = z.object({
   /** Avatar videos: a folder of Mixamo dance clips (FBX; outside git, Adobe's terms forbid passing the files on) the
    *  dancers mix in with the built-in moves. Unset → only the built-in moves. */
   danceClipsDir: z.string().min(1).optional(),
+  /** Casting soundtracks' music: "Poised and Ready.mp3" and "The Grand Entrance.mp3". */
+  castingMusicDir: z.string().min(1).optional(),
   renderStubSamplesDir: z.string().default('../engine-spike/samples'),
   sampleLibraryRoot: z.string().optional(),
   renderMix: z.enum(['0', '1']).default('1').transform((v) => v === '1'),
@@ -154,6 +156,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     singersDataDir: env.BRAIN_SINGERS_DATA_DIR || undefined,
     avatarPacksDir: env.BRAIN_AVATAR_PACKS_DIR || undefined,
     danceClipsDir: env.BRAIN_DANCE_CLIPS_DIR || undefined,
+    castingMusicDir: env.BRAIN_CASTING_MUSIC_DIR || undefined,
     renderStubSamplesDir: env.BRAIN_RENDER_STUB_SAMPLES_DIR,
     sampleLibraryRoot: env.CASPERAKI_SAMPLE_LIBRARY_ROOT,
     renderMix: env.BRAIN_RENDER_MIX,

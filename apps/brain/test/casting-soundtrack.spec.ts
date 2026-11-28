@@ -111,3 +111,152 @@ describe('the timeline', () => {
     expect(() => layOut({ script, spoken, sections: sections.filter((s) => !s.name.startsWith('Chorus')), exportSeconds: 120, entranceSeconds: 14.544, binSeconds: 0.05, scriptTaskId: 'x' })).toThrow(/chorus/);
   });
 });
+
+// ---- the mix (real ffmpeg on short tones)
+import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { mixSoundtrack } from '../src/casting/mix.js';
+import { wavLevels } from '../src/routes/renders.js';
+import { toneWav } from './fakeVocalsService.js';
+
+describe('the mix', () => {
+  let dir: string;
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'casting-mix-'));
+  });
+  afterEach(() => rmSync(dir, { recursive: true, force: true }));
+  const tone = (name: string, seconds: number, hz: number) => {
+    const p = join(dir, name);
+    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `sine=frequency=${hz}:duration=${seconds}`, p]);
+    return p;
+  };
+  it('measures a line\'s loudness per bin', () => {
+    const p = join(dir, 'l.wav');
+    writeFileSync(p, toneWav(1));
+    const levels = wavLevels(p, 0.1);
+    expect(levels).toHaveLength(10);
+    expect(Math.min(...levels)).toBeGreaterThan(0);
+  });
+  it('makes one 48 kHz file as long as the timeline, with the lines, the music and the song in place', () => {
+    const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
+    const sections = [{ name: 'Verse', startSeconds: 0, endSeconds: 4 }, { name: 'Chorus', startSeconds: 4, endSeconds: 8 }];
+    const t = layOut({ script, spoken, sections, exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
+    const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
+    const out = join(dir, 'casting.wav');
+    mixSoundtrack(t, { lines, song: tone('song.mp3', 12, 220), poised: tone('poised.mp3', 30, 330), entrance: tone('entrance.mp3', 3, 550) }, out, 'ffmpeg');
+    const probe = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=sample_rate:format=duration', '-of', 'json', out]).toString();
+    const info = JSON.parse(probe) as { streams: { sample_rate: string }[]; format: { duration: string } };
+    expect(info.streams[0]!.sample_rate).toBe('48000');
+    expect(Number(info.format.duration)).toBeCloseTo(t.durationSeconds, 1);
+  });
+  it('fails naming a missing music file', () => {
+    const spoken = new Map(lineVoices(script, singerVoice).map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
+    const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 4 }], exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
+    const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
+    expect(() => mixSoundtrack(t, { lines, song: tone('song.mp3', 12, 220), poised: join(dir, 'Poised and Ready.mp3'), entrance: tone('e.mp3', 3, 550) }, join(dir, 'o.wav'), 'ffmpeg')).toThrow(/Poised and Ready\.mp3/);
+  });
+});
+
+// ---- the castingSoundtrack task
+import { mkdirSync } from 'node:fs';
+import { orchestrate } from '@casperaki/arrangement';
+import { canonicalStringifySong } from '@casperaki/song-schema';
+import { UserAvatars } from '../src/avatars/userAvatars.js';
+import { EventHub } from '../src/events.js';
+import { hashCanonical } from '../src/routes/songs.js';
+import { openSongsStore, type SongsStore } from '../src/store.js';
+import { BackgroundTasks, TaskError } from '../src/tasks/tasks.js';
+
+describe('the castingSoundtrack task', () => {
+  const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+  const songId = 'abcdef0123456789';
+  let dir: string;
+  let store: SongsStore;
+  let speech: FakeSpeechService;
+  let tasks: BackgroundTasks;
+  let avatars: UserAvatars;
+  let voiceOf: (singerId: string) => { description: string; seed: number } | undefined;
+  const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'casting-3' });
+  const tone = (p: string, seconds: number) => execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', `sine=frequency=330:duration=${seconds}`, p]);
+
+  beforeEach(async () => {
+    dir = mkdtempSync(join(tmpdir(), 'casting-task-'));
+    mkdirSync(join(dir, 'music'));
+    tone(join(dir, 'music', 'Poised and Ready.mp3'), 60);
+    tone(join(dir, 'music', 'The Grand Entrance.mp3'), 4);
+    tone(join(dir, 'song.mp3'), 400);
+    store = openSongsStore({ path: ':memory:' });
+    const canonical = canonicalStringifySong(song, 2);
+    store.put({ id: songId, song, canonical, hash: hashCanonical(canonical), createdAt: 't' });
+    store.upsertProject({ ownerId: 'me', songId, title: 'Electric Daydream', createdAt: 't', updatedAt: 't' });
+    avatars = new UserAvatars(join(dir, 'singers'));
+    speech = await startFakeSpeechService();
+    voiceOf = (id) => (id === 'kesha' ? singerVoice : undefined);
+    tasks = new BackgroundTasks({
+      store,
+      events: new EventHub(),
+      hash: hashCanonical,
+      clock: () => new Date().toISOString(),
+      castingSoundtrack: {
+        client: new VocalsClient(speech.url, 'speech service'),
+        filesDir: join(dir, 'files'),
+        pollMs: 5,
+        ffmpegBin: 'ffmpeg',
+        musicDir: join(dir, 'music'),
+        avatars,
+        singerVoice: (_o, id) => voiceOf(id),
+        exportSong: async () => ({ path: join(dir, 'song.mp3'), seconds: 400 }),
+      },
+    });
+  });
+  afterEach(async () => {
+    await speech.stop();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  const written = (avatarId: string) => {
+    store.insertTask({ id: 'script-1', ownerId: 'me', songId, kind: 'castingScript', input: '', startedAt: 't', options: { avatarId, outcome: 'threeOne', title: 'Electric Daydream', singerName: 'Kesha', singerDescription: null, avatarName: 'Mia' } });
+    store.setTaskState('script-1', { state: 'done', result: script, message: null, finishedAt: 't' });
+  };
+  const refused = (f: () => unknown, status: number, code: string) => {
+    try {
+      f();
+    } catch (err) {
+      expect(err).toBeInstanceOf(TaskError);
+      expect([(err as TaskError).status, (err as TaskError).code]).toEqual([status, code]);
+      return;
+    }
+    throw new Error(`expected ${status} ${code}`);
+  };
+  const recipe = { pack: 'drophunter', parts: { body: '0' }, textures: {}, colors: {} };
+
+  it('needs a written script and the singer\'s speaking voice', () => {
+    refused(() => tasks.startCastingSoundtrack('me', songId), 400, 'no_script');
+    const karla = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'karla' }, PNG, 't');
+    written(karla.id);
+    refused(() => tasks.startCastingSoundtrack('me', songId), 400, 'no_speaking_voice');
+  });
+  it('fails naming a missing music file', () => {
+    const mia = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'kesha' }, PNG, 't');
+    written(mia.id);
+    rmSync(join(dir, 'music', 'The Grand Entrance.mp3'));
+    refused(() => tasks.startCastingSoundtrack('me', songId), 503, 'music_missing');
+  });
+  it('speaks the script, lays it out and mixes one file, recording which script it came from', async () => {
+    const mia = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'kesha' }, PNG, 't');
+    written(mia.id);
+    const task = tasks.startCastingSoundtrack('me', songId);
+    await tasks.idle();
+    const done = store.getTask('me', task.id)!;
+    expect(done.message ?? null).toBeNull();
+    expect(done.state).toBe('done');
+    const timeline = done.result as CastingTimeline;
+    expect(timeline.scriptTaskId).toBe('script-1');
+    expect(timeline.lines).toHaveLength(9);
+    expect(timeline.lines[0]!.levels.length).toBeGreaterThan(0);
+    const wav = tasks.stepFile('me', task.id, 'soundtrack', 'casting.wav');
+    const seconds = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav]).toString());
+    expect(seconds).toBeCloseTo(timeline.durationSeconds, 1);
+    expect(speech.jobs[0]!.params['lines']).toHaveLength(9);
+  });
+});
