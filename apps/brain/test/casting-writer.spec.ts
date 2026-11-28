@@ -15,6 +15,10 @@ describe('the cast', () => {
     expect(JUDGES.map((j) => j.id)).toEqual(['ice', 'nicky', 'love', 'bob']);
     expect(JUDGES.map((j) => j.voice.seed)).toEqual([7, 7, 7, 21]);
     expect(JUDGES.find((j) => j.id === 'bob')!.voice.description).toMatch(/Irish man/);
+    // Each judge's reference says the words of the take the owner approved.
+    expect(JUDGES.find((j) => j.id === 'ice')!.voice.referenceText).toMatch(/^Right\. Well\. That was certainly a choice/);
+    expect(JUDGES.find((j) => j.id === 'love')!.voice.referenceText).toMatch(/nineteen ninety eight/);
+    expect(new Set(JUDGES.map((j) => j.voice.referenceText)).size).toBe(4);
     for (const j of JUDGES) {
       expect(j.profile.length).toBeGreaterThan(300);
       expect(j.profile).not.toMatch(/Cowell|Walsh|Minaj|Minogue/);

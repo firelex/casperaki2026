@@ -130,6 +130,7 @@ export async function makeSpeakingVoice(ctx: SpeakingVoiceContext): Promise<Spea
       seed: result.best_seed,
       sample: 'speaking.wav',
       madeBy: ctx.description ? 'described' : 'matched',
+      line: speakingTestLine(singer.name),
       candidates: seeds.map((seed) => {
         if (ctx.description) return { seed, score: null };
         const score = result.scores[String(seed)];

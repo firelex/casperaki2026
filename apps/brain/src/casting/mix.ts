@@ -3,7 +3,7 @@
 // door), "The Grand Entrance" whole at the stage door, the song from its start to the end of its first chorus then
 // faded, and every spoken line at its time.
 
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 
 import type { CastingTimeline } from './timeline.js';
@@ -19,6 +19,26 @@ export interface SoundtrackFiles {
 /** The backstage music's level under the narration, and how long it fades out before the door. */
 const MUSIC_GAIN = 0.5;
 const MUSIC_FADE = 2;
+/** The narrator sits into the music rather than cutting through it (the owner: "too compressed, cuts a tad too much
+ *  through"): about 3 dB down, the music ducking gently under it. */
+const NARRATION_GAIN = 0.7;
+
+/** How long an audio file is heard: its length without the silence at its end (quieter than -45 dB for 0.3 s or more). */
+export function audibleSeconds(ffmpegBin: string, path: string): number {
+  if (!existsSync(path)) throw new Error(`casting soundtrack: the file is missing: ${path}`);
+  const res = spawnSync(ffmpegBin, ['-hide_banner', '-nostats', '-i', path, '-af', 'silencedetect=noise=-45dB:d=0.3', '-f', 'null', '-'], { encoding: 'utf8' });
+  if (res.status !== 0) throw new Error(`casting soundtrack: cannot measure ${path}: ${(res.stderr ?? '').trim().split('\n').slice(-2).join(' ')}`);
+  const log = res.stderr ?? '';
+  const duration = /Duration: (\d+):(\d+):([\d.]+)/u.exec(log);
+  if (!duration) throw new Error(`casting soundtrack: cannot tell the length of ${path}`);
+  const total = Number(duration[1]) * 3600 + Number(duration[2]) * 60 + Number(duration[3]);
+  const starts = [...log.matchAll(/silence_start: ([\d.]+)/gu)].map((m) => Number(m[1]));
+  const ends = [...log.matchAll(/silence_end: ([\d.]+)/gu)].map((m) => Number(m[1]));
+  // Silence running to the end: a start without an end, or an end at the very end of the file.
+  const last = starts.at(-1);
+  if (last !== undefined && (ends.length < starts.length || Math.abs((ends.at(-1) ?? 0) - total) < 0.1)) return last;
+  return total;
+}
 
 export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles, outPath: string, ffmpegBin: string): void {
   for (const [what, p] of [['backstage music', files.poised], ['stage door music', files.entrance], ['song', files.song]] as const) {
@@ -42,8 +62,9 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
     if (!file || !existsSync(file)) throw new Error(`casting soundtrack: the line ${l.id} has no spoken file`);
     inputs.push('-i', file);
     const label = `l${i}`;
-    graph.push(`[${3 + i}:a]${stereo},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
-    if (l.startSeconds < backstage.endSeconds) narration.push(label);
+    const isNarration = l.startSeconds < backstage.endSeconds;
+    graph.push(`[${3 + i}:a]${stereo}${isNarration ? `,volume=${NARRATION_GAIN}` : ''},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
+    if (isNarration) narration.push(label);
     voices.push(label);
   });
   // The narration also drives the music's ducking.
@@ -53,9 +74,9 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   graph.push(`[0:a]${stereo},atrim=0:${musicLen.toFixed(3)},volume=${MUSIC_GAIN},afade=t=out:st=${Math.max(0, musicLen - MUSIC_FADE).toFixed(3)}:d=${MUSIC_FADE}[poised]`);
   if (narration.length > 0) {
     graph.push(`${narration.map((n) => `[${n}b]`).join('')}amix=inputs=${narration.length}:normalize=0[duck]`);
-    graph.push('[poised][duck]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=500[music]');
+    graph.push('[poised][duck]sidechaincompress=threshold=0.05:ratio=3:attack=30:release=600[music]');
   } else graph.push('[poised]anull[music]');
-  graph.push(`[1:a]${stereo},adelay=${ms(door.startSeconds)}:all=1[door]`);
+  graph.push(`[1:a]${stereo},atrim=0:${(door.endSeconds - door.startSeconds).toFixed(3)},adelay=${ms(door.startSeconds)}:all=1[door]`);
   const { songToSeconds, fadeSeconds, videoStartSeconds } = timeline.performance;
   graph.push(`[2:a]${stereo},atrim=0:${(songToSeconds + fadeSeconds).toFixed(3)},afade=t=out:st=${songToSeconds.toFixed(3)}:d=${fadeSeconds},adelay=${ms(videoStartSeconds)}:all=1[song]`);
   const all = ['music', 'door', 'song', ...voiceLabels];

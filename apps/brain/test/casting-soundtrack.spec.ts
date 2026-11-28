@@ -191,7 +191,7 @@ describe('the castingSoundtrack task', () => {
     store.upsertProject({ ownerId: 'me', songId, title: 'Electric Daydream', createdAt: 't', updatedAt: 't' });
     avatars = new UserAvatars(join(dir, 'singers'));
     speech = await startFakeSpeechService();
-    voiceOf = (id) => (id === 'kesha' ? { description: singerVoice.description, seed: singerVoice.seed } : undefined);
+    voiceOf = (id) => (id === 'kesha' ? { description: singerVoice.description, seed: singerVoice.seed, line: "Hi, I'm Kesha. Honestly, I'm a bit nervous." } : id === 'old' ? { description: 'x', seed: 1 } : undefined);
     tasks = new BackgroundTasks({
       store,
       events: new EventHub(),
@@ -236,6 +236,11 @@ describe('the castingSoundtrack task', () => {
     written(karla.id);
     refused(() => tasks.startCastingSoundtrack('me', songId), 400, 'no_speaking_voice');
   });
+  it('refuses a speaking voice that does not know its words, and copies the singer from those words', async () => {
+    const old = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'old' }, PNG, 't');
+    written(old.id);
+    refused(() => tasks.startCastingSoundtrack('me', songId), 400, 'remake_speaking_voice');
+  });
   it('fails naming a missing music file', () => {
     const mia = avatars.save('me', { style: 'anime', name: 'Mia', recipe, singerId: 'kesha' }, PNG, 't');
     written(mia.id);
@@ -258,5 +263,24 @@ describe('the castingSoundtrack task', () => {
     const seconds = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav]).toString());
     expect(seconds).toBeCloseTo(timeline.durationSeconds, 1);
     expect(speech.jobs[0]!.params['lines']).toHaveLength(9);
+    const singerLine = (speech.jobs[0]!.params['lines'] as { id: string; reference_text: string }[]).find((l) => l.id === 'banter-2')!;
+    expect(singerLine.reference_text).toBe("Hi, I'm Kesha. Honestly, I'm a bit nervous.");
+  });
+});
+
+describe('the stage door music', () => {
+  it('lasts as long as it is heard: the silence at its end is cut', async () => {
+    const { audibleSeconds } = await import('../src/casting/mix.js');
+    const dir = mkdtempSync(join(tmpdir(), 'casting-audible-'));
+    try {
+      const p = join(dir, 'entrance.mp3');
+      execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', '-af', 'apad=pad_dur=1.5', p]);
+      expect(audibleSeconds('ffmpeg', p)).toBeCloseTo(3, 0);
+      const q = join(dir, 'full.mp3');
+      execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', q]);
+      expect(audibleSeconds('ffmpeg', q)).toBeCloseTo(3, 0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

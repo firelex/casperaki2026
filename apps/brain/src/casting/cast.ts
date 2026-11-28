@@ -14,9 +14,15 @@ export interface Judge {
   readonly voice: { readonly description: string; readonly seed: number; readonly referenceText: string };
 }
 
-/** What every judge's reference says: the speech service speaks it once in the judge's voice, then copies every line
- *  from it (one person throughout, accent included). */
-export const JUDGE_REFERENCE_TEXT = "Right, let's get started. Tell us your name, and tell us what you're going to sing for us today.";
+/** What each judge's reference says: the words of the take the owner approved (~/casperaki-data/voicetest: ice, nicky,
+ *  love2-7, bob2-21), so the speech service's reference (the same description, seed and words) IS that take, and every
+ *  line is copied from it. */
+const APPROVED_TAKE_TEXT = {
+  ice: "Right. Well. That was certainly a choice. I'm not saying it was the wrong choice, but it was a choice.",
+  nicky: 'Okay, okay, hold on, Ice. Baby, that chorus? That chorus was everything. You owned that stage.',
+  love: "Oh, don't listen to him, darling. He hasn't smiled since about nineteen ninety eight.",
+  bob: 'Ah, would you stop. Sure, I thought it was lovely. A bit of nerves at the start, but you grew into it.',
+} as const;
 
 export const JUDGES: readonly Judge[] = [
   {
@@ -24,28 +30,28 @@ export const JUDGES: readonly Judge[] = [
     name: 'Ice',
     profile:
       'Ice, the ruthless music mogul. 58, British, head judge. Brutally honest, arrogant, dry, intimidating, occasionally hilarious. Decades in the industry; believes he can recognise a hit within fifteen seconds. No patience for mediocrity, long introductions, pretentious lyrics or songs without a memorable chorus. Rarely raises his voice: a quiet, devastating observation does more. Interrupts songs that take too long to get going. Genuinely loves finding great music, and his turn from bored cynic to enthusiastic supporter is dramatic. Signature: slowly takes off his sunglasses before a brutal verdict. Sample lines: "I\'ve heard better melodies from my microwave." "That was three minutes of my life I\'m not getting back." "Hang on. Stop. Stop. Who wrote that chorus?" "I hate to admit this, but that was absolutely brilliant." "Bob, please. We\'re judging music, not adopting puppies." With the others: constantly argues with Bob, dismisses Nicky\'s obsession with trends, secretly respects Love\'s musical instincts.',
-    voice: { description: 'A man in his fifties with a dry, posh southern English accent, sardonic and unimpressed, speaking slowly', seed: 7, referenceText: JUDGE_REFERENCE_TEXT },
+    voice: { description: 'A man in his fifties with a dry, posh southern English accent, sardonic and unimpressed, speaking slowly', seed: 7, referenceText: APPROVED_TAKE_TEXT.ice },
   },
   {
     id: 'nicky',
     name: 'Nicky',
     profile:
       'Nicky, the pop diva. 35, American, the trendsetter. Outrageous, sharp-tongued, flamboyant, unpredictable, fiercely competitive. Obsessed with originality, charisma, hooks and commercial appeal; no patience for predictable arrangements, dated production or singers without personality. Fast, sarcastic, sometimes outrageous humour; delivers a one-liner, then bursts out laughing at it. Fiercely protective of singers she thinks have real star quality. Unlike Ice, who judges songs as products, she cares about cultural relevance: music people will dance to, share and remember. Inspects her nails while others talk; can show complete contempt with one raised eyebrow. Signature: turns away from the stage when unimpressed, swivels back when something catches her. Sample lines: "Baby, that chorus needs a personality transplant." "I\'m sorry, are we making a hit record or waiting for an elevator?" "That beat? Delicious. Those lyrics? Criminal." "Ice, darling, your musical taste expired in 2007." "Okay, superstar! NOW we\'re talking!" With the others: challenges Ice\'s authority, mercilessly teases Bob, competes with Love for most fashionable judge.',
-    voice: { description: 'A Black American woman in her forties, warm, big laugh in her voice, expressive and energetic', seed: 7, referenceText: JUDGE_REFERENCE_TEXT },
+    voice: { description: 'A Black American woman in her forties, warm, big laugh in her voice, expressive and energetic', seed: 7, referenceText: APPROVED_TAKE_TEXT.nicky },
   },
   {
     id: 'love',
     name: 'Love',
     profile:
       'Love, the glamorous pop perfectionist. 46, Australian, the musical mentor. Warm, sophisticated, emotionally intelligent, perfectionist, surprisingly formidable. The most musically thoughtful judge: melody, harmony, arrangement, vocal phrasing, emotional honesty. A great pop song must make people feel something; she is visibly moved when one does. Usually diplomatic, but sharp-tongued when another judge says something unfair or silly. Her criticism is specific and constructive (change a chord, simplify a chorus, drop a needless layer). Takes notes. Signature: closes her eyes in beautiful passages, sometimes tearful. Sample lines: "There\'s something genuinely beautiful about that melody." "I loved the verse, but you\'ve completely lost me in the chorus." "Bob, darling, not everything needs to be compared to Westlife." "Ice, you might have a bank account, but you clearly don\'t have a heart." "That final key change gave me goosebumps." With the others: mediates between Ice and Bob, enjoys Nicky\'s theatrics, the only judge Ice consistently listens to.',
-    voice: { description: 'A woman in her forties with a bright Australian accent, very sassy and cheeky, confident, a knowing eye-roll in her voice, teasing with attitude', seed: 7, referenceText: JUDGE_REFERENCE_TEXT },
+    voice: { description: 'A woman in her forties with a bright Australian accent, very sassy and cheeky, confident, a knowing eye-roll in her voice, teasing with attitude', seed: 7, referenceText: APPROVED_TAKE_TEXT.love },
   },
   {
     id: 'bob',
     name: 'Bob',
     profile:
       'Bob, the lovable Irish optimist. 66, Irish, the people\'s judge. Cheerful, sentimental, excitable, mischievous, hilariously enthusiastic. Loves almost everything and sees potential nobody else can. Every competent performer reminds him of a legend; knows the pop groups of the 1980s and 1990s by heart and thinks nearly every promising contestant could be an international star. Easily offended when Ice attacks his favourites. Genuine enthusiasm, sometimes spectacularly questionable judgement. Signature: leaps up for standing ovations that barely deserve polite applause. Sample lines: "You\'re going to be absolutely massive!" "Ice, you wouldn\'t recognise a hit if it hit you in the face!" "I\'m telling you, this could be the next ABBA!" "You\'ve got the look, you\'ve got the sound, you\'ve got everything!" "I don\'t care what anyone says. Twelve points!" With the others: Ice\'s favourite target; Love often defends him; Nicky finds his references hopelessly dated.',
-    voice: { description: 'An Irish man in his fifties with a soft Dublin accent, a light, fairly high-pitched tenor voice with a little rasp, kind, easygoing and charming', seed: 21, referenceText: JUDGE_REFERENCE_TEXT },
+    voice: { description: 'An Irish man in his fifties with a soft Dublin accent, a light, fairly high-pitched tenor voice with a little rasp, kind, easygoing and charming', seed: 21, referenceText: APPROVED_TAKE_TEXT.bob },
   },
 ];
 

@@ -38,7 +38,6 @@ import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, Tran
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAddSinger, type AddSingerOptions } from '../singers/addSingerTask.js';
 import { buildAvatar, type AvatarBuildDeps } from '../avatars/avatarBuildTask.js';
-import { speakingTestLine } from '../singers/speakingVoice.js';
 import type { UserAvatars } from '../avatars/userAvatars.js';
 import { songSinger } from '../avatars/videoAvatars.js';
 import { castNames, verdictVotes } from '../casting/cast.js';
@@ -46,7 +45,7 @@ import { castingFacts, isChorus } from '../casting/facts.js';
 import { SCENES, writeScript, type CastingScript, type SceneId } from '../casting/writer.js';
 import { layOut } from '../casting/timeline.js';
 import { lineVoices, speakLines } from '../casting/voices.js';
-import { mixSoundtrack } from '../casting/mix.js';
+import { audibleSeconds, mixSoundtrack } from '../casting/mix.js';
 import { wavLevels } from '../routes/renders.js';
 import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
@@ -127,7 +126,7 @@ export interface CastingSoundtrackDeps {
   readonly musicDir: string;
   readonly avatars: UserAvatars;
   /** The singer's speaking voice (description and seed), or undefined when it has none yet. */
-  readonly singerVoice: (ownerId: string, singerId: string) => { description: string; seed: number } | undefined;
+  readonly singerVoice: (ownerId: string, singerId: string) => { description: string; seed: number; line?: string } | undefined;
   /** The owner's song exported with its mix, and its length. */
   readonly exportSong: (ownerId: string, songId: string) => Promise<{ path: string; seconds: number }>;
 }
@@ -480,8 +479,9 @@ export class BackgroundTasks {
       if (!existsSync(join(c.musicDir, f))) throw new TaskError(503, 'music_missing', `The casting music "${f}" is missing from ${c.musicDir}.`);
     }
     if (store.runningTask(ownerId, songId, 'castingSoundtrack')) throw new TaskError(409, 'already_running', 'A casting soundtrack for this song is already being made.');
-    // The singer's reference says the line their speaking voice was chosen with: it reproduces that voice.
-    const options = CastingSoundtrackOptionsSchema.parse({ scriptTaskId: script.id, singerVoice: { description: voice.description, seed: voice.seed, referenceText: speakingTestLine(o.singerName) } });
+    // The singer's reference says the exact line their speaking voice was chosen with: it reproduces that voice.
+    if (!voice.line) throw new TaskError(400, 'remake_speaking_voice', `${o.singerName}'s speaking voice was made before it kept its words: make it again on the Singers page.`);
+    const options = CastingSoundtrackOptionsSchema.parse({ scriptTaskId: script.id, singerVoice: { description: voice.description, seed: voice.seed, referenceText: voice.line } });
     const id = randomUUID();
     store.insertTask({ id, ownerId, songId, kind: 'castingSoundtrack', input: stored.canonical, startedAt: this.deps.clock(), options });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
@@ -975,7 +975,8 @@ export class BackgroundTasks {
         spoken: new Map([...spoken].map(([id, v]) => [id, { seconds: v.seconds, levels: wavLevels(v.file, CASTING_BIN_SECONDS) }])),
         sections: songTiming(song).sections,
         exportSeconds: exported.seconds,
-        entranceSeconds: probeSecondsSync(c.ffmpegBin, join(c.musicDir, CASTING_MUSIC.entrance)),
+        // The stage door lasts as long as its music is heard (the file ends with 1.5 s of silence).
+        entranceSeconds: audibleSeconds(c.ffmpegBin, join(c.musicDir, CASTING_MUSIC.entrance)),
         binSeconds: CASTING_BIN_SECONDS,
         scriptTaskId: scriptTask.id,
       });
@@ -1099,11 +1100,3 @@ function latestDone(store: SongsStore, ownerId: string, songId: string, kind: Ta
     .sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? ''))[0];
 }
 
-/** An audio file's length in seconds (ffprobe next to the configured ffmpeg). */
-function probeSecondsSync(ffmpegBin: string, path: string): number {
-  const ffprobe = ffmpegBin.includes('/') ? join(dirname(ffmpegBin), 'ffprobe') : 'ffprobe';
-  const out = execFileSync(ffprobe, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path]).toString().trim();
-  const seconds = Number(out);
-  if (!(seconds > 0)) throw new Error(`casting: cannot tell the length of ${path} (ffprobe said "${out}")`);
-  return seconds;
-}

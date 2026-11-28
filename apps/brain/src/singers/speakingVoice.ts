@@ -31,6 +31,9 @@ export const SpeakingVoiceSchema = z
     seed: z.number().int(),
     sample: z.literal('speaking.wav'),
     madeBy: z.enum(['matched', 'described']),
+    /** The exact words every candidate said (the test line, with the singer's name then): a voice copied from this one
+     *  (casting) must say them in its reference. Voices made before 2026-11-28 evening had it added by hand. */
+    line: z.string().min(1).optional(),
     /** Every candidate spoken, with how close it is to the singing voice (null for a described voice's one). */
     candidates: z.array(z.object({ seed: z.number().int(), score: z.number().nullable() }).strict()).min(1),
     createdAt: z.string().min(1),

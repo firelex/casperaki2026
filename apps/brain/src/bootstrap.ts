@@ -431,7 +431,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           singerVoice: (ownerId: string, singerId: string) => {
             const s = speakingSinger(config.singersDir, userSingers, ownerId, singerId);
             const v = speakingVoices.get(ownerId, singerId, s.builtIn);
-            return v ? { description: v.description, seed: v.seed } : undefined;
+            return v ? { description: v.description, seed: v.seed, ...(v.line ? { line: v.line } : {}) } : undefined;
           },
           exportSong: (ownerId: string, songId: string) => videos.exportSong(ownerId, songId),
         }
