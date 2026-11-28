@@ -35,6 +35,9 @@ export interface GenreRecipe {
   /** The hi-hats of these section types from this drum style (laid over the section's own kick, snare and the rest);
    *  other sections keep their own. */
   readonly hiHats?: { readonly style: string; readonly sectionTypes: readonly string[] };
+  /** These section types play their drums' kick, snare and the rest (not the hi-hats) in half time when the song is
+   *  faster than aboveBpm: each pattern bar stretched over two. */
+  readonly drumHalfTime?: { readonly sectionTypes: readonly string[]; readonly aboveBpm: number };
   /** Section types whose parts are fixed: these tracks (drums, bass, or lanes the recipe always plays) and, with
    *  plusOne, one more of the song's other tracks (drawn once per song; never another always-playing lane). */
   readonly sectionParts?: Readonly<Record<string, { readonly keep: readonly ('drums' | 'bass' | AlwaysPlayingLane)[]; readonly plusOne: boolean }>>;
@@ -69,6 +72,9 @@ export const GENRE_RECIPES = {
     // on every sixteenth note - we have it in hip hop"), not the authored trap-hats line of straight 16ths.
     // Verses only (owner 2026-11-28: "we can't have it in all segments"); the other sections keep Bright Pop's hats.
     hiHats: { style: 'urban', sectionTypes: ['verse'] },
+    // Owner 2026-11-28: "it can go up to 120 and that makes the bass drum patterns too busy": the hip-hop styles are
+    // written for Urban's 60-100 bpm, so faster verses play them in half time ("Half time": hats at the song's pace).
+    drumHalfTime: { sectionTypes: ['verse'], aboveBpm: 100 },
     // Owner 2026-11-28: Dr. Luke drums "hit much harder". Of four A/B masters (standard or harder drums, Atemlos or "Your
     // Love Is My Drug" as the mastering reference) he chose harder drums mastered towards "Your Love Is My Drug"
     // ("let's go for harder ylimd for Casperaki pop"). The mix: the drums +4 dB, the pad and synths -2 dB, keys -1 dB, the

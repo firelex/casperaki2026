@@ -60,13 +60,17 @@ export function generateDrumPattern(
   const hats = recipeHats?.sectionTypes.includes(segmentType(segment.name))
     ? selectDrumBlueprint(ctx.rng.fork('patterns/drums/hiHats'), ctx.params.genre, [recipeHats.style])
     : undefined;
-  const layers = hats
+  // Half time (a recipe's, Casperaki Pop's fast verses): the section's own kit stretched over twice the bars; the
+  // hi-hats keep the song's pace.
+  const half = ctx.recipe?.drumHalfTime;
+  const stretch = half && half.sectionTypes.includes(segmentType(segment.name)) && ctx.params.bpm > half.aboveBpm ? 2 : 1;
+  const layers = stretch > 1 || hats
     ? [
-        { sel: selection, keep: (lane: string) => !HAT_LANES.has(lane) },
-        { sel: hats, keep: (lane: string) => HAT_LANES.has(lane) },
+        { sel: selection, keep: (lane: string) => !HAT_LANES.has(lane), stretch },
+        { sel: hats ?? selection, keep: (lane: string) => HAT_LANES.has(lane), stretch: 1 },
       ]
-    : [{ sel: selection, keep: () => true }];
-  for (const { sel, keep } of layers) emitBlueprint(bars, sel, keep);
+    : [{ sel: selection, keep: () => true, stretch: 1 }];
+  for (const { sel, keep, stretch: f } of layers) emitBlueprint(bars, sel, keep, f);
 
   return { bars };
 }
@@ -74,8 +78,10 @@ export function generateDrumPattern(
 /** The kit's hi-hat lanes (a recipe's hi-hats replace these). */
 const HAT_LANES: ReadonlySet<string> = new Set(['hiHatClosed1', 'hiHatClosed2', 'hiHatPedal', 'hiHatOpen']);
 
-/** The blueprint's hits on `keep`'s lanes, looped over the section's bars. */
-function emitBlueprint(bars: BarPattern[], selection: ReturnType<typeof selectDrumBlueprint>, keep: (lane: string) => boolean): void {
+/** The blueprint's hits on `keep`'s lanes, looped over the section's bars; `stretch` 2 plays it in half time (each
+ *  blueprint bar over two section bars). */
+function emitBlueprint(bars: BarPattern[], selection: ReturnType<typeof selectDrumBlueprint>, keep: (lane: string) => boolean, stretch = 1): void {
+  const loopBars = selection.blueprintBars * stretch;
   for (const [lane, positions] of Object.entries(selection.blueprint)) {
     if (!keep(lane)) continue;
     const rawMidi = selection.laneMidi[lane];
@@ -86,11 +92,12 @@ function emitBlueprint(bars: BarPattern[], selection: ReturnType<typeof selectDr
       // doesn't auto-double (it loops the blueprint explicitly per segment
       // bar) so we just skip the sentinel.
       if (position < 0) continue;
-      const blueprintBar = Math.floor(position / BEATS_PER_LEGACY_BAR);
-      const beat = position - blueprintBar * BEATS_PER_LEGACY_BAR;
-      if (beat < 0 || beat >= BEATS_PER_LEGACY_BAR) continue;
+      if (position >= selection.blueprintBars * BEATS_PER_LEGACY_BAR) continue;
+      const at = position * stretch;
+      const blueprintBar = Math.floor(at / BEATS_PER_LEGACY_BAR);
+      const beat = at - blueprintBar * BEATS_PER_LEGACY_BAR;
       for (let segBarIdx = 0; segBarIdx < bars.length; segBarIdx++) {
-        if (segBarIdx % selection.blueprintBars !== blueprintBar) continue;
+        if (segBarIdx % loopBars !== blueprintBar) continue;
         addNoteEvent(bars[segBarIdx]!, beat, { type: 'note', note: midi });
       }
     }

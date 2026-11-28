@@ -93,6 +93,33 @@ describe('Casperaki Pop', () => {
     expect(hatsOf(chorus.bars as never)).toEqual(hatsOf(own.bars as never));
   });
 
+  // Owner 2026-11-28: "it can go up to 120 and that makes the bass drum patterns too busy" -> half time (the hip-hop
+  // styles are written for Urban's 60-100 bpm).
+  it('above 100 bpm the verses play their hip-hop kick and snare in half time; their hats and the other sections do not change', () => {
+    const recipe = GENRE_RECIPES.casperakiPop;
+    expect(recipe.drumHalfTime).toEqual({ sectionTypes: ['verse'], aboveBpm: 100 });
+    const ctx = (bpm: number) => ({ params: { genre: 'brightPop', key: 'C', bpm, seed: 'ht' }, rng: createRng('ht'), recipe }) as never;
+    const seg = (name: string) => ({ name, bars: Array.from({ length: 8 }, () => ({ chords: ['C', 'C', 'C', 'C'] })) }) as never;
+    const hits = (bars: { notes?: Record<string, { note: number }[]> }[], notes: number[]) =>
+      bars.flatMap((b, i) => Object.entries(b.notes ?? {}).flatMap(([beat, evs]) => evs.filter((e) => notes.includes(e.note)).map((e) => `${e.note}@${i * 4 + Number(beat)}`))).sort();
+    const KICK_SNARE = [36, 38];
+    for (const seed of ['a', 'b', 'c', 'd']) {
+      const c = (bpm: number) => ({ ...(ctx(bpm) as object), rng: createRng(seed) }) as never;
+      const full = generateDrumPattern(c(100), seg('verse1'), ['drums'])!;
+      const half = generateDrumPattern(c(120), seg('verse1'), ['drums'])!;
+      // every kick and snare at 120 is one at 100 (in its first 4 bars) at twice the time
+      const fullAt = new Set(hits(full.bars as never, KICK_SNARE).map((h) => { const [n, t] = h.split('@'); return `${n}@${Number(t) * 2}`; }));
+      const halfHits = hits(half.bars as never, KICK_SNARE);
+      expect(halfHits.length).toBeGreaterThan(0);
+      for (const h of halfHits) expect(fullAt.has(h), `${seed}: ${h}`).toBe(true);
+      expect(halfHits.length).toBeLessThan(hits(full.bars as never, KICK_SNARE).length);
+      // the hats keep their pace
+      expect(hits(half.bars as never, [42])).toEqual(hits(full.bars as never, [42]));
+      // a chorus is the same at both tempos
+      expect(hits(generateDrumPattern(c(120), seg('chorus1'), ['drums'])!.bars as never, [36, 38, 42])).toEqual(hits(generateDrumPattern(c(100), seg('chorus1'), ['drums'])!.bars as never, [36, 38, 42]));
+    }
+  });
+
   it('the legacy section variety never takes the verses\' hip-hop groove or their hi-hats (owner 2026-11-28: "not sure it always gets that hip hop rhythm in the verse")', () => {
     const HATS = new Set([42, 44, 46]);
     const notesOf = (pat: { bars: { notes?: Record<string, { note?: number }[]> }[] }) =>
