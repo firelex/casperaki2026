@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { applyMixOverrides, canonicalStringifySong, MixOverridesSchema, parseSong, type MixOverrides, type Song } from '@casperaki/song-schema';
 
+import { masteringReferenceData } from '../render/playbackService.js';
 import { STUB_SAMPLES, type PlaybackService } from '../render/playbackService.js';
 import { songVersionKey } from '../render/songVersion.js';
 import type { SongsStore } from '../store.js';
@@ -49,6 +50,11 @@ export async function playbackPayload(service: PlaybackService, songId: string, 
     versionKey: songVersionKey(canonical, mixConfig),
     /** The standard mix's FX bus chains (the editor's Pro mode marks and resets changes against them). */
     standardRackChains: (JSON.parse(service.mixConfig) as { rackChains?: unknown }).rackChains ?? [],
+    /** A genre recipe's mastering reference (Casperaki Pop): the browser engine masters towards it. */
+    ...(() => {
+      const reference = masteringReferenceData(canonical, service.masteringReferencesDir);
+      return reference === undefined ? {} : { masteringReference: reference };
+    })(),
   };
 }
 

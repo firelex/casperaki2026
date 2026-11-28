@@ -68,7 +68,8 @@ self.onmessage = (ev) => {
   if (o.type === 'profile') {
     try {
       const { e, left, right } = renderUnmastered(o, () => undefined);
-      const bytes = masteringProfile(e, left, right, 'sergree');
+      // A genre recipe's mastering reference (Casperaki Pop), else Atemlos.
+      const bytes = masteringProfile(e, left, right, 'sergree', o.masteringReference);
       self.postMessage({ type: 'profile', bytes }, [bytes.buffer]);
     } catch (err) {
       self.postMessage({ type: 'error', message: String(err && err.stack ? err.stack : err) });
@@ -80,7 +81,7 @@ self.onmessage = (ev) => {
       const progress = (phase, share) => self.postMessage({ type: 'exportProgress', phase, share });
       const { e, left, right } = renderUnmastered(o, (share) => progress('render', share));
       progress('master', 0);
-      const mastered = masterSong(e, left, right, 'sergree');
+      const mastered = masterSong(e, left, right, 'sergree', o.masteringReference);
       const files = {
         'unmastered.wav': encodeWav24(left, right, o.sampleRate, 'render'),
         'mastered.wav': encodeWav24(mastered.left, mastered.right, o.sampleRate, 'master'),

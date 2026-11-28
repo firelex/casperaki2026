@@ -29,6 +29,9 @@ export interface GenreRecipe {
   readonly guitarPatterns?: readonly string[];
   /** Every section's hi-hats from this drum style (laid over the section's own kick, snare and the rest). */
   readonly hiHats?: string;
+  /** The track mastering matches the song to instead of Atemlos: the name of its data file (the brain's
+   *  mastering references directory, `<name>.json`, made by casperaki_master_reference). */
+  readonly masteringReference?: string;
 }
 
 export const GENRE_RECIPES = {
@@ -47,6 +50,9 @@ export const GENRE_RECIPES = {
     // part of every Casperaki song".
     guitarPatterns: ['Funk', 'R&B'],
     hiHats: 'authored-urban-trap-hats',
+    // Owner 2026-11-28: Dr. Luke drums "hit much harder"; mastering matched every song to Atemlos, which evened that
+    // out. Casperaki Pop is mastered towards "Your Love Is My Drug" (the owner's pick).
+    masteringReference: 'your-love-is-my-drug',
   },
 } as const satisfies Record<string, GenreRecipe>;
 

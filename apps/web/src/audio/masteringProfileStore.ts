@@ -13,8 +13,9 @@ const DB_NAME = 'casperaki-mastering';
 const STORE = 'profiles';
 
 /** The key a profile is stored under (hex SHA-256 of what the analysis depends on). */
-export async function profileStoreKey(payload: Pick<PlaybackPayload, 'song' | 'insts' | 'mixConfig'>, engineVersion: string, sampleRate: number): Promise<string> {
-  const text = JSON.stringify([engineVersion, sampleRate, payload.song, payload.insts, payload.mixConfig]);
+export async function profileStoreKey(payload: Pick<PlaybackPayload, 'song' | 'insts' | 'mixConfig' | 'masteringReference'>, engineVersion: string, sampleRate: number): Promise<string> {
+  // The reference a genre recipe masters towards is part of what is analysed (none: Atemlos, the key as before).
+  const text = JSON.stringify([engineVersion, sampleRate, payload.song, payload.insts, payload.mixConfig, ...(payload.masteringReference ? [payload.masteringReference] : [])]);
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }

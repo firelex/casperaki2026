@@ -718,6 +718,7 @@ export class LivePlayer {
             samples: stubs,
             realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
             mixConfig: utf8.encode(payload.mixConfig),
+            ...(payload.masteringReference ? { masteringReference: payload.masteringReference } : {}),
           });
         });
         await saveProfile(storeKey, bytes);
@@ -955,6 +956,7 @@ export class LivePlayer {
         samples: stubs,
         realSamples: realSamples.map((r) => ({ ...r, key: utf8.encode(r.key) })),
         mixConfig: utf8.encode(payload.mixConfig),
+        ...(payload.masteringReference ? { masteringReference: payload.masteringReference } : {}),
         ...(soloLanes ? { soloLanes: [...soloLanes] } : {}),
       }, [lameBytes]);
     });

@@ -164,9 +164,10 @@ export function laneInfo(e) {
 
 const STYLES = { sergree: 0, boost: 1 };
 
-/** Copy a stereo song into the heap and analyse it (master_analyze). Returns the
- *  padded frame count (songs under 15 s are looped to 15 s first). */
-function analyse(e, left, right, style) {
+/** Copy a stereo song into the heap and analyse it (master_analyze), towards `reference` when given (a genre
+ *  recipe's mastering reference: { rms, peak, mid, side }, else Atemlos). Returns the padded frame count (songs
+ *  under 15 s are looped to 15 s first). */
+function analyse(e, left, right, style, reference) {
   if (left.length !== right.length) throw new Error('mastering: channel lengths differ');
   const code = STYLES[style];
   if (code === undefined) throw new Error(`mastering: unknown style ${style}`);
@@ -176,10 +177,24 @@ function analyse(e, left, right, style) {
   if (!pL || !pR) throw new Error(`mastering: out of memory for ${frames} frames`);
   new Float32Array(e.memory.buffer, pL, frames).set(left);
   new Float32Array(e.memory.buffer, pR, frames).set(right);
+  if (reference) setReference(e, reference);
   const padded = e.master_analyze(pL, pR, frames, code);
+  if (reference) e.master_clear_reference();
   e.free(pL); e.free(pR);
   if (padded <= 0) throw new Error(`master_analyze failed: ${lastError(e)}`);
   return padded;
+}
+
+function setReference(e, r) {
+  if (r.mid.length !== 8192 || r.side.length !== 8192) throw new Error('mastering: a reference needs 8192 mid and side values');
+  const pM = e.malloc(8192 * 4);
+  const pS = e.malloc(8192 * 4);
+  if (!pM || !pS) throw new Error('mastering: out of memory for the reference');
+  new Float32Array(e.memory.buffer, pM, 8192).set(r.mid);
+  new Float32Array(e.memory.buffer, pS, 8192).set(r.side);
+  const ok = e.master_set_reference(pM, pS, r.rms, r.peak);
+  e.free(pM); e.free(pS);
+  if (!ok) throw new Error(`master_set_reference failed: ${lastError(e)}`);
 }
 
 function profileBytes(e) {
@@ -191,8 +206,8 @@ function profileBytes(e) {
 
 /** Analyse an unmastered song: the serialised mastering profile (Uint8Array),
  *  to hand to the playback worklet (live_set_profile). */
-export function masteringProfile(e, left, right, style = 'sergree') {
-  analyse(e, left, right, style);
+export function masteringProfile(e, left, right, style = 'sergree', reference = undefined) {
+  analyse(e, left, right, style, reference);
   const bytes = profileBytes(e);
   e.master_release();
   return bytes;
@@ -201,8 +216,8 @@ export function masteringProfile(e, left, right, style = 'sergree') {
 /** Master a whole unmastered song offline, from frame 0, exactly as
  *  `casperaki_master in.wav out.wav <style>` does. Returns the mastered PCM
  *  (as long as the song, or 15 s for a shorter one) and the profile. */
-export function masterSong(e, left, right, style = 'sergree') {
-  analyse(e, left, right, style);
+export function masterSong(e, left, right, style = 'sergree', reference = undefined) {
+  analyse(e, left, right, style, reference);
   const profile = profileBytes(e);
   const n = e.master_apply();
   if (n <= 0) throw new Error(`master_apply failed: ${lastError(e)}`);

@@ -113,6 +113,8 @@ target_link_libraries(transition_pattern_test PRIVATE aw_fx)
 # Matchering mastering port (legacy JUCE matchering -> portable C++; audio/Matchering.h).
 # KISS FFT (vendor/kissfft, BSD-3-Clause) is compiled into each target that masters.
 add_executable(casperaki_master src/main_master.cpp vendor/kissfft/kiss_fft.c)
+# A mastering reference's data (as Atemlos's), for casperaki_master's optional reference file.
+add_executable(casperaki_master_reference src/main_reference.cpp vendor/kissfft/kiss_fft.c)
 add_executable(matchering_test test/matchering_test.cpp vendor/kissfft/kiss_fft.c)
 
 enable_testing()

@@ -383,9 +383,23 @@ inline std::vector<float> firCoefficients(const std::vector<Piece>& targetPieces
 
 } // namespace detail
 
+// The reference a song is mastered towards: its match RMS, its peak, and the average FFT of its loudest mid / side
+// pieces (4096 bins, magnitude and phase interleaved). Atemlos (compiled in) unless a genre names another
+// (casperaki_master_reference makes the data the same way; docs/superpowers/specs/2026-11-28-genre-recipes-design.md).
+struct Reference {
+    const float* midAverageFft;
+    const float* sideAverageFft;
+    float rms;
+    float peak;
+};
+inline Reference atemlosReference() {
+    return {atemlos::kMidAverageFft, atemlos::kSideAverageFft, atemlos::kRmsValue, atemlos::kReferencePeak};
+}
+
 // Step 1: whole-song analysis. `song` must be stereo at 44.1 kHz and at least 15 s long
 // (run ensureMinimumLength first, as masterSongAtemlos does).
-inline MasteringProfile analyze(const AudioBuffer& song, double sampleRate, Style style) {
+inline MasteringProfile analyze(const AudioBuffer& song, double sampleRate, Style style,
+                                const Reference& reference = atemlosReference()) {
     if (sampleRate != kSampleRate)
         throw std::invalid_argument("matchering: only 44100 Hz is supported (the original is locked to it), got " +
                                     std::to_string(sampleRate));
@@ -413,11 +427,11 @@ inline MasteringProfile analyze(const AudioBuffer& song, double sampleRate, Styl
 
     // --- SERGREE stage 1: matchLevels (M.h:223) ---
     // finalAmplitudeCoefficient = normalizeAudioBuffer(reference, false) (M.h:227).
-    p.finalGain = detail::normalizationCoefficient(atemlos::kReferencePeak);
+    p.finalGain = detail::normalizationCoefficient(reference.peak);
     std::vector<float> mid, side;
     detail::midAndSide(song, mid, side);
     p.targetMatchRms = detail::analyzeLevelsForMatchRms(mid);  // M.h:254
-    p.referenceMatchRms = atemlos::kRmsValue;                   // M.h:257
+    p.referenceMatchRms = reference.rms;                        // M.h:257
     p.rmsCoefficient = p.referenceMatchRms / p.targetMatchRms;  // M.h:259
     const int segmentLengthInSamples = kSampleRate * kPieceSeconds;  // M.h:120
     std::vector<detail::Piece> midPieces = detail::loudestSegmentsAboveAverageRms(mid, segmentLengthInSamples);
@@ -429,8 +443,8 @@ inline MasteringProfile analyze(const AudioBuffer& song, double sampleRate, Styl
 
     // --- SERGREE stage 2: matchFrequencies (M.h:1350), the filter design part ---
     dsp::RealFft fft(12);  // M.h:116 fft (log2 (fftSize))
-    p.midFir = detail::firCoefficients(midPieces, atemlos::kMidAverageFft, fft);
-    p.sideFir = detail::firCoefficients(sidePieces, atemlos::kSideAverageFft, fft);
+    p.midFir = detail::firCoefficients(midPieces, reference.midAverageFft, fft);
+    p.sideFir = detail::firCoefficients(sidePieces, reference.sideAverageFft, fft);
 
     // M.h:1290 convolveMono covers blocks with start < numFrames - 4096.
     int covered = 0;

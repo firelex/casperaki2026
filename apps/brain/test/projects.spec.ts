@@ -2,7 +2,7 @@
 // jobs. The render pipeline runs against stand-in executables so the test
 // exercises the job lifecycle and file serving without the native engine.
 
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -51,9 +51,12 @@ for(let i=0;i<400;i++)b.writeInt16LE(Math.round(8000*Math.sin(i/5)),44+i*2);requ
   // args: -y -hide_banner -loglevel error -i <in> ... <out>
   writeFileSync(ffmpeg, '#!/bin/sh\nfor last; do :; done\ncp "$6" "$last"\n');
   chmodSync(ffmpeg, 0o755);
-  // stand-in matchering: <in> <out> <style> -> copies in to out
+  // stand-in matchering: <in> <out> <style> [reference.json] -> copies in to out, noting the reference it was given
   const matchering = join(dir, 'matchering.sh');
-  writeFileSync(matchering, '#!/bin/sh\n[ "$3" = sergree ] || exit 9\ncp "$1" "$2"\n');
+  writeFileSync(matchering, `#!/bin/sh\n[ "$3" = sergree ] || exit 9\necho "$4" >> ${join(dir, 'references.log')}\ncp "$1" "$2"\n`);
+  const references = join(dir, 'mastering-references');
+  mkdirSync(references, { recursive: true });
+  writeFileSync(join(references, 'your-love-is-my-drug.json'), '{}');
   chmodSync(matchering, 0o755);
   return new RenderService({
     masteringBin: matchering,
@@ -63,6 +66,7 @@ for(let i=0;i<400;i++)b.writeInt16LE(Math.round(8000*Math.sin(i/5)),44+i*2);requ
     stubSamplesDir: dir,
     sampleLibraryRoot: dir,
     mix: false,
+    masteringReferencesDir: references,
     ffmpegBin: ffmpeg,
     nodeBin: process.execPath,
   });
@@ -201,6 +205,25 @@ describe('projects', () => {
 });
 
 describe('per-song render', () => {
+  it('masters a genre recipe towards its own reference (Casperaki Pop), every other genre towards Atemlos', async () => {
+    const renders = fakeRenderService();
+    const h = await boot(renders);
+    try {
+      const pop = (await generate(h, { genre: 'casperakiPop', bpm: 120 })).id;
+      await fetch(`${h.url}/api/songs/${pop}/render`, { method: 'POST' });
+      expect(await waitForRender(h, pop)).toMatchObject({ state: 'done' });
+      const dance = (await generate(h, { seed: 'other' })).id;
+      await fetch(`${h.url}/api/songs/${dance}/render`, { method: 'POST' });
+      expect(await waitForRender(h, dance)).toMatchObject({ state: 'done' });
+      const refs = (renders as unknown as { config: { masteringReferencesDir: string } }).config.masteringReferencesDir;
+      const log = readFileSync(join(refs, '..', 'references.log'), 'utf8').split('\n');
+      expect(log[0]).toMatch(/mastering-references\/your-love-is-my-drug\.json$/u);
+      expect(log[1]).toBe('');
+    } finally {
+      await h.stop();
+    }
+  });
+
   it('runs the pipeline and serves mp3, wav and peaks', async () => {
     const h = await boot(fakeRenderService());
     try {

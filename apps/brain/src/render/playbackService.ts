@@ -21,7 +21,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFile
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import { commitAndPush } from '../git.js';
-import { runLogged } from './renderService.js';
+import { masteringReferenceOf, runLogged } from './renderService.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -42,6 +42,9 @@ export interface PlaybackServiceConfig {
   /** Sung vocal takes (BRAIN_VOCAL_TAKES_DIR): handed to the lowering as CASPERAKI_VOCAL_TAKES_DIR; take files
    *  are served only from inside it. */
   readonly vocalTakesDir?: string;
+  /** Genre recipes' mastering references (renderService.ts masteringReferenceOf): a recipe song's is handed to the
+   *  browser engine, so it masters live as the server render does. */
+  readonly masteringReferencesDir: string;
 }
 
 export interface Envelope {
@@ -138,6 +141,11 @@ export class PlaybackService {
   private mixText: string;
 
   /** mix-config.json text (the standard mix), for the browser engine. */
+  /** Genre recipes' mastering references (the playback payload hands a recipe song's to the browser). */
+  get masteringReferencesDir(): string {
+    return this.config.masteringReferencesDir;
+  }
+
   get mixConfig(): string {
     return this.mixText;
   }
@@ -520,4 +528,13 @@ function loweringFingerprint(emitScript: string, sampleLibraryRoot: string): str
     for (const f of files) h.update(f).update(readFileSync(join(dist, f)));
   }
   return h.digest('hex').slice(0, 12);
+}
+
+const references = new Map<string, unknown>();
+/** The mastering reference of a song's genre recipe (the browser engine masters towards it), or undefined (Atemlos). */
+export function masteringReferenceData(songJson: string, dir: string): unknown {
+  const path = masteringReferenceOf(songJson, dir);
+  if (path === undefined) return undefined;
+  if (!references.has(path)) references.set(path, JSON.parse(readFileSync(path, 'utf8')));
+  return references.get(path);
 }

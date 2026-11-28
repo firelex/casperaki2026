@@ -211,6 +211,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           ffmpegBin: config.ffmpegBin,
           nodeBin: process.execPath,
           masteringBin: resolve(config.masteringBin),
+          masteringReferencesDir: resolve(config.masteringReferencesDir),
           ...(config.vocalTakesDir ? { vocalTakesDir: config.vocalTakesDir } : {}),
         })
       : undefined);
@@ -271,6 +272,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           stubSamplesDir: resolve(config.renderStubSamplesDir),
           mixConfigPath: requireMixConfig(config.mixConfigPath),
           ...(config.vocalTakesDir ? { vocalTakesDir: config.vocalTakesDir } : {}),
+          masteringReferencesDir: resolve(config.masteringReferencesDir),
         })
       : undefined);
 

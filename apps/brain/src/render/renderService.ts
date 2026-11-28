@@ -30,6 +30,8 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { genreRecipe, SongGenreSchema } from '@casperaki/song-schema';
+
 import { hasYue2Take, VOCALS_CREDIT } from '../export/vocalsCredit.js';
 
 /** Fixed level change before encoding an MP3 (the WAVs are unchanged): MP3 encoding overshoots
@@ -67,8 +69,10 @@ export interface RenderServiceConfig {
   readonly mix: boolean;
   readonly ffmpegBin: string;
   readonly nodeBin: string;
-  /** casperaki_master: <in.wav> <out.wav> <sergree|boost>. */
+  /** casperaki_master: <in.wav> <out.wav> <sergree|boost> [reference.json]. */
   readonly masteringBin: string;
+  /** Where genre recipes' mastering references are (`<name>.json`, casperaki_master_reference's output). */
+  readonly masteringReferencesDir: string;
   /** Sung vocal takes (BRAIN_VOCAL_TAKES_DIR), handed to the lowering as CASPERAKI_VOCAL_TAKES_DIR. */
   readonly vocalTakesDir?: string;
 }
@@ -248,7 +252,9 @@ export class RenderService {
       await this.lowerAndRender(dir, unmastered, (step) => this.set({ ...base, state: 'running', step, startedAt }));
 
       this.set({ ...base, state: 'running', step: 'master', startedAt });
-      await runLogged(c.masteringBin, [unmastered, mastered, 'sergree'], env, join(dir, 'master.log'), MASTER_TIMEOUT_MS);
+      // A genre recipe may master towards its own reference (Casperaki Pop); every other song towards Atemlos.
+      const reference = masteringReferenceOf(readFileSync(join(dir, 'song-in.json'), 'utf8'), c.masteringReferencesDir);
+      await runLogged(c.masteringBin, [unmastered, mastered, 'sergree', ...(reference ? [reference] : [])], env, join(dir, 'master.log'), MASTER_TIMEOUT_MS);
       if (!existsSync(mastered)) {
         throw new Error('mastering exited cleanly but wrote no out.wav (see master.log)');
       }
@@ -303,4 +309,16 @@ export function runLogged(
 export function mp3EncodeArgs(wav: string, mp3: string, headroomDb: number, canonical: string): string[] {
   const credit = hasYue2Take(canonical) ? ['-metadata', `comment=${VOCALS_CREDIT}`] : [];
   return ['-y', '-hide_banner', '-loglevel', 'error', '-i', wav, '-af', `volume=${headroomDb}dB`, '-codec:a', 'libmp3lame', '-q:a', '2', ...credit, mp3];
+}
+
+/** The mastering reference file of a song's genre recipe, or undefined to master towards Atemlos. Throws when the
+ *  recipe names a reference whose file is missing. */
+export function masteringReferenceOf(songJson: string, dir: string): string | undefined {
+  const genre = (JSON.parse(songJson) as { genre?: unknown }).genre;
+  if (typeof genre !== 'string' || !SongGenreSchema.safeParse(genre).success) return undefined;
+  const name = genreRecipe(genre)?.masteringReference;
+  if (name === undefined) return undefined;
+  const path = resolve(dir, `${name}.json`);
+  if (!existsSync(path)) throw new Error(`the ${genre} mastering reference "${name}" is missing: expected ${path} (make it with casperaki_master_reference)`);
+  return path;
 }

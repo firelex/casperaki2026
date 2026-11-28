@@ -29,6 +29,16 @@ export interface PlaybackPayload {
   readonly standardRackChains: MixConfigJson['rackChains'];
   /** The song version: its text and the mix config it plays with (the brain's render/songVersion.ts). */
   readonly versionKey: string;
+  /** A genre recipe's mastering reference (Casperaki Pop), mastered towards instead of Atemlos. */
+  readonly masteringReference?: MasteringReference;
+}
+
+/** A mastering reference (the brain's data/mastering-references, casperaki_master_reference's output). */
+export interface MasteringReference {
+  readonly rms: number;
+  readonly peak: number;
+  readonly mid: readonly number[];
+  readonly side: readonly number[];
 }
 
 export const playbackApi = {

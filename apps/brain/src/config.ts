@@ -63,6 +63,8 @@ const ConfigSchema = z.object({
   /** The engine's mastering CLI (casperaki_master, the JUCE-free port of the legacy
    *  mastering; docs/67 #1) that masters exports. */
   masteringBin: z.string().default('../web/wasm/engine/build/casperaki_master'),
+  /** Genre recipes' mastering references (<name>.json, in the repo). */
+  masteringReferencesDir: z.string().default('./data/mastering-references'),
   // --- In-browser playback (docs/60) ---
   playbackDir: z.string().default('./data/playback'),
   sampleCacheDir: z.string().default('./data/sample-cache'),
@@ -154,6 +156,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     renderMix: env.BRAIN_RENDER_MIX,
     ffmpegBin: env.FFMPEG_BIN,
     masteringBin: env.BRAIN_MASTERING_BIN,
+    masteringReferencesDir: env.BRAIN_MASTERING_REFERENCES_DIR,
     playbackDir: env.BRAIN_PLAYBACK_DIR,
     sampleCacheDir: env.BRAIN_SAMPLE_CACHE_DIR,
     melodyEditsPath: env.BRAIN_MELODY_EDITS_PATH,

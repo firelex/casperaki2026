@@ -133,6 +133,11 @@ struct State {
     matchering::MasteringProfile profile;
     bool haveProfile = false;
     std::vector<uint8_t> profileBytes;
+    // A genre recipe's mastering reference (master_set_reference), used by master_analyze instead of Atemlos until
+    // master_clear_reference (docs/superpowers/specs/2026-11-28-genre-recipes-design.md).
+    bool haveReference = false;
+    std::vector<float> referenceMid, referenceSide;
+    float referenceRms = 0.0f, referencePeak = 0.0f;
 };
 
 State& state() {
@@ -760,8 +765,11 @@ int master_analyze(const float* left, const float* right, int frames, int style)
         std::memcpy(s.masterSong.getWritePointer(0), left, sizeof(float) * (size_t)frames);
         std::memcpy(s.masterSong.getWritePointer(1), right, sizeof(float) * (size_t)frames);
         matchering::ensureMinimumLength(s.masterSong, matchering::kSampleRate, matchering::kMinLengthSeconds);
+        const matchering::Reference reference = s.haveReference
+            ? matchering::Reference{s.referenceMid.data(), s.referenceSide.data(), s.referenceRms, s.referencePeak}
+            : matchering::atemlosReference();
         s.profile = matchering::analyze(s.masterSong, matchering::kSampleRate,
-                                        style == 0 ? matchering::Style::Sergree : matchering::Style::BoostAndLimit);
+                                        style == 0 ? matchering::Style::Sergree : matchering::Style::BoostAndLimit, reference);
         s.profileBytes = serializeProfile(s.profile);
         s.haveProfile = true;
         return s.masterSong.getNumSamples();
@@ -769,6 +777,33 @@ int master_analyze(const float* left, const float* right, int frames, int style)
         setError(s, 7, std::string("master_analyze: ") + e.what());
         return 0;
     }
+}
+
+// The reference the next master_analyze masters towards (casperaki_master_reference's data: 8192 mid and side values,
+// magnitude and phase interleaved, its match RMS and peak), until master_clear_reference. Returns 1, or 0 on error.
+int master_set_reference(const float* mid, const float* side, float rms, float peak) {
+    State& s = state();
+    s.lastError = 0;
+    s.lastErrorMessage.clear();
+    if (!(rms > 0.0f) || !(peak > 0.0f)) {
+        setError(s, 7, "master_set_reference: the reference's rms and peak must be positive");
+        return 0;
+    }
+    const size_t n = (size_t)matchering::kFftSize * 2;
+    s.referenceMid.assign(mid, mid + n);
+    s.referenceSide.assign(side, side + n);
+    s.referenceRms = rms;
+    s.referencePeak = peak;
+    s.haveReference = true;
+    return 1;
+}
+
+// Back to Atemlos.
+void master_clear_reference() {
+    State& s = state();
+    s.haveReference = false;
+    s.referenceMid.clear();
+    s.referenceSide.clear();
 }
 
 // The last analysed profile, serialised (null / -1 when there is none).
