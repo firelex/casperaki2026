@@ -7,7 +7,7 @@ set -eu
 cd "$(dirname "$0")"
 uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python torch torchaudio --index-url https://download.pytorch.org/whl/cu128
-uv pip install --python .venv/bin/python diffusers transformers accelerate soundfile sentencepiece
+uv pip install --python .venv/bin/python diffusers transformers accelerate soundfile sentencepiece torchsde
 HF_TOKEN="$(cat "$HOME/.cache/huggingface/token")" .venv/bin/python - <<'PY'
 import os
 from huggingface_hub import snapshot_download
