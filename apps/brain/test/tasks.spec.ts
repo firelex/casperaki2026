@@ -194,9 +194,9 @@ function rapModel(): ChatModel {
   const pool = [
     'I hit the street, I feel the beat tonight',
     'I never stop, I keep it burning bright',
-    'We ride together and we never fall',
+    'We ride, we glide, together, never fall',
     'We hear the calling and we give it all',
-    'The neon glowing on the rainy road',
+    'The neon glowing, slowing on the road',
     'We keep on flowing and we drop the load',
     'My heart a drum that beats inside my chest',
     'I start to run, I never take a rest',

@@ -19,10 +19,14 @@ export interface RapDensity {
   readonly barsPerLine: number;
   readonly syllables: readonly [number, number];
   readonly most: readonly [number, number];
+  /** Rhymes every couplet needs inside it, besides its end rhyme. */
+  readonly inlineRhymes: number;
 }
 /** A short line per bar, 8 to 11 syllables (owner 2026-11-28: a line per two bars was "a tad slow"; the 8-line verse
  *  he chose had 9 to 11 syllables a line, 79 in all, and "too many words" when a verse had 11 to 16, 102 in all). */
-export const RAP_DENSITY: RapDensity = { barsPerLine: RAP_BARS_PER_LINE, syllables: [8, 11], most: [9, 11] };
+export const RAP_DENSITY: RapDensity = { barsPerLine: RAP_BARS_PER_LINE, syllables: [8, 11], most: [9, 11], inlineRhymes: 2 };
+// Two rhymes inside every couplet (owner 2026-11-28, of a verse with about one: "more a classic rap, more inline rhymes
+// would be good but length is good"): the short lines (`syllables`) keep it from running over.
 
 export interface RapWordsRequest {
   readonly density: RapDensity;
@@ -53,7 +57,7 @@ function brief(r: RapWordsRequest): string {
     '- A bouncing, syncopated rhythm: mix one-syllable words with longer ones and let the stresses of the words fall in uneven places. Avoid the even, sing-song rhythm of a nursery rhyme or a pop chorus.',
     `- Every line takes ${barsText(r.density.barsPerLine)} of music, so it has ${r.density.syllables[0]} to ${r.density.syllables[1]} syllables, most of them ${r.density.most[0]} to ${r.density.most[1]}. Count them: a longer line will not fit.`,
     '- Lines rhyme in pairs: line 2 rhymes with line 1, line 4 with line 3, and so on (near rhymes are fine, as in real rap).',
-    '- Internal rhymes: besides the rhymes at the ends of the lines, put one or two rhyming words inside each pair of lines, in the middle of a line or across the two lines. Rhymes of two or more syllables are best (for example "pocket" and "rocket", or "on the floor" and "wanting more"). Do not stuff every phrase with rhymes: the lines must still be easy to say fast and make sense.',
+    `- Inline rhymes, many of them: besides the rhymes at the ends of the lines, put at least ${r.density.inlineRhymes} rhymes inside each pair of lines: words in the middle of the lines that rhyme with each other or with the end words, as in "No sleep, in deep, the city lights / On repeat, the beat, we own the nights". Rhymes of two or more syllables are best (for example "pocket" and "rocket", or "on the floor" and "wanting more"). Keep the lines short and saying something: the syllable count above still holds.`,
     '- Wordplay, concrete images and punchlines, said with confidence in the first person. No filler sounds such as "oh", "yeah" or "la", and no long held vowels.',
     '- Plain, modern, conversational words with attitude: contractions and everyday slang where they fit. Clean: no swearing, no slurs, nothing hateful.',
     '- Use only common English words that are in a dictionary: no made-up words, no numbers written as digits, no sound effects like "skrrt".',
@@ -68,27 +72,28 @@ const norm = (w: string) => w.toLowerCase().replace(/[‘’`]/gu, "'").replace(
 /** Small words that rhyme with everything and say nothing: not counted as internal rhymes. */
 const SMALL = new Set(['the', 'and', 'you', 'your', 'are', 'was', 'for', 'with', 'that', 'this', 'from', 'they', 'them', 'she', 'her', 'his', 'its', "it's", 'our', 'but', 'not', 'can', 'will', 'just', 'then', 'than', 'when', 'what', 'who', 'how', 'out', 'into', "i'm", 'all', 'too', 'any', 'one']);
 
-/** Whether a couplet has a rhyme inside it: two words of its lines that rhyme, other than its two end words with each
- *  other (a word inside a line rhyming with an end word counts). */
-export function hasInternalRhyme(a: string, b: string): boolean {
+/** The rhymes inside a couplet: pairs of words of its lines that rhyme, other than its two end words with each other
+ *  (a word inside a line rhyming with an end word counts). */
+export function internalRhymes(a: string, b: string): number {
   const words = (line: string) => wordsOf(line).map(norm).filter(Boolean);
   const wa = words(a);
   const wb = words(b);
   const all = [...wa.map((w, i) => ({ w, end: i === wa.length - 1 })), ...wb.map((w, i) => ({ w, end: i === wb.length - 1 }))]
     .filter((x) => x.w.length >= 3 && !SMALL.has(x.w) && pronounce(x.w));
+  let n = 0;
   for (let i = 0; i < all.length; i++) {
     for (let j = i + 1; j < all.length; j++) {
       const x = all[i]!;
       const y = all[j]!;
       if ((x.end && y.end) || x.w === y.w) continue;
-      if (wordsRhyme(x.w, y.w)) return true;
+      if (wordsRhyme(x.w, y.w)) n++;
     }
   }
-  return false;
+  return n;
 }
 
 /** What is wrong with one part's lines (empty when they are fine), for the model. */
-export function rapProblems(lines: readonly string[], count: number, syllables: readonly [number, number]): string[] {
+export function rapProblems(lines: readonly string[], count: number, syllables: readonly [number, number], inline: number): string[] {
   if (lines.length !== count) return [`It needs exactly ${count} lines, but ${lines.length} were written.`];
   const out: string[] = [];
   lines.forEach((line, i) => {
@@ -111,8 +116,13 @@ export function rapProblems(lines: readonly string[], count: number, syllables: 
     if (!a || !b || !pronounce(a) || !pronounce(b)) continue;
     if (a === b) out.push(`Lines ${i + 1} and ${i + 2} both end on "${a}": end them on two different words that rhyme.`);
     else if (!wordsRhyme(a, b)) out.push(`Lines ${i + 1} and ${i + 2} must rhyme, but "${a}" and "${b}" do not. Rewrite one or both so they end on rhyming words.`);
-    else if (!hasInternalRhyme(lines[i]!, lines[i + 1]!)) {
-      out.push(`Lines ${i + 1} and ${i + 2} have no rhyme inside them, only at their ends. Rap needs internal rhymes: put a word in the middle of a line that rhymes with another word of the two lines.`);
+    else {
+      const n = internalRhymes(lines[i]!, lines[i + 1]!);
+      if (n === 0) {
+        out.push(`Lines ${i + 1} and ${i + 2} have no rhyme inside them, only at their ends. Rap needs internal rhymes: put words in the middle of the lines that rhyme with other words of the two lines (${inline} at least).`);
+      } else if (n < inline) {
+        out.push(`Lines ${i + 1} and ${i + 2} have ${n} rhyme inside them; they need ${inline}: put more words in the middle of the lines that rhyme with other words of the two lines, keeping the lines as short.`);
+      }
     }
   }
   return out;
@@ -152,7 +162,7 @@ export async function writeRapWords(model: ChatModel, r: RapWordsRequest): Promi
       messages.push({ role: 'assistant', content: text }, { role: 'user', content: `${parsed} Answer again, as JSON in exactly the form asked for.` });
       continue;
     }
-    const problems = r.sections.flatMap((s) => rapProblems(parsed[s.name]!, s.lines, r.density.syllables).map((p) => `- ${s.label}: ${p}`));
+    const problems = r.sections.flatMap((s) => rapProblems(parsed[s.name]!, s.lines, r.density.syllables, r.density.inlineRhymes).map((p) => `- ${s.label}: ${p}`));
     const seen = new Set<string>();
     for (const s of r.sections) {
       for (const l of parsed[s.name]!) {
