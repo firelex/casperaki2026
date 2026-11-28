@@ -84,9 +84,10 @@ describe('the timeline', () => {
     expect(t.durationSeconds).toBeCloseTo(t.segments.at(-1)!.endSeconds, 6);
     expect(t.scriptTaskId).toBe('task-1');
   });
-  it('gives the stage door the whole entrance music', () => {
+  it('starts the fanfare half a second early and has the first judge talk over its last 1.5 s', () => {
     const door = t.segments[1]!;
-    expect(door.endSeconds - door.startSeconds).toBeCloseTo(14.544, 6);
+    expect(door.endSeconds - door.startSeconds).toBeCloseTo(14.544 - 1.5, 6);
+    expect(t.doorMusic).toEqual({ startSeconds: door.startSeconds - 0.5, seconds: 14.544 });
   });
   it('performs the song to the end of its first chorus (not the pre-chorus), then fades 3 s', () => {
     const perf = t.segments[3]!;

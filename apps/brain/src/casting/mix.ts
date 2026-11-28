@@ -49,8 +49,8 @@ export function pickFor(files: readonly string[], key: string, what: string): st
 
 /** The backstage music's level under the narration. */
 const MUSIC_GAIN = 0.5;
-/** The backstage music runs this far into the fanfare, fading out under it. */
-const MUSIC_CROSSFADE = 0.3;
+/** The backstage music fades out under the fanfare over this long, from the fanfare's start. */
+const MUSIC_CROSSFADE = 1;
 /** The narrator sits into the music rather than cutting through it (the owner: "too compressed, cuts a tad too much
  *  through"): about 3 dB down, the music ducking gently under it. */
 const NARRATION_GAIN = 0.7;
@@ -131,12 +131,13 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   for (const n of narration) graph.push(`[${n}]asplit=2[${n}a][${n}b]`);
   // The backstage music plays at full level up to the fanfare and crosses into it (no dip before the stage door).
   const musicLen = backstage.endSeconds - backstage.startSeconds;
-  graph.push(`[0:a]${stereo},atrim=0:${(musicLen + MUSIC_CROSSFADE).toFixed(3)},volume=${MUSIC_GAIN},afade=t=out:st=${musicLen.toFixed(3)}:d=${MUSIC_CROSSFADE}[poised]`);
+  const fadeAt = timeline.doorMusic.startSeconds - backstage.startSeconds;
+  graph.push(`[0:a]${stereo},atrim=0:${(fadeAt + MUSIC_CROSSFADE).toFixed(3)},volume=${MUSIC_GAIN},afade=t=out:st=${fadeAt.toFixed(3)}:d=${MUSIC_CROSSFADE}[poised]`);
   if (narration.length > 0) {
     graph.push(`${narration.map((n) => `[${n}b]`).join('')}amix=inputs=${narration.length}:normalize=0[duck]`);
     graph.push('[poised][duck]sidechaincompress=threshold=0.05:ratio=3:attack=30:release=600[music]');
   } else graph.push('[poised]anull[music]');
-  graph.push(`[1:a]${stereo},atrim=0:${(door.endSeconds - door.startSeconds).toFixed(3)},adelay=${ms(door.startSeconds)}:all=1[door]`);
+  graph.push(`[1:a]${stereo},atrim=0:${timeline.doorMusic.seconds.toFixed(3)},adelay=${ms(timeline.doorMusic.startSeconds)}:all=1[door]`);
   const { songToSeconds, fadeSeconds, videoStartSeconds } = timeline.performance;
   graph.push(`[2:a]${stereo},atrim=0:${(songToSeconds + fadeSeconds).toFixed(3)},afade=t=out:st=${songToSeconds.toFixed(3)}:d=${fadeSeconds},adelay=${ms(videoStartSeconds)}:all=1[song]`);
   // The applause rises as the song fades and dies away once the first verdict comes in over it.

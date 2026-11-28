@@ -244,7 +244,10 @@ export async function writeScript(
               `${sceneText(scene, facts, outcome, votes)}\n\nThe scene's beats: ${plan.beats.join('; ')}.\n\n` +
               (scene === 'verdicts' && turn.speaker !== 'narrator' && turn.speaker !== 'singer'
                 ? `${who}'s vote is ${votes[turn.speaker].toUpperCase()}: everything ${who} says in this scene must fit that vote; if the turn's purpose below does not fit it, follow the vote. ` +
-                  (turn.vote ? `This is your vote turn: say plainly, with the word "${votes[turn.speaker]}", that ${who}'s vote is ${votes[turn.speaker]}. ` : '')
+                  (turn.vote
+                    ? `This is your vote turn: say plainly, with the word "${votes[turn.speaker]}", that ${who}'s vote is ${votes[turn.speaker]}. ` +
+                      'Say the vote with conviction, like a TV judge sending someone through or not: a yes excited and warm, a no firm; never offhand. Make the delivery note say so. '
+                    : '')
                 : '') +
               `Write ${who}'s next line: what this turn is for is "${intent}". Keep it to about ${budget} words, never more than ` +
               `${budget * 2}; one or two sentences, as people really talk; react to what was just said. Never read out numbers such ` +

@@ -27,6 +27,9 @@ export interface CastingTimeline {
   readonly scriptTaskId: string;
   /** Where the applause starts: as the song begins to fade. */
   readonly applauseStartSeconds: number;
+  /** The fanfare: from half a second before the stage door (no gap after the backstage music), for its whole audible
+   *  length (the first judge talks over its last FANFARE_OVERLAP seconds). */
+  readonly doorMusic: { readonly startSeconds: number; readonly seconds: number };
 }
 
 /** Pauses between two lines of one segment, varied so the talk does not tick like a clock (the owner: "they speak
@@ -59,6 +62,10 @@ export const PERFORMANCE_LEAD = 1;
 export const PERFORMANCE_FADE = 3;
 /** The applause has this long on its own before the first verdict line comes in over it. */
 export const APPLAUSE_LEAD = 2.5;
+/** The fanfare starts this long before the stage door, over the backstage music's fade (no break between them). */
+export const FANFARE_EARLY = 0.5;
+/** The first judge starts talking this long before the fanfare ends (the owner: "the judges' intro could come earlier"). */
+export const FANFARE_OVERLAP = 1.5;
 /** The video ends this long after the last verdict. */
 export const END_TAIL = 1.5;
 
@@ -104,11 +111,13 @@ export function layOut(args: {
     t += tail;
     segments.push({ kind: SEGMENT_OF[scene], startSeconds: start, endSeconds: t });
   };
+  let doorStart = 0;
   for (const scene of SCENES) {
     if (scene === 'backstage') {
       speak('backstage', MUSIC_LEAD, AIR);
-      segments.push({ kind: 'door', startSeconds: t, endSeconds: t + args.entranceSeconds });
-      t += args.entranceSeconds;
+      doorStart = t;
+      segments.push({ kind: 'door', startSeconds: t, endSeconds: t + args.entranceSeconds - FANFARE_OVERLAP });
+      t += args.entranceSeconds - FANFARE_OVERLAP;
     } else if (scene === 'banter') {
       // The judge speaks the moment the fanfare ends.
       speak('banter', 0, AIR);
@@ -125,5 +134,6 @@ export function layOut(args: {
     performance: { songFromSeconds: 0, songToSeconds: songTo, fadeSeconds: PERFORMANCE_FADE, videoStartSeconds: perf.startSeconds + PERFORMANCE_LEAD },
     scriptTaskId: args.scriptTaskId,
     applauseStartSeconds: perf.startSeconds + PERFORMANCE_LEAD + songTo,
+    doorMusic: { startSeconds: doorStart - FANFARE_EARLY, seconds: args.entranceSeconds },
   };
 }

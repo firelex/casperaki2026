@@ -204,6 +204,8 @@ describe('the writer', () => {
     expect(bob[0]!.content).not.toMatch(/funniest person/);
     const verdictLine = calls.find((c) => c[0]!.content.includes('This is your vote turn'))!;
     expect(verdictLine[0]!.content).toMatch(/Never refer to a judge's vote before that judge has said it/);
+    // Votes are given decisively, not nonchalantly (the owner).
+    expect(verdictLine[0]!.content).toMatch(/Say the vote with conviction/);
   });
   it('refuses an empty line or an unknown gesture, naming the turn', async () => {
     await expect(run(fakeModel({ turn: (n) => (n === 7 ? { text: ' ', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/banter, turn 2/);
