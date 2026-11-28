@@ -147,6 +147,8 @@ const CastingOptionsSchema = z
     singerName: z.string().min(1),
     singerDescription: z.string().nullable(),
     avatarName: z.string().min(1),
+    /** The singer's back story as the user wrote it; absent: the narrator makes one up. */
+    backstory: z.string().min(1).max(1200).optional(),
   })
   .strict();
 export const CASTING_NOT_SET_UP = "Casting scripts are not set up: the brain needs the assistant's language model (ASSISTANT_LLM_URL) and BRAIN_SINGERS_DATA_DIR.";
@@ -422,7 +424,7 @@ export class BackgroundTasks {
 
   /** Starts writing a casting script for the owner's song, performed by one of their avatars (its singer must have
    *  sung the song's latest finished Sing), with the outcome the user chose. */
-  startCastingScript(ownerId: string, songId: string, start: { avatarId: unknown; outcome: unknown }): TaskRow {
+  startCastingScript(ownerId: string, songId: string, start: { avatarId: unknown; outcome: unknown; backstory?: unknown }): TaskRow {
     const c = this.deps.casting;
     if (!c) throw new TaskError(503, 'no_casting', CASTING_NOT_SET_UP);
     const { store } = this.deps;
@@ -448,7 +450,11 @@ export class BackgroundTasks {
     if (castNames().includes(singer.name.trim().toLowerCase())) {
       throw new TaskError(400, 'name_clash', `The singer is called "${singer.name}", like someone in the casting cast (the narrator and the judges Ice, Nicky, Love and Bob): rename the singer first.`);
     }
-    const options = CastingOptionsSchema.parse({ avatarId: avatar.id, outcome: outcome.data, title: project.title, singerName: singer.name, singerDescription: singer.description, avatarName: avatar.name });
+    if (start.backstory !== undefined && (typeof start.backstory !== 'string' || start.backstory.length > 1200)) {
+      throw new TaskError(400, 'invalid_backstory', 'The back story must be text of at most 1200 characters.');
+    }
+    const backstory = typeof start.backstory === 'string' && start.backstory.trim() ? start.backstory.trim() : undefined;
+    const options = CastingOptionsSchema.parse({ avatarId: avatar.id, outcome: outcome.data, title: project.title, singerName: singer.name, singerDescription: singer.description, avatarName: avatar.name, ...(backstory ? { backstory } : {}) });
     const id = randomUUID();
     store.insertTask({ id, ownerId, songId, kind: 'castingScript', input: stored.canonical, startedAt: this.deps.clock(), options });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
@@ -991,7 +997,7 @@ export class BackgroundTasks {
       const { store, events, clock } = this.deps;
       const o = CastingOptionsSchema.parse(task.options);
       const song = parseSong(JSON.parse(task.input));
-      const facts = castingFacts(song, o.title, { name: o.singerName, description: o.singerDescription }, o.avatarName);
+      const facts = castingFacts(song, o.title, { name: o.singerName, description: o.singerDescription }, o.avatarName, o.backstory ?? null);
       const labels: Record<SceneId, string> = { backstage: 'Backstage (narrator)', banter: 'The judges meet the singer', verdicts: 'The verdicts' };
       const lines: Record<SceneId, number> = { backstage: 0, banter: 0, verdicts: 0 };
       let current: SceneId = 'backstage';

@@ -19,6 +19,8 @@ export interface CastingFacts {
   readonly singerDescription: string | null;
   /** The name of the avatar that performs (the singer's look). */
   readonly avatarName: string;
+  /** The singer's back story as the user wrote it (who they are, who created them, where from), or null. */
+  readonly backstory: string | null;
 }
 
 /** `title`: the project's title (songs keep theirs with the project). */
@@ -27,7 +29,7 @@ export function isChorus(name: string): boolean {
   return /^chorus\b/iu.test(name.trim());
 }
 
-export function castingFacts(song: Song, title: string, singer: { name: string; description: string | null }, avatarName: string): CastingFacts {
+export function castingFacts(song: Song, title: string, singer: { name: string; description: string | null }, avatarName: string, backstory: string | null): CastingFacts {
   const { sections } = songTiming(song);
   const lines = lyricLines(song);
   const chorus = sections.find((s) => isChorus(s.name));
@@ -50,5 +52,6 @@ export function castingFacts(song: Song, title: string, singer: { name: string; 
     singerName: singer.name,
     singerDescription: singer.description,
     avatarName,
+    backstory: backstory?.trim() ? backstory.trim() : null,
   };
 }

@@ -31,9 +31,9 @@ function fakeChat(): ChatModel & { calls: number } {
       const system = messages[0]!.content;
       const line = (extra = '') => JSON.stringify({ text: `Well this is a fine moment for everyone here today and I have to say it really is quite something${extra}.`, delivery: 'warm', gesture: 'nod' });
       if (system.startsWith('You plan')) {
-        if (system.includes('backstage')) return JSON.stringify({ beats: ['b'], turns: Array.from({ length: 5 }, () => ({ speaker: 'Narrator', intent: 'x' })) });
-        if (system.includes('judges react')) return JSON.stringify({ beats: ['v'], turns: ['Ice', 'Bob', 'Nicky', 'Kesha', 'Love', 'Ice'].map((s) => ({ speaker: s, intent: 'votes' })) });
-        return JSON.stringify({ beats: ['t'], turns: ['Bob', 'Ice', 'Love', 'Kesha', 'Nicky', 'Ice'].map((s) => ({ speaker: s, intent: 'talk' })) });
+        if (system.includes('backstage')) return JSON.stringify({ beats: ['b'], turns: Array.from({ length: 5 }, () => ({ speaker: 'Narrator', intent: 'x', words: 20 })) });
+        if (system.includes('yes-or-no round')) return JSON.stringify({ beats: ['v'], turns: ['Ice', 'Bob', 'Nicky', 'Kesha', 'Love', 'Ice'].map((s) => ({ speaker: s, intent: 'votes', words: 12 })) });
+        return JSON.stringify({ beats: ['t'], turns: ['Bob', 'Kesha', 'Ice'].map((s) => ({ speaker: s, intent: 'talk', words: 12 })) });
       }
       const vote = /say plainly, with the word "(yes|no)"/u.exec(system)?.[1];
       return line(vote ? `, ${vote}` : '');

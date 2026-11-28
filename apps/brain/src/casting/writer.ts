@@ -31,10 +31,10 @@ export interface CastingScript {
 }
 
 /** Words a scene may have: its length in the spec at about 2.6 spoken words a second, with room either way. */
-const SCENE_WORDS: Readonly<Record<SceneId, readonly [number, number]>> = { backstage: [50, 160], banter: [40, 150], verdicts: [60, 190] };
+const SCENE_WORDS: Readonly<Record<SceneId, readonly [number, number]>> = { backstage: [60, 170], banter: [12, 90], verdicts: [45, 170] };
 /** The words a scene is planned for. */
-const SCENE_TARGET: Readonly<Record<SceneId, number>> = { backstage: 90, banter: 80, verdicts: 115 };
-const TURNS: Readonly<Record<SceneId, readonly [number, number]>> = { backstage: [4, 7], banter: [6, 12], verdicts: [6, 10] };
+const SCENE_TARGET: Readonly<Record<SceneId, number>> = { backstage: 100, banter: 45, verdicts: 95 };
+const TURNS: Readonly<Record<SceneId, readonly [number, number]>> = { backstage: [4, 7], banter: [2, 6], verdicts: [6, 11] };
 
 const OUTCOME_WORDS: Readonly<Record<Outcome, string>> = {
   fourYes: 'The singer goes through with four yeses.',
@@ -44,7 +44,7 @@ const OUTCOME_WORDS: Readonly<Record<Outcome, string>> = {
 
 const PlanSchema = z.object({
   beats: z.array(z.string().min(1)).min(1),
-  turns: z.array(z.object({ speaker: z.string().min(1), intent: z.string().min(1) })).min(1),
+  turns: z.array(z.object({ speaker: z.string().min(1), intent: z.string().min(1), words: z.number().int().min(2).max(70) })).min(1),
 });
 const TurnSchema = z.object({ text: z.string(), delivery: z.string(), gesture: z.string().optional() });
 
@@ -67,7 +67,7 @@ function names(facts: CastingFacts): Record<Speaker, string> {
 
 function singerProfile(facts: CastingFacts): string {
   return (
-    `The contestant: a singer called ${facts.singerName}, who appears on screen as an animated character named ${facts.avatarName}. ` +
+    `The contestant: a singer called ${facts.singerName} (always call them ${facts.singerName}). ` +
     (facts.singerDescription ? `What the person who added this singer wrote about the voice: "${facts.singerDescription}". ` : '') +
     'Nervous but hopeful, polite, a little funny when relaxed; answers questions briefly and in their own words.'
   );
@@ -86,25 +86,31 @@ function sceneText(scene: SceneId, facts: CastingFacts, outcome: Outcome, votes:
   if (scene === 'backstage') {
     return (
       'The scene: backstage, before the audition. Only the Narrator speaks, over pictures of the contestant getting ready. ' +
-      `Introduce ${n.singer} by name and the song, make the audience care about them and build up to the moment they walk on stage. ` +
+      `Say the name ${n.singer} in the first turn. Tell ${n.singer}'s back story: who they are, who created them, where they come from, what this audition means to them, ` +
+      'and a word about the song. ' +
+      (facts.backstory
+        ? `The back story, from the person who made this singer: "${facts.backstory}". Use it; add colour, but do not contradict it. `
+        : `No back story was given: make up a short, believable one that fits ${n.singer}'s name and voice, and keep it light. `) +
+      'Do not keep saying that they are about to walk on stage (the audience knows): at most the last turn leads into it. ' +
       'Do not reveal how the audition ends.'
     );
   }
   if (scene === 'banter') {
     return (
-      `The scene: ${n.singer} has just walked on stage and stands in front of the judges' desk. The four judges greet them, ` +
-      `banter and tease each other, and ask ${n.singer} at least one question, which ${n.singer} answers. They have not heard the ` +
-      'song yet. The scene ends with a judge inviting the contestant to begin.'
+      `The scene: ${n.singer} has just walked on stage to the judges' desk. It is short: one judge greets ${n.singer} and has a ` +
+      `quick exchange with them (a question and ${n.singer}'s answer); another judge may add one quick aside, but the others stay ` +
+      'quiet. They have not heard the song yet. The scene ends with a judge inviting the contestant to begin.'
     );
   }
   const list = JUDGES.map((j) => `${j.name}: ${votes[j.id]}`).join(', ');
   return (
-    `The scene: ${n.singer} has just sung the song up to the end of its first chorus. The judges react, argue a little and ` +
-    `each gives a verdict. ${OUTCOME_WORDS[outcome]} The votes: ${list}. Every judge must clearly say their own vote in one ` +
-    `of their turns, in their own way. Every turn of a judge fits that judge's vote from their first word: a judge voting ` +
-    'no is unconvinced throughout (kind or harsh, as is their way), never praising the song first and voting no later. ' +
-    `${n.singer} may react once, before the end. The very last turn of the scene is Ice's, ` +
-    'and it gives his vote: nobody speaks after him.'
+    `The scene: ${n.singer} has just sung the song up to the end of its first chorus. ${OUTCOME_WORDS[outcome]} The votes: ${list}. ` +
+    'It has two parts. First, one judge leads and gives the real critique, talking a little longer (two to four sentences) about ' +
+    'specific things in the song; one or two others may react briefly, but not every judge needs to speak here. Then one judge ' +
+    'starts the yes-or-no round, and it is quick: each judge says their vote in a few words, in their own manner. ' +
+    `Every turn of a judge fits that judge's vote: a judge voting no is unconvinced throughout (kind or harsh, as is their way), ` +
+    `never praising the song first and voting no later. ${n.singer} may react once, before the end. The very last turn of the ` +
+    "scene is Ice's, and it gives his vote: nobody speaks after him."
   );
 }
 
@@ -160,11 +166,13 @@ export async function writeScript(
           content:
             `You plan one scene of a script. ${SHOW}\n\n${sceneText(scene, facts, outcome, votes)}\n\n` +
             `Plan the scene's beats (what happens, in order) and its turns: who speaks, in order, and what each turn is for ` +
-            `(its intent, in a few words). Use between ${minTurns} and ${maxTurns} turns, mostly short ones; people may react ` +
-            `to or interrupt each other. The whole scene is about ${SCENE_TARGET[scene]} spoken words in all, so keep it tight. ` +
+            `(its intent, in a few words) and roughly how many words it has. Use between ${minTurns} and ${maxTurns} turns; people ` +
+            `may react to or interrupt each other. The whole scene is about ${SCENE_TARGET[scene]} spoken words in all, so keep it tight. ` +
             `Only these people speak in this scene: ${allowed.join(', ')}. ` +
-            (scene === 'verdicts' ? "Every judge speaks at least once; each judge's last turn is the one where they give their vote, and the last turn of the scene is Ice's. " : '') +
-            `Answer with JSON only: {"beats": ["..."], "turns": [{"speaker": "<one of: ${allowed.join(', ')}>", "intent": "..."}]}.`,
+            (scene === 'verdicts'
+              ? `Every judge speaks at least once; each judge's last turn is the one where they give their vote, and the last turn of the scene is Ice's. ${n.singer} has at most ONE turn in this scene. `
+              : '') +
+            `Answer with JSON only: {"beats": ["..."], "turns": [{"speaker": "<one of: ${allowed.join(', ')}>", "intent": "...", "words": <a whole number>}]}.`,
         },
         { role: 'user', content: `${castText(scene, facts)}\n\n${songText(facts)}\n\nWhat has been said so far in the video:\n${transcript(said, n)}\n\nPlan the scene.` },
       ]),
@@ -176,7 +184,7 @@ export async function writeScript(
     const turns = plan.turns.map((t, i) => {
       const speaker = byName.get(t.speaker.trim().toLowerCase());
       if (!speaker || !speakersOf(scene).includes(speaker)) throw new Error(`casting writer: the ${scene} plan gives turn ${i + 1} to "${t.speaker}", who is not in the scene (${allowed.join(', ')})`);
-      return { speaker, intent: t.intent, vote: false };
+      return { speaker, intent: t.intent, words: t.words, vote: false };
     });
     // In the verdicts each judge votes in their last turn.
     if (scene === 'verdicts') for (const j of JUDGES) {
@@ -189,16 +197,18 @@ export async function writeScript(
       }
       const last = turns.at(-1)!;
       if (last.speaker !== 'ice') throw new Error('casting writer: in the verdicts plan Ice must speak last, giving his vote');
+      const singerTurns = turns.filter((t) => t.speaker === 'singer').length;
+      if (singerTurns > 1) throw new Error(`casting writer: in the verdicts plan ${n.singer} speaks ${singerTurns} times; once at most`);
     }
 
-    // Each line's share of the scene's words (a guide for the writer; the scene's total is checked below).
-    const budget = Math.max(6, Math.round(SCENE_TARGET[scene] / turns.length));
     for (const [i, turn] of turns.entries()) {
       const who = n[turn.speaker];
       // A judge voting no is unconvinced in every verdicts turn: the plan's purpose for the turn (often written from the
       // judge's usual manner, e.g. Bob leaping up) gives way to the vote.
       const against = scene === 'verdicts' && turn.speaker !== 'narrator' && turn.speaker !== 'singer' && votes[turn.speaker] === 'no';
       const intent = against ? `react honestly to a song ${who} did not like${turn.vote ? ', and give the no' : ''}` : turn.intent;
+      // The plan's length for the line (a guide; the scene's total is checked below); votes are quick.
+      const budget = turn.vote ? Math.min(turn.words, 12) : turn.words;
       // The narrator is heard, never seen: no gesture.
       const seen = turn.speaker !== 'narrator';
       const profile = turn.speaker === 'narrator' ? NARRATOR_PROFILE : turn.speaker === 'singer' ? singerProfile(facts) : JUDGES.find((j) => j.id === turn.speaker)!.profile;

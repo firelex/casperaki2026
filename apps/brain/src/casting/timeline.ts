@@ -31,8 +31,8 @@ export interface CastingTimeline {
 export const LINE_GAP = 0.35;
 /** The backstage music before the narrator starts. */
 export const MUSIC_LEAD = 1.5;
-/** Air at the start and end of a talking segment. */
-export const AIR = 1;
+/** Air at the start and end of a talking segment: the judges start talking soon after the singer reaches them. */
+export const AIR = 0.4;
 /** The song fades out over this long after its first chorus. */
 export const PERFORMANCE_FADE = 3;
 /** The video ends this long after the last verdict. */

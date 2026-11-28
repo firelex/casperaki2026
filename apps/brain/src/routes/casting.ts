@@ -1,6 +1,6 @@
 // Casting videos (docs/superpowers/specs/2026-11-28-video-modes-casting-design.md), admins only while the speech model
 // is non-commercial:
-//   POST /api/songs/:id/casting/script  { avatarId, outcome: 'fourYes' | 'threeOne' | 'notThisTime' } → 202 { task }
+//   POST /api/songs/:id/casting/script  { avatarId, outcome: 'fourYes' | 'threeOne' | 'notThisTime', backstory? } → 202 { task }
 //                                        (kind castingScript; 400 naming a missing precondition, 409 while one runs)
 //   GET  /api/songs/:id/casting/script  → { script, taskId } (the latest finished one; 404 none)
 //   POST /api/songs/:id/casting/soundtrack → 202 { task } (kind castingSoundtrack, from the latest script)
@@ -30,9 +30,9 @@ export function createCastingRouter(deps: CastingRouterDeps): Router {
 
   router.post('/api/songs/:id/casting/script', (req, res) => {
     if (!admin(req, res)) return;
-    const body = (req.body ?? {}) as { avatarId?: unknown; outcome?: unknown };
+    const body = (req.body ?? {}) as { avatarId?: unknown; outcome?: unknown; backstory?: unknown };
     try {
-      const task = deps.tasks.startCastingScript(deps.ownerOf(req), req.params.id, { avatarId: body.avatarId, outcome: body.outcome });
+      const task = deps.tasks.startCastingScript(deps.ownerOf(req), req.params.id, { avatarId: body.avatarId, outcome: body.outcome, ...(body.backstory !== undefined ? { backstory: body.backstory } : {}) });
       return res.status(202).json({ task: taskJson(task, '') });
     } catch (err) {
       if (err instanceof TaskError) return res.status(err.status).json({ error: err.code, message: err.message });
