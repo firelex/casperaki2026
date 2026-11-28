@@ -21,13 +21,14 @@ export interface CastingFacts {
   readonly avatarName: string;
 }
 
-export function castingFacts(song: Song, singer: { name: string; description: string | null }, avatarName: string): CastingFacts {
+/** `title`: the project's title (songs keep theirs with the project). */
+export function castingFacts(song: Song, title: string, singer: { name: string; description: string | null }, avatarName: string): CastingFacts {
   const { sections } = songTiming(song);
   const lines = lyricLines(song);
   const chorus = sections.find((s) => /chorus/iu.test(s.name));
   const inChorus = chorus ? lines.filter((l) => l.startSeconds >= chorus.startSeconds && l.startSeconds < chorus.endSeconds) : [];
   const quotes = (inChorus.length > 0 ? inChorus : lines).slice(0, 4).map((l) => l.text);
-  if (!song.title?.trim()) throw new Error('casting: the song has no title; give it one first');
+  if (!title.trim()) throw new Error('casting: the song has no title; give it one first');
   let genre: string | null = null;
   if (song.genre) {
     const g = SongGenreSchema.safeParse(song.genre);
@@ -35,7 +36,7 @@ export function castingFacts(song: Song, singer: { name: string; description: st
     genre = GENRE_LABELS[g.data];
   }
   return {
-    title: song.title.trim(),
+    title: title.trim(),
     genre,
     bpm: song.bpm,
     tempoWord: song.bpm < 95 ? 'slow' : song.bpm < 115 ? 'mid-tempo' : 'fast',
