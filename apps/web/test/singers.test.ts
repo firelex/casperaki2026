@@ -101,6 +101,7 @@ describe('Add a singer tasks', () => {
     expect(TASK_LABELS.addSinger).toBe('Add a singer');
     expect(taskPage(t)).toBe('/singers');
     expect(taskPage({ ...t, kind: 'sing', songId: 'abc' })).toBe('/editor/abc/timeline');
+    expect(taskPage({ ...t, kind: 'avatarBuild', songId: null })).toBe('/avatars');
     expect(() => mergeOp('addSinger', {}, {} as never)).toThrow(/no result/u);
   });
 });

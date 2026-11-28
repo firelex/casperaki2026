@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { avatarsApi, avatarsQueryKey, type AvatarInfo } from '../api/avatars';
 import { singersApi, singersQueryKey, type SingerInfo } from '../api/singers';
+import { useAuth } from '../auth/AuthContext';
 import { AppHeader } from '../layout/AppHeader';
 
 const message = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -21,6 +22,7 @@ export function voiceText(singerId: string | null, singers: readonly SingerInfo[
  * singers), an Edit (the dressing room) and a Delete. "New avatar" opens an empty dressing room.
  */
 export function AvatarsPage() {
+  const { user } = useAuth();
   const avatars = useQuery({ queryKey: avatarsQueryKey, queryFn: ({ signal }) => avatarsApi.list(signal) });
   const singers = useQuery({ queryKey: singersQueryKey, queryFn: ({ signal }) => singersApi.list(signal), staleTime: 60_000 });
   return (
@@ -33,6 +35,11 @@ export function AvatarsPage() {
               <h1 className="text-[22px] font-semibold">Avatars</h1>
               <p className="mt-1 text-[14px] text-white/55">The characters in your music videos, each with one of your singers' voices.</p>
             </div>
+            {user?.isAdmin ? (
+              <Link to="/avatars/realistic/new" className="shrink-0 rounded-full border border-white/60 px-4 py-1.5 text-[14px] text-white hover:border-white">
+                New realistic avatar
+              </Link>
+            ) : null}
             <Link to="/avatars/new" className="shrink-0 rounded-full bg-white px-4 py-1.5 text-[14px] font-medium text-black hover:bg-white/90">
               New avatar
             </Link>
@@ -66,6 +73,11 @@ export function AvatarsPage() {
   );
 }
 
+/** Where Edit goes: the dressing room of the avatar's style. */
+export function avatarEditPath(a: Pick<AvatarInfo, 'id' | 'style'>): string {
+  return a.style === 'realistic' ? `/avatars/realistic/${encodeURIComponent(a.id)}` : `/avatars/${encodeURIComponent(a.id)}`;
+}
+
 /** One avatar: its portrait, name and voice, Edit and Delete (asking first). */
 export function AvatarCard({ avatar: a, singers }: { avatar: AvatarInfo; singers: readonly SingerInfo[] | undefined }) {
   const queryClient = useQueryClient();
@@ -88,6 +100,7 @@ export function AvatarCard({ avatar: a, singers }: { avatar: AvatarInfo; singers
       </div>
       <div className="flex flex-col gap-2 p-4">
         <h2 className="truncate text-[16px] font-semibold">{a.name}</h2>
+        <p className="text-[12px] text-white/45">{a.style === 'realistic' ? 'Realistic' : 'Anime'}</p>
         <p className="truncate text-[13px] text-white/60">{voiceText(a.singerId, singers)}</p>
         {confirming ? (
           <span className="flex flex-wrap items-center gap-2 text-[13px]">
@@ -101,7 +114,7 @@ export function AvatarCard({ avatar: a, singers }: { avatar: AvatarInfo; singers
           </span>
         ) : (
           <span className="flex items-center gap-2 text-[13px]">
-            <Link to={`/avatars/${encodeURIComponent(a.id)}`} className="rounded-full border border-white/30 px-3 py-1 text-white hover:border-white/60">
+            <Link to={avatarEditPath(a)} className="rounded-full border border-white/30 px-3 py-1 text-white hover:border-white/60">
               Edit
             </Link>
             <button type="button" className="rounded-full border border-white/30 px-3 py-1 text-white/80 hover:border-white/60" onClick={() => setConfirming(true)}>

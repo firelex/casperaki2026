@@ -8,10 +8,11 @@ import { duration, TaskSteps } from './TaskSteps';
 import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks';
 
 /** What a running task is doing, in a word. */
-const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', writeRapLyrics: 'writing the rap', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering', addSinger: 'making the singer', speakingVoice: 'making the speaking voice' };
+const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', writeRapLyrics: 'writing the rap', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering', addSinger: 'making the singer', speakingVoice: 'making the speaking voice', avatarBuild: 'building' };
 
-/** Where clicking a task goes: its song, or the Singers page for Add a singer. */
+/** Where clicking a task goes: its song, the Avatars page for an avatar build, or the Singers page for Add a singer. */
 export function taskPage(task: BackgroundTask): string {
+  if (task.kind === 'avatarBuild') return '/avatars';
   return task.songId === null ? '/singers' : `/editor/${task.songId}/timeline`;
 }
 

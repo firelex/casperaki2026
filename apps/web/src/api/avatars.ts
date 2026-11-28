@@ -5,6 +5,8 @@
  */
 import { parsePack, type AvatarRecipe, type PackManifest } from '@casperaki/video/avatar';
 
+import type { AvatarStyle, RealisticDesign, RealisticLibraryInfo } from '../avatars/realisticDesign';
+import type { BackgroundTask } from './tasks';
 import { defaultBrainClient } from './client';
 
 export interface AvatarPackInfo {
@@ -17,8 +19,14 @@ export interface AvatarPackInfo {
 
 export interface AvatarInfo {
   readonly id: string;
+  /** Anime (a recipe of pack parts) or realistic (a MakeHuman design and its built VRM). */
+  readonly style: AvatarStyle;
   readonly name: string;
-  readonly recipe: AvatarRecipe;
+  /** Anime avatars. */
+  readonly recipe?: AvatarRecipe;
+  /** Realistic avatars: the design, and the URL of the built person. */
+  readonly design?: RealisticDesign;
+  readonly vrmUrl?: string;
   readonly singerId: string | null;
   readonly portraitUrl: string;
   readonly createdAt: string;
@@ -32,6 +40,16 @@ export interface AvatarForm {
   readonly singerId: string | null;
   readonly portrait: string;
 }
+
+/** What Save sends for a realistic avatar: the finished build to keep, and a portrait from the 3D view. */
+export interface RealisticAvatarForm {
+  readonly name: string;
+  readonly singerId: string | null;
+  readonly buildTaskId: string;
+  readonly portrait: string;
+}
+
+export const realisticLibraryQueryKey = ['realistic-avatar-library'] as const;
 
 /** The URL of a file in a pack (a path relative to the pack folder, as the manifest writes it). */
 export function packFileUrl(pack: string, path: string): string {
@@ -58,5 +76,11 @@ export const avatarsApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ avatars: AvatarInfo[] }>('/api/avatars', { signal }),
   create: (f: AvatarForm) => defaultBrainClient.post<{ avatar: AvatarInfo }>('/api/avatars', f),
   update: (id: string, f: AvatarForm) => defaultBrainClient.put<{ avatar: AvatarInfo }>(`/api/avatars/${encodeURIComponent(id)}`, f),
+  /** Realistic avatars (admins): the curated library, a build of a design (a background task), saving a build. */
+  realisticLibrary: (signal?: AbortSignal) => defaultBrainClient.get<{ library: RealisticLibraryInfo }>('/api/avatars/realistic/library', { signal }),
+  build: (design: RealisticDesign) => defaultBrainClient.post<{ task: BackgroundTask }>('/api/avatars/realistic/builds', { design }),
+  buildVrmUrl: (taskId: string) => `/api/avatars/realistic/builds/${encodeURIComponent(taskId)}/vrm`,
+  createRealistic: (f: RealisticAvatarForm) => defaultBrainClient.post<{ avatar: AvatarInfo }>('/api/avatars/realistic', f),
+  updateRealistic: (id: string, f: RealisticAvatarForm) => defaultBrainClient.put<{ avatar: AvatarInfo }>(`/api/avatars/realistic/${encodeURIComponent(id)}`, f),
   remove: (id: string) => defaultBrainClient.delete<{ deleted: string }>(`/api/avatars/${encodeURIComponent(id)}`),
 };

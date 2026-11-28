@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { avatarsApi, avatarsQueryKey } from '../api/avatars';
+import { ofStyle, stylesOf, type AvatarStyle } from '../avatars/realisticDesign';
 import { playbackApi } from '../api/playback';
 import { videoApi, videoQueryKeys, type VideoFormat, type VideoJobs, type VideoOrientation, type VideoQuality, type VideoStatus } from '../api/video';
 import { livePlayer } from '../audio/livePlayer';
@@ -45,7 +46,17 @@ export function MusicVideoView() {
   /** The avatars chosen to dance (undefined: the first MAX_AVATARS of the user's avatars). */
   const [picked, setPicked] = useState<readonly string[] | undefined>(undefined);
   const avatars = useQuery({ queryKey: avatarsQueryKey, queryFn: ({ signal }) => avatarsApi.list(signal) });
-  const avatarIds = picked ?? (avatars.data?.avatars ?? []).slice(0, MAX_AVATARS).map((a) => a.id);
+  // One style per video (anime and realistic side by side clash): the switch shows only when the user has both.
+  const styles = stylesOf(avatars.data?.avatars ?? []);
+  const [chosenStyle, setChosenStyle] = useState<AvatarStyle | undefined>(undefined);
+  const style: AvatarStyle = chosenStyle ?? styles[0] ?? 'anime';
+  const styleAvatars = ofStyle(avatars.data?.avatars ?? [], style);
+  const avatarIds = picked ?? styleAvatars.slice(0, MAX_AVATARS).map((a) => a.id);
+  const pickStyle = (s: AvatarStyle) => {
+    setChosenStyle(s);
+    setPicked(undefined);
+    setEdited(undefined);
+  };
   /** The storyboard as edited (undefined: today's video, club, everyone, automatic camera). */
   const [edited, setEdited] = useState<readonly StoryboardEntry[] | undefined>(undefined);
   const sections = storyboardSections(viewSong);
@@ -110,8 +121,23 @@ export function MusicVideoView() {
                   .
                 </p>
               ) : null}
+              {styles.length > 1 ? (
+                <div className="mb-2 flex gap-2" role="group" aria-label="Avatar style">
+                  {styles.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      aria-pressed={s === style}
+                      onClick={() => pickStyle(s)}
+                      className={`rounded-full border px-3 py-1 text-[13px] ${s === style ? 'border-white bg-white/10' : 'border-line text-white/70 hover:border-white/40'}`}
+                    >
+                      {s === 'anime' ? 'Anime' : 'Realistic'}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <div className="flex flex-wrap gap-2">
-                {(avatars.data?.avatars ?? []).map((a) => {
+                {styleAvatars.map((a) => {
                   const on = avatarIds.includes(a.id);
                   return (
                     <button
