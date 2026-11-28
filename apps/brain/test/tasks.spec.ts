@@ -192,23 +192,24 @@ describe('background tasks', () => {
 /** A model that writes rap: every part asked for gets distinct rhyming couplets from a pool. */
 function rapModel(): ChatModel {
   const pool = [
-    'I walk the city streets until the morning light',
-    'I never stop the beat, I keep it burning bright',
-    'We ride the night together and we never fall',
-    'We hear the music calling and we give it all',
-    'The neon signs are glowing on the rainy road',
-    "We're flowing with a dream and never drop the load",
-    'My heart is like a drum that beats inside my chest',
-    'I give it everything and never take a rest',
-    'The fire in my soul is burning like a flame',
-    'The higher that I go, the brighter is my name',
-    "I'm sailing on the waves, I'm braver every day",
-    'The rhythm saves the night, it never fades away',
-    "We're running through the rain, we're dancing in the street",
-    'The thunder and the wonder are louder than the beat',
-    'The stars are shining bright above the silent town',
-    'The guitars are playing loud, we never slow it down',
+    'I hit the street, I feel the beat tonight',
+    'I never stop, I keep it burning bright',
+    'We ride together and we never fall',
+    'We hear the calling and we give it all',
+    'The neon glowing on the rainy road',
+    'We keep on flowing and we drop the load',
+    'My heart a drum that beats inside my chest',
+    'I start to run, I never take a rest',
+    'The fire in my soul is like a flame',
+    'The higher that I go, I know my name',
+    "I ride the waves, I'm braver every day",
+    'The rhythm saves the night, it fades away',
+    "We're running in the rain along the street",
+    'The thunder and the wonder of the beat',
+    'The stars are bright above the silent town',
+    'Guitars are loud, we never slow it down',
   ];
+
   return {
     async complete(messages) {
       const brief = messages.find((m) => m.role === 'user')!.content;

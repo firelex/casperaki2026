@@ -25,7 +25,7 @@ def base(wav, **over):
 
 
 def rap(wav, **over):
-    return base(wav, takes=4, lego_caption="rap, a cappella", **over)
+    return base(wav, takes=4, **over)
 
 
 def test_sections_are_checked_and_kept(wav):
@@ -44,7 +44,6 @@ def test_sections_are_checked_and_kept(wav):
     ({"takes": 0}, "takes"),
     ({"takes": None}, "takes"),
     ({"sections": []}, "non-empty"),
-    ({"lego_caption": " "}, "lego_caption"),
     ({"sections": [{"name": "v", "start": 4, "end": 2, "lyrics": "x"}]}, "before it starts"),
     ({"sections": [{"name": "v", "start": 0, "end": 2, "lyrics": " "}]}, "no words"),
     ({"sections": [{"name": "a", "start": 0, "end": 10, "lyrics": "x"}, {"name": "b", "start": 5, "end": 12, "lyrics": "y"}]}, "overlap"),
@@ -58,21 +57,39 @@ def test_bad_sections_fail_loud(wav, over, match):
         ace.check_params(params)
 
 
-def test_takes_and_lego_caption_only_with_sections(wav):
+def test_takes_only_with_sections(wav):
     with pytest.raises(ValueError, match="only for sections"):
         ace.check_params(base(wav, takes=4))
-    with pytest.raises(ValueError, match="only for sections"):
-        ace.check_params(base(wav, lego_caption="x"))
 
 
-def test_short_sections_are_made_by_lego_on_eight_bars_with_their_lines_repeated():
-    # 120 bpm: a bar is 2 s, a line 2 s; 8 bars 16 s.
+def test_short_sections_are_repainted_on_eight_bars_with_their_lines_repeated():
+    # 120 bpm: a bar is 2 s; 8 bars 16 s. A 4-bar section is made on 8 (owner 2026-11-28: the older lego way "was much
+    # slower"), its lines repeated to fill them, turned so the section starts on its first line.
     assert ace.is_short(0, 8, 120) and not ace.is_short(0, 16, 120)
     assert ace.window_seconds(128) == pytest.approx(15.0)
     assert ace.section_window(69.375, 76.875, 180, ace.window_seconds(128)) == (69.375, 84.375)
-    # a line per bar: 8 bars of 2 s fill with 8 lines
-    assert ace.lego_rap_lyrics("a\n\nb", 16, 120) == "[Verse]\n" + "\n".join("abababab")
-    assert ace.lego_rap_lyrics("a\nb\nc", 16, 120, lead=4) == "[Verse]\n" + "\n".join("bcabcabc")
+    T = ace.RAP_TAGS + "\n"
+    assert ace.rap_lyrics("a\nb\nc\nd", 8, 16, 0) == T + "\n".join("abcdabcd")
+    assert ace.rap_lyrics("a\nb\nc\nd", 8, 16, 4) == T + "\n".join("cdabcdab")
+    assert ace.rap_lyrics("a\nb", 16, 16, 0) == T + "a\nb"
+
+
+def test_a_rap_running_past_its_section_is_cut_at_its_quietest_moment():
+    import numpy as np
+    sr = 1000
+    t = np.arange(3 * sr) / sr
+    v = np.stack([np.sin(2 * np.pi * 50 * t)] * 2).astype(np.float32)
+    v[:, int(2.4 * sr):int(2.6 * sr)] = 0          # a pause 0.4-0.6 s before the end, then a word running out
+    cut = ace.cut_at_quiet(v, sr)
+    assert np.all(cut[:, int(2.45 * sr):] == 0)     # silent from the pause on
+    assert np.allclose(cut[:, :int(2.3 * sr)], v[:, :int(2.3 * sr)])
+    ended = v.copy()
+    ended[:, int(2.9 * sr):] = 0                    # already quiet at its end: kept as it is
+    assert np.array_equal(ace.cut_at_quiet(ended, sr), ended)
+
+
+def test_the_rappers_voice_is_in_the_repo():
+    assert ace.RAP_VOICE.is_file()
 
 
 def test_section_window_is_the_section_or_ten_seconds_of_song_around_it():
@@ -96,9 +113,9 @@ def test_a_section_is_repainted_with_four_bars_of_song_either_side():
 
 def test_rap_lyrics_are_the_sections_lines_once():
     # ACE's rap tags (docs/en/Tutorial.md: [spoken word] "Rap/recitation"), owner 2026-11-28 "It's not a rap. It's sung."
-    assert ace.rap_lyrics(" a\n\nb ") == "[Verse - rap]\n[spoken word]\n[high energy]\na\nb"
+    assert ace.rap_lyrics(" a\n\nb ", 16, 16, 0) == "[Verse - rap]\n[spoken word]\n[high energy]\na\nb"
     with pytest.raises(ValueError, match="no lines"):
-        ace.rap_lyrics(" \n ")
+        ace.rap_lyrics(" \n ", 16, 16, 0)
 
 
 def test_rank_is_words_then_separation():

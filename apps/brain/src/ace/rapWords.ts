@@ -1,7 +1,7 @@
 // Write rap lyrics (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): the rap's words from the language
 // model. One short line per bar (rapLineCount), rhyming in couplets (lines 1-2, 3-4, …) with a rhyme inside every
 // couplet too (owner 2026-11-28: rap needs "a different rhythmic pattern, more internal rhymes, shorter sentences"),
-// every word in our pronunciation dictionary, 6 to 16 syllables a line. Wrong lines go back to the model with what is wrong; still wrong after MAX_ROUNDS answers: an error.
+// every word in our pronunciation dictionary, as many syllables a line as RAP_DENSITY says. Wrong lines go back to the model with what is wrong; still wrong after MAX_ROUNDS answers: an error.
 // The prompt is plain English for the model.
 
 import { pronounce, wordsOf, wordsRhyme } from '@casperaki/arrangement';
@@ -13,17 +13,16 @@ import type { ChatMessage, ChatModel } from '../llm/chatModel.js';
 export const MAX_ROUNDS = 6;
 /** The last rounds let the model reason. */
 export const REASONING_ROUNDS = 2;
-export const MIN_RAP_SYLLABLES = 6;
-export const MAX_RAP_SYLLABLES = 16;
 
-/** How dense the rap is: how many bars a line takes, and the syllables most of its lines have. */
+/** How dense the rap is: how many bars a line takes, the syllables every line must have, and most lines. */
 export interface RapDensity {
   readonly barsPerLine: number;
+  readonly syllables: readonly [number, number];
   readonly most: readonly [number, number];
 }
-/** A short line per bar, most lines 10 to 12 syllables (owner 2026-11-28: a line per two bars was "a tad slow";
- *  8 lines in an 8-bar verse, "8-line is it": ACE rapped 77 % of their words on average, the best take 98 %). */
-export const RAP_DENSITY: RapDensity = { barsPerLine: RAP_BARS_PER_LINE, most: [10, 12] };
+/** A short line per bar, 8 to 11 syllables (owner 2026-11-28: a line per two bars was "a tad slow"; the 8-line verse
+ *  he chose had 9 to 11 syllables a line, 79 in all, and "too many words" when a verse had 11 to 16, 102 in all). */
+export const RAP_DENSITY: RapDensity = { barsPerLine: RAP_BARS_PER_LINE, syllables: [8, 11], most: [9, 11] };
 
 export interface RapWordsRequest {
   readonly density: RapDensity;
@@ -52,9 +51,9 @@ function brief(r: RapWordsRequest): string {
     'This is rap, not a sung song. Rap is spoken in rhythm over the drums, so its words are written differently from song lyrics:',
     '- Short, punchy phrases: break most lines into two or three short pieces (with commas or full stops) instead of one long flowing sentence.',
     '- A bouncing, syncopated rhythm: mix one-syllable words with longer ones and let the stresses of the words fall in uneven places. Avoid the even, sing-song rhythm of a nursery rhyme or a pop chorus.',
-    `- Every line takes ${barsText(r.density.barsPerLine)} of music, so it has ${MIN_RAP_SYLLABLES} to ${MAX_RAP_SYLLABLES} syllables, most of them ${r.density.most[0]} to ${r.density.most[1]}: rap is dense.`,
+    `- Every line takes ${barsText(r.density.barsPerLine)} of music, so it has ${r.density.syllables[0]} to ${r.density.syllables[1]} syllables, most of them ${r.density.most[0]} to ${r.density.most[1]}. Count them: a longer line will not fit.`,
     '- Lines rhyme in pairs: line 2 rhymes with line 1, line 4 with line 3, and so on (near rhymes are fine, as in real rap).',
-    '- Many internal rhymes: besides the rhymes at the ends of the lines, put rhyming words inside the lines, in the middle of a line or across the two lines of a pair. Rhymes of two or more syllables are best (for example "pocket" and "rocket", or "on the floor" and "wanting more").',
+    '- Internal rhymes: besides the rhymes at the ends of the lines, put one or two rhyming words inside each pair of lines, in the middle of a line or across the two lines. Rhymes of two or more syllables are best (for example "pocket" and "rocket", or "on the floor" and "wanting more"). Do not stuff every phrase with rhymes: the lines must still be easy to say fast and make sense.',
     '- Wordplay, concrete images and punchlines, said with confidence in the first person. No filler sounds such as "oh", "yeah" or "la", and no long held vowels.',
     '- Plain, modern, conversational words with attitude: contractions and everyday slang where they fit. Clean: no swearing, no slurs, nothing hateful.',
     '- Use only common English words that are in a dictionary: no made-up words, no numbers written as digits, no sound effects like "skrrt".',
@@ -89,7 +88,7 @@ export function hasInternalRhyme(a: string, b: string): boolean {
 }
 
 /** What is wrong with one part's lines (empty when they are fine), for the model. */
-export function rapProblems(lines: readonly string[], count: number): string[] {
+export function rapProblems(lines: readonly string[], count: number, syllables: readonly [number, number]): string[] {
   if (lines.length !== count) return [`It needs exactly ${count} lines, but ${lines.length} were written.`];
   const out: string[] = [];
   lines.forEach((line, i) => {
@@ -104,7 +103,7 @@ export function rapProblems(lines: readonly string[], count: number): string[] {
       return;
     }
     const n = words.reduce((a, w) => a + pronounce(w)!.phones.length, 0);
-    if (n < MIN_RAP_SYLLABLES || n > MAX_RAP_SYLLABLES) out.push(`Line ${i + 1} has ${n} syllables; every line needs ${MIN_RAP_SYLLABLES} to ${MAX_RAP_SYLLABLES}.`);
+    if (n < syllables[0] || n > syllables[1]) out.push(`Line ${i + 1} has ${n} syllables; every line needs ${syllables[0]} to ${syllables[1]}.`);
   });
   for (let i = 0; i + 1 < lines.length; i += 2) {
     const a = norm(wordsOf(lines[i]!).at(-1) ?? '');
@@ -153,7 +152,7 @@ export async function writeRapWords(model: ChatModel, r: RapWordsRequest): Promi
       messages.push({ role: 'assistant', content: text }, { role: 'user', content: `${parsed} Answer again, as JSON in exactly the form asked for.` });
       continue;
     }
-    const problems = r.sections.flatMap((s) => rapProblems(parsed[s.name]!, s.lines).map((p) => `- ${s.label}: ${p}`));
+    const problems = r.sections.flatMap((s) => rapProblems(parsed[s.name]!, s.lines, r.density.syllables).map((p) => `- ${s.label}: ${p}`));
     const seen = new Set<string>();
     for (const s of r.sections) {
       for (const l of parsed[s.name]!) {

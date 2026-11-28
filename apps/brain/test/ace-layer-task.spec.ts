@@ -193,7 +193,7 @@ describe('rap (ACE layer)', () => {
     expect(sent['caption']).toBe(
       `hip-hop, rap, female rap vocals, fast high-energy rap, aggressive punchy delivery, rapid-fire spoken word flow on the beat, punchy drums, no singing, no sung melody, ${SONG.bpm} bpm`,
     );
-    expect(String(sent['lego_caption'])).toMatch(/^female rap vocals, rap vocals, a cappella/u);
+    expect(sent).not.toHaveProperty('lego_caption');
     expect(sent['sections']).toEqual([
       { name: v1, start: startOf(v1).start, end: startOf(v1).end, lyrics: 'one\ntwo' },
       { name: v2, start: startOf(v2).start, end: startOf(v2).end, lyrics: 'three\nfour' },

@@ -137,14 +137,6 @@ export function aceCaption(song: Song, options: AceLayerOptions): string {
   return [ACE_INSTRUMENT_CAPTIONS[options.instrument], ...(words ? [words] : []), `${song.bpm} bpm`, keyScale(song.key)].join(', ');
 }
 
-/** Rap's caption for sections under 8 bars, which svc-ace makes by lego (an a cappella rap part over the song, not a
- *  repaint): the user's style first, then "rap vocals, a cappella, dry, …". */
-export function rapLegoCaption(song: Song, options: AceLayerOptions): string {
-  const words = options.words?.trim();
-  if (!words) throw new Error("rap needs its style (the rapper's voice and flow)");
-  return [words, ACE_INSTRUMENT_CAPTIONS.rap, `${song.bpm} bpm`, keyScale(song.key)].join(', ');
-}
-
 const ACE_TAGS: Readonly<Record<string, string>> = { intro: 'Intro', verse: 'Verse', preChorus: 'Pre-Chorus', chorus: 'Chorus', bridge: 'Bridge', outro: 'Outro' };
 
 /** ACE's lyrics for ad-libs: every section of the song as a tag in song order (another kind as an instrumental
@@ -305,7 +297,6 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
         ...(rapWords
           ? {
               takes: RAP_TAKES,
-              lego_caption: rapLegoCaption(input, options),
               sections: covered.map((s) => ({ name: s.name, start: s.startBar * secPerBar, end: (s.startBar + s.bars) * secPerBar, lyrics: rapWords![s.name]!.join('\n') })),
             }
           : {}),

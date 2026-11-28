@@ -26,8 +26,6 @@ Steps: read ("Read the song"), lego ("ACE writes the <track> part"), write ("Wri
              vocals/tools/pick_rap_take.py, BS-RoFormer + Whisper); rounds of `takes` until 40 % of the words are heard,
              MAX_RAP_TAKES at most. The result is silent outside the sections.
   takes      (with sections only) takes per round, 1..8
-  lego_caption (with sections only) the caption for sections shorter than MIN_WINDOW_BARS bars, which are made by
-             lego (ACE's vocals track over the song) as an a cappella rap part, not repainted
 Steps: read, lego (or one rap_<name> per section), write.
 Result file: layer.wav (32-bit float WAV). ACE-Step peak-normalises its output to -1 dBFS, so the part's level says
 nothing about how loud it should sit in the mix: the caller sets the clip's level.
@@ -51,7 +49,7 @@ TRACKS = ("guitar", "strings", "brass", "woodwinds", "keyboard", "synth", "fx", 
 # Parts that sing: they may be given words (`lyrics`, ACE's lyrics format, e.g. "[Chorus]\n(oh yeah)\n(ooh)").
 VOCAL_TRACKS = ("backing_vocals", "vocals")
 PARAMS = ("src_wav", "track", "caption", "bpm", "key_scale", "seed")
-OPTIONAL_PARAMS = ("lyrics", "sections", "takes", "lego_caption")
+OPTIONAL_PARAMS = ("lyrics", "sections", "takes")
 MIN_SECONDS = 10.0   # acestep.constants.DURATION_MIN
 MAX_SECONDS = 600.0  # acestep.constants.DURATION_MAX (also the length of the model's silence latent: 15000 frames at 25 Hz)
 
@@ -61,10 +59,10 @@ MAX_SECONDS = 600.0  # acestep.constants.DURATION_MAX (also the length of the mo
 # the words heard after MAX_RAP_TAKES fails the job.
 MIN_RAP_RECALL = 0.4  # failed takes heard 0-33 % of their words, good ones 47-100 % (Whisper misses some rap)
 RAP_CONTEXT_BARS = 4
-# A section shorter than MIN_WINDOW_BARS bars is made by lego instead (the earlier way): repaint gave no words over a
-# 4-bar section (Electric Daydream's bridge, 2026-11-28: 4-9 % heard in 8 takes, even repainting 8 bars with its lines
-# repeated), where lego over 8 bars of song (the section, then the song after it; its lines repeated to fill, one per
-# RAP_BARS_PER_LINE bars) rapped it (47-58 %, 2026-11-27). Only the section's stretch is kept either way.
+# A section shorter than MIN_WINDOW_BARS bars is repainted on MIN_WINDOW_BARS bars (the section, then the song after
+# it), its lines repeated to fill them; only the section's stretch is kept. Repainting 4 bars gave no words (0-29 %
+# heard, 2026-11-28); 8 bars with the rap tags and the voice reference 29-51 %, at the verse's pace (the earlier lego
+# way, 46-48 %, was "much slower": owner 2026-11-28).
 MIN_WINDOW_BARS = 8
 RAP_BARS_PER_LINE = 1  # a short line per bar (owner 2026-11-28: a line per two bars was "a tad slow")
 # ACE's own rap tags (its docs/en/Tutorial.md, "Vocal Control Tags": [spoken word] "Rap/recitation"): without them
@@ -74,6 +72,14 @@ MAX_RAP_TAKES = 12
 MAX_TAKES_PER_ROUND = 8
 VOCALS_PYTHON = SERVICES_DIR / "vocals" / ".venv" / "bin" / "python"
 PICK_TOOL = SERVICES_DIR / "vocals" / "tools" / "pick_rap_take.py"
+# The rapper's voice: ACE's reference audio for every rap (its timbre), so every section and song has the same rapper
+# (owner 2026-11-28: "we have a voice consistency issue"; "The original 6 and 8 bar examples had good rap voices"):
+# the separated rap of the 8-line test take he chose (apps/models/ace-vocal-tests/rap, base_dense8).
+RAP_VOICE = SERVICES_DIR / "ace-layer" / "voices" / "rapper_male.flac"
+# A rap running past its section's end is cut at its quietest moment in the last QUIET_SEARCH_S, not mid-word.
+QUIET_SEARCH_S = 1.0
+QUIET_FRAME_S = 0.02
+QUIET_FADE_S = 0.03
 
 # The spike's settings (design doc, "What the spike showed").
 ACE_SETTINGS = dict(
@@ -198,13 +204,8 @@ def check_params(params) -> dict:
         if isinstance(takes, bool) or not isinstance(takes, int) or not 1 <= takes <= MAX_TAKES_PER_ROUND:
             raise ValueError(f"ace-layer: takes must be an integer 1..{MAX_TAKES_PER_ROUND} with sections, got {takes!r}")
         sections = checked
-        lego_caption = params.get("lego_caption")
-        if not isinstance(lego_caption, str) or not lego_caption.strip():
-            raise ValueError(f"ace-layer: sections need a lego_caption (for sections under {MIN_WINDOW_BARS} bars), got {lego_caption!r}")
     elif takes is not None:
         raise ValueError("ace-layer: takes are only for sections")
-    elif "lego_caption" in params:
-        raise ValueError("ace-layer: lego_caption is only for sections")
 
     lyrics = params.get("lyrics")
     if lyrics is not None:
@@ -217,7 +218,7 @@ def check_params(params) -> dict:
     # sections are timed at it: `tempo` keeps it exact.
     return {"src_wav": src, "track": track, "caption": caption.strip(), "bpm": int(round(bpm)), "tempo": float(bpm),
             "key_scale": key, "seed": seed, **({"lyrics": lyrics.strip()} if lyrics is not None else {}),
-            **({"sections": sections, "takes": takes, "lego_caption": params["lego_caption"].strip()} if sections is not None else {})}
+            **({"sections": sections, "takes": takes} if sections is not None else {})}
 
 
 def rap_window(start: float, end: float, total: float, bpm: float) -> tuple[float, float]:
@@ -232,35 +233,50 @@ def rap_window(start: float, end: float, total: float, bpm: float) -> tuple[floa
     return section_window(ws, we, total)
 
 
-def rap_lyrics(lines: str) -> str:
-    """ACE's lyrics for one section's rap: its lines, once, under ACE's rap tags."""
+def rap_lyrics(lines: str, section_s: float, region_s: float, lead_s: float) -> str:
+    """ACE's lyrics for one section's rap, under ACE's rap tags: its lines once when the repainted stretch is the
+    section; over a longer stretch (a short section made on MIN_WINDOW_BARS bars) its lines repeated to fill it at the
+    section's own pace, turned so the section (`lead_s` into the stretch) starts on its first line."""
     own = [l.strip() for l in lines.strip().splitlines() if l.strip()]
     if not own:
         raise ValueError("ace-layer: a section's rap has no lines")
-    return RAP_TAGS + "\n" + "\n".join(own)
+    if region_s <= section_s + 1e-3:
+        return RAP_TAGS + "\n" + "\n".join(own)
+    need = round(len(own) * region_s / section_s)
+    offset = round(len(own) * lead_s / section_s)
+    return RAP_TAGS + "\n" + "\n".join(own[(i - offset) % len(own)] for i in range(need))
+
+
+def cut_at_quiet(v, sr: int):
+    """A section's rap (channels, samples) that may run past its end: unchanged when its last frame is already quiet;
+    otherwise silent from its quietest QUIET_FRAME_S frame in the last QUIET_SEARCH_S on (a short fade in), so a word
+    running over is not cut in half."""
+    import numpy as np
+
+    frame = max(1, int(QUIET_FRAME_S * sr))
+    level = lambda x: float(np.sqrt(np.mean(np.square(x, dtype=np.float64)))) if x.size else 0.0
+    whole = level(v)
+    if whole == 0.0 or level(v[:, -frame:]) < 0.1 * whole:
+        return v
+    start = max(0, v.shape[1] - int(QUIET_SEARCH_S * sr))
+    frames = [(level(v[:, i:i + frame]), i) for i in range(start, v.shape[1] - frame + 1, frame)]
+    _, at = min(frames)
+    out = v.copy()
+    fade = min(int(QUIET_FADE_S * sr), at)
+    if fade:
+        out[:, at - fade:at] *= np.linspace(1.0, 0.0, fade, dtype=out.dtype)
+    out[:, at:] = 0
+    return out
 
 
 def window_seconds(bpm: float) -> float:
-    """The stretch of song a short section is made on by lego: MIN_WINDOW_BARS bars (4 beats), and MIN_SECONDS."""
+    """The stretch of song a short section is repainted on: MIN_WINDOW_BARS bars (4 beats), and MIN_SECONDS."""
     return max(MIN_SECONDS, MIN_WINDOW_BARS * 4 * 60 / bpm)
 
 
 def is_short(start: float, end: float, bpm: float) -> bool:
-    """A section under MIN_WINDOW_BARS bars (made by lego, not repainted)."""
+    """A section under MIN_WINDOW_BARS bars (repainted on MIN_WINDOW_BARS bars, its lines repeated)."""
     return end - start < MIN_WINDOW_BARS * 4 * 60 / bpm - 1e-3
-
-
-def lego_rap_lyrics(lines: str, seconds: float, bpm: float, lead: float = 0.0) -> str:
-    """ACE's lyrics for a short section's lego rap over `seconds` of song: its lines under one verse tag, repeated to
-    fill the stretch at one line per RAP_BARS_PER_LINE bars. `lead`: seconds of the window before the section (a window
-    pulled back at the song's end); the cycle is turned so the section starts on its first line."""
-    own = [l.strip() for l in lines.strip().splitlines() if l.strip()]
-    if not own:
-        raise ValueError("ace-layer: a section's rap has no lines")
-    line_s = RAP_BARS_PER_LINE * 4 * 60 / bpm
-    need = max(len(own), round(seconds / line_s))
-    offset = round(lead / line_s)
-    return "[Verse]\n" + "\n".join(own[(i - offset) % len(own)] for i in range(need))
 
 
 def section_window(start: float, end: float, total: float, min_seconds: float = MIN_SECONDS) -> tuple[float, float]:
@@ -387,7 +403,7 @@ def _repaint(handle, p, src_wav: str, lyrics: str, seed: int, seconds: float, st
     settings = {**ACE_SETTINGS, "task_type": "repaint", "lyrics": lyrics, "instrumental": False}
     gp = GenerationParams(**settings, src_audio=src_wav, repainting_start=start, repainting_end=end,
                           chunk_mask_mode="explicit", caption=p["caption"], bpm=p["bpm"], keyscale=p["key_scale"],
-                          seed=seed)
+                          seed=seed, reference_audio=str(RAP_VOICE))
     config = GenerationConfig(batch_size=1, use_random_seed=False, seeds=[seed], audio_format="wav")
     result = generate_music(handle["dit"], None, gp, config, save_dir=None)
     if not result.success:
@@ -416,11 +432,12 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
     part = np.zeros((2, src.shape[0]), dtype=np.float32)
     for si, sec in enumerate(p["sections"]):
         step = job.step(f"rap_{sec['name']}", f"ACE raps {sec['name']}")
+        # The stretch repainted: the section, or MIN_WINDOW_BARS bars for a short one (ACE gives no words over 4 bars);
+        # with RAP_CONTEXT_BARS bars of song either side.
         short = is_short(sec["start"], sec["end"], p["tempo"])
-        if short:
-            ws, we = section_window(sec["start"], sec["end"], total, window_seconds(p["tempo"]))
-        else:
-            ws, we = rap_window(sec["start"], sec["end"], total, p["tempo"])
+        rs, re_ = section_window(sec["start"], sec["end"], total, window_seconds(p["tempo"])) if short else (sec["start"], sec["end"])
+        ws, we = rap_window(rs, re_, total, p["tempo"])
+        words = rap_lyrics(sec["lyrics"], sec["end"] - sec["start"], re_ - rs, sec["start"] - rs)
         d = Path(out_dir) / "rap" / sec["name"]
         d.mkdir(parents=True, exist_ok=True)
         window = d / "window.wav"
@@ -434,11 +451,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
             for k in range(made, made + n):
                 job.check_cancelled()
                 seed = p["seed"] + 1000 * si + k
-                if short:
-                    tensor, out_sr = _lego(handle, {**p, "caption": p["lego_caption"]}, str(window),
-                                           lego_rap_lyrics(sec["lyrics"], we - ws, p["tempo"], sec["start"] - ws), seed, we - ws)
-                else:
-                    tensor, out_sr = _repaint(handle, p, str(window), rap_lyrics(sec["lyrics"]), seed, we - ws, span[0], span[1])
+                tensor, out_sr = _repaint(handle, p, str(window), words, seed, we - ws, rs - ws, re_ - ws)
                 path = d / f"take{k + 1}.wav"
                 # ACE floors its length to whole latent frames (up to 40 ms short): exactly the window's length.
                 sf.write(str(path), fit_length(tensor.numpy(), int(round((we - ws) * out_sr))).T, out_sr, subtype="FLOAT")
@@ -465,8 +478,9 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
             raise RuntimeError(f"ace-layer: the picked vocal of {sec['name']} is {v.shape[1] / sr:.2f} s, its section "
                                f"{(b - a) / sr:.2f} s")
         b = min(b, a + v.shape[1])
-        part[:, a:b] = v.numpy()[:, :b - a]
-        step.done(f"take {best['take']} of {made} ({'lego: a short section' if short else 'repaint'}): "
+        # A word running past the section's end is cut where the rapper pauses, not in the middle.
+        part[:, a:b] = cut_at_quiet(v.numpy()[:, :b - a], sr)
+        step.done(f"take {best['take']} of {made}{' (a short section, made on 8 bars)' if short else ''}: "
                   f"{best['recall']:.0%} of the words heard: \"{best['heard']}\"",
                   {"takes": made, "recall": best["recall"], "seconds": round(time.time() - t, 1),
                    **({"vocal_db": best["vocal_db"]} if best["vocal_db"] is not None else {}),
