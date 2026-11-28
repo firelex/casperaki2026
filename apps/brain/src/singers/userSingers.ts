@@ -149,6 +149,14 @@ export class UserSingers {
     return true;
   }
 
+  /** Describes one of the owner's singers anew: false when the owner has no such singer. */
+  describe(ownerId: string, singerId: string, description: string): boolean {
+    const singers = this.list(ownerId);
+    if (!singers.some((s) => s.id === singerId)) return false;
+    this.write(ownerId, singers.map((s) => (s.id === singerId ? UserSingerSchema.parse({ ...s, description }) : s)));
+    return true;
+  }
+
   /** The names the owner gave built-in singers (id -> name; a built-in not listed keeps its own). */
   builtInNames(ownerId: string): Record<string, string> {
     const file = join(this.root, ownerFolder(ownerId), 'names.json');

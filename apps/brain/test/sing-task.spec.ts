@@ -176,7 +176,9 @@ describe('the Sing task', { timeout: 60_000 }, () => {
     expect(sung.files).toEqual(['sing/chorus1_soulx.wav']);
     const file = await fetch(`${h.url}/api/tasks/${taskId}/files/sing/chorus1_soulx.wav`);
     expect(file.status).toBe(200);
-    expect(Buffer.from(await file.arrayBuffer()).toString('ascii', 0, 4)).toBe('RIFF');
+    // (the browser gets WAVs as MP3: audio/browserMp3.ts)
+    expect(file.headers.get('content-type')).toMatch(/^audio\/mpeg/u);
+    expect(Buffer.from(await file.arrayBuffer()).toString('ascii', 0, 3)).toBe('ID3');
     expect(task.steps.find((s) => s.id === 'levels')!.files).toContain('sing/take_chorus1_vocal.wav');
     expect((await fetch(`${h.url}/api/tasks/${taskId}/files/lead/chorus1_soulx.wav`)).status).toBe(404);
     expect((await fetch(`${h.url}/api/tasks/${taskId}/files/sing/nothing.wav`)).status).toBe(404);

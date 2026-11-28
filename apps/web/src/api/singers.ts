@@ -60,11 +60,14 @@ export function speakingDescriptionProblem(description: string): string | undefi
   return undefined;
 }
 
+/** The kinds of voice a singer is added as. */
+export type SingerVoice = 'female' | 'male';
+
 /** What the Add a singer form sends. */
 export interface AddSingerForm {
   readonly file: File | undefined;
-  readonly name: string;
-  readonly description: string;
+  /** The kind of voice: the brain names the singer after it ("Female singer 3", owner 2026-11-28). */
+  readonly voice: SingerVoice | undefined;
   readonly rightToUse: boolean;
   /** The file is a full song: separate its vocals first. */
   readonly fullSong: boolean;
@@ -83,8 +86,7 @@ export function extensionOf(name: string): string | undefined {
 export function addSingerProblem(f: AddSingerForm): string | undefined {
   if (!f.file) return 'Choose a recording.';
   if (!extensionOf(f.file.name)) return 'Choose a file whose name ends in its type (for example .wav or .mp3).';
-  if (!f.name.trim()) return 'Give the singer a name.';
-  if (!f.description.trim()) return 'Describe the voice.';
+  if (!f.voice) return 'Choose a female or a male voice.';
   if (!f.reference) return 'Choose how the voice reference is picked.';
   if (!f.rightToUse) return 'Tick "I have the right to use this voice".';
   return undefined;
@@ -105,8 +107,7 @@ export const singersApi = {
     const problem = addSingerProblem(f);
     if (problem) throw new Error(problem);
     const q = new URLSearchParams({
-      name: f.name.trim(),
-      description: f.description.trim(),
+      voice: f.voice!,
       rightToUse: f.rightToUse ? '1' : '0',
       fullSong: f.fullSong ? '1' : '0',
       reference: f.reference!,
@@ -127,6 +128,9 @@ export const singersApi = {
     return body as { task: BackgroundTask };
   },
   remove: (id: string) => defaultBrainClient.delete<{ deleted: string }>(`/api/singers/${encodeURIComponent(id)}`),
+  /** A new description of one of the user's own singers. */
+  describe: (id: string, description: string) =>
+    defaultBrainClient.put<{ id: string; description: string }>(`/api/singers/${encodeURIComponent(id)}/description`, { description: description.trim() }),
   /** A new name: an added singer's, or a built-in singer's for this user only. */
   rename: (id: string, name: string) => defaultBrainClient.put<{ id: string; name: string }>(`/api/singers/${encodeURIComponent(id)}/name`, { name }),
   /** Makes the singer's speaking voice: from the singing (no description) or from the user's own description. */

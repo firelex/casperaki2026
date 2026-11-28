@@ -6,7 +6,8 @@
 //   GET    /api/singers               -> { singers: SingerJson[] }  the built-in singers, then the user's own
 //   GET    /api/singers/:id/preview   -> the singer's voice reference (audio)
 //   GET    /api/singers/:id/test-line -> the test line sung in an added singer's voice (audio)
-//   POST   /api/singers?name=&description=&rightToUse=1&fullSong=0|1&reference=beginning|best&extension=
+//   POST   /api/singers?voice=female|male&rightToUse=1&fullSong=0|1&reference=beginning|best&extension=
+//   PUT    /api/singers/:id/description { description } -> one of the user's own singers described anew
 //          body: the recording (any format ffmpeg reads, at most 5 minutes)
 //                                     -> 201 { task }  Add a singer (an addSinger task, src/singers/addSingerTask.ts);
 //                                        400 without the consent box ticked, for a recording over 5 minutes or one
@@ -34,7 +35,7 @@ import { MAX_UPLOAD_BYTES } from '../singers/addSingerTask.js';
 import type { SpeakingVoice, SpeakingVoices } from '../singers/speakingVoice.js';
 import type { SpeakingSinger } from '../singers/speakingVoiceTask.js';
 import { REFERENCE_CHOICES, type UserSinger, type UserSingers } from '../singers/userSingers.js';
-import { TaskError, type BackgroundTasks } from '../tasks/tasks.js';
+import { TaskError, type BackgroundTasks, type SingerVoice } from '../tasks/tasks.js';
 import { taskJson } from './tasks.js';
 import { ownerOf } from './songs.js';
 
@@ -118,11 +119,11 @@ function ownJson(s: UserSinger, dir: string) {
 }
 
 const RenameBody = z.object({ name: z.string().trim().min(1).max(60) }).strict();
+const DescribeBody = z.object({ description: z.string().trim().min(1).max(300) }).strict();
 
 const StartQuery = z
   .object({
-    name: z.string(),
-    description: z.string(),
+    voice: z.string(),
     rightToUse: z.enum(['0', '1']),
     fullSong: z.enum(['0', '1']),
     reference: z.enum(REFERENCE_CHOICES),
@@ -189,8 +190,7 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
       const task = await deps.tasks.startAddSinger(ownerOf(req), {
         recording,
         extension: q.data.extension,
-        name: q.data.name,
-        description: q.data.description,
+        voice: q.data.voice as SingerVoice,
         rightToUse: q.data.rightToUse === '1',
         separate: q.data.fullSong === '1',
         reference: q.data.reference,
@@ -259,6 +259,15 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
     }
     if (!deps.users?.rename(owner, req.params.id, name)) return res.status(404).json({ error: 'not_found', message: `There is no singer "${req.params.id}".` });
     return res.json({ id: req.params.id, name });
+  });
+
+  // A singer's description, edited on the Singers page (owner 2026-11-28); the user's own singers only.
+  router.put('/api/singers/:id/description', express.json(), (req, res) => {
+    const owner = ownerOf(req);
+    const body = DescribeBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_description', message: 'A description is 1 to 300 characters.' });
+    if (!deps.users?.describe(owner, req.params.id, body.data.description)) return res.status(404).json({ error: 'not_found', message: `There is no singer "${req.params.id}" of yours.` });
+    return res.json({ id: req.params.id, description: body.data.description });
   });
 
   router.delete('/api/singers/:id', (req, res) => {

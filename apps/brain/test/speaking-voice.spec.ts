@@ -70,12 +70,12 @@ const send = async (method: string, path: string, body?: unknown) => {
 
 /** Adds a singer (the fake vocals service) and waits for its task; returns its id. */
 async function addSinger(): Promise<string> {
-  const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+  const q = new URLSearchParams({ voice: 'female', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
   const res = await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) });
   expect(res.status).toBe(201);
   await tasks.idle();
   const singers = (await send('GET', '/api/singers')).body.singers as Array<Record<string, any>>;
-  return singers.find((s) => s.name === 'Karla')!.id as string;
+  return singers.find((s) => s.name === 'Female singer 1')!.id as string;
 }
 
 const singer = async (id: string) => ((await send('GET', '/api/singers')).body.singers as Array<Record<string, any>>).find((s) => s.id === id)!;
@@ -106,12 +106,12 @@ describe('speaking voices', () => {
     expect(task.steps.map((s: { id: string }) => s.id)).toContain('describe');
 
     const prompt = prompts[0]!.map((m) => m.content).join('\n');
-    expect(prompt).toMatch(/Karla/u);
-    expect(prompt).toMatch(/Strasser/u);
+    expect(prompt).toMatch(/Female singer 1/u);
+    expect(prompt).toMatch(/Female voice\./u);
     expect(prompt).toMatch(/about 460 Hz/u);
 
     const params = speech.jobs[0]!.params;
-    expect(params).toMatchObject({ stage: 'speaking_voice', singer: 'Karla', match: true, seeds: [7, 11, 21, 33, 42, 57, 64, 99], test_line: "Hi, I'm Karla. Honestly, I'm a bit nervous, but I'm really excited to be here." });
+    expect(params).toMatchObject({ stage: 'speaking_voice', singer: 'Female singer 1', match: true, seeds: [7, 11, 21, 33, 42, 57, 64, 99], test_line: "Hi, I'm Female singer 1. Honestly, I'm a bit nervous, but I'm really excited to be here." });
     expect(String(params['reference'])).toMatch(new RegExp(`${id}/voice\\.wav$`, 'u'));
     expect(params['description']).toMatch(/bright, fairly high/u);
 
@@ -216,10 +216,10 @@ describe('speaking voices', () => {
   it('refuses a second voice while Add a singer is making one for that singer', async () => {
     await boot(fullEnv());
     speech.hold();
-    const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+    const q = new URLSearchParams({ voice: 'female', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
     expect((await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) })).status).toBe(201);
     for (let i = 0; i < 200 && speech.jobs.length === 0; i++) await new Promise((r) => setTimeout(r, 10));
-    const id = ((await send('GET', '/api/singers')).body.singers as Array<Record<string, any>>).find((s) => s.name === 'Karla')!.id as string;
+    const id = ((await send('GET', '/api/singers')).body.singers as Array<Record<string, any>>).find((s) => s.name === 'Female singer 1')!.id as string;
     expect((await send('POST', `/api/singers/${id}/speaking-voice`, {})).status).toBe(409);
     speech.release();
   });
@@ -227,7 +227,7 @@ describe('speaking voices', () => {
   it("retrying an Add a singer whose speaking voice failed makes only the speaking voice", async () => {
     await boot(fullEnv());
     speech.fail('Breeze ran out of memory');
-    const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+    const q = new URLSearchParams({ voice: 'female', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
     await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) });
     await tasks.idle();
     const failed = await lastTask();
@@ -243,7 +243,7 @@ describe('speaking voices', () => {
   it("fails naming the seed when the service leaves a candidate's score out", async () => {
     await boot(fullEnv());
     speech.dropScore = 33;
-    const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+    const q = new URLSearchParams({ voice: 'female', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
     await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) });
     await tasks.idle();
     expect((await lastTask()).message).toMatch(/no score for candidate 33/u);

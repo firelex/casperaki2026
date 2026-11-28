@@ -15,8 +15,7 @@ import { mergeOp } from '../src/state/tasks';
 const file = (name: string, type = 'audio/wav') => new File([new Uint8Array([1, 2, 3])], name, { type });
 const form = (over: Partial<AddSingerForm> = {}): AddSingerForm => ({
   file: file('take.WAV'),
-  name: 'My voice',
-  description: 'Warm and low.',
+  voice: 'female',
   rightToUse: true,
   fullSong: false,
   reference: 'best',
@@ -30,8 +29,8 @@ describe('the Add a singer form', () => {
     expect(addSingerProblem(form())).toBeUndefined();
     expect(addSingerProblem(form({ file: undefined }))).toBe('Choose a recording.');
     expect(addSingerProblem(form({ file: file('recording') }))).toMatch(/ends in its type/u);
-    expect(addSingerProblem(form({ name: '  ' }))).toBe('Give the singer a name.');
-    expect(addSingerProblem(form({ description: '' }))).toBe('Describe the voice.');
+    // Owner 2026-11-28: only female or male is asked; the brain names the singer ("Female singer 3").
+    expect(addSingerProblem(form({ voice: undefined }))).toBe('Choose a female or a male voice.');
     expect(addSingerProblem(form({ reference: undefined }))).toBe('Choose how the voice reference is picked.');
     expect(addSingerProblem(form({ rightToUse: false }))).toBe('Tick "I have the right to use this voice".');
     expect(extensionOf('take.WAV')).toBe('wav');
@@ -39,11 +38,15 @@ describe('the Add a singer form', () => {
 
   it('preselects "The best stretch" and offers "The beginning", and has both boxes', () => {
     const out = html(createElement(AddSingerPanel));
-    const radios = [...out.matchAll(/<input type="radio"[^>]*\/><span>([^<]*)/gu)].map((m) => [m[1]!.trim(), m[0].includes('checked=""')]);
+    const radios = [...out.matchAll(/<input type="radio"[^>]*name="reference"[^>]*\/><span>([^<]*)/gu)].map((m) => [m[1]!.trim(), m[0].includes('checked=""')]);
     expect(radios).toEqual([['The best stretch', true], ['The beginning', false]]);
     expect(out).toMatch(/This is a full song: separate the vocals first/u);
     expect(out).toMatch(/I have the right to use this voice/u);
     expect(out).toMatch(/up to 5 minutes/u);
+    // no name or description asked: female or male, neither preselected
+    expect(out).not.toMatch(/>Name<|>Description</u);
+    const voices = [...out.matchAll(/<input type="radio" name="voice"[^>]*\/><span>([^<]*)/gu)].map((m) => [m[1]!.trim(), m[0].includes('checked=""')]);
+    expect(voices).toEqual([['Female', false], ['Male', false]]);
   });
 
   it('sends the recording as the body and the choices in the query; a refusal comes back as its message', async () => {
@@ -53,7 +56,7 @@ describe('the Add a singer form', () => {
     expect(await singersApi.add(f, fetchOk as unknown as typeof fetch)).toEqual({ task });
     const [url, init] = fetchOk.mock.calls[0] as unknown as [string, RequestInit];
     const q = new URL(url, 'http://x').searchParams;
-    expect(Object.fromEntries(q)).toEqual({ name: 'My voice', description: 'Warm and low.', rightToUse: '1', fullSong: '1', reference: 'beginning', extension: 'wav' });
+    expect(Object.fromEntries(q)).toEqual({ voice: 'female', rightToUse: '1', fullSong: '1', reference: 'beginning', extension: 'wav' });
     expect(init.method).toBe('POST');
     expect(init.body).toBe(f.file);
 
@@ -123,6 +126,20 @@ describe('a navigable Singers page (owner 2026-11-28: "allow rename of singers",
   it('a built-in singer, which has no test line, plays its voice reference on the card', () => {
     const out = html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false, speaking: null } }));
     expect(out).toMatch(/src="\/p"/u);
+  });
+
+  it('an own singer\'s card offers Edit description; a built-in singer\'s does not', () => {
+    expect(html(createElement(SingerCard, { singer: own }))).toMatch(/>Edit description</u);
+    expect(html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false, speaking: null } }))).not.toMatch(/Edit description/u);
+  });
+
+  it('edits the description through the brain', async () => {
+    const put = vi.fn().mockResolvedValue({ id: 'u-1', description: 'Husky.' });
+    const { defaultBrainClient } = await import('../src/api/client');
+    const spy = vi.spyOn(defaultBrainClient, 'put').mockImplementation(put);
+    await singersApi.describe('u-1', '  Husky.  ');
+    expect(put).toHaveBeenCalledWith('/api/singers/u-1/description', { description: 'Husky.' });
+    spy.mockRestore();
   });
 
   it('renames through the brain', async () => {

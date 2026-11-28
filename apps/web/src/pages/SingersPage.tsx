@@ -14,6 +14,7 @@ import {
   type AddSingerForm,
   type ReferenceChoice,
   type SingerInfo,
+  type SingerVoice,
 } from '../api/singers';
 import { tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { AppHeader } from '../layout/AppHeader';
@@ -152,6 +153,20 @@ export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer:
   const [newName, setNewName] = useState(s.name);
   const [error, setError] = useState<string | undefined>(undefined);
   const nameProblem = newName.trim() === '' ? 'Give the singer a name' : newName.trim().length > 60 ? 'At most 60 characters' : undefined;
+  // The description, edited on the card (owner 2026-11-28); the user's own singers only.
+  const [describing, setDescribing] = useState(false);
+  const [newDescription, setNewDescription] = useState(s.description);
+  const descriptionProblem = newDescription.trim() === '' ? 'Describe the voice' : newDescription.trim().length > 300 ? 'At most 300 characters' : undefined;
+  const describe = async () => {
+    setError(undefined);
+    try {
+      await singersApi.describe(s.id, newDescription);
+      await queryClient.invalidateQueries({ queryKey: singersQueryKey });
+      setDescribing(false);
+    } catch (err) {
+      setError(`Could not change ${s.name}'s description: ${message(err)}`);
+    }
+  };
   const rename = async () => {
     setError(undefined);
     try {
@@ -219,7 +234,66 @@ export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer:
               {s.own ? <span className="ml-2 rounded-full border border-white/20 px-2 py-0.5 align-middle text-[11px] font-normal text-white/60">yours</span> : null}
             </h2>
           )}
-          <p className="mt-1 text-[14px] text-white/75">{s.description}</p>
+          {describing ? (
+            <form
+              className="mt-2 flex flex-col gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!descriptionProblem) void describe();
+              }}
+            >
+              <textarea
+                autoFocus
+                rows={2}
+                maxLength={300}
+                value={newDescription}
+                aria-label={`Description of ${s.name}`}
+                className="rounded-[8px] border border-line bg-[#141518] px-3 py-2 text-[14px] text-white outline-none focus:border-white/40"
+                onChange={(e) => setNewDescription(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setDescribing(false);
+                    setNewDescription(s.description);
+                  }
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!descriptionProblem) void describe();
+                  }
+                }}
+              />
+              <span className="flex gap-2">
+                <button type="submit" disabled={descriptionProblem !== undefined} title={descriptionProblem} className="rounded-full bg-white px-3 py-1 text-[13px] font-medium text-black disabled:opacity-40">
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60"
+                  onClick={() => {
+                    setDescribing(false);
+                    setNewDescription(s.description);
+                  }}
+                >
+                  Cancel
+                </button>
+              </span>
+            </form>
+          ) : (
+            <p className="mt-1 text-[14px] text-white/75">
+              {s.description}
+              {s.own ? (
+                <button
+                  type="button"
+                  className="ml-2 text-[12px] text-white/50 underline-offset-2 hover:text-white hover:underline"
+                  onClick={() => {
+                    setNewDescription(s.description);
+                    setDescribing(true);
+                  }}
+                >
+                  Edit description
+                </button>
+              ) : null}
+            </p>
+          )}
         </div>
         {confirming ? (
             <span className="flex shrink-0 items-center gap-2 text-[13px]">
@@ -437,10 +511,11 @@ export function AddingCard({ task }: { task: BackgroundTask }) {
   );
 }
 
-const EMPTY: AddSingerForm = { file: undefined, name: '', description: '', rightToUse: false, fullSong: false, reference: 'best' };
+const EMPTY: AddSingerForm = { file: undefined, voice: undefined, rightToUse: false, fullSong: false, reference: 'best' };
 
-/** The Add a singer form: a recording, a name and description, how the voice reference is chosen ("The best stretch"
- *  preselected), whether it is a full song, and the required consent box. */
+/** The Add a singer form: a recording, female or male (the brain names the singer after it, "Female singer 3"; owner
+ *  2026-11-28), how the voice reference is chosen ("The best stretch" preselected), whether it is a full song, and the
+ *  required consent box. The description is edited on the singer's card. */
 export function AddSingerPanel({ initial = EMPTY }: { initial?: AddSingerForm }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AddSingerForm>(initial);
@@ -478,14 +553,18 @@ export function AddSingerPanel({ initial = EMPTY }: { initial?: AddSingerForm })
         Recording
         <input key={fileKey} type="file" accept="audio/*,video/*" className="text-[13px] text-white/80" onChange={(e) => set({ file: e.target.files?.[0] })} />
       </label>
-      <label className="flex flex-col gap-1 text-[13px] text-white/75">
-        Name
-        <input type="text" maxLength={60} value={form.name} className={field} onChange={(e) => set({ name: e.target.value })} />
-      </label>
-      <label className="flex flex-col gap-1 text-[13px] text-white/75">
-        Description
-        <textarea maxLength={300} rows={2} value={form.description} className={field} placeholder="What the voice sounds like" onChange={(e) => set({ description: e.target.value })} />
-      </label>
+      <fieldset className="flex flex-col gap-2 text-[13px] text-white/75">
+        <legend className="mb-1">Voice</legend>
+        <div className="flex gap-4">
+          {(['female', 'male'] as const).map((v: SingerVoice) => (
+            <label key={v} className="flex items-center gap-2">
+              <input type="radio" name="voice" checked={form.voice === v} onChange={() => set({ voice: v })} />
+              <span>{v === 'female' ? 'Female' : 'Male'}</span>
+            </label>
+          ))}
+        </div>
+        <span className="text-white/50">The singer is named after it (Female singer 1, 2, 3 …); rename it and describe the voice on its card.</span>
+      </fieldset>
       <fieldset className="flex flex-col gap-2 text-[13px] text-white/75">
         <legend className="mb-1">Voice reference</legend>
         {(['best', 'beginning'] as const).map((c: ReferenceChoice) => (

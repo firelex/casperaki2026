@@ -172,13 +172,27 @@ export interface AddSingerDeps {
   readonly speaking?: SpeakingVoiceDeps;
 }
 
+/** The kinds of voice a singer is added as. */
+export const SINGER_VOICES = ['female', 'male'] as const;
+export type SingerVoice = (typeof SINGER_VOICES)[number];
+const VOICE_LABELS: Readonly<Record<SingerVoice, string>> = { female: 'Female', male: 'Male' };
+
+/** The name a new singer of this voice gets: "<Female|Male> singer <n>", n one past the highest of the names given
+ *  (the owner's singers and the Add a singer tasks still running), 1 when there is none. */
+export function nextSingerName(voice: SingerVoice, names: readonly string[]): string {
+  const label = VOICE_LABELS[voice];
+  const pattern = new RegExp(`^${label} singer (\\d+)$`, 'iu');
+  const highest = names.reduce((m, n) => Math.max(m, Number(pattern.exec(n.trim())?.[1] ?? 0)), 0);
+  return `${label} singer ${highest + 1}`;
+}
+
 /** What Add a singer starts with: the upload and the user's choices (checked by startAddSinger). */
 export interface AddSingerStart {
   readonly recording: Buffer;
   /** The upload's file name extension (lowercase letters and digits), kept on the stored file. */
   readonly extension: string;
-  readonly name: string;
-  readonly description: string;
+  /** The kind of voice: the singer is named after it, "Female singer 3" (owner 2026-11-28). */
+  readonly voice: SingerVoice;
   readonly rightToUse: boolean;
   readonly separate: boolean;
   readonly reference: ReferenceChoice;
@@ -347,7 +361,7 @@ export class BackgroundTasks {
     return store.getTask(ownerId, id)!;
   }
 
-  /** Starts Add a singer for the owner: the recording is checked (the consent box, a name and description, readable
+  /** Starts Add a singer for the owner: the recording is checked (the consent box, female or male, readable
    *  audio of at most MAX_RECORDING_SECONDS) and kept in the new singer's folder before the task is queued. */
   async startAddSinger(ownerId: string, start: AddSingerStart): Promise<TaskRow> {
     const a = this.deps.addSinger;
@@ -356,11 +370,18 @@ export class BackgroundTasks {
     if (start.recording.length === 0) throw new TaskError(400, 'no_recording', 'The recording is empty.');
     const singerId = newSingerId();
     const options: AddSingerOptions = (() => {
-      const parsed = AddSingerOptionsSchema.safeParse({ singerId, name: start.name.trim(), description: start.description.trim(), separate: start.separate, reference: start.reference, upload: `original.${start.extension}` });
+      if (!(SINGER_VOICES as readonly string[]).includes(start.voice)) throw new TaskError(400, 'invalid_singer', 'Choose a female or a male voice.');
+      // Named after its voice (owner 2026-11-28); its description starts as the voice and is edited on the Singers page.
+      const adding = this.deps.store
+        .listRunningTasks()
+        .filter((t) => t.ownerId === ownerId && t.kind === 'addSinger')
+        .map((t) => (t.options as { name?: unknown } | null)?.name)
+        .filter((n): n is string => typeof n === 'string');
+      const name = nextSingerName(start.voice, [...a.singers.list(ownerId).map((x) => x.name), ...adding]);
+      const parsed = AddSingerOptionsSchema.safeParse({ singerId, name, description: `${VOICE_LABELS[start.voice]} voice.`, separate: start.separate, reference: start.reference, upload: `original.${start.extension}` });
       if (!parsed.success) {
         const issue = parsed.error.issues[0];
-        const field = issue?.path.join('.') ?? 'the form';
-        throw new TaskError(400, 'invalid_singer', field === 'name' ? 'Give the singer a name (at most 60 characters).' : field === 'description' ? 'Describe the voice (at most 300 characters).' : `${field}: ${issue?.message ?? 'invalid'}`);
+        throw new TaskError(400, 'invalid_singer', `${issue?.path.join('.') ?? 'the form'}: ${issue?.message ?? 'invalid'}`);
       }
       return parsed.data;
     })();

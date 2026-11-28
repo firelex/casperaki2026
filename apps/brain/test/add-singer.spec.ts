@@ -45,10 +45,10 @@ const fullEnv = () => ({
   BRAIN_SINGERS_DATA_DIR: join(dir, 'singers'),
 });
 
-interface Query { name?: string; description?: string; rightToUse?: string; fullSong?: string; reference?: string; extension?: string }
+interface Query { voice?: string; rightToUse?: string; fullSong?: string; reference?: string; extension?: string }
 
 async function upload(recording: Buffer, q: Query = {}) {
-  const params = new URLSearchParams({ name: 'My voice', description: 'Warm and low.', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav', ...q });
+  const params = new URLSearchParams({ voice: 'female', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav', ...q });
   const res = await fetch(`${url}/api/singers?${params}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: recording });
   return { status: res.status, body: (await res.json()) as Record<string, any> };
 }
@@ -75,7 +75,7 @@ describe('Add a singer', () => {
     await boot(fullEnv());
     const started = await upload(toneWav(20), { reference: 'beginning', fullSong: '1' });
     expect(started.status).toBe(201);
-    expect(started.body.task).toMatchObject({ kind: 'addSinger', songId: null, title: 'My voice', state: 'running' });
+    expect(started.body.task).toMatchObject({ kind: 'addSinger', songId: null, title: 'Female singer 1', state: 'running' });
     await tasks.idle();
 
     expect(svc.jobs).toHaveLength(1);
@@ -100,9 +100,9 @@ describe('Add a singer', () => {
     }
 
     const singers = (await get('/api/singers')).body.singers as Array<Record<string, any>>;
-    expect(singers.map((s) => s.name)).toEqual(['Singer 1', 'My voice']);
+    expect(singers.map((s) => s.name)).toEqual(['Singer 1', 'Female singer 1']);
     const mine = singers[1]!;
-    expect(mine).toMatchObject({ own: true, description: 'Warm and low.', transcription: 'words', reference: { choice: 'beginning', startSeconds: 2, endSeconds: 12, seconds: 10.1 } });
+    expect(mine).toMatchObject({ own: true, description: 'Female voice.', transcription: 'words', reference: { choice: 'beginning', startSeconds: 2, endSeconds: 12, seconds: 10.1 } });
     expect(mine.id).toBe(task.singerId);
     expect(mine.source).toMatch(/vocals separated from an uploaded song/u);
     for (const u of [mine.previewUrl, mine.testLineUrl]) {
@@ -143,6 +143,34 @@ describe('Add a singer', () => {
     expect(() => singerVoice(BUILT_IN, users, DEV_OWNER_ID, 'yue2_female_dry2')).toThrow(/There is no singer/u);
     expect(singerVoice(BUILT_IN, users, 'someone-else', 'yue2_female_dry2').audio).toMatch(/yue2_female_dry2\.mp3$/u);
     expect(existsSync(join(BUILT_IN, 'yue2_female_dry2.mp3'))).toBe(true);
+  });
+
+  // Owner 2026-11-28: "auto-name the voices and prompt only for female or male while uploading - and they become female
+  // singer 1, 2, 3, etc. Also, the description needs to be editable."
+  it('names a new singer after its voice, one past the highest of that kind, counting uploads still running', async () => {
+    await boot(fullEnv());
+    const first = await upload(toneWav(20));
+    const male = await upload(toneWav(20), { voice: 'male' });
+    const second = await upload(toneWav(20));
+    expect([first, male, second].map((r) => r.body.task.title)).toEqual(['Female singer 1', 'Male singer 1', 'Female singer 2']);
+    await tasks.idle();
+    const singers = (await get('/api/singers')).body.singers as Array<Record<string, any>>;
+    expect(singers.map((s) => [s.name, s.description])).toEqual([
+      ['Singer 1', expect.any(String)], ['Female singer 1', 'Female voice.'], ['Male singer 1', 'Male voice.'], ['Female singer 2', 'Female voice.'],
+    ]);
+    // a renamed singer frees nothing: the next number is one past the highest still named so
+    const put = (id: string, what: string, body: unknown) => fetch(`${url}/api/singers/${id}/${what}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    expect((await put(singers[3]!.id, 'name', { name: 'Anna' })).status).toBe(200);
+    expect((await upload(toneWav(20))).body.task.title).toBe('Female singer 2');
+    await tasks.idle();
+    // the description is edited (trimmed, 1 to 300 characters); another owner's or a built-in singer's is not
+    const d = await put(singers[1]!.id, 'description', { description: '  Warm and husky, close to the microphone.  ' });
+    expect(d.status).toBe(200);
+    expect(await d.json()).toMatchObject({ id: singers[1]!.id, description: 'Warm and husky, close to the microphone.' });
+    expect(((await get('/api/singers')).body.singers as Array<Record<string, any>>)[1]!.description).toBe('Warm and husky, close to the microphone.');
+    expect((await put(singers[1]!.id, 'description', { description: '  ' })).status).toBe(400);
+    expect((await put(singers[1]!.id, 'description', { description: 'x'.repeat(301) })).status).toBe(400);
+    expect((await put('yue2_female_dry2', 'description', { description: 'Mine now.' })).status).toBe(404);
   });
 
   it('renames a singer: an added one in its list, a built-in one for this owner only; a blank or too long name is refused (owner 2026-11-28)', async () => {
@@ -196,7 +224,7 @@ describe('Add a singer', () => {
     expect(svc.fileFetches).toContain(`${svc.jobs[1]!.id}/voice.wav`);
     const singerId = task.singerId as string;
     expect(readFileSync(join(dir, 'singers', DEV_OWNER_ID, singerId, 'voice.wav'), 'utf8')).not.toBe('from the earlier run');
-    expect(((await get('/api/singers')).body.singers as Array<{ name: string }>).map((s) => s.name)).toEqual(['Singer 1', 'My voice']);
+    expect(((await get('/api/singers')).body.singers as Array<{ name: string }>).map((s) => s.name)).toEqual(['Singer 1', 'Female singer 1']);
   });
 
   it('refuses without the consent box ticked', async () => {
@@ -216,15 +244,14 @@ describe('Add a singer', () => {
     expect(svc.jobs).toHaveLength(0);
   });
 
-  it('refuses a file that is not audio, and one without a name', async () => {
+  it('refuses a file that is not audio, and one without female or male', async () => {
     await boot(fullEnv());
     const r = await upload(Buffer.from('this is not a recording'));
     expect(r.status).toBe(400);
     expect(r.body.error).toBe('not_audio');
     expect(r.body.message).toMatch(/could not be read as audio/u);
-    const unnamed = await upload(toneWav(10), { name: '  ' });
-    expect(unnamed.status).toBe(400);
-    expect(unnamed.body.message).toBe('Give the singer a name (at most 60 characters).');
+    const unchosen = await upload(toneWav(10), { voice: 'robot' });
+    expect(unchosen.status).toBe(400);
     const noChoice = await upload(toneWav(10), { reference: 'middle' });
     expect(noChoice.status).toBe(400);
   });
