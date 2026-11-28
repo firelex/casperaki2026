@@ -15,7 +15,12 @@ export interface FakeSpeechService {
   jobs: Job[];
   /** The seed the match step chooses (default: the second seed asked for). */
   best?: number;
+  /** A seed whose score the result leaves out (a broken service). */
+  dropScore?: number;
   fail(message: string): void;
+  /** Keeps new jobs on their first step until `release`. */
+  hold(): void;
+  release(): void;
   stop(): Promise<void>;
 }
 
@@ -28,15 +33,19 @@ async function body(req: IncomingMessage): Promise<string> {
 export async function startFakeSpeechService(): Promise<FakeSpeechService & { server: Server }> {
   const jobs: Job[] = [];
   let failNext: string | undefined;
+  let held = false;
   let n = 0;
   const svc: FakeSpeechService & { server?: Server } = {
     url: '',
     jobs,
     fail: (m) => void (failNext = m),
+    hold: () => void (held = true),
+    release: () => void (held = false),
     stop: () => new Promise<void>((resolve) => svc.server!.close(() => resolve())),
   };
   const advance = (job: Job) => {
     if (job.state !== 'running') return;
+    if (held && job.shown.length >= 1) return;
     const next = job.script[job.shown.length];
     if (job.failWith && job.shown.length === 1) {
       job.state = 'error';
@@ -63,18 +72,19 @@ export async function startFakeSpeechService(): Promise<FakeSpeechService & { se
         if (params['stage'] !== 'speaking_voice') return send(400, { error: `unknown stage ${String(params['stage'])}` });
         const seeds = params['seeds'] as number[];
         const best = svc.best ?? seeds[Math.min(1, seeds.length - 1)]!;
-        const scores = Object.fromEntries(seeds.map((s) => [String(s), s === best ? 0.9 : 0.5]));
+        const matched = params['match'] === true;
+        const scores = Object.fromEntries(seeds.filter((s) => s !== svc.dropScore).map((s) => [String(s), s === best ? 0.9 : 0.5]));
         const job: Job = {
           id: `speech${++n}`,
           params,
           script: [
             ...seeds.map((s) => ({ id: `speak-${s}`, label: `candidate voice ${s}`, text: '2.0 s', numbers: { seconds: 2 }, files: [`candidate-${s}.wav`] })),
-            { id: 'match', label: 'closest to the singing voice', text: `seed ${best}`, numbers: {}, files: [`candidate-${best}.wav`] },
+            ...(matched ? [{ id: 'match', label: 'closest to the singing voice', text: `seed ${best}`, numbers: {}, files: [`candidate-${best}.wav`] }] : []),
           ],
           shown: [],
           state: 'running',
           error: null,
-          result: { best_seed: best, scores, sample: `candidate-${best}.wav` },
+          result: matched ? { best_seed: best, scores, sample: `candidate-${best}.wav` } : { best_seed: seeds[0], scores: {}, sample: `candidate-${seeds[0]}.wav` },
           ...(failNext ? { failWith: failNext } : {}),
         };
         failNext = undefined;

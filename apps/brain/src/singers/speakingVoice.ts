@@ -11,6 +11,7 @@
 //     speaking.json (SpeakingVoice), speaking.wav (the chosen voice saying the test line),
 //     candidates/candidate-<seed>.wav
 
+import { randomUUID } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
@@ -124,7 +125,7 @@ export class SpeakingVoices {
     SpeakingVoiceSchema.parse(voice);
     if (!candidates.has(voice.seed)) throw new Error(`speaking voice: no candidate file for the chosen seed ${voice.seed}`);
     const dir = this.dir(ownerId, singerId, builtIn);
-    const part = `${dir}.part-${process.pid}`;
+    const part = `${dir}.part-${randomUUID()}`;
     rmSync(part, { recursive: true, force: true });
     mkdirSync(join(part, 'candidates'), { recursive: true });
     for (const c of voice.candidates) {
@@ -135,7 +136,7 @@ export class SpeakingVoices {
     copyFileSync(candidates.get(voice.seed)!, join(part, 'speaking.wav'));
     writeFileSync(join(part, 'speaking.json'), `${JSON.stringify(voice, null, 1)}\n`);
     mkdirSync(dirname(dir), { recursive: true });
-    const old = `${dir}.old-${process.pid}`;
+    const old = `${dir}.old-${randomUUID()}`;
     if (existsSync(dir)) renameSync(dir, old);
     renameSync(part, dir);
     rmSync(old, { recursive: true, force: true });

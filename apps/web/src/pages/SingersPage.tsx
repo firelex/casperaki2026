@@ -139,6 +139,13 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
   );
 }
 
+/** Whether a speaking voice is being made for the singer (a speakingVoice task, or Add a singer, whose last steps make
+ *  the new singer's voice), and its last failed speakingVoice task. */
+export function speakingTaskState(tasks: readonly BackgroundTask[], singerId: string): { making: boolean; failed: BackgroundTask | undefined } {
+  const mine = tasks.filter((t) => (t.kind === 'speakingVoice' || t.kind === 'addSinger') && t.singerId === singerId);
+  return { making: mine.some((t) => t.state === 'running'), failed: mine.find((t) => t.kind === 'speakingVoice' && t.state === 'failed') };
+}
+
 /** The voice the singer speaks in (casting videos): listen to it, try another of its candidate voices, describe it
  *  yourself, or make it (again) from the singing. */
 export function SpeakingVoiceSection({ singer: s }: { singer: SingerInfo }) {
@@ -147,9 +154,7 @@ export function SpeakingVoiceSection({ singer: s }: { singer: SingerInfo }) {
   const [panel, setPanel] = useState<'none' | 'others' | 'describe'>('none');
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
-  const mine = (tasks ?? []).filter((t) => t.kind === 'speakingVoice' && t.singerId === s.id);
-  const making = mine.some((t) => t.state === 'running');
-  const failed = mine.find((t) => t.state === 'failed');
+  const { making, failed } = speakingTaskState(tasks ?? [], s.id);
   const v = s.speaking;
 
   const make = async (own?: string) => {

@@ -384,7 +384,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const speakingVoices = config.singersDataDir ? new SpeakingVoices(config.singersDataDir) : undefined;
   const speaking =
     config.speechServiceUrl && lyricModel && speakingVoices && config.taskFilesDir
-      ? { client: new VocalsClient(config.speechServiceUrl), voices: speakingVoices, chat: lyricModel, filesDir: config.taskFilesDir, pollMs: deps.singPollMs ?? SING_POLL_MS }
+      ? { client: new VocalsClient(config.speechServiceUrl, 'speech service'), voices: speakingVoices, chat: lyricModel, filesDir: config.taskFilesDir, pollMs: deps.singPollMs ?? SING_POLL_MS }
       : undefined;
   if (!speaking) console.warn('[brain] SPEECH_SERVICE_URL (with ASSISTANT_LLM_URL, BRAIN_SINGERS_DATA_DIR, BRAIN_TASK_FILES_DIR) not set — speaking voices answer 503.');
   const addSinger =

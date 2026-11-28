@@ -334,9 +334,15 @@ export class BackgroundTasks {
   }
 
   private checkNoSpeakingVoiceRunning(ownerId: string, singerId: string): void {
+    // A speakingVoice task, or Add a singer (whose last steps make the new singer's voice), for this singer.
     const running = this.deps.store
       .listRunningTasks()
-      .some((t) => t.ownerId === ownerId && t.kind === 'speakingVoice' && SpeakingVoiceOptionsSchema.parse(t.options).singerId === singerId);
+      .some(
+        (t) =>
+          t.ownerId === ownerId &&
+          ((t.kind === 'speakingVoice' && SpeakingVoiceOptionsSchema.parse(t.options).singerId === singerId) ||
+            (t.kind === 'addSinger' && AddSingerOptionsSchema.parse(t.options).singerId === singerId)),
+      );
     if (running) throw new TaskError(409, 'already_running', 'A speaking voice is being made for this singer already.');
   }
 

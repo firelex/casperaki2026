@@ -27,54 +27,71 @@ export interface ServiceResult {
 
 /** The service no longer knows the job (it restarted, or dropped it). */
 export class JobLostError extends Error {
-  constructor(readonly job: string) {
-    super('the vocal service lost the job: sing again');
+  constructor(
+    readonly job: string,
+    service = 'vocal service',
+    then = 'sing again',
+  ) {
+    super(`the ${service} lost the job: ${then}`);
     this.name = 'JobLostError';
   }
 }
 
+/** A model service on the serving harness (svc-vocals, svc-ace, svc-speech); `service` names it in messages. */
 export class VocalsClient {
-  constructor(private readonly baseUrl: string) {}
+  constructor(
+    private readonly baseUrl: string,
+    private readonly service = 'vocal service',
+  ) {}
 
   private url(path: string): string {
     return `${this.baseUrl.replace(/\/+$/u, '')}${path}`;
   }
 
+  /** fetch, an unreachable service named with its address. */
+  private async call(path: string, init?: RequestInit): Promise<Response> {
+    try {
+      return await fetch(this.url(path), init);
+    } catch (err) {
+      throw new Error(`the ${this.service} at ${this.baseUrl} could not be reached: ${err instanceof Error ? (err.cause instanceof Error ? err.cause.message : err.message) : String(err)}`);
+    }
+  }
+
   /** Starts a job: its id. */
   async submit(params: Record<string, unknown>): Promise<string> {
-    const res = await fetch(this.url('/generate'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
-    if (res.status !== 202) throw new Error(`the vocal service refused the ${String(params['stage'])} job: ${res.status} ${await res.text()}`);
+    const res = await this.call('/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params) });
+    if (res.status !== 202) throw new Error(`the ${this.service} refused the ${String(params['stage'])} job: ${res.status} ${await res.text()}`);
     const body = (await res.json()) as { job_id?: unknown };
-    if (typeof body.job_id !== 'string') throw new Error(`the vocal service answered the ${String(params['stage'])} job without a job_id`);
+    if (typeof body.job_id !== 'string') throw new Error(`the ${this.service} answered the ${String(params['stage'])} job without a job_id`);
     return body.job_id;
   }
 
   /** The job's state and steps (JobLostError for a job the service does not know). */
   async result(job: string): Promise<ServiceResult> {
-    const res = await fetch(this.url(`/result?job=${encodeURIComponent(job)}`));
-    if (res.status === 404) throw new JobLostError(job);
-    if (!res.ok) throw new Error(`the vocal service answered ${res.status} for job ${job}: ${await res.text()}`);
+    const res = await this.call(`/result?job=${encodeURIComponent(job)}`);
+    if (res.status === 404) throw new JobLostError(job, this.service, this.service === 'vocal service' ? 'sing again' : 'start it again');
+    if (!res.ok) throw new Error(`the ${this.service} answered ${res.status} for job ${job}: ${await res.text()}`);
     const body = (await res.json()) as Partial<ServiceResult>;
     if (body.state !== 'running' && body.state !== 'done' && body.state !== 'error') {
-      throw new Error(`the vocal service reported job ${job} in an unknown state ${JSON.stringify(body.state)}`);
+      throw new Error(`the ${this.service} reported job ${job} in an unknown state ${JSON.stringify(body.state)}`);
     }
-    if (!Array.isArray(body.steps)) throw new Error(`the vocal service reported job ${job} without its steps`);
+    if (!Array.isArray(body.steps)) throw new Error(`the ${this.service} reported job ${job} without its steps`);
     return { state: body.state, error: body.error ?? null, steps: body.steps };
   }
 
   /** The job's result file (name undefined) or a file one of its steps listed. */
   async file(job: string, name?: string): Promise<Buffer> {
     const q = `job=${encodeURIComponent(job)}${name !== undefined ? `&name=${encodeURIComponent(name)}` : ''}`;
-    const res = await fetch(this.url(`/file?${q}`));
-    if (!res.ok) throw new Error(`the vocal service could not send ${name ?? 'the result'} of job ${job}: ${res.status} ${await res.text()}`);
+    const res = await this.call(`/file?${q}`);
+    if (!res.ok) throw new Error(`the ${this.service} could not send ${name ?? 'the result'} of job ${job}: ${res.status} ${await res.text()}`);
     return Buffer.from(await res.arrayBuffer());
   }
 
   /** Cancels a job: false when the service does not know it (nothing left to cancel). */
   async cancel(job: string): Promise<boolean> {
-    const res = await fetch(this.url(`/cancel?job=${encodeURIComponent(job)}`), { method: 'POST' });
+    const res = await this.call(`/cancel?job=${encodeURIComponent(job)}`, { method: 'POST' });
     if (res.status === 404) return false;
-    if (!res.ok) throw new Error(`the vocal service could not cancel job ${job}: ${res.status} ${await res.text()}`);
+    if (!res.ok) throw new Error(`the ${this.service} could not cancel job ${job}: ${res.status} ${await res.text()}`);
     return true;
   }
 }

@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { addSingerProblem, extensionOf, referenceText, singersApi, speakingDescriptionProblem, type AddSingerForm, type SingerInfo } from '../src/api/singers';
 import { TASK_LABELS, type BackgroundTask } from '../src/api/tasks';
 import { taskPage } from '../src/layout/TasksMenu';
-import { AddSingerPanel, SingerCard } from '../src/pages/SingersPage';
+import { AddSingerPanel, SingerCard, speakingTaskState } from '../src/pages/SingersPage';
 import { mergeOp } from '../src/state/tasks';
 
 const file = (name: string, type = 'audio/wav') => new File([new Uint8Array([1, 2, 3])], name, { type });
@@ -145,5 +145,16 @@ describe('speaking voices on the Singers page', () => {
     expect(() => mergeOp('speakingVoice', {}, {} as never)).toThrow(/no result/u);
     expect(typeof singersApi.makeSpeakingVoice).toBe('function');
     expect(typeof singersApi.chooseSpeakingVoice).toBe('function');
+  });
+});
+
+describe('a singer whose speaking voice is being made', () => {
+  const task = (over: Partial<BackgroundTask>): BackgroundTask => ({ id: 't', kind: 'speakingVoice', songId: null, title: 'x', state: 'running', startedAt: 'x', singerId: 'u-1', ...over });
+  it('counts Add a singer making the new singer\'s voice, and only its own failed speaking tasks', () => {
+    expect(speakingTaskState([task({ kind: 'addSinger' })], 'u-1').making).toBe(true);
+    expect(speakingTaskState([task({})], 'u-1').making).toBe(true);
+    expect(speakingTaskState([task({ singerId: 'u-2' })], 'u-1').making).toBe(false);
+    expect(speakingTaskState([task({ kind: 'addSinger', state: 'failed' })], 'u-1').failed).toBeUndefined();
+    expect(speakingTaskState([task({ state: 'failed', message: 'no' })], 'u-1').failed?.message).toBe('no');
   });
 });

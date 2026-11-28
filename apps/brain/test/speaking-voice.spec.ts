@@ -13,6 +13,9 @@ import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
 import type { ChatMessage, ChatModel } from '../src/llm/chatModel.js';
 import { DEV_OWNER_ID } from '../src/routes/songs.js';
+import { VocalsClient } from '../src/sing/vocalsClient.js';
+import { SpeakingVoices } from '../src/singers/speakingVoice.js';
+import { makeSpeakingVoice } from '../src/singers/speakingVoiceTask.js';
 import { openSongsStore } from '../src/store.js';
 import type { BackgroundTasks } from '../src/tasks/tasks.js';
 import { fakeVocalLevel } from './fakeVocalLevel.js';
@@ -108,7 +111,7 @@ describe('speaking voices', () => {
     expect(prompt).toMatch(/about 460 Hz/u);
 
     const params = speech.jobs[0]!.params;
-    expect(params).toMatchObject({ stage: 'speaking_voice', seeds: [7, 11, 21, 33, 42, 57, 64, 99], test_line: "Hi, I'm Karla. Honestly, I'm a bit nervous, but I'm really excited to be here." });
+    expect(params).toMatchObject({ stage: 'speaking_voice', singer: 'Karla', match: true, seeds: [7, 11, 21, 33, 42, 57, 64, 99], test_line: "Hi, I'm Karla. Honestly, I'm a bit nervous, but I'm really excited to be here." });
     expect(String(params['reference'])).toMatch(new RegExp(`${id}/voice\\.wav$`, 'u'));
     expect(params['description']).toMatch(/bright, fairly high/u);
 
@@ -127,7 +130,7 @@ describe('speaking voices', () => {
     const r = await send('POST', `/api/singers/${id}/speaking-voice`, { description: '  A man in his forties, deep and calm.  ' });
     expect(r.status).toBe(202);
     await tasks.idle();
-    expect(speech.jobs[1]!.params).toMatchObject({ description: 'A man in his forties, deep and calm.', seeds: [7] });
+    expect(speech.jobs[1]!.params).toMatchObject({ description: 'A man in his forties, deep and calm.', seeds: [7], match: false });
     expect(prompts).toHaveLength(1); // only the one made when the singer was added
     expect((await singer(id)).speaking).toMatchObject({ madeBy: 'described', seed: 7, description: 'A man in his forties, deep and calm.' });
   });
@@ -181,6 +184,69 @@ describe('speaking voices', () => {
     expect(off.status).toBe(503);
     expect(off.body.message).toMatch(/SPEECH_SERVICE_URL/u);
     expect((await singer(id)).speaking).toBeTruthy(); // still listed: the files stay
+  });
+
+  it('fails naming the speech service and its address when it cannot be reached', async () => {
+    await boot({ ...baseEnv(), SPEECH_SERVICE_URL: 'http://127.0.0.1:9' });
+    expect((await send('POST', `/api/singers/${BUILT_IN_ID}/speaking-voice`, { description: 'A man.' })).status).toBe(202);
+    await tasks.idle();
+    const task = await lastTask();
+    expect(task.state).toBe('failed');
+    expect(task.message).toMatch(/speech service at http:\/\/127\.0\.0\.1:9/u);
+  });
+
+  it('after a restart, follows the same job with the description it was spoken from', async () => {
+    const job = ((await (await fetch(`${speech.url}/generate`, { method: 'POST', body: JSON.stringify({ stage: 'speaking_voice', seeds: [7, 11, 21, 33, 42, 57, 64, 99], match: true }) })).json()) as { job_id: string }).job_id;
+    const voices = new SpeakingVoices(join(dir, 'singers'));
+    const voice = await makeSpeakingVoice({
+      ownerId: 'o',
+      singer: { id: BUILT_IN_ID, name: 'Singer 1', description: 'd', audio: join(BUILT_IN, 'yue2_female_dry2.mp3'), meta: join(BUILT_IN, 'yue2_female_dry2.json'), builtIn: true },
+      deps: { client: new VocalsClient(speech.url, 'speech service'), voices, chat: { complete: async () => { throw new Error('the language model is down'); } }, filesDir: join(dir, 'files'), pollMs: 5 },
+      filesDir: join(dir, 'files', 'task'),
+      signal: new AbortController().signal,
+      jobs: { speaking: job, speakingDescription: 'The description the job was spoken from.' },
+      setJobs: () => undefined,
+      setSteps: () => undefined,
+      now: () => 'now',
+    });
+    expect(voice).toMatchObject({ description: 'The description the job was spoken from.', madeBy: 'matched' });
+    expect(speech.jobs).toHaveLength(1);
+  });
+
+  it('refuses a second voice while Add a singer is making one for that singer', async () => {
+    await boot(fullEnv());
+    speech.hold();
+    const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+    expect((await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) })).status).toBe(201);
+    for (let i = 0; i < 200 && speech.jobs.length === 0; i++) await new Promise((r) => setTimeout(r, 10));
+    const id = ((await send('GET', '/api/singers')).body.singers as Array<Record<string, any>>).find((s) => s.name === 'Karla')!.id as string;
+    expect((await send('POST', `/api/singers/${id}/speaking-voice`, {})).status).toBe(409);
+    speech.release();
+  });
+
+  it("retrying an Add a singer whose speaking voice failed makes only the speaking voice", async () => {
+    await boot(fullEnv());
+    speech.fail('Breeze ran out of memory');
+    const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+    await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) });
+    await tasks.idle();
+    const failed = await lastTask();
+    expect(failed.state).toBe('failed');
+    expect((await send('POST', `/api/tasks/${failed.id}/retry`)).status).toBe(200);
+    await tasks.idle();
+    expect((await lastTask()).state).toBe('done');
+    expect(vocals.jobs).toHaveLength(1);
+    expect(speech.jobs).toHaveLength(2);
+    expect((await singer(failed.singerId)).speaking).toMatchObject({ madeBy: 'matched' });
+  });
+
+  it("fails naming the seed when the service leaves a candidate's score out", async () => {
+    await boot(fullEnv());
+    speech.dropScore = 33;
+    const q = new URLSearchParams({ name: 'Karla', description: 'Strasser', rightToUse: '1', fullSong: '0', reference: 'best', extension: 'wav' });
+    await fetch(`${url}/api/singers?${q}`, { method: 'POST', headers: { 'content-type': 'audio/wav' }, body: toneWav(20) });
+    await tasks.idle();
+    expect((await lastTask()).message).toMatch(/no score for candidate 33/u);
   });
 
   it('adds a singer without a speaking voice when the speech service is not set up', async () => {

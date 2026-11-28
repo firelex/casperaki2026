@@ -3,8 +3,10 @@ two singers, 2026-11-28), so instead: the description of the voice (written by t
 uploader's words) is spoken with each seed, and the candidate whose voice is closest to the singer's reference
 (SpeakerMatcher) is kept.
 
-params: {"stage": "speaking_voice", "reference": <abs path to the singer's voice.wav>, "description": str,
-         "test_line": str, "seeds": [int, ...]}
+params: {"stage": "speaking_voice", "singer": <name, for messages>, "reference": <abs path to the singer's voice.wav>,
+         "description": str, "test_line": str, "seeds": [int, ...], "match": bool}
+        match false (a voice the user described): exactly one seed, spoken and kept without matching (scores {}).
+        The reference is checked for at least 1 s of voice before any model loads.
 files:  candidate-<seed>.wav (finished, post.finish) and speaking_voice.json =
         {"best_seed": int, "scores": {"<seed>": float}, "sample": "candidate-<best>.wav"}
 """
@@ -16,7 +18,10 @@ from pathlib import Path
 from . import post
 
 
-def check(params) -> tuple[Path, str, str, list[int]]:
+def check(params) -> tuple[str, Path, str, str, list[int], bool]:
+    singer = params.get("singer")
+    if not isinstance(singer, str) or not singer.strip():
+        raise ValueError("speech: no singer name")
     ref = params.get("reference")
     if not isinstance(ref, str) or not Path(ref).is_absolute():
         raise ValueError("speech: the reference must be an absolute path")
@@ -31,14 +36,24 @@ def check(params) -> tuple[Path, str, str, list[int]]:
     if (not isinstance(seeds, list) or not seeds or len(set(map(repr, seeds))) != len(seeds)
             or not all(isinstance(s, int) and not isinstance(s, bool) for s in seeds)):
         raise ValueError("speech: the seeds must be a list of different whole numbers")
-    return Path(ref), description.strip(), line.strip(), seeds
+    match = params.get("match")
+    if not isinstance(match, bool):
+        raise ValueError("speech: match must be true or false")
+    if not match and len(seeds) != 1:
+        raise ValueError("speech: a voice that is not matched is spoken with one seed")
+    return singer.strip(), Path(ref), description.strip(), line.strip(), seeds, match
 
 
 def run(params, out_dir, job):
-    ref, description, line, seeds = check(params)
+    singer, ref, description, line, seeds, match = check(params)
     out = Path(out_dir)
-    from .breeze import Breeze
-    from .match import SpeakerMatcher
+    from . import breeze, match as matching
+
+    if match:
+        voice = matching.voiced_seconds(ref)
+        if voice < 1:
+            raise ValueError(f"speech: {singer}'s voice reference has {voice:.1f} s of voice; matching needs at least 1 s of voice")
+    Breeze, SpeakerMatcher = breeze.Breeze, matching.SpeakerMatcher
 
     breeze = Breeze()
     try:
@@ -50,6 +65,10 @@ def run(params, out_dir, job):
                 step.done(f"{seconds:.1f} s", {"seconds": seconds}, [f"candidate-{seed}.wav"])
     finally:
         breeze.close()
+    if not match:
+        result = {"best_seed": seeds[0], "scores": {}, "sample": f"candidate-{seeds[0]}.wav"}
+        (out / "speaking_voice.json").write_text(json.dumps(result))
+        return {"file": str(out / "speaking_voice.json"), "kind": "json"}
     step = job.step("match", "closest to the singing voice") if job else None
     matcher = SpeakerMatcher()
     try:

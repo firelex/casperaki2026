@@ -112,6 +112,14 @@ export async function runAddSinger(ctx: AddSingerContext): Promise<{ singerId: s
   let service: TaskStep[] = [];
   let keep: TaskStep = { ...KEEP, state: 'waiting' };
   const publish = () => ctx.setSteps([...service, keep]);
+  // A Retry after the singer was kept (only its speaking voice failed): straight to the speaking voice.
+  const kept = singers.get(ctx.ownerId, options.singerId);
+  if (kept) {
+    keep = { ...KEEP, state: 'done', text: `${options.name} was kept already` };
+    publish();
+    if (ctx.speaking) await speakingStep(ctx, [keep], join(dir, kept.audio), join(dir, kept.meta), ctx.jobs?.addSinger);
+    return { singerId: options.singerId };
+  }
   publish();
 
   let job: string;
@@ -142,8 +150,7 @@ export async function runAddSinger(ctx: AddSingerContext): Promise<{ singerId: s
       if (!existsSync(src)) throw new Error(`${name} was not among the files the vocal service's steps made`);
       copyFileSync(src, join(dir, name));
     }
-    // A Retry after the singer was kept (its speaking voice failed): it is listed already.
-    if (!singers.get(ctx.ownerId, options.singerId)) singers.add(ctx.ownerId, {
+    singers.add(ctx.ownerId, {
       id: options.singerId,
       name: options.name,
       description: options.description,
@@ -164,19 +171,22 @@ export async function runAddSinger(ctx: AddSingerContext): Promise<{ singerId: s
     publish();
     throw err;
   }
-  if (ctx.speaking) {
-    const before = [...service, keep];
-    await makeSpeakingVoice({
-      ownerId: ctx.ownerId,
-      singer: { id: options.singerId, name: options.name, description: options.description, audio: join(dir, made.audio), meta: join(dir, made.meta), builtIn: false },
-      deps: ctx.speaking,
-      filesDir: ctx.filesDir,
-      signal: ctx.signal,
-      jobs: ctx.jobs,
-      setJobs: (jobs) => ctx.setJobs({ ...jobs, addSinger: job }),
-      setSteps: (steps) => ctx.setSteps([...before, ...steps]),
-      now: ctx.now,
-    });
-  }
+  if (ctx.speaking) await speakingStep(ctx, [...service, keep], join(dir, made.audio), join(dir, made.meta), job);
   return { singerId: options.singerId };
+}
+
+/** The new singer's speaking voice, its steps shown after `before`. */
+async function speakingStep(ctx: AddSingerContext, before: TaskStep[], audio: string, meta: string, addSingerJob: string | undefined): Promise<void> {
+  const { options } = ctx;
+  await makeSpeakingVoice({
+    ownerId: ctx.ownerId,
+    singer: { id: options.singerId, name: options.name, description: options.description, audio, meta, builtIn: false },
+    deps: ctx.speaking!,
+    filesDir: ctx.filesDir,
+    signal: ctx.signal,
+    jobs: ctx.jobs,
+    setJobs: (jobs) => ctx.setJobs({ ...jobs, ...(addSingerJob !== undefined ? { addSinger: addSingerJob } : {}) }),
+    setSteps: (steps) => ctx.setSteps([...before, ...steps]),
+    now: ctx.now,
+  });
 }

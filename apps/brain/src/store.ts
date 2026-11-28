@@ -122,6 +122,8 @@ export interface TaskJobs {
   readonly addSinger?: string;
   /** A singer's speaking voice (Add a singer's last steps, or a speakingVoice task): the speech service's job. */
   readonly speaking?: string;
+  /** The description the speaking job speaks: kept with the job, so a resumed task records what it was spoken from. */
+  readonly speakingDescription?: string;
 }
 
 export interface TaskRow {

@@ -16,6 +16,6 @@ SEEDS = [7, 11, 21, 33, 42, 57, 64, 99]
 ref, name, description, out = sys.argv[1:5]
 Path(out).mkdir(parents=True, exist_ok=True)
 line = f"Hi, I'm {name}. Honestly, I'm a bit nervous, but I'm really excited to be here."
-speaking_voice.run({"stage": "speaking_voice", "reference": str(Path(ref).resolve()), "description": description,
+speaking_voice.run({"stage": "speaking_voice", "singer": name, "match": True, "reference": str(Path(ref).resolve()), "description": description,
                     "test_line": line, "seeds": SEEDS}, out, None)
 print(json.dumps(json.loads((Path(out) / "speaking_voice.json").read_text()), indent=1))

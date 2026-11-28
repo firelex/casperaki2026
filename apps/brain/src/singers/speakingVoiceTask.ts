@@ -79,7 +79,14 @@ export async function makeSpeakingVoice(ctx: SpeakingVoiceContext): Promise<Spea
   const publish = () => ctx.setSteps([...(describe ? [describe] : []), ...service, keep]);
   publish();
 
-  let description = ctx.description;
+  // A task resumed after a restart follows its job with the description that job was started with.
+  const resumed = ctx.jobs?.speaking !== undefined;
+  let description = resumed ? ctx.jobs!.speakingDescription : ctx.description;
+  if (resumed && !description) throw new Error('the speaking-voice job lost its description: make the speaking voice again');
+  if (resumed && describe) {
+    describe = { ...describe, state: 'done', text: description! };
+    publish();
+  }
   if (!description) {
     const startedAt = ctx.now();
     describe = { ...describe!, state: 'running', startedAt };
@@ -97,13 +104,13 @@ export async function makeSpeakingVoice(ctx: SpeakingVoiceContext): Promise<Spea
   const seeds = ctx.description ? [DESCRIBED_SEED] : [...SPEAKING_SEEDS];
 
   let job: string;
-  if (ctx.jobs?.speaking !== undefined) job = ctx.jobs.speaking;
+  if (resumed) job = ctx.jobs!.speaking!;
   else {
     if (ctx.signal.aborted) throw new CancelledError();
     // A new job: an earlier run's step files must go, or followJob (which skips files it already has) keeps them.
     rmSync(join(ctx.filesDir, SPEAKING_FILES_STAGE), { recursive: true, force: true });
-    job = await deps.client.submit({ stage: SPEAKING_STAGE, reference: singer.audio, description, test_line: speakingTestLine(singer.name), seeds });
-    ctx.setJobs({ ...(ctx.jobs ?? {}), speaking: job });
+    job = await deps.client.submit({ stage: SPEAKING_STAGE, singer: singer.name, reference: singer.audio, description, test_line: speakingTestLine(singer.name), seeds, match: !ctx.description });
+    ctx.setJobs({ ...(ctx.jobs ?? {}), speaking: job, speakingDescription: description });
   }
   const following = { client: deps.client, filesDir: ctx.filesDir, pollMs: deps.pollMs, signal: ctx.signal };
   const file = await followJob(following, SPEAKING_FILES_STAGE, job, (steps) => {
@@ -123,7 +130,12 @@ export async function makeSpeakingVoice(ctx: SpeakingVoiceContext): Promise<Spea
       seed: result.best_seed,
       sample: 'speaking.wav',
       madeBy: ctx.description ? 'described' : 'matched',
-      candidates: seeds.map((seed) => ({ seed, score: ctx.description ? null : (result.scores[String(seed)] ?? null) })),
+      candidates: seeds.map((seed) => {
+        if (ctx.description) return { seed, score: null };
+        const score = result.scores[String(seed)];
+        if (score === undefined) throw new Error(`the speech service gave no score for candidate ${seed}`);
+        return { seed, score };
+      }),
       createdAt: ctx.now(),
     };
     deps.voices.save(ctx.ownerId, singer.id, singer.builtIn, voice, new Map(seeds.map((s) => [s, join(stageDir, `candidate-${s}.wav`)])));
