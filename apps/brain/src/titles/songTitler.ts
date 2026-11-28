@@ -30,7 +30,7 @@ const TIMEOUT_MS = 30_000;
 const MAX_TITLE_LENGTH = 60;
 const RECENT_TITLES = 40;
 /** Answers asked for before giving up when the model keeps copying an example title. */
-const MAX_ATTEMPTS = 3;
+const MAX_ATTEMPTS = 6;
 const titleKey = (t: string) => t.toLowerCase().replace(/[^a-z' ]/gu, '').replace(/\s+/gu, ' ').trim();
 
 export class SongTitler {
@@ -67,9 +67,13 @@ export class SongTitler {
     // A title copied from the examples (or the bank) is asked for again, with other examples.
     let title: string | undefined;
     const bank = new Set(titleBank().map(titleKey));
+    // Each bank title it answers is listed to avoid in the next ask (the bank holds the common pop titles, so the model
+    // reaches for them: "Casperaki Pop in D" kept its placeholder after three, 2026-11-28).
+    const rejected: string[] = [];
     for (let attempt = 1; attempt <= MAX_ATTEMPTS && title === undefined; attempt++) {
-      const answer = await this.ask(songPrompt(song, taken, drawTitles(titleBank(), TITLE_EXAMPLES, Math.random)));
+      const answer = await this.ask(songPrompt(song, [...taken, ...rejected], drawTitles(titleBank(), TITLE_EXAMPLES, Math.random)));
       if (!bank.has(titleKey(answer))) title = answer;
+      else rejected.push(answer);
     }
     if (title === undefined) throw new Error(`the title model copied an example title ${MAX_ATTEMPTS} times`);
     const project = this.store.getProject(ownerId, songId);

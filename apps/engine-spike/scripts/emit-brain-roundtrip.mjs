@@ -326,6 +326,21 @@ function fxMetadata() {
   return _fxMetadata;
 }
 
+// The sound library's multisample sheet (multisampleMetadata.json, beside the instruments folder): per chromatic
+// recording (its path under instruments/) what the slicing must know, e.g. "firstNote" for one that does not start on
+// the timing table's first note ("BA Brooks 1" starts on F#: the player shifts its slices; owner 2026-11-28 "offset
+// the notes in the player"). A recording it does not list starts where the table does.
+const MULTISAMPLE_METADATA_PATH = SAMPLE_LIBRARY_ROOT ? join(SAMPLE_LIBRARY_ROOT, '..', 'multisampleMetadata.json') : null;
+let _multisampleMetadata = null;
+function multisampleMetadata() {
+  if (_multisampleMetadata) return _multisampleMetadata;
+  if (!MULTISAMPLE_METADATA_PATH) return (_multisampleMetadata = {});
+  if (!existsSync(MULTISAMPLE_METADATA_PATH)) throw new Error(`The sound library has no multisample sheet at ${MULTISAMPLE_METADATA_PATH} (multisampleMetadata.json, beside the instruments folder).`);
+  const raw = JSON.parse(_readFileSync(MULTISAMPLE_METADATA_PATH, 'utf8'));
+  if (!raw || typeof raw.recordings !== 'object') throw new Error(`${MULTISAMPLE_METADATA_PATH} has no "recordings" object`);
+  return (_multisampleMetadata = raw.recordings);
+}
+
 function getTransitionSampleDetails(entry) {
   if (!SAMPLE_LIBRARY_ROOT) return null;
   // Disk folder names can differ from the catalog's (e.g. the 8-bit arcade
@@ -481,10 +496,13 @@ function attachMultisamplePlan(verdict, instJson) {
   if (typeof family !== 'string') return verdict;
   const samples = Array.isArray(instJson?.samples) ? instJson.samples : [];
   if (samples.length === 0) return verdict;
+  // Read outside the try below: a missing or broken sheet must fail the lowering, not quietly unresolve the slots.
+  const firstNote = typeof verdict.relativePath === 'string' ? multisampleMetadata()[verdict.relativePath]?.firstNote : undefined;
   try {
     const res = resolveMultisampleSlots({
       family,
       samples: samples.map((s) => ({ id: s.id, note: s.note, type: s.type })),
+      ...(firstNote ? { firstNote } : {}),
     });
     return {
       ...verdict,

@@ -278,3 +278,23 @@ describe('resolveMultisampleSlots — production data sanity (real timing JSONs)
     expect(res.reason).toMatch(/not in the timing map/u);
   });
 });
+
+describe('a recording that does not start on the timing table first note (owner 2026-11-28: "offset the notes in the player")', () => {
+  const timing = ['c2', 'd#2', 'f#2', 'a2', 'c3', 'd#3'].map((note, i) => ({ start: `00.${String(i * 4).padStart(2, '0')}.50`, end: `00.${String(i * 4 + 4).padStart(2, '0')}.50`, type: 'longNote', note }));
+  const samples = [{ id: 1, note: 'c2', type: 'longNote' }, { id: 2, note: 'd#2', type: 'longNote' }, { id: 3, note: 'c3', type: 'longNote' }, { id: 4, note: 'd#3', type: 'longNote' }];
+
+  it('starting on F# (two slices of three semitones before C): every slot takes the slice two further on', () => {
+    const res = resolveMultisampleSlots({ family: 'basses', samples, familyTimingMap: { basses: 'bassNotes' }, loadTimingForName: () => timing, firstNote: 'F#' });
+    // the slots past the recording's top stay empty: no note is re-pitched to stand in (owner 2026-11-28)
+    expect(res.slots.map((s) => (s.status === 'resolved' ? s.sliceStart : s.status))).toEqual([8.5, 12.5, 'unresolved', 'unresolved']);
+  });
+
+  it('a first note off the three-semitone grid is refused, naming it', () => {
+    expect(() => resolveMultisampleSlots({ family: 'basses', samples, familyTimingMap: { basses: 'bassNotes' }, loadTimingForName: () => timing, firstNote: 'D' })).toThrow(/D/u);
+  });
+
+  it('starting on C (or no first note given): as before', () => {
+    const res = resolveMultisampleSlots({ family: 'basses', samples, familyTimingMap: { basses: 'bassNotes' }, loadTimingForName: () => timing, firstNote: 'C' });
+    expect(res.slots.map((s) => (s.status === 'resolved' ? s.sliceStart : s.status))).toEqual([0.5, 4.5, 16.5, 20.5]);
+  });
+});

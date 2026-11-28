@@ -124,6 +124,20 @@ describe('SongTitler', () => {
     expect(store!.getProject('u', 'a'.repeat(16))!.title).toBe('Brand New Line');
   });
 
+  it('a title already in the bank is not offered again: the next ask lists it to avoid, and four bank titles in a row still end named (song "Casperaki Pop in D", 2026-11-28)', async () => {
+    let n = 0;
+    const bankTitles = titleBank().slice(0, 4);
+    const { titler, song, prompts } = await setup(() => {
+      n++;
+      return { status: 200, text: n <= 4 ? bankTitles[n - 1]! : 'Brand New Line' };
+    });
+    titler.name({ ownerId: 'u', songId: 'a'.repeat(16), song, placeholderTitle: 'Edm in A' });
+    await titler.idle();
+    expect(prompts).toHaveLength(5);
+    for (const t of bankTitles) expect(prompts[4]).toContain(t);
+    expect(store!.getProject('u', 'a'.repeat(16))!.title).toBe('Brand New Line');
+  });
+
   it('keeps the placeholder when the model fails', async () => {
     const { titler, song } = await setup(() => ({ status: 500, text: 'boom' }));
     titler.name({ ownerId: 'u', songId: 'a'.repeat(16), song, placeholderTitle: 'Edm in A' });

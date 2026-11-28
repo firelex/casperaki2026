@@ -193,6 +193,7 @@ function buildTimingIndex(timing) {
  *   familyTimingMap?: Record<string, string>;
  *   loadTimingForName?: (name: string) => LegacyTimingEntry[];
  *   dataDir?: string;
+ *   firstNote?: string;
  * }} opts
  * @returns {MultisampleResolution}
  */
@@ -202,6 +203,7 @@ export function resolveMultisampleSlots({
   familyTimingMap,
   loadTimingForName,
   dataDir,
+  firstNote,
 }) {
   const map = familyTimingMap ?? loadFamilyTimingMap(dataDir ? { dataDir } : undefined);
   const timingName = map?.[family];
@@ -227,6 +229,9 @@ export function resolveMultisampleSlots({
   const loader = loadTimingForName ?? ((name) => loadTiming(name, dataDir ? { dataDir } : undefined));
   const timing = loader(timingName);
   const idx = buildTimingIndex(timing);
+  // A recording that starts below the table's first note (the library's multisampleMetadata.json: "BA Brooks 1" starts
+  // on F#, not C; owner 2026-11-28 "offset the notes in the player"): every slot takes the slice that many further on.
+  const shift = firstNote === undefined ? 0 : slicesBeforeFirst(timing, firstNote, timingName);
 
   /** @type {MultisampleSlotResolution[]} */
   const slots = [];
@@ -253,7 +258,13 @@ export function resolveMultisampleSlots({
       unresolvedCount++;
       continue;
     }
-    const t = timing[tIndex];
+    const t = timing[tIndex + shift];
+    if (!t || t.type !== s.type) {
+      // Past the recording's top (it starts `shift` notes early): no slice, never a re-pitched stand-in (owner 2026-11-28).
+      slots.push({ slot: { id: s.id, note: s.note, type: s.type }, status: 'unresolved', reason: `the recording starts ${shift} slice(s) early (first note ${firstNote}), so it has no slice for (note=${s.note}, type=${s.type})` });
+      unresolvedCount++;
+      continue;
+    }
     const sliceStart = parseMmSsHh(t.start);
     const sliceEnd = parseMmSsHh(t.end);
     slots.push({
@@ -278,3 +289,25 @@ export function resolveMultisampleSlots({
     slots,
   };
 }
+
+const PITCH_CLASSES = { c: 0, 'c#': 1, db: 1, d: 2, 'd#': 3, eb: 3, e: 4, f: 5, 'f#': 6, gb: 6, g: 7, 'g#': 8, ab: 8, a: 9, 'a#': 10, bb: 10, b: 11 };
+
+/** How many slices before the table's first note a recording starting on `firstNote` begins (the table steps by a
+ *  fixed interval: bassNotes by three semitones). Throws for a note that is not on that grid. */
+function slicesBeforeFirst(timing, firstNote, timingName) {
+  const pc = (n) => {
+    const m = /^([a-g](?:#|b)?)/iu.exec(String(n).trim());
+    const v = m ? PITCH_CLASSES[m[1].toLowerCase()] : undefined;
+    if (v === undefined) throw new Error(`multisample: "${n}" is not a note`);
+    return v;
+  };
+  const real = timing.filter((t) => t.type !== 'IGNORE');
+  if (real.length < 2) throw new Error(`multisample: ${timingName}.json has too few notes to shift`);
+  const step = (pc(real[1].note) - pc(real[0].note) + 12) % 12;
+  const below = (pc(real[0].note) - pc(firstNote) + 12) % 12;
+  if (step === 0 || below % step !== 0) {
+    throw new Error(`multisample: a recording starting on ${firstNote} does not fit ${timingName}.json's ${step}-semitone steps from ${real[0].note}`);
+  }
+  return below / step;
+}
+

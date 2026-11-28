@@ -527,7 +527,13 @@ export class PlaybackService {
 function loweringFingerprint(emitScript: string, sampleLibraryRoot: string): string {
   const fxSheet = join(sampleLibraryRoot, '..', 'fxMetadata.json');
   if (!existsSync(fxSheet)) throw new Error(`PlaybackService: the sound library has no fx sheet at ${fxSheet}`);
-  const h = createHash('sha256').update(readFileSync(emitScript)).update(readFileSync(fxSheet));
+  // The library's multisample sheet (which recordings start off the slice table's first note) and the emit script's
+  // own modules (the slice resolver) change a lowering too.
+  const msSheet = join(sampleLibraryRoot, '..', 'multisampleMetadata.json');
+  if (!existsSync(msSheet)) throw new Error(`PlaybackService: the sound library has no multisample sheet at ${msSheet}`);
+  const h = createHash('sha256').update(readFileSync(emitScript)).update(readFileSync(fxSheet)).update(readFileSync(msSheet));
+  const lib = join(dirname(emitScript), 'lib');
+  if (existsSync(lib)) for (const f of (readdirSync(lib) as string[]).filter((x) => x.endsWith('.mjs')).sort()) h.update(f).update(readFileSync(join(lib, f)));
   const scope = join(dirname(emitScript), '..', 'node_modules', '@casperaki');
   if (!existsSync(scope)) throw new Error(`PlaybackService: ${scope} not found (the emit script's @casperaki packages)`);
   for (const pkg of readdirSync(scope).sort()) {
