@@ -1,7 +1,7 @@
-// Words for Add rap vocals (docs/superpowers/specs/2026-11-27-rap-vocals-design.md): ACE-Step raps gibberish without
-// words, so the sections the user left empty get words from the language model. One line per two bars
-// (rapLineCount), rhyming in couplets (lines 1-2, 3-4, …), every word in our pronunciation dictionary, 6 to 16
-// syllables a line. Wrong lines go back to the model with what is wrong; still wrong after MAX_ROUNDS answers: an error.
+// Write rap lyrics (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): the rap's words from the language
+// model. One line per two bars (rapLineCount), rhyming in couplets (lines 1-2, 3-4, …) with a rhyme inside every
+// couplet too (owner 2026-11-28: rap needs "a different rhythmic pattern, more internal rhymes, shorter sentences"),
+// every word in our pronunciation dictionary, 6 to 16 syllables a line. Wrong lines go back to the model with what is wrong; still wrong after MAX_ROUNDS answers: an error.
 // The prompt is plain English for the model.
 
 import { pronounce, wordsOf, wordsRhyme } from '@casperaki/arrangement';
@@ -36,9 +36,13 @@ function brief(r: RapWordsRequest): string {
     ...(r.songWords.length
       ? ['What the singer sings in the song (the rap goes with it: the same story and feeling, seen from another side; do not repeat these lines):', ...r.songWords.map((l) => `  ${l}`)]
       : []),
-    'How to write it:',
-    '- Every line takes two bars of music, so it has 6 to 16 syllables, most of them 9 to 13, with a strong, rhythmic flow.',
+    'This is rap, not a sung song. Rap is spoken in rhythm over the drums, so its words are written differently from song lyrics:',
+    '- Short, punchy phrases: break most lines into two or three short pieces (with commas or full stops) instead of one long flowing sentence.',
+    '- A bouncing, syncopated rhythm: mix one-syllable words with longer ones and let the stresses of the words fall in uneven places. Avoid the even, sing-song rhythm of a nursery rhyme or a pop chorus.',
+    '- Every line takes two bars of music, so it has 6 to 16 syllables, most of them 12 to 15: rap is dense.',
     '- Lines rhyme in pairs: line 2 rhymes with line 1, line 4 with line 3, and so on (near rhymes are fine, as in real rap).',
+    '- Many internal rhymes: besides the rhymes at the ends of the lines, put rhyming words inside the lines, in the middle of a line or across the two lines of a pair. Rhymes of two or more syllables are best (for example "pocket" and "rocket", or "on the floor" and "wanting more").',
+    '- Wordplay, concrete images and punchlines, said with confidence in the first person. No filler sounds such as "oh", "yeah" or "la", and no long held vowels.',
     '- Plain, modern, conversational words with attitude: contractions and everyday slang where they fit. Clean: no swearing, no slurs, nothing hateful.',
     '- Use only common English words that are in a dictionary: no made-up words, no numbers written as digits, no sound effects like "skrrt".',
     '- Each part has its own lines: no line is used twice.',
@@ -48,6 +52,28 @@ function brief(r: RapWordsRequest): string {
 }
 
 const norm = (w: string) => w.toLowerCase().replace(/[‘’`]/gu, "'").replace(/[^a-z']/gu, '');
+
+/** Small words that rhyme with everything and say nothing: not counted as internal rhymes. */
+const SMALL = new Set(['the', 'and', 'you', 'your', 'are', 'was', 'for', 'with', 'that', 'this', 'from', 'they', 'them', 'she', 'her', 'his', 'its', "it's", 'our', 'but', 'not', 'can', 'will', 'just', 'then', 'than', 'when', 'what', 'who', 'how', 'out', 'into', "i'm", 'all', 'too', 'any', 'one']);
+
+/** Whether a couplet has a rhyme inside it: two words of its lines that rhyme, other than its two end words with each
+ *  other (a word inside a line rhyming with an end word counts). */
+export function hasInternalRhyme(a: string, b: string): boolean {
+  const words = (line: string) => wordsOf(line).map(norm).filter(Boolean);
+  const wa = words(a);
+  const wb = words(b);
+  const all = [...wa.map((w, i) => ({ w, end: i === wa.length - 1 })), ...wb.map((w, i) => ({ w, end: i === wb.length - 1 }))]
+    .filter((x) => x.w.length >= 3 && !SMALL.has(x.w) && pronounce(x.w));
+  for (let i = 0; i < all.length; i++) {
+    for (let j = i + 1; j < all.length; j++) {
+      const x = all[i]!;
+      const y = all[j]!;
+      if ((x.end && y.end) || x.w === y.w) continue;
+      if (wordsRhyme(x.w, y.w)) return true;
+    }
+  }
+  return false;
+}
 
 /** What is wrong with one part's lines (empty when they are fine), for the model. */
 export function rapProblems(lines: readonly string[], count: number): string[] {
@@ -73,6 +99,9 @@ export function rapProblems(lines: readonly string[], count: number): string[] {
     if (!a || !b || !pronounce(a) || !pronounce(b)) continue;
     if (a === b) out.push(`Lines ${i + 1} and ${i + 2} both end on "${a}": end them on two different words that rhyme.`);
     else if (!wordsRhyme(a, b)) out.push(`Lines ${i + 1} and ${i + 2} must rhyme, but "${a}" and "${b}" do not. Rewrite one or both so they end on rhyming words.`);
+    else if (!hasInternalRhyme(lines[i]!, lines[i + 1]!)) {
+      out.push(`Lines ${i + 1} and ${i + 2} have no rhyme inside them, only at their ends. Rap needs internal rhymes: put a word in the middle of a line that rhymes with another word of the two lines.`);
+    }
   }
   return out;
 }

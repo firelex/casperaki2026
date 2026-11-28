@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import type { ChatMessage, ChatModel } from '../src/llm/chatModel.js';
 import { MAX_ROUNDS, rapProblems, writeRapWords } from '../src/ace/rapWords.js';
 
-const GOOD = ['I been rolling through the city with the windows down', 'Every light is turning green and I am heading into town'];
+// Rhyming at the end (down / town) and inside (rolling / holding).
+const GOOD = ['I been rolling through the city with the windows down', 'Holding every light, I am heading into town'];
 
 describe('rapProblems', () => {
   it('passes rhyming couplets of dictionary words, 6 to 16 syllables a line', () => {
@@ -16,6 +17,11 @@ describe('rapProblems', () => {
     expect(rapProblems(['Skrrt skrrt in the city with the windows down', GOOD[1]!], 2)[0]).toMatch(/not in the dictionary.*skrrt/u);
     expect(rapProblems(['Go now', GOOD[1]!], 2)[0]).toMatch(/Line 1 has 2 syllables/u);
     expect(rapProblems([GOOD[0]!, 'Every light is turning green and I am feeling really fine'], 2)[0]).toMatch(/"down" and "fine" do not/u);
+  });
+
+  it('needs a rhyme inside every couplet, not only at the line ends (rap, owner 2026-11-28)', () => {
+    const endOnly = ['I been driving through the city with the windows down', 'Every light is turning green and I am heading into town'];
+    expect(rapProblems(endOnly, 2)).toEqual([expect.stringMatching(/Lines 1 and 2 have no rhyme inside them/u)]);
   });
 });
 
@@ -37,7 +43,7 @@ const req = { title: 'Night Drive', style: 'male rap vocals', songWords: ['We dr
 
 describe('writeRapWords', () => {
   it('asks in plain words for every part, and sends wrong lines back until they pass', async () => {
-    const bad = JSON.stringify({ sections: [{ name: 'Verse 2', lines: [GOOD[0], 'Every light is turning green and I am feeling really fine'] }] });
+    const bad = JSON.stringify({ sections: [{ name: 'Verse 2', lines: [GOOD[0], 'Holding every light, I am feeling really fine'] }] });
     const good = JSON.stringify({ sections: [{ name: 'Verse 2', lines: GOOD }] });
     const { m, sent } = model([bad, good]);
     expect(await writeRapWords(m, req)).toEqual({ verse2: GOOD });
@@ -46,6 +52,8 @@ describe('writeRapWords', () => {
     expect(brief).toContain('Verse 2 (2 lines)');
     expect(brief).toContain('male rap vocals');
     expect(brief).toContain('We drive all night');
+    expect(brief).toMatch(/internal rhymes/u);
+    expect(brief).toMatch(/not a sung song/u);
     expect(sent[1]!.at(-1)!.content).toMatch(/Verse 2: Lines 1 and 2 must rhyme/u);
   });
 
