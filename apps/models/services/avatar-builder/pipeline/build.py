@@ -17,18 +17,24 @@ BLENDER_TIMEOUT_S = 600
 
 
 def build(design: dict, library: dict, out_dir: Path, blender: str, log=print) -> dict:
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    """A user's design (pipeline/design.py) as a person."""
     info = to_human_info(design, library)
     assets = chosen_assets(design, library)
-    hair_id = design["hair"]
-    job = {"info": info, "name": "Casperaki avatar", "author": author_line(assets), "hair": hair_id,
-           "lips": design.get("lips"), "hairTint": design.get("hairTint")}
+    job = {"info": info, "name": "Casperaki avatar", "author": author_line(assets), "hair": design["hair"],
+           "lips": design.get("lips"), "hairTint": design.get("hairTint"), "hairGrey": None}
+    return run_job(job, assets, out_dir, blender, log)
+
+
+def run_job(job: dict, assets: list[dict], out_dir: Path, blender: str, log=print) -> dict:
+    """Runs Blender on a job (blender_build.py) and fixes the VRM it writes; `assets` are the library entries used."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    hair_id = job["hair"]
     job_path, vrm, report = out_dir / "job.json", out_dir / "person.vrm", out_dir / "blender-report.json"
     job_path.write_text(json.dumps(job))
     for p in (vrm, report):
         p.unlink(missing_ok=True)
-    log("avatar-builder: Blender is building the person")
+    log(f"avatar-builder: Blender is building {job['name']}")
     r = subprocess.run([blender, "-b", "--python-exit-code", "1", "--python", str(HERE / "blender_build.py"), "--", str(job_path), str(vrm), str(report)],
                        capture_output=True, text=True, timeout=BLENDER_TIMEOUT_S)
     (out_dir / "blender.log").write_text(r.stdout + r.stderr)

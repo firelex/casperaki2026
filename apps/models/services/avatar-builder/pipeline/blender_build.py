@@ -119,6 +119,15 @@ if job.get("hairTint"):
     shade = l / max(1e-4, float(l[solid].mean()))
     hp[..., :3] = np.clip(srgb_to_linear(job["hairTint"])[None, None, :] * shade[..., None], 0, 1)
     put(hair_img, hp)
+if job.get("hairGrey"):
+    # Grey hair (the judges): the hair's shading mapped onto a grey range, darkest to lightest (linear 0..1).
+    dark, light = job["hairGrey"]
+    l = lum(hp[..., :3])
+    solid = hp[..., 3] > 0.5
+    lo, hi = np.percentile(l[solid], 2), np.percentile(l[solid], 98)
+    n = np.clip((l - lo) / max(1e-4, hi - lo), 0, 1)
+    hp[..., :3] = (dark + (light - dark) * n)[..., None]
+    put(hair_img, hp)
 probe["hair"] = hp[..., :3][hp[..., 3] > 0.5].mean(axis=0).tolist()
 
 # ---- textures reduced (the body's skin to 2048; teeth, eyes, brows and lashes to 512; the rest to 1024)
