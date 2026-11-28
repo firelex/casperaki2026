@@ -25,6 +25,7 @@ export function Score({
   subtitle,
   chords,
   caption = 'The notes the engine plays, rounded to 16ths; parts spanning middle C go on a grand staff.',
+  onPick,
 }: {
   notes: readonly ScoreNote[];
   beats: number;
@@ -43,11 +44,15 @@ export function Score({
   chords?: ReadonlyMap<number, string>;
   /** The line under the score. */
   caption?: string;
+  /** A note or its word clicked: the beat it is sung at (from the passage start). */
+  onPick?: (beat: number) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const timings = useRef<NoteTimingEvent[]>([]);
   const cursor = useRef<SVGLineElement | null>(null);
   const lit = useRef<Element[]>([]);
+  const pick = useRef(onPick);
+  pick.current = onPick;
 
   useEffect(() => {
     const el = ref.current;
@@ -78,6 +83,19 @@ export function Score({
     svg.appendChild(line);
     cursor.current = line;
     lit.current = [];
+    // A click on a note or its word: the beat of the timing event the clicked element belongs to.
+    const onClick = (e: MouseEvent) => {
+      if (!pick.current) return;
+      for (let node = e.target as Element | null; node && node !== el; node = node.parentElement) {
+        const ev = timings.current.find((t) => (t.elements ?? []).some((group) => group.includes(node as HTMLElement)));
+        if (ev) {
+          pick.current((ev.milliseconds * bpm) / 60_000);
+          return;
+        }
+      }
+    };
+    el.addEventListener('click', onClick);
+    return () => el.removeEventListener('click', onClick);
   }, [notes, beats, songKey, bpm, marks, barNumbers, title, subtitle, chords]);
 
   // Follow the player: cursor at the last note event at or before the position.
@@ -120,7 +138,7 @@ export function Score({
 
   return (
     <div className="p-4">
-      <div ref={ref} className="score-sheet rounded-[6px] bg-[#fbfbfa] text-[#15161a] shadow-[0_2px_10px_rgba(0,0,0,0.4)]" aria-label="Score" />
+      <div ref={ref} className={`score-sheet rounded-[6px] bg-[#fbfbfa] text-[#15161a] shadow-[0_2px_10px_rgba(0,0,0,0.4)] ${onPick ? 'cursor-text' : ''}`} aria-label="Score" />
       <p className="mt-2 text-[11px] text-white/45">
         {caption}
       </p>

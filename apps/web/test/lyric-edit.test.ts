@@ -18,3 +18,15 @@ describe('lyrics edited on the notes', () => {
     expect(syllablesInOrder(notes, lyricOrder(notes), { 2: 'there' })).toEqual(['Hel-', 'lo', 'there']);
   });
 });
+
+describe('a click in the score', () => {
+  it('picks the note sung at that beat (the nearest start, among notes with a syllable)', async () => {
+    const { noteAtBeat } = await import('../src/editor/sequencer/lyricEdit');
+    const notes = [{ start: 0, label: 'Hel-' }, { start: 0.5, label: 'lo' }, { start: 1, label: undefined }, { start: 2, label: 'world' }];
+    expect(noteAtBeat(notes, 0.5)).toBe(1);
+    expect(noteAtBeat(notes, 0.49)).toBe(1);
+    expect(noteAtBeat(notes, 1.1)).toBe(1); // the note without a syllable is skipped: 0.5 is nearer than 2
+    expect(noteAtBeat(notes, 1.9)).toBe(3);
+    expect(noteAtBeat([], 1)).toBeUndefined();
+  });
+});
