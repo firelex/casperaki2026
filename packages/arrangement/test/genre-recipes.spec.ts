@@ -43,12 +43,36 @@ describe('Casperaki Pop', () => {
     expect(() => selectDrumBlueprint(createRng('x'), 'brightPop', ['nope'])).toThrow(/nope/u);
   });
 
-  it('its guitar plays syncopated patterns: Funk and R&B strumming only (owner 2026-11-28)', () => {
-    for (let i = 0; i < 20; i++) {
-      const sel = selectVirtualGuitaristPattern(createRng(`g${i}`), 'brightPop', 110, GENRE_RECIPES.casperakiPop.guitarPatterns);
-      expect(sel.patternName, sel.patternName).toMatch(/-(Funk|R&B)-/u);
+  // Owner 2026-11-28: "In the latest casperaki song I wasn't able to get proper strummed guitars" (the Funk and R&B
+  // patterns are a strum a bar and single-string picking).
+  it('its guitar strums: recorded strums only, at least 4 a bar, a third or more off the beat, from both banks', () => {
+    const sources = new Set<string>();
+    for (const bpm of [95, 110, 120, 129]) {
+      for (let i = 0; i < 25; i++) {
+        const sel = selectVirtualGuitaristPattern(createRng(`g${bpm}-${i}`), 'brightPop', bpm, GENRE_RECIPES.casperakiPop.guitarPatterns);
+        sources.add(sel.source);
+        const events = sel.pattern.bars.flatMap((bar) => Object.entries(bar.notes).flatMap(([beat, evs]) => evs.map((e) => ({ beat: Number.parseFloat(beat), e: e as { type: string; event?: string } }))));
+        expect(events.filter((x) => x.e.type === 'strum'), sel.patternName).toEqual([]);
+        const strums = events.filter((x) => x.e.type === 'virtualGuitarist' && x.e.event!.startsWith('chord'));
+        expect(strums.length / sel.pattern.bars.length, sel.patternName).toBeGreaterThanOrEqual(4);
+        expect(strums.filter((x) => x.beat % 1 !== 0).length / strums.length, sel.patternName).toBeGreaterThanOrEqual(0.3);
+      }
     }
-    expect(() => selectVirtualGuitaristPattern(createRng('x'), 'brightPop', 110, ['Nope'])).toThrow(/Nope/u);
+    expect([...sources].sort()).toEqual(['main', 'stefan']);
+    expect(() => selectVirtualGuitaristPattern(createRng('x'), 'brightPop', 110, { families: ['Nope'] })).toThrow(/Nope/u);
+  });
+
+  // Owner 2026-11-28: "casperaki pop should always use strum patterns, no finger-picking" (pattern-lab styles too).
+  it('a song\'s guitars play no single strings, in any section', () => {
+    for (const seed of ['s1', 's2', 's3', 's4', 's5', 's6']) {
+      const song = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 118, seed });
+      for (const [sec, a] of Object.entries(song.arrangement)) {
+        for (const [track, o] of Object.entries(a.overrides)) {
+          if (!track.startsWith('Guitar')) continue;
+          for (const b of o.bars ?? []) for (const evs of Object.values(b.notes ?? {})) for (const e of evs ?? []) expect((e as { type: string }).type, `${seed} ${sec} ${track}`).not.toBe('strum');
+        }
+      }
+    }
   });
 
   it('the verses take the hip-hop generator\'s hi-hats over their own kick and snare; the other sections keep their own hats (owner 2026-11-28: "we can\'t have it in all segments")', () => {

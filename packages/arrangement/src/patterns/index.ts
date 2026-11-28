@@ -16,7 +16,7 @@ import type { GeneratorContext } from '../context.js';
 import type { Segment, SongStructure } from '@casperaki/song-schema';
 import { type InstrumentFamily, type SelectionResult } from '../selection/types.js';
 import { authoredStylesFor } from './authored-bank.js';
-import { emitAuthoredPatterns, familyTakesKind } from './chord-tones.js';
+import { emitAuthoredPatterns, familyTakesKind, guitarStyleStrummed } from './chord-tones.js';
 import { generateBassPattern } from './bass.js';
 import { generateDrumPattern } from './drums.js';
 import { generateGuitarPattern } from './guitar.js';
@@ -164,7 +164,13 @@ function authoredPattern(
   if (family === 'drums') return undefined;
   const rng = laneCtx.rng.fork('patterns/authored');
   if (preview && preview.family === family) return emitAuthoredPatterns(rng, segment, preview.patterns);
-  const styles = authoredStylesFor(family, laneCtx.params.genre).filter((s) => familyTakesKind(family, s.patterns.kind));
+  // A recipe whose guitar only strums (Casperaki Pop, owner 2026-11-28: "no finger-picking") takes only the lab styles
+  // that strum throughout.
+  const choice = laneCtx.recipe?.guitarPatterns;
+  const strummedOnly = family === 'guitar' && choice !== undefined && 'strummed' in choice;
+  const styles = authoredStylesFor(family, laneCtx.params.genre)
+    .filter((s) => familyTakesKind(family, s.patterns.kind))
+    .filter((s) => !strummedOnly || guitarStyleStrummed(s.patterns));
   if (styles.length === 0) return undefined;
   // Guitar: the lab styles and the legacy Virtual Guitarist bank share the lane half and half; where the
   // legacy bank has nothing for this genre and tempo, the lab styles always play.

@@ -164,6 +164,16 @@ export function energyCoverageProblem(patterns: readonly { readonly energy?: Ene
 /** Guitar strum spread: the time between two strings of one strum, in beats. */
 export const STRUM_SPREAD_BEATS = 0.02;
 
+/** Whether a guitar style is strums throughout: every hit on two strings or more (each a recorded strum,
+ *  strumAsRecording), no picked string. Chord-tone styles are not guitar styles. */
+export function guitarStyleStrummed(patterns: AuthoredPatterns): boolean {
+  if (patterns.kind === 'chordTones') return false;
+  return patterns.patterns.every((p) => {
+    const picks = 'hits' in p ? p.hits : (p.picks ?? []);
+    return picks.every(([, strings]) => strings.length > 1);
+  });
+}
+
 /** The strum lengths the Virtual Guitarist conversion rounds to (legacy convertNonVirtualGuitaristPatternsIntoVirtualGuitaristPatterns.js). */
 const RECORDED_STRUM_LENGTHS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4] as const;
 

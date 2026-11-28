@@ -34,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 import type { Rng } from '@casperaki/music-theory';
-import { GenreSchema, type Genre } from '@casperaki/song-schema';
+import { GenreSchema, type GuitarPatternChoice, type Genre } from '@casperaki/song-schema';
 
 import { DataAssetError, type DataAssetMeta } from '../data/loader.js';
 
@@ -232,6 +232,28 @@ export function virtualGuitaristBankHasPatterns(genre: string, bpm: number): boo
   return filterStyleMap(loadBank(), parsed.data, bpm).length > 0;
 }
 
+/** Strummed (owner 2026-11-28, Casperaki Pop: "proper strummed guitars"): recorded chord strums only, no single-string
+ *  picking, at least STRUMS_PER_BAR a bar, and STRUMS_OFF_BEAT of them or more off the beat (syncopated). */
+const STRUMS_PER_BAR = 4;
+const STRUMS_OFF_BEAT = 0.3;
+export function isStrummed(pattern: VirtualGuitaristBankPattern): boolean {
+  let strums = 0;
+  let off = 0;
+  for (const bar of pattern.bars) {
+    for (const [beat, evs] of Object.entries(bar.notes)) {
+      for (const e of evs) {
+        const ev = e as { type: string; event?: string };
+        if (ev.type === 'strum') return false;
+        if (ev.type === 'virtualGuitarist' && ev.event?.startsWith('chord')) {
+          strums++;
+          if (Number.parseFloat(beat) % 1 !== 0) off++;
+        }
+      }
+    }
+  }
+  return pattern.bars.length > 0 && strums / pattern.bars.length >= STRUMS_PER_BAR && off / strums >= STRUMS_OFF_BEAT;
+}
+
 /**
  * Deterministically pick one virtualGuitarist pattern.
  *
@@ -245,8 +267,9 @@ export function selectVirtualGuitaristPattern(
   rng: Rng,
   genre: string,
   bpm: number,
-  /** A genre recipe's pattern families ("Funk", "R&B"): only the main bank's patterns of those names. */
-  families?: readonly string[],
+  /** A genre recipe's choice: the main bank's patterns of these families ("Funk", "R&B"), or strummed patterns only
+   *  (isStrummed, from the main bank as the style map allows and Stefan's). */
+  choice?: GuitarPatternChoice,
 ): VirtualGuitaristBankSelection {
   const genreParse = GenreSchema.safeParse(genre);
   if (!genreParse.success) {
@@ -259,7 +282,8 @@ export function selectVirtualGuitaristPattern(
     throw new DataAssetError(MAIN_META, `invalid bpm "${bpm}" — must be a positive finite number`);
   }
   const bank = loadBank();
-  if (families) {
+  if (choice && 'families' in choice) {
+    const { families } = choice;
     const named = filterStyleMap(bank, genreParse.data, bpm).filter((n) => families.some((f) => n.includes(`-${f}-`)));
     if (named.length === 0) {
       throw new DataAssetError(STYLE_MAP_META, `no virtualGuitarist pattern of the families ${families.join(', ')} for genre="${genre}" bpm=${bpm}`);
@@ -268,6 +292,19 @@ export function selectVirtualGuitaristPattern(
     const pattern = bank.main.get(patternName);
     if (!pattern) throw new DataAssetError(MAIN_META, `the style map names "${patternName}", which the main bank does not have`);
     return { patternName, source: 'main', mainCandidateCount: named.length, stefanCandidateCount: 0, pattern };
+  }
+  if (choice) {
+    const main = filterStyleMap(bank, genreParse.data, bpm).filter((n) => {
+      const p = bank.main.get(n);
+      if (!p) throw new DataAssetError(MAIN_META, `the style map names "${n}", which the main bank does not have`);
+      return isStrummed(p);
+    });
+    const stefan = bank.stefanKeysSorted.filter((n) => isStrummed(bank.stefan.get(n)!));
+    const all = [...main.map((n) => ({ n, source: 'main' as const })), ...stefan.map((n) => ({ n, source: 'stefan' as const }))];
+    if (all.length === 0) throw new DataAssetError(STYLE_MAP_META, `no strummed virtualGuitarist pattern for genre="${genre}" bpm=${bpm}`);
+    const pick = rng.pick(all);
+    const pattern = (pick.source === 'main' ? bank.main : bank.stefan).get(pick.n)!;
+    return { patternName: pick.n, source: pick.source, mainCandidateCount: main.length, stefanCandidateCount: stefan.length, pattern };
   }
   const source = pickSourceBank(rng, genreParse.data);
   const mainCandidates = filterStyleMap(bank, genreParse.data, bpm);

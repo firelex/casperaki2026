@@ -13,6 +13,9 @@ import type { MixOverrides } from './schemas/mix-overrides.js';
 export const ALWAYS_PLAYING_LANES = ['electricGuitarClean', 'synthsPlucked'] as const;
 export type AlwaysPlayingLane = (typeof ALWAYS_PLAYING_LANES)[number];
 
+/** Which Virtual Guitarist patterns a recipe's guitar plays. */
+export type GuitarPatternChoice = { readonly families: readonly string[] } | { readonly strummed: true };
+
 export interface GenreRecipe {
   /** What users see. */
   readonly label: string;
@@ -26,8 +29,9 @@ export interface GenreRecipe {
   readonly drumStyles: Readonly<Record<string, readonly string[]>>;
   /** Lanes that play in every section. */
   readonly alwaysPlays: readonly AlwaysPlayingLane[];
-  /** The guitar's patterns: only Virtual Guitarist pattern families of these names ("Funk" → "…-Funk-03"). */
-  readonly guitarPatterns?: readonly string[];
+  /** The guitar's patterns: Virtual Guitarist pattern families of these names ("Funk" → "…-Funk-03"), or strummed
+   *  patterns only (recorded strums, no single-string picking; arrangement virtual-guitarist-bank.ts). */
+  readonly guitarPatterns?: GuitarPatternChoice;
   /** The hi-hats of these section types from this drum style (laid over the section's own kick, snare and the rest);
    *  other sections keep their own. */
   readonly hiHats?: { readonly style: string; readonly sectionTypes: readonly string[] };
@@ -58,9 +62,9 @@ export const GENRE_RECIPES = {
     },
     // Owner 2026-11-28: "make sure the casperaki pop always gets guitar and a bouncy synth" (the plucked synth).
     alwaysPlays: ['electricGuitarClean', 'synthsPlucked'],
-    // Owner 2026-11-28: "make sure the guitar is syncopated" (the 16th-note strumming families) and "trap hi-hats ...
-    // part of every Casperaki song".
-    guitarPatterns: ['Funk', 'R&B'],
+    // Owner 2026-11-28: "make sure the guitar is syncopated", then "I wasn't able to get proper strummed guitars": the
+    // Funk and R&B families were a strum a bar and single-string picking, so strummed patterns only (both banks).
+    guitarPatterns: { strummed: true },
     // The hip-hop generator's hats (8ths with 16th doubles and rolls; owner 2026-11-28: the trap hi-hat is "not always
     // on every sixteenth note - we have it in hip hop"), not the authored trap-hats line of straight 16ths.
     // Verses only (owner 2026-11-28: "we can't have it in all segments"); the other sections keep Bright Pop's hats.
