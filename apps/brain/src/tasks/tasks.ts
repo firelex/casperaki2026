@@ -512,8 +512,8 @@ export class BackgroundTasks {
       const f = join(c.musicDir, JUDGE_VOICES_DIR, j.voice.referenceAudio);
       if (!existsSync(f)) throw new TaskError(503, 'voice_missing', `${j.name}'s recorded voice is missing: ${f}.`);
     }
-    // One applause clip; two music beds (one under the meeting, another under the verdicts).
-    for (const [folder, needed] of [[CASTING_APPLAUSE_DIR, 1], [CASTING_BEDS_DIR, 2]] as const) {
+    // Two applause clips (after the song, at the very end); two music beds (one under the meeting, another under the verdicts).
+    for (const [folder, needed] of [[CASTING_APPLAUSE_DIR, 2], [CASTING_BEDS_DIR, 2]] as const) {
       if (wavsIn(join(c.musicDir, folder)).length < needed) throw new TaskError(503, 'music_missing', `${join(c.musicDir, folder)} needs at least ${needed} WAV file${needed > 1 ? 's' : ''}.`);
     }
     if (store.runningTask(ownerId, songId, 'castingSoundtrack')) throw new TaskError(409, 'already_running', 'A casting soundtrack for this song is already being made.');
@@ -1026,6 +1026,7 @@ export class BackgroundTasks {
       const perSpeaker = speakerGains(c.ffmpegBin, bySpeaker, CASTING_VOICE_LUFS);
       const gains = new Map(timeline.lines.map((l) => [l.id, perSpeaker.get(l.speaker)!]));
       const applause = pickFor(wavsIn(join(c.musicDir, CASTING_APPLAUSE_DIR)), scriptTask.id, 'applause');
+      const finalApplause = pickFor(wavsIn(join(c.musicDir, CASTING_APPLAUSE_DIR)).filter((f) => f !== applause), scriptTask.id, 'final applause');
       const verdictBed = pickFor(wavsIn(join(c.musicDir, CASTING_BEDS_DIR)), scriptTask.id, 'verdict music');
       const talkBed = pickFor(wavsIn(join(c.musicDir, CASTING_BEDS_DIR)).filter((f) => f !== verdictBed), scriptTask.id, 'meeting music');
       mixSoundtrack(
@@ -1034,6 +1035,8 @@ export class BackgroundTasks {
           gains,
           applause: join(c.musicDir, CASTING_APPLAUSE_DIR, applause),
           applauseGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_APPLAUSE_DIR, applause), APPLAUSE_LUFS),
+          finalApplause: join(c.musicDir, CASTING_APPLAUSE_DIR, finalApplause),
+          finalApplauseGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_APPLAUSE_DIR, finalApplause), APPLAUSE_LUFS),
           verdictBed: join(c.musicDir, CASTING_BEDS_DIR, verdictBed),
           bedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, verdictBed), BED_LUFS),
           talkBed: join(c.musicDir, CASTING_BEDS_DIR, talkBed),
@@ -1043,7 +1046,7 @@ export class BackgroundTasks {
       );
       own.mix = { ...own.mix, state: 'done', finishedAt: clock(), text: `${timeline.durationSeconds.toFixed(0)} s`, files: ['soundtrack/casting.wav'] };
       publish();
-      return { ...timeline, music: { applause, verdictBed, talkBed } };
+      return { ...timeline, music: { applause, finalApplause, verdictBed, talkBed } };
     }
     if (task.kind === 'castingScript') {
       const c = this.deps.casting;

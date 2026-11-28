@@ -149,7 +149,7 @@ describe('the mix', () => {
     const t = layOut({ script, spoken, sections, exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
     const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
     const out = join(dir, 'casting.wav');
-    mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: tone('poised.mp3', 30, 330), entrance: tone('entrance.mp3', 3, 550), applause: tone('applause.wav', 8, 880), applauseGain: 1, verdictBed: tone('bed.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, out, 'ffmpeg');
+    mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: tone('poised.mp3', 30, 330), entrance: tone('entrance.mp3', 3, 550), applause: tone('applause.wav', 8, 880), applauseGain: 1, finalApplause: tone('fa.wav', 8, 990), finalApplauseGain: 1, verdictBed: tone('bed.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, out, 'ffmpeg');
     const probe = execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'stream=sample_rate:format=duration', '-of', 'json', out]).toString();
     const info = JSON.parse(probe) as { streams: { sample_rate: string }[]; format: { duration: string } };
     expect(info.streams[0]!.sample_rate).toBe('48000');
@@ -159,7 +159,7 @@ describe('the mix', () => {
     const spoken = new Map(lineVoices(script, singerVoice, '/voices').map((r) => [r.id, { seconds: 1, levels: [0.3] }]));
     const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 4 }], exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
     const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
-    expect(() => mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: join(dir, 'Poised and Ready.mp3'), entrance: tone('e.mp3', 3, 550), applause: tone('ap.wav', 8, 880), applauseGain: 1, verdictBed: tone('vb.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, join(dir, 'o.wav'), 'ffmpeg')).toThrow(/Poised and Ready\.mp3/);
+    expect(() => mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('song.mp3', 12, 220), poised: join(dir, 'Poised and Ready.mp3'), entrance: tone('e.mp3', 3, 550), applause: tone('ap.wav', 8, 880), applauseGain: 1, finalApplause: tone('fa.wav', 8, 990), finalApplauseGain: 1, verdictBed: tone('vb.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, join(dir, 'o.wav'), 'ffmpeg')).toThrow(/Poised and Ready\.mp3/);
   });
 });
 
@@ -193,6 +193,7 @@ describe('the castingSoundtrack task', () => {
     mkdirSync(join(dir, 'music', 'applause'));
     mkdirSync(join(dir, 'music', 'verdict-beds'));
     tone(join(dir, 'music', 'applause', 'applause-01.wav'), 8);
+    tone(join(dir, 'music', 'applause', 'applause-02.wav'), 8);
     tone(join(dir, 'music', 'verdict-beds', 'bed-01.wav'), 60);
     tone(join(dir, 'music', 'verdict-beds', 'bed-02.wav'), 60);
     mkdirSync(join(dir, 'music', 'judge-voices'));
@@ -371,6 +372,9 @@ describe('applause and the verdict music', () => {
     expect(firstVerdict.startSeconds - verdicts.startSeconds).toBeCloseTo(2.5, 6);
     // The applause starts as the song begins to fade.
     expect(t.applauseStartSeconds).toBeCloseTo(t.performance.videoStartSeconds + t.performance.songToSeconds, 6);
+    // Another applause at the very end: from the last line's end, for the last 5 s of the video.
+    expect(t.finalApplauseStartSeconds).toBeCloseTo(t.lines.at(-1)!.endSeconds, 6);
+    expect(t.durationSeconds - t.finalApplauseStartSeconds).toBeCloseTo(5, 6);
   });
   it('picks one applause and one verdict bed per script, the same each time', async () => {
     const { pickFor } = await import('../src/casting/mix.js');
@@ -391,7 +395,7 @@ describe('applause and the verdict music', () => {
       const t = layOut({ script, spoken, sections: [{ name: 'Chorus', startSeconds: 0, endSeconds: 4 }], exportSeconds: 12, entranceSeconds: 3, binSeconds: 0.05, scriptTaskId: 'x' });
       const lines = new Map([...spoken.keys()].map((id) => [id, tone(`${id}.wav`, 1, 440)]));
       const out = join(dir, 'o.wav');
-      mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('s.mp3', 12, 220), poised: tone('p.mp3', 30, 330), entrance: tone('e.mp3', 3, 550), applause: tone('ap.wav', 8, 880), applauseGain: 1, verdictBed: tone('vb.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, out, 'ffmpeg');
+      mixSoundtrack(t, { gains: new Map([...spoken.keys()].map((id) => [id, 1])), lines, song: tone('s.mp3', 12, 220), poised: tone('p.mp3', 30, 330), entrance: tone('e.mp3', 3, 550), applause: tone('ap.wav', 8, 880), applauseGain: 1, finalApplause: tone('fa.wav', 8, 990), finalApplauseGain: 1, verdictBed: tone('vb.wav', 60, 110), bedGain: 1, talkBed: tone('tb.wav', 60, 120), talkBedGain: 1 }, out, 'ffmpeg');
       const seconds = Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', out]).toString());
       expect(seconds).toBeCloseTo(t.durationSeconds, 1);
     } finally {

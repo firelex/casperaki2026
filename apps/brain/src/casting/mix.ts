@@ -20,6 +20,9 @@ export interface SoundtrackFiles {
    *  level (APPLAUSE_LUFS, BED_LUFS: the generated files' own loudness varies by 15 dB). */
   readonly applause: string;
   readonly applauseGain: number;
+  /** Another applause clip for the very end, with its gain. */
+  readonly finalApplause: string;
+  readonly finalApplauseGain: number;
   readonly verdictBed: string;
   readonly bedGain: number;
   /** The music under the meeting after the fanfare (fading to zero before the song's second of silence). */
@@ -101,7 +104,7 @@ export function audibleSeconds(ffmpegBin: string, path: string): number {
 }
 
 export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles, outPath: string, ffmpegBin: string): void {
-  for (const [what, p] of [['backstage music', files.poised], ['stage door music', files.entrance], ['song', files.song], ['applause', files.applause], ['verdict music', files.verdictBed]] as const) {
+  for (const [what, p] of [['backstage music', files.poised], ['stage door music', files.entrance], ['song', files.song], ['applause', files.applause], ['final applause', files.finalApplause], ['verdict music', files.verdictBed]] as const) {
     if (!existsSync(p)) throw new Error(`casting soundtrack: the ${what} file is missing: ${p}`);
   }
   const seg = (kind: string) => {
@@ -113,7 +116,7 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   const door = seg('door');
   const talk = seg('talk');
   const ms = (s: number) => Math.round(s * 1000);
-  const inputs: string[] = ['-i', files.poised, '-i', files.entrance, '-i', files.song, '-i', files.applause, '-i', files.verdictBed, '-i', files.talkBed];
+  const inputs: string[] = ['-i', files.poised, '-i', files.entrance, '-i', files.song, '-i', files.applause, '-i', files.verdictBed, '-i', files.talkBed, '-i', files.finalApplause];
   const graph: string[] = [];
   const stereo = 'aresample=48000,aformat=sample_fmts=fltp:channel_layouts=stereo';
   const narration: string[] = [];
@@ -127,7 +130,7 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
     const gain = files.gains.get(l.id);
     if (gain === undefined) throw new Error(`casting soundtrack: the line ${l.id} has no gain`);
     const inMeeting = l.startSeconds >= talk.startSeconds && l.startSeconds < talk.endSeconds;
-    graph.push(`[${6 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : inMeeting ? MEETING_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
+    graph.push(`[${7 + i}:a]${stereo},volume=${(gain * (isNarration ? NARRATION_GAIN : inMeeting ? MEETING_GAIN : 1)).toFixed(4)},adelay=${ms(l.startSeconds)}:all=1[${label}]`);
     if (isNarration) narration.push(label);
     voices.push(label);
   });
@@ -158,7 +161,10 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   // Music under the meeting: in with the talk, faded to zero by its end (then the song's second of silence).
   const talkLen = talk.endSeconds - talk.startSeconds;
   graph.push(`[5:a]${stereo},atrim=start=${TALK_BED_FROM},asetpts=PTS-STARTPTS,aloop=loop=-1:size=2147483647,atrim=0:${talkLen.toFixed(3)},volume=${files.talkBedGain.toFixed(4)},afade=t=in:d=${Math.min(BED_FADE, talkLen / 3).toFixed(3)},afade=t=out:st=${Math.max(0, talkLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(talk.startSeconds)}:all=1[talkbed]`);
-  const all = ['music', 'door', 'song', 'applause', 'bed', 'talkbed', ...voiceLabels];
+  // The applause at the very end: in quickly as the last line ends, dying away to the end of the video.
+  const finalLen = timeline.durationSeconds - timeline.finalApplauseStartSeconds;
+  graph.push(`[6:a]${stereo},atrim=0:${finalLen.toFixed(3)},volume=${files.finalApplauseGain.toFixed(4)},afade=t=in:d=0.3,afade=t=out:st=${Math.max(0, finalLen - APPLAUSE_FADE).toFixed(3)}:d=${APPLAUSE_FADE},adelay=${ms(timeline.finalApplauseStartSeconds)}:all=1[finalapplause]`);
+  const all = ['music', 'door', 'song', 'applause', 'bed', 'talkbed', 'finalapplause', ...voiceLabels];
   graph.push(`${all.map((a) => `[${a}]`).join('')}amix=inputs=${all.length}:normalize=0:duration=longest,alimiter=limit=0.95,apad,atrim=0:${timeline.durationSeconds.toFixed(3)}[out]`);
   try {
     execFileSync(ffmpegBin, ['-loglevel', 'error', '-y', ...inputs, '-filter_complex', graph.join(';'), '-map', '[out]', '-ar', '48000', '-c:a', 'pcm_s16le', outPath], { stdio: ['ignore', 'pipe', 'pipe'] });

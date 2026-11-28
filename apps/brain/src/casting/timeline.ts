@@ -27,6 +27,8 @@ export interface CastingTimeline {
   readonly scriptTaskId: string;
   /** Where the applause starts: as the song begins to fade. */
   readonly applauseStartSeconds: number;
+  /** The applause at the very end: from the end of the last line to the end of the video (FINAL_APPLAUSE seconds). */
+  readonly finalApplauseStartSeconds: number;
   /** The fanfare: from half a second before the stage door (no gap after the backstage music), for its whole audible
    *  length (the first judge talks over its last FANFARE_OVERLAP seconds). */
   readonly doorMusic: { readonly startSeconds: number; readonly seconds: number };
@@ -66,8 +68,8 @@ export const APPLAUSE_LEAD = 2.5;
 export const FANFARE_EARLY = 0.5;
 /** The first judge starts talking this long before the fanfare ends (the owner: "the judges' intro could come earlier"). */
 export const FANFARE_OVERLAP = 1.5;
-/** The video ends this long after the last verdict. */
-export const END_TAIL = 1.5;
+/** The video ends with applause this long after the last line (the owner: "another applause at the very end"). */
+export const FINAL_APPLAUSE = 5;
 
 const SEGMENT_OF: Readonly<Record<SceneId, SegmentKind>> = { backstage: 'backstage', banter: 'talk', verdicts: 'verdicts' };
 
@@ -123,7 +125,7 @@ export function layOut(args: {
       speak('banter', 0, AIR);
       segments.push({ kind: 'performance', startSeconds: t, endSeconds: t + PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE });
       t += PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE;
-    } else speak('verdicts', APPLAUSE_LEAD, END_TAIL);
+    } else speak('verdicts', APPLAUSE_LEAD, FINAL_APPLAUSE);
   }
   const perf = segments.find((s) => s.kind === 'performance')!;
   return {
@@ -134,6 +136,7 @@ export function layOut(args: {
     performance: { songFromSeconds: 0, songToSeconds: songTo, fadeSeconds: PERFORMANCE_FADE, videoStartSeconds: perf.startSeconds + PERFORMANCE_LEAD },
     scriptTaskId: args.scriptTaskId,
     applauseStartSeconds: perf.startSeconds + PERFORMANCE_LEAD + songTo,
+    finalApplauseStartSeconds: t - FINAL_APPLAUSE,
     doorMusic: { startSeconds: doorStart - FANFARE_EARLY, seconds: args.entranceSeconds },
   };
 }
