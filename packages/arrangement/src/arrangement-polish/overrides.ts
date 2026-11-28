@@ -22,7 +22,7 @@ import { MidiNoteSchema, type Segment, type SongStructure } from '@casperaki/son
 
 import type { GeneratorContext } from '../context.js';
 import { describeDrumBank } from '../patterns/drums-bank.js';
-import { generateDrumPattern } from '../patterns/drums.js';
+import { drumStylesFor, generateDrumPattern } from '../patterns/drums.js';
 import { bassPreviewFromParams, drumPreviewFromParams } from '../patterns/proposals.js';
 import { addNoteEvent, emptyBarPattern } from '../patterns/shared.js';
 import type { BarPattern, FamilyPattern, PatternResult } from '../patterns/types.js';
@@ -553,6 +553,35 @@ export function synthesizeBassOverrideForSegment(
 }
 
 function applyDrumDecision(
+  ctx: GeneratorContext,
+  segment: Segment,
+  base: FamilyPattern,
+  decision: DrumOverrideDecision,
+): FamilyPattern {
+  // A genre recipe's own drum styles for this section type (Casperaki Pop's hip-hop verses) are its groove: the legacy
+  // section variety (masks, four-on-the-floor, re-rolls) leaves it alone (owner 2026-11-28: "not sure it always gets
+  // that hip hop rhythm in the verse").
+  if (drumStylesFor(ctx, segment.name)) return base;
+  const out = applyLegacyDrumDecision(ctx, segment, base, decision);
+  // A recipe's hi-hats play in every section the drums play in: a mask or a floor that dropped them gets them back.
+  if (!ctx.recipe?.hiHats || decision.kind === 'dropOut' || decision.kind === 'none') return out;
+  return { bars: out.bars.map((bar, i) => withHatsOf(bar, base.bars[i % base.bars.length]!)) };
+}
+
+/** `bar` with `from`'s hi-hat notes added where it has none of its own. */
+function withHatsOf(bar: BarPattern, from: BarPattern): BarPattern {
+  type Ev = NonNullable<BarPattern['notes'][keyof BarPattern['notes']]>[number];
+  const isHat = (e: Ev) => e.type === 'note' && typeof e.note === 'number' && isHiHat(pieceNameForMidi(e.note) ?? '');
+  if (Object.values(bar.notes).some((evs) => (evs ?? []).some(isHat))) return bar;
+  const notes: BarPattern['notes'] = { ...bar.notes };
+  for (const [beat, evs] of Object.entries(from.notes)) {
+    const hats = (evs ?? []).filter(isHat);
+    if (hats.length > 0) notes[beat as keyof typeof notes] = [...(notes[beat as keyof typeof notes] ?? []), ...hats];
+  }
+  return { ...bar, notes };
+}
+
+function applyLegacyDrumDecision(
   ctx: GeneratorContext,
   segment: Segment,
   base: FamilyPattern,

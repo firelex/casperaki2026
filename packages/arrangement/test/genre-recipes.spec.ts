@@ -66,6 +66,37 @@ describe('Casperaki Pop', () => {
     }
   });
 
+  it('the legacy section variety never takes the verses\' hip-hop groove or any section\'s trap hats (owner 2026-11-28: "not sure it always gets that hip hop rhythm in the verse")', () => {
+    const HATS = new Set([42, 44, 46]);
+    const notesOf = (pat: { bars: { notes?: Record<string, { note?: number }[]> }[] }) =>
+      pat.bars.flatMap((b) => Object.values(b.notes ?? {}).flat().map((e) => e.note));
+    for (let i = 0; i < 12; i++) {
+      const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 105, seed: `groove-${i}` });
+      const drums = 'Drums';
+      for (const seg of s.songStructure) {
+        const pat = s.arrangement[seg.name]!.overrides[drums] as never;
+        if (!pat) continue;
+        const notes = notesOf(pat);
+        if (notes.length === 0) continue; // a deliberate drop-out
+        expect(notes.some((n) => HATS.has(n!)), `${i} ${seg.name} has hi-hats`).toBe(true);
+      }
+    }
+  });
+
+  it('a bouncy plucked synth plays in every section, and every guitar is a clean electric, never acoustic or distorted (owner 2026-11-28)', () => {
+    for (let i = 0; i < 12; i++) {
+      const s = orchestrate({ genre: 'casperakiPop', key: 'C', bpm: 105, seed: `roster-${i}` });
+      const types = s.instrumentDefinitions.map((d) => [d.name, String(d.instrumentGroup), String(d.lowLevelType)] as const);
+      const pluck = types.find(([, , low]) => low === 'synthsPlucked');
+      expect(pluck, `${i}: ${JSON.stringify(types)}`).toBeDefined();
+      for (const seg of s.songStructure) expect(Object.keys(s.arrangement[seg.name]!.overrides), `${i} ${seg.name}`).toContain(pluck![0]);
+      for (const [name, group, low] of types) {
+        if (!/guitar/iu.test(group) && !/guitar/iu.test(low)) continue;
+        expect(ELECTRIC_CLEAN, `${i} ${name} ${low}`).toContain(low);
+      }
+    }
+  });
+
   it('a base genre is generated as before (no recipe)', () => {
     expect(orchestrate({ genre: 'brightPop', key: 'C', bpm: 110, seed: 'casperaki-pop' }).genre).toBe('brightPop');
   });

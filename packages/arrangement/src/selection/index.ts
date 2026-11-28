@@ -320,6 +320,7 @@ const BREAK_ADD_ONE_SPECS: Readonly<Record<string, readonly LaneSpec[]>> = {
 /** The lane specs of the lanes a genre recipe can make play in every section. */
 const ALWAYS_PLAYING_SPECS: Readonly<Record<AlwaysPlayingLane, LaneSpec>> = {
   electricGuitarClean: ELECTRIC_GUITAR_CLEAN,
+  synthsPlucked: PLUCKED,
 };
 
 interface RosterRoll {
@@ -589,12 +590,15 @@ class RosterBuilder {
     private readonly entries: readonly ValidatedCatalogEntry[],
     private readonly genre: string,
     private readonly rng: Rng,
+    /** Lanes this song may not have (a genre recipe's: Casperaki Pop takes no acoustic or distorted guitar). */
+    private readonly refuses: (spec: LaneSpec) => boolean = () => false,
   ) {}
 
   /** Resolve a spec to a fresh lane and append it. Returns the lane name, or
    *  undefined when the lane is unsupported for the genre (orchestral coverage
    *  gate) or the catalog has no candidate at all (lane skipped). */
   add(spec: LaneSpec, essential: boolean, perSegment = false): string | undefined {
+    if (this.refuses(spec)) return undefined;
     if (!laneSupportedForGenre(spec.familyClass, this.genre)) return undefined;
     const pool = candidatesFor(this.entries, spec.cfg, soundGenre(spec.familyClass, this.genre));
     if (pool.candidates.length === 0) return undefined;
@@ -617,6 +621,7 @@ class RosterBuilder {
    *  new per-segment lane (legacy `_addInstrument` per-segment tonal
    *  addition). */
   ensure(spec: LaneSpec): string | undefined {
+    if (this.refuses(spec)) return undefined;
     if (!laneSupportedForGenre(spec.familyClass, this.genre)) return undefined;
     const pool = candidatesFor(this.entries, spec.cfg, soundGenre(spec.familyClass, this.genre));
     if (pool.candidates.length === 0) return undefined;
@@ -741,7 +746,11 @@ export function selectInstruments(
 
   // --- Roster roll (Phase 1) ---
   const roll = rollRoster(rng.fork('roster'), genre);
-  const builder = new RosterBuilder(catalog.entries, genre, rng.fork('resolve'));
+  // A recipe that always plays a guitar takes no other kind of guitar (Casperaki Pop: clean electric only; owner
+  // 2026-11-28 "syncopated electric guitars - ideally not distorted"). A second one is a clean electric too.
+  const alwaysGuitars = (ctx.recipe?.alwaysPlays ?? []).map((lane) => ALWAYS_PLAYING_SPECS[lane]).filter((s) => s.familyClass === 'guitar');
+  const refuses = (spec: LaneSpec) => alwaysGuitars.length > 0 && spec.familyClass === 'guitar' && !alwaysGuitars.includes(spec);
+  const builder = new RosterBuilder(catalog.entries, genre, rng.fork('resolve'), refuses);
 
   // Essentials first (stable lane names): Drums, Bass, the mandatory pad.
   const essentialLaneNames: string[] = [];

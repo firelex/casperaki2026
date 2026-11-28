@@ -10,7 +10,7 @@ import { GENRE_TEMPO_RANGES, GenreSchema, registerDerivedGenre, type Genre, type
 import type { MixOverrides } from './schemas/mix-overrides.js';
 
 /** Lanes a recipe can make play in every section (selection/index.ts maps them to its lane specs). */
-export const ALWAYS_PLAYING_LANES = ['electricGuitarClean'] as const;
+export const ALWAYS_PLAYING_LANES = ['electricGuitarClean', 'synthsPlucked'] as const;
 export type AlwaysPlayingLane = (typeof ALWAYS_PLAYING_LANES)[number];
 
 export interface GenreRecipe {
@@ -49,11 +49,14 @@ export const GENRE_RECIPES = {
     drumStyles: {
       verse: ['urban', 'authored-urban-boom-bap', 'authored-urban-trap-hats', 'authored-gmd-urban-boom-bap', 'authored-gmd-urban-soul-funk-pocket'],
     },
-    alwaysPlays: ['electricGuitarClean'],
+    // Owner 2026-11-28: "make sure the casperaki pop always gets guitar and a bouncy synth" (the plucked synth).
+    alwaysPlays: ['electricGuitarClean', 'synthsPlucked'],
     // Owner 2026-11-28: "make sure the guitar is syncopated" (the 16th-note strumming families) and "trap hi-hats ...
     // part of every Casperaki song".
     guitarPatterns: ['Funk', 'R&B'],
-    hiHats: 'authored-urban-trap-hats',
+    // The hip-hop generator's hats (8ths with 16th doubles and rolls; owner 2026-11-28: the trap hi-hat is "not always
+    // on every sixteenth note - we have it in hip hop"), not the authored trap-hats line of straight 16ths.
+    hiHats: 'urban',
     // Owner 2026-11-28: Dr. Luke drums "hit much harder". Of four A/B masters (standard or harder drums, Atemlos or "Your
     // Love Is My Drug" as the mastering reference) he chose harder drums mastered towards "Your Love Is My Drug"
     // ("let's go for harder ylimd for Casperaki pop"). The mix: the drums +4 dB, the pad and synths -2 dB, keys -1 dB, the
