@@ -39,19 +39,20 @@ const STYLE: Record<string, string> = {
   urban: 'a smooth urban hip-hop and R&B track',
 };
 
-/** Added to every description: the look of a cover (abstract and cyber, owner 2026-11-28: literal scenes did not
- *  always fit their songs; the Songs page tints it red to violet), and what the small model draws well. */
-const LOOK = 'abstract cyber album cover art, futuristic digital art, neon glow, glowing lines, geometric shapes, high contrast, highly detailed';
+/** Added to every description: the look of a cover (owner 2026-11-28: literal scenes did not always fit, pure
+ *  abstraction was "too abstract": one subject in a stylised cyber look; the Songs page tints it red to violet). */
+const LOOK = 'stylised cyber album cover art, synthwave, neon lighting, glowing outlines, digital art, dreamlike, rich colours, highly detailed';
 
 export function artworkBrief(title: string, genre: string | null): string {
   const style = genre ? STYLE[genre] : undefined;
   if (genre && !style) throw new Error(`artworkBrief: no description for the style "${genre}"`);
   return [
     `Describe a picture to use as the cover artwork of a song called "${title}"${style ? `, which is ${style}` : ''}.`,
-    'The picture is abstract, futuristic and cyber in style: neon light, glowing lines and grids, geometric shapes,',
-    'digital textures, light trails or holographic gradients, catching the mood and energy of the title, not a literal',
-    'scene of it. A small image-generation model will draw it from your description, so describe it in concrete visual',
-    'terms: the shapes, how they are arranged, the colours, the light and the mood. Do not ask for people, faces, text,',
+    'The picture has one clear subject that fits the title: an object, a place, or a fully clothed person seen as a',
+    'silhouette or from behind, so that someone seeing it gets what the song is about. It is drawn in a stylised,',
+    'futuristic cyber look: neon light, glowing outlines, a night city or a digital glow around the subject, dreamlike',
+    'rather than realistic. A small image-generation model will draw it from your description, so describe it in',
+    'concrete visual terms: the subject, where it is, the colours, the light and the mood. Do not ask for faces, text,',
     'letters, words or logos in the picture, and do not name real people, artists or brands.',
     'The description is one sentence of at most 40 words.',
     'Answer in JSON of the form {"description": "..."}.',

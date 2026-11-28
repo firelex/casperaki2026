@@ -60,7 +60,7 @@ describe('song artwork', () => {
     await h.tasks.idle();
     expect(prompts[0]).toContain('"Neon Rain"');
     expect(prompts[0]).toContain('an energetic electronic dance track');
-    expect(drawn[0]!.prompt).toMatch(/^a neon city street at night in the rain, abstract cyber album cover art/u);
+    expect(drawn[0]!.prompt).toMatch(/^a neon city street at night in the rain, stylised cyber album cover art/u);
     const [p] = await h.projects();
     expect(p!.artwork).toEqual({ state: 'done', url: expect.stringMatching(new RegExp(`^/api/songs/${p!.id}/artwork\\?v=`, 'u')) });
     const img = await fetch(`${h.url}${p!.artwork!.url}`);
@@ -85,9 +85,11 @@ describe('song artwork', () => {
 
   it('asks in plain words, naming the style', () => {
     expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/song called "Velvet Static", which is a slow, emotional ballad\./u);
-    // abstract and cyber, not a literal scene (owner 2026-11-28: "some of them don't fully fit")
-    expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/abstract, futuristic/u);
-    expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/not a literal scene/u);
+    // one clear subject that fits the title, in a stylised cyber look (owner 2026-11-28: literal scenes "don't fully
+    // fit", pure abstraction "too abstract")
+    expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/one clear subject that fits the title/u);
+    expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/stylised, futuristic cyber look/u);
+    expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/fully clothed/u);
     expect(() => artworkBrief('X', 'polka')).toThrow(/no description for the style "polka"/u);
   });
 });
