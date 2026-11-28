@@ -146,7 +146,7 @@ export function RapDialog({
   return (
     <Shell
       title="Rap"
-      description="ACE-Step raps the sections you choose with their words, a few takes each; the clearest is kept, on the track Rap. The singing in those sections is muted (right-click a clip to unmute it)."
+      description="AI raps the sections you choose with their words, a few takes each; the clearest is kept, on the track Rap. The singing in those sections is muted (right-click a clip to unmute it)."
       start={{
         label: 'Rap',
         disabled: ticked.length === 0 || missing.length > 0 || !style.trim(),

@@ -29,7 +29,7 @@ export function AdlibsDialog({
         <div className="border-b border-line/60 px-5 py-4 pr-12">
           <DialogTitle className="text-[17px] font-semibold text-white">Add ad-libs</DialogTitle>
           <DialogDescription className="mt-1 text-[13px] text-white/55">
-            ACE-Step sings ad-libs over the song as it is. They go into {sections.join(' and ')}, on their own track.
+            AI sings ad-libs over the song as it is. They go into {sections.join(' and ')}, on their own track.
           </DialogDescription>
         </div>
         <div className="flex flex-col gap-5 px-5 py-5 text-[14px]">

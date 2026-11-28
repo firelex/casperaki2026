@@ -99,9 +99,10 @@ export function finalChoruses(sections: readonly string[]): string[] {
   return out;
 }
 
-/** The name a new ACE layer track takes: "ACE <Instrument>", numbered after the first when the name is taken. */
+/** The name a new AI track takes: "AI <Instrument>", numbered after the first when the name is taken (owner
+ *  2026-11-28: "ACE should be referred to as AI throughout"; songs made before keep their "ACE <Instrument>" tracks). */
 export function aceTrackName(instrument: AceInstrument, taken: readonly string[]): string {
-  const base = `ACE ${ACE_INSTRUMENT_LABELS[instrument]}`;
+  const base = `AI ${ACE_INSTRUMENT_LABELS[instrument]}`;
   if (!taken.includes(base)) return base;
   for (let n = 2; ; n++) if (!taken.includes(`${base} ${n}`)) return `${base} ${n}`;
 }
@@ -113,7 +114,7 @@ export const RAP_TRACK = 'Rap';
 /** The instrument of an ACE layer track ("ACE Guitar 2" → guitar; "Rap" → rap), or undefined for any other track. */
 export function aceInstrumentOfTrack(track: string): AceInstrument | undefined {
   if (track === RAP_TRACK) return 'rap';
-  const m = /^ACE (.+?)(?: \d+)?$/u.exec(track);
+  const m = /^(?:AI|ACE) (.+?)(?: \d+)?$/u.exec(track);
   if (!m) return undefined;
   return ACE_INSTRUMENTS.find((i) => ACE_INSTRUMENT_LABELS[i] === m[1]);
 }

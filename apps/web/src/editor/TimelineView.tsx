@@ -10,6 +10,10 @@ import {
   ContextMenuLabel,
   ContextMenuSeparator,
   ContextMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@teamsuzie/ui';
 
 import { soundsApi, soundsQueryKeys } from '../api/sounds';
@@ -598,7 +602,7 @@ export function TimelineView() {
       await onSaved((songId, song) => tasksApi.startAceLayer(songId, song, instrument, words, bars, kinds));
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
-      setTaskError(`Add ACE layer failed: ${err instanceof Error ? err.message : String(err)}`);
+      setTaskError(`Add AI track failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
   const aceLayerItem: AceLayerItem = { disabled: Boolean(aceTask), onSelect: () => setLayering(true) };
@@ -608,7 +612,7 @@ export function TimelineView() {
   const adlibItem: AceLayerItem & { label: string; hint: string } = {
     label: 'Add ad-libs…',
     disabled: Boolean(aceTask) || adlibSections.length === 0,
-    hint: aceTask ? 'an ACE layer is being made' : adlibSections.length === 0 ? 'the song does not end in a chorus' : '',
+    hint: aceTask ? 'an AI track is being made' : adlibSections.length === 0 ? 'the song does not end in a chorus' : '',
     onSelect: () => setAdlibbing(true),
   };
   const addAdlibs = async (lyrics: string, style: string, voice: AceAdlibVoice) => {
@@ -636,7 +640,7 @@ export function TimelineView() {
     rap: {
       label: 'Rap…',
       disabled: Boolean(aceTask) || Boolean(rapLyricsTask),
-      hint: aceTask ? 'an ACE layer is being made' : rapLyricsTask ? 'the rap lyrics are being written' : '',
+      hint: aceTask ? 'an AI track is being made' : rapLyricsTask ? 'the rap lyrics are being written' : '',
       onSelect: () => setRapping(true),
     },
   };
@@ -751,14 +755,12 @@ export function TimelineView() {
           </span>
         ) : null}
         <div className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
+          <AddTrackMenu
+            onMidi={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
+            ai={aceLayerItem}
             disabled={!edits.options.data || Boolean(edits.busy)}
             className="mr-3 h-8 rounded-full border border-white/30 px-3.5 text-[13px] font-semibold text-white hover:border-white/60 disabled:opacity-40"
-          >
-            + Add track
-          </button>
+          />
           <span className="mr-1 text-[12px] text-white/55">Width</span>
           <ToolButton onClick={() => zoom(1 / 1.5)} label="Zoom out">−</ToolButton>
           <ToolButton onClick={() => zoom(1.5)} label="Zoom in">+</ToolButton>
@@ -1014,14 +1016,12 @@ export function TimelineView() {
           {/* Add a track. */}
           <div className="relative flex" style={{ height: ADD_ROW_H }}>
             <div className="sticky left-0 z-10 flex shrink-0 items-center border-b border-r border-line/40 bg-[#2a2b30] px-4" style={{ width: HEADER_W }}>
-              <button
-                type="button"
-                onClick={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
+              <AddTrackMenu
+                onMidi={() => setDialog({ kind: 'add', sections: model.sections.map((s) => s.name) })}
+                ai={aceLayerItem}
                 disabled={!edits.options.data || Boolean(edits.busy)}
                 className="text-[13px] text-white/55 hover:text-white disabled:opacity-40"
-              >
-                + Add track
-              </button>
+              />
             </div>
             <div className="shrink-0 border-b border-line/25" style={{ width }} />
           </div>
@@ -1465,7 +1465,7 @@ function TrackMenu({
         </ContextMenuItem>
         <ContextMenuSeparator className="my-1 h-px bg-line" />
         <ContextMenuItem className={ITEM} disabled={busy} onSelect={() => onAdd(section)}>
-          Add track…
+          Add MIDI track…
         </ContextMenuItem>
         <AceLayerMenuItem item={aceLayer} />
       </ContextMenuContent>
@@ -1504,10 +1504,32 @@ interface AceLayerItem {
   onSelect(): void;
 }
 
+/** "+ Add track": a MIDI track (an instrument playing notes, the add-track dialog) or an AI track (a part an AI
+ *  model plays over the song). Owner 2026-11-28: "the Add track should offer either Midi track or AI track". */
+function AddTrackMenu({ onMidi, ai, disabled, className }: { onMidi(): void; ai: AceLayerItem; disabled: boolean; className: string }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild disabled={disabled}>
+        <button type="button" disabled={disabled} className={className}>
+          + Add track
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className={MENU} align="start">
+        <DropdownMenuItem className={ITEM} onSelect={onMidi}>
+          MIDI track… <span className="ml-auto pl-6 text-[12px] text-white/40">an instrument playing notes</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem className={ITEM} disabled={ai.disabled} onSelect={ai.onSelect}>
+          AI track… <span className="ml-auto pl-6 text-[12px] text-white/40">{ai.disabled ? 'one is being made' : 'a part AI plays over the song'}</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function AceLayerMenuItem({ item }: { item: AceLayerItem }) {
   return (
     <ContextMenuItem className={ITEM} disabled={item.disabled} onSelect={item.onSelect}>
-      Add ACE layer… {item.disabled ? <MenuHint text="one is being made" /> : null}
+      Add AI track… {item.disabled ? <MenuHint text="one is being made" /> : null}
     </ContextMenuItem>
   );
 }

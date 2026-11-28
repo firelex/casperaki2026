@@ -96,14 +96,14 @@ describe('the ACE layer task', () => {
       ['lego', 'done'],
       ['clips', 'done'],
     ]);
-    expect(result.track).toBe('ACE Guitar');
+    expect(result.track).toBe('AI Guitar');
     expect(result.takes.map((t) => t.segment)).toEqual(SONG.songStructure.map((s) => s.name));
     for (const [i, t] of result.takes.entries()) {
       const path = join(dir, 'takes', `${t.sha256}.ogg`);
       expect(existsSync(path)).toBe(true);
       expect(t.durationSeconds).toBe(SONG.songStructure[i]!.bars.length * SEC_PER_BAR);
       expect(seconds(path)).toBeCloseTo(t.durationSeconds, 1);
-      expect(t.fingerprint).toBe(vocalTakeFingerprint(SONG, t.segment, 'ACE Guitar'));
+      expect(t.fingerprint).toBe(vocalTakeFingerprint(SONG, t.segment, 'AI Guitar'));
     }
     expect(existsSync(join(dir, 'files', 't1', 'ace', 'layer.wav'))).toBe(true);
     // Levelled to the library's -24 LUFS (the fake part is a tone at about -23 LUFS, the same in every section).
@@ -148,7 +148,7 @@ describe('the ACE layer task', () => {
     const lyrics = String(submitted[0]!['lyrics']);
     expect(lyrics.split('\n\n')).toHaveLength(names.length);
     expect(lyrics.match(/\[Chorus\]\n\(oh yeah\)\n\(hey!\)/gu)?.length).toBe(names.filter((n) => sectionKind(n) === 'chorus').length);
-    expect(result.track).toBe('ACE Ad-libs');
+    expect(result.track).toBe('AI Ad-libs');
     expect(result.takes.map((t) => t.segment)).toEqual(finals);
   });
 

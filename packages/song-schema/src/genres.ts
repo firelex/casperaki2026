@@ -43,7 +43,7 @@ export const GENRE_RECIPES = {
   // drum patterns in the verse. Otherwise like brightPop."
   casperakiPop: {
     label: 'Casperaki Pop',
-    blurb: 'Bright pop with Dr. Luke drums, electric guitar and hip-hop verses',
+    blurb: 'Bright pop with hard-hitting drums, funky guitar and hip-hop verses',
     base: 'brightPop',
     drumLibrary: { library: 'drLuke', families: ['kickDrums', 'snareDrums', 'clapsSnaps'] },
     drumStyles: {

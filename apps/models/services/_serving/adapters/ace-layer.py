@@ -431,7 +431,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
     total = src.shape[0] / sr
     part = np.zeros((2, src.shape[0]), dtype=np.float32)
     for si, sec in enumerate(p["sections"]):
-        step = job.step(f"rap_{sec['name']}", f"ACE raps {sec['name']}")
+        step = job.step(f"rap_{sec['name']}", f"AI raps {sec['name']}")
         # The stretch repainted: the section, or MIN_WINDOW_BARS bars for a short one (ACE gives no words over 4 bars);
         # with RAP_CONTEXT_BARS bars of song either side.
         short = is_short(sec["start"], sec["end"], p["tempo"])
@@ -466,7 +466,7 @@ def _rap_sections(handle, p, src, sr, out_dir, job):
                 best, best_path = cand, picked_path
             made += n
         if best["recall"] < MIN_RAP_RECALL:
-            raise RuntimeError(f"ace-layer: ACE did not rap the words of {sec['name']} clearly in {made} takes (best: "
+            raise RuntimeError(f"ace-layer: the AI did not rap the words of {sec['name']} clearly in {made} takes (best: "
                                f"{best['recall']:.0%} of the words heard, \"{best['heard'][:200]}\")")
         vocal, vsr = sf.read(str(best_path), dtype="float32", always_2d=True)
         v = torch.from_numpy(np.ascontiguousarray(vocal.T))
@@ -518,7 +518,7 @@ def generate(handle, params, out_dir, job):
         part = _rap_sections(handle, p, src, sr, out_dir, job)
     else:
         # 2. ACE writes the part.
-        step = job.step("lego", f"ACE writes the {name} part")
+        step = job.step("lego", f"AI writes the {name} part")
         t = time.time()
         tensor, out_sr = _lego(handle, p, p["src_wav"], p.get("lyrics"), p["seed"], seconds)
         took = time.time() - t

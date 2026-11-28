@@ -54,9 +54,9 @@ export function AceLayerDialog({
     <Dialog open onOpenChange={(o) => (o ? undefined : onClose())}>
       <DialogContent className={CONTENT}>
         <div className="border-b border-line/60 px-5 py-4 pr-12">
-          <DialogTitle className="text-[17px] font-semibold text-white">Add ACE layer</DialogTitle>
+          <DialogTitle className="text-[17px] font-semibold text-white">Add AI track</DialogTitle>
           <DialogDescription className="mt-1 text-[13px] text-white/55">
-            ACE-Step listens to the song as it is and plays one more part over it. It arrives on its own track, which you can mute or remove.
+            AI listens to the song as it is and plays one more part over it. It arrives on its own track, which you can mute or remove.
           </DialogDescription>
         </div>
         <div className="flex flex-col gap-5 px-5 py-5 text-[14px]">

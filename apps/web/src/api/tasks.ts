@@ -101,4 +101,4 @@ export const tasksApi = {
 };
 
 /** What a task does, in words ("Write lyrics"). */
-export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', writeRapLyrics: 'Write rap lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer', addSinger: 'Add a singer', speakingVoice: 'Speaking voice' };
+export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', writeRapLyrics: 'Write rap lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add AI track', addSinger: 'Add a singer', speakingVoice: 'Speaking voice' };

@@ -3,6 +3,8 @@
 // envelope (a bass multisample with two slots, one drum lane), the "ffmpeg"
 // writes its arguments into the output file so slicing can be checked.
 
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -85,6 +87,28 @@ describe('in-browser playback', () => {
     const drum = await (await fetch(h.url + pb.samples[2]!.url)).text();
     expect(drum).not.toContain('-ss');
     expect((await fetch(h.url + pb.stubs[0]!)).status).toBe(200);
+  });
+
+  it('a library recording changed on disk gets new slice ids, so browsers fetch it again (owner 2026-11-28: a bass fixed in the library)', async () => {
+    const svc = fakePlayback();
+    const store = openSongsStore({ path: ':memory:' });
+    const app = createApp(loadConfig({} as NodeJS.ProcessEnv), { store, playback: svc });
+    const server = await new Promise<ReturnType<typeof app.listen>>((resolve) => { const x = app.listen(0, '127.0.0.1', () => resolve(x)); });
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    try {
+      await fetch(`${url}/api/songs/generate`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ genre: 'edm', key: 'A', bpm: 124, seed: 'playback-spec' }) });
+      const { id } = await settled<{ id: string }>(url, app);
+      const urls = async () => Object.fromEntries(((await (await fetch(`${url}/api/songs/${id}/playback`)).json()) as Payload).samples.map((x) => [x.key, x.url]));
+      const before = await urls();
+      const lib = (svc as unknown as { config: { sampleLibraryRoot: string } }).config.sampleLibraryRoot;
+      writeFileSync(join(lib, 'basses', 'bass.mp3'), 'mp3, fixed');
+      const after = await urls();
+      expect(after['900']).not.toBe(before['900']);
+      expect(after['901']).not.toBe(before['901']);
+      expect(after.bassDrum1).toBe(before.bassDrum1);
+    } finally {
+      await new Promise<void>((r) => server.close(() => { store.close(); r(); }));
+    }
   });
 
   it('plays a pitch the recording does not reach as the highest recorded one, resampled up', async () => {

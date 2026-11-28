@@ -354,9 +354,9 @@ export class BackgroundTasks {
     if (kind === 'aceLayer') {
       if (!ace) throw new Error('checkCanStart: an ACE layer task without its options');
       if (!this.deps.ace) {
-        throw new TaskError(503, 'no_ace_service', 'ACE layers are not set up: the brain needs ACE_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
+        throw new TaskError(503, 'no_ace_service', 'AI tracks are not set up: the brain needs ACE_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_VOCAL_TAKES_DIR.');
       }
-      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_layering', 'An ACE layer is already being made for this song.');
+      if (store.activeTask(ownerId, songId, kind)) throw new TaskError(409, 'already_layering', 'An AI track is already being made for this song.');
       try {
         coveredSections(song, ace.range, ace.sectionKinds, ace.sections);
         keyScale(song.key);

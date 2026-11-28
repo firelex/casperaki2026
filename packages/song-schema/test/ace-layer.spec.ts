@@ -16,8 +16,10 @@ describe('rap (ACE layer)', () => {
     expect(() => aceTrackOf('rap', 'vocals')).toThrow(/no voice/u);
   });
 
-  it('plays on a track "ACE Rap"', () => {
-    expect(aceTrackName('rap', ['ACE Rap'])).toBe('ACE Rap 2');
+  it('plays on a track "AI Rap" (songs from before keep their "ACE" tracks, still recognised)', () => {
+    expect(aceTrackName('rap', ['AI Rap'])).toBe('AI Rap 2');
+    expect(aceTrackName('guitar', [])).toBe('AI Guitar');
+    expect(aceInstrumentOfTrack('AI Guitar 2')).toBe('guitar');
     expect(aceInstrumentOfTrack('ACE Rap 2')).toBe('rap');
     expect(aceInstrumentOfTrack('Rap')).toBe('rap');
     expect(aceInstrumentOfTrack('Rap 2')).toBeUndefined();

@@ -17,7 +17,7 @@
 import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 
 import { commitAndPush } from '../git.js';
@@ -141,6 +141,12 @@ export class PlaybackService {
   private mixText: string;
 
   /** mix-config.json text (the standard mix), for the browser engine. */
+  /** A library file's size and modification time (part of its slices' ids). */
+  private fileVersion(relativePath: string): string {
+    const st = statSync(resolve(this.config.sampleLibraryRoot, relativePath));
+    return `${st.size}:${Math.round(st.mtimeMs)}`;
+  }
+
   /** Genre recipes' mastering references (the playback payload hands a recipe song's to the browser). */
   get masteringReferencesDir(): string {
     return this.config.masteringReferencesDir;
@@ -431,7 +437,10 @@ export class PlaybackService {
   }
 
   private register(spec: SampleSpec | TakeSpec): string {
-    const id = createHash('sha256').update(JSON.stringify(spec)).digest('hex').slice(0, 24);
+    // A library recording's id also covers its size and modification time: browsers keep slices for good (they are
+    // served as immutable), so a recording fixed in the library (2026-11-28: a bass a tritone off) must get new ids.
+    const version = 'relativePath' in spec ? this.fileVersion(spec.relativePath) : '';
+    const id = createHash('sha256').update(JSON.stringify(spec) + version).digest('hex').slice(0, 24);
     const specPath = join(this.config.sampleCacheDir, `${id}.json`);
     if (!existsSync(specPath)) writeFileSync(specPath, JSON.stringify(spec));
     return id;
