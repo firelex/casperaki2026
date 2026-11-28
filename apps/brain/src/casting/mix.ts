@@ -32,6 +32,11 @@ export const APPLAUSE_LUFS = -18;
 const APPLAUSE_FADE = 2.5;
 /** The verdict music's loudness: quiet under the voices; it fades in after the applause and out at the end. */
 export const BED_LUFS = -31;
+/** The meeting's music sits a little louder (it was inaudible at -31 under the judges). */
+export const TALK_BED_LUFS = -26;
+/** Where in their tracks the beds start: ACE's tracks open sparse and soft (about -33 dB for 15 s). */
+export const TALK_BED_FROM = 12;
+export const VERDICT_BED_FROM = 8;
 const BED_FADE = 2;
 
 /** The gain (linear) bringing a file to `targetLufs`. */
@@ -149,10 +154,10 @@ export function mixSoundtrack(timeline: CastingTimeline, files: SoundtrackFiles,
   // The verdict music under the talk: in after the applause, out at the end (looped if the verdicts outlast it).
   const bedStart = firstVerdict.startSeconds;
   const bedLen = verdicts.endSeconds - bedStart;
-  graph.push(`[4:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${bedLen.toFixed(3)},volume=${files.bedGain.toFixed(4)},afade=t=in:d=${BED_FADE},afade=t=out:st=${Math.max(0, bedLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(bedStart)}:all=1[bed]`);
+  graph.push(`[4:a]${stereo},atrim=start=${VERDICT_BED_FROM},asetpts=PTS-STARTPTS,aloop=loop=-1:size=2147483647,atrim=0:${bedLen.toFixed(3)},volume=${files.bedGain.toFixed(4)},afade=t=in:d=${BED_FADE},afade=t=out:st=${Math.max(0, bedLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(bedStart)}:all=1[bed]`);
   // Music under the meeting: in with the talk, faded to zero by its end (then the song's second of silence).
   const talkLen = talk.endSeconds - talk.startSeconds;
-  graph.push(`[5:a]${stereo},aloop=loop=-1:size=2147483647,atrim=0:${talkLen.toFixed(3)},volume=${files.talkBedGain.toFixed(4)},afade=t=in:d=${Math.min(BED_FADE, talkLen / 3).toFixed(3)},afade=t=out:st=${Math.max(0, talkLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(talk.startSeconds)}:all=1[talkbed]`);
+  graph.push(`[5:a]${stereo},atrim=start=${TALK_BED_FROM},asetpts=PTS-STARTPTS,aloop=loop=-1:size=2147483647,atrim=0:${talkLen.toFixed(3)},volume=${files.talkBedGain.toFixed(4)},afade=t=in:d=${Math.min(BED_FADE, talkLen / 3).toFixed(3)},afade=t=out:st=${Math.max(0, talkLen - BED_FADE).toFixed(3)}:d=${BED_FADE},adelay=${ms(talk.startSeconds)}:all=1[talkbed]`);
   const all = ['music', 'door', 'song', 'applause', 'bed', 'talkbed', ...voiceLabels];
   graph.push(`${all.map((a) => `[${a}]`).join('')}amix=inputs=${all.length}:normalize=0:duration=longest,alimiter=limit=0.95,apad,atrim=0:${timeline.durationSeconds.toFixed(3)}[out]`);
   try {

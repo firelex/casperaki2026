@@ -45,7 +45,7 @@ import { castingFacts, isChorus } from '../casting/facts.js';
 import { SCENES, writeScript, type CastingScript, type SceneId } from '../casting/writer.js';
 import { layOut } from '../casting/timeline.js';
 import { lineVoices, speakLines } from '../casting/voices.js';
-import { APPLAUSE_LUFS, audibleSeconds, BED_LUFS, gainTo, mixSoundtrack, pickFor, speakerGains } from '../casting/mix.js';
+import { APPLAUSE_LUFS, audibleSeconds, BED_LUFS, gainTo, TALK_BED_LUFS, mixSoundtrack, pickFor, speakerGains } from '../casting/mix.js';
 import { wavLevels } from '../routes/renders.js';
 import { songTiming } from '../video/videoInput.js';
 import { checkDesign, RealisticDesignSchema, type RealisticDesign } from '../avatars/realisticDesign.js';
@@ -1032,7 +1032,7 @@ export class BackgroundTasks {
           verdictBed: join(c.musicDir, CASTING_BEDS_DIR, verdictBed),
           bedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, verdictBed), BED_LUFS),
           talkBed: join(c.musicDir, CASTING_BEDS_DIR, talkBed),
-          talkBedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, talkBed), BED_LUFS), lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
+          talkBedGain: gainTo(c.ffmpegBin, join(c.musicDir, CASTING_BEDS_DIR, talkBed), TALK_BED_LUFS), lines: new Map([...spoken].map(([id, v]) => [id, v.file])), song: exported.path, poised: join(c.musicDir, CASTING_MUSIC.poised), entrance: join(c.musicDir, CASTING_MUSIC.entrance) },
         join(outDir, 'casting.wav'),
         c.ffmpegBin,
       );
