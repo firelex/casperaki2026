@@ -22,7 +22,7 @@ import type { AceAdlibVoice, AceInstrument } from '@casperaki/song-schema/ace-la
 
 import { defaultBrainClient } from './client';
 
-export type TaskKind = 'writeLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger';
+export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task (sing records every one), as the brain stores it. */
@@ -69,8 +69,12 @@ export const tasksQueryKey = ['tasks'] as const;
 export const tasksApi = {
   list: (signal?: AbortSignal) => defaultBrainClient.get<{ tasks: BackgroundTask[] }>('/api/tasks', { signal }),
   start: (kind: 'writeLyrics', songId: string, song: Song) => defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind, songId, song }),
-  /** Sing with a singer (singersApi.list). */
-  startSing: (songId: string, song: Song, singerId: string) => defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'sing', songId, song, singerId }),
+  /** Sing with a singer (singersApi.list), the chosen sections only (the others keep their takes). */
+  startSing: (songId: string, song: Song, singerId: string, sections: readonly string[]) =>
+    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'sing', songId, song, singerId, sections }),
+  /** Write rap lyrics: the language model writes the words of `sections` in `style` (result { rapLyrics }). */
+  startWriteRapLyrics: (songId: string, song: Song, style: string, sections: readonly string[]) =>
+    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'writeRapLyrics', songId, song, style, sections }),
   /** Transcribe melody: `recording.data` is the file as base64. */
   startTranscribe: (songId: string, song: Song, segment: string, recording: { name: string; type: string; data: string }, hasBacking: boolean) =>
     defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'transcribe', songId, song, segment, recording, hasBacking }),
@@ -86,13 +90,9 @@ export const tasksApi = {
       kind: 'aceLayer', songId, song, instrument: 'adlibs', lyrics, voice, sections,
       ...(style.trim() ? { words: style.trim() } : {}),
     }),
-  /** Add rap vocals: ACE raps in `style` over `sections`; `rapWords` holds the words the user wrote (the other
-   *  sections' words are written by the brain). */
+  /** Rap: ACE raps in `style` over `sections`, each with its words (`rapWords`: section → lines as text). */
   startRap: (songId: string, song: Song, style: string, sections: readonly string[], rapWords: Record<string, string>) =>
-    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', {
-      kind: 'aceLayer', songId, song, instrument: 'rap', sections,
-      ...(style.trim() ? { words: style.trim() } : {}), ...(Object.keys(rapWords).length ? { rapWords } : {}),
-    }),
+    defaultBrainClient.post<{ task: BackgroundTask }>('/api/tasks', { kind: 'aceLayer', songId, song, instrument: 'rap', sections, words: style, rapWords }),
   apply: (id: string) => defaultBrainClient.post<AppliedTask>(`/api/tasks/${encodeURIComponent(id)}/apply`, {}),
   cancel: (id: string) => defaultBrainClient.post<{ task: BackgroundTask }>(`/api/tasks/${encodeURIComponent(id)}/cancel`, {}),
   /** Where a step's file ("<stage>/<name>") is served. */
@@ -101,4 +101,4 @@ export const tasksApi = {
 };
 
 /** What a task does, in words ("Write lyrics"). */
-export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer', addSinger: 'Add a singer' };
+export const TASK_LABELS: Readonly<Record<TaskKind, string>> = { writeLyrics: 'Write lyrics', writeRapLyrics: 'Write rap lyrics', sing: 'Sing', transcribe: 'Transcribe melody', aceLayer: 'Add ACE layer', addSinger: 'Add a singer' };

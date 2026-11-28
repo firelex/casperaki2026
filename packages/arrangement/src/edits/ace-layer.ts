@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { muteUnderRap } from './rap.js';
+import { applyRapLyrics, muteUnderRap } from './rap.js';
 
 import {
   ACE_INSTRUMENTS,
@@ -40,8 +40,11 @@ export const AceLayerResultSchema = z
           .strict(),
       )
       .min(1),
+    /** Rap: the words each section was rapped with (section → lines), recorded as the song's rap lyrics. */
+    rapLyrics: z.record(z.string().min(1), z.array(z.string().min(1)).min(1)).optional(),
   })
-  .strict();
+  .strict()
+  .refine((r) => (r.rapLyrics !== undefined) === (r.instrument === 'rap'), 'rap results carry their words, and only rap results');
 export type AceLayerResult = z.infer<typeof AceLayerResultSchema>;
 
 /** The song with an ACE layer's clips on its track (replacing the track's earlier clips, if any). */
@@ -78,5 +81,5 @@ export function applyAceLayer(song: Song, result: AceLayerResult): Song {
     attachedTo: { scope: 'segment', segment: t.segment, instrument: layer.track },
   }));
   const out = parseSong({ ...song, aiArtifacts: [...song.aiArtifacts.filter((a) => !onTrack(a)), ...artifacts] });
-  return rap ? muteUnderRap(out, [...sections]) : out;
+  return rap ? muteUnderRap(applyRapLyrics(out, layer.rapLyrics!), [...sections]) : out;
 }

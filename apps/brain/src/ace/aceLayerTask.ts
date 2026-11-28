@@ -342,7 +342,7 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
       numbers: { clips: out.length, lufs, gainDb },
     };
   });
-  return AceLayerResultSchema.parse({ track, instrument: options.instrument, caption, seed: options.seed, takes });
+  return AceLayerResultSchema.parse({ track, instrument: options.instrument, caption, seed: options.seed, takes, ...(rapWords ? { rapLyrics: rapWords } : {}) });
 }
 
 const fmt = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.round(seconds % 60)).padStart(2, '0')}`;

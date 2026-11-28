@@ -72,7 +72,9 @@ describe('a finished transcription merged into unsaved edits', () => {
   it('is the applySung edit for its section only (partial), so the other sections keep their takes', () => {
     const saved = { title: 'saved' } as unknown as Song;
     expect(mergeOp('transcribe', { melody: {}, takes: [] }, saved)).toEqual({ kind: 'applySung', result: { melody: {}, takes: [] }, sungOver: saved, partial: true });
-    expect(mergeOp('sing', { melody: {}, takes: [] }, saved)).toEqual({ kind: 'applySung', result: { melody: {}, takes: [] }, sungOver: saved });
+    // Sing covers the sections it sang (the user's choice): partial too.
+    expect(mergeOp('sing', { melody: {}, takes: [] }, saved)).toEqual({ kind: 'applySung', result: { melody: {}, takes: [] }, sungOver: saved, partial: true });
+    expect(mergeOp('writeRapLyrics', { rapLyrics: { verse1: ['yo'] } }, saved)).toEqual({ kind: 'setRapLyrics', lyrics: { verse1: ['yo'] } });
     expect(mergeOp('writeLyrics', { verse1: ['la'] }, saved)).toEqual({ kind: 'applyLyrics', lyrics: { verse1: ['la'] } });
     expect(mergeOp('aceLayer', { track: 'ACE Guitar' }, saved)).toEqual({ kind: 'applyAceLayer', result: { track: 'ACE Guitar' } });
   });

@@ -29,12 +29,12 @@ import { drumBarPattern } from './sequencer/ClipDetail';
 import { indexInstrumentDefinitions, LEAD_VOCAL_NAME } from '../types/song';
 import { TASK_LABELS, tasksApi, tasksQueryKey, type BackgroundTask } from '../api/tasks';
 import { useTasks } from '../state/tasks';
-import { bytesToBase64, lyricsFirstType, lyricsWritten, staleTakes, startOnSaved, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
+import { bytesToBase64, lyricsFirstType, lyricsWritten, rapLyricsIn, staleTakes, startOnSaved, sungTakes, transcribeSections, vocalMenu, type VocalMenu } from './singing';
 import { hasNotes } from './audioOnlyTracks';
 import { useSaveSong } from '../state/useSongActions';
 import { TranscribeDialog } from './sequencer/TranscribeDialog';
 import { AceLayerDialog } from './sequencer/AceLayerDialog';
-import { RapDialog } from './sequencer/RapDialog';
+import { RapDialog, WriteRapLyricsDialog } from './sequencer/RapDialog';
 import { AdlibsDialog } from './sequencer/AdlibsDialog';
 import { SingerDialog } from './sequencer/SingerDialog';
 import { useSession } from '../state/session';
@@ -608,13 +608,35 @@ export function TimelineView() {
       setTaskError(`Add ad-libs failed: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
-  /** Add rap vocals: ACE raps over the sections the user picks (docs/superpowers/specs/2026-11-27-rap-vocals-design.md). */
+  /** Rap like singing (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): Write rap lyrics… writes the
+   *  chosen sections' words into the song; Rap… raps the chosen sections with their words onto the "Rap" track. */
+  const [writingRap, setWritingRap] = useState(false);
   const [rapping, setRapping] = useState(false);
-  const rapItem: AceLayerItem & { label: string; hint: string } = {
-    label: 'Add rap vocals…',
-    disabled: Boolean(aceTask),
-    hint: aceTask ? 'an ACE layer is being made' : '',
-    onSelect: () => setRapping(true),
+  const rapLyricsTask = tasks?.find((t) => t.kind === 'writeRapLyrics' && t.songId === activeSong?.id && (t.state === 'running' || t.state === 'ready'));
+  const rapItems: RapItems = {
+    write: {
+      label: 'Write rap lyrics…',
+      disabled: Boolean(rapLyricsTask),
+      hint: rapLyricsTask ? (rapLyricsTask.state === 'running' ? 'being written' : 'written, being put in') : '',
+      onSelect: () => setWritingRap(true),
+    },
+    rap: {
+      label: 'Rap…',
+      disabled: Boolean(aceTask) || Boolean(rapLyricsTask),
+      hint: aceTask ? 'an ACE layer is being made' : rapLyricsTask ? 'the rap lyrics are being written' : '',
+      onSelect: () => setRapping(true),
+    },
+  };
+  const writeRapLyrics = async (style: string, chosen: string[]) => {
+    if (!activeSong || !viewSong) throw new Error('No song is open.');
+    setWritingRap(false);
+    setTaskError(undefined);
+    try {
+      await tasksApi.startWriteRapLyrics(activeSong.id, viewSong, style, chosen);
+      await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
+    } catch (err) {
+      setTaskError(`Write rap lyrics failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
   };
   const addRap = async (style: string, chosen: string[], words: Record<string, string>) => {
     setRapping(false);
@@ -623,8 +645,21 @@ export function TimelineView() {
       await onSaved((songId, song) => tasksApi.startRap(songId, song, style, chosen, words));
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
-      setTaskError(`Add rap vocals failed: ${err instanceof Error ? err.message : String(err)}`);
+      setTaskError(`Rap failed: ${err instanceof Error ? err.message : String(err)}`);
     }
+  };
+  /** Right-click a clip with takes: Mute clip / Unmute clip (every take of the track in that section). */
+  const clipMute = (track: SeqTrack, section: number): ClipMute | undefined => {
+    if (!viewSong) return undefined;
+    const name = model?.sections[section]?.name;
+    if (!name) return undefined;
+    const takes = viewSong.aiArtifacts.filter((a) => a.attachedTo.scope === 'segment' && a.attachedTo.segment === name && a.attachedTo.instrument === track.name);
+    if (takes.length === 0) return undefined;
+    const muted = takes.every((a) => a.muted === true);
+    return {
+      muted,
+      onToggle: () => void edits.run({ kind: 'setTakesMuted', track: track.name, segment: name, muted: !muted }, `${muted ? 'Unmuting' : 'Muting'} ${track.name} in ${name}`),
+    };
   };
   const selectionMenu: SelectionActions = { ...selectionBase, aceLayer: aceLayerItem };
   const writeLyrics = () => startTask('writeLyrics', 'Write lyrics');
@@ -632,11 +667,11 @@ export function TimelineView() {
   const [choosingSinger, setChoosingSinger] = useState(false);
   const lastSinger = tasks?.filter((t) => t.kind === 'sing' && t.songId === activeSong?.id && t.singerId).sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0]?.singerId;
   const sing = () => setChoosingSinger(true);
-  const startSing = async (singerId: string) => {
+  const startSing = async (singerId: string, sections: string[]) => {
     setChoosingSinger(false);
     setTaskError(undefined);
     try {
-      await onSaved((songId, song) => tasksApi.startSing(songId, song, singerId));
+      await onSaved((songId, song) => tasksApi.startSing(songId, song, singerId, sections));
       await queryClient.invalidateQueries({ queryKey: tasksQueryKey });
     } catch (err) {
       setTaskError(`Sing failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -857,7 +892,8 @@ export function TimelineView() {
               onRemove={() => edits.removeTrack(t.name)}
               aceLayer={aceLayerItem}
               adlibs={adlibItem}
-              rap={rapItem}
+              rap={rapItems}
+              clipMute={(s) => clipMute(t, s)}
               onOverview={t.isDrums ? undefined : () => setDialog({ kind: 'overview', track: t.name })}
               onAdd={(s) =>
                 setDialog({ kind: 'add', sections: s === undefined ? model.sections.map((x) => x.name) : [model.sections[s]!.name] })
@@ -933,13 +969,13 @@ export function TimelineView() {
                     automation={automationByTrack.get(t.name)}
                   />
                   {t.clips
-                    .filter((c) => c.stale)
+                    .filter((c) => c.stale || c.muted)
                     .map((c) => (
                       <div
                         key={c.section}
                         className="absolute top-0 bottom-0"
                         style={{ left: c.startBar * px, width: c.bars * px }}
-                        title="not sung (changed since it was sung)"
+                        title={c.muted ? 'muted (right-click: Unmute clip)' : 'not sung (changed since it was sung)'}
                       />
                     ))}
                 </div>
@@ -1008,12 +1044,27 @@ export function TimelineView() {
         </div>
       ) : null}
 
-      {choosingSinger ? <SingerDialog preselected={lastSinger} onClose={() => setChoosingSinger(false)} onStart={(id) => void startSing(id)} /> : null}
+      {choosingSinger && viewSong ? (
+        <SingerDialog preselected={lastSinger} sections={transcribeSections(viewSong)} onClose={() => setChoosingSinger(false)} onStart={(id, secs) => void startSing(id, secs)} />
+      ) : null}
       {adlibbing ? (
         <AdlibsDialog sections={adlibSections} onClose={() => setAdlibbing(false)} onStart={(l, st, v) => void addAdlibs(l, st, v)} />
       ) : null}
-      {rapping ? (
-        <RapDialog sections={model.sections.map((s) => ({ name: s.name, bars: s.bars }))} onClose={() => setRapping(false)} onStart={(st, ch, w) => void addRap(st, ch, w)} />
+      {writingRap && viewSong ? (
+        <WriteRapLyricsDialog
+          sections={model.sections.map((s) => ({ name: s.name, bars: s.bars }))}
+          hasSung={sungTakes(viewSong).length > 0}
+          onClose={() => setWritingRap(false)}
+          onStart={(st, ch) => void writeRapLyrics(st, ch)}
+        />
+      ) : null}
+      {rapping && viewSong ? (
+        <RapDialog
+          sections={model.sections.map((s) => ({ name: s.name, bars: s.bars }))}
+          rapLyrics={rapLyricsIn(viewSong)}
+          onClose={() => setRapping(false)}
+          onStart={(st, ch, w) => void addRap(st, ch, w)}
+        />
       ) : null}
       {layering ? (
         <AceLayerDialog
@@ -1242,6 +1293,7 @@ function TrackMenu({
   aceLayer,
   adlibs,
   rap,
+  clipMute,
   onOverview,
   children,
 }: {
@@ -1269,8 +1321,10 @@ function TrackMenu({
   aceLayer: AceLayerItem;
   /** Add ad-libs… (the final chorus(es); disabled with why). */
   adlibs: AceLayerItem & { label: string; hint: string };
-  /** Add rap vocals… (disabled while the song's ACE layer task runs). */
-  rap: AceLayerItem & { label: string; hint: string };
+  /** Write rap lyrics… and Rap… (disabled with why). */
+  rap: RapItems;
+  /** Per section: Mute clip / Unmute clip, when the track has takes there. */
+  clipMute: (section: number) => ClipMute | undefined;
   /** Whole-track piano roll / score (pitched tracks). */
   onOverview: (() => void) | undefined;
   children: ReactNode;
@@ -1306,8 +1360,11 @@ function TrackMenu({
             <ContextMenuItem className={ITEM} disabled={adlibs.disabled} onSelect={adlibs.onSelect}>
               {adlibs.label} <MenuHint text={adlibs.hint} />
             </ContextMenuItem>
-            <ContextMenuItem className={ITEM} disabled={rap.disabled} onSelect={rap.onSelect}>
-              {rap.label} <MenuHint text={rap.hint} />
+            <ContextMenuItem className={ITEM} disabled={busy || rap.write.disabled} onSelect={rap.write.onSelect}>
+              {rap.write.label} <MenuHint text={rap.write.hint} />
+            </ContextMenuItem>
+            <ContextMenuItem className={ITEM} disabled={rap.rap.disabled} onSelect={rap.rap.onSelect}>
+              {rap.rap.label} <MenuHint text={rap.rap.hint} />
             </ContextMenuItem>
             <ContextMenuSeparator className="my-1 h-px bg-line" />
           </>
@@ -1322,6 +1379,14 @@ function TrackMenu({
             <ContextMenuItem className={ITEM} onSelect={() => onLoop(section)}>
               Loop {sections[section]!.name}
             </ContextMenuItem>
+            {(() => {
+              const m = clipMute(section);
+              return m ? (
+                <ContextMenuItem className={ITEM} disabled={busy} onSelect={m.onToggle}>
+                  {m.muted ? 'Unmute clip' : 'Mute clip'}
+                </ContextMenuItem>
+              ) : null;
+            })()}
             <ContextMenuSeparator className="my-1 h-px bg-line" />
             {onNewMelody ? (
               <>
@@ -1387,6 +1452,11 @@ interface SelectionActions {
   /** Add ACE layer… over the selection (or the whole song). */
   readonly aceLayer: AceLayerItem;
 }
+
+/** The Vocal track menu's Write rap lyrics… and Rap… items. */
+type RapItems = { readonly write: AceLayerItem & { label: string; hint: string }; readonly rap: AceLayerItem & { label: string; hint: string } };
+/** A clip's Mute clip / Unmute clip item. */
+type ClipMute = { readonly muted: boolean; onToggle(): void };
 
 interface AceLayerItem {
   readonly disabled: boolean;

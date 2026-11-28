@@ -25,13 +25,20 @@ describe('finalChoruses (where ad-libs go)', () => {
   });
 });
 
-describe('Add rap vocals (RapDialog)', () => {
-  it('names sections as people do, ticks the verses at first, and sends only the words the user wrote', async () => {
-    const { defaultRapSections, rapSectionLabel, rapWordsToSend } = await import('../src/editor/sequencer/RapDialog');
+describe('Write rap lyrics and Rap (RapDialog.tsx)', () => {
+  it('names sections as people do; ticks the verses when the song is sung, otherwise every section', async () => {
+    const { defaultRapSections, rapSectionLabel } = await import('../src/editor/sequencer/RapDialog');
     expect(rapSectionLabel('verse2')).toBe('Verse 2');
     expect(rapSectionLabel('preChorus1')).toBe('Pre-chorus 1');
     expect(rapSectionLabel('intro')).toBe('Intro');
-    expect(defaultRapSections([{ name: 'intro' }, { name: 'verse1' }, { name: 'chorus1' }, { name: 'verse2' }])).toEqual(['verse1', 'verse2']);
-    expect(rapWordsToSend(['verse1', 'verse2'], { verse1: '  a\nb ', verse2: '   ', chorus1: 'not ticked' })).toEqual({ verse1: 'a\nb' });
+    const sections = [{ name: 'intro' }, { name: 'verse1' }, { name: 'chorus1' }, { name: 'verse2' }];
+    expect(defaultRapSections(sections, true)).toEqual(['verse1', 'verse2']);
+    expect(defaultRapSections(sections, false)).toEqual(['intro', 'verse1', 'chorus1', 'verse2']);
+  });
+
+  it('Rap needs words for every ticked section, and sends each one trimmed', async () => {
+    const { rapWordsToSend, sectionsWithoutWords } = await import('../src/editor/sequencer/RapDialog');
+    expect(sectionsWithoutWords(['verse1', 'verse2'], { verse1: 'a', verse2: '   ' })).toEqual(['verse2']);
+    expect(rapWordsToSend(['verse1'], { verse1: '  a\n\n b ', chorus1: 'not ticked' })).toEqual({ verse1: 'a\nb' });
   });
 });

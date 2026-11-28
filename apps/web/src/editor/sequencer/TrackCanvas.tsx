@@ -89,7 +89,7 @@ export function TrackCanvas({
       const x = clip.startBar * px + 1;
       const w = Math.max(2, clip.bars * px - 2);
       // A take sung over something that has since changed is greyed (not sung).
-      const clipColor = clip.stale ? '#8a8d96' : color;
+      const clipColor = clip.stale || clip.muted ? '#8a8d96' : color;
       g.globalAlpha = 0.2 * alpha;
       g.fillStyle = clipColor;
       roundRect(g, x, top, w, clipH, 3);

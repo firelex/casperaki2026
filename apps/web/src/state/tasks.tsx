@@ -54,7 +54,13 @@ export interface ApplyContext {
 /** The track edit that puts a task's result into a working song: written lyrics, or a sung result (Transcribe
  *  melody's covers its section only: `partial`, so the other sections keep their takes). */
 export function mergeOp(kind: BackgroundTask['kind'], result: AppliedTask['result'], saved: Song): TrackEdit {
-  if (kind === 'sing') return { kind: 'applySung', result, sungOver: saved };
+  // Sing covers the sections it sang: the other sections keep their takes.
+  if (kind === 'sing') return { kind: 'applySung', result, sungOver: saved, partial: true };
+  if (kind === 'writeRapLyrics') {
+    const rap = (result as { rapLyrics?: Readonly<Record<string, readonly string[]>> } | null)?.rapLyrics;
+    if (!rap) throw new Error('a Write rap lyrics result without its rapLyrics');
+    return { kind: 'setRapLyrics', lyrics: rap };
+  }
   if (kind === 'transcribe') return { kind: 'applySung', result, sungOver: saved, partial: true };
   if (kind === 'aceLayer') return { kind: 'applyAceLayer', result };
   if (kind === 'addSinger') throw new Error('Add a singer has no result to put into a song');

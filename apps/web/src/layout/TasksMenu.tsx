@@ -8,7 +8,7 @@ import { duration, TaskSteps } from './TaskSteps';
 import { tryApplyAgain, useApplying, useElapsed, useTasks } from '../state/tasks';
 
 /** What a running task is doing, in a word. */
-const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering', addSinger: 'making the singer' };
+const RUNNING_WORDS: Readonly<Record<BackgroundTask['kind'], string>> = { writeLyrics: 'writing', writeRapLyrics: 'writing the rap', sing: 'singing', transcribe: 'transcribing', aceLayer: 'layering', addSinger: 'making the singer' };
 
 /** Where clicking a task goes: its song, or the Singers page for Add a singer. */
 export function taskPage(task: BackgroundTask): string {

@@ -46,6 +46,8 @@ export interface SeqClip {
   readonly notes: readonly SeqNote[];
   /** A sung take whose section changed since it was sung: drawn greyed ("not sung"). */
   readonly stale?: boolean;
+  /** Every take of the clip is muted (by the user, or under a rap): drawn greyed, silent. */
+  readonly muted?: boolean;
 }
 
 export interface SeqTrack {
@@ -285,9 +287,21 @@ export function buildSequencerModel(song: Song, stale: ReadonlySet<string> = new
     );
   }
 
+  // Clips whose takes are all muted (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md).
+  const takesOf = new Map<string, boolean[]>();
+  for (const a of song.aiArtifacts) {
+    if (a.attachedTo.scope !== 'segment' || !a.attachedTo.instrument) continue;
+    const key = takeKey(a.attachedTo.instrument, a.attachedTo.segment);
+    takesOf.set(key, [...(takesOf.get(key) ?? []), a.muted === true]);
+  }
+  const muted = new Set([...takesOf].filter(([, m]) => m.every(Boolean)).map(([k]) => k));
+
   const tracks: SeqTrack[] = [...clipsByTrack.entries()]
     .map(([name, rawClips]) => {
-      const clips = rawClips.map((c) => (stale.has(takeKey(name, sections[c.section]!.name)) ? { ...c, stale: true } : c));
+      const clips = rawClips.map((c) => {
+        const key = takeKey(name, sections[c.section]!.name);
+        return { ...c, ...(stale.has(key) ? { stale: true } : {}), ...(muted.has(key) ? { muted: true } : {}) };
+      });
       const pitches = clips.flatMap((c) => c.notes.map((n) => n.pitch).filter((p): p is number => p !== null));
       return {
         name,

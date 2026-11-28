@@ -30,6 +30,7 @@ const rap = (sections: readonly string[], n = 'e', track = RAP_TRACK): AceLayerR
   caption: 'pop song with male rap vocals',
   seed: 3,
   takes: sections.map((s) => ({ segment: s, sha256: sha(n), durationSeconds: 8, fingerprint: vocalTakeFingerprint(base, s, track) as never })),
+  rapLyrics: Object.fromEntries(sections.map((s) => [s, [`${s} line ${n}`]])),
 });
 const sungAll = applySungVocals(base, { melody: {}, takes: [take(s1, 'Vocal', 'a'), take(s1, 'Backing vocals 1', 'b'), take(s2, 'Vocal', 'c')] });
 // s1's melody as the generator made it (a sung result carries the melody of the sections it sang).
@@ -66,6 +67,8 @@ describe('rap clips', () => {
     const clips = again.aiArtifacts.filter((a) => a.attachedTo.scope === 'segment' && a.attachedTo.instrument === RAP_TRACK);
     expect(clips.map((a) => [(a.attachedTo as { segment: string }).segment, a.output.sha256])).toEqual([[s1, sha('e')], [s2, sha('f')]]);
     expect(rapSections(again)).toEqual([s1, s2]);
+    // the words each section was rapped with are the song's rap lyrics
+    expect(rapLyricsOf(again)).toEqual({ [s1]: [`${s1} line e`], [s2]: [`${s2} line f`] });
   });
 
   it('refuse a rap result on another track', () => {

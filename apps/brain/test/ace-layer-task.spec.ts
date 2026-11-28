@@ -194,6 +194,7 @@ describe('rap (ACE layer)', () => {
     ]);
     expect(steps.map((s) => s.id)).not.toContain('words');
     expect(result.track).toBe('Rap');
+    expect(result.rapLyrics).toEqual({ [v1]: ['one', 'two'], [v2]: ['three', 'four'] });
     expect(result.takes.map((t) => t.segment)).toEqual([v1, v2]);
   });
 

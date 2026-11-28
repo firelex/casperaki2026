@@ -87,3 +87,18 @@ describe('track order', () => {
     expect(m.tracks.filter((t) => t.isVocal).map((t) => t.name)).toEqual(vocal);
   });
 });
+
+describe('muted clips (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md)', () => {
+  it('a section whose takes are all muted is still shown, marked muted; one with a playing take is not', () => {
+    const { song } = makeFixtureSong();
+    const [first, second] = song.songStructure.map((s) => s.name) as [string, string];
+    const take = (segment: string, n: string, muted?: boolean) => ({
+      id: `ace-step-conditioned:${segment}:Rap:${n}`, kind: 'ace-step-conditioned', modelId: 'ace', modelVersion: 'repaint',
+      output: { uri: `vocal-take:${n.repeat(64)}.ogg`, sha256: n.repeat(64), durationSeconds: 8 },
+      attachedTo: { scope: 'segment', segment, instrument: 'Rap' }, ...(muted ? { muted: true } : {}),
+    });
+    const withTakes = { ...song, aiArtifacts: [take(first, 'a', true), take(second, 'b')] } as typeof song;
+    const rap = buildSequencerModel(withTakes).tracks.find((t) => t.name === 'Rap')!;
+    expect(rap.clips.map((c) => [c.section, c.muted ?? false])).toEqual([[0, true], [1, false]]);
+  });
+});

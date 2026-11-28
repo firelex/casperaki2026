@@ -38,7 +38,7 @@ Vocal track menu: Write melody, Write lyrics, **Sing…**, Transcribe melody, Ad
   sections (one line per 2 bars, rhyming couplets, as today's rapWords.ts); other sections' rap words are kept.
 - **Rap…**: style, section tick boxes (ticked at first: the sections that have rap words), each ticked section's words
   shown and editable. A ticked section with no words disables the button ("write rap lyrics first", as Sing needs
-  written lyrics). Edits are saved into the song when the rap starts. ACE raps each ticked section; the clips land on
+  written lyrics). The words each section was rapped with (edits included) are saved into the song when the rap lands (my call: simpler than saving first; a failed rap keeps them in the task, which retry raps again). ACE raps each ticked section; the clips land on
   the track **"Rap"**, one per section; rapping a section again replaces its clip.
 - **Muting:** when a section has a rap clip, the sung takes there (Vocal, Backing vocals 1 and 2) are muted, both when
   the rap lands and when a later Sing makes takes in that section. Right-click a clip: **Mute** / **Unmute** (any take
@@ -54,8 +54,9 @@ Vocal track menu: Write melody, Write lyrics, **Sing…**, Transcribe melody, Ad
 - **svc-ace rap** switches from lego to repaint on the base model: per section a window of the section with 4 bars of
   song before and after (as far as the song goes), the section repainted with its own lines (not repeated), caption
   "<genre> song with <style>, rap verse over the beat, <bpm> bpm, <key>". Then as today: 4 takes a round up to 12,
-  separated and heard, the clearest kept, fewer than 40 % of the words heard fails. Short sections (4 bars) are
-  checked live during the build; if repaint gives no voice there, that is reported, not papered over.
+  separated and heard, the clearest kept, fewer than 40 % of the words heard fails. Checked live 2026-11-28: repaint
+  gave no words over a 4-bar bridge (4-9 % in 8 takes, also when repainting 8 bars), so sections under 8 bars are
+  still made by lego on 8 bars of song with their lines repeated (48 % on that bridge); 8 bars and more by repaint.
 - Write rap lyrics is a brain task of its own (like writeLyrics); Rap stays the aceLayer task with instrument `rap`,
   now taking its words from the song.
 

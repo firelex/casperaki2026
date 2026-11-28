@@ -169,3 +169,13 @@ export async function startOnSaved<T>(o: {
   const saved = await o.save();
   return o.start(saved.id, saved.song);
 }
+
+/** The song's rap words (section → lines; docs/superpowers/specs/2026-11-28-rap-like-singing-design.md). */
+export function rapLyricsIn(song: Pick<Song, 'generator'>): Record<string, string[]> {
+  const raw = (song.generator?.params as { params?: { rapLyrics?: unknown } } | undefined)?.params?.rapLyrics;
+  if (raw === undefined) return {};
+  if (typeof raw !== 'object' || raw === null || Object.values(raw).some((l) => !Array.isArray(l) || l.some((x) => typeof x !== 'string'))) {
+    throw new Error("the song's rapLyrics are not section → lines");
+  }
+  return raw as Record<string, string[]>;
+}

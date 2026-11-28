@@ -36,6 +36,10 @@ export type TrackEdit =
   | { readonly kind: 'newRhythm'; readonly section: string }
   /** A finished ACE layer task's result (the apply response's `result`): its clips on their "ACE <Instrument>" track. */
   | { readonly kind: 'applyAceLayer'; readonly result: unknown }
+  /** The rap's words of some sections (section → lines): a finished Write rap lyrics task merged into unsaved edits. */
+  | { readonly kind: 'setRapLyrics'; readonly lyrics: Readonly<Record<string, readonly string[]>> }
+  /** Every take of a track in a section muted or unmuted (right-click a clip). */
+  | { readonly kind: 'setTakesMuted'; readonly track: string; readonly segment: string; readonly muted: boolean }
   /** A finished Sing task's result (the apply response's `result`) put into the working copy. */
   | {
       readonly kind: 'applySung';
