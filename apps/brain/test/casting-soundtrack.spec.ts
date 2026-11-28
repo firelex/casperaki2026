@@ -20,18 +20,18 @@ export const script: CastingScript = {
   banter: [line('bob', 'Come on in, love!'), line('singer', 'Hi, I am Kesha.'), line('ice', 'Let us hear it.')],
   verdicts: [line('bob', 'No from me, love.'), line('nicky', 'Yes, baby!'), line('love', 'A yes from me.'), line('ice', 'Yes. Well done.')],
 };
-const singerVoice = { description: 'A young woman with a bright voice', seed: 33 };
+const singerVoice = { description: 'A young woman with a bright voice', seed: 33, referenceText: "Hi, I'm Kesha." };
 
 describe('the voices', () => {
   it('gives every line its speaker\'s voice, in script order with unique ids', () => {
     const reqs = lineVoices(script, singerVoice);
     expect(reqs.map((r) => r.id)).toEqual(['backstage-1', 'backstage-2', 'banter-1', 'banter-2', 'banter-3', 'verdicts-1', 'verdicts-2', 'verdicts-3', 'verdicts-4']);
     const ice = JUDGES.find((j) => j.id === 'ice')!.voice;
-    expect(reqs[0]).toMatchObject({ instruction: NARRATOR_VOICE.description, seed: NARRATOR_VOICE.seed, text: 'This is Kesha, and tonight is her night.' });
-    expect(reqs[3]).toMatchObject({ instruction: singerVoice.description, seed: 33 });
-    expect(reqs[4]).toMatchObject({ instruction: ice.description, seed: ice.seed });
-    // The voice is the description alone (the delivery note would change the person).
-    expect(reqs.every((r) => !r.instruction.includes('zzz-delivery'))).toBe(true);
+    expect(reqs[0]).toMatchObject({ instruction: NARRATOR_VOICE.description, seed: NARRATOR_VOICE.seed, reference_text: NARRATOR_VOICE.referenceText, text: 'This is Kesha, and tonight is her night.' });
+    expect(reqs[3]).toMatchObject({ instruction: singerVoice.description, seed: 33, reference_text: "Hi, I'm Kesha." });
+    expect(reqs[4]).toMatchObject({ instruction: ice.description, seed: ice.seed, reference_text: ice.referenceText });
+    // Every line is copied from its voice's reference, its delivery note steering the copy (the description stays the voice's).
+    expect(reqs.every((r) => r.direction === 'zzz-delivery' && !r.instruction.includes('zzz-delivery'))).toBe(true);
   });
 });
 
@@ -191,7 +191,7 @@ describe('the castingSoundtrack task', () => {
     store.upsertProject({ ownerId: 'me', songId, title: 'Electric Daydream', createdAt: 't', updatedAt: 't' });
     avatars = new UserAvatars(join(dir, 'singers'));
     speech = await startFakeSpeechService();
-    voiceOf = (id) => (id === 'kesha' ? singerVoice : undefined);
+    voiceOf = (id) => (id === 'kesha' ? { description: singerVoice.description, seed: singerVoice.seed } : undefined);
     tasks = new BackgroundTasks({
       store,
       events: new EventHub(),

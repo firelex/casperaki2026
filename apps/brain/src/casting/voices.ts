@@ -1,6 +1,8 @@
 // Speaking a casting script: every line in its character's voice (docs/superpowers/plans/2026-11-28-casting-4-
 // soundtrack.md): the narrator's and the judges' approved descriptions and seeds, the singer's own speaking voice.
-// The voice is the description alone: adding the line's delivery note to it changed the person in a test (ledger).
+// Every line is copied from its voice's reference (the voice saying its reference text), steered by the line's
+// delivery note: Breeze keeps a person far better from a reference than from a description (0.95-0.98 similarity to
+// the reference against 0.81-0.90; the narrator kept switching accents).
 
 import { join } from 'node:path';
 
@@ -15,6 +17,8 @@ import { SCENES, type CastingScript, type Speaker } from './writer.js';
 export interface Voice {
   readonly description: string;
   readonly seed: number;
+  /** The words the voice's reference says. */
+  readonly referenceText: string;
 }
 export interface LineRequest {
   /** "<scene>-<n>", n from 1 in the scene. */
@@ -22,6 +26,9 @@ export interface LineRequest {
   readonly text: string;
   readonly instruction: string;
   readonly seed: number;
+  readonly reference_text: string;
+  /** The line's delivery note, steering the copied voice. */
+  readonly direction?: string;
 }
 
 export const VOICES_STAGE = 'voices';
@@ -37,7 +44,7 @@ export function lineVoices(script: CastingScript, singer: Voice): LineRequest[] 
   return SCENES.flatMap((scene) =>
     script[scene].map((l, i) => {
       const v = voiceOf(l.speaker, singer);
-      return { id: `${scene}-${i + 1}`, text: l.text, instruction: v.description, seed: v.seed };
+      return { id: `${scene}-${i + 1}`, text: l.text, instruction: v.description, seed: v.seed, reference_text: v.referenceText, ...(l.delivery.trim() ? { direction: l.delivery.trim() } : {}) };
     }),
   );
 }

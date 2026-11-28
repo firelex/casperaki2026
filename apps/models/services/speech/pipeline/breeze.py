@@ -29,9 +29,20 @@ class Breeze:
         if self.runtime.fast_enabled:
             raise RuntimeError("speech: Breeze started on its fast path; this service runs it eagerly like infer.py")
 
-    def speak(self, text: str, instruction: str, seed: int, out: Path) -> Path:
+    def speak(self, text: str, instruction: str | None, seed: int, out: Path, ref_audio: Path | None = None, ref_text: str | None = None) -> Path:
+        """Speaks `text`: in the voice the instruction describes, or (with ref_audio and its exact words ref_text) in the
+        reference's voice, the instruction (optional then) steering its delivery."""
         infer = self._infer
-        request = {"id": "line", "text": text, "speaker": "S0", "instruction": instruction.strip()}
+        if (ref_audio is None) != (ref_text is None):
+            raise ValueError("speech: a reference needs both its audio and its exact words")
+        if ref_audio is None and not (instruction and instruction.strip()):
+            raise ValueError("speech: a voice needs a description or a reference")
+        request = {"id": "line", "text": text, "speaker": "S0"}
+        if instruction and instruction.strip():
+            request["instruction"] = instruction.strip()
+        if ref_audio is not None:
+            request["ref_audio_path"] = str(ref_audio)
+            request["ref_text"] = ref_text
         infer.set_all_seeds(seed)
         inputs = infer.prepare_inputs(self.tokenizer, self.audio_tokenizer, self.model, [request],
                                       infer.get_template(infer.select_template_name(request)),

@@ -38,6 +38,7 @@ import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, Tran
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAddSinger, type AddSingerOptions } from '../singers/addSingerTask.js';
 import { buildAvatar, type AvatarBuildDeps } from '../avatars/avatarBuildTask.js';
+import { speakingTestLine } from '../singers/speakingVoice.js';
 import type { UserAvatars } from '../avatars/userAvatars.js';
 import { songSinger } from '../avatars/videoAvatars.js';
 import { castNames, verdictVotes } from '../casting/cast.js';
@@ -135,7 +136,7 @@ export const CASTING_MUSIC = { poised: 'Poised and Ready.mp3', entrance: 'The Gr
 export const CASTING_BIN_SECONDS = 0.05;
 export const CASTING_SOUNDTRACK_NOT_SET_UP = 'Casting soundtracks are not set up: the brain needs SPEECH_SERVICE_URL, BRAIN_CASTING_MUSIC_DIR, BRAIN_TASK_FILES_DIR, BRAIN_SINGERS_DATA_DIR and rendering.';
 const CastingSoundtrackOptionsSchema = z
-  .object({ scriptTaskId: z.string().min(1), singerVoice: z.object({ description: z.string().min(1), seed: z.number().int() }).strict() })
+  .object({ scriptTaskId: z.string().min(1), singerVoice: z.object({ description: z.string().min(1), seed: z.number().int(), referenceText: z.string().min(1) }).strict() })
   .strict();
 
 const CastingOptionsSchema = z
@@ -473,7 +474,8 @@ export class BackgroundTasks {
       if (!existsSync(join(c.musicDir, f))) throw new TaskError(503, 'music_missing', `The casting music "${f}" is missing from ${c.musicDir}.`);
     }
     if (store.runningTask(ownerId, songId, 'castingSoundtrack')) throw new TaskError(409, 'already_running', 'A casting soundtrack for this song is already being made.');
-    const options = CastingSoundtrackOptionsSchema.parse({ scriptTaskId: script.id, singerVoice: { description: voice.description, seed: voice.seed } });
+    // The singer's reference says the line their speaking voice was chosen with: it reproduces that voice.
+    const options = CastingSoundtrackOptionsSchema.parse({ scriptTaskId: script.id, singerVoice: { description: voice.description, seed: voice.seed, referenceText: speakingTestLine(o.singerName) } });
     const id = randomUUID();
     store.insertTask({ id, ownerId, songId, kind: 'castingSoundtrack', input: stored.canonical, startedAt: this.deps.clock(), options });
     this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId, state: 'running' });
