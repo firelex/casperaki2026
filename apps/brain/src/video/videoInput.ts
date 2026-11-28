@@ -218,6 +218,7 @@ export function songToAvatarInput(args: {
     artist: args.artist,
     audio: { path: args.audio.path, durationSeconds: args.audio.durationSeconds },
     ...songTiming(args.song),
+    ...(args.song.genre ? { genre: args.song.genre } : {}),
     lyrics: lyricLines(args.song),
     binSeconds,
     master: fitted(args.levels.master),

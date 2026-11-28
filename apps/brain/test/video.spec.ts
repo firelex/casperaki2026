@@ -36,6 +36,7 @@ describe('songToAvatarInput', () => {
     expect(input.avatars[0]).toMatchObject({ id: 'a0123456789ab', name: 'Kai', sings: true });
     expect(input.lyrics).toEqual(lyricLines(song));
     expect(input.sections).toEqual(songTiming(song).sections);
+    expect(input.genre).toBe('brightPop'); // a ballad is danced calmly (the engine's paceOf)
   });
   it('gives a silent voice to a song without lead vocals', () => {
     const levels = { binSeconds: 0.5, tracks: [track('Bass', 'track', [0.9, 0.9])], master: [0.7, 0.8] };
