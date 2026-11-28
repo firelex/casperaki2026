@@ -23,7 +23,7 @@ import { z } from 'zod';
 import { AceLayerResultSchema, applyAceLayer, applyLyricsFirst, applyRapLyrics, applySungVocals, applyWrittenLyrics, generatorParams, lyricsFirstParts, sungSections, vocalMelodyShown, WrittenLyricsSchema } from '@casperaki/arrangement';
 import { canonicalStringifySong, parseSong, rapLineCount, type MixOverrides, type Song } from '@casperaki/song-schema';
 
-import { writeRapWords } from '../ace/rapWords.js';
+import { RAP_DENSITY, writeRapWords } from '../ace/rapWords.js';
 import { AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, sectionLabel, songWordsOf, type AceLayerOptions } from '../ace/aceLayerTask.js';
 import type { EventHub } from '../events.js';
 import type { ChatModel } from '../llm/chatModel.js';
@@ -581,7 +581,7 @@ export class BackgroundTasks {
         if (!sec) throw new Error(`the song has no section "${name}"`);
         return { name, label: sectionLabel(name), lines: rapLineCount(sec.bars.length) };
       });
-      const rapLyrics = await writeRapWords(model, { title: project.title, style: o.style, songWords: songWordsOf(input), sections });
+      const rapLyrics = await writeRapWords(model, { density: RAP_DENSITY, title: project.title, style: o.style, songWords: songWordsOf(input), sections });
       return { rapLyrics };
     }
     if (task.kind === 'sing') {

@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChatMessage, ChatModel } from '../src/llm/chatModel.js';
-import { MAX_ROUNDS, rapProblems, writeRapWords } from '../src/ace/rapWords.js';
+import { MAX_ROUNDS, RAP_DENSITY, rapProblems, writeRapWords } from '../src/ace/rapWords.js';
 
 // Rhyming at the end (down / town) and inside (rolling / holding).
 const GOOD = ['I been rolling through the city with the windows down', 'Holding every light, I am heading into town'];
@@ -39,7 +39,7 @@ function model(answers: string[]) {
   return { m, sent };
 }
 
-const req = { title: 'Night Drive', style: 'male rap vocals', songWords: ['We drive all night'], sections: [{ name: 'verse2', label: 'Verse 2', lines: 2 }] };
+const req = { density: RAP_DENSITY, title: 'Night Drive', style: 'male rap vocals', songWords: ['We drive all night'], sections: [{ name: 'verse2', label: 'Verse 2', lines: 2 }] };
 
 describe('writeRapWords', () => {
   it('asks in plain words for every part, and sends wrong lines back until they pass', async () => {
@@ -54,6 +54,7 @@ describe('writeRapWords', () => {
     expect(brief).toContain('We drive all night');
     expect(brief).toMatch(/internal rhymes/u);
     expect(brief).toMatch(/not a sung song/u);
+    expect(brief).toContain('Every line takes two bars of music, so it has 6 to 16 syllables, most of them 12 to 15');
     expect(sent[1]!.at(-1)!.content).toMatch(/Verse 2: Lines 1 and 2 must rhyme/u);
   });
 

@@ -15,7 +15,16 @@ export const REASONING_ROUNDS = 2;
 export const MIN_RAP_SYLLABLES = 6;
 export const MAX_RAP_SYLLABLES = 16;
 
+/** How dense the rap is: how many bars a line takes, and the syllables most of its lines have. */
+export interface RapDensity {
+  readonly barsPerLine: number;
+  readonly most: readonly [number, number];
+}
+/** Today's: a line per two bars, most lines 12 to 15 syllables. */
+export const RAP_DENSITY: RapDensity = { barsPerLine: 2, most: [12, 15] };
+
 export interface RapWordsRequest {
+  readonly density: RapDensity;
   /** The song's title (the rap is about the same thing). */
   readonly title: string;
   /** The rap's style as the user gave it ("male rap vocals, confident hip hop flow"); empty for none. */
@@ -28,6 +37,8 @@ export interface RapWordsRequest {
 
 const AnswerSchema = z.object({ sections: z.array(z.object({ name: z.string(), lines: z.array(z.string()) })) });
 
+const barsText = (bars: number) => (bars === 1 ? 'one bar' : bars === 2 ? 'two bars' : `${bars} bars`);
+
 function brief(r: RapWordsRequest): string {
   const parts = r.sections.map((s) => `${s.label} (${s.lines} line${s.lines === 1 ? '' : 's'})`).join(', ');
   return [
@@ -39,7 +50,7 @@ function brief(r: RapWordsRequest): string {
     'This is rap, not a sung song. Rap is spoken in rhythm over the drums, so its words are written differently from song lyrics:',
     '- Short, punchy phrases: break most lines into two or three short pieces (with commas or full stops) instead of one long flowing sentence.',
     '- A bouncing, syncopated rhythm: mix one-syllable words with longer ones and let the stresses of the words fall in uneven places. Avoid the even, sing-song rhythm of a nursery rhyme or a pop chorus.',
-    '- Every line takes two bars of music, so it has 6 to 16 syllables, most of them 12 to 15: rap is dense.',
+    `- Every line takes ${barsText(r.density.barsPerLine)} of music, so it has ${MIN_RAP_SYLLABLES} to ${MAX_RAP_SYLLABLES} syllables, most of them ${r.density.most[0]} to ${r.density.most[1]}: rap is dense.`,
     '- Lines rhyme in pairs: line 2 rhymes with line 1, line 4 with line 3, and so on (near rhymes are fine, as in real rap).',
     '- Many internal rhymes: besides the rhymes at the ends of the lines, put rhyming words inside the lines, in the middle of a line or across the two lines of a pair. Rhymes of two or more syllables are best (for example "pocket" and "rocket", or "on the floor" and "wanting more").',
     '- Wordplay, concrete images and punchlines, said with confidence in the first person. No filler sounds such as "oh", "yeah" or "la", and no long held vowels.',
