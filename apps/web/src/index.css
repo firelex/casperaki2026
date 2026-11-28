@@ -551,3 +551,12 @@ body {
   content: 'Send';
   font-size: 13px;
 }
+
+/* Song covers in Casperaki's colours: the artwork as a duotone, its lights red to violet, its shadows dark. */
+.ck-duotone {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-c3) 100%);
+}
+.ck-duotone > img {
+  filter: grayscale(1) contrast(1.15) brightness(1.08);
+  mix-blend-mode: multiply;
+}

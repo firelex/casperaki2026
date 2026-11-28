@@ -295,7 +295,7 @@ export function ProjectsPage() {
               onPrepare={(p) => livePlayer.prepare(p.id, (signal) => playbackApi.forSaved(p.id, signal))}
             />
           ) : (
-            <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid grid-cols-2 gap-5 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {filtered.map((p) => (
                 <li key={p.id}>
                   <SongCard
@@ -457,111 +457,107 @@ function SongCard({
     .filter(Boolean)
     .join(' · ');
 
+  const playing = live === 'playing' || live === 'loading';
   return (
-    <article
-      className={`group relative flex h-full flex-col overflow-hidden rounded-[14px] border bg-panel transition-colors ${selected ? 'border-white/70' : 'border-line/60 hover:border-line-2'}`}
-      onPointerEnter={onPrepare}
-      onFocus={onPrepare}
-    >
-      {/* The whole card opens the song; controls sit above this layer. */}
+    <article className="group relative flex h-full flex-col" onPointerEnter={onPrepare} onFocus={onPrepare}>
+      {/* Clicking anywhere on the card opens the song; the controls sit above this layer. */}
       <button
         type="button"
         onClick={onOpen}
         className="absolute inset-0 z-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         aria-label={`Open ${project.title} in the editor`}
       />
-      <label
-        className={`absolute left-3 top-3 z-20 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[6px] bg-black/50 ${selected ? '' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}
-        title={selected ? 'Deselect' : 'Select'}
-      >
-        <input type="checkbox" checked={selected} onChange={onToggleSelected} aria-label={`Select ${project.title}`} className="h-4 w-4 accent-white" />
-      </label>
-      <Artwork project={project} />
-      <SectionStrip project={project} progress={progress} />
-      <div className="pointer-events-none relative z-10 flex flex-1 flex-col gap-1 px-5 pb-4 pt-4">
-        {editing ? (
-          <form
-            className="pointer-events-auto flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const t = draft.trim();
-              if (t && t !== project.title) onRename(t);
-              setEditing(false);
+      <div className={`pointer-events-none relative aspect-square overflow-hidden rounded-[14px] border transition-colors ${selected ? 'border-white/80' : 'border-line/60 group-hover:border-white/30'}`}>
+        <Cover project={project} />
+        {/* A dark fade under the title, so it reads on any artwork. */}
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0d0d17] via-[#0d0d17]/70 to-transparent" />
+        <label
+          className={`pointer-events-auto absolute left-3 top-3 z-20 flex h-7 w-7 cursor-pointer items-center justify-center rounded-[6px] bg-black/55 ${selected ? '' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}
+          title={selected ? 'Deselect' : 'Select'}
+        >
+          <input type="checkbox" checked={selected} onChange={onToggleSelected} aria-label={`Select ${project.title}`} className="h-4 w-4 accent-white" />
+        </label>
+        <div className="pointer-events-auto absolute right-2 top-2 z-20 rounded-full bg-black/45 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <SongMenu
+            project={project}
+            onOpen={onOpen}
+            onRename={() => {
+              setDraft(project.title);
+              setEditing(true);
             }}
-          >
-            <input
-              autoFocus
-              value={draft}
-              maxLength={120}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setDraft(project.title);
+            onDelete={() => setConfirmDelete(true)}
+            onRender={onRender}
+          />
+        </div>
+        <div className="absolute inset-x-0 bottom-0 z-10 flex items-end gap-3 px-4 pb-4">
+          <div className="min-w-0 flex-1">
+            {editing ? (
+              <form
+                className="pointer-events-auto flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const t = draft.trim();
+                  if (t && t !== project.title) onRename(t);
                   setEditing(false);
-                }
-              }}
-              aria-label="Song title"
-              className="h-9 min-w-0 flex-1 rounded-[6px] border border-line bg-bg px-2 text-[16px] text-white outline-none focus:border-white/50"
-            />
-            <button type="submit" className="rounded-[6px] bg-accent px-3 text-[13px] font-semibold text-white">
-              Save
-            </button>
-          </form>
-        ) : (
-          <h3 className="truncate text-[18px] font-semibold text-white" title={project.title}>
-            {project.title}
-          </h3>
-        )}
-        <p className="text-[14px] text-white/60">{meta}</p>
-        <p className="text-[13px] text-white/40">
-          Edited {timeAgo(project.updatedAt)}
+                }}
+              >
+                <input
+                  autoFocus
+                  value={draft}
+                  maxLength={120}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setDraft(project.title);
+                      setEditing(false);
+                    }
+                  }}
+                  aria-label="Song title"
+                  className="h-9 min-w-0 flex-1 rounded-[6px] border border-line bg-bg px-2 text-[15px] text-white outline-none focus:border-white/50"
+                />
+                <button type="submit" className="rounded-[6px] bg-accent px-3 text-[13px] font-semibold text-white">
+                  Save
+                </button>
+              </form>
+            ) : (
+              <h3 className="app-heading line-clamp-2 text-[19px] leading-tight text-white drop-shadow" title={project.title}>
+                {project.title}
+              </h3>
+            )}
+            <p className="mt-1 truncate text-[13px] text-white/70">
+              {meta} · {songLength(project)}
+            </p>
+          </div>
+          <div className={`pointer-events-auto transition-opacity ${playing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'}`}>
+            <PlayButton project={project} live={live} onTogglePlay={onTogglePlay} round />
+          </div>
+        </div>
+        <SectionStrip project={project} progress={progress} />
+      </div>
+      <div className="pointer-events-none relative z-10 flex flex-col gap-1 px-1 pt-2">
+        <p className="text-[12px] text-white/40">
+          {live === 'loading' && liveStep ? liveStep : `Edited ${timeAgo(project.updatedAt)}`}
         </p>
-
         {confirmDelete ? (
-          <div className="pointer-events-auto mt-4 flex items-center justify-between gap-3 rounded-[8px] bg-err/10 px-3 py-2">
+          <div className="pointer-events-auto mt-1 flex items-center justify-between gap-3 rounded-[8px] bg-err/10 px-3 py-2">
             <span className="text-[14px] text-white">Delete this song?</span>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(false)}
-                className="h-8 rounded-full px-3 text-[13px] text-white/75 hover:text-white"
-              >
+              <button type="button" onClick={() => setConfirmDelete(false)} className="h-8 rounded-full px-3 text-[13px] text-white/75 hover:text-white">
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={onDelete}
-                className="h-8 rounded-full bg-err px-3 text-[13px] font-semibold text-white"
-              >
+              <button type="button" onClick={onDelete} className="h-8 rounded-full bg-err px-3 text-[13px] font-semibold text-white">
                 Delete
               </button>
             </div>
           </div>
-        ) : (
-          <div className="mt-4 flex items-center gap-3">
-            <PlayButton project={project} live={live} onTogglePlay={onTogglePlay} />
-            {live === 'loading' ? <span className="truncate text-[13px] text-white/55">{liveStep}</span> : null}
-            <div className="ml-auto pointer-events-auto">
-              <SongMenu
-                project={project}
-                onOpen={onOpen}
-                onRename={() => {
-                  setDraft(project.title);
-                  setEditing(true);
-                }}
-                onDelete={() => setConfirmDelete(true)}
-                onRender={onRender}
-              />
-            </div>
-          </div>
-        )}
+        ) : null}
         {live === 'error' && liveError ? (
-          <p className="mt-2 text-[12px] text-err" role="alert">
+          <p className="text-[12px] text-err" role="alert">
             Playback failed: {liveError}
           </p>
         ) : null}
         {r.state === 'failed' && r.error ? (
-          <p className="mt-2 truncate text-[12px] text-err" title={r.error}>
+          <p className="truncate text-[12px] text-err" title={r.error}>
             Export failed: {r.error.split('\n')[0]}
           </p>
         ) : null}
@@ -570,23 +566,21 @@ function SongCard({
   );
 }
 
-/** The song's artwork (drawn after its title by the brain's image service), or a placeholder while it is drawn. */
-function Artwork({ project }: { project: Project }) {
+/** The song's cover: its artwork (drawn after its title by the brain's image service) in Casperaki's colours (a red to
+ *  violet duotone), or the colours alone while it is drawn, could not be drawn, or the brain draws none. */
+function Cover({ project }: { project: Project }) {
   const art = project.artwork;
-  if (!art) return null;
-  if (art.state === 'done') {
-    return <img src={art.url} alt="" className="pointer-events-none aspect-[16/9] w-full object-cover" loading="lazy" />;
-  }
-  if (art.state === 'drawing') {
-    return (
-      <div className="pointer-events-none flex aspect-[16/9] w-full items-center justify-center bg-gradient-to-br from-white/[0.06] to-white/[0.02]">
-        <span className="animate-pulse text-[13px] text-white/45">Drawing the artwork…</span>
-      </div>
-    );
-  }
   return (
-    <div className="pointer-events-none flex aspect-[16/9] w-full items-center justify-center bg-white/[0.03]" title={art.message}>
-      <span className="text-[13px] text-err/80">The artwork could not be drawn</span>
+    <div className="ck-duotone absolute inset-0">
+      {art?.state === 'done' ? <img src={art.url} alt="" className="h-full w-full object-cover" loading="lazy" /> : null}
+      {art?.state === 'drawing' ? (
+        <span className="absolute inset-x-0 top-1/3 animate-pulse text-center text-[13px] text-white/70">Drawing the artwork…</span>
+      ) : null}
+      {art?.state === 'failed' ? (
+        <span className="absolute inset-x-0 top-1/3 text-center text-[13px] text-white/70" title={art.message}>
+          The artwork could not be drawn
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -596,21 +590,13 @@ function Artwork({ project }: { project: Project }) {
 function SectionStrip({ project, progress }: { project: Project; progress: number }) {
   const total = project.sections.reduce((n, s) => n + s.bars, 0);
   return (
-    <div className="relative px-5 pt-5" aria-hidden="true">
-      <div className="flex h-12 gap-[2px]">
+    <div className="absolute inset-x-0 bottom-0 z-10 h-[5px]" aria-hidden="true">
+      <div className="flex h-full gap-[1px]">
         {project.sections.map((s, i) => (
-          <div
-            key={`${s.name}-${i}`}
-            className="min-w-0 rounded-[3px]"
-            style={{ flexGrow: s.bars, flexBasis: 0, background: sectionColor(s.type ?? s.name), opacity: 0.7 }}
-          />
+          <div key={`${s.name}-${i}`} className="min-w-0" style={{ flexGrow: s.bars, flexBasis: 0, background: sectionColor(s.type ?? s.name), opacity: 0.85 }} />
         ))}
       </div>
-      {progress > 0 ? (
-        <div className="pointer-events-none absolute bottom-0 left-5 right-5 top-5">
-          <div className="h-full bg-white/25" style={{ width: `${progress * 100}%` }} />
-        </div>
-      ) : null}
+      {progress > 0 ? <div className="absolute inset-y-0 left-0 bg-white/70" style={{ width: `${progress * 100}%` }} /> : null}
       <p className="sr-only">
         {project.sections.length} sections, {total} bars
       </p>
@@ -622,13 +608,29 @@ function PlayButton({
   project,
   live,
   onTogglePlay,
+  round = false,
 }: {
   project: Project;
   live: LiveStatus;
   onTogglePlay(): void;
+  /** On a cover: a round button with only its sign. */
+  round?: boolean;
 }) {
   const playing = live === 'playing';
   const loading = live === 'loading';
+  if (round) {
+    return (
+      <button
+        type="button"
+        onClick={onTogglePlay}
+        disabled={loading}
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-[16px] text-white shadow-[0_4px_16px_rgba(0,0,0,0.5)] transition-transform hover:scale-105 disabled:opacity-80"
+        aria-label={playing ? `Pause ${project.title}` : `Play ${project.title}`}
+      >
+        <span aria-hidden="true">{loading ? '…' : playing ? '❚❚' : '▶'}</span>
+      </button>
+    );
+  }
   return (
     <button
       type="button"

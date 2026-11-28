@@ -17,6 +17,7 @@ import { livePlayer, patternPlayer, type LaneMeters, type MixConfigJson, type Re
 import { fnv1a, useLiveTransport } from '../audio/useLiveTransport';
 import { useLivePosition, useLiveState } from '../audio/useLivePlayer';
 import { playbackApi } from '../api/playback';
+import { songsApi, songsQueryKeys } from '../api/songs';
 import { resolveEngineEvents, resolveEngineNotes } from '../audio/resolveNotes';
 import type { PlaybackPayload } from '../api/playback';
 import { downloadBytes, fileStem } from '../export/exportMidi';
@@ -83,6 +84,10 @@ const ITEM = 'cursor-pointer rounded-[6px] px-3 py-2 text-[14px] outline-none da
 export function TimelineView() {
   const { viewSong, activeSong, activeSegment, setActiveSegment, applyEdit, editor } = useSession();
   // Sung takes whose section changed since they were sung are drawn greyed.
+  // The song's artwork, shown in the timeline's top-left corner (owner 2026-11-28), from the list of songs.
+  const songs = useQuery({ queryKey: songsQueryKeys.list, queryFn: ({ signal }) => songsApi.list(signal), staleTime: 30_000 });
+  const art = songs.data?.projects.find((p) => p.id === activeSong?.project.id)?.artwork;
+  const artUrl = art?.state === 'done' ? art.url : undefined;
   const stale = useQuery({
     queryKey: ['stale-takes', viewSong ? fnv1a(JSON.stringify(viewSong)) : undefined],
     queryFn: () => staleTakes(viewSong!),
@@ -790,15 +795,26 @@ export function TimelineView() {
           {/* Ruler. */}
           <div className="sticky top-0 z-30 bg-[#1b1c1f]" style={{ height: RULER_H + CHORD_H }}>
           <div className="flex" style={{ height: RULER_H }}>
-            <div
-              className="sticky left-0 z-40 flex shrink-0 flex-col border-b border-r border-line/60 bg-[#1b1c1f] px-3 text-[10px] text-white/40"
-              style={{ width: HEADER_W }}
-            >
-              <span style={{ height: MARKERS_H, lineHeight: `${MARKERS_H}px` }}>Sections</span>
-              <span style={{ height: BARS_H, lineHeight: `${BARS_H}px` }}>Bars|beats</span>
-              <span style={{ height: TIME_H, lineHeight: `${TIME_H}px` }}>Min:sec</span>
-              <span className="text-sky-300/70" style={{ height: LOOP_H, lineHeight: `${LOOP_H}px` }}>Loop (drag)</span>
-            </div>
+            {artUrl ? (
+              // The song's artwork in Casperaki's colours (as its cover on the Songs page); the rows' names on hover.
+              <div
+                className="ck-duotone sticky left-0 z-40 shrink-0 overflow-hidden border-b border-r border-line/60"
+                style={{ width: HEADER_W }}
+                title="Sections · Bars|beats · Min:sec · Loop (drag)"
+              >
+                <img src={artUrl} alt="" className="h-full w-full object-cover" />
+              </div>
+            ) : (
+              <div
+                className="sticky left-0 z-40 flex shrink-0 flex-col border-b border-r border-line/60 bg-[#1b1c1f] px-3 text-[10px] text-white/40"
+                style={{ width: HEADER_W }}
+              >
+                <span style={{ height: MARKERS_H, lineHeight: `${MARKERS_H}px` }}>Sections</span>
+                <span style={{ height: BARS_H, lineHeight: `${BARS_H}px` }}>Bars|beats</span>
+                <span style={{ height: TIME_H, lineHeight: `${TIME_H}px` }}>Min:sec</span>
+                <span className="text-sky-300/70" style={{ height: LOOP_H, lineHeight: `${LOOP_H}px` }}>Loop (drag)</span>
+              </div>
+            )}
             <SelectionMenu selection={range ? selectionMenu : undefined}>
             <div className="border-b border-line/60">
               <Ruler
