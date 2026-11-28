@@ -54,10 +54,12 @@ export const GENRE_RECIPES = {
     // part of every Casperaki song".
     guitarPatterns: ['Funk', 'R&B'],
     hiHats: 'authored-urban-trap-hats',
-    // Owner 2026-11-28: Dr. Luke drums "hit much harder". Of four A/B masters he chose "harder drums and Atemlos
-    // master" (not the "Your Love Is My Drug" reference): the drums +4 dB, the pad and synths -2 dB, keys -1 dB, the
+    // Owner 2026-11-28: Dr. Luke drums "hit much harder". Of four A/B masters (standard or harder drums, Atemlos or "Your
+    // Love Is My Drug" as the mastering reference) he chose harder drums mastered towards "Your Love Is My Drug"
+    // ("let's go for harder ylimd for Casperaki pop"). The mix: the drums +4 dB, the pad and synths -2 dB, keys -1 dB, the
     // kick bus's Thunder 0.41 -> 0.65 and its output 0.53 -> 0.62, the drum bus's Pyewacket input 0.83 -> 1.0 and its
     // output 0.5 -> 0.6 (slots of casperaki_engine/config/mix-config.json's rack chains).
+    masteringReference: 'your-love-is-my-drug',
     mix: {
       lanes: { Drums: { volumeDb: 4 }, Pad: { volumeDb: -2 }, Synths: { volumeDb: -2 }, PluckedSynths: { volumeDb: -2 }, Keys: { volumeDb: -1 } },
       buses: { kicks: { '1': [0.65, 1], '3': [0.62] }, drums: { '1': [1, 0.499824703, 0.455113977], '3': [0.6] } },

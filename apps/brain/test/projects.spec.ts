@@ -215,7 +215,7 @@ describe('projects', () => {
 });
 
 describe('per-song render', () => {
-  it('masters towards Atemlos unless a genre recipe names its own reference (none does: the owner kept Atemlos for Casperaki Pop)', async () => {
+  it('masters a genre recipe towards its own reference (Casperaki Pop: "Your Love Is My Drug"), every other genre towards Atemlos', async () => {
     const renders = fakeRenderService();
     const h = await boot(renders);
     try {
@@ -229,7 +229,8 @@ describe('per-song render', () => {
       expect(await waitForRender(h, dance)).toMatchObject({ state: 'done' });
       const refs = (renders as unknown as { config: { masteringReferencesDir: string } }).config.masteringReferencesDir;
       const log = readFileSync(join(refs, '..', 'references.log'), 'utf8').split('\n');
-      expect(log.slice(0, 2)).toEqual(['', '']);
+      expect(log[0]).toMatch(/mastering-references\/your-love-is-my-drug\.json$/u);
+      expect(log[1]).toBe('');
     } finally {
       await h.stop();
     }
