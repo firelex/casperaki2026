@@ -69,6 +69,24 @@ export async function startFakeSpeechService(): Promise<FakeSpeechService & { se
       if (req.method === 'GET' && u.pathname === '/health') return send(200, { ready: true });
       if (req.method === 'POST' && u.pathname === '/generate') {
         const params = JSON.parse(await body(req)) as Record<string, unknown>;
+        if (params['stage'] === 'lines') {
+          // The lines stage: one step per line, its WAV (one second of tone per 3 words, at least 1 s).
+          const lines = params['lines'] as { id: string; text: string }[];
+          const seconds = (t: string) => Math.max(1, t.split(/\s+/u).length / 3);
+          const job: Job = {
+            id: `speech${++n}`,
+            params,
+            script: lines.map((l) => ({ id: l.id, label: l.text.slice(0, 60), text: `${seconds(l.text).toFixed(1)} s`, numbers: { seconds: seconds(l.text) }, files: [`${l.id}.wav`] })),
+            shown: [],
+            state: 'running',
+            error: null,
+            result: { lines: lines.map((l) => ({ id: l.id, file: `${l.id}.wav`, seconds: seconds(l.text) })) },
+            ...(failNext ? { failWith: failNext } : {}),
+          };
+          failNext = undefined;
+          jobs.push(job);
+          return send(202, { job_id: job.id });
+        }
         if (params['stage'] !== 'speaking_voice') return send(400, { error: `unknown stage ${String(params['stage'])}` });
         const seeds = params['seeds'] as number[];
         const best = svc.best ?? seeds[Math.min(1, seeds.length - 1)]!;
@@ -104,7 +122,8 @@ export async function startFakeSpeechService(): Promise<FakeSpeechService & { se
         if (name === null) return job.state === 'done' ? send(200, job.result) : send(404, { error: 'not done' });
         if (!job.shown.some((s) => s.files.includes(name))) return send(404, { error: `file '${name}' was not listed` });
         res.writeHead(200, { 'content-type': 'audio/wav' });
-        return res.end(toneWav());
+        const lineSeconds = (job.result as { lines?: { file: string; seconds: number }[] }).lines?.find((l) => l.file === name)?.seconds;
+        return res.end(toneWav(lineSeconds ?? 0.5));
       }
       if (req.method === 'POST' && u.pathname === '/cancel') return send(200, { cancelled: true });
       return send(404, { error: 'not found' });

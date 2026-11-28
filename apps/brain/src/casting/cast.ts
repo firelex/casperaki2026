@@ -53,7 +53,13 @@ export const JURY_DYNAMIC =
 export const JURY_RULES =
   'Rules for the writer. Never four generic reviews in a row. They interrupt each other, react to unexpected comments, laugh, disagree and sometimes change their minds. Humour comes from their personalities and from specific musical details of the song. They must sometimes be genuinely surprised: now and then Ice gives twelve points to a song everyone expects him to hate, Bob delivers a devastating criticism, Nicky is moved to tears, Love loses her temper. The sample lines show the voice; the writer does not reuse them word for word in every video.';
 
-/** The narrator: heard, never seen. Their voice is chosen with the owner in plan 4. */
+/** The narrator's voice. PROVISIONAL: take "a", seed 7, of ~/casperaki-data/casting/narrator until the owner picks one. */
+export const NARRATOR_VOICE = {
+  description: 'A man in his forties with a warm, rich mid-Atlantic accent, a confident television announcer, building excitement',
+  seed: 7,
+} as const;
+
+/** The narrator: heard, never seen. */
 export const NARRATOR_PROFILE =
   'The narrator of a television talent show: a warm, confident announcer heard over pictures of the contestant backstage, never seen. Builds excitement and sympathy, tells the audience who the singer is and what is at stake, short punchy sentences, a little drama, never sarcastic.';
 

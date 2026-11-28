@@ -126,6 +126,8 @@ export interface TaskJobs {
   readonly speakingDescription?: string;
   /** A realistic avatar's build: the avatar builder's job. */
   readonly avatarBuild?: string;
+  /** A casting soundtrack: the speech service's job speaking the script's lines. */
+  readonly castingVoices?: string;
 }
 
 export interface TaskRow {
