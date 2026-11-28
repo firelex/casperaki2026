@@ -69,7 +69,8 @@ export function App() {
         <Route path="/singers" element={<SingersPage />} />
         <Route path="/avatars" element={<AvatarsPage />} />
         <Route path="/avatars/new" element={<DressingRoomPage />} />
-        {/* Realistic avatars (MakeHuman, built on the server): admins only for now. */}
+        {/* Realistic avatars (MakeHuman, built on the server): an admin tool, reached by its address only (the owner,
+            2026-11-28: performers stay anime; realistic people are for the casting judges). */}
         {user.isAdmin ? <Route path="/avatars/realistic/new" element={<RealisticDressingRoomPage />} /> : null}
         {user.isAdmin ? <Route path="/avatars/realistic/:avatarId" element={<RealisticDressingRoomPage />} /> : null}
         <Route path="/avatars/:avatarId" element={<DressingRoomPage />} />

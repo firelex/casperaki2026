@@ -105,8 +105,9 @@ Fixed characters, the same in every video.
 | Love | Australian, blonde, forties, sassy, teases Ice | "A woman in her forties with a bright Australian accent, very sassy and cheeky, confident, a knowing eye-roll in her voice, teasing with attitude", seed 7 |
 | Bob | Irish man, fifties, kind, easygoing, charming | "An Irish man in his fifties with a soft Dublin accent, a light, fairly high-pitched tenor voice with a little rasp, kind, easygoing and charming", seed 21 |
 
-Their looks: replaced by `2026-11-28-realistic-avatars-design.md` (realistic as approved, `~/apps/blender/judges-final.json`,
-and an anime version; the casting video takes the singer's style). The voices above were made for the earlier ages;
+Their looks: realistic (MakeHuman) as approved, `~/apps/blender/judges-final.json`, built as VRM files by the avatar
+builder; the singers stay anime (owner, 2026-11-28: "keep the dancers as anime. Just the judges as humans. Unless we
+find good VRoid judges"). The voices above were made for the earlier ages;
 Bob (now 66) and Nicky (now 35) may be re-made to match **(my call, offered to the owner)**.
 
 #### The jury profiles (the owner's, 2026-11-28)

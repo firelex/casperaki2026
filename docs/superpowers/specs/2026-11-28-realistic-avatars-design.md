@@ -1,5 +1,12 @@
 # Realistic avatars beside the anime ones
 
+> **Superseded in part (owner, 2026-11-28, after seeing the realistic test video):** "I want to keep the dancers as
+> anime. Just the judges as humans. Unless we find good VRoid judges." Performers (singers and dancers) stay anime;
+> realistic people are for the casting judges. Kept: the avatar builder service, the engine's VRM-file avatars and
+> equal heights (casting uses them). The realistic dressing room stays only as an admin tool reached by its address
+> (no button). Casting: realistic judges with anime singers (the "casting takes the singer's style" rule below no
+> longer holds).
+
 Date: 2026-11-28. Status: design; the owner's words are quoted, my calls marked **(my call)**. Builds on
 `2026-11-27-avatars-design.md` (anime avatars from Character Studio packs, dressing room, avatar videos) and
 `2026-11-28-video-modes-casting-design.md` (casting; its "Judges" look is replaced by this design).
