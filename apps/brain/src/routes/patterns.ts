@@ -49,8 +49,8 @@ import {
   sectionEnergy,
   type PatternProposal,
 } from '@casperaki/arrangement';
-import type { Genre, Song } from '@casperaki/song-schema';
-import { canonicalStringifySong, DEFAULT_BPM_BY_GENRE, GenreSchema } from '@casperaki/song-schema';
+import type { Song } from '@casperaki/song-schema';
+import { baseGenre, canonicalStringifySong, genreTempoRange, SongGenreSchema, type SongGenre } from '@casperaki/song-schema';
 
 import type { PlaybackService } from '../render/playbackService.js';
 import type { SongsStore, SuggestionComment } from '../store.js';
@@ -80,7 +80,7 @@ const BulkReviewBody = z
 const CommentBody = z.object({ body: z.string().trim().min(1).max(2000) }).strict();
 const PreviewBody = z
   .object({
-    genre: GenreSchema,
+    genre: SongGenreSchema,
     seed: z.union([z.string().min(1), z.number().int()]).optional(),
     variant: z.enum(['proposal', 'current']),
     /** Play only this pattern (0-based) of the proposal; omitted = the song picks among all of them. */
@@ -138,7 +138,7 @@ const familyLanes = (song: Song, proposal: PatternProposal) =>
  * on the lab seed with the proposal forced in ('proposal') or the library as is
  * ('current'), a lane of the proposal's family, and the picked sound on it.
  */
-function labSong(req: Request): { proposal: PatternProposal; genre: Genre; seed: string | number; song: Song } {
+function labSong(req: Request): { proposal: PatternProposal; genre: SongGenre; seed: string | number; song: Song } {
   const body = PreviewBody.safeParse(req.body);
   if (!body.success) throw new LabError(400, 'invalid_body', body.error.issues[0]?.message ?? 'invalid body');
   const proposal = loadPatternProposals().find((p) => p.id === req.params.id);
@@ -151,7 +151,7 @@ function labSong(req: Request): { proposal: PatternProposal; genre: Genre; seed:
   } catch (err) {
     throw new LabError(400, 'invalid_take', err instanceof Error ? err.message : String(err));
   }
-  let song = withProposalLane(orchestrate({ genre, key: 'C', bpm: DEFAULT_BPM_BY_GENRE[genre], seed, ...(params ? { params } : {}) }), proposal, body.data.take);
+  let song = withProposalLane(orchestrate({ genre, key: 'C', bpm: genreTempoRange(genre).defaultBpm, seed, ...(params ? { params } : {}) }), proposal, body.data.take);
   if (soundId) {
     if (proposal.family === 'drums') throw new LabError(400, 'drum_kit_fixed', 'The drum kit is fixed per genre; drum proposals cannot change sound.');
     for (const lane of familyLanes(song, proposal)) {
@@ -173,8 +173,10 @@ function labSong(req: Request): { proposal: PatternProposal; genre: Genre; seed:
  * and trombone for brass, whose generated tracks use the brass sections). None
  * for drums: the kit is fixed per genre.
  */
-function soundsFor(proposal: PatternProposal, genre: Parameters<typeof familySoundPool>[1]): { id: string; name: string; inStyle: boolean }[] {
+function soundsFor(proposal: PatternProposal, songGenre: SongGenre): { id: string; name: string; inStyle: boolean }[] {
   if (proposal.family === 'drums') return [];
+  // A genre recipe's sounds are its base genre's.
+  const genre = baseGenre(songGenre);
   const names = loadPublicNames();
   const pool = familySoundPool(proposal.family, genre);
   const inPool = new Set(pool.map((e) => e.id));
@@ -277,7 +279,7 @@ export function createPatternsRouter({ store, playback, isAdminRequest, reviewer
   router.get('/api/patterns/:id/sounds', (req, res) => {
     const proposal = loadPatternProposals().find((p) => p.id === req.params.id);
     if (!proposal) return res.status(404).json({ error: 'not_found', id: req.params.id });
-    const genre = GenreSchema.safeParse(req.query.genre);
+    const genre = SongGenreSchema.safeParse(req.query.genre);
     if (!genre.success) return res.status(400).json({ error: 'invalid_genre', message: 'genre must be one of the canonical genres' });
     return res.json({ sounds: soundsFor(proposal, genre.data) });
   });

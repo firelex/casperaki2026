@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest';
 import type { Song } from '@casperaki/song-schema';
 
 import { orchestrate } from '../src/index.js';
-import { authoredStylesFor } from '../src/patterns/authored-bank.js';
+import { generatorContext } from '../src/context.js';
+import { authoredStylesFor, authoredStylesForSong } from '../src/patterns/authored-bank.js';
 import { resolveChordTone, sectionEnergy } from '../src/patterns/chord-tones.js';
 import { loadPatternProposals, previewParamsFor } from '../src/patterns/proposals.js';
 
@@ -113,6 +114,28 @@ describe('chord-tone patterns', () => {
 
   it('songs are unchanged while no style is approved', () => {
     expect(authoredStylesFor('keys', 'ballad')).toEqual([]);
+  });
+
+  // Owner 2026-11-28: our own short, choppy patterns for Casperaki Pop, proposed and approved in the pattern lab.
+  it('a style may be for a genre recipe: a Casperaki Pop song takes Bright Pop\'s styles and its own, a Bright Pop song only Bright Pop\'s', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'authored-'));
+    const strums = [{ bars: 1, strums: [[0.5, 'down', 0.25], [1.75, 'up', 0.25], [2.5, 'down', 0.25], [3.75, 'up', 0.25]] }];
+    writeFileSync(join(dir, 'p.json'), JSON.stringify(strums));
+    writeFileSync(
+      join(dir, 'index.json'),
+      JSON.stringify({
+        $schemaVersion: 1,
+        styles: {
+          'authored-cp': { family: 'guitar', kind: 'guitarStrums', genres: ['casperakiPop'], file: 'p.json' },
+          'authored-bp': { family: 'guitar', kind: 'guitarStrums', genres: ['brightPop'], file: 'p.json' },
+        },
+      }),
+    );
+    const names = (genre: string) => authoredStylesForSong('guitar', generatorContext({ genre, key: 'C', bpm: 110, seed: 'x' } as never), dir).map((x) => x.styleName).sort();
+    expect(names('casperakiPop')).toEqual(['authored-bp', 'authored-cp']);
+    expect(names('brightPop')).toEqual(['authored-bp']);
+    const base = { id: 'cp', name: 'n', genres: ['casperakiPop'], rationale: 'r' };
+    expect(loadPatternProposals(tmpProposals([{ ...base, family: 'guitar', kind: 'guitarStrums', patterns: strums }])).map((p) => p.genres)).toEqual([['casperakiPop']]);
   });
 
   it('the bank and proposals refuse styles that leave a section silent', () => {

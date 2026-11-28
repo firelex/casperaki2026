@@ -236,9 +236,10 @@ export function virtualGuitaristBankHasPatterns(genre: string, bpm: number): boo
  *  picking, at least STRUMS_PER_BAR a bar, and STRUMS_OFF_BEAT of them or more off the beat (syncopated). */
 const STRUMS_PER_BAR = 4;
 const STRUMS_OFF_BEAT = 0.3;
-export function isStrummed(pattern: VirtualGuitaristBankPattern): boolean {
+export function isStrummed(pattern: VirtualGuitaristBankPattern, minShortShare = 0): boolean {
   let strums = 0;
   let off = 0;
+  let short = 0;
   for (const bar of pattern.bars) {
     for (const [beat, evs] of Object.entries(bar.notes)) {
       for (const e of evs) {
@@ -247,11 +248,12 @@ export function isStrummed(pattern: VirtualGuitaristBankPattern): boolean {
         if (ev.type === 'virtualGuitarist' && ev.event?.startsWith('chord')) {
           strums++;
           if (Number.parseFloat(beat) % 1 !== 0) off++;
+          if (ev.event.includes('Short')) short++;
         }
       }
     }
   }
-  return pattern.bars.length > 0 && strums / pattern.bars.length >= STRUMS_PER_BAR && off / strums >= STRUMS_OFF_BEAT;
+  return pattern.bars.length > 0 && strums / pattern.bars.length >= STRUMS_PER_BAR && off / strums >= STRUMS_OFF_BEAT && short / strums >= minShortShare;
 }
 
 /**
@@ -294,12 +296,14 @@ export function selectVirtualGuitaristPattern(
     return { patternName, source: 'main', mainCandidateCount: named.length, stefanCandidateCount: 0, pattern };
   }
   if (choice) {
+    const short = choice.minShortShare ?? 0;
+    const allowed = (n: string) => !(choice.notFamilies ?? []).some((f) => n.includes(`-${f}-`));
     const main = filterStyleMap(bank, genreParse.data, bpm).filter((n) => {
       const p = bank.main.get(n);
       if (!p) throw new DataAssetError(MAIN_META, `the style map names "${n}", which the main bank does not have`);
-      return isStrummed(p);
+      return allowed(n) && isStrummed(p, short);
     });
-    const stefan = bank.stefanKeysSorted.filter((n) => isStrummed(bank.stefan.get(n)!));
+    const stefan = bank.stefanKeysSorted.filter((n) => allowed(n) && isStrummed(bank.stefan.get(n)!, short));
     const all = [...main.map((n) => ({ n, source: 'main' as const })), ...stefan.map((n) => ({ n, source: 'stefan' as const }))];
     if (all.length === 0) throw new DataAssetError(STYLE_MAP_META, `no strummed virtualGuitarist pattern for genre="${genre}" bpm=${bpm}`);
     const pick = rng.pick(all);

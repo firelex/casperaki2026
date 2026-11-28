@@ -56,6 +56,10 @@ describe('Casperaki Pop', () => {
         const strums = events.filter((x) => x.e.type === 'virtualGuitarist' && x.e.event!.startsWith('chord'));
         expect(strums.length / sel.pattern.bars.length, sel.patternName).toBeGreaterThanOrEqual(4);
         expect(strums.filter((x) => x.beat % 1 !== 0).length / strums.length, sel.patternName).toBeGreaterThanOrEqual(0.3);
+        // short, choppy pop strums (owner 2026-11-28: "the latest song sounds almost like a rock pattern"): 70% or more
+        // short strums, and no Country patterns
+        expect(strums.filter((x) => x.e.event!.includes('Short')).length / strums.length, sel.patternName).toBeGreaterThanOrEqual(0.7);
+        expect(sel.patternName).not.toMatch(/-Country-/u);
       }
     }
     expect([...sources].sort()).toEqual(['main', 'stefan']);

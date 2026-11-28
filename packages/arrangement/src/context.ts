@@ -37,13 +37,15 @@ export interface GeneratorContext {
   readonly params: GenerateParams;
   /** The song's genre recipe, when its genre is a derived one (docs/superpowers/specs/2026-11-28-genre-recipes-design.md). */
   readonly recipe?: GenreRecipe;
+  /** The derived genre's own key ("casperakiPop"), when it is one: pattern-lab styles may be for it alone. */
+  readonly recipeGenre?: string;
 }
 
 /** The context a song's params are generated in: a derived genre runs as its base genre, with its recipe at hand. */
 export function generatorContext(params: GenerateParams): GeneratorContext {
   const recipe = genreRecipe(params.genre);
   return recipe
-    ? { params: { ...params, genre: recipe.base }, rng: createRng(params.seed), recipe }
+    ? { params: { ...params, genre: recipe.base }, rng: createRng(params.seed), recipe, recipeGenre: params.genre }
     : { params, rng: createRng(params.seed) };
 }
 

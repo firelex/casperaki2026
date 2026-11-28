@@ -18,7 +18,9 @@ import { fileURLToPath } from 'node:url';
 
 import { z } from 'zod';
 
-import { GenreSchema } from '@casperaki/song-schema';
+import { SongGenreSchema } from '@casperaki/song-schema';
+
+import type { GeneratorContext } from '../context.js';
 
 import { InstrumentFamilySchema, type InstrumentFamily } from '../selection/types.js';
 import {
@@ -44,7 +46,7 @@ const IndexSchema = z
         .object({
           family: InstrumentFamilySchema,
           kind: z.enum(['chordTones', 'guitarPicks', 'guitarStrums']),
-          genres: z.array(GenreSchema).min(1),
+          genres: z.array(SongGenreSchema).min(1),
           file: z.string().min(1),
         })
         .strict(),
@@ -83,6 +85,13 @@ function load(dir: string): AuthoredStyle[] {
 export function authoredStylesFor(family: InstrumentFamily, genre: string, dir: string = AUTHORED_BANK_DIR): AuthoredStyle[] {
   const all = dir === AUTHORED_BANK_DIR ? (cached ??= load(dir)) : load(dir);
   return all.filter((s) => s.family === family && s.genres.includes(genre));
+}
+
+/** The approved styles a song's lane may take: its (base) genre's, and a genre recipe's own (Casperaki Pop's, owner
+ *  2026-11-28). */
+export function authoredStylesForSong(family: InstrumentFamily, ctx: Pick<GeneratorContext, 'params' | 'recipeGenre'>, dir: string = AUTHORED_BANK_DIR): AuthoredStyle[] {
+  const own = authoredStylesFor(family, ctx.params.genre, dir);
+  return ctx.recipeGenre ? [...own, ...authoredStylesFor(family, ctx.recipeGenre, dir).filter((s) => !own.includes(s))] : own;
 }
 
 /** Names of every approved style in the bank. */

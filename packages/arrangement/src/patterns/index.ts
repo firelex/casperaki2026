@@ -15,7 +15,7 @@ import { parseChord } from '@casperaki/music-theory';
 import type { GeneratorContext } from '../context.js';
 import type { Segment, SongStructure } from '@casperaki/song-schema';
 import { type InstrumentFamily, type SelectionResult } from '../selection/types.js';
-import { authoredStylesFor } from './authored-bank.js';
+import { authoredStylesForSong } from './authored-bank.js';
 import { emitAuthoredPatterns, familyTakesKind, guitarStyleStrummed } from './chord-tones.js';
 import { generateBassPattern } from './bass.js';
 import { generateDrumPattern } from './drums.js';
@@ -168,7 +168,7 @@ function authoredPattern(
   // that strum throughout.
   const choice = laneCtx.recipe?.guitarPatterns;
   const strummedOnly = family === 'guitar' && choice !== undefined && 'strummed' in choice;
-  const styles = authoredStylesFor(family, laneCtx.params.genre)
+  const styles = authoredStylesForSong(family, laneCtx)
     .filter((s) => familyTakesKind(family, s.patterns.kind))
     .filter((s) => !strummedOnly || guitarStyleStrummed(s.patterns));
   if (styles.length === 0) return undefined;

@@ -14,7 +14,15 @@ export const ALWAYS_PLAYING_LANES = ['electricGuitarClean', 'synthsPlucked'] as 
 export type AlwaysPlayingLane = (typeof ALWAYS_PLAYING_LANES)[number];
 
 /** Which Virtual Guitarist patterns a recipe's guitar plays. */
-export type GuitarPatternChoice = { readonly families: readonly string[] } | { readonly strummed: true };
+export type GuitarPatternChoice =
+  | { readonly families: readonly string[] }
+  | {
+      readonly strummed: true;
+      /** At least this share of the strums short (choppy, not ringing). */
+      readonly minShortShare?: number;
+      /** Pattern families left out ("Country" → "…-Country-03"). */
+      readonly notFamilies?: readonly string[];
+    };
 
 export interface GenreRecipe {
   /** What users see. */
@@ -67,7 +75,9 @@ export const GENRE_RECIPES = {
     alwaysPlays: ['electricGuitarClean', 'synthsPlucked'],
     // Owner 2026-11-28: "make sure the guitar is syncopated", then "I wasn't able to get proper strummed guitars": the
     // Funk and R&B families were a strum a bar and single-string picking, so strummed patterns only (both banks).
-    guitarPatterns: { strummed: true },
+    // Then "short, choppy guitars, the latest song sounds almost like a rock pattern": 70% or more short strums, and
+    // not the Country patterns (written for 160 bpm).
+    guitarPatterns: { strummed: true, minShortShare: 0.7, notFamilies: ['Country'] },
     // The hip-hop generator's hats (8ths with 16th doubles and rolls; owner 2026-11-28: the trap hi-hat is "not always
     // on every sixteenth note - we have it in hip hop"), not the authored trap-hats line of straight 16ths.
     // Verses only (owner 2026-11-28: "we can't have it in all segments"); the other sections keep Bright Pop's hats.

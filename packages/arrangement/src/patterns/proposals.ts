@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 
 import { z } from 'zod';
 
-import { GenreSchema } from '@casperaki/song-schema';
+import { baseGenre, SongGenreSchema } from '@casperaki/song-schema';
 
 import {
   CHORD_TONE_FAMILIES,
@@ -59,7 +59,7 @@ const ProposalBase = z.object({
   id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/u),
   name: z.string().min(1),
   /** Genres this pattern is meant for; previews and export use them. */
-  genres: z.array(GenreSchema).min(1),
+  genres: z.array(SongGenreSchema).min(1),
   /** Why it fits the style, in plain words, for the reviewer. */
   rationale: z.string().min(1),
 });
@@ -100,7 +100,7 @@ export function loadPatternProposals(dir: string = PROPOSALS_DIR): PatternPropos
         if (problem) throw new Error(`proposals/${file}: "${p.id}": ${problem}`);
         // The family must be playable in each genre (sounds, and the orchestral gate).
         for (const genre of p.genres) {
-          if (familySoundPool(p.family, genre).length === 0) {
+          if (familySoundPool(p.family, baseGenre(genre)).length === 0) {
             throw new Error(`proposals/${file}: "${p.id}": ${p.family} cannot play in ${genre} (no sounds or no lane for it there)`);
           }
         }
