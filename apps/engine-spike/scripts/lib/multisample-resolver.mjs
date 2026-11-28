@@ -260,8 +260,8 @@ export function resolveMultisampleSlots({
     }
     const t = timing[tIndex + shift];
     if (!t || t.type !== s.type) {
-      // Past the recording's top (it starts `shift` notes early): no slice, never a re-pitched stand-in (owner 2026-11-28).
-      slots.push({ slot: { id: s.id, note: s.note, type: s.type }, status: 'unresolved', reason: `the recording starts ${shift} slice(s) early (first note ${firstNote}), so it has no slice for (note=${s.note}, type=${s.type})` });
+      // Past the recording's top (it starts `shift` notes early): the lowering drops the slot, so the sampler stretches its top real note (owner 2026-11-28).
+      slots.push({ slot: { id: s.id, note: s.note, type: s.type }, status: 'unresolved', reason: `the recording starts ${shift} slice(s) early (first note ${firstNote}), so it has no slice for (note=${s.note}, type=${s.type})`, pastRecording: true });
       unresolvedCount++;
       continue;
     }

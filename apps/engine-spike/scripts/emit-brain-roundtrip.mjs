@@ -504,6 +504,14 @@ function attachMultisamplePlan(verdict, instJson) {
       samples: samples.map((s) => ({ id: s.id, note: s.note, type: s.type })),
       ...(firstNote ? { firstNote } : {}),
     });
+    // Notes past the top of a recording that starts early ("BA Brooks 1"): left out of the instrument, so the sampler's
+    // highest real zone stretches over them as it does between slots (owner 2026-11-28 "for the missing note, yes,
+    // stretch"); kept, an empty slot would play the placeholder sound. The instrument files are rewritten below.
+    const past = new Set(res.slots.filter((x) => x.pastRecording).map((x) => x.slot.id));
+    if (past.size > 0) {
+      instJson.samples = instJson.samples.filter((x) => !past.has(x.id));
+      instsChanged = true;
+    }
     return {
       ...verdict,
       multisample: {
@@ -530,6 +538,7 @@ function attachMultisamplePlan(verdict, instJson) {
   }
 }
 
+let instsChanged = false;
 const instByFamily = {};
 for (const inst of fixture.instruments ?? []) {
   if (inst?.json?.name) instByFamily[inst.json.name] = inst.json;
@@ -653,6 +662,9 @@ for (const inst of fixture.instruments ?? []) {
     withSlots.fxAbsDir = resolveGuitarFxDir(verdict, SAMPLE_LIBRARY_ROOT) ?? null;
   }
   lanes[laneName] = withSlots;
+}
+if (instsChanged) {
+  for (const inst of fixture.instruments) writeFileSync(resolve(OUT, inst.filename), JSON.stringify(inst.json, null, 2));
 }
 
 const assetManifest = {

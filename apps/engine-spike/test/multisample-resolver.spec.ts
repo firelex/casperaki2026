@@ -287,6 +287,9 @@ describe('a recording that does not start on the timing table first note (owner 
     const res = resolveMultisampleSlots({ family: 'basses', samples, familyTimingMap: { basses: 'bassNotes' }, loadTimingForName: () => timing, firstNote: 'F#' });
     // the slots past the recording's top stay empty: no note is re-pitched to stand in (owner 2026-11-28)
     expect(res.slots.map((s) => (s.status === 'resolved' ? s.sliceStart : s.status))).toEqual([8.5, 12.5, 'unresolved', 'unresolved']);
+    // ... and are marked as past the recording, so the lowering drops them and the sampler stretches its top real note
+    // over them (owner 2026-11-28 "for the missing note, yes, stretch"), never the placeholder sound
+    expect(res.slots.map((s) => Boolean(s.pastRecording))).toEqual([false, false, true, true]);
   });
 
   it('a first note off the three-semitone grid is refused, naming it', () => {
