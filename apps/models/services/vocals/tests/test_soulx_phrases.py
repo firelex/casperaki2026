@@ -129,3 +129,41 @@ def test_a_section_last_phrase_is_sung_into_the_room_before_the_next_section():
     assert soulx.tail_beats(notes, 16, 2.0) == pytest.approx(0.5)
     assert soulx.tail_beats(notes, 16, 0.5) == pytest.approx(0.0)
     assert soulx.tail_beats([n(10, 1, 60)], 16, None) == pytest.approx(0.0)  # ends well inside the section
+
+
+def test_every_phrase_ends_on_a_rest_so_its_last_sound_is_sung():
+    """Owner 2026-11-28: the test line's "voice" was cut off before its "ce". SoulX sings exactly as long as its score:
+    a phrase that stops on its last note is cut mid-sound (the final "s" of "voice" never came). Every phrase is given
+    RELEASE_SEC of rest after it (measured: the "s", 150 ms of hiss, then a fade)."""
+    import numpy as np
+
+    seen = []
+
+    class DP:
+        def process(self, meta, audio):
+            assert audio is None
+            seen.append(meta)
+            return meta
+
+    class Model:
+        def infer(self, batch, **kw):
+            import torch
+            d = sum(float(x) for x in batch["target"]["duration"].split())
+            return torch.full((int(d * 100),), 0.1)
+
+    singer = object.__new__(soulx.Singer)
+    singer.sr, singer.dp, singer.model, singer.prompt = 100, DP(), Model(), None
+    singer.config = type("C", (), {"infer": type("I", (), {"n_steps": 1, "cfg": 1})()})()
+    notes = [n(0, 1, 60), n(1, 1, 62), n(8, 1, 64, "voice", ("v", "oy1", "s"))]
+    out = singer.sing(notes, BPM, 4, "test")
+    assert soulx.RELEASE_SEC >= 0.25  # room for a final consonant and its fade (the "s" took 150 ms)
+    assert len(seen) == 2
+    for meta in seen:
+        assert meta["phoneme"].split()[-1] == "<SP>"
+        assert float(meta["duration"].split()[-1]) == pytest.approx(soulx.RELEASE_SEC)
+        assert meta["note_pitch"].split()[-1] == "0" and meta["note_type"].split()[-1] == "1"
+    # the release is sung after the phrase's last note (the second phrase: its breath from 3.75 s, its note at beat 8
+    # = 4 s, then the rest)
+    last = seen[1]
+    end_s = 4.0 - soulx.LEAD_REST_SEC + sum(float(x) for x in last["duration"].split())
+    assert np.abs(out[int((end_s - 0.05) * 100)]) > 0

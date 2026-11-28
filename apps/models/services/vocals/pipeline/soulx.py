@@ -27,6 +27,11 @@ CODA_BEATS, BREATH_BEATS = 1.0, 0.5
 # word SoulX swallowed it ("stones": 22 dB under the vowel even with the longer note; its own "s" note: 9 dB; its own
 # "z" note did not help).
 SIBILANT_S = 0.12
+# SoulX sings exactly as long as its score, so a phrase that stops on its last note is cut mid-sound (owner 2026-11-28:
+# the test line's "voice" cut off before its "ce"; the final "s" never came). Every phrase is sung with this much rest
+# after it (measured on the owner's voice: the "s", 150 ms of hiss, then a fade). It overlaps nothing that is sung:
+# the next phrase's own score starts with its breath.
+RELEASE_SEC = 0.3
 
 
 def phrase_groups(notes) -> list[list[dict]]:
@@ -185,9 +190,12 @@ class Singer:
         beat_s = 60.0 / float(bpm)
         out = np.zeros(int((bars * 4 * beat_s + TAIL_S) * self.sr), dtype=np.float32)
         for p in phrases(notes, bpm, bars * 4, rest_after=rest_after, section=section):
-            meta = {"duration": " ".join(f"{d:.4f}" for d in p["duration"]), "phoneme": " ".join(p["phoneme"]),
-                    "note_pitch": " ".join(str(x) for x in p["pitch"]),
-                    "note_type": " ".join(str(x) for x in p["type"]), "language": "English"}
+            # The phrase, then RELEASE_SEC of rest for its last sound.
+            duration, phoneme = [*p["duration"], RELEASE_SEC], [*p["phoneme"], "<SP>"]
+            pitch, kind = [*p["pitch"], 0], [*p["type"], 1]
+            meta = {"duration": " ".join(f"{d:.4f}" for d in duration), "phoneme": " ".join(phoneme),
+                    "note_pitch": " ".join(str(x) for x in pitch),
+                    "note_type": " ".join(str(x) for x in kind), "language": "English"}
             with torch.no_grad():
                 audio = self.model.infer({"prompt": self.prompt, "target": self.dp.process(meta, None)}, auto_shift=False,
                                          pitch_shift=0, n_steps=self.config.infer.n_steps, cfg=self.config.infer.cfg,
