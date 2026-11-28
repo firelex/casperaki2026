@@ -458,17 +458,27 @@ function SongCard({
     .join(' · ');
 
   const playing = live === 'playing' || live === 'loading';
+  // Clicked open: a spinner on the cover until the editor shows (it can take a moment to load the song).
+  const [opening, setOpening] = useState(false);
   return (
     <article className="group relative flex h-full flex-col" onPointerEnter={onPrepare} onFocus={onPrepare}>
       {/* Clicking anywhere on the card opens the song; the controls sit above this layer. */}
       <button
         type="button"
-        onClick={onOpen}
+        onClick={() => {
+          setOpening(true);
+          onOpen();
+        }}
         className="absolute inset-0 z-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         aria-label={`Open ${project.title} in the editor`}
       />
       <div className={`pointer-events-none relative aspect-square overflow-hidden rounded-[14px] border transition-colors ${selected ? 'border-white/80' : 'border-line/60 group-hover:border-white/30'}`}>
         <Cover project={project} />
+        {opening ? (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45" role="status" aria-label={`Opening ${project.title}`}>
+            <span className="h-10 w-10 animate-spin rounded-full border-[3px] border-white/25 border-t-white" />
+          </div>
+        ) : null}
         {/* A dark fade under the title, so it reads on any artwork. */}
         <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0d0d17] via-[#0d0d17]/70 to-transparent" />
         <label
