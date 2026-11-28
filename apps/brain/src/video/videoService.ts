@@ -76,8 +76,8 @@ export interface VideoServiceDeps {
   /** The engine's renderAvatarVideo (injected so tests need no Chrome). */
   readonly renderAvatarVideo: (request: AvatarRenderRequest) => Promise<void>;
   /** Avatars on a dance floor: the owner's avatars by id, the lead marked (throws VideoInputError naming the
-   *  problem), and the part packs' folder. Unset: the avatars style answers 503. */
-  readonly avatars?: { readonly resolve: (ownerId: string, songId: string, ids: readonly string[]) => VideoAvatar[]; readonly packsDir: string };
+   *  problem), the part packs' folder and the Mixamo dance clips' folder (if any). Unset: the avatars style answers 503. */
+  readonly avatars?: { readonly resolve: (ownerId: string, songId: string, ids: readonly string[]) => VideoAvatar[]; readonly packsDir: string; readonly clipsDir?: string };
   /** The song's own mix config (Pro-mode changes applied), or undefined on the standard mix (render/songVersion.ts). */
   readonly songMix: (ownerId: string, songId: string) => string | undefined;
   /** The standard mix config (for the version key of a song on the standard mix). */
@@ -207,7 +207,7 @@ export class VideoService {
         writeFileSync(join(this.dirFor(args.songId), `avatars-input-${args.format}.json`), JSON.stringify(input));
         stepStart = new Date().toISOString();
         step('rendering', { progress: 0, detail: 'starting the renderer (bundling the scene, building the avatars)' });
-        await this.deps.renderAvatarVideo({ input, packsDir: this.deps.avatars!.packsDir, ...render });
+        await this.deps.renderAvatarVideo({ input, packsDir: this.deps.avatars!.packsDir, ...(this.deps.avatars!.clipsDir ? { clipsDir: this.deps.avatars!.clipsDir } : {}), ...render });
       } else if (args.style === 'console') {
         // The song's mix may have changed while it exported (a Pro-mode change).
         if (args.console.versionKey !== this.versionKey(args.ownerId, args.songId)) throw new Error(SONG_CHANGED_MESSAGE);

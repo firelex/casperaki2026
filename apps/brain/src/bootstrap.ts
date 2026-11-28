@@ -243,7 +243,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
           renderConsoleVideo,
           renderAvatarVideo,
           ...(avatarPacks && userAvatars
-            ? { avatars: { packsDir: avatarPacks.root, resolve: (ownerId: string, songId: string, ids: readonly string[]) => videoAvatars(store, userAvatars, ownerId, songId, ids) } }
+            ? { avatars: { packsDir: avatarPacks.root, ...(config.danceClipsDir ? { clipsDir: config.danceClipsDir } : {}), resolve: (ownerId: string, songId: string, ids: readonly string[]) => videoAvatars(store, userAvatars, ownerId, songId, ids) } }
             : {}),
           // `playback` (the mix config) is set up below; these run per video, after start-up.
           songMix: (ownerId, songId) => {
@@ -401,6 +401,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   readSingers(config.singersDir); // fail at startup, naming the file, if the singers list is broken
   app.use(createSingersRouter({ dir: config.singersDir, ...(userSingers ? { users: userSingers } : {}), tasks }));
   if (!config.avatarPacksDir) console.warn('[brain] BRAIN_AVATAR_PACKS_DIR not set — Avatars answer 503.');
+  if (config.avatarPacksDir && !config.danceClipsDir) console.warn('[brain] BRAIN_DANCE_CLIPS_DIR not set — avatar videos use only the built-in dance moves.');
   app.use(
     createAvatarsRouter({
       ...(avatarPacks ? { packs: avatarPacks } : {}),
