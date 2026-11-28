@@ -10,6 +10,7 @@
 import { writtenLyricsOf } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 import type { SongsStore } from '../store.js';
+import { drawTitles, TITLE_EXAMPLES, titleBank } from './titleBank.js';
 
 export interface TitleEndpoint {
   readonly baseUrl: string;
@@ -27,6 +28,9 @@ export interface UntitledSong {
 const TIMEOUT_MS = 30_000;
 const MAX_TITLE_LENGTH = 60;
 const RECENT_TITLES = 40;
+/** Answers asked for before giving up when the model keeps copying an example title. */
+const MAX_ATTEMPTS = 3;
+const titleKey = (t: string) => t.toLowerCase().replace(/[^a-z' ]/gu, '').replace(/\s+/gu, ' ').trim();
 
 export class SongTitler {
   private readonly pending = new Set<Promise<void>>();
@@ -59,7 +63,14 @@ export class SongTitler {
       .map((p) => p.title)
       .filter((t) => t !== placeholderTitle)
       .slice(0, RECENT_TITLES);
-    const title = await this.ask(songPrompt(song, taken));
+    // A title copied from the examples (or the bank) is asked for again, with other examples.
+    let title: string | undefined;
+    const bank = new Set(titleBank().map(titleKey));
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS && title === undefined; attempt++) {
+      const answer = await this.ask(songPrompt(song, taken, drawTitles(titleBank(), TITLE_EXAMPLES, Math.random)));
+      if (!bank.has(titleKey(answer))) title = answer;
+    }
+    if (title === undefined) throw new Error(`the title model copied an example title ${MAX_ATTEMPTS} times`);
     const project = this.store.getProject(ownerId, songId);
     if (!project) return; // deleted meanwhile
     if (project.title !== placeholderTitle) return; // renamed by the user meanwhile
@@ -100,8 +111,9 @@ export function cleanTitle(raw: string): string {
   return title;
 }
 
-/** A plain-English request for one title, describing the song. */
-export function songPrompt(song: Song, takenTitles: readonly string[]): string {
+/** A plain-English request for one title, describing the song; `examples`: titles with the feel to aim for
+ *  (titleBank.ts). */
+export function songPrompt(song: Song, takenTitles: readonly string[], examples: readonly string[]): string {
   const genre = song.genre ? humanGenre(song.genre) : 'pop';
   const sections = song.songStructure.map((s) => s.name.replace(/\d+$/u, '')).filter((n, i, all) => all.indexOf(n) === i);
   const instruments = song.instrumentDefinitions.map((d) => d.name).filter((n, i, all) => all.indexOf(n) === i);
@@ -124,6 +136,9 @@ export function songPrompt(song: Song, takenTitles: readonly string[]): string {
     '- Do not mention the style, the key, the tempo or any instrument.',
     '- Do not use the title of a well-known existing song.',
   ];
+  if (examples.length > 0) {
+    lines.push(`- Aim for the feel of these chart-pop titles (do not copy any of them): ${examples.join('; ')}.`);
+  }
   if (takenTitles.length > 0) lines.push(`- Do not reuse or closely imitate any of these titles the user already has: ${takenTitles.join('; ')}.`);
   lines.push('', 'Answer with the title only: no quotation marks, no explanation.');
   return lines.join('\n');

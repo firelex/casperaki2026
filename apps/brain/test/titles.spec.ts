@@ -8,6 +8,7 @@ import { orchestrate } from '@casperaki/arrangement';
 import { canonicalStringifySong } from '@casperaki/song-schema';
 import { openSongsStore, type SongsStore } from '../src/store.js';
 import { cleanTitle, songPrompt, SongTitler } from '../src/titles/songTitler.js';
+import { drawTitles, MAX_TITLE_WORDS, TITLE_EXAMPLES, titleBank } from '../src/titles/titleBank.js';
 
 describe('cleanTitle', () => {
   it('keeps the first line and strips quotes, a "Title:" label and a full stop', () => {
@@ -23,7 +24,7 @@ describe('cleanTitle', () => {
 
 describe('songPrompt', () => {
   it('asks for a short chart-pop title, not a poetic image', () => {
-    const prompt = songPrompt(orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'pop-title' }), []);
+    const prompt = songPrompt(orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'pop-title' }), [], []);
     expect(prompt).toMatch(/chart-pop/u);
     for (const s of ['Bad Idea', 'Kiss Me Back', 'Not Your Girl', 'Cinnamon Boulevard']) expect(prompt).toContain(s);
     expect(prompt).not.toMatch(/Evocative/u);
@@ -31,12 +32,30 @@ describe('songPrompt', () => {
 
   it('describes the song and lists the titles to avoid', () => {
     const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'titles' });
-    const prompt = songPrompt(song, ['Still Water']);
+    const prompt = songPrompt(song, ['Still Water'], []);
     expect(prompt).toContain('Style: bright pop');
     expect(prompt).toContain('Key: C');
     expect(prompt).toContain('Tempo: 120 beats per minute');
     expect(prompt).toContain('Still Water');
     expect(prompt).toContain('Answer with the title only');
+  });
+});
+
+describe('example titles (owner 2026-11-28: "more pop ... give DeepSeek references like we do for the lyrics")', () => {
+  it('the bank holds about 1,000 different chart-pop titles of one to four words', () => {
+    const bank = titleBank();
+    expect(bank.length).toBeGreaterThanOrEqual(1000);
+    expect(new Set(bank.map((t) => t.toLowerCase())).size).toBe(bank.length);
+    for (const t of bank) expect(t.split(/\s+/u).length, t).toBeLessThanOrEqual(MAX_TITLE_WORDS);
+  });
+
+  it('a dozen different examples are drawn per song and shown as the feel, not to copy', () => {
+    let n = 0;
+    const examples = drawTitles(titleBank(), TITLE_EXAMPLES, () => ((n = (n * 7 + 3) % 97) / 97));
+    expect(new Set(examples).size).toBe(TITLE_EXAMPLES);
+    const prompt = songPrompt(orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'pop-title' }), [], examples);
+    for (const e of examples) expect(prompt).toContain(e);
+    expect(prompt).toMatch(/do not copy any of them/u);
   });
 });
 
@@ -89,6 +108,20 @@ describe('SongTitler', () => {
     titler.name({ ownerId: 'u', songId: 'a'.repeat(16), song, placeholderTitle: 'Edm in A' });
     await titler.idle();
     expect(store!.getProject('u', 'a'.repeat(16))!.title).toBe('Mine');
+  });
+
+  it('asks again when the answer copies one of the example titles it was shown', async () => {
+    let n = 0;
+    const { titler, song, prompts } = await setup((body) => {
+      n++;
+      // the first answer is one of the shown examples
+      const shown = /Aim for the feel of these chart-pop titles \(do not copy any of them\): (.*)\.$/mu.exec(body.messages[0]!.content)![1]!.split('; ');
+      return { status: 200, text: n === 1 ? shown[0]! : 'Brand New Line' };
+    });
+    titler.name({ ownerId: 'u', songId: 'a'.repeat(16), song, placeholderTitle: 'Edm in A' });
+    await titler.idle();
+    expect(prompts).toHaveLength(2);
+    expect(store!.getProject('u', 'a'.repeat(16))!.title).toBe('Brand New Line');
   });
 
   it('keeps the placeholder when the model fails', async () => {

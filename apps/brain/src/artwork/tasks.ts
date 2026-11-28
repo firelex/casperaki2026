@@ -39,18 +39,20 @@ const STYLE: Record<string, string> = {
   urban: 'a smooth urban hip-hop and R&B track',
 };
 
-/** Added to every description: the look of a cover, and what the small model draws well. */
-const LOOK = 'album cover art, digital painting, rich colours, dramatic lighting, highly detailed';
+/** Added to every description: the look of a cover (abstract and cyber, owner 2026-11-28: literal scenes did not
+ *  always fit their songs; the Songs page tints it red to violet), and what the small model draws well. */
+const LOOK = 'abstract cyber album cover art, futuristic digital art, neon glow, glowing lines, geometric shapes, high contrast, highly detailed';
 
 export function artworkBrief(title: string, genre: string | null): string {
   const style = genre ? STYLE[genre] : undefined;
   if (genre && !style) throw new Error(`artworkBrief: no description for the style "${genre}"`);
   return [
     `Describe a picture to use as the cover artwork of a song called "${title}"${style ? `, which is ${style}` : ''}.`,
-    'A small image-generation model will draw it from your description, so describe one clear scene or subject in',
-    'concrete visual terms: what is in the picture, where it is, the colours, the light and the mood. Let the title',
-    'inspire it, but do not ask for any text, letters, words or logos in the picture, and do not name real people,',
-    'artists or brands.',
+    'The picture is abstract, futuristic and cyber in style: neon light, glowing lines and grids, geometric shapes,',
+    'digital textures, light trails or holographic gradients, catching the mood and energy of the title, not a literal',
+    'scene of it. A small image-generation model will draw it from your description, so describe it in concrete visual',
+    'terms: the shapes, how they are arranged, the colours, the light and the mood. Do not ask for people, faces, text,',
+    'letters, words or logos in the picture, and do not name real people, artists or brands.',
     'The description is one sentence of at most 40 words.',
     'Answer in JSON of the form {"description": "..."}.',
   ].join(' ');
