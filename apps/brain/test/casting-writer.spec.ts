@@ -5,7 +5,7 @@ import { orchestrate } from '@casperaki/arrangement';
 import { describe, expect, it } from 'vitest';
 
 import { JUDGES, verdictVotes } from '../src/casting/cast.js';
-import { castingFacts } from '../src/casting/facts.js';
+import { castingFacts, pickQuotes } from '../src/casting/facts.js';
 import { songTiming } from '../src/video/videoInput.js';
 
 const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'casting-1' });
@@ -41,10 +41,13 @@ describe('the song facts', () => {
     expect(f.title).toBe('Electric Daydream');
     expect(f.bpm).toBe(120);
     expect(f.tempoWord).toBe('fast');
-    expect(f.quotes.length).toBeGreaterThan(0);
-    expect(f.quotes.length).toBeLessThanOrEqual(4);
     const chorus = songTiming(song).sections.find((s) => /^chorus\b/iu.test(s.name))!;
     expect(f.sections).toContain(chorus.name);
+    // Generated songs carry no words until lyrics are written (6b6ab03): the quotes are picked from given lines.
+    const sections = [{ name: 'Verse 1', startSeconds: 0, endSeconds: 10 }, { name: 'Pre-chorus', startSeconds: 10, endSeconds: 20 }, { name: 'Chorus 1', startSeconds: 20, endSeconds: 40 }];
+    const lines = ['v1', 'p1', 'c1', 'c2', 'c3', 'c4', 'c5'].map((text, i) => ({ text, startSeconds: [2, 12, 21, 25, 29, 33, 37][i]! }));
+    expect(pickQuotes(lines, sections)).toEqual(['c1', 'c2', 'c3', 'c4']);
+    expect(pickQuotes(lines.slice(0, 2), sections)).toEqual(['v1', 'p1']);
     expect(f).toMatchObject({ singerName: 'Kesha', singerDescription: 'bright pop voice', avatarName: 'Mia' });
   });
   it('refuses a song without a title', () => {
@@ -71,18 +74,20 @@ const PLANS: Record<string, Plan> = {
       { speaker: 'Kesha', intent: 'answers' },
       { speaker: 'Bob', intent: 'asks about the song' },
       { speaker: 'Kesha', intent: 'answers' },
-      { speaker: 'Ice', intent: 'tells her to begin' },
+      { speaker: 'Bob', intent: 'tells her to begin' },
     ],
   },
   verdicts: {
-    beats: ['reactions', 'votes'],
+    beats: ['critique', 'votes', 'thanks'],
     turns: [
-      { speaker: 'Ice', intent: 'a first dry remark' },
-      { speaker: 'Bob', intent: 'raves' },
-      { speaker: 'Nicky', intent: 'teases Bob' },
-      { speaker: 'Love', intent: 'praises the melody' },
+      { speaker: 'Love', intent: 'the critique' },
+      { speaker: 'Nicky', intent: 'reacts' },
+      { speaker: 'Ice', intent: 'starts the vote round' },
+      { speaker: 'Bob', intent: 'votes' },
+      { speaker: 'Nicky', intent: 'votes' },
+      { speaker: 'Love', intent: 'votes' },
+      { speaker: 'Ice', intent: 'last vote' },
       { speaker: 'Kesha', intent: 'thanks them' },
-      { speaker: 'Ice', intent: 'last word' },
     ],
   },
 };
@@ -107,7 +112,7 @@ function fakeModel(over: { plan?: Partial<Record<string, Plan>>; turn?: (n: numb
   };
   return { chat, calls };
 }
-const facts = castingFacts(song, 'Electric Daydream', { name: 'Kesha', description: 'a bright, clear pop voice' }, 'Mia', null);
+const facts = { ...castingFacts(song, 'Electric Daydream', { name: 'Kesha', description: 'a bright, clear pop voice' }, 'Mia', null), quotes: ['Hands up, hands up, under the lights'] };
 const yes = { ice: 'yes', nicky: 'yes', love: 'yes', bob: 'yes' } as const;
 const run = (chat: ChatModel, signal = new AbortController().signal, f = facts) => writeScript(chat, f, 'fourYes', yes, signal);
 
@@ -116,12 +121,13 @@ describe('the writer', () => {
     const { chat, calls } = fakeModel();
     const script: CastingScript = await run(chat);
     expect(script.backstage.map((l) => l.speaker)).toEqual(Array(5).fill('narrator'));
-    expect(script.banter.map((l) => l.speaker)).toEqual(['bob', 'singer', 'bob', 'singer', 'ice']);
-    expect(script.verdicts.at(-1)!.speaker).toBe('ice');
+    expect(script.banter.map((l) => l.speaker)).toEqual(['bob', 'singer', 'bob', 'singer', 'bob']);
+    expect(script.verdicts.at(-1)!.speaker).toBe('singer');
+    expect(script.verdicts.at(-2)!.speaker).toBe('ice');
     expect(script.verdicts[0]).toMatchObject({ delivery: 'warm', gesture: 'nod' });
     // The narrator is never seen: no gesture.
     expect(script.backstage.every((l) => l.gesture === 'none')).toBe(true);
-    expect(calls).toHaveLength(3 + 5 + 5 + 6);
+    expect(calls).toHaveLength(3 + 5 + 5 + 8);
     // Each line is written seeing the conversation so far.
     const lastTurn = calls.at(-1)!.map((m) => m.content).join('\n');
     expect(lastTurn).toContain('Bob:');
@@ -158,8 +164,15 @@ describe('the writer', () => {
   it('refuses verdicts where a judge has no turn, or Ice does not speak last', async () => {
     const noLove = { ...PLANS.verdicts!, turns: PLANS.verdicts!.turns.map((t) => (t.speaker === 'Love' ? { ...t, speaker: 'Nicky' } : t)) };
     await expect(run(fakeModel({ plan: { verdicts: noLove } }).chat)).rejects.toThrow(/Love/);
-    const iceFirst = { ...PLANS.verdicts!, turns: [...PLANS.verdicts!.turns.filter((t) => t.speaker !== 'Love'), { speaker: 'Love', intent: 'last word' }] };
-    await expect(run(fakeModel({ plan: { verdicts: iceFirst } }).chat)).rejects.toThrow(/Ice.*last/);
+    const t = PLANS.verdicts!.turns;
+    const loveVotesLast = { ...PLANS.verdicts!, turns: [...t.slice(0, 5), t[6]!, t[5]!, t[7]!] };
+    await expect(run(fakeModel({ plan: { verdicts: loveVotesLast } }).chat)).rejects.toThrow(/Ice must give the last vote/);
+    const iceDoesNotStart = { ...PLANS.verdicts!, turns: [t[0]!, t[1]!, t[3]!, t[2]!, t[4]!, t[5]!, t[6]!, t[7]!] };
+    await expect(run(fakeModel({ plan: { verdicts: iceDoesNotStart } }).chat)).rejects.toThrow(/Ice must start the vote round/);
+    const noThanks = { ...PLANS.verdicts!, turns: t.slice(0, 7) };
+    await expect(run(fakeModel({ plan: { verdicts: noThanks } }).chat)).rejects.toThrow(/must speak once, last/);
+    const twoJudges = { ...PLANS.banter!, turns: [...PLANS.banter!.turns.slice(0, 4), { speaker: 'Ice', intent: 'go' }] };
+    await expect(run(fakeModel({ plan: { banter: twoJudges } }).chat)).rejects.toThrow(/exactly one judge speaks/);
   });
   it('needs a vote turn for every judge, Ice\'s last, each vote said plainly; a judge voting no is unconvinced throughout', async () => {
     const { chat, calls } = fakeModel();
@@ -171,12 +184,12 @@ describe('the writer', () => {
     const { chat: c2, calls: k2 } = fakeModel({ plan: { verdicts: bobTwice } });
     await run(c2);
     expect(k2.filter((c) => c[0]!.content.includes('spoken by Bob') && c[0]!.content.includes('This is your vote turn'))).toHaveLength(1);
-    // Bob's vote turn (the second verdicts turn: 5 backstage + 5 banter + Ice's remark before it) says no although his vote is yes.
-    await expect(run(fakeModel({ turn: (n) => (n === 12 ? { text: 'Sorry, it is a no from me.', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/verdicts, turn 2 \(Bob\).*yes/);
+    // Bob's vote turn (the fourth verdicts turn, after 5 backstage and 5 banter lines) says no although his vote is yes.
+    await expect(run(fakeModel({ turn: (n) => (n === 14 ? { text: 'Sorry, it is a no from me.', delivery: 'x', gesture: 'nod' } : undefined) }).chat)).rejects.toThrow(/verdicts, turn 4 \(Bob\).*yes/);
   });
   it('lets the singer react only once in the verdicts, and has the narrator name them first', async () => {
     const twice = { ...PLANS.verdicts!, turns: [{ speaker: 'Kesha', intent: 'gasps' }, ...PLANS.verdicts!.turns] };
-    await expect(run(fakeModel({ plan: { verdicts: twice } }).chat)).rejects.toThrow(/Kesha speaks 2 times/);
+    await expect(run(fakeModel({ plan: { verdicts: twice } }).chat)).rejects.toThrow(/Kesha must speak once, last/);
     const { chat, calls } = fakeModel();
     await run(chat);
     expect(calls[0]![0]!.content).toContain('Say the name Kesha in the first turn');
@@ -202,9 +215,10 @@ describe('the writer', () => {
     const { chat, calls } = fakeModel();
     await run(chat);
     const all = calls.flat().map((m) => m.content).join('\n');
-    expect(all).toMatch(/one judge greets .* and has a quick exchange/);
+    expect(all).toMatch(/only ONE judge speaks/);
     expect(all).toMatch(/one judge leads and gives the real critique/);
-    expect(all).toMatch(/starts the yes-or-no round, and it is quick/);
+    expect(all).toMatch(/Ice, the head judge, starts the yes-or-no round/);
+    expect(all).toMatch(/thanks the judges in a few words: that is the last turn/);
     // A vote line is kept to a few words whatever the plan says.
     const vote = calls.find((c) => c[0]!.content.includes('This is your vote turn'))!;
     expect(vote[0]!.content).toMatch(/Keep it to about 12 words/);

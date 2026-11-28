@@ -97,20 +97,21 @@ function sceneText(scene: SceneId, facts: CastingFacts, outcome: Outcome, votes:
   }
   if (scene === 'banter') {
     return (
-      `The scene: ${n.singer} has just walked on stage to the judges' desk. It is short: one judge greets ${n.singer} and has a ` +
-      `quick exchange with them (a question and ${n.singer}'s answer); another judge may add one quick aside, but the others stay ` +
-      'quiet. They have not heard the song yet. The scene ends with a judge inviting the contestant to begin.'
+      `The scene: ${n.singer} has just walked on stage to the judges' desk. It is short, and only ONE judge speaks: that judge ` +
+      `greets ${n.singer} and has a quick exchange with them (a question and ${n.singer}'s answer), then invites them to begin. ` +
+      'The other judges stay quiet. They have not heard the song yet.'
     );
   }
   const list = JUDGES.map((j) => `${j.name}: ${votes[j.id]}`).join(', ');
   return (
     `The scene: ${n.singer} has just sung the song up to the end of its first chorus. ${OUTCOME_WORDS[outcome]} The votes: ${list}. ` +
-    'It has two parts. First, one judge leads and gives the real critique, talking a little longer (two to four sentences) about ' +
-    'specific things in the song; one or two others may react briefly, but not every judge needs to speak here. Then one judge ' +
-    'starts the yes-or-no round, and it is quick: each judge says their vote in a few words, in their own manner. ' +
+    'It has three parts. First, one judge leads and gives the real critique, talking a little longer (two to four sentences) about ' +
+    'specific things in the song; one or two others may react briefly, but not every judge needs to speak here. Then Ice, the ' +
+    'head judge, starts the yes-or-no round (for example by asking the others for their votes), and it is quick: each judge says ' +
+    "their vote in a few words, in their own manner, and Ice gives his vote last. Finally " +
+    `${n.singer} thanks the judges in a few words: that is the last turn of the scene, and ${n.singer}'s only one. ` +
     `Every turn of a judge fits that judge's vote: a judge voting no is unconvinced throughout (kind or harsh, as is their way), ` +
-    `never praising the song first and voting no later. ${n.singer} may react once, before the end. The very last turn of the ` +
-    "scene is Ice's, and it gives his vote: nobody speaks after him."
+    'never praising the song first and voting no later.'
   );
 }
 
@@ -170,7 +171,9 @@ export async function writeScript(
             `may react to or interrupt each other. The whole scene is about ${SCENE_TARGET[scene]} spoken words in all, so keep it tight. ` +
             `Only these people speak in this scene: ${allowed.join(', ')}. ` +
             (scene === 'verdicts'
-              ? `Every judge speaks at least once; each judge's last turn is the one where they give their vote, and the last turn of the scene is Ice's. ${n.singer} has at most ONE turn in this scene. `
+              ? `Every judge speaks at least once; each judge's last turn is the one where they give their vote. Ice starts the vote round and gives the last vote; the very last turn of the scene is ${n.singer}'s thank-you, ${n.singer}'s only turn. `
+              : scene === 'banter'
+                ? `Only one judge speaks, with ${n.singer}. `
               : '') +
             `Answer with JSON only: {"beats": ["..."], "turns": [{"speaker": "<one of: ${allowed.join(', ')}>", "intent": "...", "words": <a whole number>}]}.`,
         },
@@ -191,14 +194,22 @@ export async function writeScript(
       const last = turns.map((t) => t.speaker).lastIndexOf(j.id);
       if (last >= 0) turns[last]!.vote = true;
     }
+    if (scene === 'banter') {
+      const judges = new Set(turns.map((t) => t.speaker).filter((sp) => sp !== 'singer'));
+      if (judges.size !== 1) throw new Error(`casting writer: in the banter plan exactly one judge speaks (it has ${judges.size})`);
+    }
     if (scene === 'verdicts') {
       for (const j of JUDGES) {
         if (!turns.some((t) => t.speaker === j.id)) throw new Error(`casting writer: the verdicts plan gives ${j.name} no turn to vote in`);
       }
-      const last = turns.at(-1)!;
-      if (last.speaker !== 'ice') throw new Error('casting writer: in the verdicts plan Ice must speak last, giving his vote');
+      // Ice starts the vote round (a turn of his before the first other judge's vote), gives the last vote, and the
+      // singer's thank-you closes the scene.
       const singerTurns = turns.filter((t) => t.speaker === 'singer').length;
-      if (singerTurns > 1) throw new Error(`casting writer: in the verdicts plan ${n.singer} speaks ${singerTurns} times; once at most`);
+      if (singerTurns !== 1 || turns.at(-1)!.speaker !== 'singer') throw new Error(`casting writer: in the verdicts plan ${n.singer} must speak once, last (the thank-you); the plan has ${singerTurns} turns of ${n.singer}, the last by ${turns.at(-1)!.speaker}`);
+      const judgesOnly = turns.slice(0, -1);
+      if (judgesOnly.at(-1)!.speaker !== 'ice') throw new Error('casting writer: in the verdicts plan Ice must give the last vote, right before the thank-you');
+      const firstOtherVote = Math.min(...judgesOnly.map((t, i) => (t.vote && t.speaker !== 'ice' ? i : Infinity)));
+      if (!judgesOnly.slice(0, firstOtherVote).some((t) => t.speaker === 'ice')) throw new Error('casting writer: in the verdicts plan Ice must start the vote round (speak before the first other vote)');
     }
 
     for (const [i, turn] of turns.entries()) {

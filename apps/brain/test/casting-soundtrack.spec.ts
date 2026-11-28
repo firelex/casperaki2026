@@ -88,8 +88,9 @@ describe('the timeline', () => {
   });
   it('performs the song to the end of its first chorus (not the pre-chorus), then fades 3 s', () => {
     const perf = t.segments[3]!;
-    expect(t.performance).toMatchObject({ songFromSeconds: 0, songToSeconds: 48, fadeSeconds: 3, videoStartSeconds: perf.startSeconds });
-    expect(perf.endSeconds - perf.startSeconds).toBeCloseTo(51, 6);
+    // A breath of 1.5 s before the song starts.
+    expect(t.performance).toMatchObject({ songFromSeconds: 0, songToSeconds: 48, fadeSeconds: 3, videoStartSeconds: perf.startSeconds + 1.5 });
+    expect(perf.endSeconds - perf.startSeconds).toBeCloseTo(52.5, 6);
   });
   it('places every line inside its segment, in order, never overlapping', () => {
     expect(t.lines).toHaveLength(9);

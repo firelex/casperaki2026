@@ -32,8 +32,8 @@ function fakeChat(): ChatModel & { calls: number } {
       const line = (extra = '') => JSON.stringify({ text: `Well this is a fine moment for everyone here today and I have to say it really is quite something${extra}.`, delivery: 'warm', gesture: 'nod' });
       if (system.startsWith('You plan')) {
         if (system.includes('backstage')) return JSON.stringify({ beats: ['b'], turns: Array.from({ length: 5 }, () => ({ speaker: 'Narrator', intent: 'x', words: 20 })) });
-        if (system.includes('yes-or-no round')) return JSON.stringify({ beats: ['v'], turns: ['Ice', 'Bob', 'Nicky', 'Kesha', 'Love', 'Ice'].map((s) => ({ speaker: s, intent: 'votes', words: 12 })) });
-        return JSON.stringify({ beats: ['t'], turns: ['Bob', 'Kesha', 'Ice'].map((s) => ({ speaker: s, intent: 'talk', words: 12 })) });
+        if (system.includes('yes-or-no round')) return JSON.stringify({ beats: ['v'], turns: ['Ice', 'Bob', 'Nicky', 'Love', 'Ice', 'Kesha'].map((s) => ({ speaker: s, intent: 'votes', words: 12 })) });
+        return JSON.stringify({ beats: ['t'], turns: ['Bob', 'Kesha', 'Bob'].map((s) => ({ speaker: s, intent: 'talk', words: 12 })) });
       }
       const vote = /say plainly, with the word "(yes|no)"/u.exec(system)?.[1];
       return line(vote ? `, ${vote}` : '');
@@ -110,7 +110,7 @@ describe('starting a casting script', () => {
     expect(done.state).toBe('done');
     const script = done.result as { banter: { speaker: string }[]; verdicts: { speaker: string }[] };
     expect(script.banter.map((l) => l.speaker)).toContain('singer');
-    expect(script.verdicts.at(-1)!.speaker).toBe('ice');
+    expect(script.verdicts.at(-1)!.speaker).toBe('singer');
     expect(done.steps.map((s) => [s.id, s.state])).toEqual([['backstage', 'done'], ['banter', 'done'], ['verdicts', 'done']]);
   });
 });

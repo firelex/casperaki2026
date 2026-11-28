@@ -48,6 +48,8 @@ const between = ([lo, hi]: readonly [number, number], u: number) => lo + (hi - l
 export const MUSIC_LEAD = 1.5;
 /** Air at the start and end of a talking segment: the judges start talking soon after the singer reaches them. */
 export const AIR = 0.4;
+/** A breath before the song starts: the singer collects herself after the judge's invitation. */
+export const PERFORMANCE_LEAD = 1.5;
 /** The song fades out over this long after its first chorus. */
 export const PERFORMANCE_FADE = 3;
 /** The video ends this long after the last verdict. */
@@ -102,8 +104,8 @@ export function layOut(args: {
       t += args.entranceSeconds;
     } else if (scene === 'banter') {
       speak('banter', AIR, AIR);
-      segments.push({ kind: 'performance', startSeconds: t, endSeconds: t + songTo + PERFORMANCE_FADE });
-      t += songTo + PERFORMANCE_FADE;
+      segments.push({ kind: 'performance', startSeconds: t, endSeconds: t + PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE });
+      t += PERFORMANCE_LEAD + songTo + PERFORMANCE_FADE;
     } else speak('verdicts', AIR, END_TAIL);
   }
   const perf = segments.find((s) => s.kind === 'performance')!;
@@ -112,7 +114,7 @@ export function layOut(args: {
     durationSeconds: t,
     segments,
     lines,
-    performance: { songFromSeconds: 0, songToSeconds: songTo, fadeSeconds: PERFORMANCE_FADE, videoStartSeconds: perf.startSeconds },
+    performance: { songFromSeconds: 0, songToSeconds: songTo, fadeSeconds: PERFORMANCE_FADE, videoStartSeconds: perf.startSeconds + PERFORMANCE_LEAD },
     scriptTaskId: args.scriptTaskId,
   };
 }

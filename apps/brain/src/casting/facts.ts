@@ -29,12 +29,17 @@ export function isChorus(name: string): boolean {
   return /^chorus\b/iu.test(name.trim());
 }
 
+/** Up to four lyric lines: the first chorus's, else the song's first lines; none for a song without words. */
+export function pickQuotes(lines: readonly { text: string; startSeconds: number }[], sections: readonly { name: string; startSeconds: number; endSeconds: number }[]): string[] {
+  const chorus = sections.find((s) => isChorus(s.name));
+  const inChorus = chorus ? lines.filter((l) => l.startSeconds >= chorus.startSeconds && l.startSeconds < chorus.endSeconds) : [];
+  return (inChorus.length > 0 ? inChorus : lines).slice(0, 4).map((l) => l.text);
+}
+
 export function castingFacts(song: Song, title: string, singer: { name: string; description: string | null }, avatarName: string, backstory: string | null): CastingFacts {
   const { sections } = songTiming(song);
   const lines = lyricLines(song);
-  const chorus = sections.find((s) => isChorus(s.name));
-  const inChorus = chorus ? lines.filter((l) => l.startSeconds >= chorus.startSeconds && l.startSeconds < chorus.endSeconds) : [];
-  const quotes = (inChorus.length > 0 ? inChorus : lines).slice(0, 4).map((l) => l.text);
+  const quotes = pickQuotes(lines, sections);
   if (!title.trim()) throw new Error('casting: the song has no title; give it one first');
   let genre: string | null = null;
   if (song.genre) {
