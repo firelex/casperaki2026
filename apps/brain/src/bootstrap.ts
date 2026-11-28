@@ -440,7 +440,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), ...(avatarBuild ? { avatarBuild } : {}), ...(casting ? { casting } : {}), ...(castingSoundtrack ? { castingSoundtrack } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
-  app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
+  app.use(createTasksRouter({ store, tasks, now: () => new Date(), ffmpegBin: config.ffmpegBin }));
   app.use(createCastingRouter({ store, tasks, ownerOf, isAdminRequest: (req) => (demoSecret ? Boolean(req.user) : auth ? Boolean(req.user && isAdmin(req.user.email)) : true) }));
   app.use(createLabRouter({ ffmpegBin: config.ffmpegBin, beatThisPython: config.beatThisPython, humLabDir: config.humLabDir }));
   app.use(

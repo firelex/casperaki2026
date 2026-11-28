@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Checkbox } from '@teamsuzie/ui';
 
@@ -33,17 +33,14 @@ export function SingersPage() {
   const { data: tasks } = useTasks();
   const queryClient = useQueryClient();
   const adding = (tasks ?? []).filter((t) => t.kind === 'addSinger' && (t.state === 'running' || t.state === 'failed'));
-  // A singer made since the list was loaded: load it again.
-  const listed = new Set((singers.data?.singers ?? []).map((s) => s.id));
-  const made = (tasks ?? []).some((t) => t.kind === 'addSinger' && t.state === 'done' && t.singerId !== undefined && !listed.has(t.singerId));
+  // A singer task finished since the list was loaded (a new singer, its speaking voice): load the list again. Add a
+  // singer lists the singer before it makes its speaking voice, so a singer already listed may have changed too.
+  const finished = singerTasksFinished(tasks ?? []);
+  const seen = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (made && singers.data) void queryClient.invalidateQueries({ queryKey: singersQueryKey });
-  }, [made, singers.data, queryClient]);
-  // A speaking voice made since: load the singers again.
-  const spoken = (tasks ?? []).filter((t) => t.kind === 'speakingVoice' && t.state === 'done').map((t) => t.id).join();
-  useEffect(() => {
-    if (spoken) void queryClient.invalidateQueries({ queryKey: singersQueryKey });
-  }, [spoken, queryClient]);
+    if (seen.current !== undefined && seen.current !== finished) void queryClient.invalidateQueries({ queryKey: singersQueryKey });
+    seen.current = finished;
+  }, [finished, queryClient]);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-bg text-white">
@@ -272,6 +269,15 @@ export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer:
 
 /** Whether a speaking voice is being made for the singer (a speakingVoice task, or Add a singer, whose last steps make
  *  the new singer's voice), and its last failed speakingVoice task. */
+/** The Add a singer and speaking voice tasks that have finished, as one key: it changes when another finishes. */
+export function singerTasksFinished(tasks: readonly BackgroundTask[]): string {
+  return tasks
+    .filter((t) => (t.kind === 'addSinger' || t.kind === 'speakingVoice') && t.state === 'done')
+    .map((t) => `${t.id}:${t.finishedAt ?? ''}`)
+    .sort()
+    .join(',');
+}
+
 export function speakingTaskState(tasks: readonly BackgroundTask[], singerId: string): { making: boolean; failed: BackgroundTask | undefined } {
   const mine = tasks.filter((t) => (t.kind === 'speakingVoice' || t.kind === 'addSinger') && t.singerId === singerId);
   return { making: mine.some((t) => t.state === 'running'), failed: mine.find((t) => t.kind === 'speakingVoice' && t.state === 'failed') };

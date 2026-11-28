@@ -26,6 +26,7 @@
 // titled "<singer>: speaking voice"), addSinger:
 // started by POST /api/singers, src/routes/singers.ts, titled with the singer's name; done when the singer is stored).
 
+import { browserMp3 } from '../audio/browserMp3.js';
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 
@@ -79,7 +80,7 @@ export function taskJson(t: TaskRow, title: string) {
   };
 }
 
-export function createTasksRouter({ store, tasks, now }: { store: SongsStore; tasks: BackgroundTasks; now: () => Date }): Router {
+export function createTasksRouter({ store, tasks, now, ffmpegBin }: { store: SongsStore; tasks: BackgroundTasks; now: () => Date; ffmpegBin: string }): Router {
   const router = Router();
   const titled = (owner: string, t: TaskRow) => taskJson(t, t.songId === null ? '' : (store.getProject(owner, t.songId)?.title ?? ''));
 
@@ -142,9 +143,18 @@ export function createTasksRouter({ store, tasks, now }: { store: SongsStore; ta
     return answer(res, () => res.json({ task: titled(owner, tasks.cancel(owner, req.params.id)) }));
   });
 
-  router.get('/api/tasks/:id/files/:stage/:name', (req, res) => {
+  // A WAV is sent as MP3 (audio/browserMp3.ts); any other file as it is.
+  router.get('/api/tasks/:id/files/:stage/:name', async (req, res) => {
     const owner = ownerOf(req);
-    return answer(res, () => res.sendFile(tasks.stepFile(owner, req.params.id, req.params.stage, req.params.name)));
+    let path: string;
+    try {
+      path = tasks.stepFile(owner, req.params.id, req.params.stage, req.params.name);
+    } catch (err) {
+      if (err instanceof TaskError) return res.status(err.status).json({ error: err.code, message: err.message });
+      throw err;
+    }
+    if (!/\.wav$/iu.test(path)) return res.sendFile(path);
+    res.type('audio/mpeg').sendFile(await browserMp3(ffmpegBin, path));
   });
 
   return router;

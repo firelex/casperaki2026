@@ -89,7 +89,15 @@ describe('Add a singer', () => {
     expect(task.steps.map((s: { id: string }) => s.id)).toEqual(['decode', 'separate', 'silence', 'reference', 'pitch', 'words', 'notes', 'test-line', 'keep']);
     expect(task.steps.every((s: { state: string }) => s.state === 'done')).toBe(true);
     const testLineStep = task.steps.find((s: { id: string }) => s.id === 'test-line');
-    expect((await fetch(`${url}/api/tasks/${task.id}/files/${testLineStep.files[0]}`)).status).toBe(200);
+    // A step's WAV reaches the browser as MP3 (owner 2026-11-28: "We should only send mp3 to the browser"); the
+    // second request is served from the copy the first made.
+    for (let i = 0; i < 2; i++) {
+      const file = await fetch(`${url}/api/tasks/${task.id}/files/${testLineStep.files[0]}`);
+      expect(file.status).toBe(200);
+      expect(file.headers.get('content-type')).toMatch(/^audio\/mpeg/u);
+      const bytes = Buffer.from(await file.arrayBuffer());
+      expect(bytes.subarray(0, 3).toString('latin1') === 'ID3' || (bytes[0] === 0xff && (bytes[1]! & 0xe0) === 0xe0)).toBe(true);
+    }
 
     const singers = (await get('/api/singers')).body.singers as Array<Record<string, any>>;
     expect(singers.map((s) => s.name)).toEqual(['Singer 1', 'My voice']);

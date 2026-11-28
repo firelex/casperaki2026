@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { addSingerProblem, extensionOf, referenceText, singersApi, speakingDescriptionProblem, type AddSingerForm, type SingerInfo } from '../src/api/singers';
 import { TASK_LABELS, type BackgroundTask } from '../src/api/tasks';
 import { taskPage } from '../src/layout/TasksMenu';
-import { AddSingerPanel, SingerCard, shownSingers, speakingTaskState } from '../src/pages/SingersPage';
+import { AddSingerPanel, SingerCard, shownSingers, singerTasksFinished, speakingTaskState } from '../src/pages/SingersPage';
 import { mergeOp } from '../src/state/tasks';
 
 const file = (name: string, type = 'audio/wav') => new File([new Uint8Array([1, 2, 3])], name, { type });
@@ -190,5 +190,18 @@ describe('a singer whose speaking voice is being made', () => {
     expect(speakingTaskState([task({ singerId: 'u-2' })], 'u-1').making).toBe(false);
     expect(speakingTaskState([task({ kind: 'addSinger', state: 'failed' })], 'u-1').failed).toBeUndefined();
     expect(speakingTaskState([task({ state: 'failed', message: 'no' })], 'u-1').failed?.message).toBe('no');
+  });
+});
+
+// Owner 2026-11-28: "when a voice is fully in it doesn't appear right away, you need to refresh the page".
+describe('the singers list reloads when a singer task finishes', () => {
+  const task = (over: Partial<BackgroundTask>): BackgroundTask => ({ id: 't', kind: 'addSinger', songId: null, title: 'x', state: 'running', startedAt: 'x', singerId: 'u-1', ...over });
+  it('changes when an Add a singer or speaking voice task finishes, also for a singer already listed', () => {
+    const running = singerTasksFinished([task({})]);
+    expect(singerTasksFinished([task({ state: 'done' })])).not.toBe(running);
+    expect(singerTasksFinished([task({ kind: 'speakingVoice', id: 's', state: 'done' })])).not.toBe(running);
+  });
+  it('does not change for other tasks or tasks still running', () => {
+    expect(singerTasksFinished([task({}), task({ id: 'o', kind: 'sing', state: 'done' })])).toBe(singerTasksFinished([]));
   });
 });
