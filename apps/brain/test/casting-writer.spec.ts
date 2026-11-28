@@ -8,7 +8,7 @@ import { JUDGES, verdictVotes } from '../src/casting/cast.js';
 import { castingFacts } from '../src/casting/facts.js';
 import { songTiming } from '../src/video/videoInput.js';
 
-const song = orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'casting-1' });
+const song = { ...orchestrate({ genre: 'brightPop', key: 'C', bpm: 120, seed: 'casting-1' }), title: 'Electric Daydream' };
 
 describe('the cast', () => {
   it('is the four judges with their approved voices, in plain-English profiles naming no real person', () => {
