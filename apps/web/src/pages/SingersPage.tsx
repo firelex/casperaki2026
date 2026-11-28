@@ -60,9 +60,7 @@ export function SingersPage() {
               The singers could not be loaded: {message(singers.error)}
             </p>
           ) : null}
-          {singers.data?.singers.map((s) => (
-            <SingerCard key={s.id} singer={s} />
-          ))}
+          {singers.data ? <SingerList singers={singers.data.singers} /> : null}
           {adding.map((t) => (
             <AddingCard key={t.id} task={t} />
           ))}
@@ -73,12 +71,87 @@ export function SingersPage() {
   );
 }
 
-/** One singer: its name, description, voice reference, Delete (a built-in singer for this user only), and for the
- *  user's own: how it was chosen and the test line. */
-export function SingerCard({ singer: s }: { singer: SingerInfo }) {
+export type SingerShow = 'all' | 'yours' | 'builtIn';
+
+/** The singers to list: by name, those whose name or description holds the search (any case), yours or the built-in
+ *  ones only when asked. */
+export function shownSingers(singers: readonly SingerInfo[], search: string, show: SingerShow): SingerInfo[] {
+  const q = search.trim().toLowerCase();
+  return singers
+    .filter((s) => (show === 'all' ? true : show === 'yours' ? s.own : !s.own))
+    .filter((s) => q === '' || s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+}
+
+/** The singer list with a search box, All / Yours / Built-in and a jump to Add a singer (owner 2026-11-28: "a bit more
+ *  navigable if there are more singers"). */
+function SingerList({ singers }: { singers: readonly SingerInfo[] }) {
+  const [search, setSearch] = useState('');
+  const [show, setShow] = useState<SingerShow>('all');
+  const shown = shownSingers(singers, search, show);
+  const chip = (v: SingerShow, label: string) => (
+    <button
+      type="button"
+      aria-pressed={show === v}
+      className={`rounded-full border px-3 py-1 text-[13px] ${show === v ? 'border-white bg-white text-black' : 'border-white/30 text-white/80 hover:border-white/60'}`}
+      onClick={() => setShow(v)}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <>
+      <div className="sticky top-[-32px] z-10 -mx-2 flex flex-wrap items-center gap-2 rounded-[12px] bg-[#1b1c1f]/95 px-2 py-3 backdrop-blur">
+        <input
+          type="search"
+          value={search}
+          placeholder="Find a singer"
+          aria-label="Find a singer by name or description"
+          className="min-w-[200px] flex-1 rounded-full border border-line bg-[#141518] px-4 py-1.5 text-[14px] text-white outline-none focus:border-white/40"
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {chip('all', 'All')}
+        {chip('yours', 'Yours')}
+        {chip('builtIn', 'Built-in')}
+        <span className="text-[12px] text-white/50">
+          {shown.length} of {singers.length}
+        </span>
+        <button
+          type="button"
+          className="rounded-full bg-white px-3 py-1 text-[13px] font-medium text-black"
+          onClick={() => document.getElementById('add-a-singer')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        >
+          Add a singer
+        </button>
+      </div>
+      {shown.length === 0 ? <p className="text-[14px] text-white/55">No singer matches.</p> : null}
+      {shown.map((s) => (
+        <SingerCard key={s.id} singer={s} />
+      ))}
+    </>
+  );
+}
+
+/** One singer: its name, description, voice reference, Rename and Delete (a built-in singer for this user only); under
+ *  Details its test line (the user's own), speaking voice and source. */
+export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer: SingerInfo; open?: boolean }) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState(s.name);
   const [error, setError] = useState<string | undefined>(undefined);
+  const nameProblem = newName.trim() === '' ? 'Give the singer a name' : newName.trim().length > 60 ? 'At most 60 characters' : undefined;
+  const rename = async () => {
+    setError(undefined);
+    try {
+      await singersApi.rename(s.id, newName.trim());
+      await queryClient.invalidateQueries({ queryKey: singersQueryKey });
+      setRenaming(false);
+    } catch (err) {
+      setError(`Could not rename ${s.name}: ${message(err)}`);
+    }
+  };
   const remove = async () => {
     setError(undefined);
     try {
@@ -93,10 +166,49 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
     <section className="flex flex-col gap-3 rounded-[12px] border border-line bg-panel p-5">
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-[17px] font-semibold">
-            {s.name}
-            {s.own ? <span className="ml-2 rounded-full border border-white/20 px-2 py-0.5 align-middle text-[11px] font-normal text-white/60">yours</span> : null}
-          </h2>
+          {renaming ? (
+            <form
+              className="flex items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!nameProblem) void rename();
+              }}
+            >
+              <input
+                autoFocus
+                type="text"
+                maxLength={60}
+                value={newName}
+                aria-label={`New name for ${s.name}`}
+                className="min-w-0 flex-1 rounded-[8px] border border-line bg-[#141518] px-3 py-1 text-[15px] text-white outline-none focus:border-white/40"
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setRenaming(false);
+                    setNewName(s.name);
+                  }
+                }}
+              />
+              <button type="submit" disabled={nameProblem !== undefined} title={nameProblem} className="rounded-full bg-white px-3 py-1 text-[13px] font-medium text-black disabled:opacity-40">
+                Save
+              </button>
+              <button
+                type="button"
+                className="rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60"
+                onClick={() => {
+                  setRenaming(false);
+                  setNewName(s.name);
+                }}
+              >
+                Cancel
+              </button>
+            </form>
+          ) : (
+            <h2 className="text-[17px] font-semibold">
+              {s.name}
+              {s.own ? <span className="ml-2 rounded-full border border-white/20 px-2 py-0.5 align-middle text-[11px] font-normal text-white/60">yours</span> : null}
+            </h2>
+          )}
           <p className="mt-1 text-[14px] text-white/75">{s.description}</p>
         </div>
         {confirming ? (
@@ -109,10 +221,22 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
                 Keep
               </button>
             </span>
-          ) : (
-            <button type="button" className="shrink-0 rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60" onClick={() => setConfirming(true)}>
-              Delete
-            </button>
+          ) : renaming ? null : (
+            <span className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                className="rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60"
+                onClick={() => {
+                  setNewName(s.name);
+                  setRenaming(true);
+                }}
+              >
+                Rename
+              </button>
+              <button type="button" className="rounded-full border border-white/30 px-3 py-1 text-[13px] text-white/80 hover:border-white/60" onClick={() => setConfirming(true)}>
+                Delete
+              </button>
+            </span>
           )}
       </div>
       <div className="flex flex-col gap-1">
@@ -122,14 +246,21 @@ export function SingerCard({ singer: s }: { singer: SingerInfo }) {
         </span>
         <audio controls preload="none" src={s.previewUrl} className="w-full" aria-label={`${s.name}: voice reference`} />
       </div>
-      {s.testLineUrl ? (
-        <div className="flex flex-col gap-1">
-          <span className="text-[12px] text-white/55">Test line, sung in this voice</span>
-          <audio controls preload="none" src={s.testLineUrl} className="w-full" aria-label={`${s.name}: test line`} />
-        </div>
+      <button type="button" aria-expanded={open} className="self-start text-[13px] text-white/60 hover:text-white" onClick={() => setOpen(!open)}>
+        {open ? '▾' : '▸'} Details
+      </button>
+      {open ? (
+        <>
+          {s.testLineUrl ? (
+            <div className="flex flex-col gap-1">
+              <span className="text-[12px] text-white/55">Test line, sung in this voice</span>
+              <audio controls preload="none" src={s.testLineUrl} className="w-full" aria-label={`${s.name}: test line`} />
+            </div>
+          ) : null}
+          <SpeakingVoiceSection singer={s} />
+          <p className="text-[12px] text-white/45">{s.source}</p>
+        </>
       ) : null}
-      <SpeakingVoiceSection singer={s} />
-      <p className="text-[12px] text-white/45">{s.source}</p>
       {error ? (
         <p className="text-[13px] text-err" role="alert">
           {error}
@@ -317,7 +448,7 @@ export function AddSingerPanel({ initial = EMPTY }: { initial?: AddSingerForm })
   };
   const field = 'rounded-[8px] border border-line bg-[#141518] px-3 py-2 text-[14px] text-white outline-none focus:border-white/40';
   return (
-    <section className="flex flex-col gap-4 rounded-[12px] border border-line bg-panel p-5" aria-label="Add a singer">
+    <section id="add-a-singer" className="flex scroll-mt-4 flex-col gap-4 rounded-[12px] border border-line bg-panel p-5" aria-label="Add a singer">
       <div>
         <h2 className="text-[17px] font-semibold">Add a singer</h2>
         <p className="mt-1 text-[13px] text-white/55">

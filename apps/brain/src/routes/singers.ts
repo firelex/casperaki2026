@@ -69,7 +69,8 @@ export function readSingers(dir: string): Singer[] {
  *  owner's own. An Error for an unknown singer. */
 export function speakingSinger(dir: string, users: UserSingers | undefined, ownerId: string, id: string): SpeakingSinger {
   const builtIn = readSingers(dir).find((s) => s.id === id && !users?.hiddenBuiltIns(ownerId).has(id));
-  if (builtIn) return { id, name: builtIn.name, description: builtIn.description, audio: join(resolve(dir), builtIn.audio), meta: join(resolve(dir), builtIn.meta), builtIn: true };
+  // A built-in singer the owner renamed speaks under that name (casting); one never renamed keeps its own.
+  if (builtIn) return { id, name: users?.builtInNames(ownerId)[id] ?? builtIn.name, description: builtIn.description, audio: join(resolve(dir), builtIn.audio), meta: join(resolve(dir), builtIn.meta), builtIn: true };
   const own = users?.get(ownerId, id);
   if (own) return { id, name: own.name, description: own.description, audio: join(users!.dir(ownerId, id), own.audio), meta: join(users!.dir(ownerId, id), own.meta), builtIn: false };
   throw new Error(`There is no singer "${id}".`);
@@ -112,6 +113,8 @@ function ownJson(s: UserSinger) {
   };
 }
 
+const RenameBody = z.object({ name: z.string().trim().min(1).max(60) }).strict();
+
 const StartQuery = z
   .object({
     name: z.string(),
@@ -136,10 +139,13 @@ export interface SingersRouterDeps {
 export function createSingersRouter(deps: SingersRouterDeps): Router {
   const router = Router();
   const own = (owner: string) => deps.users?.list(owner) ?? [];
-  /** The built-in singers the owner has not deleted. */
+  /** The built-in singers the owner has not deleted, under the names the owner gave them. */
   const builtIns = (owner: string) => {
     const hidden = deps.users?.hiddenBuiltIns(owner) ?? new Set<string>();
-    return readSingers(deps.dir).filter((s) => !hidden.has(s.id));
+    const names = deps.users?.builtInNames(owner) ?? {};
+    return readSingers(deps.dir)
+      .filter((s) => !hidden.has(s.id))
+      .map((s) => (names[s.id] ? { ...s, name: names[s.id]! } : s));
   };
 
   router.get('/api/singers', (req, res) => {
@@ -234,6 +240,21 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
     if (!voice) return res.status(404).json({ error: 'not_found', message: 'The singer has no speaking voice yet.' });
     if (!voice.candidates.some((c) => c.seed === body.data.seed)) return res.status(400).json({ error: 'not_a_candidate', message: `${body.data.seed} is not one of the singer's candidate voices.` });
     return res.json({ speaking: speakingJson(deps.voices!.choose(s.owner, req.params.id, s.builtIn, body.data.seed), req.params.id) });
+  });
+
+  // Rename (owner 2026-11-28): an added singer in its list; a built-in one for this owner only.
+  router.put('/api/singers/:id/name', express.json(), (req, res) => {
+    const owner = ownerOf(req);
+    const body = RenameBody.safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_name', message: 'A singer needs a name of 1 to 60 characters.' });
+    const name = body.data.name;
+    if (builtIns(owner).some((s) => s.id === req.params.id)) {
+      if (!deps.users) return res.status(503).json({ error: 'not_configured', message: 'Renaming a built-in singer needs BRAIN_SINGERS_DATA_DIR (where each user\'s singers are kept).' });
+      deps.users.nameBuiltIn(owner, req.params.id, name);
+      return res.json({ id: req.params.id, name });
+    }
+    if (!deps.users?.rename(owner, req.params.id, name)) return res.status(404).json({ error: 'not_found', message: `There is no singer "${req.params.id}".` });
+    return res.json({ id: req.params.id, name });
   });
 
   router.delete('/api/singers/:id', (req, res) => {

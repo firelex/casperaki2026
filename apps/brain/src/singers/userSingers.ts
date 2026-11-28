@@ -141,6 +141,31 @@ export class UserSingers {
     renameSync(tmp, file);
   }
 
+  /** Renames one of the owner's singers: false when the owner has no such singer. */
+  rename(ownerId: string, singerId: string, name: string): boolean {
+    const singers = this.list(ownerId);
+    if (!singers.some((s) => s.id === singerId)) return false;
+    this.write(ownerId, singers.map((s) => (s.id === singerId ? UserSingerSchema.parse({ ...s, name }) : s)));
+    return true;
+  }
+
+  /** The names the owner gave built-in singers (id -> name; a built-in not listed keeps its own). */
+  builtInNames(ownerId: string): Record<string, string> {
+    const file = join(this.root, ownerFolder(ownerId), 'names.json');
+    if (!existsSync(file)) return {};
+    return z.record(z.string().min(1), z.string().min(1)).parse(JSON.parse(readFileSync(file, 'utf8')));
+  }
+
+  /** Renames a built-in singer for the owner only (its files and its name for everyone else stay). */
+  nameBuiltIn(ownerId: string, singerId: string, name: string): void {
+    const names = { ...this.builtInNames(ownerId), [singerId]: name };
+    const file = join(this.root, ownerFolder(ownerId), 'names.json');
+    mkdirSync(join(file, '..'), { recursive: true });
+    const tmp = `${file}.part-${process.pid}`;
+    writeFileSync(tmp, `${JSON.stringify(names, null, 1)}\n`);
+    renameSync(tmp, file);
+  }
+
   /** Deletes the folder of a singer that never joined the list (its recording refused before the task started). */
   discard(ownerId: string, singerId: string): void {
     if (this.list(ownerId).some((s) => s.id === singerId)) throw new Error(`singers: ${singerId} is listed: delete it with remove`);

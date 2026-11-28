@@ -127,6 +127,8 @@ export const singersApi = {
     return body as { task: BackgroundTask };
   },
   remove: (id: string) => defaultBrainClient.delete<{ deleted: string }>(`/api/singers/${encodeURIComponent(id)}`),
+  /** A new name: an added singer's, or a built-in singer's for this user only. */
+  rename: (id: string, name: string) => defaultBrainClient.put<{ id: string; name: string }>(`/api/singers/${encodeURIComponent(id)}/name`, { name }),
   /** Makes the singer's speaking voice: from the singing (no description) or from the user's own description. */
   makeSpeakingVoice: (id: string, description?: string) =>
     defaultBrainClient.post<{ task: BackgroundTask }>(`/api/singers/${encodeURIComponent(id)}/speaking-voice`, description === undefined ? {} : { description: description.trim() }),

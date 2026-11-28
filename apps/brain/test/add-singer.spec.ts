@@ -129,6 +129,29 @@ describe('Add a singer', () => {
     expect(existsSync(join(BUILT_IN, 'yue2_female_dry2.mp3'))).toBe(true);
   });
 
+  it('renames a singer: an added one in its list, a built-in one for this owner only; a blank or too long name is refused (owner 2026-11-28)', async () => {
+    await boot(fullEnv());
+    await upload(toneWav(20));
+    await tasks.idle();
+    const mine = ((await get('/api/singers')).body.singers as Array<Record<string, any>>).find((s) => s.own)!;
+    const rename = (id: string, name: unknown) =>
+      fetch(`${url}/api/singers/${id}/name`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name }) });
+
+    const a = await rename(mine.id, '  Velvet  ');
+    expect(a.status).toBe(200);
+    expect(await a.json()).toMatchObject({ id: mine.id, name: 'Velvet' });
+    expect((await rename('yue2_female_dry2', 'Aurora')).status).toBe(200);
+    expect(((await get('/api/singers')).body.singers as Array<Record<string, any>>).map((s) => s.name)).toEqual(['Aurora', 'Velvet']);
+    // the speaking side (casting) uses the new name too; another owner still sees the built-in's own name
+    const users = new UserSingers(join(dir, 'singers'));
+    expect(users.builtInNames(DEV_OWNER_ID)).toEqual({ yue2_female_dry2: 'Aurora' });
+    expect(users.builtInNames('someone-else')).toEqual({});
+
+    expect((await rename(mine.id, '   ')).status).toBe(400);
+    expect((await rename(mine.id, 'x'.repeat(61))).status).toBe(400);
+    expect((await rename('u-000000000000', 'Nobody')).status).toBe(404);
+  });
+
   it('can be cancelled while it runs, then started again from the kept recording', async () => {
     await boot(fullEnv());
     svc.hold('add_singer');

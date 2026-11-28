@@ -9,7 +9,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { addSingerProblem, extensionOf, referenceText, singersApi, speakingDescriptionProblem, type AddSingerForm, type SingerInfo } from '../src/api/singers';
 import { TASK_LABELS, type BackgroundTask } from '../src/api/tasks';
 import { taskPage } from '../src/layout/TasksMenu';
-import { AddSingerPanel, SingerCard, speakingTaskState } from '../src/pages/SingersPage';
+import { AddSingerPanel, SingerCard, shownSingers, speakingTaskState } from '../src/pages/SingersPage';
 import { mergeOp } from '../src/state/tasks';
 
 const file = (name: string, type = 'audio/wav') => new File([new Uint8Array([1, 2, 3])], name, { type });
@@ -79,7 +79,7 @@ const own: SingerInfo = {
 
 describe('the Singers page', () => {
   it("shows an own singer's voice reference with how it was chosen, its test line and Delete", () => {
-    const out = html(createElement(SingerCard, { singer: own }));
+    const out = html(createElement(SingerCard, { singer: own, open: true }));
     expect(out).toMatch(/The best stretch: 9.1 s, from 5.2 s to 14.2 s of the recording/u);
     expect(out).toMatch(/sung as &quot;la la la&quot;/u);
     expect(out).toMatch(/src="\/api\/singers\/u-0123456789ab\/test-line"/u);
@@ -92,6 +92,39 @@ describe('the Singers page', () => {
     const out = html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false, speaking: null } }));
     expect(out).not.toMatch(/Test line|>yours</u);
     expect(out).toMatch(/>Delete</u);
+  });
+});
+
+describe('a navigable Singers page (owner 2026-11-28: "allow rename of singers", "a bit more navigable if there are more singers")', () => {
+  const s = (id: string, name: string, own: boolean, description = 'd'): SingerInfo => ({ id, name, description, source: 's', previewUrl: '/p', own, speaking: null });
+  const all = [s('b', 'Zara', false), s('u-1', 'anna', true, 'Warm and husky'), s('c', 'Milo', false, 'bright tenor')];
+
+  it('lists the singers by name, finds them by name or description, and shows yours or the built-in ones only', () => {
+    expect(shownSingers(all, '', 'all').map((x) => x.name)).toEqual(['anna', 'Milo', 'Zara']);
+    expect(shownSingers(all, 'HUSK', 'all').map((x) => x.name)).toEqual(['anna']);
+    expect(shownSingers(all, 'tenor', 'all').map((x) => x.name)).toEqual(['Milo']);
+    expect(shownSingers(all, '', 'yours').map((x) => x.name)).toEqual(['anna']);
+    expect(shownSingers(all, '', 'builtIn').map((x) => x.name)).toEqual(['Milo', 'Zara']);
+  });
+
+  it('a card offers Rename next to Delete, and keeps its test line and speaking voice under Details until opened', () => {
+    const closed = html(createElement(SingerCard, { singer: own }));
+    expect(closed).toMatch(/>Rename</u);
+    expect(closed).toMatch(/Details</u);
+    expect(closed).toMatch(/src="\/api\/singers\/u-0123456789ab\/preview"/u);
+    expect(closed).not.toMatch(/test-line|Speaking voice/u);
+    const opened = html(createElement(SingerCard, { singer: own, open: true }));
+    expect(opened).toMatch(/test-line/u);
+    expect(opened).toMatch(/Speaking voice/u);
+  });
+
+  it('renames through the brain', async () => {
+    const put = vi.fn().mockResolvedValue({ id: 'u-1', name: 'Velvet' });
+    const { defaultBrainClient } = await import('../src/api/client');
+    const spy = vi.spyOn(defaultBrainClient, 'put').mockImplementation(put);
+    await singersApi.rename('u-1', 'Velvet');
+    expect(put).toHaveBeenCalledWith('/api/singers/u-1/name', { name: 'Velvet' });
+    spy.mockRestore();
   });
 });
 
@@ -119,7 +152,7 @@ describe('speaking voices on the Singers page', () => {
   };
 
   it('plays the speaking voice with its description, and offers the other candidates and describing it yourself', () => {
-    const out = html(createElement(SingerCard, { singer: { ...own, speaking } }));
+    const out = html(createElement(SingerCard, { singer: { ...own, speaking }, open: true }));
     expect(out).toMatch(/Speaking voice/u);
     expect(out).toMatch(/bright, fairly high speaking voice/u);
     expect(out).toMatch(/src="\/api\/singers\/u-0123456789ab\/speaking-sample\?v=1"/u);
@@ -128,7 +161,7 @@ describe('speaking voices on the Singers page', () => {
   });
 
   it('offers to make one when the singer has none', () => {
-    const out = html(createElement(SingerCard, { singer: { ...own, speaking: null } }));
+    const out = html(createElement(SingerCard, { singer: { ...own, speaking: null }, open: true }));
     expect(out).toMatch(/Make a speaking voice/u);
     expect(out).not.toMatch(/speaking-sample/u);
   });
