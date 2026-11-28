@@ -4,7 +4,7 @@
 // start, in the middle or at the end of the section.
 
 import { createRng } from '@casperaki/music-theory';
-import { parseSong, type Song } from '@casperaki/song-schema';
+import { baseGenre, parseSong, type Song } from '@casperaki/song-schema';
 
 import { buildEdmSnareRollPattern } from '../arrangement-polish/edm-snare-roll.js';
 import { EDM_SNARE_DRUM_ROLL, EDM_SNARE_ROLL_MAX_BARS } from '../arrangement-polish/transitions.js';
@@ -115,7 +115,7 @@ function soundFor(
   }
   if (!working.genre) throw new TrackEditError(400, 'no_genre', 'The song has no genre to pick a transition sound for.');
   const seed = String((working.generator?.params as { seed?: unknown } | undefined)?.seed ?? working.title);
-  const picked = pickTransitionSound(catalog, req.type, { genre: working.genre, ...ctx }, `${seed}/user`, seg.name);
+  const picked = pickTransitionSound(catalog, req.type, { genre: baseGenre(working.genre), ...ctx }, `${seed}/user`, seg.name);
   if (!picked) throw new TrackEditError(400, 'no_sound', `No ${label} recording fits ${seg.name}.`);
   return picked.entry.id;
 }

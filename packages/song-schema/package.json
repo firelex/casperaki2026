@@ -26,6 +26,10 @@
     "./ace-layer": {
       "types": "./dist/ace-layer.d.ts",
       "import": "./dist/ace-layer.js"
+    },
+    "./genres": {
+      "types": "./dist/genres.d.ts",
+      "import": "./dist/genres.js"
     }
   },
   "files": [

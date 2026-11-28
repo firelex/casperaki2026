@@ -70,6 +70,7 @@ import { readFileSync } from 'node:fs';
 
 import type { ValidatedCatalog, ValidatedCatalogEntry } from '@casperaki/arrangement';
 import { resolveTransitionSound } from '@casperaki/arrangement';
+import { baseGenre, SongGenreSchema } from '@casperaki/song-schema';
 import type {
   AdapterDiagnostic,
   InstrumentDefinition,
@@ -231,6 +232,11 @@ export interface EngineFixture {
 }
 
 const DEFAULT_GENERATOR_NAME = '@casperaki/arrangement.orchestrate';
+
+/** The genre the engine and the catalogue tags know: a genre recipe's base genre; any other genre as it is. */
+function engineGenre(genre: string): string {
+  return SongGenreSchema.safeParse(genre).success ? baseGenre(genre) : genre;
+}
 
 // Phase-2 known-good engine envelope. Read at module init from the fixture
 // dir shipped with this package. The envelope is the shape the native engine
@@ -1042,7 +1048,8 @@ export function toEngineFixture(
 
   envelope.tempo = song.bpm;
   envelope.key = song.key;
-  if (song.genre !== undefined) envelope.genre = song.genre;
+  // A derived genre (genre recipe) goes as its base genre: the engine's mix tables know only those.
+  if (song.genre !== undefined) envelope.genre = engineGenre(song.genre);
   envelope.brainProvenance = {
     generator: options.generatorName ?? DEFAULT_GENERATOR_NAME,
     hash: options.brainHash,
@@ -1332,7 +1339,7 @@ export function toEngineFixture(
   if (options.transitionCatalog && options.getTransitionSampleDetails) {
     const cat = options.transitionCatalog;
     const probe = options.getTransitionSampleDetails;
-    const genre = song.genre ?? 'brightPop';
+    const genre = engineGenre(song.genre ?? 'brightPop');
     let nextId = options.transitionPlaysampleIdBase ?? 40000;
     let nextFilenameIdx = options.transitionInstFilenameStart ?? nextInstIndex();
     const tempo = song.bpm;

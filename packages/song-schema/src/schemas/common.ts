@@ -93,8 +93,18 @@ export const DEFAULT_BPM_BY_GENRE = Object.fromEntries(
   Object.entries(GENRE_TEMPO_RANGES).map(([genre, range]) => [genre, range.defaultBpm]),
 ) as Readonly<Record<Genre, number>>;
 
+/** Derived genres (genre recipes, ../genres.ts) → their base genre: registered by genres.ts as it loads (it imports this
+ *  module, so it cannot be imported from here), so a recipe's tempo range is its base genre's. */
+const DERIVED_GENRE_BASES = new Map<string, Genre>();
+export function registerDerivedGenre(genre: string, base: Genre): void {
+  if (GenreSchema.safeParse(genre).success) throw new Error(`registerDerivedGenre: "${genre}" is a base genre`);
+  DERIVED_GENRE_BASES.set(genre, base);
+}
+
 export function tempoRangeForGenre(genre: string): GenreTempoRange | undefined {
-  return (GENRE_TEMPO_RANGES as Readonly<Record<string, GenreTempoRange>>)[genre];
+  const ranges = GENRE_TEMPO_RANGES as Readonly<Record<string, GenreTempoRange>>;
+  const base = DERIVED_GENRE_BASES.get(genre);
+  return base ? ranges[base] : ranges[genre];
 }
 
 export function isBpmInGenreTempoRange(genre: string, bpm: number): boolean {

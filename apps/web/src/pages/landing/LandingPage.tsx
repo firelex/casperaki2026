@@ -179,7 +179,7 @@ function Difference() {
 const STEPS: ReadonlyArray<{ title: string; body: string; slot: string; note: string }> = [
   {
     title: 'Pick a genre and a tempo',
-    body: 'Ballad, bright pop, EDM, Latin, organic, rock, Schlager or urban. Give it a title if you like.',
+    body: 'Ballad, bright pop, Casperaki pop, dance, Latin, organic, rock, Schlager or urban. Give it a title if you like.',
     slot: 'step-genre',
     note: 'The "Create a project" dialog with genre and tempo chosen',
   },

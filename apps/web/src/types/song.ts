@@ -1,3 +1,5 @@
+import { GENRE_RECIPES, type SongGenre } from '@casperaki/song-schema/genres';
+import { GenreSchema } from '@casperaki/song-schema/schemas';
 /**
  * Song view helpers.
  *
@@ -26,17 +28,12 @@ import type {
   SongStructure,
 } from '@casperaki/song-schema';
 
-/** Canonical brain-accepted genres mirrored from the Zod enum. Kept in sync manually. */
-export const CANONICAL_GENRES: readonly Genre[] = [
-  'ballad',
-  'brightPop',
-  'edm',
-  'latin',
-  'organicVibes',
-  'rock',
-  'schlager',
-  'urban',
-];
+/** The genres a new song can have, in the order the tiles show them: each base genre, a genre recipe after its base
+ *  (Casperaki Pop after Bright pop). */
+export const CANONICAL_GENRES: readonly SongGenre[] = GenreSchema.options.flatMap((g) => [
+  g,
+  ...(Object.entries(GENRE_RECIPES) as [SongGenre, { base: string }][]).filter(([, r]) => r.base === g).map(([k]) => k),
+]);
 
 /** Instrument families the engine adapter currently understands. */
 export const TONAL_FAMILIES = ['Drums', 'Bass', 'Keys', 'Pad'] as const;

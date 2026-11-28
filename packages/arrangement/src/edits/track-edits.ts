@@ -15,7 +15,7 @@
 // SPLICES only the edited track into the working song, section by section.
 
 import { createRng } from '@casperaki/music-theory';
-import { parseSong, type InstrumentDefinition, type SegmentPayload, type Song } from '@casperaki/song-schema';
+import { baseGenre, parseSong, type InstrumentDefinition, type SegmentPayload, type Song } from '@casperaki/song-schema';
 import { z } from 'zod';
 
 import { segmentType } from '../arrangement-polish/segment-type.js';
@@ -98,7 +98,7 @@ export function trackOptions(song: Song): TrackOptions {
       sounds:
         family === 'drums'
           ? []
-          : familySoundPool(family, params.genre).map((e) => ({ id: e.id, name: publicNameOf(e) })),
+          : familySoundPool(family, baseGenre(params.genre)).map((e) => ({ id: e.id, name: publicNameOf(e) })),
     }))
     .filter((f) => f.family === 'drums' || f.sounds.length > 0);
   return { tracks, families };
@@ -167,7 +167,7 @@ export function editTrack(working: Song, op: TrackEditRequest): { song: Song; tr
     }
     if (op.kind === 'changeSound') {
       if (family === 'drums') throw drumKitFixed();
-      const sound = soundIn(family, params.genre, op.soundId);
+      const sound = soundIn(family, baseGenre(params.genre), op.soundId);
       recorded = { kind: 'changeSound', track, soundId: sound };
     } else {
       const variant = 1 + existing.filter((e) => e.kind === 'newPattern' && e.track === track).length;
@@ -179,7 +179,7 @@ export function editTrack(working: Song, op: TrackEditRequest): { song: Song; tr
     }
     activation = new Set(op.segments);
     if (op.family === 'drums' && op.soundId) throw drumKitFixed();
-    const pool = familySoundPool(op.family, params.genre);
+    const pool = familySoundPool(op.family, baseGenre(params.genre));
     if (op.family !== 'drums' && pool.length === 0) {
       throw new TrackEditError(400, 'no_sounds', `There are no ${FAMILY_LABELS[op.family].toLowerCase()} sounds for this genre.`);
     }
@@ -195,7 +195,7 @@ export function editTrack(working: Song, op: TrackEditRequest): { song: Song; tr
     } else {
       track = freeLaneName(op.family, new Set([...names, ...generated]));
       const soundId = op.soundId
-        ? soundIn(op.family, params.genre, op.soundId)
+        ? soundIn(op.family, baseGenre(params.genre), op.soundId)
         : createRng(params.seed).fork(`trackEdit/add/${track}`).pick(pool).id;
       const baseSections = base.songStructure.map((s) => s.name);
       const segments = [

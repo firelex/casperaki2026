@@ -5,7 +5,7 @@
 // The brain writes the words (a language model); this module is pure: it says which lines the melody has, checks
 // nothing itself (see vocals/written-lyrics.ts) and splices regenerated sections into the working song.
 
-import { parseSong, SUNG_TAKE_KINDS, vocalTakeFingerprint, Sha256Schema, type AIArtifact, type Song } from '@casperaki/song-schema';
+import { baseGenre, parseSong, SUNG_TAKE_KINDS, vocalTakeFingerprint, Sha256Schema, type AIArtifact, type Song } from '@casperaki/song-schema';
 
 import { segmentType } from '../arrangement-polish/segment-type.js';
 import type { GenerateParams } from '../context.js';
@@ -512,7 +512,7 @@ export function newRhythm(working: Song, type: string): Song {
   const before = vocalSignature(current, type);
   const variants = rhythmVariantsOf(params.params);
   for (let v = (variants[type] ?? 0) + 1, tries = 0; tries < MELODY_TRIES; v++, tries++) {
-    const rhythm = drawRhythm({ desiredPatternLength: bars, segmentType: type, genre: params.genre, tempo: params.bpm, rng: createRng(`${params.seed}/vocals/rhythm/${type}#v${v}`) });
+    const rhythm = drawRhythm({ desiredPatternLength: bars, segmentType: type, genre: baseGenre(params.genre), tempo: params.bpm, rng: createRng(`${params.seed}/vocals/rhythm/${type}#v${v}`) });
     const recuts = Object.fromEntries(parts.map((part) => [part, recutRhythm(rhythm, lines[part]!, { bpm: params.bpm, bars, echo: ECHO_TYPES.has(type) })]));
     const next = paramsWithoutSung(withRhythms(params, new Set([type]), recuts, { [type]: v }), new Set([type]));
     if (vocalSignature(orchestrate(next), type) === before) continue;

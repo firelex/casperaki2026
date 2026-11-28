@@ -28,10 +28,16 @@
 import { MidiNoteSchema, type Segment } from '@casperaki/song-schema';
 
 import type { GeneratorContext } from '../context.js';
+import { segmentType } from '../arrangement-polish/segment-type.js';
 import { selectDrumBlueprint, selectPreviewDrumBlueprint, BEATS_PER_LEGACY_BAR } from './drums-bank.js';
 import { drumPreviewFromParams } from './proposals.js';
 import { addNoteEvent, emptyBarPattern } from './shared.js';
 import type { BarPattern, FamilyPattern, InstrumentFamily } from './types.js';
+
+/** The drum styles a genre recipe gives a section (by its type, "verse2" → verse), or undefined for the genre's own. */
+export function drumStylesFor(ctx: Pick<GeneratorContext, 'recipe'>, sectionName: string): readonly string[] | undefined {
+  return ctx.recipe?.drumStyles[segmentType(sectionName)];
+}
 
 export function generateDrumPattern(
   ctx: GeneratorContext,
@@ -39,11 +45,13 @@ export function generateDrumPattern(
   activity: readonly InstrumentFamily[],
 ): FamilyPattern | undefined {
   if (!activity.includes('drums')) return undefined;
-  const rng = ctx.rng.fork('patterns/drums');
+  // A genre recipe's drum styles for this section type come from their own stream (the other sections keep theirs).
+  const styles = drumStylesFor(ctx, segment.name);
+  const rng = styles ? ctx.rng.fork(`patterns/drums/${segmentType(segment.name)}`) : ctx.rng.fork('patterns/drums');
 
   // Pattern lab: a preview forces a proposed pattern in place of the genre's styles.
   const preview = drumPreviewFromParams(ctx.params.params);
-  const selection = preview ? selectPreviewDrumBlueprint(rng, preview) : selectDrumBlueprint(rng, ctx.params.genre);
+  const selection = preview ? selectPreviewDrumBlueprint(rng, preview) : selectDrumBlueprint(rng, ctx.params.genre, styles);
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
   for (const [lane, positions] of Object.entries(selection.blueprint)) {

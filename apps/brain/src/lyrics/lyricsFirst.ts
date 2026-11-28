@@ -6,6 +6,7 @@
 // lines, up to MAX_ROUNDS answers in all, without reasoning (about 1.5 s each) but for the last REASONING_ROUNDS. Still wrong after that: an error
 // naming the lines. The arrangement then bends a rhythm to the words (applyLyricsFirst).
 
+import { baseGenre } from '@casperaki/song-schema';
 import { checkFreeLyrics, MAX_LINE_SYLLABLES, MIN_LINE_SYLLABLES, type FreeLyricsProblem, type LyricsByType } from '@casperaki/arrangement';
 import { z } from 'zod';
 
@@ -64,6 +65,7 @@ const GENRE_LABELS: Readonly<Record<string, string>> = {
   latin: 'Latin pop',
   organicVibes: 'warm, organic, acoustic-leaning pop',
   rock: 'pop rock',
+  schlager: 'Schlager-style sing-along pop',
   urban: 'urban pop (R&B and hip-hop feel)',
 };
 
@@ -78,7 +80,8 @@ function verses(r: LyricsFirstRequest): string {
 }
 
 function brief(r: LyricsFirstRequest): string {
-  const genre = GENRE_LABELS[r.genre];
+  // A genre recipe (Casperaki Pop) is written for as its base genre.
+  const genre = GENRE_LABELS[baseGenre(r.genre)];
   if (!genre) throw new Error(`lyrics first: no description of the genre "${r.genre}" for the lyric writer`);
   const parts = r.types.map((t) => `${t.label} (${t.lines} lines)`).join(', ');
   return [

@@ -10,7 +10,8 @@
 // the parent rng directly. This way adding/removing a generator doesn't
 // shift any other generator's output.
 
-import type { Rng } from '@casperaki/music-theory';
+import { createRng, type Rng } from '@casperaki/music-theory';
+import { genreRecipe, type GenreRecipe } from '@casperaki/song-schema';
 
 export interface GenerateParams {
   /** Genre key. Generators validate against the canonical brain
@@ -32,7 +33,18 @@ export interface GenerateParams {
 
 export interface GeneratorContext {
   readonly rng: Rng;
+  /** The params as generated: a derived genre's are its base genre's (`params.genre` is a base genre). */
   readonly params: GenerateParams;
+  /** The song's genre recipe, when its genre is a derived one (docs/superpowers/specs/2026-11-28-genre-recipes-design.md). */
+  readonly recipe?: GenreRecipe;
+}
+
+/** The context a song's params are generated in: a derived genre runs as its base genre, with its recipe at hand. */
+export function generatorContext(params: GenerateParams): GeneratorContext {
+  const recipe = genreRecipe(params.genre);
+  return recipe
+    ? { params: { ...params, genre: recipe.base }, rng: createRng(params.seed), recipe }
+    : { params, rng: createRng(params.seed) };
 }
 
 /** Marker for values that depend on the seeded RNG — purely documentary today. */

@@ -2,7 +2,7 @@
 // sing yet, so the preview window plays the melody (one note per syllable,
 // same pitch and length) on an acoustic piano instead.
 
-import { parseSong, type Song } from '@casperaki/song-schema';
+import { baseGenre, parseSong, type Song } from '@casperaki/song-schema';
 
 import { loadValidatedCatalog, type ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
 import { instrumentDefinitionFromCatalog } from '../orchestrate/index.js';
@@ -31,7 +31,7 @@ export function vocalAsPiano(song: Song, track: string): { song: Song; piano: Va
     throw new TrackEditError(400, 'not_a_preview', `Send a preview song holding only the track "${track}".`);
   }
   if (!song.genre) throw new TrackEditError(400, 'no_genre', 'The song has no style to pick a piano for.');
-  const piano = previewPiano(song.genre);
+  const piano = previewPiano(baseGenre(song.genre));
   let notes = 0;
   const arrangement: Song['arrangement'] = {};
   for (const [name, payload] of Object.entries(song.arrangement)) {

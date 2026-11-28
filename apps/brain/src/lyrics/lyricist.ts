@@ -13,6 +13,7 @@
 // repairs are written without reasoning (seconds each); the last two repairs reason. Lines still wrong after that:
 // an error naming them. There is no fallback, and every chosen section passes checkSectionLyrics before it is used.
 
+import { baseGenre, SongGenreSchema } from '@casperaki/song-schema';
 import {
   checkLyricLine,
   checkSectionLyrics,
@@ -114,7 +115,7 @@ const SMALL_WORDS = [...UNSTRESSED_SMALL_WORDS].map((w) => `"${w}"`).join(', ');
 
 /** The plain-English brief for the model. */
 export function lyricsBrief(song: Song, parts: readonly Part[], context: readonly { label: string; words: readonly string[] }[], title: string | undefined): string {
-  const genre = (song.genre && GENRE_LABELS[song.genre]) ?? 'pop';
+  const genre = (song.genre && GENRE_LABELS[SongGenreSchema.safeParse(song.genre).success ? baseGenre(song.genre) : song.genre]) ?? 'pop';
   const sung = sungSections(song);
   const partOf = new Map(parts.flatMap((p) => p.sections.map((s) => [s, p] as const)));
   const contextOf = new Map(context.map((c) => [c.label, c] as const));

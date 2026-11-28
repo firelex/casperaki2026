@@ -7,6 +7,7 @@
 // A failed call leaves the placeholder in place and is logged as an error: the
 // song is fully usable either way, and the user can rename it by hand.
 
+import { genreLabel } from '@casperaki/song-schema';
 import { writtenLyricsOf } from '@casperaki/arrangement';
 import type { Song } from '@casperaki/song-schema';
 import type { SongsStore } from '../store.js';
@@ -114,7 +115,7 @@ export function cleanTitle(raw: string): string {
 /** A plain-English request for one title, describing the song; `examples`: titles with the feel to aim for
  *  (titleBank.ts). */
 export function songPrompt(song: Song, takenTitles: readonly string[], examples: readonly string[]): string {
-  const genre = song.genre ? humanGenre(song.genre) : 'pop';
+  const genre = song.genre ? genreLabel(song.genre).toLowerCase() : 'pop';
   const sections = song.songStructure.map((s) => s.name.replace(/\d+$/u, '')).filter((n, i, all) => all.indexOf(n) === i);
   const instruments = song.instrumentDefinitions.map((d) => d.name).filter((n, i, all) => all.indexOf(n) === i);
   const lyrics = writtenLyricsOf((song.generator?.params as { params?: Record<string, unknown> } | undefined)?.params);
@@ -144,6 +145,3 @@ export function songPrompt(song: Song, takenTitles: readonly string[], examples:
   return lines.join('\n');
 }
 
-function humanGenre(genre: string): string {
-  return genre.replace(/([a-z])([A-Z])/gu, '$1 $2').toLowerCase();
-}

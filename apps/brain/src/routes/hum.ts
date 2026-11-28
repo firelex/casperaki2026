@@ -24,7 +24,7 @@ import express, { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { hum } from '@casperaki/arrangement';
-import { GenreSchema, formatGenreTempoRange, isBpmInGenreTempoRange } from '@casperaki/song-schema';
+import { formatGenreTempoRange, genreLabel, isBpmInGenreTempoRange, SongGenreSchema } from '@casperaki/song-schema';
 
 import {
   amtChords,
@@ -369,7 +369,7 @@ export function createHumRouter(deps: HumRouterDeps): Router {
     .object({
       analysisId: z.string(),
       alternative: z.number().int().min(0).max(2),
-      genre: GenreSchema,
+      genre: SongGenreSchema,
       title: z.string().trim().min(1).max(120).optional(),
       melody: z.array(z.unknown()).optional(),
       chords: z.array(z.string()).optional(),
@@ -388,7 +388,7 @@ export function createHumRouter(deps: HumRouterDeps): Router {
         return res.status(400).json({
           error: 'tempo_out_of_range',
           step: 'building the song',
-          message: `The hum is at ${a.bpm} bpm; ${genre} songs are ${formatGenreTempoRange(genre)}. Pick another style, or hum again with the click at a tempo in that range.`,
+          message: `The hum is at ${a.bpm} bpm; ${genreLabel(genre)} songs are ${formatGenreTempoRange(genre)}. Pick another style, or hum again with the click at a tempo in that range.`,
         });
       }
       let chorus: { melody: readonly BeatNote[]; chords: readonly string[] } = a.alternatives[alternative]!;

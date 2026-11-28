@@ -182,7 +182,7 @@ describe('assistant tools', () => {
     expect(() => runTool('go_to', {}, ctx)).toThrow(/either a section or a bar/u);
     expect(runTool('revert_to_original', {}, ctx).action).toEqual({ kind: 'revert' });
     expect(runTool('new_song', { genre: 'rock', key: 'E', bpm: 120 }, ctx).action).toEqual({ kind: 'newSong', genre: 'rock', key: 'E', bpm: 120 });
-    expect(() => runTool('new_song', { genre: 'ballad', key: 'E', bpm: 200 }, ctx)).toThrow(/ballad songs are/u);
+    expect(() => runTool('new_song', { genre: 'ballad', key: 'E', bpm: 200 }, ctx)).toThrow(/Ballad songs are/u);
   });
 
   it('changes a drum sound, edits sections and drum hits, and validates arguments', async () => {

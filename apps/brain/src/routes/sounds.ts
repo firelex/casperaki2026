@@ -15,7 +15,7 @@ import { Router, type Response } from 'express';
 import { z } from 'zod';
 
 import type { InstrumentFamily } from '@casperaki/arrangement';
-import { canonicalStringifySong, GenreSchema, type Song } from '@casperaki/song-schema';
+import { baseGenre, canonicalStringifySong, GenreSchema, type Song, SongGenreSchema } from '@casperaki/song-schema';
 
 import type { PlaybackService } from '../render/playbackService.js';
 import { diskPathOf, searchSounds, soundCatalog, soundFamilies, soundTransitions, SoundError, type SoundItem } from '../sounds/soundCatalog.js';
@@ -40,7 +40,8 @@ const ListQuery = z
   })
   .strict();
 
-const DetailsQuery = z.object({ genre: GenreSchema.optional() }).strict();
+// The song's genre; a genre recipe's values are its base genre's.
+const DetailsQuery = z.object({ genre: SongGenreSchema.transform((g) => baseGenre(g)).optional() }).strict();
 
 /** The kind of part a borrowed preview plays, in words. */
 const FAMILY_PART: Readonly<Record<InstrumentFamily, string>> = {

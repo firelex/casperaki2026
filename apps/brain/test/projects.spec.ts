@@ -109,9 +109,16 @@ describe('projects', () => {
   beforeEach(async () => { h = await boot(); });
   afterEach(async () => { await h.stop(); });
 
+  it('generates Casperaki Pop (a genre recipe): the song keeps its genre, titled by its label', async () => {
+    const { project, song } = await generate(h, { genre: 'casperakiPop', bpm: 120 });
+    expect(project.title).toBe('Casperaki Pop in A');
+    expect(song.genre).toBe('casperakiPop');
+  });
+
   it('lists generated songs with a default title', async () => {
     const { id, project } = await generate(h);
-    expect(project.title).toBe('Edm in A');
+    // EDM is shown as Dance (owner 2026-11-28)
+    expect(project.title).toBe('Dance in A');
     const list = (await (await fetch(`${h.url}/api/songs`)).json()) as { projects: Array<{ id: string; genre: string; bpm: number; render: { state: string } }> };
     expect(list.projects).toHaveLength(1);
     expect(list.projects[0]).toMatchObject({ id, genre: 'edm', bpm: 124, render: { state: 'none' } });
@@ -205,7 +212,7 @@ describe('per-song render', () => {
       expect(done).toMatchObject({ state: 'done', mp3Url: `/api/songs/${id}/render.mp3`, wavUrl: `/api/songs/${id}/render.wav` });
       const wav = await fetch(`${h.url}${done.wavUrl}?download=1`);
       expect(wav.status).toBe(200);
-      expect(wav.headers.get('content-disposition')).toContain('Edm-in-A.wav');
+      expect(wav.headers.get('content-disposition')).toContain('Dance-in-A.wav');
       expect((await wav.arrayBuffer()).byteLength).toBe(844);
       expect((await fetch(`${h.url}${done.mp3Url}`)).status).toBe(200);
       expect(done).toMatchObject({
@@ -214,7 +221,7 @@ describe('per-song render', () => {
       });
       const raw = await fetch(`${h.url}${done.unmasteredWavUrl}?download=1`);
       expect(raw.status).toBe(200);
-      expect(raw.headers.get('content-disposition')).toContain('Edm-in-A (unmastered).wav');
+      expect(raw.headers.get('content-disposition')).toContain('Dance-in-A (unmastered).wav');
       expect((await fetch(`${h.url}${done.unmasteredMp3Url}`)).status).toBe(200);
       const peaks = (await (await fetch(`${h.url}/api/songs/${id}/render/peaks?bins=16`)).json()) as { peaks: number[] };
       expect(peaks.peaks).toHaveLength(16);

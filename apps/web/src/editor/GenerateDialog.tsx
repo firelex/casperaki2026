@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { DEFAULT_BPM_BY_GENRE, GENRE_TEMPO_RANGES, type Genre } from '@casperaki/song-schema/schemas';
+import { genreTempoRange, type SongGenre } from '@casperaki/song-schema/genres';
 
 import { BrainError } from '../api/client';
 import { songsApi, songsQueryKeys, type GeneratedSong } from '../api/songs';
@@ -16,7 +16,7 @@ import { CANONICAL_GENRES } from '../types/song';
 export interface GenerateDialogProps {
   open: boolean;
   /** Genre preselected when the dialog opens (e.g. from the empty state). */
-  initialGenre?: Genre;
+  initialGenre?: SongGenre;
   onClose(): void;
   onCreated(songId: string): void;
 }
@@ -33,11 +33,11 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
   const queryClient = useQueryClient();
   const { setActiveSong } = useSession();
   const [title, setTitle] = useState('');
-  const [genre, setGenre] = useState<Genre>(initialGenre ?? 'brightPop');
+  const [genre, setGenre] = useState<SongGenre>(initialGenre ?? 'brightPop');
   const [key, setKey] = useState('C');
-  const [bpm, setBpm] = useState(DEFAULT_BPM_BY_GENRE[initialGenre ?? 'brightPop']);
+  const [bpm, setBpm] = useState(genreTempoRange(initialGenre ?? 'brightPop').defaultBpm);
   const [seed, setSeed] = useState(randomSeed);
-  const tempoRange = GENRE_TEMPO_RANGES[genre];
+  const tempoRange = genreTempoRange(genre);
 
   // Each opening starts fresh, on the requested genre.
   useEffect(() => {
@@ -45,7 +45,7 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
     const g = initialGenre ?? 'brightPop';
     setTitle('');
     setGenre(g);
-    setBpm(DEFAULT_BPM_BY_GENRE[g]);
+    setBpm(genreTempoRange(g).defaultBpm);
     setKey('C');
     setSeed(randomSeed());
   }, [open, initialGenre]);
@@ -88,9 +88,9 @@ export function GenerateDialog({ open, initialGenre, onClose, onCreated }: Gener
 
   if (!open) return null;
 
-  const pickGenre = (g: Genre) => {
+  const pickGenre = (g: SongGenre) => {
     setGenre(g);
-    setBpm(DEFAULT_BPM_BY_GENRE[g]);
+    setBpm(genreTempoRange(g).defaultBpm);
   };
 
   return (

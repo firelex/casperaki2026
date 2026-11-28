@@ -160,7 +160,7 @@ describe('POST /api/hum/*', () => {
 
     const tooFast = await fetch(`${url}/api/hum/song`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ analysisId: a.id, alternative: 0, genre: 'edm' }) });
     expect(tooFast.status).toBe(400);
-    expect(((await tooFast.json()) as { message: string }).message).toMatch(/70 bpm; edm songs are 115-150 bpm/u);
+    expect(((await tooFast.json()) as { message: string }).message).toMatch(/70 bpm; Dance songs are 115-150 bpm/u);
 
     const song = await fetch(`${url}/api/hum/song`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ analysisId: a.id, alternative: 0, genre: 'ballad' }) });
     expect(song.status).toBe(201);

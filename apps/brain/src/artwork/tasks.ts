@@ -5,6 +5,7 @@
 // saves move it, and unfinished tasks resume when the brain starts. A finished or failed picture is announced on
 // /api/events.
 
+import { baseGenre } from '@casperaki/song-schema';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -44,7 +45,8 @@ const STYLE: Record<string, string> = {
 const LOOK = 'stylised cyber album cover art, synthwave, neon lighting, glowing outlines, digital art, dreamlike, rich colours, highly detailed';
 
 export function artworkBrief(title: string, genre: string | null): string {
-  const style = genre ? STYLE[genre] : undefined;
+  // A genre recipe (Casperaki Pop) looks like its base genre.
+  const style = genre ? STYLE[baseGenre(genre)] : undefined;
   if (genre && !style) throw new Error(`artworkBrief: no description for the style "${genre}"`);
   return [
     `Describe a picture to use as the cover artwork of a song called "${title}"${style ? `, which is ${style}` : ''}.`,

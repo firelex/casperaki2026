@@ -90,6 +90,6 @@ describe('song artwork', () => {
     expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/one clear subject that fits the title/u);
     expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/stylised, futuristic cyber look/u);
     expect(artworkBrief('Velvet Static', 'ballad')).toMatch(/fully clothed/u);
-    expect(() => artworkBrief('X', 'polka')).toThrow(/no description for the style "polka"/u);
+    expect(() => artworkBrief('X', 'polka')).toThrow(/unknown genre "polka"/u);
   });
 });

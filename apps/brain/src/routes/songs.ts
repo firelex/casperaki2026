@@ -11,17 +11,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { orchestrate, VOCAL_MELODY_PARAM, type GenerateParams } from '@casperaki/arrangement';
-import {
-  canonicalStringifySong,
-  formatGenreTempoRange,
-  GenreSchema,
-  isBpmInGenreTempoRange,
-  applyMixOverrides,
-  isEmptyMixOverrides,
-  MixOverridesSchema,
-  parseSong,
-  pruneMixOverrides,
-} from '@casperaki/song-schema';
+import { applyMixOverrides, canonicalStringifySong, formatGenreTempoRange, genreLabel, GenreSchema, isBpmInGenreTempoRange, isEmptyMixOverrides, MixOverridesSchema, parseSong, pruneMixOverrides, SongGenreSchema } from '@casperaki/song-schema';
 import type { Song } from '@casperaki/song-schema';
 
 import type { RenderService, RenderStatus } from '../render/renderService.js';
@@ -37,7 +27,7 @@ import { readRenderPeaks } from './renders.js';
 // structures.md for the rationale.
 const GenerateBodySchema = z
   .object({
-    genre: GenreSchema,
+    genre: SongGenreSchema,
     key: z.string().min(1),
     bpm: z.number().int().positive(),
     seed: z.union([z.string().min(1), z.number().int()]),
@@ -49,7 +39,7 @@ const GenerateBodySchema = z
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['bpm'],
-      message: `bpm must be in the legacy ${body.genre} tempo range (${formatGenreTempoRange(body.genre)})`,
+      message: `bpm must be in the ${genreLabel(body.genre)} tempo range (${formatGenreTempoRange(body.genre)})`,
     });
   });
 
@@ -368,8 +358,8 @@ export function createSongsRouter({ store, renders, mixConfig, now, onPlaceholde
 
 /** The placeholder title a new song has until it is named ("Bright Pop in C"). */
 export function defaultTitle(genre: string, key: string): string {
-  const label = genre.replace(/([a-z])([A-Z])/g, '$1 $2');
-  return `${label.charAt(0).toUpperCase()}${label.slice(1)} in ${key}`;
+  // The genre as users see it ("Dance in C", "Casperaki Pop in A").
+  return `${genreLabel(genre)} in ${key}`;
 }
 
 function safeFileName(title: string): string {

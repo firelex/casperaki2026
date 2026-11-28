@@ -29,7 +29,7 @@ import {
   type TransitionEntry,
 } from '@casperaki/song-schema';
 
-import type { GenerateParams, GeneratorContext } from '../context.js';
+import { generatorContext, type GenerateParams, type GeneratorContext } from '../context.js';
 import {
   generateFills,
   generateMutes,
@@ -155,19 +155,20 @@ export const ORCHESTRATOR_VERSION = '0.1.0';
 /** The sections (names and bar counts) `orchestrate(params)` makes, without writing the rest of the song (the
  *  structure is drawn first, from the seed and the explicit structure, whatever else the params record). */
 export function generatedSections(params: GenerateParams): { name: string; bars: number }[] {
-  return generateSongStructure({ params, rng: createRng(params.seed) }).map((s) => ({ name: s.name, bars: s.bars.length }));
+  return generateSongStructure(generatorContext(params)).map((s) => ({ name: s.name, bars: s.bars.length }));
 }
 
 /** The melody the generator chooses for each sung section type of these params (vocals/index.ts sectionMelodies),
  *  before any lyrics-first rhythm is laid under it: the same draws as orchestrate. */
 export function vocalSelections(params: GenerateParams): Map<string, MergedPrecedent | undefined> {
-  const ctx = { params, rng: createRng(params.seed) };
+  const ctx = generatorContext(params);
   const structure = generateChords(ctx, generateSongStructure(ctx));
   return sectionMelodies(ctx, structure, ctx.rng.fork('vocals'));
 }
 
 export function orchestrate(params: GenerateParams): Song {
-  const ctx = { params, rng: createRng(params.seed) };
+  // A derived genre (genre recipe) is generated as its base genre; the song keeps its own genre (lowerToSong: params).
+  const ctx = generatorContext(params);
   const structure = generateSongStructure(ctx);
   // The vocals come first: sung sections take the chords of the melody they
   // borrow (in the song's key), and every other part is written over those.

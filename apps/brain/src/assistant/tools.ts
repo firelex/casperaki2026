@@ -7,7 +7,7 @@
 
 import { addSection, editTrack, InstrumentFamilySchema, SECTION_TYPES, setTransition, TrackEditError, trackOptions, TRANSITION_TYPES } from '@casperaki/arrangement';
 import { applyCommand, initEditState, type EditCommand } from '@casperaki/song-edit';
-import { GENRE_TEMPO_RANGES, GenreSchema, isBpmInGenreTempoRange, type Song } from '@casperaki/song-schema';
+import { genreLabel, genreTempoRange, isBpmInGenreTempoRange, type Song, SongGenreSchema } from '@casperaki/song-schema';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -413,16 +413,16 @@ export const TOOLS = [
   }),
   tool({
     name: 'new_song',
-    description: `Write a new song and open it (this song stays in the song list). Styles and their tempo ranges: ${Object.entries(GENRE_TEMPO_RANGES)
-      .map(([g, r]) => `${g} ${r.min}-${r.max}`)
+    description: `Write a new song and open it (this song stays in the song list). Styles (their names as the user knows them) and their tempo ranges: ${SongGenreSchema.options
+      .map((g) => `${g} ("${genreLabel(g)}") ${genreTempoRange(g).min}-${genreTempoRange(g).max}`)
       .join(', ')}.`,
-    params: z.object({ genre: GenreSchema, key: z.string().regex(/^[A-G][#b]?m?$/u).describe('e.g. C, F#, Bbm'), bpm: z.number().int() }).strict(),
+    params: z.object({ genre: SongGenreSchema, key: z.string().regex(/^[A-G][#b]?m?$/u).describe('e.g. C, F#, Bbm'), bpm: z.number().int() }).strict(),
     run: (a) => {
       if (!isBpmInGenreTempoRange(a.genre, a.bpm)) {
-        const r = GENRE_TEMPO_RANGES[a.genre];
-        throw new ToolError(`${a.genre} songs are ${r.min}-${r.max} bpm.`);
+        const r = genreTempoRange(a.genre);
+        throw new ToolError(`${genreLabel(a.genre)} songs are ${r.min}-${r.max} bpm.`);
       }
-      return { summary: `Writing a new ${a.genre} song in ${a.key} at ${a.bpm} bpm and opening it.`, action: { kind: 'newSong', genre: a.genre, key: a.key, bpm: a.bpm } };
+      return { summary: `Writing a new ${genreLabel(a.genre)} song in ${a.key} at ${a.bpm} bpm and opening it.`, action: { kind: 'newSong', genre: a.genre, key: a.key, bpm: a.bpm } };
     },
   }),
 

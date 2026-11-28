@@ -38,7 +38,7 @@
 //
 // The input structure is read-only; we project from it rather than mutate.
 
-import type { SongStructure } from '@casperaki/song-schema';
+import type { AlwaysPlayingLane, SongStructure } from '@casperaki/song-schema';
 
 import type { Rng } from '@casperaki/music-theory';
 import type { GeneratorContext } from '../context.js';
@@ -317,6 +317,11 @@ const BREAK_ADD_ONE_SPECS: Readonly<Record<string, readonly LaneSpec[]>> = {
 /** Rolled per-song combination, before catalog resolution: the mandatory pad
  *  lane + the genre's non-essential tonal lanes. Drums + Bass are implicit
  *  essentials (added by `buildRoster`). */
+/** The lane specs of the lanes a genre recipe can make play in every section. */
+const ALWAYS_PLAYING_SPECS: Readonly<Record<AlwaysPlayingLane, LaneSpec>> = {
+  electricGuitarClean: ELECTRIC_GUITAR_CLEAN,
+};
+
 interface RosterRoll {
   readonly padSpec: LaneSpec;
   readonly nonEssential: readonly LaneSpec[];
@@ -749,12 +754,19 @@ export function selectInstruments(
     }
     essentialLaneNames.push(name);
   }
+  // A genre recipe's lanes that play in every section (Casperaki Pop: a clean electric guitar) are essential too.
+  const always = (ctx.recipe?.alwaysPlays ?? []).map((lane) => ALWAYS_PLAYING_SPECS[lane]);
+  for (const spec of always) {
+    const name = builder.add(spec, true);
+    if (!name) throw new Error(`selectInstruments: no candidates for the always-playing lane "${spec.token}" (genre "${genre}")`);
+    essentialLaneNames.push(name);
+  }
 
   // Non-essential base roster (roll order). Lanes with zero candidates are
   // skipped (legacy never dropped for genre coverage, so this only fires for a
   // truly absent family — diagnostics-worthy but non-fatal).
   const baseNonEssential: string[] = [];
-  for (const spec of roll.nonEssential) {
+  for (const spec of roll.nonEssential.filter((s) => !always.includes(s))) {
     const name = builder.add(spec, false);
     if (name) baseNonEssential.push(name);
   }

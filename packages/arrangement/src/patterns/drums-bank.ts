@@ -265,6 +265,15 @@ function blueprintBars(blueprint: DrumBlueprint): number {
   return Math.max(1, slots / 32);
 }
 
+/** One of `styles` (no draw for one), each a style of the bank. */
+function pickStyle(styles: readonly string[], rng: Rng): string {
+  if (styles.length === 0) throw new Error('selectDrumBlueprint: an empty list of drum styles');
+  const bank = loadBank();
+  const unknown = styles.filter((s) => !bank.styles.has(s));
+  if (unknown.length) throw new DataAssetError(BANK_INDEX_META, `no drum style ${unknown.map((s) => `"${s}"`).join(', ')} in the bank`);
+  return styles.length === 1 ? styles[0]! : rng.pick(styles);
+}
+
 function styleForGenre(genre: Genre, rng: Rng): string {
   const bank = loadBank();
   const list = bank.index.genreStyles[genre];
@@ -287,7 +296,7 @@ function styleForGenre(genre: Genre, rng: Rng): string {
  * style's bank is empty. Validates `genre` against `GenreSchema` so any
  * non-canonical input fails at the boundary, never as a silent fallback.
  */
-export function selectDrumBlueprint(rng: Rng, genre: string): DrumBankSelection {
+export function selectDrumBlueprint(rng: Rng, genre: string, styles?: readonly string[]): DrumBankSelection {
   const parsed = GenreSchema.safeParse(genre);
   if (!parsed.success) {
     throw new DataAssetError(
@@ -296,8 +305,10 @@ export function selectDrumBlueprint(rng: Rng, genre: string): DrumBankSelection 
     );
   }
   const bank = loadBank();
-  const styleName = styleForGenre(parsed.data, rng);
-  const style = bank.styles.get(styleName)!;
+  // A genre recipe may name the styles of a section type (Casperaki Pop's verses: the Urban styles).
+  const styleName = styles ? pickStyle(styles, rng) : styleForGenre(parsed.data, rng);
+  const style = bank.styles.get(styleName);
+  if (!style) throw new DataAssetError(BANK_INDEX_META, `no drum style "${styleName}" in the bank`);
 
   if (style.kind === 'authoredAlgo') {
     const blueprint = AUTHORED_DRUM_ALGOS[style.authoredAlgoName!]!(rng, makeLibraryPick(bank, rng));

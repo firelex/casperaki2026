@@ -9,6 +9,8 @@
 // `details.drumSounds` (role → catalog id), and are also recorded as
 // `setDrumSound` track edits so a regenerated Drums track carries them.
 
+import { genreRecipe, SongGenreSchema } from '@casperaki/song-schema';
+
 import { loadValidatedCatalog, type ValidatedCatalogEntry } from '../catalog/validated-catalog.js';
 
 /** Engine drum role → the catalog family its sound comes from (engine order). */
@@ -67,9 +69,16 @@ export function drumRolesForFamily(family: string): DrumRole[] {
   return DRUM_ROLES.filter((r) => DRUM_ROLE_FAMILIES[r] === family);
 }
 
-/** The genre's default sound for a family (the deterministic pick), or undefined when the family has no rows. */
-export function defaultDrumEntry(family: string, genre: string): ValidatedCatalogEntry | undefined {
-  const candidates = loadValidatedCatalog().entries.filter((e) => e.family === family);
+/** The genre's default sound for a family (the deterministic pick), or undefined when the family has no rows. A
+ *  derived genre (genre recipe) picks as its base genre, from its own sample library for the families it names
+ *  (Casperaki Pop: kick, snare and clap from drLuke). */
+export function defaultDrumEntry(family: string, songGenre: string): ValidatedCatalogEntry | undefined {
+  const recipe = SongGenreSchema.safeParse(songGenre).success ? genreRecipe(songGenre) : undefined;
+  const genre = recipe?.base ?? songGenre;
+  const all = loadValidatedCatalog().entries.filter((e) => e.family === family);
+  const lib = recipe?.drumLibrary?.families.includes(family) ? recipe.drumLibrary.library : undefined;
+  const candidates = lib === undefined ? all : all.filter((e) => e.library === lib);
+  if (lib !== undefined && candidates.length === 0) throw new Error(`the ${songGenre} drums take ${family} from the "${lib}" library, which has none`);
   if (candidates.length === 0) return undefined;
   const primary = candidates.filter((e) => e.mainStyle === genre);
   const secondary = candidates.filter((e) => e.addStyles.includes(genre as never));
