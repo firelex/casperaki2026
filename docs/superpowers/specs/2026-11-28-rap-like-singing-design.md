@@ -64,3 +64,19 @@ Vocal track menu: Write melody, Write lyrics, **Sing…**, Transcribe melody, Ad
 
 Sung lyrics stay written for all sung parts at once (Write lyrics has no section choice); the rap's words are not
 shown on the timeline (they are in the Rap dialog).
+
+## Where it ended up (2026-11-28, after the owner listened; "That works.")
+
+- **Rap, not singing:** ACE repaints over the song rendered without its takes (drums, bass, chords: it stays in the
+  key), with ACE's own rap tags `[Verse - rap]`, `[spoken word]` ("Rap/recitation" in its docs), `[high energy]`
+  and the caption "hip-hop, rap, <style>, fast high-energy rap, aggressive punchy delivery, rapid-fire spoken word
+  flow on the beat, punchy drums, no singing, no sung melody, <bpm> bpm". Without the tags the rap was sung.
+- **Density:** one short line per bar, 8-11 syllables (the owner's chosen 8-line verse had 9-11 a line, 79 in all;
+  102 "had too many words").
+- **Words:** written as rap, not song lyrics (apps/brain/src/ace/rapWords.ts): short punchy phrases, syncopated,
+  one or two rhymes inside each couplet (checked), multi-syllable rhymes, no fillers.
+- **One voice:** ACE's reference audio for every rap, apps/models/services/ace-layer/voices/rapper_male.flac (the
+  separated rap of the 8-line test take the owner liked).
+- **Short sections** (under 8 bars) are repainted on 8 bars with their lines repeated, only the section kept (lego
+  was "much slower"); a rap running past its section is cut at its quietest moment in its last second.
+- Live check, Electric Daydream verse1 + bridge1: 96 % and 100 % of the words heard, about 1.5 minutes.
