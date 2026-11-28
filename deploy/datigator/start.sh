@@ -11,6 +11,7 @@
 #   svc-artwork      song artwork image service (segmind/small-sd), port 16513
 #   svc-ace          add one instrument part to a song (ACE-Step 1.5 lego, ace-layer adapter), port 16515
 #   svc-speech       spoken lines in described voices and singers' speaking voices (Breeze TTS 2), port 16516
+#   svc-avatars      realistic avatars built in Blender (MakeHuman; avatar-builder adapter), port 16517
 #
 # At boot the Windows task "Start WSL at boot" starts WSL; systemd starts cron, whose @reboot line runs this
 # (crontab: @reboot $HOME/apps/casperaki/deploy/datigator/start.sh >> $HOME/casperaki-data/boot.log 2>&1).
@@ -48,3 +49,5 @@ start svc-vocals "cd $SERVING && exec python3 harness.py --adapter vocals --port
 start svc-ace "cd $SERVING && exec python3 harness.py --adapter ace-layer --port 16515 --models-dir /mnt/d/casperaki-models 2>&1 | tee -a run/svc-ace.log"
 # Speech (speech adapter: Breeze TTS 2, its code, weights and venv in ~/breeze-tts-2; brain.env SPEECH_SERVICE_URL).
 start svc-speech "cd $SERVING && exec python3 harness.py --adapter speech --port 16516 2>&1 | tee -a run/svc-speech.log"
+# Realistic avatars (avatar-builder adapter: Blender + MakeHuman in ~/apps/blender; brain.env AVATAR_BUILDER_URL, AVATAR_LIBRARY_FILE).
+start svc-avatars "cd $SERVING && BLENDER_BIN=$HOME/apps/blender/blender-4.5.17-linux-x64/blender exec python3 harness.py --adapter avatar-builder --port 16517 2>&1 | tee -a run/svc-avatars.log"
