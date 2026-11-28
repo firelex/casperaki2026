@@ -86,6 +86,9 @@ const ConfigSchema = z.object({
   /** Sing: the vocals service (svc-vocals on the serving harness) as a base URL, and the directory the brain keeps
    *  each task's step files in (<dir>/<task id>/). Unset → Sing answers 503 naming the setting. */
   vocalsServiceUrl: z.string().url().optional(),
+  /** Singers' speaking voices (and casting's speech): the speech service (svc-speech, Breeze TTS 2) as a base URL.
+   *  Unset → making speaking voices answers 503 naming it, and Add a singer makes none. */
+  speechServiceUrl: z.string().url().optional(),
   taskFilesDir: z.string().min(1).optional(),
   /** ACE layer: the ace service (svc-ace, the ace-layer adapter on the serving harness) as a base URL. Needs
    *  BRAIN_TASK_FILES_DIR, BRAIN_VOCAL_TAKES_DIR and per-song rendering. Unset → ACE layer answers 503. */
@@ -167,6 +170,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): BrainConfig {
     amtServiceUrl: env.AMT_SERVICE_URL || undefined,
     vocalTakesDir: env.BRAIN_VOCAL_TAKES_DIR || undefined,
     vocalsServiceUrl: env.VOCALS_SERVICE_URL || undefined,
+    speechServiceUrl: env.SPEECH_SERVICE_URL || undefined,
     taskFilesDir: env.BRAIN_TASK_FILES_DIR || undefined,
     aceServiceUrl: env.ACE_SERVICE_URL || undefined,
     artworkServiceUrl: env.ARTWORK_SERVICE_URL || undefined,

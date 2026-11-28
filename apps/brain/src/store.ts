@@ -93,7 +93,7 @@ export interface MixDismissal {
 
 /** A background task (src/tasks/tasks.ts), on a song (its song follows the project when saves move it) or, for
  *  addSinger (a new singer made from a recording), on no song. */
-export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger';
+export type TaskKind = 'writeLyrics' | 'writeRapLyrics' | 'sing' | 'transcribe' | 'aceLayer' | 'addSinger' | 'speakingVoice';
 export type TaskState = 'running' | 'ready' | 'done' | 'failed';
 
 /** One step of a task as the Tasks page lists it (the brain's own steps and a model service's, in the order they run). */
@@ -120,6 +120,8 @@ export interface TaskJobs {
   readonly ace?: string;
   /** Add a singer: the vocals service's add_singer stage job. */
   readonly addSinger?: string;
+  /** A singer's speaking voice (Add a singer's last steps, or a speakingVoice task): the speech service's job. */
+  readonly speaking?: string;
 }
 
 export interface TaskRow {
@@ -551,7 +553,7 @@ interface TaskDbRow {
   options: string | null;
 }
 
-const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'writeRapLyrics', 'sing', 'transcribe', 'aceLayer', 'addSinger'];
+const TASK_KINDS: readonly TaskKind[] = ['writeLyrics', 'writeRapLyrics', 'sing', 'transcribe', 'aceLayer', 'addSinger', 'speakingVoice'];
 /** The song_id of a task on no song. */
 const NO_SONG = '';
 const TASK_STATES: readonly TaskState[] = ['running', 'ready', 'done', 'failed'];

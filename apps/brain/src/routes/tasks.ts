@@ -22,7 +22,8 @@
 //   GET  /api/tasks/:id/files/:stage/:name -> a file a step of the task made (step.files lists "<stage>/<name>")
 //
 // TaskJson: { id, kind, songId (null for a task on no song), title, state, message?, startedAt, finishedAt?,
-// steps: TaskStep[], singerId? } (TaskStep: src/store.ts; kinds: writeLyrics, writeRapLyrics, sing, transcribe, aceLayer, addSinger:
+// steps: TaskStep[], singerId? } (TaskStep: src/store.ts; kinds: writeLyrics, writeRapLyrics, sing, transcribe, aceLayer, speakingVoice (a singer's speaking voice, on no song,
+// titled "<singer>: speaking voice"), addSinger:
 // started by POST /api/singers, src/routes/singers.ts, titled with the singer's name; done when the singer is stored).
 
 import { Router, type Response } from 'express';
@@ -34,6 +35,7 @@ import type { TaskRow } from '../store.js';
 import type { SongsStore } from '../store.js';
 import { MAX_RECORDING_BYTES } from '../sing/transcribeTask.js';
 import { AddSingerOptionsSchema } from '../singers/addSingerTask.js';
+import { SpeakingVoiceOptionsSchema } from '../singers/speakingVoiceTask.js';
 import { TaskError, type BackgroundTasks } from '../tasks/tasks.js';
 import { ownerOf } from './songs.js';
 
@@ -63,7 +65,7 @@ export function taskJson(t: TaskRow, title: string) {
     id: t.id,
     kind: t.kind,
     songId: t.songId,
-    title: t.kind === 'addSinger' ? AddSingerOptionsSchema.parse(t.options).name : title,
+    title: t.kind === 'addSinger' ? AddSingerOptionsSchema.parse(t.options).name : t.kind === 'speakingVoice' ? `${SpeakingVoiceOptionsSchema.parse(t.options).name}: speaking voice` : title,
     state: t.state,
     ...(t.message !== null ? { message: t.message } : {}),
     startedAt: t.startedAt,
@@ -71,6 +73,7 @@ export function taskJson(t: TaskRow, title: string) {
     steps: t.steps,
     // Add a singer: the singer it makes.
     ...(t.kind === 'addSinger' ? { singerId: AddSingerOptionsSchema.parse(t.options).singerId } : {}),
+    ...(t.kind === 'speakingVoice' ? { singerId: SpeakingVoiceOptionsSchema.parse(t.options).singerId } : {}),
     // The singer a Sing sang with (its dialog preselects it for Sing again).
     ...(t.kind === 'sing' && t.options && typeof (t.options as { singerId?: unknown }).singerId === 'string' ? { singerId: (t.options as { singerId: string }).singerId } : {}),
   };

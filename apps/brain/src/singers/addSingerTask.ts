@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { CancelledError, followJob, writeAtomic } from '../sing/singTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import type { TaskJobs, TaskStep } from '../store.js';
+import { makeSpeakingVoice, type SpeakingVoiceDeps } from './speakingVoiceTask.js';
 import { REFERENCE_CHOICES, type UserSingers } from './userSingers.js';
 
 /** The longest recording a singer can be made from (seconds). */
@@ -96,6 +97,8 @@ export interface AddSingerContext {
   readonly setJobs: (jobs: TaskJobs) => void;
   readonly setSteps: (steps: TaskStep[]) => void;
   readonly now: () => string;
+  /** When speaking voices are set up (SPEECH_SERVICE_URL): the new singer's speaking voice is made last. */
+  readonly speaking?: SpeakingVoiceDeps;
 }
 
 const KEEP = { id: 'keep', label: 'Keep the singer' } as const;
@@ -139,7 +142,8 @@ export async function runAddSinger(ctx: AddSingerContext): Promise<{ singerId: s
       if (!existsSync(src)) throw new Error(`${name} was not among the files the vocal service's steps made`);
       copyFileSync(src, join(dir, name));
     }
-    singers.add(ctx.ownerId, {
+    // A Retry after the singer was kept (its speaking voice failed): it is listed already.
+    if (!singers.get(ctx.ownerId, options.singerId)) singers.add(ctx.ownerId, {
       id: options.singerId,
       name: options.name,
       description: options.description,
@@ -159,6 +163,20 @@ export async function runAddSinger(ctx: AddSingerContext): Promise<{ singerId: s
     keep = { ...KEEP, state: 'failed', startedAt, finishedAt: ctx.now(), text: err instanceof Error ? err.message : String(err) };
     publish();
     throw err;
+  }
+  if (ctx.speaking) {
+    const before = [...service, keep];
+    await makeSpeakingVoice({
+      ownerId: ctx.ownerId,
+      singer: { id: options.singerId, name: options.name, description: options.description, audio: join(dir, made.audio), meta: join(dir, made.meta), builtIn: false },
+      deps: ctx.speaking,
+      filesDir: ctx.filesDir,
+      signal: ctx.signal,
+      jobs: ctx.jobs,
+      setJobs: (jobs) => ctx.setJobs({ ...jobs, addSinger: job }),
+      setSteps: (steps) => ctx.setSteps([...before, ...steps]),
+      now: ctx.now,
+    });
   }
   return { singerId: options.singerId };
 }

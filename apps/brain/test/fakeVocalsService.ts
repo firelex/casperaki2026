@@ -199,6 +199,11 @@ export async function startFakeVocalsService(): Promise<FakeVocalsService & { se
           res.writeHead(200, { 'content-type': 'audio/wav' });
           return res.end(toneWav());
         }
+        if (name === 'voice.json') {
+          // SoulX-Singer's description of a voice reference, as pipeline/voice_meta.py writes it (its sung pitch: f0).
+          res.writeHead(200, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify([{ index: 'voice', language: 'English', text: '<SP> who says', f0: '0 440 450 460 470 480 0' }]));
+        }
         res.writeHead(200, { 'content-type': 'text/plain' });
         return res.end(`${name} of ${job.id}`);
       }

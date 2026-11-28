@@ -36,6 +36,7 @@ import type { VocalLevel } from '../sing/vocalLevel.js';
 import { keepRecording, runTranscribe, TRANSCRIBE_CHANGED, transcribeNeeds, TranscribeOptionsSchema, type TranscribeOptions } from '../sing/transcribeTask.js';
 import type { VocalsClient } from '../sing/vocalsClient.js';
 import { AddSingerOptionsSchema, MAX_RECORDING_SECONDS, recordingSeconds, runAddSinger, type AddSingerOptions } from '../singers/addSingerTask.js';
+import { makeSpeakingVoice, SpeakingVoiceOptionsSchema, type SpeakingSinger, type SpeakingVoiceDeps } from '../singers/speakingVoiceTask.js';
 import { newSingerId, type ReferenceChoice, type UserSingers } from '../singers/userSingers.js';
 import type { SongsStore, TaskKind, TaskRow, TaskStep } from '../store.js';
 
@@ -82,6 +83,9 @@ export interface BackgroundTasksDeps {
   /** Add a singer: the vocals service, the task files folder, the users' singers (BRAIN_SINGERS_DATA_DIR), ffmpeg and
    *  the poll interval; without it, Add a singer answers 503. */
   readonly addSinger?: AddSingerDeps;
+  /** Singers' speaking voices: the speech service, the voices' folder, the language model, and how to find a singer
+   *  of the owner's (an Error for an unknown one); without it, making speaking voices answers 503. */
+  readonly speakingVoice?: SpeakingVoiceDeps & { readonly findSinger: (ownerId: string, singerId: string) => SpeakingSinger };
 }
 
 export interface AddSingerDeps {
@@ -90,6 +94,8 @@ export interface AddSingerDeps {
   readonly singers: UserSingers;
   readonly ffmpegBin: string;
   readonly pollMs: number;
+  /** Set when speaking voices are set up: a new singer's speaking voice is made last. */
+  readonly speaking?: SpeakingVoiceDeps;
 }
 
 /** What Add a singer starts with: the upload and the user's choices (checked by startAddSinger). */
@@ -106,6 +112,7 @@ export interface AddSingerStart {
 
 /** The user-facing refusals of Add a singer. */
 export const NO_CONSENT = 'Tick "I have the right to use this voice" to add a singer: only voices you may use can become singers.';
+export const SPEAKING_NOT_SET_UP = "Speaking voices are not set up: the brain needs SPEECH_SERVICE_URL, the assistant's language model (ASSISTANT_LLM_URL), BRAIN_TASK_FILES_DIR and BRAIN_SINGERS_DATA_DIR.";
 export const ADD_SINGER_NOT_SET_UP = 'Adding singers is not set up: the brain needs VOCALS_SERVICE_URL, BRAIN_TASK_FILES_DIR and BRAIN_SINGERS_DATA_DIR.';
 
 /** "4 min 5 s" */
@@ -302,6 +309,37 @@ export class BackgroundTasks {
     return this.deps.store.getTask(ownerId, id)!;
   }
 
+  /** Makes a speaking voice for one of the owner's singers: described from the singing and matched, or from the
+   *  user's own description (used as is). 400 for a blank description, 404 for an unknown singer, 409 while one is
+   *  being made for that singer. */
+  startSpeakingVoice(ownerId: string, start: { singerId: string; description?: string }): TaskRow {
+    const sv = this.deps.speakingVoice;
+    if (start.description !== undefined && !start.description.trim()) throw new TaskError(400, 'no_description', 'Describe the voice.');
+    if (!sv) throw new TaskError(503, 'no_speech_service', SPEAKING_NOT_SET_UP);
+    let singer: SpeakingSinger;
+    try {
+      singer = sv.findSinger(ownerId, start.singerId);
+    } catch (err) {
+      throw new TaskError(404, 'not_found', err instanceof Error ? err.message : String(err));
+    }
+    this.checkNoSpeakingVoiceRunning(ownerId, singer.id);
+    const description = start.description?.trim();
+    const parsed = SpeakingVoiceOptionsSchema.safeParse({ singerId: singer.id, name: singer.name, ...(description ? { description } : {}) });
+    if (!parsed.success) throw new TaskError(400, 'invalid_description', 'Describe the voice in at most 300 characters.');
+    const id = randomUUID();
+    this.deps.store.insertTask({ id, ownerId, songId: null, kind: 'speakingVoice', input: '', startedAt: this.deps.clock(), options: parsed.data });
+    this.deps.events.publish(ownerId, { type: 'task', taskId: id, songId: null, state: 'running' });
+    this.enqueue(ownerId, id, 'speakingVoice');
+    return this.deps.store.getTask(ownerId, id)!;
+  }
+
+  private checkNoSpeakingVoiceRunning(ownerId: string, singerId: string): void {
+    const running = this.deps.store
+      .listRunningTasks()
+      .some((t) => t.ownerId === ownerId && t.kind === 'speakingVoice' && SpeakingVoiceOptionsSchema.parse(t.options).singerId === singerId);
+    if (running) throw new TaskError(409, 'already_running', 'A speaking voice is being made for this singer already.');
+  }
+
   /** Why a task of this kind cannot start on the owner's song now (a TaskError), checked on start and on retry. */
   private checkCanStart(ownerId: string, songId: string, kind: TaskKind, song: Song, o: StartOptions): void {
     const { store } = this.deps;
@@ -383,7 +421,17 @@ export class BackgroundTasks {
     if (task.state !== 'failed') throw new TaskError(409, 'not_failed', 'Only a failed task can be started again.');
     if (task.kind === 'sing' && task.message === SONG_CHANGED) throw new TaskError(409, 'song_changed', RETRY_SONG_CHANGED);
     if (task.kind === 'transcribe' && task.message === TRANSCRIBE_CHANGED) throw new TaskError(409, 'song_changed', RETRY_TRANSCRIBE_CHANGED);
-    if (task.kind === 'addSinger') {
+    if (task.kind === 'speakingVoice') {
+      const sv = this.deps.speakingVoice;
+      if (!sv) throw new TaskError(503, 'no_speech_service', SPEAKING_NOT_SET_UP);
+      const o = SpeakingVoiceOptionsSchema.parse(task.options);
+      try {
+        sv.findSinger(ownerId, o.singerId);
+      } catch (err) {
+        throw new TaskError(409, 'singer_gone', err instanceof Error ? err.message : String(err));
+      }
+      this.checkNoSpeakingVoiceRunning(ownerId, o.singerId);
+    } else if (task.kind === 'addSinger') {
       const a = this.deps.addSinger;
       if (!a) throw new TaskError(503, 'no_singer_service', ADD_SINGER_NOT_SET_UP);
       const o = AddSingerOptionsSchema.parse(task.options);
@@ -477,7 +525,15 @@ export class BackgroundTasks {
     const task = this.deps.store.getTask(ownerId, id);
     if (!task) throw new TaskError(404, 'not_found', 'There is no such task.');
     const filesDir =
-      task.kind === 'transcribe' ? this.deps.transcribe?.filesDir : task.kind === 'aceLayer' ? this.deps.ace?.filesDir : task.kind === 'addSinger' ? this.deps.addSinger?.filesDir : this.deps.sing?.filesDir;
+      task.kind === 'transcribe'
+        ? this.deps.transcribe?.filesDir
+        : task.kind === 'aceLayer'
+          ? this.deps.ace?.filesDir
+          : task.kind === 'addSinger'
+            ? this.deps.addSinger?.filesDir
+            : task.kind === 'speakingVoice'
+              ? this.deps.speakingVoice?.filesDir
+              : this.deps.sing?.filesDir;
     if (filesDir === undefined) throw new TaskError(404, 'no_file', `The task has no file "${name}".`);
     const path = join(resolve(filesDir), id, stage, name);
     if (!existsSync(path)) throw new TaskError(404, 'no_file', `The task has no file "${stage}/${name}".`);
@@ -684,7 +740,32 @@ export class BackgroundTasks {
           events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: null, state: 'running' });
         },
         now: clock,
+        ...(a.speaking ? { speaking: a.speaking } : {}),
       });
+    }
+    if (task.kind === 'speakingVoice') {
+      const sv = this.deps.speakingVoice;
+      if (!sv) throw new Error(SPEAKING_NOT_SET_UP);
+      const { store, events, clock } = this.deps;
+      const o = SpeakingVoiceOptionsSchema.parse(task.options);
+      const voice = await makeSpeakingVoice({
+        ownerId: task.ownerId,
+        singer: sv.findSinger(task.ownerId, o.singerId),
+        ...(o.description ? { description: o.description } : {}),
+        deps: sv,
+        filesDir: join(resolve(sv.filesDir), task.id),
+        signal,
+        jobs: task.jobs,
+        setJobs: (jobs) => store.setTaskJobs(task.id, jobs),
+        setSteps: (steps) => {
+          const now = store.getTask(task.ownerId, task.id);
+          if (!now || now.state !== 'running') return;
+          store.setTaskSteps(task.id, steps);
+          events.publish(task.ownerId, { type: 'task', taskId: task.id, songId: null, state: 'running' });
+        },
+        now: clock,
+      });
+      return { singerId: o.singerId, seed: voice.seed };
     }
     throw new Error(`unknown task kind ${String(task.kind)}`);
   }

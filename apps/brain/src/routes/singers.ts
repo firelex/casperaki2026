@@ -11,19 +11,28 @@
 //                                     -> 201 { task }  Add a singer (an addSinger task, src/singers/addSingerTask.ts);
 //                                        400 without the consent box ticked, for a recording over 5 minutes or one
 //                                        that is not audio; 503 when adding singers is not set up
+//   GET    /api/singers/:id/speaking-sample -> the singer's speaking voice saying its test line (WAV)
+//   GET    /api/singers/:id/speaking-candidates/:seed -> one of its candidate speaking voices (WAV)
+//   POST   /api/singers/:id/speaking-voice {description?} -> 202 { task }  make the singer's speaking voice (a
+//                                        speakingVoice task, src/singers/speakingVoiceTask.ts): described from the
+//                                        singing and matched, or the user's description used as is; 400 blank
+//                                        description, 404 unknown singer, 409 one is being made, 503 not set up
+//   POST   /api/singers/:id/speaking-voice/choose {seed} -> { speaking }  another candidate as its voice
 //   DELETE /api/singers/:id           -> { deleted: id }  one of the user's own singers, or a built-in one for this
 //                                        user only (its files stay; 503 when adding singers is not set up)
 //
-// SingerJson: { id, name, description, source, previewUrl, own, testLineUrl?, reference?: { choice, startSeconds,
+// SingerJson: { id, name, description, source, previewUrl, own, speaking: SpeakingJson | null, testLineUrl?, reference?: { choice, startSeconds,
 // endSeconds, recordingStartSeconds, recordingEndSeconds, seconds }, transcription? } (the last three for own singers).
 
-import express, { Router, type Response } from 'express';
+import express, { Router, type Request, type Response } from 'express';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { z } from 'zod';
 
 import { MAX_UPLOAD_BYTES } from '../singers/addSingerTask.js';
+import type { SpeakingVoice, SpeakingVoices } from '../singers/speakingVoice.js';
+import type { SpeakingSinger } from '../singers/speakingVoiceTask.js';
 import { REFERENCE_CHOICES, type UserSinger, type UserSingers } from '../singers/userSingers.js';
 import { TaskError, type BackgroundTasks } from '../tasks/tasks.js';
 import { taskJson } from './tasks.js';
@@ -56,6 +65,16 @@ export function readSingers(dir: string): Singer[] {
   return singers;
 }
 
+/** A singer of the owner's for making a speaking voice (src/singers/speakingVoiceTask.ts): a built-in one or the
+ *  owner's own. An Error for an unknown singer. */
+export function speakingSinger(dir: string, users: UserSingers | undefined, ownerId: string, id: string): SpeakingSinger {
+  const builtIn = readSingers(dir).find((s) => s.id === id && !users?.hiddenBuiltIns(ownerId).has(id));
+  if (builtIn) return { id, name: builtIn.name, description: builtIn.description, audio: join(resolve(dir), builtIn.audio), meta: join(resolve(dir), builtIn.meta), builtIn: true };
+  const own = users?.get(ownerId, id);
+  if (own) return { id, name: own.name, description: own.description, audio: join(users!.dir(ownerId, id), own.audio), meta: join(users!.dir(ownerId, id), own.meta), builtIn: false };
+  throw new Error(`There is no singer "${id}".`);
+}
+
 /** A singer's voice reference and its description, as absolute paths: a built-in singer (`dir`) or one of the
  *  owner's own (`users`, when adding singers is set up). An Error for an unknown singer. */
 export function singerVoice(dir: string, users: UserSingers | undefined, ownerId: string, id: string): { audio: string; meta: string } {
@@ -64,6 +83,19 @@ export function singerVoice(dir: string, users: UserSingers | undefined, ownerId
   const own = users?.get(ownerId, id);
   if (own) return { audio: join(users!.dir(ownerId, id), own.audio), meta: join(users!.dir(ownerId, id), own.meta) };
   throw new Error(`There is no singer "${id}".`);
+}
+
+/** A singer's speaking voice as pages see it. */
+function speakingJson(voice: SpeakingVoice | undefined, id: string) {
+  if (!voice) return null;
+  const v = encodeURIComponent(voice.createdAt + voice.seed);
+  return {
+    description: voice.description,
+    madeBy: voice.madeBy,
+    seed: voice.seed,
+    sampleUrl: `/api/singers/${id}/speaking-sample?v=${v}`,
+    candidates: voice.candidates.map((c) => ({ ...c, url: `/api/singers/${id}/speaking-candidates/${c.seed}?v=${v}` })),
+  };
 }
 
 function ownJson(s: UserSinger) {
@@ -97,6 +129,8 @@ export interface SingersRouterDeps {
   /** The users' singers (BRAIN_SINGERS_DATA_DIR), when adding singers is set up. */
   readonly users?: UserSingers;
   readonly tasks: BackgroundTasks;
+  /** The singers' speaking voices (kept in BRAIN_SINGERS_DATA_DIR), when that is set. */
+  readonly voices?: SpeakingVoices;
 }
 
 export function createSingersRouter(deps: SingersRouterDeps): Router {
@@ -109,8 +143,10 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
   };
 
   router.get('/api/singers', (req, res) => {
-    const builtIn = builtIns(ownerOf(req)).map((s) => ({ id: s.id, name: s.name, description: s.description, source: s.source, previewUrl: `/api/singers/${s.id}/preview`, own: false }));
-    res.json({ singers: [...builtIn, ...own(ownerOf(req)).map(ownJson)] });
+    const owner = ownerOf(req);
+    const speaking = (id: string, builtIn: boolean) => speakingJson(deps.voices?.get(owner, id, builtIn), id);
+    const builtIn = builtIns(owner).map((s) => ({ id: s.id, name: s.name, description: s.description, source: s.source, previewUrl: `/api/singers/${s.id}/preview`, own: false, speaking: speaking(s.id, true) }));
+    res.json({ singers: [...builtIn, ...own(owner).map((s) => ({ ...ownJson(s), speaking: speaking(s.id, false) }))] });
   });
 
   router.get('/api/singers/:id/preview', (req, res) => {
@@ -151,6 +187,53 @@ export function createSingersRouter(deps: SingersRouterDeps): Router {
       });
       return res.status(201).json({ task: taskJson(task, '') });
     });
+  });
+
+  /** The owner's singer (built-in or own) for its speaking voice, or a 404 answered. */
+  const speakingOf = (req: Request, res: Response): { owner: string; builtIn: boolean } | undefined => {
+    const owner = ownerOf(req);
+    if (builtIns(owner).some((s) => s.id === req.params.id)) return { owner, builtIn: true };
+    if (own(owner).some((s) => s.id === req.params.id)) return { owner, builtIn: false };
+    res.status(404).json({ error: 'not_found', message: `There is no singer "${req.params.id}".` });
+    return undefined;
+  };
+
+  router.get('/api/singers/:id/speaking-sample', (req, res) => {
+    const s = speakingOf(req, res);
+    if (!s) return;
+    if (!deps.voices?.get(s.owner, req.params.id, s.builtIn)) return res.status(404).json({ error: 'not_found', message: 'The singer has no speaking voice yet.' });
+    res.setHeader('cache-control', 'private, max-age=3600');
+    return res.sendFile(deps.voices.samplePath(s.owner, req.params.id, s.builtIn));
+  });
+
+  router.get('/api/singers/:id/speaking-candidates/:seed', (req, res) => {
+    const s = speakingOf(req, res);
+    if (!s) return;
+    const voice = deps.voices?.get(s.owner, req.params.id, s.builtIn);
+    const seed = Number(req.params.seed);
+    if (!voice || !voice.candidates.some((c) => c.seed === seed)) return res.status(404).json({ error: 'not_found', message: `The singer has no candidate voice ${req.params.seed}.` });
+    res.setHeader('cache-control', 'private, max-age=3600');
+    return res.sendFile(join(deps.voices!.dir(s.owner, req.params.id, s.builtIn), 'candidates', `candidate-${seed}.wav`));
+  });
+
+  router.post('/api/singers/:id/speaking-voice', (req, res) => {
+    const body = z.object({ description: z.string().optional() }).strict().safeParse(req.body ?? {});
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: 'Send { description? }.' });
+    return answer(res, async () => {
+      const task = deps.tasks.startSpeakingVoice(ownerOf(req), { singerId: req.params.id, ...(body.data.description !== undefined ? { description: body.data.description } : {}) });
+      return res.status(202).json({ task: taskJson(task, '') });
+    });
+  });
+
+  router.post('/api/singers/:id/speaking-voice/choose', (req, res) => {
+    const s = speakingOf(req, res);
+    if (!s) return;
+    const body = z.object({ seed: z.number().int() }).strict().safeParse(req.body);
+    if (!body.success) return res.status(400).json({ error: 'invalid_body', message: 'Send { seed }.' });
+    const voice = deps.voices?.get(s.owner, req.params.id, s.builtIn);
+    if (!voice) return res.status(404).json({ error: 'not_found', message: 'The singer has no speaking voice yet.' });
+    if (!voice.candidates.some((c) => c.seed === body.data.seed)) return res.status(400).json({ error: 'not_a_candidate', message: `${body.data.seed} is not one of the singer's candidate voices.` });
+    return res.json({ speaking: speakingJson(deps.voices!.choose(s.owner, req.params.id, s.builtIn, body.data.seed), req.params.id) });
   });
 
   router.delete('/api/singers/:id', (req, res) => {

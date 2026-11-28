@@ -34,7 +34,8 @@ import { createPatternsRouter } from './routes/patterns.js';
 import { createSuggestionsRouter } from './routes/suggestions.js';
 import { createTracksRouter } from './routes/tracks.js';
 import { createSoundsRouter } from './routes/sounds.js';
-import { createSingersRouter, readSingers, singerVoice } from './routes/singers.js';
+import { createSingersRouter, readSingers, singerVoice, speakingSinger } from './routes/singers.js';
+import { SpeakingVoices } from './singers/speakingVoice.js';
 import { UserSingers } from './singers/userSingers.js';
 import { createAvatarsRouter } from './routes/avatars.js';
 import { AvatarPacks } from './avatars/avatarPacks.js';
@@ -378,11 +379,20 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   } else {
     console.warn('[brain] ACE_SERVICE_URL not set — Add ACE layer answers 503.');
   }
+  // Singers' speaking voices (src/singers/speakingVoice.ts): the speech service, the language model that describes
+  // the voice, and the singers' data folder (where the voices are kept) and task files.
+  const speakingVoices = config.singersDataDir ? new SpeakingVoices(config.singersDataDir) : undefined;
+  const speaking =
+    config.speechServiceUrl && lyricModel && speakingVoices && config.taskFilesDir
+      ? { client: new VocalsClient(config.speechServiceUrl), voices: speakingVoices, chat: lyricModel, filesDir: config.taskFilesDir, pollMs: deps.singPollMs ?? SING_POLL_MS }
+      : undefined;
+  if (!speaking) console.warn('[brain] SPEECH_SERVICE_URL (with ASSISTANT_LLM_URL, BRAIN_SINGERS_DATA_DIR, BRAIN_TASK_FILES_DIR) not set — speaking voices answer 503.');
   const addSinger =
     userSingers && sing
-      ? { client: sing.client, filesDir: config.taskFilesDir!, singers: userSingers, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS }
+      ? { client: sing.client, filesDir: config.taskFilesDir!, singers: userSingers, ffmpegBin: config.ffmpegBin, pollMs: deps.singPollMs ?? SING_POLL_MS, ...(speaking ? { speaking } : {}) }
       : undefined;
-  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
+  const speakingVoice = speaking ? { ...speaking, findSinger: (ownerId: string, singerId: string) => speakingSinger(config.singersDir, userSingers, ownerId, singerId) } : undefined;
+  const tasks = new BackgroundTasks({ store, events, ...(lyricModel ? { lyricModel } : {}), ...(sing ? { sing } : {}), ...(ace ? { ace } : {}), ...(addSinger ? { addSinger } : {}), ...(speakingVoice ? { speakingVoice } : {}), transcribe, hash: hashCanonical, clock: () => new Date().toISOString() });
   app.use(createTracksRouter({ isSinging: (owner, songId) => tasks.isSinging(owner, songId) }));
   (app.locals as { tasks?: BackgroundTasks }).tasks = tasks;
   app.use(createTasksRouter({ store, tasks, now: () => new Date() }));
@@ -399,7 +409,7 @@ export function createApp(config: BrainConfig, deps: CreateAppDeps = {}): Expres
   );
   app.use(createSoundsRouter({ playback }));
   readSingers(config.singersDir); // fail at startup, naming the file, if the singers list is broken
-  app.use(createSingersRouter({ dir: config.singersDir, ...(userSingers ? { users: userSingers } : {}), tasks }));
+  app.use(createSingersRouter({ dir: config.singersDir, ...(userSingers ? { users: userSingers } : {}), tasks, ...(speakingVoices ? { voices: speakingVoices } : {}) }));
   if (!config.avatarPacksDir) console.warn('[brain] BRAIN_AVATAR_PACKS_DIR not set — Avatars answer 503.');
   if (config.avatarPacksDir && !config.danceClipsDir) console.warn('[brain] BRAIN_DANCE_CLIPS_DIR not set — avatar videos use only the built-in dance moves.');
   app.use(
