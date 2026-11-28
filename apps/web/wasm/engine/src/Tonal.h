@@ -457,18 +457,31 @@ inline std::vector<TimeNote> buildTonalNotes(const json& noteBars, const json& s
     return timeNotes;
 }
 
+// Tonal note (and Virtual Guitarist strum) velocity by position in the bar, as the legacy app played it
+// (casperaki2-engine-js api/v1.0/services/classes/renderer/HelperClass.js:540-564; owner 2026-11-28 "Switch, like
+// drums"): the bar's first beat 0.8, the middle of the bar 0.7, the other beats 0.6, between beats 0.5, each plus a
+// random +-0.1. Scaled by 0.9/0.8 so the bar's first beat keeps the 0.9 the engine gave it before (the C++ legacy's
+// 0.9/0.7/0.5/0.3 without randomness). `beat` counts from a bar line (a section's start).
+inline int legacyTonalVelocity(double beat, Random& rng) {
+    const double inBar = std::fmod(std::fmod(beat, 4.0) + 4.0, 4.0);
+    double v;
+    if (inBar == 0.0) v = 0.8;
+    else if (inBar == 2.0) v = 0.7;
+    else if (std::fmod(inBar, 1.0) == 0.0) v = 0.6;
+    else v = 0.5;
+    v += (rng.nextInt(20001) - 10000) / 100000.0;  // uniform -0.1 .. +0.1
+    return (int)std::lround(v * (0.9 / 0.8) * 127.0);
+}
+
 // SequencerUtils.h:636-670 — add a note to a clip's note list. Computes the
-// beat-mode velocity and applies the same-pitch overlap shortener against notes
+// beat-mode velocity (legacyTonalVelocity) and applies the same-pitch overlap shortener against notes
 // already in this clip (so a held note is trimmed when the next onset of the
 // same pitch arrives). `clip` is the destination IR clip.
 inline void addNoteToClip(Clip& clip, const TimeNote& tn, VelocityMode mode, Random* rng = nullptr) {
-    static const double normalisedVelocities[4] = {0.9, 0.7, 0.5, 0.3};
     int velocity = tn.velocity;
     if (mode == vmBeat) {
-        if (std::fmod(tn.start, 4.0) == 0.0) velocity = (int)(normalisedVelocities[0] * 127);
-        else if (std::fmod(tn.start, 2.0) == 0.0) velocity = (int)(normalisedVelocities[1] * 127);
-        else if (std::fmod(tn.start, 1.0) == 0.0) velocity = (int)(normalisedVelocities[2] * 127);
-        else velocity = (int)(normalisedVelocities[3] * 127);
+        if (!rng) throw std::logic_error("addNoteToClip: velocity by position needs its random stream");
+        velocity = legacyTonalVelocity(tn.start, *rng);
     } else if (mode == vmRandomised && rng) {
         // SequencerUtils.h:653 — humanise around the base velocity. Integer
         // division truncates toward zero (range [-13, +12]). The native golden

@@ -73,21 +73,28 @@ describe('chord-tone patterns', () => {
     }
   });
 
-  it('a guitar preview plays strums over the chord shape', () => {
-    const preview = { lanePreview: { family: 'guitar', kind: 'guitarPicks', patterns: [{ bars: 1, hits: [[0, [0, 1, 2], 1, 90], [1, [3], 0.5, 70]] }] } };
+  // Owner 2026-11-28: "finger picking can be done on sampled guitars, but strums always on virtual guitarist", as
+  // the legacy app's convertNonVirtualGuitaristPatternsIntoVirtualGuitaristPatterns.js did: a hit on several strings
+  // is a recorded strum (down when the strings go up from the bass, short when it lasts a 16th, its length the
+  // nearest of 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4 beats); one string stays a picked note on the sampled guitar.
+  it('a guitar preview plays its strums as Virtual Guitarist strums and its picks on the sampled guitar', () => {
+    const hits = [[0, [0, 1, 2], 1, 90], [1, [3], 0.5, 70], [2, [5, 4, 3], 0.3, 80], [3, [1, 2, 3, 4], 0.6, 80]];
+    const preview = { lanePreview: { family: 'guitar', kind: 'guitarPicks', patterns: [{ bars: 1, hits }] } };
     const song = songWithLane('organicVibes', 'Guitar', preview);
     const events = laneEvents(song, 'Guitar');
     expect(events.length).toBeGreaterThan(0);
-    const strum = events.find((x) => x.beat === '0.0')!.e as { type: string; strings: number[]; offset: number[] };
-    expect(strum.type).toBe('strum');
-    expect(strum.strings).toEqual([0, 1, 2]);
-    expect(strum.offset).toEqual([0, 0.02, 0.04]);
+    const at = (beat: string) => events.find((x) => x.beat === beat)!.e as Record<string, unknown>;
+    expect(at('0.0')).toMatchObject({ type: 'virtualGuitarist', event: 'chordLongStrumDown', duration: 1 });
+    expect(at('1.0')).toMatchObject({ type: 'strum', strings: [3], durations: [0.5], velocities: [70] });
+    expect(at('2.0')).toMatchObject({ type: 'virtualGuitarist', event: 'chordShortStrumUp', duration: 0.25 });
+    expect(at('3.0')).toMatchObject({ type: 'virtualGuitarist', event: 'chordLongStrumDown', duration: 0.5 });
+    for (const { e } of events) if ((e as { type: string }).type === 'strum') expect((e as { strings: number[] }).strings).toHaveLength(1);
   });
 
   it('a guitar preview plays its Virtual Guitarist effects', () => {
     const preview = { lanePreview: { family: 'guitar', kind: 'guitarPicks', patterns: [{ bars: 1, hits: [[0, [0, 1, 2], 1, 90]], fx: [[3.5, 'fx2']] }] } };
     const song = songWithLane('organicVibes', 'Guitar', preview);
-    const fx = laneEvents(song, 'Guitar').filter((x) => (x.e as { type: string }).type === 'virtualGuitarist');
+    const fx = laneEvents(song, 'Guitar').filter((x) => (x.e as { type: string; event?: string }).type === 'virtualGuitarist' && (x.e as { event: string }).event.startsWith('fx'));
     expect(fx.length).toBeGreaterThan(0);
     for (const { beat, e } of fx) {
       expect(beat).toBe('3.5');

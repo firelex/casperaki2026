@@ -75,6 +75,9 @@ struct TimeStrums {
     double duration = -1;
     Type type = shortStrumUp;
     int velocity = 65;
+    /** Where the strum is written, in beats from the section's first bar line (before the sample's timing offset):
+     *  its velocity by position comes from here (Resolver, legacyTonalVelocity). */
+    double gridBeat = 0;
 
     static const char* typeStrings(int i) {
         static const char* s[] = {"chordShortStrumUp", "chordShortStrumDown",
@@ -259,6 +262,7 @@ inline GuitarSegmentNotes buildGuitarSegment(const json& noteBars, const json& s
                             ? (isAcoustic ? -0.17 : -0.15) - (bpm - 110) / 10.0 * 0.01
                             : (isAcoustic ? -0.03 : -0.01);
                         double durOffsetSec = 0.1 - std::min(0.0, (bpm - 110) / 5.0 * 0.01);
+                        s.gridBeat = (barIndex * 4) + noteTime + s.start;
                         s.start += (barIndex * 4) + noteTime + (timeOffsetSec / 60.0 * bpm);
                         s.duration += durOffsetSec / 60.0 * bpm;
                         out.timeStrums.push_back(s);

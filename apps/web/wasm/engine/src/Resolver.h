@@ -75,6 +75,8 @@ public:
         // (docs/61 §2 preferred path). Owned per-resolve so the velocity grid is
         // reproducible run-to-run for a given song.
         rng_.setSeed(Random::seedFromString(songJson));
+        // Its own stream, so the velocities by position move no other random draw.
+        velocityRng_.setSeed(Random::seedFromString(songJson + "velocity by position"));
 
         // --- Structure/timeline math (Sequencer.cpp:386,436-442) -------------
         // 4/4 throughout, a single tempo inserted at beat 0; segments are laid
@@ -142,6 +144,7 @@ private:
     const std::string* songText_ = nullptr;
     std::unique_ptr<nlohmann::ordered_json> songOrdered_;
     Random rng_;
+    Random velocityRng_;  // legacyTonalVelocity (tonal notes, Virtual Guitarist strums)
     double secPerBeat_ = 0.5;
     std::vector<Segment> segments_;
 
@@ -491,9 +494,12 @@ private:
 
                     // duration != -1 always holds after the segment offset, so every
                     // strum lands as a midi note (the step/fx setNote branch is dead).
+                    // A chord strum's velocity by its place in the bar, as the legacy app played tonal notes (owner
+                    // 2026-11-28: dynamics for the Virtual Guitarist); fret noises keep theirs.
+                    const int velocity = strum.type == TimeStrums::fx ? strum.velocity : legacyTonalVelocity(strum.gridBeat, velocityRng_);
                     if (strum.duration != -1)
                         midi.notes.push_back(Note{keyNote, music::Note{keyNote}.toString(),
-                                                  strum.start, strum.duration, strum.velocity});
+                                                  strum.start, strum.duration, velocity});
                 }
 
                 // numSteps = 8 * (int)(stretched length in beats) (Guitar.h:110-111).
@@ -834,7 +840,7 @@ private:
                         double startSec, double endSec, const std::vector<TimeNote>& notes) {
         Clip clip; clip.name = segName; clip.type = "midi";
         clip.startSec = startSec; clip.endSec = endSec;
-        for (const auto& tn : notes) addNoteToClip(clip, tn, vmBeat);
+        for (const auto& tn : notes) addNoteToClip(clip, tn, vmBeat, &velocityRng_);
         sortClipNotes(clip);
         track.clips.push_back(std::move(clip));
     }
@@ -852,9 +858,9 @@ private:
 
         for (const auto& tn : notes) {
             if (tn.duration > 0.5) {
-                addNoteToClip(longClip, tn, vmBeat);
+                addNoteToClip(longClip, tn, vmBeat, &velocityRng_);
             } else {
-                addNoteToClip(shortClip, tn, vmBeat);
+                addNoteToClip(shortClip, tn, vmBeat, &velocityRng_);
             }
         }
         sortClipNotes(longClip);

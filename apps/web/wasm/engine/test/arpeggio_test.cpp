@@ -76,13 +76,17 @@ int main() {
             {60, 4, 0.25}, {64, 4.5, 0.25}, {69, 5, 0.25}, {72, 5.5, 0.25},
             {76, 6, 0.25}, {81, 6.5, 0.25}, {84, 7, 0.25}, {88, 7.5, 0.25},
         });
-        // Synths lane: +2 beat sustain tail, VelocityMode::beat (0.9/0.7/0.5/0.3 * 127).
+        // Synths lane: +2 beat sustain tail, VelocityMode::beat (legacyTonalVelocity: the JS legacy's 0.8/0.7/0.6/0.5
+        // +-0.1, scaled by 0.9/0.8): each note within the random spread of its place in the bar.
         Clip clip;
-        for (auto tn : notes) { tn.duration += 2.0; addNoteToClip(clip, tn, vmBeat); }
-        const int wantVel[16] = {114, 38, 63, 38, 88, 38, 63, 38, 114, 38, 63, 38, 88, 38, 63, 38};
-        for (size_t i = 0; i < clip.notes.size() && i < 16; ++i)
-            check(clip.notes[i].vel == wantVel[i], "up/eighth/2 velocity " + std::to_string(i) + " = " +
-                                                   std::to_string(clip.notes[i].vel));
+        Random rng; rng.setSeed(11);
+        for (auto tn : notes) { tn.duration += 2.0; addNoteToClip(clip, tn, vmBeat, &rng); }
+        const double centre[16] = {0.8, 0.5, 0.6, 0.5, 0.7, 0.5, 0.6, 0.5, 0.8, 0.5, 0.6, 0.5, 0.7, 0.5, 0.6, 0.5};
+        for (size_t i = 0; i < clip.notes.size() && i < 16; ++i) {
+            const double want = centre[i] * (0.9 / 0.8) * 127.0, spread = 0.1 * (0.9 / 0.8) * 127.0 + 1.0;
+            check(std::fabs(clip.notes[i].vel - want) <= spread, "up/eighth/2 velocity " + std::to_string(i) + " = " +
+                                                                  std::to_string(clip.notes[i].vel));
+        }
         check(clip.notes.size() == 16, "up/eighth/2 clip note count");
         check(clip.notes[0].name == "C4" && clip.notes[0].lenBeats == 2.25, "up/eighth/2 first clip note");
     }

@@ -12,10 +12,11 @@
 //    own quality (minor, seventh, sus …) decides the notes.
 //
 // 2. Guitar picks (guitar). Each hit names strings of the chord's guitar shape,
-//    counted from its lowest note (0 = the bass note), and plays them as one
-//    `strum` event: several strings are a strum (in the order listed, so
-//    [0,1,2,3,4,5] is a down strum and [5,4,3,2,1,0] an up strum), one string
-//    a picked note. Engine: Guitar.h getStrumNotes over GuitarChord shapes.
+//    counted from its lowest note (0 = the bass note). One string is a picked
+//    note on the sampled guitar (a `strum` event; engine Guitar.h getStrumNotes
+//    over GuitarChord shapes); several strings are a strum, played as the
+//    Virtual Guitarist's recording (strumAsRecording: [0,1,2,3,4,5] a down
+//    strum, [5,4,3,2,1,0] an up strum).
 //
 // Patterns loop over the section, bar by bar. A pattern may say which
 // sections it is for (`energy`): 'low' for intros, verses, breaks and outros,
@@ -163,6 +164,21 @@ export function energyCoverageProblem(patterns: readonly { readonly energy?: Ene
 /** Guitar strum spread: the time between two strings of one strum, in beats. */
 export const STRUM_SPREAD_BEATS = 0.02;
 
+/** The strum lengths the Virtual Guitarist conversion rounds to (legacy convertNonVirtualGuitaristPatternsIntoVirtualGuitaristPatterns.js). */
+const RECORDED_STRUM_LENGTHS = [0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4] as const;
+
+/** A hit on several strings as a recorded Virtual Guitarist strum, the legacy app's way
+ *  (casperaki2-engine-js …/offline/virtualGuitarist/convertNonVirtualGuitaristPatternsIntoVirtualGuitaristPatterns.js):
+ *  down when the strings go up from the bass (`strings[1] > strings[0]`), up otherwise; its length the nearest of
+ *  RECORDED_STRUM_LENGTHS (the first on a tie), a short strum at 0.25 and a long one above. */
+export function strumAsRecording(strings: readonly number[], duration: number): { event: string; duration: number } {
+  if (strings.length < 2) throw new Error(`a strum needs two strings or more, got [${strings.join(', ')}]`);
+  const length = RECORDED_STRUM_LENGTHS.reduce((best, l) => (Math.abs(l - duration) < Math.abs(best - duration) ? l : best));
+  const down = strings[1]! > strings[0]!;
+  const event = length === 0.25 ? (down ? 'chordShortStrumDown' : 'chordShortStrumUp') : down ? 'chordLongStrumDown' : 'chordLongStrumUp';
+  return { event, duration: length };
+}
+
 /**
  * Play a style's patterns over one section of one lane. One pattern per
  * section type (`rng` is the lane's stream, so verses share a pattern and the
@@ -203,6 +219,12 @@ export function emitAuthoredPatterns(rng: Rng, segment: Segment, style: Authored
       for (const [at, strings, duration, velocity] of picks) {
         if (Math.floor(at / BEATS_PER_BAR) !== patternBar) continue;
         const beat = at - patternBar * BEATS_PER_BAR;
+        // A hit on several strings is a strum, and strums are always the Virtual Guitarist's recordings (owner
+        // 2026-11-28); its loudness is the engine's by position (Resolver legacyTonalVelocity).
+        if (strings.length > 1) {
+          addNoteEvent(bars[segBar]!, beat, { type: 'virtualGuitarist', chord: chordAt(segBar, beat), ...strumAsRecording(strings, duration) });
+          continue;
+        }
         addNoteEvent(bars[segBar]!, beat, {
           type: 'strum',
           chord: chordAt(segBar, beat),

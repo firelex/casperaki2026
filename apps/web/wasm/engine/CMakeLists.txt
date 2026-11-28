@@ -94,6 +94,8 @@ target_compile_definitions(mixconfig_test PRIVATE
 
 # Instrument lanes: names, per-lane meters, live lane gain (mute/solo).
 add_executable(drum_velocity_test test/drum_velocity_test.cpp)
+add_executable(tonal_velocity_test test/tonal_velocity_test.cpp)
+add_executable(guitar_strum_position_test test/guitar_strum_position_test.cpp)
 add_executable(lanes_test test/lanes_test.cpp)
 target_link_libraries(lanes_test PRIVATE aw_fx)
 target_compile_definitions(lanes_test PRIVATE
@@ -129,6 +131,8 @@ add_test(NAME noise_source_test COMMAND noise_source_test)
 add_test(NAME mixconfig_test COMMAND mixconfig_test)
 add_test(NAME lanes_test COMMAND lanes_test)
 add_test(NAME drum_velocity_test COMMAND drum_velocity_test)
+add_test(NAME tonal_velocity_test COMMAND tonal_velocity_test)
+add_test(NAME guitar_strum_position_test COMMAND guitar_strum_position_test)
 add_test(NAME arpeggio_test COMMAND arpeggio_test)
 add_test(NAME transition_pattern_test COMMAND transition_pattern_test)
 add_test(NAME matchering_test COMMAND matchering_test
