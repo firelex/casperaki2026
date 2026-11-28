@@ -497,12 +497,16 @@ function attachMultisamplePlan(verdict, instJson) {
   const samples = Array.isArray(instJson?.samples) ? instJson.samples : [];
   if (samples.length === 0) return verdict;
   // Read outside the try below: a missing or broken sheet must fail the lowering, not quietly unresolve the slots.
-  const firstNote = typeof verdict.relativePath === 'string' ? multisampleMetadata()[verdict.relativePath]?.firstNote : undefined;
+  const sheet = typeof verdict.relativePath === 'string' ? multisampleMetadata()[verdict.relativePath] : undefined;
+  const firstNote = sheet?.firstNote;
+  const tuneCents = sheet?.tuneCents;
+  if (tuneCents !== undefined && !(Number.isFinite(tuneCents) && Math.abs(tuneCents) <= 100)) throw new Error(`multisampleMetadata.json: ${verdict.relativePath} has tuneCents ${tuneCents} (a number of cents, at most 100 either way)`);
   try {
     const res = resolveMultisampleSlots({
       family,
       samples: samples.map((s) => ({ id: s.id, note: s.note, type: s.type })),
       ...(firstNote ? { firstNote } : {}),
+      ...(tuneCents ? { tuneCents } : {}),
     });
     // Notes past the top of a recording that starts early ("BA Brooks 1"): left out of the instrument, so the sampler's
     // highest real zone stretches over them as it does between slots (owner 2026-11-28 "for the missing note, yes,

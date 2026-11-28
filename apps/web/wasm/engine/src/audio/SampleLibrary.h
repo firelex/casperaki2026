@@ -114,7 +114,12 @@ private:
                 const double s1 = slot.value("sliceEnd", -1.0);
                 if (!(s1 > s0) || s0 < 0) { st.tonalMissing++; continue; }
                 if (!decoded || !decoded->ok) { st.tonalMissing++; continue; }
-                mixer.setSample(std::to_string(id), makeSlice(*decoded, s0, s1));
+                auto slice = makeSlice(*decoded, s0, s1);
+                // A recording measured out of tune (the library's multisampleMetadata.json tuneCents): the slice is
+                // declared at a proportionally higher rate, so the sampler plays it that many cents up (a fine tune).
+                const double cents = slot.value("tuneCents", 0.0);
+                if (cents != 0.0) slice->sampleRate = (int)std::lround(slice->sampleRate * std::pow(2.0, cents / 1200.0));
+                mixer.setSample(std::to_string(id), slice);
                 st.tonalSlots++;
             }
         }

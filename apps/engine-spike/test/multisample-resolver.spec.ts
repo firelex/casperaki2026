@@ -292,6 +292,11 @@ describe('a recording that does not start on the timing table first note (owner 
     expect(res.slots.map((s) => Boolean(s.pastRecording))).toEqual([false, false, true, true]);
   });
 
+  it('a recording measured out of tune carries its correction on every resolved slot (tuneCents, owner 2026-11-28)', () => {
+    const res = resolveMultisampleSlots({ family: 'basses', samples, familyTimingMap: { basses: 'bassNotes' }, loadTimingForName: () => timing, firstNote: 'F#', tuneCents: 13 });
+    expect(res.slots.map((s) => (s.status === 'resolved' ? s.tuneCents : null))).toEqual([13, 13, null, null]);
+  });
+
   it('a first note off the three-semitone grid is refused, naming it', () => {
     expect(() => resolveMultisampleSlots({ family: 'basses', samples, familyTimingMap: { basses: 'bassNotes' }, loadTimingForName: () => timing, firstNote: 'D' })).toThrow(/D/u);
   });

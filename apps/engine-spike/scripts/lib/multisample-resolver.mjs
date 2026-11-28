@@ -194,6 +194,7 @@ function buildTimingIndex(timing) {
  *   loadTimingForName?: (name: string) => LegacyTimingEntry[];
  *   dataDir?: string;
  *   firstNote?: string;
+ *   tuneCents?: number;
  * }} opts
  * @returns {MultisampleResolution}
  */
@@ -204,6 +205,7 @@ export function resolveMultisampleSlots({
   loadTimingForName,
   dataDir,
   firstNote,
+  tuneCents,
 }) {
   const map = familyTimingMap ?? loadFamilyTimingMap(dataDir ? { dataDir } : undefined);
   const timingName = map?.[family];
@@ -275,6 +277,9 @@ export function resolveMultisampleSlots({
       timingIndex: tIndex,
       timingNote: normNote(t.note),
       timingType: String(t.type),
+      // The library's measured correction for a recording out of tune (multisampleMetadata.json): the players raise
+      // the slice by this many cents (a sampler's fine tune).
+      ...(tuneCents ? { tuneCents } : {}),
     });
     resolvedCount++;
   }

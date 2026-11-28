@@ -241,7 +241,10 @@ export class PlaybackService {
           this.warnBeyondEnd(entry.relativePath, fileSec, s0, src.slot.note);
           add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: src.sliceStart, sliceEnd: src.sliceEnd, pitchShift: shift });
         } else {
-          add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1 });
+          // A recording measured out of tune (the library's multisampleMetadata.json): raised by its tuneCents, as
+          // the server renderer does (a sampler's fine tune).
+          const cents = typeof slot.tuneCents === 'number' ? slot.tuneCents : 0;
+          add(String(slot.slot.id), 'tonal', { relativePath: entry.relativePath, sliceStart: s0, sliceEnd: s1, ...(cents ? { pitchShift: cents / 100 } : {}) });
         }
       }
     }
