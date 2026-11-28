@@ -265,15 +265,13 @@ describe('CatalogApi', () => {
 });
 
 describe('videoApi.start', () => {
-  it('posts the console style with the measured tracks', async () => {
+  it('posts the measured levels and the avatars for the 3D video', async () => {
     const { videoApi } = await import('../src/api/video');
     const { defaultBrainClient } = await import('../src/api/client');
     const post = vi.spyOn(defaultBrainClient, 'post').mockResolvedValue({ state: 'queued' } as never);
-    const consoleBody = { versionKey: '0123456789abcdef', binSeconds: 0.5, tracks: [], master: [0.5] };
-    await videoApi.start('abc', { style: 'console', orientation: 'portrait', quality: 'preview', artist: 'Me', console: consoleBody });
-    expect(post).toHaveBeenCalledWith('/api/songs/abc/video', { style: 'console', orientation: 'portrait', quality: 'preview', artist: 'Me', console: consoleBody });
-    await videoApi.start('abc', { style: 'cartoon', orientation: 'landscape', quality: 'full', artist: 'Me' });
-    expect(post).toHaveBeenLastCalledWith('/api/songs/abc/video', { style: 'cartoon', orientation: 'landscape', quality: 'full', artist: 'Me' });
+    const levels = { versionKey: '0123456789abcdef', binSeconds: 0.5, tracks: [], master: [0.5] };
+    await videoApi.start('abc', { orientation: 'portrait', quality: 'preview', artist: 'Me', levels, avatarIds: ['a-1'] });
+    expect(post).toHaveBeenCalledWith('/api/songs/abc/video', { orientation: 'portrait', quality: 'preview', artist: 'Me', levels, avatars: { avatarIds: ['a-1'] } });
     post.mockRestore();
   });
 });

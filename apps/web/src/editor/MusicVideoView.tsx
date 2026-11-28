@@ -4,21 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { avatarsApi, avatarsQueryKey } from '../api/avatars';
 import { playbackApi } from '../api/playback';
-import { videoApi, videoQueryKeys, type ConsoleBody, type VideoFormat, type VideoOrientation, type VideoQuality, type VideoStatus, type VideoStyle } from '../api/video';
+import { videoApi, videoQueryKeys, type VideoFormat, type VideoJobs, type VideoOrientation, type VideoQuality, type VideoStatus } from '../api/video';
 import { livePlayer } from '../audio/livePlayer';
 import { useSession } from '../state/session';
 import { LEAD_VOCAL_NAME } from '../types/song';
-import { buildConsoleBody, measureTracks } from './consoleVideoData';
+import { buildMeasuredLevels, measureTracks } from './trackLevels';
 import { AvatarStoryboardEditor } from './AvatarStoryboardEditor';
 import { sectionLabel, storyboardFor, type StoryboardEntry } from './avatarStoryboard';
-import { colorHex } from './sequencer/layout';
 import { BEATS_PER_BAR, buildSequencerModel } from './sequencerModel';
-
-const STYLES: readonly { id: VideoStyle; label: string; hint: string }[] = [
-  { id: 'cartoon', label: 'Cartoon', hint: 'Dancers, scenes and the sung words' },
-  { id: 'console', label: 'Console', hint: 'A 3D mixing desk playing the song' },
-  { id: 'avatars', label: 'Avatars', hint: 'Your avatars dancing in a 3D club' },
-];
 
 /** How many avatars a dance floor video shows. */
 const MAX_AVATARS = 5;
@@ -28,30 +21,32 @@ const ORIENTATIONS: readonly { id: VideoOrientation; label: string; hint: string
   { id: 'portrait', label: 'Tall', hint: '1080 × 1920, for TikTok, Reels and Shorts' },
 ];
 
+/** The song's video job for a format (none yet: undefined). */
+export function jobFor(jobs: VideoJobs | undefined, format: VideoFormat): VideoStatus | undefined {
+  return jobs?.jobs.avatars[format];
+}
+
 /**
- * Music Video tab: a music video of the saved song, wide or tall, rendered in
- * the background from the song's mix (exported first if needed). Cartoon: a
- * language model plans the scenes (dancers, props, camera, lyric banners) to
- * the sections and the sung words. Console: a 3D mixing desk; the tab first
- * measures each track's level through the in-browser engine and sends them,
- * with the song's clips and notes, for the version that is saved.
+ * Music Video tab: the 3D avatar video of the saved song, wide or tall, rendered in the background from the song's mix
+ * (exported first if needed): the user's avatars perform in 3D scenes, planned section by section in the storyboard.
+ * The tab first measures each track's level through the in-browser engine (the lead vocal's drive the singer's mouth)
+ * and sends them for the version that is saved.
  */
 export function MusicVideoView() {
   const { songId } = useParams<{ songId: string }>();
   if (!songId) throw new Error('MusicVideoView: no song id in the route');
   const { viewSong, editorDirty } = useSession();
   const queryClient = useQueryClient();
-  const [style, setStyle] = useState<VideoStyle>('cartoon');
   const [orientation, setOrientation] = useState<VideoOrientation>('landscape');
-  /** Console style: the share of the track levels measured so far (0..1) while measuring. */
+  /** The share of the track levels measured so far (0..1) while measuring. */
   const [measuring, setMeasuring] = useState<number | undefined>(undefined);
   const [artist, setArtist] = useState('Casperaki');
   const [quality, setQuality] = useState<VideoQuality>('full');
-  /** Avatars style: the avatars chosen to dance (undefined: the first MAX_AVATARS of the user's avatars). */
+  /** The avatars chosen to dance (undefined: the first MAX_AVATARS of the user's avatars). */
   const [picked, setPicked] = useState<readonly string[] | undefined>(undefined);
-  const avatars = useQuery({ queryKey: avatarsQueryKey, queryFn: ({ signal }) => avatarsApi.list(signal), enabled: style === 'avatars' });
+  const avatars = useQuery({ queryKey: avatarsQueryKey, queryFn: ({ signal }) => avatarsApi.list(signal) });
   const avatarIds = picked ?? (avatars.data?.avatars ?? []).slice(0, MAX_AVATARS).map((a) => a.id);
-  /** Avatars style: the storyboard as edited (undefined: today's video, club, everyone, automatic camera). */
+  /** The storyboard as edited (undefined: today's video, club, everyone, automatic camera). */
   const [edited, setEdited] = useState<readonly StoryboardEntry[] | undefined>(undefined);
   const sections = storyboardSections(viewSong);
   const chosenAvatars = avatarIds.map((id) => avatars.data?.avatars.find((a) => a.id === id)).filter((a): a is NonNullable<typeof a> => a !== undefined);
@@ -64,39 +59,28 @@ export function MusicVideoView() {
     queryKey: videoQueryKeys.jobs(songId),
     queryFn: ({ signal }) => videoApi.jobs(songId, signal),
     refetchInterval: (q) =>
-      Object.values(q.state.data?.jobs ?? {})
-        .flatMap((byFormat) => Object.values(byFormat))
-        .some((j) => j && (j.state === 'queued' || j.state === 'running'))
+      Object.values(q.state.data?.jobs.avatars ?? {}).some((j) => j && (j.state === 'queued' || j.state === 'running'))
         ? 2000
         : false,
   });
   const start = useMutation({
     mutationFn: async () => {
-      const opts = { style, orientation, quality, artist: artist.trim() };
-      if (style === 'cartoon') return videoApi.start(songId, opts);
-      if (editorDirty) throw new Error(`Save the song first: the ${style === 'avatars' ? 'dance floor' : 'console'} video shows the saved version.`);
-      if (style === 'avatars' && avatarIds.length === 0) throw new Error('Choose at least one avatar (make them on the Avatars page).');
+      if (editorDirty) throw new Error('Save the song first: the video shows the saved version.');
+      if (avatarIds.length === 0) throw new Error('Choose at least one avatar (make them on the Avatars page).');
       if (!viewSong) throw new Error('The song is not loaded yet.');
       setMeasuring(0);
       try {
         const meters = await measureTracks(livePlayer, songId, (signal) => playbackApi.forSaved(songId, signal), setMeasuring);
         const model = buildSequencerModel(viewSong);
-        const body: ConsoleBody = buildConsoleBody({
-          model,
-          meters,
-          secondsPerBar: (BEATS_PER_BAR * 60) / viewSong.bpm,
-          leadVocal: model.tracks.some((t) => t.name === LEAD_VOCAL_NAME) ? LEAD_VOCAL_NAME : undefined,
-          hex: colorHex,
-        });
-        return await videoApi.start(songId, { ...opts, console: body, ...(style === 'avatars' ? { avatarIds, storyboard: board } : {}) });
+        const levels = buildMeasuredLevels({ model, meters, leadVocal: model.tracks.some((t) => t.name === LEAD_VOCAL_NAME) ? LEAD_VOCAL_NAME : undefined });
+        return await videoApi.start(songId, { orientation, quality, artist: artist.trim(), levels, avatarIds, storyboard: board });
       } finally {
         setMeasuring(undefined);
       }
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: videoQueryKeys.jobs(songId) }),
   });
-  const job = jobs.data?.jobs[style][format];
-  const plannerMissing = style === 'cartoon' && jobs.data?.plannerConfigured === false;
+  const job = jobFor(jobs.data, format);
   const busy = job?.state === 'queued' || job?.state === 'running';
 
   return (
@@ -105,35 +89,11 @@ export function MusicVideoView() {
         <section className="w-full shrink-0 lg:w-[340px]" aria-label="Video settings">
           <h1 className="text-[22px] font-semibold">Music video</h1>
           <p className="mt-1 text-[14px] text-white/60">
-            {style === 'cartoon' ? 'A cartoon video of ' : style === 'avatars' ? 'A dance floor video of ' : 'A mixing-desk video of '}
-            {viewSong?.title ? <span className="text-white">{viewSong.title}</span> : 'this song'}
-            {style === 'cartoon'
-              ? ': dancers, scenes and the sung words, planned to the song’s sections and beat.'
-              : style === 'avatars'
-                ? ': your avatars dance to the beat in a 3D club; the one whose voice sang the song sings the words.'
-                : ': every track’s strip lights up and meters as it plays, faders ride the fades, and the camera follows the sections.'}
+            A video of {viewSong?.title ? <span className="text-white">{viewSong.title}</span> : 'this song'}: your avatars perform it in 3D
+            scenes, dancing to the beat; the one whose voice sang the song sings the words.
           </p>
 
           <fieldset className="mt-6">
-            <legend className="mb-2 text-[13px] text-white/60">Style</legend>
-            <div className="flex gap-2">
-              {STYLES.map((o) => (
-                <button
-                  key={o.id}
-                  type="button"
-                  aria-pressed={style === o.id}
-                  onClick={() => setStyle(o.id)}
-                  className={`flex-1 rounded-[10px] border px-3 py-2 text-left ${style === o.id ? 'border-white bg-white/10' : 'border-line hover:border-white/40'}`}
-                >
-                  <span className="block text-[14px] font-semibold">{o.label}</span>
-                  <span className="block text-[12px] text-white/55">{o.hint}</span>
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          {style === 'avatars' ? (
-            <fieldset className="mt-5">
               <legend className="mb-2 text-[13px] text-white/60">Who dances (up to {MAX_AVATARS})</legend>
               {avatars.isPending ? <p className="text-[13px] text-white/55">Loading your avatars…</p> : null}
               {avatars.isError ? (
@@ -169,7 +129,6 @@ export function MusicVideoView() {
               </div>
               <p className="mt-2 text-[12px] text-white/45">The avatar whose voice sang the song sings it; the others dance.</p>
             </fieldset>
-          ) : null}
 
           <fieldset className="mt-5">
             <legend className="mb-2 text-[13px] text-white/60">Format</legend>
@@ -194,8 +153,8 @@ export function MusicVideoView() {
             <div className="flex gap-2">
               {(
                 [
-                  ['full', 'Full', style === 'cartoon' ? 'Full size; takes about 2½× the song’s length' : 'Full size'],
-                  ['preview', 'Quick preview', style === 'cartoon' ? 'Half size; about 3× faster, to check the scenes' : 'Half size; quicker, to check the shots'],
+                  ['full', 'Full', 'Full size'],
+                  ['preview', 'Quick preview', 'Half size; quicker, to check the shots'],
                 ] as const
               ).map(([id, label, hint]) => (
                 <button
@@ -222,22 +181,15 @@ export function MusicVideoView() {
             />
           </label>
 
-          {plannerMissing ? (
-            <p className="mt-4 rounded-[8px] bg-err/10 px-3 py-2 text-[13px] text-red-200">
-              Video making is not set up yet: the scene planner needs a DeepSeek API key on the server (DEEPSEEK_API_KEY in the brain&rsquo;s settings).
-            </p>
-          ) : null}
           {editorDirty ? (
             <p className="mt-4 rounded-[8px] bg-amber-400/10 px-3 py-2 text-[13px] text-amber-200">
-              {style !== 'cartoon'
-                ? 'Save the song first: this video shows the saved version, measured track by track.'
-                : 'The video is made from the saved song. Save your edits first to include them.'}
+              Save the song first: this video shows the saved version, measured track by track.
             </p>
           ) : null}
 
           <button
             type="button"
-            disabled={busy || start.isPending || !artist.trim() || plannerMissing || (style !== 'cartoon' && editorDirty) || (style === 'avatars' && avatarIds.length === 0)}
+            disabled={busy || start.isPending || !artist.trim() || editorDirty || avatarIds.length === 0}
             onClick={() => start.mutate()}
             className="mt-5 h-11 w-full rounded-full bg-accent text-[15px] font-semibold text-white hover:bg-[#e00000] disabled:opacity-50"
           >
@@ -257,11 +209,8 @@ export function MusicVideoView() {
             </p>
           ) : null}
           <p className="mt-3 text-[12px] text-white/45">
-            {style === 'cartoon'
-              ? 'A full video takes about 2½× the song’s length, a quick preview less than the song itself.'
-              : style === 'avatars'
-                ? 'The tracks are measured here first (a moment), then the club is drawn on the server’s graphics card: about 1¼× the song’s length.'
-                : 'The tracks are measured here first (a moment), then the desk is drawn on the server’s graphics card.'}{' '}
+            The tracks are measured here first (a moment), then the scenes are drawn on the server’s graphics card: about 1½× the
+            song’s length.{' '}
             If the song has not been exported yet, its mix is made first.
           </p>
         </section>
@@ -270,9 +219,9 @@ export function MusicVideoView() {
           {jobs.isError ? (
             <p className="text-[14px] text-err">{jobs.error.message}</p>
           ) : (
-            <VideoPanel job={job} style={style} orientation={orientation} preview={quality === 'preview'} title={viewSong?.title ?? 'Music video'} />
+            <VideoPanel job={job} orientation={orientation} preview={quality === 'preview'} title={viewSong?.title ?? 'Music video'} />
           )}
-          {style === 'avatars' && chosenAvatars.length > 0 && sections.length > 0 ? (
+          {chosenAvatars.length > 0 && sections.length > 0 ? (
             <AvatarStoryboardEditor sections={sections} board={board} avatars={chosenAvatars} onChange={setEdited} />
           ) : null}
         </section>
@@ -283,13 +232,11 @@ export function MusicVideoView() {
 
 function VideoPanel({
   job,
-  style,
   orientation,
   preview,
   title,
 }: {
   job: VideoStatus | undefined;
-  style: VideoStyle;
   orientation: VideoOrientation;
   preview: boolean;
   title: string;
@@ -298,7 +245,7 @@ function VideoPanel({
   if (!job) {
     return (
       <div className={`${frame} flex items-center justify-center rounded-[12px] border border-dashed border-line text-[14px] text-white/45`}>
-        No {orientation === 'portrait' ? 'tall' : 'wide'} {style} {preview ? 'preview' : 'video'} yet. Make one on the left.
+        No {orientation === 'portrait' ? 'tall' : 'wide'} {preview ? 'preview' : 'video'} yet. Make one on the left.
       </div>
     );
   }
@@ -310,10 +257,10 @@ function VideoPanel({
       </div>
     );
   }
-  if (job.state !== 'done' || !job.url) return <VideoProgress job={job} style={style} frame={frame} />;
+  if (job.state !== 'done' || !job.url) return <VideoProgress job={job} frame={frame} />;
   return (
     <div className="flex flex-col gap-3">
-      <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: ${style} music video`} />
+      <video key={job.url + (job.finishedAt ?? '')} src={job.url} controls className={`${frame} rounded-[12px] bg-black`} aria-label={`${title}: music video`} />
       <div className="flex items-center gap-3">
         <a href={`${job.url}?download=1`} className="h-10 rounded-full border border-white/30 px-4 text-[14px] leading-10 text-white hover:border-white/60">
           Download MP4{preview ? ' (preview)' : ''}
@@ -324,17 +271,15 @@ function VideoPanel({
   );
 }
 
-const STEPS: readonly { id: 'audio' | 'planning' | 'rendering'; label: string }[] = [
+const STEPS: readonly { id: 'audio' | 'rendering'; label: string }[] = [
   { id: 'audio', label: 'Export the song’s mix' },
-  { id: 'planning', label: 'Plan the scenes' },
   { id: 'rendering', label: 'Render the video' },
 ];
 
-/** The steps (the console style has no planning) with the current one's detail, progress and a running timer, so the
- *  page never looks stuck. */
-function VideoProgress({ job, style, frame }: { job: VideoStatus; style: VideoStyle; frame: string }) {
+/** The steps with the current one's detail, progress and a running timer, so the page never looks stuck. */
+function VideoProgress({ job, frame }: { job: VideoStatus; frame: string }) {
   const now = useNow(1000);
-  const steps = style !== 'cartoon' ? STEPS.filter((s) => s.id !== 'planning') : STEPS;
+  const steps = STEPS;
   const current = steps.findIndex((s) => s.id === job.step);
   const pct = typeof job.progress === 'number' ? Math.round(job.progress * 100) : undefined;
   const elapsed = (iso: string | undefined) => {
