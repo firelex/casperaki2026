@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { GENRE_RECIPES } from '@casperaki/song-schema';
 
 import { createRng } from '@casperaki/music-theory';
-import { drumKit, generatorParams, orchestrate, selectDrumBlueprint } from '../src/index.js';
+import { drumKit, generateDrumPattern, generatorParams, orchestrate, selectDrumBlueprint } from '../src/index.js';
+import { selectVirtualGuitaristPattern } from '../src/patterns/virtual-guitarist-bank.js';
 import { drumStylesFor } from '../src/patterns/drums.js';
 
 const ELECTRIC_CLEAN = ['electricGuitarsDominoStereo', 'electricGuitarsLpChorusStereo'];
@@ -40,6 +41,29 @@ describe('Casperaki Pop', () => {
     expect(drumStylesFor({}, 'verse1')).toBeUndefined();
     for (let i = 0; i < 20; i++) expect(styles).toContain(selectDrumBlueprint(createRng(`v${i}`), 'brightPop', styles).styleName);
     expect(() => selectDrumBlueprint(createRng('x'), 'brightPop', ['nope'])).toThrow(/nope/u);
+  });
+
+  it('its guitar plays syncopated patterns: Funk and R&B strumming only (owner 2026-11-28)', () => {
+    for (let i = 0; i < 20; i++) {
+      const sel = selectVirtualGuitaristPattern(createRng(`g${i}`), 'brightPop', 110, GENRE_RECIPES.casperakiPop.guitarPatterns);
+      expect(sel.patternName, sel.patternName).toMatch(/-(Funk|R&B)-/u);
+    }
+    expect(() => selectVirtualGuitaristPattern(createRng('x'), 'brightPop', 110, ['Nope'])).toThrow(/Nope/u);
+  });
+
+  it('every section has the trap hi-hats (16ths with rolls) over its own kick and snare (owner 2026-11-28)', () => {
+    const ctx = { params: { genre: 'brightPop', key: 'C', bpm: 110, seed: 'hats' }, rng: createRng('hats'), recipe: GENRE_RECIPES.casperakiPop };
+    const trap = selectDrumBlueprint(ctx.rng.fork('patterns/drums/hiHats'), 'brightPop', [GENRE_RECIPES.casperakiPop.hiHats]);
+    const hatsOf = (bars: { notes?: Record<string, { note: number }[]> }[]) =>
+      bars.flatMap((b, i) => Object.entries(b.notes ?? {}).flatMap(([beat, evs]) => evs.filter((e) => e.note === 42).map(() => i * 4 + Number(beat)))).sort((a, b) => a - b);
+    const want = (trap.blueprint as Record<string, number[]>).hiHatClosed1!.filter((t) => t < 8).sort((a, b) => a - b);
+    for (const name of ['verse1', 'chorus1']) {
+      const seg = { name, bars: Array.from({ length: 4 }, () => ({ chords: ['C', 'C', 'C', 'C'] })) } as never;
+      const pat = generateDrumPattern(ctx as never, seg, ['drums'])!;
+      expect(hatsOf(pat.bars as never).filter((t) => t < 8), name).toEqual(want);
+      // its own kick is there too
+      expect(pat.bars.some((b) => Object.values(b.notes ?? {}).some((evs) => (evs as { note: number }[]).some((e) => e.note === 36))), name).toBe(true);
+    }
   });
 
   it('a base genre is generated as before (no recipe)', () => {

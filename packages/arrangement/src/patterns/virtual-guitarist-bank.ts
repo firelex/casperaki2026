@@ -102,6 +102,8 @@ export interface VirtualGuitaristBankPattern {
 }
 
 export interface VirtualGuitaristBankSelection {
+  /** The picked pattern's name ("Ample Guitar - 110-16-44-Funk-03"). */
+  readonly patternName: string;
   readonly source: 'main' | 'stefan';
   readonly mainCandidateCount: number;
   readonly stefanCandidateCount: number;
@@ -243,6 +245,8 @@ export function selectVirtualGuitaristPattern(
   rng: Rng,
   genre: string,
   bpm: number,
+  /** A genre recipe's pattern families ("Funk", "R&B"): only the main bank's patterns of those names. */
+  families?: readonly string[],
 ): VirtualGuitaristBankSelection {
   const genreParse = GenreSchema.safeParse(genre);
   if (!genreParse.success) {
@@ -255,6 +259,16 @@ export function selectVirtualGuitaristPattern(
     throw new DataAssetError(MAIN_META, `invalid bpm "${bpm}" — must be a positive finite number`);
   }
   const bank = loadBank();
+  if (families) {
+    const named = filterStyleMap(bank, genreParse.data, bpm).filter((n) => families.some((f) => n.includes(`-${f}-`)));
+    if (named.length === 0) {
+      throw new DataAssetError(STYLE_MAP_META, `no virtualGuitarist pattern of the families ${families.join(', ')} for genre="${genre}" bpm=${bpm}`);
+    }
+    const patternName = rng.pick(named);
+    const pattern = bank.main.get(patternName);
+    if (!pattern) throw new DataAssetError(MAIN_META, `the style map names "${patternName}", which the main bank does not have`);
+    return { patternName, source: 'main', mainCandidateCount: named.length, stefanCandidateCount: 0, pattern };
+  }
   const source = pickSourceBank(rng, genreParse.data);
   const mainCandidates = filterStyleMap(bank, genreParse.data, bpm);
   const stefanCandidates = bank.stefanKeysSorted;
@@ -287,6 +301,7 @@ export function selectVirtualGuitaristPattern(
     );
   }
   return {
+    patternName,
     source: resolvedSource,
     mainCandidateCount: mainCandidates.length,
     stefanCandidateCount: stefanCandidates.length,

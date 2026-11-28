@@ -25,6 +25,10 @@ export interface GenreRecipe {
   readonly drumStyles: Readonly<Record<string, readonly string[]>>;
   /** Lanes that play in every section. */
   readonly alwaysPlays: readonly AlwaysPlayingLane[];
+  /** The guitar's patterns: only Virtual Guitarist pattern families of these names ("Funk" → "…-Funk-03"). */
+  readonly guitarPatterns?: readonly string[];
+  /** Every section's hi-hats from this drum style (laid over the section's own kick, snare and the rest). */
+  readonly hiHats?: string;
 }
 
 export const GENRE_RECIPES = {
@@ -39,6 +43,10 @@ export const GENRE_RECIPES = {
       verse: ['urban', 'authored-urban-boom-bap', 'authored-urban-trap-hats', 'authored-gmd-urban-boom-bap', 'authored-gmd-urban-soul-funk-pocket'],
     },
     alwaysPlays: ['electricGuitarClean'],
+    // Owner 2026-11-28: "make sure the guitar is syncopated" (the 16th-note strumming families) and "trap hi-hats ...
+    // part of every Casperaki song".
+    guitarPatterns: ['Funk', 'R&B'],
+    hiHats: 'authored-urban-trap-hats',
   },
 } as const satisfies Record<string, GenreRecipe>;
 

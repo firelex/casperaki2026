@@ -54,7 +54,27 @@ export function generateDrumPattern(
   const selection = preview ? selectPreviewDrumBlueprint(rng, preview) : selectDrumBlueprint(rng, ctx.params.genre, styles);
   const bars: BarPattern[] = segment.bars.map(() => emptyBarPattern());
 
+  // A genre recipe's hi-hats (Casperaki Pop: trap hats) replace the section's own, the same in every section (one
+  // draw per song); the rest of its kit plays on.
+  const hats = ctx.recipe?.hiHats ? selectDrumBlueprint(ctx.rng.fork('patterns/drums/hiHats'), ctx.params.genre, [ctx.recipe.hiHats]) : undefined;
+  const layers = hats
+    ? [
+        { sel: selection, keep: (lane: string) => !HAT_LANES.has(lane) },
+        { sel: hats, keep: (lane: string) => HAT_LANES.has(lane) },
+      ]
+    : [{ sel: selection, keep: () => true }];
+  for (const { sel, keep } of layers) emitBlueprint(bars, sel, keep);
+
+  return { bars };
+}
+
+/** The kit's hi-hat lanes (a recipe's hi-hats replace these). */
+const HAT_LANES: ReadonlySet<string> = new Set(['hiHatClosed1', 'hiHatClosed2', 'hiHatPedal', 'hiHatOpen']);
+
+/** The blueprint's hits on `keep`'s lanes, looped over the section's bars. */
+function emitBlueprint(bars: BarPattern[], selection: ReturnType<typeof selectDrumBlueprint>, keep: (lane: string) => boolean): void {
   for (const [lane, positions] of Object.entries(selection.blueprint)) {
+    if (!keep(lane)) continue;
     const rawMidi = selection.laneMidi[lane];
     if (rawMidi === undefined) continue;
     const midi = MidiNoteSchema.parse(rawMidi);
@@ -72,6 +92,4 @@ export function generateDrumPattern(
       }
     }
   }
-
-  return { bars };
 }

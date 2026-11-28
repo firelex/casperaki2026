@@ -37,7 +37,8 @@ export function generateGuitarPattern(
 ): FamilyPattern | undefined {
   if (!activity.includes('guitar')) return undefined;
   const rng = ctx.rng.fork('patterns/guitar/virtualGuitarist');
-  const selection = selectVirtualGuitaristPattern(rng, ctx.params.genre, ctx.params.bpm);
+  // A genre recipe may keep the guitar to some pattern families (Casperaki Pop: the syncopated Funk and R&B strums).
+  const selection = selectVirtualGuitaristPattern(rng, ctx.params.genre, ctx.params.bpm, ctx.recipe?.guitarPatterns);
   const pattern = postProcessVirtualGuitaristPattern(rng, selection.pattern);
   if (pattern.bars.length === 0) throw new Error(`generateGuitarPattern: the Virtual Guitarist pattern has no bars`);
 
