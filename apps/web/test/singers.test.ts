@@ -107,15 +107,22 @@ describe('a navigable Singers page (owner 2026-11-28: "allow rename of singers",
     expect(shownSingers(all, '', 'builtIn').map((x) => x.name)).toEqual(['Milo', 'Zara']);
   });
 
-  it('a card offers Rename next to Delete, and keeps its test line and speaking voice under Details until opened', () => {
+  // Owner 2026-11-28: "we should show the test line as the main vocal widget, and the reference track under details".
+  it('a card offers Rename next to Delete, plays its test line, and keeps its voice reference and speaking voice under Details until opened', () => {
     const closed = html(createElement(SingerCard, { singer: own }));
     expect(closed).toMatch(/>Rename</u);
     expect(closed).toMatch(/Details</u);
-    expect(closed).toMatch(/src="\/api\/singers\/u-0123456789ab\/preview"/u);
-    expect(closed).not.toMatch(/test-line|Speaking voice/u);
+    expect(closed).toMatch(/src="\/api\/singers\/u-0123456789ab\/test-line"/u);
+    expect(closed).not.toMatch(/\/preview"|Voice reference|Speaking voice/u);
     const opened = html(createElement(SingerCard, { singer: own, open: true }));
-    expect(opened).toMatch(/test-line/u);
+    expect(opened).toMatch(/src="\/api\/singers\/u-0123456789ab\/preview"/u);
+    expect(opened).toMatch(/Voice reference/u);
     expect(opened).toMatch(/Speaking voice/u);
+  });
+
+  it('a built-in singer, which has no test line, plays its voice reference on the card', () => {
+    const out = html(createElement(SingerCard, { singer: { id: 'yue2_female_dry2', name: 'Singer 1', description: 'd', source: 's', previewUrl: '/p', own: false, speaking: null } }));
+    expect(out).toMatch(/src="\/p"/u);
   });
 
   it('renames through the brain', async () => {

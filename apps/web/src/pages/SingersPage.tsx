@@ -129,8 +129,21 @@ function SingerList({ singers }: { singers: readonly SingerInfo[] }) {
   );
 }
 
-/** One singer: its name, description, voice reference, Rename and Delete (a built-in singer for this user only); under
- *  Details its test line (the user's own), speaking voice and source. */
+/** The recording the singer's voice is copied from, and how it was chosen. */
+function VoiceReference({ singer: s }: { singer: SingerInfo }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[12px] text-white/55">
+        Voice reference{s.reference ? ` · ${referenceText(s.reference)}` : ''}
+        {s.transcription ? ` · ${s.transcription === 'la' ? 'sung as "la la la"' : 'sung with words'}` : ''}
+      </span>
+      <audio controls preload="none" src={s.previewUrl} className="w-full" aria-label={`${s.name}: voice reference`} />
+    </div>
+  );
+}
+
+/** One singer: its name, description, test line (a built-in singer, which has none: its voice reference), Rename and
+ *  Delete (a built-in singer for this user only); under Details its voice reference, speaking voice and source. */
 export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer: SingerInfo; open?: boolean }) {
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
@@ -236,24 +249,22 @@ export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer:
             </span>
           )}
       </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-[12px] text-white/55">
-          Voice reference{s.reference ? ` · ${referenceText(s.reference)}` : ''}
-          {s.transcription ? ` · ${s.transcription === 'la' ? 'sung as "la la la"' : 'sung with words'}` : ''}
-        </span>
-        <audio controls preload="none" src={s.previewUrl} className="w-full" aria-label={`${s.name}: voice reference`} />
-      </div>
+      {/* The test line is what the singer sounds like singing (owner 2026-11-28: the main player); a built-in singer
+          has none, so its card plays its voice reference. */}
+      {s.testLineUrl ? (
+        <div className="flex flex-col gap-1">
+          <span className="text-[12px] text-white/55">Test line, sung in this voice</span>
+          <audio controls preload="none" src={s.testLineUrl} className="w-full" aria-label={`${s.name}: test line`} />
+        </div>
+      ) : (
+        <VoiceReference singer={s} />
+      )}
       <button type="button" aria-expanded={open} className="self-start text-[13px] text-white/60 hover:text-white" onClick={() => setOpen(!open)}>
         {open ? '▾' : '▸'} Details
       </button>
       {open ? (
         <>
-          {s.testLineUrl ? (
-            <div className="flex flex-col gap-1">
-              <span className="text-[12px] text-white/55">Test line, sung in this voice</span>
-              <audio controls preload="none" src={s.testLineUrl} className="w-full" aria-label={`${s.name}: test line`} />
-            </div>
-          ) : null}
+          {s.testLineUrl ? <VoiceReference singer={s} /> : null}
           <SpeakingVoiceSection singer={s} />
           <p className="text-[12px] text-white/45">{s.source}</p>
         </>
@@ -267,8 +278,6 @@ export function SingerCard({ singer: s, open: initiallyOpen = false }: { singer:
   );
 }
 
-/** Whether a speaking voice is being made for the singer (a speakingVoice task, or Add a singer, whose last steps make
- *  the new singer's voice), and its last failed speakingVoice task. */
 /** The Add a singer and speaking voice tasks that have finished, as one key: it changes when another finishes. */
 export function singerTasksFinished(tasks: readonly BackgroundTask[]): string {
   return tasks
@@ -278,6 +287,8 @@ export function singerTasksFinished(tasks: readonly BackgroundTask[]): string {
     .join(',');
 }
 
+/** Whether a speaking voice is being made for the singer (a speakingVoice task, or Add a singer, whose last steps make
+ *  the new singer's voice), and its last failed speakingVoice task. */
 export function speakingTaskState(tasks: readonly BackgroundTask[], singerId: string): { making: boolean; failed: BackgroundTask | undefined } {
   const mine = tasks.filter((t) => (t.kind === 'speakingVoice' || t.kind === 'addSinger') && t.singerId === singerId);
   return { making: mine.some((t) => t.state === 'running'), failed: mine.find((t) => t.kind === 'speakingVoice' && t.state === 'failed') };
