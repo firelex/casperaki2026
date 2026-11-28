@@ -66,7 +66,10 @@ RAP_CONTEXT_BARS = 4
 # repeated), where lego over 8 bars of song (the section, then the song after it; its lines repeated to fill, one per
 # RAP_BARS_PER_LINE bars) rapped it (47-58 %, 2026-11-27). Only the section's stretch is kept either way.
 MIN_WINDOW_BARS = 8
-RAP_BARS_PER_LINE = 2
+RAP_BARS_PER_LINE = 1  # a short line per bar (owner 2026-11-28: a line per two bars was "a tad slow")
+# ACE's own rap tags (its docs/en/Tutorial.md, "Vocal Control Tags": [spoken word] "Rap/recitation"): without them
+# the repainted rap was sung (owner 2026-11-28: "It's not a rap. It's sung."); [high energy] for "more energy".
+RAP_TAGS = "[Verse - rap]\n[spoken word]\n[high energy]"
 MAX_RAP_TAKES = 12
 MAX_TAKES_PER_ROUND = 8
 VOCALS_PYTHON = SERVICES_DIR / "vocals" / ".venv" / "bin" / "python"
@@ -230,11 +233,11 @@ def rap_window(start: float, end: float, total: float, bpm: float) -> tuple[floa
 
 
 def rap_lyrics(lines: str) -> str:
-    """ACE's lyrics for one section's rap: its lines, once, under a verse tag."""
+    """ACE's lyrics for one section's rap: its lines, once, under ACE's rap tags."""
     own = [l.strip() for l in lines.strip().splitlines() if l.strip()]
     if not own:
         raise ValueError("ace-layer: a section's rap has no lines")
-    return "[Verse]\n" + "\n".join(own)
+    return RAP_TAGS + "\n" + "\n".join(own)
 
 
 def window_seconds(bpm: float) -> float:

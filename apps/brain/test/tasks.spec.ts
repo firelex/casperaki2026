@@ -7,7 +7,7 @@ import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { sungSections } from '@casperaki/arrangement';
-import type { Song } from '@casperaki/song-schema';
+import { rapLineCount, type Song } from '@casperaki/song-schema';
 
 import { createApp } from '../src/bootstrap.js';
 import { loadConfig } from '../src/config.js';
@@ -197,9 +197,17 @@ function rapModel(): ChatModel {
     'We ride the night together and we never fall',
     'We hear the music calling and we give it all',
     'The neon signs are glowing on the rainy road',
-    'We carry every dream and never drop the load',
+    "We're flowing with a dream and never drop the load",
     'My heart is like a drum that beats inside my chest',
     'I give it everything and never take a rest',
+    'The fire in my soul is burning like a flame',
+    'The higher that I go, the brighter is my name',
+    "I'm sailing on the waves, I'm braver every day",
+    'The rhythm saves the night, it never fades away',
+    "We're running through the rain, we're dancing in the street",
+    'The thunder and the wonder are louder than the beat',
+    'The stars are shining bright above the silent town',
+    'The guitars are playing loud, we never slow it down',
   ];
   return {
     async complete(messages) {
@@ -232,7 +240,7 @@ describe('Write rap lyrics (docs/superpowers/specs/2026-11-28-rap-like-singing-d
     const saved = (await send('GET', `${h.url}/api/songs/${applied.body.songId as string}`)).body.song as Song;
     const rap = (saved.generator!.params as { params: { rapLyrics: Record<string, string[]> } }).params.rapLyrics;
     expect(Object.keys(rap)).toEqual([verse.name]);
-    expect(rap[verse.name]).toHaveLength(Math.round(verse.bars.length / 2));
+    expect(rap[verse.name]).toHaveLength(rapLineCount(verse.bars.length));
   });
 
   it('refuses an unknown section', async () => {

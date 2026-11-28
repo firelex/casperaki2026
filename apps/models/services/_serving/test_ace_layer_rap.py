@@ -66,12 +66,13 @@ def test_takes_and_lego_caption_only_with_sections(wav):
 
 
 def test_short_sections_are_made_by_lego_on_eight_bars_with_their_lines_repeated():
-    # 120 bpm: a bar is 2 s, a line 4 s; 8 bars 16 s.
+    # 120 bpm: a bar is 2 s, a line 2 s; 8 bars 16 s.
     assert ace.is_short(0, 8, 120) and not ace.is_short(0, 16, 120)
     assert ace.window_seconds(128) == pytest.approx(15.0)
     assert ace.section_window(69.375, 76.875, 180, ace.window_seconds(128)) == (69.375, 84.375)
-    assert ace.lego_rap_lyrics("a\n\nb", 16, 120) == "[Verse]\na\nb\na\nb"
-    assert ace.lego_rap_lyrics("a\nb\nc", 16, 120, lead=4) == "[Verse]\nc\na\nb\nc"
+    # a line per bar: 8 bars of 2 s fill with 8 lines
+    assert ace.lego_rap_lyrics("a\n\nb", 16, 120) == "[Verse]\n" + "\n".join("abababab")
+    assert ace.lego_rap_lyrics("a\nb\nc", 16, 120, lead=4) == "[Verse]\n" + "\n".join("bcabcabc")
 
 
 def test_section_window_is_the_section_or_ten_seconds_of_song_around_it():
@@ -94,7 +95,8 @@ def test_a_section_is_repainted_with_four_bars_of_song_either_side():
 
 
 def test_rap_lyrics_are_the_sections_lines_once():
-    assert ace.rap_lyrics(" a\n\nb ") == "[Verse]\na\nb"
+    # ACE's rap tags (docs/en/Tutorial.md: [spoken word] "Rap/recitation"), owner 2026-11-28 "It's not a rap. It's sung."
+    assert ace.rap_lyrics(" a\n\nb ") == "[Verse - rap]\n[spoken word]\n[high energy]\na\nb"
     with pytest.raises(ValueError, match="no lines"):
         ace.rap_lyrics(" \n ")
 

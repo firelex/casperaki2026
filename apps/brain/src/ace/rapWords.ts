@@ -1,10 +1,11 @@
 // Write rap lyrics (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): the rap's words from the language
-// model. One line per two bars (rapLineCount), rhyming in couplets (lines 1-2, 3-4, …) with a rhyme inside every
+// model. One short line per bar (rapLineCount), rhyming in couplets (lines 1-2, 3-4, …) with a rhyme inside every
 // couplet too (owner 2026-11-28: rap needs "a different rhythmic pattern, more internal rhymes, shorter sentences"),
 // every word in our pronunciation dictionary, 6 to 16 syllables a line. Wrong lines go back to the model with what is wrong; still wrong after MAX_ROUNDS answers: an error.
 // The prompt is plain English for the model.
 
 import { pronounce, wordsOf, wordsRhyme } from '@casperaki/arrangement';
+import { RAP_BARS_PER_LINE } from '@casperaki/song-schema';
 import { z } from 'zod';
 
 import type { ChatMessage, ChatModel } from '../llm/chatModel.js';
@@ -20,8 +21,9 @@ export interface RapDensity {
   readonly barsPerLine: number;
   readonly most: readonly [number, number];
 }
-/** Today's: a line per two bars, most lines 12 to 15 syllables. */
-export const RAP_DENSITY: RapDensity = { barsPerLine: 2, most: [12, 15] };
+/** A short line per bar, most lines 10 to 12 syllables (owner 2026-11-28: a line per two bars was "a tad slow";
+ *  8 lines in an 8-bar verse, "8-line is it": ACE rapped 77 % of their words on average, the best take 98 %). */
+export const RAP_DENSITY: RapDensity = { barsPerLine: RAP_BARS_PER_LINE, most: [10, 12] };
 
 export interface RapWordsRequest {
   readonly density: RapDensity;

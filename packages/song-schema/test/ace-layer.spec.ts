@@ -3,9 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { aceInstrumentOfTrack, aceTrackName, aceTrackOf, rapLineCount } from '../src/ace-layer.js';
 
 describe('rap (ACE layer)', () => {
-  it('raps one line per two bars, at least one', () => {
-    expect(rapLineCount(8)).toBe(4);
-    expect(rapLineCount(4)).toBe(2);
+  it('raps one line per bar, at least one', () => {
+    // a line per bar (owner 2026-11-28: 8 lines in an 8-bar verse, "8-line is it")
+    expect(rapLineCount(8)).toBe(8);
+    expect(rapLineCount(4)).toBe(4);
     expect(rapLineCount(1)).toBe(1);
     expect(() => rapLineCount(0)).toThrow(/0 bars/u);
   });

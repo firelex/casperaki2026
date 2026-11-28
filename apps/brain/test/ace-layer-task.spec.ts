@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { applyAceLayer, orchestrate } from '@casperaki/arrangement';
-import { finalChoruses, rapLineCount, vocalTakeFingerprint } from '@casperaki/song-schema';
+import { finalChoruses, rapLineCount, vocalTakeFingerprint, type Song } from '@casperaki/song-schema';
 
 
 import { ACE_LAYER_LUFS, RAP_TAKES, aceCaption, aceLyrics, AceLayerOptionsSchema, coveredSections, keyScale, runAceLayer, sectionKind, type AceLayerOptions } from '../src/ace/aceLayerTask.js';
@@ -181,12 +181,18 @@ describe('rap (ACE layer)', () => {
     expect(verses.length).toBeGreaterThan(1);
     const [v1, v2] = verses as [string, string];
     const options: AceLayerOptions = { instrument: 'rap', words: 'female rap vocals', sections: [v1, v2], rapWords: { [v1]: ' one \n\n two ', [v2]: 'three\nfour' }, seed: 9 };
-    const { result, submitted, steps } = await run(options);
+    // the song is rendered for ACE without its takes (no singing, no earlier rap): drums, bass and chords
+    const rendered: Song[] = [];
+    const sung = applyAceLayer(SONG, { track: 'ACE Guitar', instrument: 'guitar', caption: 'guitar', seed: 1, takes: [{ segment: v1, sha256: 'a'.repeat(64) as never, durationSeconds: 8, fingerprint: vocalTakeFingerprint(SONG, v1, 'ACE Guitar') as never }] });
+    const { result, submitted, steps } = await run(options, { input: sung, renderWav: async (song: Song) => (rendered.push(song), join(dir, 'render.wav')) });
+    expect(rendered.map((r) => r.aiArtifacts)).toEqual([[]]);
     expect(submitted).toHaveLength(1);
     const sent = submitted[0]!;
     expect(sent).toMatchObject({ track: 'vocals', takes: RAP_TAKES, seed: 9 });
     expect(sent).not.toHaveProperty('lyrics');
-    expect(sent['caption']).toBe(`${SONG.genre} song with female rap vocals, rap verse over the beat, ${SONG.bpm} bpm, ${keyScale(SONG.key)}`);
+    expect(sent['caption']).toBe(
+      `hip-hop, rap, female rap vocals, fast high-energy rap, aggressive punchy delivery, rapid-fire spoken word flow on the beat, punchy drums, no singing, no sung melody, ${SONG.bpm} bpm`,
+    );
     expect(String(sent['lego_caption'])).toMatch(/^female rap vocals, rap vocals, a cappella/u);
     expect(sent['sections']).toEqual([
       { name: v1, start: startOf(v1).start, end: startOf(v1).end, lyrics: 'one\ntwo' },

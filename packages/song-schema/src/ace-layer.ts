@@ -59,9 +59,10 @@ export type AceAdlibVoice = (typeof ACE_ADLIB_VOICES)[number];
 export const ACE_ADLIB_DEFAULT_WORDS = '(oh yeah)\n(ooh, ooh)\n(hey!)\n(come on)';
 export const ACE_ADLIB_DEFAULT_STYLE = 'female soulful pop ad-libs, call and response';
 
-/** Rap (docs/superpowers/specs/2026-11-27-rap-vocals-design.md): ACE raps one line per two bars. */
-export const RAP_BARS_PER_LINE = 2;
-export const RAP_DEFAULT_STYLE = 'male rap vocals, confident hip hop flow';
+/** Rap (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md): ACE raps one short line per bar (owner
+ *  2026-11-28: a line per two bars was "a tad slow"; 8 lines in an 8-bar verse, "8-line is it"). */
+export const RAP_BARS_PER_LINE = 1;
+export const RAP_DEFAULT_STYLE = 'male rap vocals, fast high-energy hip hop flow';
 
 /** The lines a section of `bars` bars raps (at least one). */
 export function rapLineCount(bars: number): number {

@@ -105,7 +105,7 @@ export function WriteRapLyricsDialog({
   return (
     <Shell
       title="Write rap lyrics"
-      description="The words of a rap for the sections you choose, one line per two bars. You can change them in Rap… before rapping."
+      description="The words of a rap for the sections you choose, one short line per bar. You can change them in Rap… before rapping."
       start={{ label: 'Write', disabled: ticked.length === 0 || !style.trim(), onClick: () => onStart(style.trim(), ticked) }}
       onClose={onClose}
     >
@@ -174,7 +174,7 @@ export function RapDialog({
                   rows={Math.min(rapLineCount(s.bars), 6)}
                   maxLength={1000}
                   onChange={(e) => setWords({ ...words, [s.name]: e.target.value })}
-                  placeholder="No words yet: write rap lyrics first, or type them here (one line per two bars)"
+                  placeholder="No words yet: write rap lyrics first, or type them here (one short line per bar)"
                   className="ml-7 rounded-[8px] border border-line bg-transparent px-3 py-2 font-mono text-[13px] text-white placeholder:text-white/30"
                 />
               ) : null}

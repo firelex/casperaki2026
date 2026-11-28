@@ -127,12 +127,12 @@ export function keyScale(key: string): string {
 /** What ACE is asked to play: the instrument's description, the user's words, the tempo and the key. */
 export function aceCaption(song: Song, options: AceLayerOptions): string {
   const words = options.words?.trim();
-  // Rap is ACE repainting the section of the whole mix (docs/superpowers/specs/2026-11-28-rap-like-singing-design.md),
-  // so the caption describes the song with the rapper on it.
+  // Rap is ACE repainting the section of the song without its vocals (docs/superpowers/specs/
+  // 2026-11-28-rap-like-singing-design.md), so the caption describes that music with a rapper on it: fast, high-energy,
+  // spoken (owner 2026-11-28: "It's not a rap. It's sung." then "it's a tad slow. More energy.").
   if (options.instrument === 'rap') {
-    if (!song.genre) throw new Error('the song has no genre, which the rap caption needs');
     if (!words) throw new Error("rap needs its style (the rapper's voice and flow)");
-    return `${song.genre} song with ${words}, rap verse over the beat, ${song.bpm} bpm, ${keyScale(song.key)}`;
+    return `hip-hop, rap, ${words}, fast high-energy rap, aggressive punchy delivery, rapid-fire spoken word flow on the beat, punchy drums, no singing, no sung melody, ${song.bpm} bpm`;
   }
   return [ACE_INSTRUMENT_CAPTIONS[options.instrument], ...(words ? [words] : []), `${song.bpm} bpm`, keyScale(song.key)].join(', ');
 }
@@ -271,7 +271,9 @@ export async function runAceLayer(ctx: AceLayerContext): Promise<AceLayerResult>
   const secPerBar = (BEATS_PER_BAR * 60) / input.bpm;
 
   const wav = await log.run('render', async () => {
-    const path = await ctx.renderWav(input);
+    // Rap is made over the song without its takes (no singing, no earlier rap or layers): its drums, bass and chords,
+    // so ACE raps on the beat and in the key, and the rap's words come out clearly (spike 2026-11-28).
+    const path = await ctx.renderWav(rap ? { ...input, aiArtifacts: [] } : input);
     if (ctx.signal.aborted) throw new CancelledError();
     const seconds = wavSeconds(readFileSync(path), 'the render');
     return { value: path, text: `${fmt(seconds)} rendered`, numbers: { seconds } };

@@ -54,7 +54,7 @@ describe('writeRapWords', () => {
     expect(brief).toContain('We drive all night');
     expect(brief).toMatch(/internal rhymes/u);
     expect(brief).toMatch(/not a sung song/u);
-    expect(brief).toContain('Every line takes two bars of music, so it has 6 to 16 syllables, most of them 12 to 15');
+    expect(brief).toContain('Every line takes one bar of music, so it has 6 to 16 syllables, most of them 10 to 12');
     expect(sent[1]!.at(-1)!.content).toMatch(/Verse 2: Lines 1 and 2 must rhyme/u);
   });
 
